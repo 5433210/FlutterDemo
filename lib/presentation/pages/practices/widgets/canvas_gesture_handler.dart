@@ -383,7 +383,8 @@ class CanvasGestureHandler {
             _dragStart = details.localPosition;
             _elementStartPositions.clear();
 
-            // 记录所有选中元素的起始位置
+            // 记录所有选中元素的起始位置和完整属性
+            final Map<String, Map<String, dynamic>> elementStartProperties = {};
             for (final selectedId in controller.state.selectedElementIds) {
               final selectedElement = ElementUtils.findElementById(
                   elements.cast<Map<String, dynamic>>(), selectedId);
@@ -392,6 +393,8 @@ class CanvasGestureHandler {
                   (selectedElement['x'] as num).toDouble(),
                   (selectedElement['y'] as num).toDouble(),
                 );
+                // 保存完整的元素属性
+                elementStartProperties[selectedId] = Map<String, dynamic>.from(selectedElement);
               }
             }
 
@@ -400,6 +403,7 @@ class CanvasGestureHandler {
               elementIds: controller.state.selectedElementIds.toSet(),
               startPosition: details.localPosition,
               elementStartPositions: _elementStartPositions,
+              elementStartProperties: elementStartProperties, // 🔧 传递完整属性
             );
 
             onDragStart(dragStateManager.isDragging, _dragStart, Offset(x, y),
@@ -680,7 +684,8 @@ class CanvasGestureHandler {
             _elementStartPosition = Offset(x, y);
             _elementStartPositions.clear();
 
-            // 记录所有选中元素的起始位置
+            // 记录所有选中元素的起始位置和完整属性
+            final Map<String, Map<String, dynamic>> elementStartProperties = {};
             for (final selectedId in controller.state.selectedElementIds) {
               final selectedElement = elements.firstWhere(
                 (e) => e['id'] == selectedId,
@@ -692,6 +697,8 @@ class CanvasGestureHandler {
                   (selectedElement['x'] as num).toDouble(),
                   (selectedElement['y'] as num).toDouble(),
                 );
+                // 保存完整的元素属性
+                elementStartProperties[selectedId] = Map<String, dynamic>.from(selectedElement);
               }
             }
 
@@ -699,6 +706,7 @@ class CanvasGestureHandler {
               elementIds: controller.state.selectedElementIds.toSet(),
               startPosition: details.localPosition,
               elementStartPositions: _elementStartPositions,
+              elementStartProperties: elementStartProperties, // 🔧 传递完整属性
             );
 
             // onDragStart(_isDragging, _dragStart, _elementStartPosition,

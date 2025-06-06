@@ -18,6 +18,7 @@ import 'element_change_types.dart';
 import 'free_control_points.dart';
 import 'layers/layer_render_manager.dart';
 import 'layers/layer_types.dart';
+import 'selected_elements_highlight.dart';
 import 'state_change_dispatcher.dart';
 
 /// Material 3 canvas widget for practice editing
@@ -619,6 +620,27 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             ),
           ),
         ),
+
+        // 🎯 多选元素高亮显示
+        Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              key: const ValueKey(
+                  'selected_elements_highlight_repaint_boundary'),
+              child: SelectedElementsHighlight(
+                elements: elements,
+                selectedElementIds:
+                    widget.controller.state.selectedElementIds.toSet(),
+                canvasScale:
+                    widget.transformationController.value.getMaxScaleOnAxis(),
+                primaryColor: Theme.of(context).colorScheme.primary,
+                secondaryColor: Theme.of(context).colorScheme.outline,
+                dragStateManager: _dragStateManager,
+              ),
+            ),
+          ),
+        ),
+
         // Control points
         if (selectedElementId != null)
           Positioned.fill(
@@ -718,13 +740,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
               child: DragTarget<String>(
                 onWillAcceptWithDetails: (data) {
                   // 只接受工具栏拖拽的元素类型
-                  debugPrint('🎯 DragTarget.onWillAcceptWithDetails: data=${data.data}');
-                  final willAccept = ['text', 'image', 'collection'].contains(data.data);
+                  debugPrint(
+                      '🎯 DragTarget.onWillAcceptWithDetails: data=${data.data}');
+                  final willAccept =
+                      ['text', 'image', 'collection'].contains(data.data);
                   debugPrint('🎯 DragTarget willAccept: $willAccept');
                   return willAccept;
                 },
                 onAcceptWithDetails: (data) {
-                  debugPrint('🎯 DragTarget.onAcceptWithDetails: data=${data.data}');
+                  debugPrint(
+                      '🎯 DragTarget.onAcceptWithDetails: data=${data.data}');
                   _handleElementDrop(data.data);
                 },
                 builder: (context, candidateData, rejectedData) {
@@ -1150,10 +1175,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   /// 创建集字元素
   void _createCollectionElement(Offset position) {
     debugPrint('🎯 创建集字元素: position=$position');
-    
+
     // 调用controller创建集字元素，现在返回元素ID
-    final newElementId = widget.controller.addCollectionElementAt(position.dx, position.dy, '');
-    
+    final newElementId =
+        widget.controller.addCollectionElementAt(position.dx, position.dy, '');
+
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.selectElement(newElementId);
@@ -1164,10 +1190,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   /// 创建图像元素
   void _createImageElement(Offset position) {
     debugPrint('🎯 创建图像元素: position=$position');
-    
+
     // 调用controller创建图像元素，现在返回元素ID
-    final newElementId = widget.controller.addImageElementAt(position.dx, position.dy, '');
-    
+    final newElementId =
+        widget.controller.addImageElementAt(position.dx, position.dy, '');
+
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.selectElement(newElementId);
@@ -1179,10 +1206,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _createTextElement(Offset position) {
     print('=== 📝 开始创建文本元素: position=$position ===');
     debugPrint('🎯 创建文本元素: position=$position');
-    
+
     // 调用controller创建文本元素，现在返回元素ID
-    final newElementId = widget.controller.addTextElementAt(position.dx, position.dy);
-    
+    final newElementId =
+        widget.controller.addTextElementAt(position.dx, position.dy);
+
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.selectElement(newElementId);
@@ -1768,7 +1796,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // 获取页面尺寸
     final pageSize = ElementUtils.calculatePixelSize(currentPage);
-    
+
     // 在页面中心附近创建元素，添加一些随机偏移避免重叠
     final random = DateTime.now().millisecondsSinceEpoch % 100;
     final dropPosition = Offset(
@@ -1776,7 +1804,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       pageSize.height / 2 + random - 50,
     );
 
-    debugPrint('🎯 在页面内创建元素: position=$dropPosition, pageSize=${pageSize.width}x${pageSize.height}');
+    debugPrint(
+        '🎯 在页面内创建元素: position=$dropPosition, pageSize=${pageSize.width}x${pageSize.height}');
 
     // 根据元素类型创建不同的元素
     switch (elementType) {

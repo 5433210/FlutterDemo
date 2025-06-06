@@ -1101,6 +1101,9 @@ class SmartCanvasGestureHandler implements GestureContext {
     // 立即设置拖拽状态，防止时序问题
     _isDragging = true;
     _elementStartPositions.clear();
+    
+    // 🔧 修复多选L形指示器：收集元素的完整初始属性
+    final Map<String, Map<String, dynamic>> elementStartProperties = {};
 
     for (final selectedId in controller.state.selectedElementIds) {
       final selectedElement =
@@ -1110,6 +1113,9 @@ class SmartCanvasGestureHandler implements GestureContext {
           (selectedElement['x'] as num).toDouble(),
           (selectedElement['y'] as num).toDouble(),
         );
+        
+        // 保存完整的元素属性
+        elementStartProperties[selectedId] = Map<String, dynamic>.from(selectedElement);
       }
     }
 
@@ -1117,9 +1123,11 @@ class SmartCanvasGestureHandler implements GestureContext {
       elementIds: controller.state.selectedElementIds.toSet(),
       startPosition: _dragStart,
       elementStartPositions: _elementStartPositions,
+      elementStartProperties: elementStartProperties, // 🔧 传递完整属性
     );
 
     debugPrint('【SmartCanvasGestureHandler】开始元素拖拽，选中元素: ${controller.state.selectedElementIds}');
+    debugPrint('🔧 已传递 ${elementStartProperties.length} 个元素的初始属性到DragStateManager');
     onDragStart(
         true, _dragStart, _elementStartPosition, _elementStartPositions);
     _currentMode = _GestureMode.elementDrag;

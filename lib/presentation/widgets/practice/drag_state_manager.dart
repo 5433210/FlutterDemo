@@ -54,6 +54,10 @@ class DragStateManager extends ChangeNotifier {
   // 🔧 新增：完整的元素预览属性（支持resize和rotate）
   final Map<String, Map<String, dynamic>> _previewProperties =
       <String, Map<String, dynamic>>{};
+      
+  // 🔧 新增：保存原始起始属性（用于正确计算预览属性）
+  final Map<String, Map<String, dynamic>> _elementStartProperties =
+      <String, Map<String, dynamic>>{};
 
   // 批量更新相关
   Timer? _batchUpdateTimer;
@@ -108,6 +112,7 @@ class DragStateManager extends ChangeNotifier {
     _elementStartPositions.clear();
     _previewPositions.clear();
     _previewProperties.clear();
+    _elementStartProperties.clear();
     _pendingUpdates.clear();
 
     // 通知监听器状态更改
@@ -170,6 +175,7 @@ class DragStateManager extends ChangeNotifier {
     _elementStartPositions.clear();
     _previewPositions.clear();
     _previewProperties.clear();
+    _elementStartProperties.clear();
     _pendingUpdates.clear();
 
     notifyListeners();
@@ -302,9 +308,11 @@ class DragStateManager extends ChangeNotifier {
       }
     }
 
-    // 🔧 新增：初始化完整元素预览属性
+    // 🔧 新增：初始化完整元素预览属性和起始属性
     _previewProperties.clear();
+    _elementStartProperties.clear();
     if (elementStartProperties != null) {
+      _elementStartProperties.addAll(elementStartProperties);
       _previewProperties.addAll(elementStartProperties);
     }
 
@@ -349,6 +357,9 @@ class DragStateManager extends ChangeNotifier {
 
     // 更新预览位置
     _updatePreviewPositions();
+    
+    // 🔧 修复多选L形指示器：同时更新预览属性
+    _updatePreviewProperties();
 
     // 立即处理批量更新，不使用定时器
     _processBatchUpdate();
@@ -520,6 +531,26 @@ class DragStateManager extends ChangeNotifier {
             '🔍[RESIZE_FIX]    元素 $elementId: 起始位置=$startPos, 新预览位置=$newPreviewPos');
       } else {
         debugPrint('🔍[RESIZE_FIX]    元素 $elementId: ❌ 没有起始位置');
+      }
+    }
+  }
+
+  /// 🔧 新增：更新预览属性（用于多选拖拽时的L形指示器跟随）
+  void _updatePreviewProperties() {
+    for (final elementId in _draggingElementIds) {
+      final startPos = _elementStartPositions[elementId];
+      final originalProperties = _elementStartProperties[elementId]; // 使用原始起始属性
+      
+      if (startPos != null && originalProperties != null) {
+        // 计算新位置
+        final newPos = startPos + _currentDragOffset;
+        
+        // 基于原始属性创建新的预览属性，更新位置信息
+        final updatedProperties = Map<String, dynamic>.from(originalProperties);
+        updatedProperties['x'] = newPos.dx;
+        updatedProperties['y'] = newPos.dy;
+        
+        _previewProperties[elementId] = updatedProperties;
       }
     }
   }
