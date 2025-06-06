@@ -19,6 +19,9 @@ class FreeControlPoints extends StatefulWidget {
   final Function(int)? onControlPointDragStart;
   final Function(int)? onControlPointDragEnd;
 
+  // 🔧 新增：传递最终状态的回调
+  final Function(int, Map<String, double>)? onControlPointDragEndWithState;
+
   const FreeControlPoints({
     Key? key,
     required this.elementId,
@@ -31,6 +34,7 @@ class FreeControlPoints extends StatefulWidget {
     this.onControlPointUpdate,
     this.onControlPointDragStart,
     this.onControlPointDragEnd,
+    this.onControlPointDragEndWithState,
   }) : super(key: key);
 
   @override
@@ -142,14 +146,20 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               debugPrint(
                   '🧪 测试控制点 $index 移动到: ${_controlPointPositions[index]}');
 
-              // 触发控制点更新回调
-              widget.onControlPointUpdate
-                  ?.call(index, _controlPointPositions[index]!);
+              // 🔧 修复：传递增量而不是绝对位置给Canvas
+              // Canvas的_handleControlPointUpdate期望接收delta参数
+              debugPrint('🔍[RESIZE_FIX] 控制点 $index 传递delta: ${details.delta}');
+              widget.onControlPointUpdate?.call(index, details.delta);
             },
             onPanEnd: (details) {
-              debugPrint('🧪 测试控制点 $index ($controlPointName) 结束拖拽');
+              debugPrint('🔍[RESIZE_FIX] 测试控制点 $index ($controlPointName) 结束拖拽');
 
-              // 触发拖拽结束回调
+              // 🔧 修复时序：先传递最终计算的状态，再触发Commit阶段
+              debugPrint('🔍[RESIZE_FIX] 步骤1: 传递最终状态给Canvas');
+              widget.onControlPointDragEndWithState?.call(index, getCurrentElementProperties());
+              
+              // 然后触发拖拽结束回调（触发Commit阶段）
+              debugPrint('🔍[RESIZE_FIX] 步骤2: 触发Commit阶段');
               widget.onControlPointDragEnd?.call(index);
             },
             child: Center(
@@ -528,6 +538,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     final centerX = _rotationCenter!.dx;
     final centerY = _rotationCenter!.dy;
+    
+    // 🔧 修复：更新位置坐标，确保_currentX和_currentY是左上角位置
+    _currentX = centerX - _currentWidth / 2;
+    _currentY = centerY - _currentHeight / 2;
 
     // 使用当前独立的矩形尺寸
     const offset = 8.0;
@@ -744,12 +758,41 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       currentRotationPoint.dx - _rotationCenter!.dx,
     );
 
-    // 计算角度变化量
+    // 🔧 修复：使用当前累积的旋转角度，而不是重新从widget.rotation开始
     final deltaAngle = newAngle - _initialRotationAngle!;
-    _currentRotation = widget.rotation * pi / 180 + deltaAngle;
+    _currentRotation += deltaAngle;
+    
+    // 🔧 修复：更新初始角度，避免累积误差
+    _initialRotationAngle = newAngle;
 
     // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
+    
+    debugPrint('🔍[RESIZE_FIX] 旋转更新: 角度变化=${deltaAngle * 180 / pi}°, 当前总角度=${_currentRotation * 180 / pi}°');
+  }
+
+  /// 获取当前计算出的元素属性（用于Commit阶段）
+  Map<String, double> getCurrentElementProperties() {
+    final result = {
+      'x': _currentX,
+      'y': _currentY,
+      'width': _currentWidth,
+      'height': _currentHeight,
+      'rotation': _currentRotation * 180 / pi, // 转换为度数
+    };
+    
+    // 🔧 详细的调试信息，帮助诊断状态不同步问题
+    debugPrint('🔍[RESIZE_FIX] ======= FreeControlPoints最终状态分析 =======');
+    debugPrint('🔍[RESIZE_FIX] 当前计算状态: $result');
+    debugPrint('🔍[RESIZE_FIX] 对比初始状态:');
+    debugPrint('🔍[RESIZE_FIX]    x: ${widget.x} -> $_currentX (变化: ${_currentX - widget.x})');
+    debugPrint('🔍[RESIZE_FIX]    y: ${widget.y} -> $_currentY (变化: ${_currentY - widget.y})');
+    debugPrint('🔍[RESIZE_FIX]    width: ${widget.width} -> $_currentWidth (变化: ${_currentWidth - widget.width})');
+    debugPrint('🔍[RESIZE_FIX]    height: ${widget.height} -> $_currentHeight (变化: ${_currentHeight - widget.height})');
+    debugPrint('🔍[RESIZE_FIX]    rotation: ${widget.rotation} -> ${_currentRotation * 180 / pi} (变化: ${_currentRotation * 180 / pi - widget.rotation})');
+    debugPrint('🔍[RESIZE_FIX] =======================================');
+    
+    return result;
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
+import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
 import '../helpers/element_utils.dart';
@@ -95,12 +96,34 @@ class _GridPainter extends CustomPainter {
   }
 }
 
-class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
-  // Drag state variables
-  bool _isDragging = false; // ignore: unused_field
-  // ignore: unused_field
+class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
+    with TickerProviderStateMixin {
+  // 核心组件
+  late TransformationController _transformationController;
+  late ContentRenderController _contentRenderController;
+  late DragStateManager _dragStateManager;
+  late LayerRenderManager _layerRenderManager;
+  late PerformanceMonitor _performanceMonitor;
+
+  // 优化组件
+  late CanvasStructureListener _structureListener;
+  late StateChangeDispatcher _stateDispatcher;
+  late DragOperationManager _dragOperationManager;
+
+  // UI组件
+  late GlobalKey _repaintBoundaryKey;
+
+  // 状态管理
+  bool _isDragging = false;
+  bool _isResizing = false;
+  bool _isRotating = false;
+  Map<String, dynamic>? _originalElementProperties;
+
+  // 🔧 保存FreeControlPoints的最终状态（用于Commit阶段）
+  Map<String, double>? _freeControlPointsFinalState;
+  
+  // 拖拽相关状态
   Offset _dragStart = Offset.zero;
-  // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
 
   // 拖拽准备状态：使用普通变量避免setState时序问题
@@ -108,38 +131,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // Canvas gesture handler
   late SmartCanvasGestureHandler _gestureHandler;
 
-  // Content render controller for dual-layer architecture
-  late ContentRenderController _contentRenderController;
-  // Drag state manager for optimized drag handling (核心组件：三阶段拖拽系统)
-  late DragStateManager _dragStateManager;
-
-  // Layer render manager for coordinated layer rendering
-  late LayerRenderManager _layerRenderManager;
-  // 新增: 分层+元素级混合优化策略核心组件
-  // Canvas structure listener for smart layer-specific routing
-  late CanvasStructureListener _structureListener;
-  // State change dispatcher for unified state management
-  late StateChangeDispatcher _stateDispatcher;
-  // Drag operation manager for 3-phase drag system
-  late DragOperationManager _dragOperationManager;
-
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
       ValueNotifier(SelectionBoxState());
 
-  // Dedicated GlobalKey for RepaintBoundary (for screenshot functionality)
-  // Use the widget's key if provided, otherwise create a new one
-  late final GlobalKey _repaintBoundaryKey;
-
-  /// 处理控制点拖拽结束事件
-  // 存储原始元素属性，用于撤销/重做
-  Map<String, dynamic>? _originalElementProperties;
-  bool _isResizing = false;
-  bool _isRotating = false;
+  // 跟踪页面变化，用于自动重置视图
+  String? _lastPageKey;
   bool _hasInitializedView = false; // 防止重复初始化视图
-  String? _lastPageKey; // 跟踪页面变化，用于自动重置视图
-  // Performance monitoring
-  final perf.PerformanceMonitor _performanceMonitor = perf.PerformanceMonitor();
+
   @override
   Widget build(BuildContext context) {
     // Track performance for main canvas rebuilds
@@ -473,6 +472,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                       onControlPointUpdate: _handleControlPointUpdate,
                       onControlPointDragEnd: _handleControlPointDragEnd,
                       onControlPointDragStart: _handleControlPointDragStart,
+                      onControlPointDragEndWithState:
+                          _handleControlPointDragEndWithState,
                     );
                   }),
                 ),
@@ -1011,7 +1012,58 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     return finalProperties;
   }
 
-  /// 创建撤销操作 - 用于Commit阶段
+  /// 根据FreeControlPoints的最终状态计算元素尺寸
+  Map<String, double>? _calculateResizeFromFreeControlPoints(
+      String elementId, int controlPointIndex) {
+    // 🔧 使用FreeControlPoints传递的最终计算状态
+    if (_freeControlPointsFinalState != null) {
+      debugPrint('🔍[RESIZE_FIX] 使用FreeControlPoints最终状态: $_freeControlPointsFinalState');
+      return Map<String, double>.from(_freeControlPointsFinalState!);
+    }
+
+    // 回退：如果没有最终状态，使用当前元素属性
+    debugPrint('🔍[RESIZE_FIX] ⚠️ 未找到FreeControlPoints最终状态，使用当前元素属性作为回退');
+    final element = widget.controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return null;
+
+    return {
+      'x': (element['x'] as num).toDouble(),
+      'y': (element['y'] as num).toDouble(),
+      'width': (element['width'] as num).toDouble(),
+      'height': (element['height'] as num).toDouble(),
+    };
+  }
+
+  /**
+   * 三阶段拖拽系统技术说明
+   * 
+   * 本系统实现了高性能的三阶段拖拽操作：
+   * 
+   * 1. Preview阶段 (_handleControlPointDragStart):
+   *    - 保存原始元素属性
+   *    - 创建元素快照
+   *    - 初始化DragStateManager
+   * 
+   * 2. Live阶段 (_handleControlPointUpdate):
+   *    - 实时更新拖拽偏移量
+   *    - 更新元素属性提供即时视觉反馈
+   *    - 在DragPreviewLayer中显示元素快照
+   * 
+   * 3. Commit阶段 (_handleControlPointDragEnd):
+   *    - 计算最终元素属性
+   *    - 应用网格吸附(如果启用)
+   *    - 创建撤销操作
+   *    - 清理预览状态
+   * 
+   * 性能优化点：
+   * - 使用RepaintBoundary减少重绘区域
+   * - 使用快照系统避免重复渲染
+   * - 分离UI更新和数据提交
+   */ /// 创建撤销操作 - 用于Commit阶段
   void _createUndoOperation(String elementId,
       Map<String, dynamic> oldProperties, Map<String, dynamic> newProperties) {
     // 检查是否有实际变化
@@ -1060,38 +1112,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     }
   }
 
-  /**
-   * 三阶段拖拽系统技术说明
-   * 
-   * 本系统实现了高性能的三阶段拖拽操作：
-   * 
-   * 1. Preview阶段 (_handleControlPointDragStart):
-   *    - 保存原始元素属性
-   *    - 创建元素快照
-   *    - 初始化DragStateManager
-   * 
-   * 2. Live阶段 (_handleControlPointUpdate):
-   *    - 实时更新拖拽偏移量
-   *    - 更新元素属性提供即时视觉反馈
-   *    - 在DragPreviewLayer中显示元素快照
-   * 
-   * 3. Commit阶段 (_handleControlPointDragEnd):
-   *    - 计算最终元素属性
-   *    - 应用网格吸附(如果启用)
-   *    - 创建撤销操作
-   *    - 清理预览状态
-   * 
-   * 性能优化点：
-   * - 使用RepaintBoundary减少重绘区域
-   * - 使用快照系统避免重复渲染
-   * - 分离UI更新和数据提交
-   */ /// 回退到基础模式（禁用优化功能）
+  /// 回退到基础模式（禁用优化功能）
   void _fallbackToBasicMode() {
     try {
       // 只初始化最基础的组件
       _contentRenderController = ContentRenderController();
       _dragStateManager = DragStateManager();
       _layerRenderManager = LayerRenderManager();
+      _performanceMonitor = PerformanceMonitor(); // 🔧 也需要初始化性能监控器
 
       // 不要重新初始化_repaintBoundaryKey，因为它已经在_initializeCoreComponents()中初始化了
       // _repaintBoundaryKey = GlobalKey();
@@ -1233,29 +1261,39 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
       // 处理旋转控制点
       if (_isRotating) {
-        debugPrint('✅ Commit阶段: 处理旋转操作');
+        debugPrint('🔍[RESIZE_FIX] Commit阶段: 处理旋转操作');
 
-        // 计算最终属性并应用网格吸附
-        final currentProperties = <String, double>{
-          'rotation': (element['rotation'] as num?)?.toDouble() ?? 0.0,
-        };
-        final finalProperties =
-            _calculateFinalElementProperties(currentProperties);
+        // 🔧 使用FreeControlPoints传递的最终状态（与resize保持一致）
+        if (_freeControlPointsFinalState != null && _freeControlPointsFinalState!.containsKey('rotation')) {
+          final finalRotation = _freeControlPointsFinalState!['rotation']!;
+          
+          debugPrint('🔍[RESIZE_FIX] 使用FreeControlPoints旋转状态: $finalRotation°');
+          
+          // 应用最终旋转值
+          element['rotation'] = finalRotation;
 
-        // 应用最终旋转值
-        element['rotation'] = finalProperties['rotation'];
-
-        // 🔧 真正更新Controller中的元素属性
-        widget.controller.updateElementProperties(elementId, {
-          'rotation': finalProperties['rotation']!,
-        });
+          // 🔧 真正更新Controller中的元素属性
+          widget.controller.updateElementProperties(elementId, {
+            'rotation': finalRotation,
+          });
+          
+          debugPrint('🔍[RESIZE_FIX] Commit阶段: rotation结果已应用 - $finalRotation°');
+        } else {
+          debugPrint('🔍[RESIZE_FIX] ⚠️ 未找到FreeControlPoints旋转状态，使用当前元素属性作为回退');
+          
+          // 回退：如果没有最终状态，保持当前rotation不变
+          final currentRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
+          widget.controller.updateElementProperties(elementId, {
+            'rotation': currentRotation,
+          });
+        }
 
         // 创建撤销操作
         _createUndoOperation(elementId, _originalElementProperties!, element);
 
         _isRotating = false;
         _originalElementProperties = null;
-        debugPrint('✅ Commit阶段: 旋转操作完成');
+        debugPrint('🔍[RESIZE_FIX] Commit阶段: 旋转操作完成');
         return;
       }
 
@@ -1265,8 +1303,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
         // 🔧 在这里计算resize的最终变化
         // 获取FreeControlPoints传递的累积变化
-        final resizeResult = _calculateResizeFromFreeControlPoints(elementId, controlPointIndex);
-        
+        final resizeResult =
+            _calculateResizeFromFreeControlPoints(elementId, controlPointIndex);
+
         if (resizeResult != null) {
           // 应用resize变化
           element['x'] = resizeResult['x'];
@@ -1274,8 +1313,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
           element['width'] = resizeResult['width'];
           element['height'] = resizeResult['height'];
 
-          debugPrint('✅ Commit阶段: resize结果已应用 - ${resizeResult}');
-          
+          debugPrint('🔍[RESIZE_FIX] Commit阶段: resize结果已应用 - $resizeResult');
+
           // 🔧 真正更新Controller中的元素属性
           widget.controller.updateElementProperties(elementId, {
             'x': resizeResult['x']!,
@@ -1283,6 +1322,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
             'width': resizeResult['width']!,
             'height': resizeResult['height']!,
           });
+          
+          debugPrint('🔍[RESIZE_FIX] Commit阶段: Controller更新完成');
         }
 
         // 创建撤销操作
@@ -1309,6 +1350,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       _isRotating = false;
       _isResizing = false;
       _originalElementProperties = null;
+      _freeControlPointsFinalState = null; // 🔧 清理最终状态
 
       // 添加延迟刷新以确保完整可见性恢复
       Future.delayed(const Duration(milliseconds: 150), () {
@@ -1373,22 +1415,50 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       elementIds: {elementId},
       startPosition: elementPosition,
       elementStartPositions: {elementId: elementPosition},
-      elementStartProperties: {elementId: Map<String, dynamic>.from(element)}, // 🔧 传递完整元素属性
+      elementStartProperties: {
+        elementId: Map<String, dynamic>.from(element)
+      }, // 🔧 传递完整元素属性
     );
 
     debugPrint('🎯 Preview阶段完成: 元素 $elementId 快照已创建，原始属性已保存');
   }
 
+  /// 🔧 新增：处理控制点拖拽结束并接收最终状态
+  void _handleControlPointDragEndWithState(int controlPointIndex, Map<String, double> finalState) {
+    debugPrint('🔍[RESIZE_FIX] 收到FreeControlPoints最终状态: $finalState');
+    
+    // 保存最终状态，供_calculateResizeFromFreeControlPoints使用
+    _freeControlPointsFinalState = finalState;
+    
+    debugPrint('🔍[RESIZE_FIX] 已保存FreeControlPoints最终状态，等待Commit阶段使用');
+  }
+
   /// Handle control point updates - 实现Live阶段
   void _handleControlPointUpdate(int controlPointIndex, Offset delta) {
-    debugPrint('🔄 控制点 $controlPointIndex 更新中 - Live阶段');
+    debugPrint('🔍[RESIZE_FIX] 控制点 $controlPointIndex 更新中 - Live阶段，接收delta: $delta');
 
     // 🔧 性能优化：在拖拽过程中不更新Controller，避免Canvas重建
     // 只让FreeControlPoints处理视觉反馈，Controller在拖拽结束时更新
-    debugPrint('🔧 Live阶段：跳过Controller更新，保持Canvas流畅');
-    
+    debugPrint('🔍[RESIZE_FIX] Live阶段：跳过Controller更新，保持Canvas流畅');
+
+    // 🔧 但是仍然需要进行性能监控，记录拖拽帧率和更新次数
+    if (widget.controller.state.selectedElementIds.isNotEmpty) {
+      final selectedElementId = widget.controller.state.selectedElementIds.first;
+      
+      // 调用DragStateManager的性能监控（不触发数据更新）
+      if (_dragStateManager.isDragging) {
+        // 仅更新性能统计，不触发notifyListeners
+        _dragStateManager.updatePerformanceStatsOnly();
+        debugPrint('🔍[RESIZE_FIX] 已更新性能监控统计');
+      }
+    }
+
     // 无论是resize还是rotate，都跳过Live阶段的Controller更新
     // 让FreeControlPoints独立处理视觉反馈，保持拖拽流畅
+
+    // 🔧 但是需要保存最终状态以便Commit阶段使用
+    // 这里我们接收到的是FreeControlPoints的绝对位置，需要转换为元素属性
+    // 由于这是Live阶段，我们暂时不处理，等待拖拽结束时再获取最终状态
   }
 
   /// Handle element resize
@@ -1591,6 +1661,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // 图层渲染管理器 - 用于分层渲染策略
     _layerRenderManager = LayerRenderManager();
+
+    // 🔧 性能监控器 - 用于追踪性能指标
+    _performanceMonitor = PerformanceMonitor();
 
     // RepaintBoundary的Key - 用于截图和快照功能
     _repaintBoundaryKey = GlobalKey();
@@ -2014,30 +2087,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     debugPrint('【手势检测】让InteractiveViewer处理画布平移');
     debugPrint('🔍【_shouldHandleSpecialGesture】无特殊手势需求');
     return false;
-  }
-
-  /// 根据FreeControlPoints的最终状态计算元素尺寸
-  Map<String, double>? _calculateResizeFromFreeControlPoints(String elementId, int controlPointIndex) {
-    // FreeControlPoints会根据其内部的_currentX, _currentY, _currentWidth, _currentHeight
-    // 计算最终的元素尺寸。我们需要从控制点的最终状态推算这些值。
-    
-    // 由于FreeControlPoints维护自己的状态，我们可以通过观察它传递的信息
-    // 来推断最终的元素属性。但更简单的方法是直接从widget参数获取。
-    
-    // 临时解决方案：直接使用当前元素属性，让FreeControlPoints处理视觉反馈即可
-    final element = widget.controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
-    
-    if (element.isEmpty) return null;
-    
-    return {
-      'x': (element['x'] as num).toDouble(),
-      'y': (element['y'] as num).toDouble(),
-      'width': (element['width'] as num).toDouble(),
-      'height': (element['height'] as num).toDouble(),
-    };
   }
 }
 

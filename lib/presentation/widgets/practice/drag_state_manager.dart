@@ -471,4 +471,41 @@ class DragStateManager extends ChangeNotifier {
       }
     }
   }
+
+  /// 🔧 新增：仅更新性能监控统计，不触发通知（用于Live阶段）
+  void updatePerformanceStatsOnly() {
+    if (!_isDragging) return;
+
+    final now = DateTime.now();
+
+    // 计算每次更新的时间间隔
+    if (_lastUpdateTime != null) {
+      final updateTime = now.difference(_lastUpdateTime!).inMilliseconds;
+      _updateTimes.add(updateTime.toDouble());
+
+      // 计算帧率 (FPS = 1000ms / 每帧时间)
+      if (updateTime > 0) {
+        final fps = (1000 / updateTime).round();
+        _frameRates.add(fps);
+      }
+
+      // 计算平均更新时间
+      _avgUpdateTime = _updateTimes.fold(0.0, (sum, time) => sum + time) /
+          _updateTimes.length;
+    }
+
+    _lastUpdateTime = now;
+    _updateCount++;
+
+    // 注意：这里不调用 notifyListeners()，仅更新性能统计
+    // 这样可以在Live阶段记录性能数据而不影响UI重建
+
+    // 调试信息
+    if (DragConfig.debugMode && _updateCount % 10 == 0) {
+      debugPrint('🔍[RESIZE_FIX] DragStateManager - 性能数据 (仅统计):');
+      debugPrint('🔍[RESIZE_FIX]    更新次数: $_updateCount');
+      debugPrint('🔍[RESIZE_FIX]    平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
+      debugPrint('🔍[RESIZE_FIX]    当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
+    }
+  }
 }
