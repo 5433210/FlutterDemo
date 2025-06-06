@@ -761,6 +761,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                   _gestureHandler.handleTapUp(
                       details, elements.cast<Map<String, dynamic>>());
 
+                  // 🔧 关键修复：确保在选择状态变化后立即更新UI状态
+                  if (mounted) {
+                    setState(() {});
+                    // 调试选择状态变化后的情况
+                    _debugCanvasState('元素选择后');
+                  }
+
                   // 🔍[RESIZE_FIX] 选择处理后的状态
                   debugPrint(
                       '🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
@@ -1419,6 +1426,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _isResizing = false;
       _originalElementProperties = null;
       _freeControlPointsFinalState = null; // 🔧 清理最终状态
+      
+      // 🔧 关键修复：重置_isReadyForDrag状态，确保Canvas手势不会被错误拦截
+      _isReadyForDrag = false;
+      _isDragging = false;
+      
+      // 🔧 立即触发状态更新，确保InteractiveViewer的panEnabled状态正确更新
+      if (mounted) {
+        setState(() {});
+        // 调试状态重置后的情况
+        _debugCanvasState('控制点拖拽结束后');
+      }
 
       // 添加延迟刷新以确保完整可见性恢复
       Future.delayed(const Duration(milliseconds: 150), () {
@@ -2089,6 +2107,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 处理DragStateManager状态变化
   void _onDragStateManagerChanged() {}
+
+  /// 🔧 调试方法：检查当前状态，帮助诊断画布平移问题
+  void _debugCanvasState(String context) {
+    final panEnabled = !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag);
+    debugPrint('🔍[CANVAS_STATE] [$context] panEnabled: $panEnabled');
+    debugPrint('🔍[CANVAS_STATE] [$context] _isDragging: $_isDragging');
+    debugPrint('🔍[CANVAS_STATE] [$context] _dragStateManager.isDragging: ${_dragStateManager.isDragging}');
+    debugPrint('🔍[CANVAS_STATE] [$context] _isReadyForDrag: $_isReadyForDrag');
+    debugPrint('🔍[CANVAS_STATE] [$context] selectedElementIds: ${widget.controller.state.selectedElementIds}');
+    debugPrint('🔍[CANVAS_STATE] [$context] currentTool: ${widget.controller.state.currentTool}');
+  }
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
