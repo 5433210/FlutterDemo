@@ -715,8 +715,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 // Status bar uses real-time calculation, no explicit setState needed
               },
               constrained: false, // Allow content to be unconstrained
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
+                              child: GestureDetector(
+                  // 🔧 关键修复：使用deferToChild确保空白区域手势能穿透到InteractiveViewer
+                  behavior: HitTestBehavior.deferToChild,
                 onTapDown: (details) {
                   debugPrint(
                       '🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
@@ -774,134 +775,98 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 onSecondaryTapUp: (details) =>
                     _gestureHandler.handleSecondaryTapUp(
                         details, elements.cast<Map<String, dynamic>>()),
-                // 智能手势处理：只在需要时设置回调
-                onPanStart: _shouldHandleAnySpecialGesture(elements)
-                    ? (details) {
-                        // 🔍[RESIZE_FIX] Canvas onPanStart被调用
-                        debugPrint(
-                            '🔍[RESIZE_FIX] ✅ Canvas onPanStart被调用: position=${details.localPosition}');
-                        debugPrint(
-                            '🔍【onPanStart】回调被调用 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+                                  // 🔧 关键修复：只在真正需要时设置onPanStart回调
+                  onPanStart: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
+                      ? (details) {
+                          debugPrint('🔍[RESIZE_FIX] ✅ Canvas onPanStart被调用: position=${details.localPosition}');
+                          
+                          // 动态检查是否需要处理特殊手势
+                          final shouldHandle = _shouldHandleSpecialGesture(details, elements);
+                          debugPrint('🔍[RESIZE_FIX] _shouldHandleSpecialGesture结果: $shouldHandle');
 
-                        // 动态检查是否需要处理特殊手势（元素拖拽、选择框等）
-                        final shouldHandle =
-                            _shouldHandleSpecialGesture(details, elements);
-                        debugPrint(
-                            '🔍[RESIZE_FIX] _shouldHandleSpecialGesture结果: $shouldHandle');
-
-                        if (shouldHandle) {
-                          debugPrint(
-                              '🔍【onPanStart】需要特殊处理，调用SmartCanvasGestureHandler');
-                          _gestureHandler.handlePanStart(
-                              details, elements.cast<Map<String, dynamic>>());
-                        } else if (widget.controller.state.currentTool ==
-                            'select') {
-                          debugPrint('🔍【onPanStart】select模式，处理选择框');
-                          _gestureHandler.handlePanStart(
-                              details, elements.cast<Map<String, dynamic>>());
-                        } else {
-                          debugPrint(
-                              '🔍【onPanStart】点击空白区域，不处理，让InteractiveViewer处理画布平移');
-                          // 不调用手势处理器，让InteractiveViewer接管
+                          if (shouldHandle) {
+                            debugPrint('🔍【onPanStart】Canvas处理特殊手势');
+                            _gestureHandler.handlePanStart(details, elements.cast<Map<String, dynamic>>());
+                          } else {
+                            debugPrint('🔍【onPanStart】空白区域点击，不处理');
+                            // 🔧 关键：不调用任何处理逻辑，让手势穿透
+                          }
                         }
-                      }
-                    : (details) {
-                        debugPrint(
-                            '🔍[RESIZE_FIX] ❌ Canvas onPanStart为null，InteractiveViewer处理 - position=${details.localPosition}');
-                      },
-                onPanUpdate: _shouldHandleAnySpecialGesture(elements)
-                    ? (details) {
-                        // 🔍[RESIZE_FIX] Canvas onPanUpdate被调用
-                        debugPrint(
-                            '🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
+                      : null, // 🔧 关键：当不需要时，设置为null让InteractiveViewer完全接管
+                                  onPanUpdate: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
+                      ? (details) {
+                          debugPrint('🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
 
-                        // 先处理选择框更新，这优先级最高
-                        if (widget.controller.state.currentTool == 'select' &&
-                            _gestureHandler.isSelectionBoxActive) {
-                          debugPrint('🔍[RESIZE_FIX] 处理选择框更新');
-                          _gestureHandler.handlePanUpdate(details);
-                          _selectionBoxNotifier.value = SelectionBoxState(
-                            isActive: true,
-                            startPoint: _gestureHandler.selectionBoxStart,
-                            endPoint: _gestureHandler.selectionBoxEnd,
-                          );
-                          return;
+                          // 处理选择框更新
+                          if (widget.controller.state.currentTool == 'select' &&
+                              _gestureHandler.isSelectionBoxActive) {
+                            debugPrint('🔍[RESIZE_FIX] 处理选择框更新');
+                            _gestureHandler.handlePanUpdate(details);
+                            _selectionBoxNotifier.value = SelectionBoxState(
+                              isActive: true,
+                              startPoint: _gestureHandler.selectionBoxStart,
+                              endPoint: _gestureHandler.selectionBoxEnd,
+                            );
+                            return;
+                          }
+
+                          // 处理元素拖拽
+                          if (_isDragging || _dragStateManager.isDragging) {
+                            debugPrint('🔍[RESIZE_FIX] 处理元素拖拽');
+                            _gestureHandler.handlePanUpdate(details);
+                            return;
+                          }
+
+                          // 🔧 关键：空白区域不处理，让InteractiveViewer接管
+                          debugPrint('🔍[RESIZE_FIX] 空白区域手势，不拦截');
                         }
-
-                        // Handle element dragging - 检查DragStateManager的拖拽状态
-                        if (_isDragging ||
-                            _dragStateManager.isDragging ||
-                            (_isReadyForDrag &&
-                                widget.controller.state.selectedElementIds
-                                    .isNotEmpty)) {
-                          debugPrint(
-                              '🔍[RESIZE_FIX] Canvas调用_gestureHandler.handlePanUpdate处理元素拖拽');
-                          _gestureHandler.handlePanUpdate(details);
-                          debugPrint('【元素拖拽】SmartCanvasGestureHandler正在处理元素拖拽');
-                          return;
-                        }
-
-                        // 如果不需要特殊处理，则不调用手势处理器，让InteractiveViewer处理
-                        debugPrint(
-                            '🔍【onPanUpdate】不处理，让InteractiveViewer处理画布平移');
-                      }
-                    : (details) {
-                        debugPrint(
-                            '🔍[RESIZE_FIX] Canvas onPanUpdate为null，InteractiveViewer处理');
-                      },
-                onPanEnd: _shouldHandleAnySpecialGesture(elements)
-                    ? (details) {
-                        // 检查是否需要处理手势结束
-                        bool shouldHandleEnd =
-                            _gestureHandler.isSelectionBoxActive ||
-                                _isDragging ||
-                                _dragStateManager.isDragging ||
-                                _isReadyForDrag;
-
-                        // 重置拖拽准备状态
-                        _isReadyForDrag = false;
-
-                        // 只有在真正处理了手势的情况下才调用handlePanEnd
-                        if (shouldHandleEnd) {
+                      : null, // 🔧 关键：设置为null让InteractiveViewer完全接管
+                                  onPanEnd: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
+                      ? (details) {
+                          debugPrint('🔍[RESIZE_FIX] Canvas onPanEnd被调用');
+                          
                           // 重置选择框状态
                           if (widget.controller.state.currentTool == 'select' &&
                               _gestureHandler.isSelectionBoxActive) {
                             _selectionBoxNotifier.value = SelectionBoxState();
                           }
-                          _gestureHandler.handlePanEnd(details);
+                          
+                          // 处理手势结束
+                          if (_isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive) {
+                            _gestureHandler.handlePanEnd(details);
+                          }
+                          
+                          // 重置状态
+                          _isReadyForDrag = false;
                         }
-                      }
-                    : null,
-                onPanCancel: _shouldHandleAnySpecialGesture(elements)
-                    ? () {
-                        // 检查是否需要处理手势取消
-                        bool shouldHandleCancel =
-                            _gestureHandler.isSelectionBoxActive ||
-                                _isDragging ||
-                                _dragStateManager.isDragging ||
-                                _isReadyForDrag;
-
-                        // 重置拖拽准备状态
-                        _isReadyForDrag = false;
-
-                        // 只有在真正处理了手势的情况下才调用handlePanCancel
-                        if (shouldHandleCancel) {
+                      : null,
+                                  onPanCancel: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
+                      ? () {
+                          debugPrint('🔍[RESIZE_FIX] Canvas onPanCancel被调用');
+                          
                           // 重置选择框状态
                           if (widget.controller.state.currentTool == 'select' &&
                               _gestureHandler.isSelectionBoxActive) {
                             _selectionBoxNotifier.value = SelectionBoxState();
                           }
-                          _gestureHandler.handlePanCancel();
+                          
+                          // 处理手势取消
+                          if (_isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive) {
+                            _gestureHandler.handlePanCancel();
+                          }
+                          
+                          // 重置状态
+                          _isReadyForDrag = false;
                         }
-                      }
-                    : null,
-                child: Container(
-                  width: pageSize.width,
-                  height: pageSize.height,
-                  // 临时调试：添加红色边框，看看页面实际渲染区域
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.red, width: 2),
-                  ),
+                      : null,
+                                  child: Container(
+                    width: pageSize.width,
+                    height: pageSize.height,
+                    // 🔧 关键修复：添加透明背景确保手势检测正常工作
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(color: Colors.red, width: 2),
+                    ),
                   child: Builder(
                     builder: (context) {
                       // 添加调试信息，检查页面容器的实际渲染尺寸
