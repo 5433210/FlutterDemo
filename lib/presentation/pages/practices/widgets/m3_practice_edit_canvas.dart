@@ -13,6 +13,7 @@ import 'content_render_controller.dart';
 import 'content_render_layer.dart';
 import 'drag_operation_manager.dart';
 import 'drag_preview_layer.dart';
+import 'element_change_types.dart';
 import 'free_control_points.dart';
 import 'layers/layer_render_manager.dart';
 import 'layers/layer_types.dart';
@@ -1222,10 +1223,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       return;
     }
 
-    // Phase 3: Commit - 结束拖拽状态管理器并提交最终更改
-    _dragStateManager.endDrag(shouldCommitChanges: true);
-
     try {
+      // Phase 3: Commit - 结束拖拽状态管理器并提交最终更改
+      _dragStateManager.endDrag(shouldCommitChanges: true);
+
+      // 强制内容渲染控制器刷新，确保元素恢复可见性
+      _contentRenderController.markElementDirty(
+          elementId, ElementChangeType.multiple);
+
       // 处理旋转控制点
       if (_isRotating) {
         debugPrint('✅ Commit阶段: 处理旋转操作');
@@ -1296,6 +1301,27 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       _isRotating = false;
       _isResizing = false;
       _originalElementProperties = null;
+
+      // 添加延迟刷新以确保完整可见性恢复
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) {
+          // 标记元素为脏以强制重新渲染
+          if (widget.controller.state.selectedElementIds.isNotEmpty) {
+            final elementId = widget.controller.state.selectedElementIds.first;
+            _contentRenderController.markElementDirty(
+                elementId, ElementChangeType.multiple);
+
+            // 通知DragStateManager强制清理拖拽状态
+            _dragStateManager.cancelDrag();
+
+            // 确保DragPreviewLayer不再显示该元素
+            setState(() {});
+
+            // 更新控制器状态以确保UI更新
+            widget.controller.notifyListeners();
+          }
+        }
+      });
     }
 
     debugPrint('✅ Commit阶段完成: 三阶段拖拽系统处理完毕');
@@ -1461,47 +1487,61 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         x += delta.dx;
         width -= delta.dx;
         break;
-    } // 确保最小尺寸
-    width = width.clamp(10.0, double.infinity);
-    height =
-        height.clamp(10.0, double.infinity); // 注释掉拖拽过程中的平滑吸附，改为只在拖拽结束时应用网格吸附
-    // 应用平滑吸附 - 使用SnapManager
-    // if (widget.controller.state.snapEnabled) {
-    //   // 确保使用最新的网格设置更新SnapManager
-    //   _snapManager.updateSettings(
-    //     gridSize: widget.controller.state.gridSize,
-    //     enabled: widget.controller.state.snapEnabled,
-    //     snapThreshold: 10.0,
-    //   );
+    }
 
-    //   // 创建一个临时的元素位置供SnapManager使用
-    //   final tempElement = {
-    //     'id': elementId,
-    //     'x': x,
-    //     'y': y,
-    //     'width': width,
-    //     'height': height,
-    //   }; // 应用平滑吸附到网格 - 在拖拽过程中使用 snapFactor=0.3 实现平滑效果
-    //   final snappedPosition = _snapManager.snapPosition(
-    //     Offset(x, y),
-    //     [tempElement],
-    //     elementId,
-    //     isDragging: true,
-    //     snapFactor: 0.3,
-    //   );
+    // 确保最小尺寸 - 为不同类型的元素设置不同的最小尺寸
+    final elementType = element['type'] as String? ?? '';
+    double minWidth, minHeight;
 
-    //   // 确保位置有变化 - 避免卡住不动
-    //   if ((snappedPosition.dx - x).abs() > 0.001 ||
-    //       (snappedPosition.dy - y).abs() > 0.001) {
-    //     // 更新位置，但保持原来计算的宽高
-    //     x = snappedPosition.dx;
-    //     y = snappedPosition.dy;
+    // 根据元素类型分配最小尺寸
+    switch (elementType) {
+      case 'text':
+        minWidth = 30.0;
+        minHeight = 30.0; // 文本元素需要更大的最小高度以确保可见性
+        break;
+      case 'image':
+        minWidth = 20.0;
+        minHeight = 20.0;
+        break;
+      case 'collection':
+        minWidth = 40.0;
+        minHeight = 40.0; // 集字元素需要较大的最小尺寸
+        break;
+      default:
+        minWidth = 15.0;
+        minHeight = 15.0;
+    }
 
-    //     debugPrint('吸附后的位置: x=$x, y=$y');
-    //   } else {
-    //     debugPrint('跳过吸附: 位置变化太小');
-    //   }
-    // }
+    // 应用最小尺寸限制
+    if (width < minWidth) {
+      // 如果宽度小于最小值，根据控制点调整位置和宽度
+      if (controlPointIndex == 0 ||
+          controlPointIndex == 6 ||
+          controlPointIndex == 7) {
+        // 左侧控制点：保持右边缘不变，调整左边缘
+        double diff = minWidth - width;
+        x -= diff;
+        width = minWidth;
+      } else {
+        // 右侧控制点：保持左边缘不变，设置最小宽度
+        width = minWidth;
+      }
+    }
+
+    if (height < minHeight) {
+      // 如果高度小于最小值，根据控制点调整位置和高度
+      if (controlPointIndex == 0 ||
+          controlPointIndex == 1 ||
+          controlPointIndex == 2) {
+        // 上方控制点：保持下边缘不变，调整上边缘
+        double diff = minHeight - height;
+        y -= diff;
+        height = minHeight;
+      } else {
+        // 下方控制点：保持上边缘不变，设置最小高度
+        height = minHeight;
+      }
+    }
 
     // 更新元素属性
     final updates = {

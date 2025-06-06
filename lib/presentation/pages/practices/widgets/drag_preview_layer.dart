@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../widgets/practice/drag_state_manager.dart';
@@ -62,71 +64,77 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
 
     // 创建一个透明层，显示所有拖拽元素的预览
     return RepaintBoundary(
-      child: Positioned.fill(
-        child: IgnorePointer(
-          child: Opacity(
-            opacity: DragConfig.dragPreviewOpacity,
-            child: Stack(
-              children: [
-                for (final elementId in draggingElementIds)
-                  Builder(
-                    builder: (context) {
-                      debugPrint('🎯 DragPreviewLayer: 构建元素 $elementId 的预览');
+      child: Stack(
+        children: [
+          // 使用IgnorePointer包装整个预览层，避免干扰用户交互
+          IgnorePointer(
+            child: Opacity(
+              opacity: DragConfig.dragPreviewOpacity,
+              child: Stack(
+                children: [
+                  for (final elementId in draggingElementIds)
+                    Builder(
+                      builder: (context) {
+                        debugPrint('🎯 DragPreviewLayer: 构建元素 $elementId 的预览');
 
-                      // 尝试使用ElementSnapshot系统获取预览（如果可用）
-                      if (widget.useSnapshotSystem &&
-                          widget.dragOperationManager != null) {
-                        final snapshot = widget.dragOperationManager!
-                            .getSnapshotForElement(elementId);
-                        if (snapshot != null) {
-                          debugPrint(
-                              '🎯 DragPreviewLayer: 使用快照预览元素 $elementId');
-                          return _buildSnapshotPreview(elementId, snapshot);
+                        // 尝试使用ElementSnapshot系统获取预览（如果可用）
+                        if (widget.useSnapshotSystem &&
+                            widget.dragOperationManager != null) {
+                          final snapshot = widget.dragOperationManager!
+                              .getSnapshotForElement(elementId);
+                          if (snapshot != null) {
+                            debugPrint(
+                                '🎯 DragPreviewLayer: 使用快照预览元素 $elementId');
+                            return _buildSnapshotPreview(elementId, snapshot);
+                          }
                         }
-                      }
 
-                      // 获取元素的预览位置
-                      final previewPosition = widget.dragStateManager
-                          .getElementPreviewPosition(elementId);
+                        // 获取元素的预览位置
+                        final previewPosition = widget.dragStateManager
+                            .getElementPreviewPosition(elementId);
 
-                      // 如果没有预览位置，不显示该元素
-                      if (previewPosition == null) {
-                        debugPrint('🎯 DragPreviewLayer: 元素 $elementId 没有预览位置');
-                        return const SizedBox.shrink();
-                      }
+                        // 如果没有预览位置，不显示该元素
+                        if (previewPosition == null) {
+                          debugPrint(
+                              '🎯 DragPreviewLayer: 元素 $elementId 没有预览位置');
+                          return const SizedBox.shrink();
+                        }
 
-                      debugPrint(
-                          '🎯 DragPreviewLayer: 元素 $elementId 预览位置: $previewPosition');
-
-                      // 查找元素数据
-                      final element = widget.elements.firstWhere(
-                        (e) => e['id'] == elementId,
-                        orElse: () => <String, dynamic>{},
-                      );
-
-                      if (element.isEmpty) {
-                        debugPrint('🎯 DragPreviewLayer: 元素 $elementId 数据未找到');
-                        return const SizedBox.shrink();
-                      }
-
-                      // 如果提供了自定义构建器，使用它构建预览
-                      if (widget.elementBuilder != null) {
                         debugPrint(
-                            '🎯 DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
-                        return widget.elementBuilder!(
-                            elementId, previewPosition, element);
-                      }
+                            '🎯 DragPreviewLayer: 元素 $elementId 预览位置: $previewPosition');
 
-                      // 否则使用默认预览样式
-                      debugPrint('🎯 DragPreviewLayer: 使用默认样式预览元素 $elementId');
-                      return _buildDefaultPreview(
-                          elementId, previewPosition, element);
-                    },
-                  )
-              ],
+                        // 查找元素数据
+                        final element = widget.elements.firstWhere(
+                          (e) => e['id'] == elementId,
+                          orElse: () => <String, dynamic>{},
+                        );
+
+                        if (element.isEmpty) {
+                          debugPrint(
+                              '🎯 DragPreviewLayer: 元素 $elementId 数据未找到');
+                          return const SizedBox.shrink();
+                        }
+
+                        // 如果提供了自定义构建器，使用它构建预览
+                        if (widget.elementBuilder != null) {
+                          debugPrint(
+                              '🎯 DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
+                          return widget.elementBuilder!(
+                              elementId, previewPosition, element);
+                        }
+
+                        // 否则使用默认预览样式
+                        debugPrint(
+                            '🎯 DragPreviewLayer: 使用默认样式预览元素 $elementId');
+                        return _buildDefaultPreview(
+                            elementId, previewPosition, element);
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -155,6 +163,18 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     final elementRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
     final elementType = element['type'] as String;
 
+    // 确保预览尺寸不小于最小值，确保视觉可见性
+    final displayWidth = math.max(elementWidth, 20.0);
+    final displayHeight = math.max(elementHeight, 20.0);
+
+    // 为超小元素添加更明显的视觉反馈
+    final bool isVerySmall = elementWidth < 30.0 || elementHeight < 30.0;
+    final bool isExtremelySmall = elementWidth < 15.0 || elementHeight < 15.0;
+
+    // 根据元素尺寸调整边框宽度和透明度
+    final borderWidth = isExtremelySmall ? 3.0 : (isVerySmall ? 2.5 : 1.5);
+    final opacity = isExtremelySmall ? 0.2 : 0.1;
+
     // 根据元素类型构建不同的预览样式
     Widget previewContent;
 
@@ -162,14 +182,20 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       case 'text':
         // 简化的文本预览
         previewContent = Container(
-          width: elementWidth,
-          height: elementHeight,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: 1.5),
-            color: Colors.blue.withOpacity(0.1),
+            border: Border.all(color: Colors.blue, width: borderWidth),
+            color: Colors.blue.withOpacity(opacity),
           ),
-          child: const Center(
-            child: Icon(Icons.text_fields, color: Colors.blue),
+          child: Center(
+            child: Icon(
+              Icons.text_fields,
+              color: Colors.blue,
+              size: isVerySmall
+                  ? math.min(displayWidth, displayHeight) * 0.6
+                  : null,
+            ),
           ),
         );
         break;
@@ -177,14 +203,20 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       case 'image':
         // 简化的图片预览
         previewContent = Container(
-          width: elementWidth,
-          height: elementHeight,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.green, width: 1.5),
-            color: Colors.green.withOpacity(0.1),
+            border: Border.all(color: Colors.green, width: borderWidth),
+            color: Colors.green.withOpacity(opacity),
           ),
-          child: const Center(
-            child: Icon(Icons.image, color: Colors.green),
+          child: Center(
+            child: Icon(
+              Icons.image,
+              color: Colors.green,
+              size: isVerySmall
+                  ? math.min(displayWidth, displayHeight) * 0.6
+                  : null,
+            ),
           ),
         );
         break;
@@ -192,10 +224,10 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       case 'collection':
         // 简化的集字预览
         previewContent = Container(
-          width: elementWidth,
-          height: elementHeight,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.orange, width: 1.5),
+            border: Border.all(color: Colors.orange, width: borderWidth),
             color: Colors.orange.withOpacity(0.1),
           ),
           child: const Center(
@@ -207,10 +239,10 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       default:
         // 默认预览样式
         previewContent = Container(
-          width: elementWidth,
-          height: elementHeight,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.purple, width: 1.5),
+            border: Border.all(color: Colors.purple, width: borderWidth),
             color: Colors.purple.withOpacity(0.1),
           ),
         );
@@ -248,6 +280,14 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     final width = snapshot.size.width;
     final height = snapshot.size.height;
 
+    // 确保预览尺寸不小于最小值，确保视觉可见性
+    final displayWidth = math.max(width, 20.0);
+    final displayHeight = math.max(height, 20.0);
+
+    // 为超小元素添加视觉反馈
+    final bool isVerySmall = width < 30.0 || height < 30.0;
+    final borderWidth = isVerySmall ? 2.5 : 1.5;
+
     Widget child;
     switch (elementType) {
       case 'text':
@@ -255,10 +295,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         final fontSize =
             (snapshot.properties['fontSize'] as num?)?.toDouble() ?? 14.0;
         child = Container(
-          width: width,
-          height: height,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue.withOpacity(0.7)),
+            border: Border.all(
+                color: Colors.blue.withOpacity(0.7), width: borderWidth),
             color: Colors.white.withOpacity(0.9),
           ),
           alignment: Alignment.center,
@@ -273,10 +314,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         break;
       case 'image':
         child = Container(
-          width: width,
-          height: height,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.green.withOpacity(0.7)),
+            border: Border.all(
+                color: Colors.green.withOpacity(0.7), width: borderWidth),
             color: Colors.white.withOpacity(0.9),
           ),
           child: const Icon(Icons.image, color: Colors.green),
@@ -284,10 +326,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         break;
       default:
         child = Container(
-          width: width,
-          height: height,
+          width: displayWidth,
+          height: displayHeight,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.purple.withOpacity(0.7)),
+            border: Border.all(
+                color: Colors.purple.withOpacity(0.7), width: borderWidth),
             color: Colors.white.withOpacity(0.9),
           ),
           child: Center(
