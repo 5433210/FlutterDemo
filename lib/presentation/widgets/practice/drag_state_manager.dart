@@ -464,10 +464,19 @@ class DragStateManager extends ChangeNotifier {
 
   /// 更新预览位置
   void _updatePreviewPositions() {
+    // 🔍[RESIZE_FIX] 调试预览位置计算
+    debugPrint('🔍[RESIZE_FIX] DragStateManager._updatePreviewPositions() - 当前拖拽偏移: $_currentDragOffset');
+    
     for (final elementId in _draggingElementIds) {
       final startPos = _elementStartPositions[elementId];
       if (startPos != null) {
-        _previewPositions[elementId] = startPos + _currentDragOffset;
+        final newPreviewPos = startPos + _currentDragOffset;
+        _previewPositions[elementId] = newPreviewPos;
+        
+        // 🔍[RESIZE_FIX] 调试每个元素的位置计算
+        debugPrint('🔍[RESIZE_FIX]    元素 $elementId: 起始位置=$startPos, 新预览位置=$newPreviewPos');
+      } else {
+        debugPrint('🔍[RESIZE_FIX]    元素 $elementId: ❌ 没有起始位置');
       }
     }
   }

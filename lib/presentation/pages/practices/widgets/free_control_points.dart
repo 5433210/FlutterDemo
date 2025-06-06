@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'custom_cursors.dart';
@@ -93,8 +94,28 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void didUpdateWidget(FreeControlPoints oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 测试控制点现在完全独立，不再响应widget属性变化
-    // 只在初始化时从widget获取起始状态，后续可以自由调整
+    // 🔧 修复：控制点应该跟随元素位置变化，但只在不是自己触发的变化时
+    // 检查是否是外部元素拖拽导致的位置变化（而不是控制点自己的resize/rotate操作）
+    if (_isInitialized && 
+        (widget.x != oldWidget.x || widget.y != oldWidget.y) &&
+        (widget.width == oldWidget.width && widget.height == oldWidget.height && widget.rotation == oldWidget.rotation)) {
+      
+      // 这是一个纯粹的位置变化（平移），不是尺寸或旋转变化
+      // 更新控制点位置以跟随元素移动
+      final deltaX = widget.x - oldWidget.x;
+      final deltaY = widget.y - oldWidget.y;
+      
+      debugPrint('🔧 控制点跟随元素移动: delta=($deltaX, $deltaY)');
+      debugPrint('🔧 元素位置变化: (${oldWidget.x}, ${oldWidget.y}) → (${widget.x}, ${widget.y})');
+      
+      setState(() {
+        _syncWithElementPosition(widget.x, widget.y, widget.width, widget.height, widget.rotation);
+      });
+    }
+    // 如果是尺寸或旋转变化，保持控制点的独立状态，不响应widget变化
+    else if (_isInitialized) {
+      debugPrint('🔧 控制点保持独立状态，忽略外部尺寸/旋转变化');
+    }
   }
 
   @override
@@ -143,12 +164,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _updateControlPointWithConstraints(index, details.delta);
               });
 
-              debugPrint(
-                  '🧪 测试控制点 $index 移动到: ${_controlPointPositions[index]}');
+              debugPrint('🎯 控制点 $index 移动到: ${_controlPointPositions[index]}');
 
-              // 🔧 修复：传递增量而不是绝对位置给Canvas
-              // Canvas的_handleControlPointUpdate期望接收delta参数
-              debugPrint('🔍[RESIZE_FIX] 控制点 $index 传递delta: ${details.delta}');
+              // 🔧 关键：将控制点状态推送给DragStateManager
+              _pushStateToCanvasAndPreview();
+
+              // 传递增量给Canvas进行Live更新
+              debugPrint('🎯 控制点 $index 传递delta: ${details.delta}');
               widget.onControlPointUpdate?.call(index, details.delta);
             },
             onPanEnd: (details) {
@@ -204,8 +226,81 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 将屏幕坐标系的delta转换为元素本地坐标系的delta
 
   /// 构建透明拖拽层 - 用于平移整个控制点组  /// 构建透明拖拽层，用于平移整个控制点组
-  /// ✅ 透明拖拽层现在随控制点一起旋转，但平移操作仍使用屏幕坐标系
+  /// 🔧 新架构：以控制点为主导，让DragPreviewLayer跟随控制点状态
   Widget _buildTransparentDragLayer() {
+    // 使用当前独立的矩形尺寸，不受旋转影响
+    const padding = 5.0;
+    final dragWidth = _currentWidth + padding * 2;
+    final dragHeight = _currentHeight + padding * 2;
+
+    // 计算旋转中心位置
+    final centerX = _currentX + _currentWidth / 2;
+    final centerY = _currentY + _currentHeight / 2;
+
+    // 计算拖拽层的左上角位置（相对于旋转中心）
+    final dragLeft = centerX - dragWidth / 2;
+    final dragTop = centerY - dragHeight / 2;
+
+    debugPrint('🎯 控制点透明拖拽层: left=$dragLeft, top=$dragTop, size=${dragWidth}x$dragHeight');
+    
+    return Positioned(
+      left: dragLeft,
+      top: dragTop,
+      width: dragWidth,
+      height: dragHeight,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.move,
+        onEnter: (_) {
+          debugPrint('🎯 鼠标进入控制点拖拽层');
+        },
+        onExit: (_) {
+          debugPrint('🎯 鼠标离开控制点拖拽层');
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onPanStart: (details) {
+            debugPrint('🎯 控制点主导：开始平移操作');
+            
+            // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
+            widget.onControlPointDragStart?.call(-1); // -1表示平移操作
+          },
+          onPanUpdate: (details) {
+            debugPrint('🎯 控制点主导：平移更新 delta=${details.delta}');
+            
+            setState(() {
+              _translateAllControlPoints(details.delta);
+            });
+
+            // 🔧 关键：将控制点状态推送给DragStateManager
+            _pushStateToCanvasAndPreview();
+            
+            // 通知Canvas进行Live更新
+            widget.onControlPointUpdate?.call(-1, details.delta);
+          },
+          onPanEnd: (details) {
+            debugPrint('🎯 控制点主导：平移结束');
+            
+            // 🔧 传递最终状态
+            widget.onControlPointDragEndWithState?.call(-1, getCurrentElementProperties());
+            
+            // 触发Commit阶段
+            widget.onControlPointDragEnd?.call(-1);
+          },
+          child: Container(
+            width: dragWidth,
+            height: dragHeight,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              // 添加调试边框（在debug模式下可见）
+              border: kDebugMode ? Border.all(color: Colors.red.withOpacity(0.3), width: 1) : null,
+            ),
+          ),
+        ),
+      ),
+    );
+    
+    // 🔧 以下是原来的实现，现在被注释掉以避免冲突：
+    /*
     // 使用当前独立的矩形尺寸，不受旋转影响
     const padding = 5.0;
     final dragWidth = _currentWidth + padding * 2;
@@ -262,6 +357,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         ),
       ),
     );
+    */
   }
 
   Rect? _calculateCurrentRectFromControlPoints() {
@@ -326,6 +422,87 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         return '旋转';
       default:
         return '未知';
+    }
+  }
+
+  /// 同步控制点位置到元素位置 - 用于跟随外部元素移动
+  void _syncWithElementPosition(double x, double y, double width, double height, double rotation) {
+    debugPrint('🔧 同步控制点位置: ($x, $y, ${width}x$height, ${rotation}°)');
+    
+    // 更新内部状态
+    _currentX = x;
+    _currentY = y;
+    _currentWidth = width;
+    _currentHeight = height;
+    _currentRotation = rotation * pi / 180;
+
+    final centerX = _currentX + _currentWidth / 2;
+    final centerY = _currentY + _currentHeight / 2;
+
+    // 更新旋转中心
+    _rotationCenter = Offset(centerX, centerY);
+
+    // 重新计算所有控制点位置
+    _recalculateControlPointPositions();
+    
+    debugPrint('🔧 控制点位置同步完成');
+  }
+
+  /// 重新计算控制点位置
+  void _recalculateControlPointPositions() {
+    const offset = 8.0; // 控制点偏移量
+
+    final centerX = _currentX + _currentWidth / 2;
+    final centerY = _currentY + _currentHeight / 2;
+
+    final unrotatedPositions = [
+      // 索引0: 左上角
+      Offset(_currentX - offset, _currentY - offset),
+      // 索引1: 上中
+      Offset(_currentX + _currentWidth / 2, _currentY - offset),
+      // 索引2: 右上角
+      Offset(_currentX + _currentWidth + offset, _currentY - offset),
+      // 索引3: 右中
+      Offset(_currentX + _currentWidth + offset, _currentY + _currentHeight / 2),
+      // 索引4: 右下角
+      Offset(_currentX + _currentWidth + offset, _currentY + _currentHeight + offset),
+      // 索引5: 下中
+      Offset(_currentX + _currentWidth / 2, _currentY + _currentHeight + offset),
+      // 索引6: 左下角
+      Offset(_currentX - offset, _currentY + _currentHeight + offset),
+      // 索引7: 左中
+      Offset(_currentX - offset, _currentY + _currentHeight / 2),
+      // 索引8: 旋转控制点
+      Offset(centerX, _currentY - 40),
+    ];
+
+    // 应用旋转并保存位置
+    for (int i = 0; i < unrotatedPositions.length; i++) {
+      final rotated = _rotatePoint(
+        unrotatedPositions[i].dx,
+        unrotatedPositions[i].dy,
+        centerX,
+        centerY,
+        _currentRotation,
+      );
+      _controlPointPositions[i] = rotated;
+    }
+  }
+
+  /// 🔧 控制点主导架构：将控制点状态实时推送给Canvas和DragPreviewLayer
+  void _pushStateToCanvasAndPreview() {
+    // 构建当前元素的完整状态
+    final currentState = getCurrentElementProperties();
+    
+    debugPrint('🎯 控制点实时推送状态: $currentState');
+    
+    // 🔧 关键：通过onControlPointDragEndWithState实时推送状态
+    // 这样DragPreviewLayer就能实时跟随控制点的变化
+    if (widget.onControlPointDragEndWithState != null) {
+      // 注意：这里我们在Live阶段调用，让预览层实时更新
+      // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
+      widget.onControlPointDragEndWithState!(-2, currentState);
+      debugPrint('🎯 已推送Live阶段状态到DragStateManager');
     }
   }
 

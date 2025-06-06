@@ -45,95 +45,103 @@ class DragPreviewLayer extends StatefulWidget {
 class _DragPreviewLayerState extends State<DragPreviewLayer> {
   @override
   Widget build(BuildContext context) {
-    debugPrint('🔍 DragPreviewLayer: build() 开始');
-    debugPrint(
-        '   isDragPreviewActive: ${widget.dragStateManager.isDragPreviewActive}');
-    debugPrint('   isDragging: ${widget.dragStateManager.isDragging}');
-    debugPrint(
-        '   draggingElementIds: ${widget.dragStateManager.draggingElementIds}');
+    // 🔍[RESIZE_FIX] 使用ListenableBuilder确保正确响应DragStateManager变化
+    return ListenableBuilder(
+      listenable: widget.dragStateManager,
+      builder: (context, child) {
+        // 🔍[RESIZE_FIX] DragPreviewLayer关键调试
+        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer.build() 开始');
+        debugPrint('🔍[RESIZE_FIX]    isDragPreviewActive: ${widget.dragStateManager.isDragPreviewActive}');
+        debugPrint('🔍[RESIZE_FIX]    isDragging: ${widget.dragStateManager.isDragging}');
+        debugPrint('🔍[RESIZE_FIX]    draggingElementIds: ${widget.dragStateManager.draggingElementIds}');
 
-    // 如果没有活动的拖拽预览，返回空容器
-    if (!widget.dragStateManager.isDragPreviewActive) {
-      debugPrint('🎯 DragPreviewLayer: ❌ 没有活动的拖拽预览，返回空容器');
-      return const SizedBox.shrink();
-    }
+        // 如果没有活动的拖拽预览，返回空容器
+        if (!widget.dragStateManager.isDragPreviewActive) {
+          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: ❌ 没有活动的拖拽预览，返回空容器');
+          return const SizedBox.shrink();
+        }
 
-    // 获取所有正在拖拽的元素ID
-    final draggingElementIds = widget.dragStateManager.draggingElementIds;
-    if (draggingElementIds.isEmpty) {
-      debugPrint('🎯 DragPreviewLayer: ❌ 没有拖拽中的元素，返回空容器');
-      return const SizedBox.shrink();
-    }
+        // 获取所有正在拖拽的元素ID
+        final draggingElementIds = widget.dragStateManager.draggingElementIds;
+        if (draggingElementIds.isEmpty) {
+          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: ❌ 没有拖拽中的元素，返回空容器');
+          return const SizedBox.shrink();
+        }
 
-    debugPrint('🎯 DragPreviewLayer: 构建预览层，拖拽元素: $draggingElementIds');
+        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 构建预览层，拖拽元素: $draggingElementIds');
 
-    // 创建一个透明层，显示所有拖拽元素的预览
-    return RepaintBoundary(
-      child: IgnorePointer(
-        // 使用IgnorePointer包装整个预览层，避免干扰用户交互
-        child: Opacity(
-          opacity: DragConfig.dragPreviewOpacity,
-          child: Stack(
-            fit: StackFit.expand,
-            clipBehavior: Clip.none, // 允许子元素溢出容器边界
-            children: draggingElementIds.map((elementId) {
-              // 为每个元素构建单独的预览
-              return Builder(
-                builder: (context) {
-                  debugPrint('🎯 DragPreviewLayer: 构建元素 $elementId 的预览');
+        // 创建一个透明层，显示所有拖拽元素的预览
+        return RepaintBoundary(
+          child: IgnorePointer(
+            // 使用IgnorePointer包装整个预览层，避免干扰用户交互
+            child: Opacity(
+              opacity: DragConfig.dragPreviewOpacity,
+              child: Stack(
+                fit: StackFit.expand,
+                clipBehavior: Clip.none, // 允许子元素溢出容器边界
+                children: draggingElementIds.map((elementId) {
+                  // 为每个元素构建单独的预览
+                  return Builder(
+                    builder: (context) {
+                      debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 构建元素 $elementId 的预览');
 
-                  // 🔧 优先使用完整的预览属性（支持resize和rotate）
-                  final previewProperties = widget.dragStateManager
-                      .getElementPreviewProperties(elementId);
-                  
-                  Widget elementPreview;
-                  
-                  if (previewProperties != null) {
-                    // 使用完整的预览属性构建元素
-                    debugPrint('🎯 DragPreviewLayer: 使用完整属性预览元素 $elementId');
-                    elementPreview = _buildFullPropertyPreview(elementId, previewProperties);
-                  } else {
-                    // 回退到传统的位置偏移方式
-                    final previewPosition = widget.dragStateManager
-                        .getElementPreviewPosition(elementId);
+                      // 🔧 优先使用完整的预览属性（支持resize和rotate）
+                      final previewProperties = widget.dragStateManager
+                          .getElementPreviewProperties(elementId);
+                      
+                      Widget elementPreview;
+                      
+                      if (previewProperties != null) {
+                        // 使用完整的预览属性构建元素
+                        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用完整属性预览元素 $elementId');
+                        elementPreview = _buildFullPropertyPreview(elementId, previewProperties);
+                      } else {
+                        // 回退到传统的位置偏移方式
+                        final previewPosition = widget.dragStateManager
+                            .getElementPreviewPosition(elementId);
 
-                    // 如果没有预览位置，不显示该元素
-                    if (previewPosition == null) {
-                      debugPrint('🎯 DragPreviewLayer: 元素 $elementId 没有预览位置');
-                      return const SizedBox.shrink();
-                    }
+                        // 🔍[RESIZE_FIX] 调试预览位置
+                        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 预览位置: $previewPosition');
 
-                    // 查找元素数据
-                    final element = widget.elements.firstWhere(
-                      (e) => e['id'] == elementId,
-                      orElse: () => <String, dynamic>{},
-                    );
+                        // 如果没有预览位置，不显示该元素
+                        if (previewPosition == null) {
+                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 没有预览位置');
+                          return const SizedBox.shrink();
+                        }
 
-                    if (element.isEmpty) {
-                      debugPrint('🎯 DragPreviewLayer: 元素 $elementId 数据未找到');
-                      return const SizedBox.shrink();
-                    }
+                        // 查找元素数据
+                        final element = widget.elements.firstWhere(
+                          (e) => e['id'] == elementId,
+                          orElse: () => <String, dynamic>{},
+                        );
 
-                    // 如果提供了自定义构建器，使用它构建预览
-                    if (widget.elementBuilder != null) {
-                      debugPrint('🎯 DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
-                      elementPreview = widget.elementBuilder!(
-                          elementId, previewPosition, element);
-                    } else {
-                      // 否则使用默认预览样式
-                      debugPrint('🎯 DragPreviewLayer: 使用默认样式预览元素 $elementId');
-                      elementPreview = _buildDefaultPreview(
-                          elementId, previewPosition, element);
-                    }
-                  }
-                  
-                  return elementPreview;
-                },
-              );
-            }).toList(),
+                        if (element.isEmpty) {
+                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 数据未找到');
+                          return const SizedBox.shrink();
+                        }
+
+                        // 如果提供了自定义构建器，使用它构建预览
+                        if (widget.elementBuilder != null) {
+                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
+                          elementPreview = widget.elementBuilder!(
+                              elementId, previewPosition, element);
+                        } else {
+                          // 否则使用默认预览样式
+                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用默认样式预览元素 $elementId');
+                          elementPreview = _buildDefaultPreview(
+                              elementId, previewPosition, element);
+                        }
+                      }
+                      
+                      return elementPreview;
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

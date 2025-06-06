@@ -286,6 +286,9 @@ class SmartCanvasGestureHandler implements GestureContext {
     _responseStopwatch.start();
 
     try {
+      // 🔍[RESIZE_FIX] handlePanUpdate路径调试
+      debugPrint('🔍[RESIZE_FIX] handlePanUpdate开始: position=${details.localPosition}, isDragging=${dragStateManager.isDragging}');
+      
       // Handle selection box updates first (highest priority)
       if (_isSelectionBoxActive) {
         _selectionBoxEnd = details.localPosition;
@@ -299,14 +302,18 @@ class SmartCanvasGestureHandler implements GestureContext {
         details.localPosition,
       );
 
+      debugPrint('🔍[RESIZE_FIX] 尝试SmartGestureDispatcher处理');
       final result = await _gestureDispatcher.dispatchPointerEvent(
         event: pointerEvent,
         context: this,
       );
 
       if (!result.handled) {
+        debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher未处理，回退到Legacy路径');
         // Fallback to legacy handling
         await _handleLegacyPanUpdate(details);
+      } else {
+        debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher已处理手势');
       }
     } finally {
       _responseStopwatch.stop();
@@ -435,12 +442,21 @@ class SmartCanvasGestureHandler implements GestureContext {
     required Offset delta,
     bool isBatched = false,
   }) async {
+    // 🔍[RESIZE_FIX] 元素拖拽 Live阶段：通过SmartGestureDispatcher路径
+    debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher -> updateElementDrag: elementId=$elementId, delta=$delta, isBatched=$isBatched');
+    
     if (isBatched) {
       dragStateManager.updateDragOffset(delta);
+      // 🔍[RESIZE_FIX] 性能监控：只更新统计，不触发通知
+      dragStateManager.updatePerformanceStatsOnly();
     } else {
       // Direct update for immediate response
       dragStateManager.updateDragOffset(delta);
+      // 🔍[RESIZE_FIX] 性能监控：只更新统计，不触发通知
+      dragStateManager.updatePerformanceStatsOnly();
     }
+    
+    debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher路径：跳过Controller更新，保持流畅');
     onDragUpdate();
     return GestureDispatchResult.handled();
   }
@@ -506,43 +522,61 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _finalizeElementDrag() {
-    debugPrint('【SmartGestureHandler】结束元素拖拽');
+    debugPrint('🔍[RESIZE_FIX] Commit阶段: 结束元素拖拽');
     _isDragging = false;
-    dragStateManager.endDrag();
 
+    // 🔍[RESIZE_FIX] Commit阶段：计算最终位置并一次性更新Controller
     final List<String> elementIds = [];
     final List<Map<String, dynamic>> oldPositions = [];
     final List<Map<String, dynamic>> newPositions = [];
+    final Map<String, Map<String, dynamic>> finalUpdates = {};
+
+    // 从DragStateManager获取最终拖拽偏移
+    final finalOffset = dragStateManager.currentDragOffset;
+    debugPrint('🔍[RESIZE_FIX] 最终拖拽偏移: $finalOffset');
 
     for (final elementId in controller.state.selectedElementIds) {
-      final element = controller.state.currentPageElements.firstWhere(
-        (e) => e['id'] == elementId,
-        orElse: () => <String, dynamic>{},
-      );
-
-      if (element.isEmpty) continue;
-
       final startPosition = _elementStartPositions[elementId];
       if (startPosition == null) continue;
 
-      final x = (element['x'] as num).toDouble();
-      final y = (element['y'] as num).toDouble();
+      // 计算最终位置
+      final finalX = startPosition.dx + finalOffset.dx;
+      final finalY = startPosition.dy + finalOffset.dy;
 
-      if (startPosition.dx != x || startPosition.dy != y) {
+      // 检查是否有实际移动
+      if (startPosition.dx != finalX || startPosition.dy != finalY) {
         elementIds.add(elementId);
         oldPositions.add({'x': startPosition.dx, 'y': startPosition.dy});
-        newPositions.add({'x': x, 'y': y});
+        newPositions.add({'x': finalX, 'y': finalY});
+        
+        // 准备批量更新数据
+        finalUpdates[elementId] = {
+          'x': finalX,
+          'y': finalY,
+        };
       }
     }
 
-    if (elementIds.isNotEmpty) {
+    // 🔍[RESIZE_FIX] Commit阶段：一次性批量更新Controller
+    if (finalUpdates.isNotEmpty) {
+      debugPrint('🔍[RESIZE_FIX] 批量更新 ${finalUpdates.length} 个元素的最终位置');
+      controller.batchUpdateElementProperties(
+        finalUpdates,
+        options: BatchUpdateOptions.forDragOperation(),
+      );
+      
+      // 创建撤销操作
       controller.createElementTranslationOperation(
         elementIds: elementIds,
         oldPositions: oldPositions,
         newPositions: newPositions,
       );
+      
+      debugPrint('🔍[RESIZE_FIX] Commit阶段: 元素位置更新完成');
     }
 
+    // 结束拖拽状态
+    dragStateManager.endDrag();
     onDragEnd();
   }
 
@@ -607,42 +641,47 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _handleElementDragUpdate(Offset currentPosition) {
-    final dx = currentPosition.dx - _dragStart.dx;
-    final dy = currentPosition.dy - _dragStart.dy;
+    try {
+      // 🔍[RESIZE_FIX] ✅ _handleElementDragUpdate被调用！ - 方法开始
+      debugPrint('🔍[RESIZE_FIX] ✅ _handleElementDragUpdate被调用！ - 方法开始');
+      
+      final dx = currentPosition.dx - _dragStart.dx;
+      final dy = currentPosition.dy - _dragStart.dy;
 
-    // 获取缩放因子并调整拖拽偏移
-    // 注意：当画布放大时，用户的手势应该对应更大的元素移动
-    // 因此不需要除以缩放因子，直接使用原始偏移量即可
-    final scaleFactor = getScaleFactor();
-    final adjustedDx = dx; // 移除缩放调整，直接使用原始偏移
-    final adjustedDy = dy; // 移除缩放调整，直接使用原始偏移
+      // 获取缩放因子并调整拖拽偏移
+      // 注意：当画布放大时，用户的手势应该对应更大的元素移动
+      // 因此不需要除以缩放因子，直接使用原始偏移量即可
+      final scaleFactor = getScaleFactor();
+      final adjustedDx = dx; // 移除缩放调整，直接使用原始偏移
+      final adjustedDy = dy; // 移除缩放调整，直接使用原始偏移
 
-    // 更新拖拽状态
-    dragStateManager.updateDragOffset(Offset(adjustedDx, adjustedDy));
-    _isDragging = true;
+      debugPrint('🔍[RESIZE_FIX] 元素拖拽 Live阶段详情:');
+      debugPrint('🔍[RESIZE_FIX]   - 当前位置: $currentPosition');
+      debugPrint('🔍[RESIZE_FIX]   - 起始位置: $_dragStart');
+      debugPrint('🔍[RESIZE_FIX]   - 原始偏移: dx=$dx, dy=$dy');
+      debugPrint('🔍[RESIZE_FIX]   - 调整后偏移: dx=$adjustedDx, dy=$adjustedDy');
+      debugPrint('🔍[RESIZE_FIX]   - 缩放因子: $scaleFactor');
+      
+      debugPrint('🔍[RESIZE_FIX] 准备调用updateDragOffset...');
+      
+      // 更新拖拽状态
+      dragStateManager.updateDragOffset(Offset(adjustedDx, adjustedDy));
+      _isDragging = true;
 
-    // 使用批量更新机制更新元素位置
-    final updates = <String, Map<String, dynamic>>{};
-    for (final selectedId in controller.state.selectedElementIds) {
-      final start = _elementStartPositions[selectedId];
-      if (start != null) {
-        updates[selectedId] = {
-          'x': start.dx + adjustedDx,
-          'y': start.dy + adjustedDy,
-        };
-      }
+      debugPrint('🔍[RESIZE_FIX] updateDragOffset调用完成');
+
+      // 🔍[RESIZE_FIX] Live阶段：跳过Controller批量更新，避免Canvas重建
+      // 让DragPreviewLayer处理视觉反馈，Controller在拖拽结束时更新
+      debugPrint('🔍[RESIZE_FIX] 跳过Live阶段Controller更新，保持拖拽流畅');
+
+      debugPrint('🔍[RESIZE_FIX] 准备调用onDragUpdate...');
+      onDragUpdate();
+      debugPrint('🔍[RESIZE_FIX] ✅ _handleElementDragUpdate完成');
+      
+    } catch (e, stackTrace) {
+      debugPrint('❌ _handleElementDragUpdate异常: $e');
+      debugPrint('❌ 堆栈跟踪: $stackTrace');
     }
-
-    // 批量更新元素位置，使用拖拽优化选项
-    if (updates.isNotEmpty) {
-      controller.batchUpdateElementProperties(
-        updates,
-        options: BatchUpdateOptions.forDragOperation(),
-      );
-    }
-
-    debugPrint('【SmartGestureHandler】拖拽更新: dx=$adjustedDx, dy=$adjustedDy, scale=$scaleFactor (不调整缩放)');
-    onDragUpdate();
   }
 
   void _handleElementSelection(
@@ -807,12 +846,16 @@ class SmartCanvasGestureHandler implements GestureContext {
     final scaleFactor = getScaleFactor();
     final inverseScale = scaleFactor > 0 ? 1.0 / scaleFactor : 1.0;
 
+    // 🔍[RESIZE_FIX] Legacy路径调试
+    debugPrint('🔍[RESIZE_FIX] Legacy PanUpdate路径: currentPosition=$currentPosition, isDragging=${dragStateManager.isDragging}, mode=$_currentMode');
+
     if (controller.state.isPreviewMode) {
       _handlePreviewModePan(currentPosition, inverseScale);
       return;
     }
 
     if (dragStateManager.isDragging) {
+      debugPrint('🔍[RESIZE_FIX] Legacy路径 -> _handleElementDragUpdate');
       _handleElementDragUpdate(currentPosition);
     } else if (_currentMode == _GestureMode.selectionBox) {
       // 处理选择框更新
