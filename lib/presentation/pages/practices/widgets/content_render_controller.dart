@@ -18,6 +18,9 @@ class ContentRenderController extends ChangeNotifier {
   // 拖拽状态管理器引用
   DragStateManager? _dragStateManager;
 
+  // 需要跳过渲染的元素列表 (将在DragPreviewLayer中显示)
+  final Set<String> _elementsToSkip = <String>{};
+
   // Smart rebuilding system components
   late final DirtyTracker _dirtyTracker;
   SelectiveRebuildManager? _rebuildManager;
@@ -49,6 +52,14 @@ class ContentRenderController extends ChangeNotifier {
 
   /// Get selective rebuild manager (may be null if not enabled)
   SelectiveRebuildManager? get rebuildManager => _rebuildManager;
+
+  void agStateChanged() {
+    debugPrint('🔄 ContentRenderController: 拖拽状态变化，触发重建');
+    debugPrint('   isDragging: ${_dragStateManager?.isDragging}');
+    debugPrint(
+        '   draggingElementIds: ${_dragStateManager?.draggingElementIds}');
+    notifyListeners();
+  }
 
   /// Clear change history
   void clearHistory() {
@@ -316,11 +327,26 @@ class ContentRenderController extends ChangeNotifier {
     return false;
   }
 
-  void agStateChanged() {
-    debugPrint('🔄 ContentRenderController: 拖拽状态变化，触发重建');
-    debugPrint('   isDragging: ${_dragStateManager?.isDragging}');
-    debugPrint(
-        '   draggingElementIds: ${_dragStateManager?.draggingElementIds}');
-    notifyListeners();
+  /// 拖拽状态变化处理方法
+  void _onDragStateChanged() {
+    // 当拖拽状态发生变化时更新渲染控制器的状态
+    if (_dragStateManager != null) {
+      final isDragging = _dragStateManager!.isDragging;
+      final draggingElementIds = _dragStateManager!
+          .draggingElementIds; // 更新需要跳过渲染的元素列表（这些元素将在DragPreviewLayer中显示）
+      _elementsToSkip.clear();
+      if (isDragging) {
+        _elementsToSkip.addAll(draggingElementIds); // 标记这些元素为脏状态，以便下一次渲染时更新
+        for (final elementId in draggingElementIds) {
+          markElementDirty(elementId, ElementChangeType.multiple);
+        }
+      }
+
+      // 通知监听器状态已更新
+      notifyListeners();
+
+      debugPrint(
+          'ContentRenderController: 拖拽状态更新，当前拖拽中: $isDragging, 元素: $draggingElementIds');
+    }
   }
 }

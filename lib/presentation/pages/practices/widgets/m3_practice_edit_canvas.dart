@@ -97,6 +97,7 @@ class _GridPainter extends CustomPainter {
 class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // Drag state variables
   bool _isDragging = false; // ignore: unused_field
+  // ignore: unused_field
   Offset _dragStart = Offset.zero;
   // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
@@ -108,7 +109,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   // Content render controller for dual-layer architecture
   late ContentRenderController _contentRenderController;
-  // Drag state manager for optimized drag handling
+  // Drag state manager for optimized drag handling (核心组件：三阶段拖拽系统)
   late DragStateManager _dragStateManager;
 
   // Layer render manager for coordinated layer rendering
@@ -625,12 +626,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // 🔥 关键修复：移除每次build时的自动变换设置
     // 不再在build方法中强制设置transformationController和调用zoomTo
-    // 这些操作现在只在真正需要时进行（如初始化、重置按钮）
-    debugPrint('🔧【_buildPageContent】保持当前变换状态，不强制重置');
-
-    // Get current zoom level for status bar (calculated dynamically each time)
-    final currentZoomScale =
-        widget.transformationController.value.getMaxScaleOnAxis();
+    // 这些操作现在只在真正需要时进行（如初始化、重置按钮）    debugPrint('🔧【_buildPageContent】保持当前变换状态，不强制重置');
 
     return Stack(
       children: [
@@ -1063,14 +1059,41 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     }
   }
 
-  /// 回退到基础模式（禁用优化功能）
+  /**
+   * 三阶段拖拽系统技术说明
+   * 
+   * 本系统实现了高性能的三阶段拖拽操作：
+   * 
+   * 1. Preview阶段 (_handleControlPointDragStart):
+   *    - 保存原始元素属性
+   *    - 创建元素快照
+   *    - 初始化DragStateManager
+   * 
+   * 2. Live阶段 (_handleControlPointUpdate):
+   *    - 实时更新拖拽偏移量
+   *    - 更新元素属性提供即时视觉反馈
+   *    - 在DragPreviewLayer中显示元素快照
+   * 
+   * 3. Commit阶段 (_handleControlPointDragEnd):
+   *    - 计算最终元素属性
+   *    - 应用网格吸附(如果启用)
+   *    - 创建撤销操作
+   *    - 清理预览状态
+   * 
+   * 性能优化点：
+   * - 使用RepaintBoundary减少重绘区域
+   * - 使用快照系统避免重复渲染
+   * - 分离UI更新和数据提交
+   */ /// 回退到基础模式（禁用优化功能）
   void _fallbackToBasicMode() {
     try {
       // 只初始化最基础的组件
       _contentRenderController = ContentRenderController();
       _dragStateManager = DragStateManager();
       _layerRenderManager = LayerRenderManager();
-      _repaintBoundaryKey = GlobalKey();
+
+      // 不要重新初始化_repaintBoundaryKey，因为它已经在_initializeCoreComponents()中初始化了
+      // _repaintBoundaryKey = GlobalKey();
 
       // 注册简化的层级
       _layerRenderManager.registerLayer(
@@ -1527,17 +1550,20 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   /// 初始化核心组件
   void _initializeCoreComponents() {
-    // Initialize content render controller for dual-layer architecture
+    // 内容渲染控制器 - 用于管理元素渲染和优化
     _contentRenderController = ContentRenderController();
-    print('🏗️ Canvas: ContentRenderController initialized');
 
-    // Initialize drag state manager for optimized drag handling
+    // 拖拽状态管理器 - 三阶段拖拽系统的核心组件
+    // 负责：1. Preview阶段的快照创建 2. Live阶段的状态更新 3. Commit阶段的属性提交
     _dragStateManager = DragStateManager();
-    print('🏗️ Canvas: DragStateManager initialized');
 
-    // Initialize layer render manager for coordinated layer rendering
+    // 图层渲染管理器 - 用于分层渲染策略
     _layerRenderManager = LayerRenderManager();
-    print('🏗️ Canvas: LayerRenderManager initialized');
+
+    // RepaintBoundary的Key - 用于截图和快照功能
+    _repaintBoundaryKey = GlobalKey();
+
+    print('🏗️ Canvas: 核心组件初始化完成，三阶段拖拽系统就绪');
   }
 
   /// 初始化手势处理器
@@ -1759,8 +1785,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   /// 初始化UI组件
   void _initializeUIComponents() {
-    // Initialize RepaintBoundary key - always create a new key for screenshot functionality
-    _repaintBoundaryKey = GlobalKey();
+    // No need to initialize _repaintBoundaryKey again as it's already initialized in _initializeCoreComponents()
 
     // 初始化手势处理器 (需要在所有其他组件初始化后)
     _initializeGestureHandler();
