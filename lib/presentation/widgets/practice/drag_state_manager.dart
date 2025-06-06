@@ -50,6 +50,10 @@ class DragStateManager extends ChangeNotifier {
 
   // 实时拖拽位置（用于预览层）
   final Map<String, Offset> _previewPositions = <String, Offset>{};
+  
+  // 🔧 新增：完整的元素预览属性（支持resize和rotate）
+  final Map<String, Map<String, dynamic>> _previewProperties = <String, Map<String, dynamic>>{};
+
   // 批量更新相关
   Timer? _batchUpdateTimer;
   final Map<String, Map<String, dynamic>> _pendingUpdates =
@@ -102,6 +106,7 @@ class DragStateManager extends ChangeNotifier {
     _currentDragOffset = Offset.zero;
     _elementStartPositions.clear();
     _previewPositions.clear();
+    _previewProperties.clear();
     _pendingUpdates.clear();
 
     // 通知监听器状态更改
@@ -163,6 +168,7 @@ class DragStateManager extends ChangeNotifier {
     _currentDragOffset = Offset.zero;
     _elementStartPositions.clear();
     _previewPositions.clear();
+    _previewProperties.clear();
     _pendingUpdates.clear();
 
     notifyListeners();
@@ -182,6 +188,11 @@ class DragStateManager extends ChangeNotifier {
   /// 获取元素的预览位置
   Offset? getElementPreviewPosition(String elementId) {
     return _previewPositions[elementId];
+  }
+
+  /// 🔧 新增：获取元素的完整预览属性
+  Map<String, dynamic>? getElementPreviewProperties(String elementId) {
+    return _previewProperties[elementId];
   }
 
   /// 获取元素的起始位置
@@ -265,6 +276,7 @@ class DragStateManager extends ChangeNotifier {
     required Set<String> elementIds,
     required Offset startPosition,
     required Map<String, Offset> elementStartPositions,
+    Map<String, Map<String, dynamic>>? elementStartProperties, // 🔧 新增：初始元素属性
   }) {
     debugPrint('🔥 DragStateManager.startDrag() - 开始拖拽');
     debugPrint('   拖拽元素: $elementIds');
@@ -287,6 +299,12 @@ class DragStateManager extends ChangeNotifier {
       if (startPos != null) {
         _previewPositions[elementId] = startPos;
       }
+    }
+
+    // 🔧 新增：初始化完整元素预览属性
+    _previewProperties.clear();
+    if (elementStartProperties != null) {
+      _previewProperties.addAll(elementStartProperties);
     }
 
     // 重置性能监控数据
@@ -345,6 +363,47 @@ class DragStateManager extends ChangeNotifier {
       debugPrint(
           '   当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
     }
+  }
+
+  /// 🔧 新增：更新元素的完整预览属性（支持resize和rotate）
+  void updateElementPreviewProperties(String elementId, Map<String, dynamic> properties) {
+    if (!_isDragging || !_draggingElementIds.contains(elementId)) return;
+
+    final now = DateTime.now();
+
+    // 性能监控（与updateDragOffset相同的逻辑）
+    if (_lastUpdateTime != null) {
+      final updateTime = now.difference(_lastUpdateTime!).inMilliseconds;
+      _updateTimes.add(updateTime.toDouble());
+
+      if (updateTime > 0) {
+        final fps = (1000 / updateTime).round();
+        _frameRates.add(fps);
+      }
+
+      _avgUpdateTime = _updateTimes.fold(0.0, (sum, time) => sum + time) /
+          _updateTimes.length;
+    }
+
+    _lastUpdateTime = now;
+    _updateCount++;
+
+    // 更新元素的完整预览属性
+    _previewProperties[elementId] = Map<String, dynamic>.from(properties);
+    
+    // 同时更新预览位置，保持兼容性
+    final x = (properties['x'] as num?)?.toDouble();
+    final y = (properties['y'] as num?)?.toDouble();
+    if (x != null && y != null) {
+      _previewPositions[elementId] = Offset(x, y);
+    }
+
+    // 立即处理批量更新
+    _processBatchUpdate();
+
+    notifyListeners();
+
+    debugPrint('📊 DragStateManager: 更新元素 $elementId 完整属性: $properties');
   }
 
   /// 提交最终位置
