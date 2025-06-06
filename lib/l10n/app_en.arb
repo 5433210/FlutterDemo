@@ -313,7 +313,7 @@
   "distribution": "Distribution",
   "distributionOperations": "Distribution Operations",
   "distributionRequiresThreeElements": "Distribution requires at least 3 elements",
-  "doubleClickToEdit": "Double-click to edit text",
+  "doubleClickToEdit": "Edit text in properties panel",
   "edit": "Edit",
   "editCategory": "Edit Category",
   "editGroupContents": "Edit Group Contents",

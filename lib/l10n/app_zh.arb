@@ -314,7 +314,7 @@
   "distribution": "分布",
   "distributionOperations": "分布操作",
   "distributionRequiresThreeElements": "分布操作需要至少3个元素",
-  "doubleClickToEdit": "双击编辑文本",
+  "doubleClickToEdit": "属性面板编辑文本",
   "edit": "编辑",
   "editCategory": "编辑分类",
   "editGroupContents": "编辑组内容",

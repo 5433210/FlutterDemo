@@ -984,7 +984,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
 
   @override
-  String get doubleClickToEdit => '双击编辑文本';
+  String get doubleClickToEdit => '属性面板编辑文本';
 
   @override
   String get edit => '编辑';

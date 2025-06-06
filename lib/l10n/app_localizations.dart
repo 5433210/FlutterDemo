@@ -1976,7 +1976,7 @@ abstract class AppLocalizations {
   /// No description provided for @doubleClickToEdit.
   ///
   /// In zh, this message translates to:
-  /// **'双击编辑文本'**
+  /// **'属性面板编辑文本'**
   String get doubleClickToEdit;
 
   /// No description provided for @edit.

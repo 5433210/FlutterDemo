@@ -176,17 +176,18 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 添加集字元素在指定位置
-  void addCollectionElementAt(double x, double y, String characters,
+  String addCollectionElementAt(double x, double y, String characters,
       {bool isFromCharacterManagement = false,
       Map<String, dynamic>? elementFromCharacterManagement}) {
     if (isFromCharacterManagement) {
       elementFromCharacterManagement!['x'] = x;
       elementFromCharacterManagement['y'] = y;
       _addElement(elementFromCharacterManagement);
-      return;
+      return elementFromCharacterManagement['id'] as String;
     }
+    final elementId = 'collection_${_uuid.v4()}';
     final element = {
-      'id': 'collection_${_uuid.v4()}',
+      'id': elementId,
       'type': 'collection',
       'x': x,
       'y': y,
@@ -214,12 +215,14 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+    return elementId;
   }
 
   /// 添加空集字元素在指定位置（不显示对话框）
-  void addEmptyCollectionElementAt(double x, double y) {
+  String addEmptyCollectionElementAt(double x, double y) {
+    final elementId = 'collection_${_uuid.v4()}';
     final element = {
-      'id': 'collection_${_uuid.v4()}',
+      'id': elementId,
       'type': 'collection',
       'x': x,
       'y': y,
@@ -245,12 +248,14 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+    return elementId;
   }
 
   /// 添加空图片元素在指定位置（不显示对话框）
-  void addEmptyImageElementAt(double x, double y) {
+  String addEmptyImageElementAt(double x, double y) {
+    final elementId = 'image_${_uuid.v4()}';
     final element = {
-      'id': 'image_${_uuid.v4()}',
+      'id': elementId,
       'type': 'image',
       'x': x,
       'y': y,
@@ -259,7 +264,7 @@ class PracticeEditController extends ChangeNotifier {
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
-      'isLocked': false, // 锁定标志
+      'isLocked': false, // 隐藏标志
       'isHidden': false, // 隐藏标志
       'name': '图片元素', // 默认名称
       'content': {
@@ -270,6 +275,7 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+    return elementId;
   }
 
   /// 添加图片元素
@@ -298,9 +304,10 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 添加图片元素在指定位置
-  void addImageElementAt(double x, double y, String imageUrl) {
+  String addImageElementAt(double x, double y, String imageUrl) {
+    final elementId = 'image_${_uuid.v4()}';
     final element = {
-      'id': 'image_${_uuid.v4()}',
+      'id': elementId,
       'type': 'image',
       'x': x,
       'y': y,
@@ -320,6 +327,7 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+    return elementId;
   }
 
   /// 添加图层
@@ -508,11 +516,12 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 添加文本元素在指定位置
-  void addTextElementAt(double x, double y) {
+  String addTextElementAt(double x, double y) {
     print('📝 PracticeEditController: Creating text element at ($x, $y)');
 
+    final elementId = 'text_${_uuid.v4()}';
     final element = {
-      'id': 'text_${_uuid.v4()}',
+      'id': elementId,
       'type': 'text',
       'x': x,
       'y': y,
@@ -525,7 +534,7 @@ class PracticeEditController extends ChangeNotifier {
       'isHidden': false, // 隐藏标志
       'name': '文本元素', // 默认名称
       'content': {
-        'text': '双击编辑文本',
+        'text': '属性面板编辑文本',
         'fontFamily': 'sans-serif',
         'fontSize': 24.0,
         'fontColor': '#000000', // 修改为fontColor以匹配渲染器
@@ -541,9 +550,9 @@ class PracticeEditController extends ChangeNotifier {
       },
     };
 
-    print(
-        '📝 PracticeEditController: Element created with ID: ${element['id']}');
+    print('📝 PracticeEditController: Element created with ID: $elementId');
     _addElement(element);
+    return elementId;
   }
 
   /// Aligns the specified elements according to the given alignment type.

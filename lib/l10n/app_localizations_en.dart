@@ -984,7 +984,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
 
   @override
-  String get doubleClickToEdit => 'Double-click to edit text';
+  String get doubleClickToEdit => 'Edit text in properties panel';
 
   @override
   String get edit => 'Edit';

@@ -715,209 +715,246 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 // Status bar uses real-time calculation, no explicit setState needed
               },
               constrained: false, // Allow content to be unconstrained
-                              child: GestureDetector(
-                  // 🔧 关键修复：使用deferToChild确保空白区域手势能穿透到InteractiveViewer
-                  behavior: HitTestBehavior.deferToChild,
-                onTapDown: (details) {
-                  debugPrint(
-                      '🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
-                  // 检查是否点击在选中元素上，如果是，准备拖拽
-                  // 直接设置变量，避免setState时序问题
-                  if (_shouldHandleSpecialGesture(
-                      DragStartDetails(localPosition: details.localPosition),
-                      elements)) {
-                    debugPrint('🔥【onTapDown】点击在选中元素上，准备拖拽');
-                    _isReadyForDrag = true;
-                    // 🔍[RESIZE_FIX] 立即重建以禁用InteractiveViewer的panEnabled
-                    if (mounted) setState(() {});
-                  } else {
-                    debugPrint('🔥【onTapDown】点击在空白区域');
-                    _isReadyForDrag = false;
-                  }
-
-                  // 🔍[RESIZE_FIX] 调试InteractiveViewer状态
-                  final panEnabled = !(_isDragging ||
-                      _dragStateManager.isDragging ||
-                      _isReadyForDrag);
-                  debugPrint(
-                      '🔍[RESIZE_FIX] InteractiveViewer panEnabled: $panEnabled (isDragging=$_isDragging, dragManagerDragging=${_dragStateManager.isDragging}, isReadyForDrag=$_isReadyForDrag)');
-
-                  // 🔍[RESIZE_FIX] 检查Canvas的onPanStart是否会被设置
-                  final shouldHandleGesture =
-                      _shouldHandleAnySpecialGesture(elements);
-                  debugPrint(
-                      '🔍[RESIZE_FIX] Canvas onPanStart 是否设置: $shouldHandleGesture');
+              child: DragTarget<String>(
+                onWillAcceptWithDetails: (data) {
+                  // 只接受工具栏拖拽的元素类型
+                  debugPrint('🎯 DragTarget.onWillAcceptWithDetails: data=${data.data}');
+                  final willAccept = ['text', 'image', 'collection'].contains(data.data);
+                  debugPrint('🎯 DragTarget willAccept: $willAccept');
+                  return willAccept;
                 },
-                onTapUp: (details) {
-                  // 重置拖拽准备状态
-                  _isReadyForDrag = false;
-
-                  // 🔍[RESIZE_FIX] 调试点击和选择过程
-                  debugPrint(
-                      '🔍[RESIZE_FIX] onTapUp被调用: position=${details.localPosition}');
-                  debugPrint(
-                      '🔍[RESIZE_FIX] 当前选中元素数: ${widget.controller.state.selectedElementIds.length}');
-
-                  _gestureHandler.handleTapUp(
-                      details, elements.cast<Map<String, dynamic>>());
-
-                  // 🔧 关键修复：确保在选择状态变化后立即更新UI状态
-                  if (mounted) {
-                    setState(() {});
-                    // 调试选择状态变化后的情况
-                    _debugCanvasState('元素选择后');
-                  }
-
-                  // 🔍[RESIZE_FIX] 选择处理后的状态
-                  debugPrint(
-                      '🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
-                  if (widget.controller.state.selectedElementIds.isNotEmpty) {
-                    debugPrint(
-                        '🔍[RESIZE_FIX] 选中的元素IDs: ${widget.controller.state.selectedElementIds}');
-                  }
+                onAcceptWithDetails: (data) {
+                  debugPrint('🎯 DragTarget.onAcceptWithDetails: data=${data.data}');
+                  _handleElementDrop(data.data);
                 },
-                // 处理右键点击事件，用于退出select模式
-                onSecondaryTapDown: (details) =>
-                    _gestureHandler.handleSecondaryTapDown(details),
-                onSecondaryTapUp: (details) =>
-                    _gestureHandler.handleSecondaryTapUp(
-                        details, elements.cast<Map<String, dynamic>>()),
-                                  // 🔧 关键修复：只在真正需要时设置onPanStart回调
-                  onPanStart: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
-                      ? (details) {
-                          debugPrint('🔍[RESIZE_FIX] ✅ Canvas onPanStart被调用: position=${details.localPosition}');
-                          
-                          // 动态检查是否需要处理特殊手势
-                          final shouldHandle = _shouldHandleSpecialGesture(details, elements);
-                          debugPrint('🔍[RESIZE_FIX] _shouldHandleSpecialGesture结果: $shouldHandle');
+                builder: (context, candidateData, rejectedData) {
+                  return GestureDetector(
+                    // 🔧 关键修复：使用deferToChild确保空白区域手势能穿透到InteractiveViewer
+                    behavior: HitTestBehavior.deferToChild,
+                    onTapDown: (details) {
+                      debugPrint(
+                          '🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
+                      // 检查是否点击在选中元素上，如果是，准备拖拽
+                      // 直接设置变量，避免setState时序问题
+                      if (_shouldHandleSpecialGesture(
+                          DragStartDetails(
+                              localPosition: details.localPosition),
+                          elements)) {
+                        debugPrint('🔥【onTapDown】点击在选中元素上，准备拖拽');
+                        _isReadyForDrag = true;
+                        // 🔍[RESIZE_FIX] 立即重建以禁用InteractiveViewer的panEnabled
+                        if (mounted) setState(() {});
+                      } else {
+                        debugPrint('🔥【onTapDown】点击在空白区域');
+                        _isReadyForDrag = false;
+                      }
 
-                          if (shouldHandle) {
-                            debugPrint('🔍【onPanStart】Canvas处理特殊手势');
-                            _gestureHandler.handlePanStart(details, elements.cast<Map<String, dynamic>>());
-                          } else {
-                            debugPrint('🔍【onPanStart】空白区域点击，不处理');
-                            // 🔧 关键：不调用任何处理逻辑，让手势穿透
-                          }
-                        }
-                      : null, // 🔧 关键：当不需要时，设置为null让InteractiveViewer完全接管
-                                  onPanUpdate: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
-                      ? (details) {
-                          debugPrint('🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
+                      // 🔍[RESIZE_FIX] 调试InteractiveViewer状态
+                      final panEnabled = !(_isDragging ||
+                          _dragStateManager.isDragging ||
+                          _isReadyForDrag);
+                      debugPrint(
+                          '🔍[RESIZE_FIX] InteractiveViewer panEnabled: $panEnabled (isDragging=$_isDragging, dragManagerDragging=${_dragStateManager.isDragging}, isReadyForDrag=$_isReadyForDrag)');
 
-                          // 处理选择框更新
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            debugPrint('🔍[RESIZE_FIX] 处理选择框更新');
-                            _gestureHandler.handlePanUpdate(details);
-                            _selectionBoxNotifier.value = SelectionBoxState(
-                              isActive: true,
-                              startPoint: _gestureHandler.selectionBoxStart,
-                              endPoint: _gestureHandler.selectionBoxEnd,
-                            );
-                            return;
-                          }
-
-                          // 处理元素拖拽
-                          if (_isDragging || _dragStateManager.isDragging) {
-                            debugPrint('🔍[RESIZE_FIX] 处理元素拖拽');
-                            _gestureHandler.handlePanUpdate(details);
-                            return;
-                          }
-
-                          // 🔧 关键：空白区域不处理，让InteractiveViewer接管
-                          debugPrint('🔍[RESIZE_FIX] 空白区域手势，不拦截');
-                        }
-                      : null, // 🔧 关键：设置为null让InteractiveViewer完全接管
-                                  onPanEnd: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
-                      ? (details) {
-                          debugPrint('🔍[RESIZE_FIX] Canvas onPanEnd被调用');
-                          
-                          // 重置选择框状态
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                          
-                          // 处理手势结束
-                          if (_isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive) {
-                            _gestureHandler.handlePanEnd(details);
-                          }
-                          
-                          // 重置状态
-                          _isReadyForDrag = false;
-                        }
-                      : null,
-                                  onPanCancel: (_isDragging || _dragStateManager.isDragging || widget.controller.state.currentTool == 'select')
-                      ? () {
-                          debugPrint('🔍[RESIZE_FIX] Canvas onPanCancel被调用');
-                          
-                          // 重置选择框状态
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                          
-                          // 处理手势取消
-                          if (_isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive) {
-                            _gestureHandler.handlePanCancel();
-                          }
-                          
-                          // 重置状态
-                          _isReadyForDrag = false;
-                        }
-                      : null,
-                                  child: Container(
-                    width: pageSize.width,
-                    height: pageSize.height,
-                    // 🔧 关键修复：添加透明背景确保手势检测正常工作
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(color: Colors.red, width: 2),
-                    ),
-                  child: Builder(
-                    builder: (context) {
-                      // 添加调试信息，检查页面容器的实际渲染尺寸
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          final RenderBox? containerBox =
-                              context.findRenderObject() as RenderBox?;
-                          if (containerBox != null) {
-                            final containerSize = containerBox.size;
-                            debugPrint(
-                                '🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
-
-                            // 获取容器在屏幕中的位置
-                            final containerOffset =
-                                containerBox.localToGlobal(Offset.zero);
-                            debugPrint(
-                                '🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
-                          }
-                        }
-                      });
-                      return Stack(
-                        fit:
-                            StackFit.expand, // Use expand to fill the container
-                        clipBehavior: Clip
-                            .none, // Allow control points to extend beyond page boundaries
-                        children: [
-                          // Use LayerRenderManager to build coordinated layer stack
-                          RepaintBoundary(
-                            key:
-                                _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-                            child: _layerRenderManager.buildLayerStack(
-                              layerOrder: [
-                                RenderLayerType.staticBackground,
-                                RenderLayerType.content,
-                                RenderLayerType.dragPreview,
-                                RenderLayerType.interaction,
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
+                      // 🔍[RESIZE_FIX] 检查Canvas的onPanStart是否会被设置
+                      final shouldHandleGesture =
+                          _shouldHandleAnySpecialGesture(elements);
+                      debugPrint(
+                          '🔍[RESIZE_FIX] Canvas onPanStart 是否设置: $shouldHandleGesture');
                     },
-                  ),
-                ),
+                    onTapUp: (details) {
+                      // 重置拖拽准备状态
+                      _isReadyForDrag = false;
+
+                      // 🔍[RESIZE_FIX] 调试点击和选择过程
+                      debugPrint(
+                          '🔍[RESIZE_FIX] onTapUp被调用: position=${details.localPosition}');
+                      debugPrint(
+                          '🔍[RESIZE_FIX] 当前选中元素数: ${widget.controller.state.selectedElementIds.length}');
+
+                      _gestureHandler.handleTapUp(
+                          details, elements.cast<Map<String, dynamic>>());
+
+                      // 🔧 关键修复：确保在选择状态变化后立即更新UI状态
+                      if (mounted) {
+                        setState(() {});
+                        // 调试选择状态变化后的情况
+                        _debugCanvasState('元素选择后');
+                      }
+
+                      // 🔍[RESIZE_FIX] 选择处理后的状态
+                      debugPrint(
+                          '🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
+                      if (widget
+                          .controller.state.selectedElementIds.isNotEmpty) {
+                        debugPrint(
+                            '🔍[RESIZE_FIX] 选中的元素IDs: ${widget.controller.state.selectedElementIds}');
+                      }
+                    },
+                    // 处理右键点击事件，用于退出select模式
+                    onSecondaryTapDown: (details) =>
+                        _gestureHandler.handleSecondaryTapDown(details),
+                    onSecondaryTapUp: (details) =>
+                        _gestureHandler.handleSecondaryTapUp(
+                            details, elements.cast<Map<String, dynamic>>()),
+                    // 🔧 关键修复：只在真正需要时设置onPanStart回调
+                    onPanStart: (_isDragging ||
+                            _dragStateManager.isDragging ||
+                            widget.controller.state.currentTool == 'select')
+                        ? (details) {
+                            debugPrint(
+                                '🔍[RESIZE_FIX] ✅ Canvas onPanStart被调用: position=${details.localPosition}');
+
+                            // 动态检查是否需要处理特殊手势
+                            final shouldHandle =
+                                _shouldHandleSpecialGesture(details, elements);
+                            debugPrint(
+                                '🔍[RESIZE_FIX] _shouldHandleSpecialGesture结果: $shouldHandle');
+
+                            if (shouldHandle) {
+                              debugPrint('🔍【onPanStart】Canvas处理特殊手势');
+                              _gestureHandler.handlePanStart(details,
+                                  elements.cast<Map<String, dynamic>>());
+                            } else {
+                              debugPrint('🔍【onPanStart】空白区域点击，不处理');
+                              // 🔧 关键：不调用任何处理逻辑，让手势穿透
+                            }
+                          }
+                        : null, // 🔧 关键：当不需要时，设置为null让InteractiveViewer完全接管
+                    onPanUpdate: (_isDragging ||
+                            _dragStateManager.isDragging ||
+                            widget.controller.state.currentTool == 'select')
+                        ? (details) {
+                            debugPrint(
+                                '🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
+
+                            // 处理选择框更新
+                            if (widget.controller.state.currentTool ==
+                                    'select' &&
+                                _gestureHandler.isSelectionBoxActive) {
+                              debugPrint('🔍[RESIZE_FIX] 处理选择框更新');
+                              _gestureHandler.handlePanUpdate(details);
+                              _selectionBoxNotifier.value = SelectionBoxState(
+                                isActive: true,
+                                startPoint: _gestureHandler.selectionBoxStart,
+                                endPoint: _gestureHandler.selectionBoxEnd,
+                              );
+                              return;
+                            }
+
+                            // 处理元素拖拽
+                            if (_isDragging || _dragStateManager.isDragging) {
+                              debugPrint('🔍[RESIZE_FIX] 处理元素拖拽');
+                              _gestureHandler.handlePanUpdate(details);
+                              return;
+                            }
+
+                            // 🔧 关键：空白区域不处理，让InteractiveViewer接管
+                            debugPrint('🔍[RESIZE_FIX] 空白区域手势，不拦截');
+                          }
+                        : null, // 🔧 关键：设置为null让InteractiveViewer完全接管
+                    onPanEnd: (_isDragging ||
+                            _dragStateManager.isDragging ||
+                            widget.controller.state.currentTool == 'select')
+                        ? (details) {
+                            debugPrint('🔍[RESIZE_FIX] Canvas onPanEnd被调用');
+
+                            // 重置选择框状态
+                            if (widget.controller.state.currentTool ==
+                                    'select' &&
+                                _gestureHandler.isSelectionBoxActive) {
+                              _selectionBoxNotifier.value = SelectionBoxState();
+                            }
+
+                            // 处理手势结束
+                            if (_isDragging ||
+                                _dragStateManager.isDragging ||
+                                _gestureHandler.isSelectionBoxActive) {
+                              _gestureHandler.handlePanEnd(details);
+                            }
+
+                            // 重置状态
+                            _isReadyForDrag = false;
+                          }
+                        : null,
+                    onPanCancel: (_isDragging ||
+                            _dragStateManager.isDragging ||
+                            widget.controller.state.currentTool == 'select')
+                        ? () {
+                            debugPrint('🔍[RESIZE_FIX] Canvas onPanCancel被调用');
+
+                            // 重置选择框状态
+                            if (widget.controller.state.currentTool ==
+                                    'select' &&
+                                _gestureHandler.isSelectionBoxActive) {
+                              _selectionBoxNotifier.value = SelectionBoxState();
+                            }
+
+                            // 处理手势取消
+                            if (_isDragging ||
+                                _dragStateManager.isDragging ||
+                                _gestureHandler.isSelectionBoxActive) {
+                              _gestureHandler.handlePanCancel();
+                            }
+
+                            // 重置状态
+                            _isReadyForDrag = false;
+                          }
+                        : null,
+                    child: Container(
+                      width: pageSize.width,
+                      height: pageSize.height,
+                      // 🔧 关键修复：添加透明背景确保手势检测正常工作
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(color: Colors.red, width: 2),
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          // 添加调试信息，检查页面容器的实际渲染尺寸
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              final RenderBox? containerBox =
+                                  context.findRenderObject() as RenderBox?;
+                              if (containerBox != null) {
+                                final containerSize = containerBox.size;
+                                debugPrint(
+                                    '🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
+
+                                // 获取容器在屏幕中的位置
+                                final containerOffset =
+                                    containerBox.localToGlobal(Offset.zero);
+                                debugPrint(
+                                    '🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
+                              }
+                            }
+                          });
+                          return Stack(
+                            fit: StackFit
+                                .expand, // Use expand to fill the container
+                            clipBehavior: Clip
+                                .none, // Allow control points to extend beyond page boundaries
+                            children: [
+                              // Use LayerRenderManager to build coordinated layer stack
+                              RepaintBoundary(
+                                key:
+                                    _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
+                                child: _layerRenderManager.buildLayerStack(
+                                  layerOrder: [
+                                    RenderLayerType.staticBackground,
+                                    RenderLayerType.content,
+                                    RenderLayerType.dragPreview,
+                                    RenderLayerType.interaction,
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -1110,32 +1147,50 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     };
   }
 
-  /**
-   * 三阶段拖拽系统技术说明
-   * 
-   * 本系统实现了高性能的三阶段拖拽操作：
-   * 
-   * 1. Preview阶段 (_handleControlPointDragStart):
-   *    - 保存原始元素属性
-   *    - 创建元素快照
-   *    - 初始化DragStateManager
-   * 
-   * 2. Live阶段 (_handleControlPointUpdate):
-   *    - 实时更新拖拽偏移量
-   *    - 更新元素属性提供即时视觉反馈
-   *    - 在DragPreviewLayer中显示元素快照
-   * 
-   * 3. Commit阶段 (_handleControlPointDragEnd):
-   *    - 计算最终元素属性
-   *    - 应用网格吸附(如果启用)
-   *    - 创建撤销操作
-   *    - 清理预览状态
-   * 
-   * 性能优化点：
-   * - 使用RepaintBoundary减少重绘区域
-   * - 使用快照系统避免重复渲染
-   * - 分离UI更新和数据提交
-   */ /// 创建撤销操作 - 用于Commit阶段
+  /// 创建集字元素
+  void _createCollectionElement(Offset position) {
+    debugPrint('🎯 创建集字元素: position=$position');
+    
+    // 调用controller创建集字元素，现在返回元素ID
+    final newElementId = widget.controller.addCollectionElementAt(position.dx, position.dy, '');
+    
+    // 等待一帧后选择新创建的元素
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.selectElement(newElementId);
+      debugPrint('✅ 创建集字元素成功: $newElementId');
+    });
+  }
+
+  /// 创建图像元素
+  void _createImageElement(Offset position) {
+    debugPrint('🎯 创建图像元素: position=$position');
+    
+    // 调用controller创建图像元素，现在返回元素ID
+    final newElementId = widget.controller.addImageElementAt(position.dx, position.dy, '');
+    
+    // 等待一帧后选择新创建的元素
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.selectElement(newElementId);
+      debugPrint('✅ 创建图像元素成功: $newElementId');
+    });
+  }
+
+  /// 创建文本元素
+  void _createTextElement(Offset position) {
+    print('=== 📝 开始创建文本元素: position=$position ===');
+    debugPrint('🎯 创建文本元素: position=$position');
+    
+    // 调用controller创建文本元素，现在返回元素ID
+    final newElementId = widget.controller.addTextElementAt(position.dx, position.dy);
+    
+    // 等待一帧后选择新创建的元素
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.selectElement(newElementId);
+      debugPrint('✅ 创建文本元素成功: $newElementId');
+    });
+  }
+
+  /// 创建撤销操作 - 用于Commit阶段
   void _createUndoOperation(String elementId,
       Map<String, dynamic> oldProperties, Map<String, dynamic> newProperties) {
     // 检查是否有实际变化
@@ -1184,7 +1239,47 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     }
   }
 
-  /// 回退到基础模式（禁用优化功能）
+  /// 🔧 调试方法：检查当前状态，帮助诊断画布平移问题
+  void _debugCanvasState(String context) {
+    final panEnabled =
+        !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag);
+    debugPrint('🔍[CANVAS_STATE] [$context] panEnabled: $panEnabled');
+    debugPrint('🔍[CANVAS_STATE] [$context] _isDragging: $_isDragging');
+    debugPrint(
+        '🔍[CANVAS_STATE] [$context] _dragStateManager.isDragging: ${_dragStateManager.isDragging}');
+    debugPrint('🔍[CANVAS_STATE] [$context] _isReadyForDrag: $_isReadyForDrag');
+    debugPrint(
+        '🔍[CANVAS_STATE] [$context] selectedElementIds: ${widget.controller.state.selectedElementIds}');
+    debugPrint(
+        '🔍[CANVAS_STATE] [$context] currentTool: ${widget.controller.state.currentTool}');
+  }
+
+  /**
+   * 三阶段拖拽系统技术说明
+   * 
+   * 本系统实现了高性能的三阶段拖拽操作：
+   * 
+   * 1. Preview阶段 (_handleControlPointDragStart):
+   *    - 保存原始元素属性
+   *    - 创建元素快照
+   *    - 初始化DragStateManager
+   * 
+   * 2. Live阶段 (_handleControlPointUpdate):
+   *    - 实时更新拖拽偏移量
+   *    - 更新元素属性提供即时视觉反馈
+   *    - 在DragPreviewLayer中显示元素快照
+   * 
+   * 3. Commit阶段 (_handleControlPointDragEnd):
+   *    - 计算最终元素属性
+   *    - 应用网格吸附(如果启用)
+   *    - 创建撤销操作
+   *    - 清理预览状态
+   * 
+   * 性能优化点：
+   * - 使用RepaintBoundary减少重绘区域
+   * - 使用快照系统避免重复渲染
+   * - 分离UI更新和数据提交
+   */ /// 回退到基础模式（禁用优化功能）
   void _fallbackToBasicMode() {
     try {
       // 只初始化最基础的组件
@@ -1426,11 +1521,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _isResizing = false;
       _originalElementProperties = null;
       _freeControlPointsFinalState = null; // 🔧 清理最终状态
-      
+
       // 🔧 关键修复：重置_isReadyForDrag状态，确保Canvas手势不会被错误拦截
       _isReadyForDrag = false;
       _isDragging = false;
-      
+
       // 🔧 立即触发状态更新，确保InteractiveViewer的panEnabled状态正确更新
       if (mounted) {
         setState(() {});
@@ -1652,194 +1747,52 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     debugPrint('🎯 Live阶段：控制点主导更新完成，保持流畅性能');
   }
 
-  /// Handle element resize
-  void _handleResize(String elementId, int controlPointIndex, Offset delta) {
-    final element = widget.controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
+  /// 处理从工具栏拖拽创建元素
+  void _handleElementDrop(String elementType) {
+    print('=== 🎯 开始处理元素拖拽创建: $elementType ===');
+    debugPrint('🎯 处理元素拖拽创建: $elementType');
 
-    if (element.isEmpty) {
+    // 获取Canvas的渲染框
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      debugPrint('❌ 无法获取Canvas RenderBox');
       return;
     }
 
-    // Get current element properties
-    double x = (element['x'] as num).toDouble();
-    double y = (element['y'] as num).toDouble();
-    double width = (element['width'] as num).toDouble();
-    double height = (element['height'] as num).toDouble();
-    double rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-
-    // Get the current scale factor from the transformation controller
-    final scale = widget.transformationController.value.getMaxScaleOnAxis();
-
-    // Get adjusted delta based on scale - ensures that dragging behavior is consistent regardless of zoom level
-    final adjustedDelta = Offset(delta.dx / scale, delta.dy / scale);
-
-    debugPrint(
-        '调整元素大小: 控制点=$controlPointIndex, 原始delta=$delta, 调整后delta=$adjustedDelta, 缩放=$scale, 当前属性: x=$x, y=$y, width=$width, height=$height, rotation=$rotation');
-
-    // 处理旋转的情况 - 转换拖拽增量到元素本地坐标系
-    Offset localDelta = adjustedDelta;
-    if (rotation != 0) {
-      // 将增量从屏幕坐标系转换到元素本地坐标系
-      final radians = rotation * (3.14159265359 / 180);
-      final cosTheta = math.cos(-radians);
-      final sinTheta = math.sin(-radians);
-      localDelta = Offset(
-        adjustedDelta.dx * cosTheta - adjustedDelta.dy * sinTheta,
-        adjustedDelta.dx * sinTheta + adjustedDelta.dy * cosTheta,
-      );
-      debugPrint('应用旋转变换: 旋转角度=$rotation度, 本地delta=$localDelta');
+    // 计算在页面内的合适位置（距离页面边缘一定距离）
+    final currentPage = widget.controller.state.currentPage;
+    if (currentPage == null) {
+      debugPrint('❌ 当前页面不存在');
+      return;
     }
 
-    // 根据控制点索引计算新的位置和大小
-    switch (controlPointIndex) {
-      case 0: // 左上角
-        x += localDelta.dx;
-        y += localDelta.dy;
-        width -= localDelta.dx;
-        height -= localDelta.dy;
-        break;
-      case 1: // 上中
-        y += localDelta.dy;
-        height -= localDelta.dy;
-        break;
-      case 2: // 右上角
-        y += localDelta.dy;
-        width += localDelta.dx;
-        height -= localDelta.dy;
-        break;
-      case 3: // 右中
-        width += localDelta.dx;
-        break;
-      case 4: // 右下角
-        width += localDelta.dx;
-        height += localDelta.dy;
-        break;
-      case 5: // 下中
-        height += localDelta.dy;
-        break;
-      case 6: // 左下角
-        x += localDelta.dx;
-        width -= localDelta.dx;
-        height += localDelta.dy;
-        break;
-      case 7: // 左中
-        x += localDelta.dx;
-        width -= localDelta.dx;
-        break;
-    }
+    // 获取页面尺寸
+    final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    
+    // 在页面中心附近创建元素，添加一些随机偏移避免重叠
+    final random = DateTime.now().millisecondsSinceEpoch % 100;
+    final dropPosition = Offset(
+      pageSize.width / 2 + random - 50, // 中心位置加上-50到+50的偏移
+      pageSize.height / 2 + random - 50,
+    );
 
-    // 确保最小尺寸 - 为不同类型的元素设置不同的最小尺寸
-    final elementType = element['type'] as String? ?? '';
-    double minWidth, minHeight;
+    debugPrint('🎯 在页面内创建元素: position=$dropPosition, pageSize=${pageSize.width}x${pageSize.height}');
 
-    // 根据元素类型分配最小尺寸
+    // 根据元素类型创建不同的元素
     switch (elementType) {
       case 'text':
-        minWidth = 30.0;
-        minHeight = 30.0; // 文本元素需要更大的最小高度以确保可见性
+        _createTextElement(dropPosition);
         break;
       case 'image':
-        minWidth = 20.0;
-        minHeight = 20.0;
+        _createImageElement(dropPosition);
         break;
       case 'collection':
-        minWidth = 40.0;
-        minHeight = 40.0; // 集字元素需要较大的最小尺寸
+        _createCollectionElement(dropPosition);
         break;
       default:
-        minWidth = 15.0;
-        minHeight = 15.0;
+        debugPrint('⚠️ 未知的元素类型: $elementType');
     }
-
-    // 应用最小尺寸限制
-    if (width < minWidth) {
-      // 如果宽度小于最小值，根据控制点调整位置和宽度
-      if (controlPointIndex == 0 ||
-          controlPointIndex == 6 ||
-          controlPointIndex == 7) {
-        // 左侧控制点：保持右边缘不变，调整左边缘
-        double diff = minWidth - width;
-        x -= diff;
-        width = minWidth;
-      } else {
-        // 右侧控制点：保持左边缘不变，设置最小宽度
-        width = minWidth;
-      }
-    }
-
-    if (height < minHeight) {
-      // 如果高度小于最小值，根据控制点调整位置和高度
-      if (controlPointIndex == 0 ||
-          controlPointIndex == 1 ||
-          controlPointIndex == 2) {
-        // 上方控制点：保持下边缘不变，调整上边缘
-        double diff = minHeight - height;
-        y -= diff;
-        height = minHeight;
-      } else {
-        // 下方控制点：保持上边缘不变，设置最小高度
-        height = minHeight;
-      }
-    }
-
-    // 更新元素属性
-    final updates = {
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-    };
-
-    debugPrint('更新元素属性: $updates');
-    // 添加调试信息
-    debugPrint('调整元素大小结果:');
-    debugPrint('  原始尺寸: ${element['width']}x${element['height']}');
-    debugPrint('  新尺寸: ${width}x$height');
-    debugPrint('  最小尺寸限制: ${minWidth}x$minHeight');
-    debugPrint('  元素类型: $elementType');
-
-    // 确保内容渲染控制器知道元素已更改
-    _contentRenderController.markElementDirty(
-        elementId, ElementChangeType.sizeAndPosition);
-
-    widget.controller.updateElementProperties(elementId, updates);
   }
-
-  /// Handle element rotation
-  void _handleRotation(String elementId, Offset delta) {
-    final element = widget.controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
-
-    if (element.isEmpty) {
-      return;
-    }
-
-    // Get current rotation
-    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-
-    // We'll use a simpler rotation approach that doesn't require center point calculation
-
-    // Improved rotation calculation
-    // Use a sensitivity factor to make rotation more controllable
-    const rotationSensitivity = 0.5;
-
-    // Calculate rotation based on delta movement
-    // Horizontal movement (dx) has more effect on rotation than vertical movement (dy)
-    final rotationDelta = (delta.dx * rotationSensitivity);
-
-    // Apply the rotation delta
-    final newRotation = rotation + rotationDelta;
-
-    debugPrint(
-        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation'); // Update rotation
-    widget.controller
-        .updateElementProperties(elementId, {'rotation': newRotation});
-  } // Removed unused _handleTransformationChange method
 
   /// 初始化核心组件
   void _initializeCoreComponents() {
@@ -2107,17 +2060,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 处理DragStateManager状态变化
   void _onDragStateManagerChanged() {}
-
-  /// 🔧 调试方法：检查当前状态，帮助诊断画布平移问题
-  void _debugCanvasState(String context) {
-    final panEnabled = !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag);
-    debugPrint('🔍[CANVAS_STATE] [$context] panEnabled: $panEnabled');
-    debugPrint('🔍[CANVAS_STATE] [$context] _isDragging: $_isDragging');
-    debugPrint('🔍[CANVAS_STATE] [$context] _dragStateManager.isDragging: ${_dragStateManager.isDragging}');
-    debugPrint('🔍[CANVAS_STATE] [$context] _isReadyForDrag: $_isReadyForDrag');
-    debugPrint('🔍[CANVAS_STATE] [$context] selectedElementIds: ${widget.controller.state.selectedElementIds}');
-    debugPrint('🔍[CANVAS_STATE] [$context] currentTool: ${widget.controller.state.currentTool}');
-  }
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
