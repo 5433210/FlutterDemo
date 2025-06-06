@@ -60,83 +60,96 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
 
     // 获取所有正在拖拽的元素ID
     final draggingElementIds = widget.dragStateManager.draggingElementIds;
+    if (draggingElementIds.isEmpty) {
+      debugPrint('🎯 DragPreviewLayer: ❌ 没有拖拽中的元素，返回空容器');
+      return const SizedBox.shrink();
+    }
+
     debugPrint('🎯 DragPreviewLayer: 构建预览层，拖拽元素: $draggingElementIds');
 
     // 创建一个透明层，显示所有拖拽元素的预览
     return RepaintBoundary(
-      child: Stack(
-        children: [
-          // 使用IgnorePointer包装整个预览层，避免干扰用户交互
-          IgnorePointer(
-            child: Opacity(
-              opacity: DragConfig.dragPreviewOpacity,
-              child: Stack(
-                children: [
-                  for (final elementId in draggingElementIds)
-                    Builder(
-                      builder: (context) {
-                        debugPrint('🎯 DragPreviewLayer: 构建元素 $elementId 的预览');
+      child: IgnorePointer(
+        // 使用IgnorePointer包装整个预览层，避免干扰用户交互
+        child: Opacity(
+          opacity: DragConfig.dragPreviewOpacity,
+          child: Stack(
+            fit: StackFit.expand,
+            clipBehavior: Clip.none, // 允许子元素溢出容器边界
+            children: draggingElementIds.map((elementId) {
+              // 为每个元素构建单独的预览
+              return Builder(
+                builder: (context) {
+                  debugPrint('🎯 DragPreviewLayer: 构建元素 $elementId 的预览');
 
-                        // 尝试使用ElementSnapshot系统获取预览（如果可用）
-                        if (widget.useSnapshotSystem &&
-                            widget.dragOperationManager != null) {
-                          final snapshot = widget.dragOperationManager!
-                              .getSnapshotForElement(elementId);
-                          if (snapshot != null) {
-                            debugPrint(
-                                '🎯 DragPreviewLayer: 使用快照预览元素 $elementId');
-                            return _buildSnapshotPreview(elementId, snapshot);
-                          }
-                        }
+                  // 尝试使用ElementSnapshot系统获取预览（如果可用）
+                  if (widget.useSnapshotSystem &&
+                      widget.dragOperationManager != null) {
+                    final snapshot = widget.dragOperationManager!
+                        .getSnapshotForElement(elementId);
+                    if (snapshot != null) {
+                      debugPrint('🎯 DragPreviewLayer: 使用快照预览元素 $elementId');
+                      return _buildSnapshotPreview(elementId, snapshot);
+                    }
+                  }
 
-                        // 获取元素的预览位置
-                        final previewPosition = widget.dragStateManager
-                            .getElementPreviewPosition(elementId);
+                  // 获取元素的预览位置
+                  final previewPosition = widget.dragStateManager
+                      .getElementPreviewPosition(elementId);
 
-                        // 如果没有预览位置，不显示该元素
-                        if (previewPosition == null) {
-                          debugPrint(
-                              '🎯 DragPreviewLayer: 元素 $elementId 没有预览位置');
-                          return const SizedBox.shrink();
-                        }
+                  // 如果没有预览位置，不显示该元素
+                  if (previewPosition == null) {
+                    debugPrint('🎯 DragPreviewLayer: 元素 $elementId 没有预览位置');
+                    return const SizedBox.shrink();
+                  }
 
-                        debugPrint(
-                            '🎯 DragPreviewLayer: 元素 $elementId 预览位置: $previewPosition');
+                  // 查找元素数据
+                  final element = widget.elements.firstWhere(
+                    (e) => e['id'] == elementId,
+                    orElse: () => <String, dynamic>{},
+                  );
 
-                        // 查找元素数据
-                        final element = widget.elements.firstWhere(
-                          (e) => e['id'] == elementId,
-                          orElse: () => <String, dynamic>{},
-                        );
+                  if (element.isEmpty) {
+                    debugPrint('🎯 DragPreviewLayer: 元素 $elementId 数据未找到');
+                    return const SizedBox.shrink();
+                  }
 
-                        if (element.isEmpty) {
-                          debugPrint(
-                              '🎯 DragPreviewLayer: 元素 $elementId 数据未找到');
-                          return const SizedBox.shrink();
-                        }
+                  // 如果提供了自定义构建器，使用它构建预览
+                  if (widget.elementBuilder != null) {
+                    debugPrint('🎯 DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
+                    return widget.elementBuilder!(
+                        elementId, previewPosition, element);
+                  }
 
-                        // 如果提供了自定义构建器，使用它构建预览
-                        if (widget.elementBuilder != null) {
-                          debugPrint(
-                              '🎯 DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
-                          return widget.elementBuilder!(
-                              elementId, previewPosition, element);
-                        }
-
-                        // 否则使用默认预览样式
-                        debugPrint(
-                            '🎯 DragPreviewLayer: 使用默认样式预览元素 $elementId');
-                        return _buildDefaultPreview(
-                            elementId, previewPosition, element);
-                      },
-                    ),
-                ],
-              ),
-            ),
+                  // 否则使用默认预览样式
+                  debugPrint('🎯 DragPreviewLayer: 使用默认样式预览元素 $elementId');
+                  return _buildDefaultPreview(
+                      elementId, previewPosition, element);
+                },
+              );
+            }).toList(),
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  @override
+  void didUpdateWidget(DragPreviewLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 监听DragStateManager变化
+    if (widget.dragStateManager != oldWidget.dragStateManager) {
+      oldWidget.dragStateManager.removeListener(_handleDragStateChange);
+      widget.dragStateManager.addListener(_handleDragStateChange);
+      debugPrint('🔄 DragPreviewLayer: DragStateManager已更新');
+    }
+
+    // 检查元素列表变化
+    if (widget.elements.length != oldWidget.elements.length) {
+      debugPrint(
+          '🔄 DragPreviewLayer: 元素列表长度已变化 ${oldWidget.elements.length} -> ${widget.elements.length}');
+    }
   }
 
   @override
@@ -355,6 +368,17 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     debugPrint(
         '   isDragPreviewActive: ${widget.dragStateManager.isDragPreviewActive}');
     debugPrint('   isDragging: ${widget.dragStateManager.isDragging}');
+    debugPrint(
+        '   draggingElementIds: ${widget.dragStateManager.draggingElementIds}');
+
+    // 检查是否是从拖拽状态到非拖拽状态的转变
+    bool isDragEnding = !widget.dragStateManager.isDragging &&
+        !widget.dragStateManager.isDragPreviewActive &&
+        widget.dragStateManager.draggingElementIds.isEmpty;
+
+    if (isDragEnding) {
+      debugPrint('🔄 DragPreviewLayer: 拖拽操作已结束，清理预览层');
+    }
 
     // 在任何拖拽状态变化时都重建组件，以确保正确的显示/隐藏行为
     if (mounted) {

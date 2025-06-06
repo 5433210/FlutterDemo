@@ -1445,47 +1445,64 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     double height = (element['height'] as num).toDouble();
     double rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
 
-    debugPrint(
-        '调整元素大小: 控制点=$controlPointIndex, delta=$delta, 当前属性: x=$x, y=$y, width=$width, height=$height, rotation=$rotation');
+    // Get the current scale factor from the transformation controller
+    final scale = widget.transformationController.value.getMaxScaleOnAxis();
 
-    // 如果元素有旋转，我们需要考虑旋转后的坐标系中的调整
-    // 但为了简化，我们先在原始坐标系中进行调整
+    // Get adjusted delta based on scale - ensures that dragging behavior is consistent regardless of zoom level
+    final adjustedDelta = Offset(delta.dx / scale, delta.dy / scale);
+
+    debugPrint(
+        '调整元素大小: 控制点=$controlPointIndex, 原始delta=$delta, 调整后delta=$adjustedDelta, 缩放=$scale, 当前属性: x=$x, y=$y, width=$width, height=$height, rotation=$rotation');
+
+    // 处理旋转的情况 - 转换拖拽增量到元素本地坐标系
+    Offset localDelta = adjustedDelta;
+    if (rotation != 0) {
+      // 将增量从屏幕坐标系转换到元素本地坐标系
+      final radians = rotation * (3.14159265359 / 180);
+      final cosTheta = math.cos(-radians);
+      final sinTheta = math.sin(-radians);
+      localDelta = Offset(
+        adjustedDelta.dx * cosTheta - adjustedDelta.dy * sinTheta,
+        adjustedDelta.dx * sinTheta + adjustedDelta.dy * cosTheta,
+      );
+      debugPrint('应用旋转变换: 旋转角度=$rotation度, 本地delta=$localDelta');
+    }
 
     // 根据控制点索引计算新的位置和大小
     switch (controlPointIndex) {
       case 0: // 左上角
-        x += delta.dx;
-        y += delta.dy;
-        width -= delta.dx;
-        height -= delta.dy;
+        x += localDelta.dx;
+        y += localDelta.dy;
+        width -= localDelta.dx;
+        height -= localDelta.dy;
         break;
       case 1: // 上中
-        y += delta.dy;
-        height -= delta.dy;
+        y += localDelta.dy;
+        height -= localDelta.dy;
         break;
       case 2: // 右上角
-        y += delta.dy;
-        width += delta.dx;
-        height -= delta.dy;
+        y += localDelta.dy;
+        width += localDelta.dx;
+        height -= localDelta.dy;
         break;
       case 3: // 右中
-        width += delta.dx;
+        width += localDelta.dx;
         break;
       case 4: // 右下角
-        width += delta.dx;
-        height += delta.dy;
+        width += localDelta.dx;
+        height += localDelta.dy;
         break;
       case 5: // 下中
-        height += delta.dy;
+        height += localDelta.dy;
         break;
       case 6: // 左下角
-        x += delta.dx;
-        width -= delta.dx;
-        height += delta.dy;
+        x += localDelta.dx;
+        width -= localDelta.dx;
+        height += localDelta.dy;
         break;
       case 7: // 左中
-        x += delta.dx;
-        width -= delta.dx;
+        x += localDelta.dx;
+        width -= localDelta.dx;
         break;
     }
 
@@ -1552,6 +1569,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     };
 
     debugPrint('更新元素属性: $updates');
+    // 添加调试信息
+    debugPrint('调整元素大小结果:');
+    debugPrint('  原始尺寸: ${element['width']}x${element['height']}');
+    debugPrint('  新尺寸: ${width}x$height');
+    debugPrint('  最小尺寸限制: ${minWidth}x$minHeight');
+    debugPrint('  元素类型: $elementType');
+
+    // 确保内容渲染控制器知道元素已更改
+    _contentRenderController.markElementDirty(
+        elementId, ElementChangeType.sizeAndPosition);
+
     widget.controller.updateElementProperties(elementId, updates);
   }
 

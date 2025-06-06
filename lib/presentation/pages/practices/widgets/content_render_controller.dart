@@ -267,6 +267,22 @@ class ContentRenderController extends ChangeNotifier {
     debugPrint('ContentRenderController: Element $elementId deleted');
   }
 
+  /// 刷新所有受监控的元素
+  void refreshAll(String reason) {
+    debugPrint('🔄 ContentRenderController.refreshAll() - $reason');
+
+    // 标记所有受跟踪的元素为脏状态
+    for (final elementId in _lastKnownProperties.keys) {
+      markElementDirty(elementId, ElementChangeType.multiple);
+    }
+
+    // 通知所有监听器
+    notifyListeners();
+
+    debugPrint(
+        '🔄 ContentRenderController.refreshAll() - 完成，已刷新 ${_lastKnownProperties.length} 个元素');
+  }
+
   /// Reset controller state
   void reset() {
     _changeHistory.clear();
@@ -294,8 +310,6 @@ class ContentRenderController extends ChangeNotifier {
   }
 
   /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
-
-  /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
   bool shouldSkipElementRendering(String elementId) {
     // 添加调试信息
     final isDragStateManagerActive = _dragStateManager != null;
@@ -313,12 +327,21 @@ class ContentRenderController extends ChangeNotifier {
     debugPrint('   isElementDragging: $isElementDragging');
     debugPrint('   enableDragPreview: $enableDragPreview');
 
-    // 如果启用了拖拽预览层且元素正在被拖拽，可以跳过主渲染层中的渲染
-    if (isDragStateManagerActive &&
-        isDragging &&
-        isDragPreviewActive &&
-        isElementDragging &&
-        enableDragPreview) {
+    // 快速退出 - 如果拖拽状态管理器无效，始终显示元素
+    if (!isDragStateManagerActive) {
+      debugPrint(
+          '🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染 (无拖拽状态管理器)');
+      return false;
+    }
+
+    // 快速退出 - 如果不在拖拽中，始终显示元素
+    if (!isDragging || !isDragPreviewActive) {
+      debugPrint('🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染 (不在拖拽中)');
+      return false;
+    }
+
+    // 核心逻辑 - 仅当元素正在被拖拽且拖拽预览层启用时，才跳过元素渲染
+    if (isElementDragging && enableDragPreview) {
       debugPrint('🎯 ContentRenderController: ✅ 跳过元素 $elementId 渲染 (拖拽中)');
       return true;
     }
@@ -332,14 +355,34 @@ class ContentRenderController extends ChangeNotifier {
     // 当拖拽状态发生变化时更新渲染控制器的状态
     if (_dragStateManager != null) {
       final isDragging = _dragStateManager!.isDragging;
-      final draggingElementIds = _dragStateManager!
-          .draggingElementIds; // 更新需要跳过渲染的元素列表（这些元素将在DragPreviewLayer中显示）
+      final draggingElementIds = _dragStateManager!.draggingElementIds;
+      final isDragPreviewActive = _dragStateManager!.isDragPreviewActive;
+
+      // 添加调试信息
+      debugPrint('🔄 ContentRenderController._onDragStateChanged()');
+      debugPrint('   isDragging: $isDragging');
+      debugPrint('   isDragPreviewActive: $isDragPreviewActive');
+      debugPrint('   draggingElementIds: $draggingElementIds');
+
+      // 更新需要跳过渲染的元素列表（这些元素将在DragPreviewLayer中显示）
       _elementsToSkip.clear();
-      if (isDragging) {
-        _elementsToSkip.addAll(draggingElementIds); // 标记这些元素为脏状态，以便下一次渲染时更新
+      if (isDragging && isDragPreviewActive) {
+        _elementsToSkip.addAll(draggingElementIds);
+
+        // 标记这些元素为脏状态，以便下一次渲染时更新
         for (final elementId in draggingElementIds) {
           markElementDirty(elementId, ElementChangeType.multiple);
         }
+      } else if (!isDragging &&
+          !isDragPreviewActive &&
+          draggingElementIds.isEmpty) {
+        // 拖拽结束，确保所有元素可见
+        debugPrint('🔄 ContentRenderController: 拖拽结束，确保所有元素可见');
+
+        // 延迟标记所有元素为脏状态，确保在拖拽层完全消失后再刷新
+        Future.delayed(const Duration(milliseconds: 50), () {
+          refreshAll('拖拽结束，恢复元素可见性');
+        });
       }
 
       // 通知监听器状态已更新

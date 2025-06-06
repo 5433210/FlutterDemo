@@ -90,7 +90,24 @@ class DragStateManager extends ChangeNotifier {
   /// 取消拖拽操作
   void cancelDrag() {
     debugPrint('❌ DragStateManager.cancelDrag() - 取消拖拽');
-    endDrag(shouldCommitChanges: false);
+
+    // 确保所有状态被重置
+    _batchUpdateTimer?.cancel();
+
+    // 强制重置所有拖拽状态
+    _isDragging = false;
+    _isDragPreviewActive = false;
+    _draggingElementIds.clear();
+    _dragStartPosition = Offset.zero;
+    _currentDragOffset = Offset.zero;
+    _elementStartPositions.clear();
+    _previewPositions.clear();
+    _pendingUpdates.clear();
+
+    // 通知监听器状态更改
+    notifyListeners();
+
+    debugPrint('❌ DragStateManager.cancelDrag() - 拖拽状态已完全重置');
   }
 
   @override
