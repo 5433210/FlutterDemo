@@ -38,11 +38,17 @@ class SelectedElementsHighlight extends StatelessWidget {
       return ListenableBuilder(
         listenable: dragStateManager!,
         builder: (context, child) {
-          return _buildHighlightStack();
+          return RepaintBoundary(
+            key: ValueKey('highlight_${selectedElementIds.length}_${selectedElementIds.hashCode}'),
+            child: _buildHighlightStack(),
+          );
         },
       );
     } else {
-      return _buildHighlightStack();
+      return RepaintBoundary(
+        key: ValueKey('highlight_${selectedElementIds.length}_${selectedElementIds.hashCode}'),
+        child: _buildHighlightStack(),
+      );
     }
   }
 
@@ -73,6 +79,16 @@ class SelectedElementsHighlight extends StatelessWidget {
     Map<String, dynamic>? liveProperties;
     if (dragStateManager != null && dragStateManager!.isDragging) {
       liveProperties = dragStateManager!.getElementPreviewProperties(elementId);
+      if (liveProperties == null) {
+        // 🔧 回退策略：如果完整属性不可用，尝试使用预览位置
+        final previewPosition = dragStateManager!.getElementPreviewPosition(elementId);
+        if (previewPosition != null) {
+          // 基于原始属性创建具有预览位置的临时属性
+          liveProperties = Map<String, dynamic>.from(element);
+          liveProperties['x'] = previewPosition.dx;
+          liveProperties['y'] = previewPosition.dy;
+        }
+      }
     }
     
     // 使用实时属性或原始属性
@@ -84,9 +100,11 @@ class SelectedElementsHighlight extends StatelessWidget {
     final height = (activeProperties['height'] as num).toDouble();
     final rotation = (activeProperties['rotation'] as num?)?.toDouble() ?? 0.0;
 
-    // L形线条的长度和宽度
-    final cornerLength = math.max(12.0, 16.0 / canvasScale);
-    final lineWidth = math.max(2.0, 3.0 / canvasScale);
+    // L形线条的长度和宽度 - 使用更温和的缩放算法
+    // 使用平方根函数让缩放变化更温和，同时设置合理的最大值
+    final scaleFactor = math.sqrt(1.0 / canvasScale);
+    final cornerLength = math.min(24.0, math.max(12.0, 14.0 * scaleFactor));
+    final lineWidth = math.min(4.0, math.max(1.5, 2.0 * scaleFactor));
 
     return Positioned(
       left: x,

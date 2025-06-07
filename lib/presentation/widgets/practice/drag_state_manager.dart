@@ -316,6 +316,10 @@ class DragStateManager extends ChangeNotifier {
       _previewProperties.addAll(elementStartProperties);
     }
 
+    // 🔧 修复：立即触发第一次预览属性更新
+    // 确保SelectedElementsHighlight能立即获取到正确的预览属性
+    _updatePreviewProperties();
+
     // 重置性能监控数据
     _dragStartTime = DateTime.now();
     _lastUpdateTime = _dragStartTime;

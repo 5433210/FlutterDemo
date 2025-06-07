@@ -2200,16 +2200,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       if (layerId == null || !_controller.state.isLayerLocked(layerId)) {
         ids.add(id);
       }
-    } // Update selection state
-    _controller.state.selectedElementIds = ids;
-    _controller.state.selectedElement =
-        null; // Don't set single selected element in multi-selection
-
-    // Only trigger a rebuild if we're not in a drag operation
-    if (_canvasKey.currentState == null ||
-        !_canvasKey.currentState!.context.mounted) {
-      setState(() {});
     }
+
+    // 🔧 修复：使用controller的selectElements方法，确保notifyListeners被调用
+    _controller.selectElements(ids);
   }
 
   /// Send element to back

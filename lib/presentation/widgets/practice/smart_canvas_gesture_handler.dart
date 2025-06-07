@@ -217,12 +217,24 @@ class SmartCanvasGestureHandler implements GestureContext {
   /// Enhanced pan start with smart gesture detection
   Future<void> handlePanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) async {
+    debugPrint('[DRAG_DEBUG] ===== handlePanStart被调用 =====');
+    debugPrint('[DRAG_DEBUG] 点击位置: ${details.localPosition}');
+    debugPrint('[DRAG_DEBUG] 当前选中元素: ${controller.state.selectedElementIds}');
+    debugPrint('[DRAG_DEBUG] 当前工具: ${controller.state.currentTool}');
+    debugPrint('[DRAG_DEBUG] 元素总数: ${elements.length}');
+    
     _responseStopwatch.start();
 
     try {
       // 对于潜在的拖拽操作，直接使用legacy处理避免gesture dispatcher误判
       // 检查是否可能是元素拖拽
       bool isPotentialElementDrag = false;
+      if (controller.state.selectedElementIds.isNotEmpty) {
+        debugPrint('[DRAG_DEBUG] 检查潜在拖拽：有${controller.state.selectedElementIds.length}个选中元素');
+      } else {
+        debugPrint('[DRAG_DEBUG] 检查潜在拖拽：没有选中元素');
+      }
+      
       if (controller.state.selectedElementIds.isNotEmpty) {
         for (int i = elements.length - 1; i >= 0; i--) {
           final element = elements[i];
@@ -255,12 +267,14 @@ class SmartCanvasGestureHandler implements GestureContext {
 
       // 如果是潜在的元素拖拽或选择框操作，直接使用legacy处理
       if (isPotentialElementDrag || controller.state.currentTool == 'select') {
-        debugPrint('🔧【handlePanStart】检测到潜在拖拽或选择框，直接使用legacy处理');
+        debugPrint('[DRAG_DEBUG] 检测到潜在拖拽或选择框，使用legacy处理');
+        debugPrint('[DRAG_DEBUG] isPotentialElementDrag=$isPotentialElementDrag, currentTool=${controller.state.currentTool}');
         await _handleLegacyPanStart(details, elements);
         return;
       }
 
       // 其他情况使用新的gesture dispatcher
+      debugPrint('[DRAG_DEBUG] 使用SmartGestureDispatcher处理');
       final pointerEvent = _createSyntheticPointerEvent(
         PointerDownEvent,
         details.localPosition,
@@ -272,8 +286,11 @@ class SmartCanvasGestureHandler implements GestureContext {
       );
 
       if (!result.handled) {
+        debugPrint('[DRAG_DEBUG] SmartGestureDispatcher未处理，回退到legacy处理');
         // Fallback to legacy handling
         await _handleLegacyPanStart(details, elements);
+      } else {
+        debugPrint('[DRAG_DEBUG] SmartGestureDispatcher已处理');
       }
     } finally {
       _responseStopwatch.stop();
@@ -283,14 +300,16 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   /// Enhanced pan update with smart gesture recognition
   Future<void> handlePanUpdate(DragUpdateDetails details) async {
+    debugPrint('[DRAG_DEBUG] ===== handlePanUpdate被调用 =====');
+    debugPrint('[DRAG_DEBUG] 位置: ${details.localPosition}, isDragging=${dragStateManager.isDragging}');
+    
     _responseStopwatch.start();
 
     try {
-      // 🔍[RESIZE_FIX] handlePanUpdate路径调试
-      debugPrint('🔍[RESIZE_FIX] handlePanUpdate开始: position=${details.localPosition}, isDragging=${dragStateManager.isDragging}');
       
       // Handle selection box updates first (highest priority)
       if (_isSelectionBoxActive) {
+        debugPrint('[DRAG_DEBUG] 选择框活跃，更新选择框');
         _selectionBoxEnd = details.localPosition;
         onDragUpdate();
         return;
@@ -302,18 +321,18 @@ class SmartCanvasGestureHandler implements GestureContext {
         details.localPosition,
       );
 
-      debugPrint('🔍[RESIZE_FIX] 尝试SmartGestureDispatcher处理');
+      debugPrint('[DRAG_DEBUG] 尝试SmartGestureDispatcher处理');
       final result = await _gestureDispatcher.dispatchPointerEvent(
         event: pointerEvent,
         context: this,
       );
 
       if (!result.handled) {
-        debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher未处理，回退到Legacy路径');
+        debugPrint('[DRAG_DEBUG] SmartGestureDispatcher未处理，回退到Legacy路径');
         // Fallback to legacy handling
         await _handleLegacyPanUpdate(details);
       } else {
-        debugPrint('🔍[RESIZE_FIX] SmartGestureDispatcher已处理手势');
+        debugPrint('[DRAG_DEBUG] SmartGestureDispatcher已处理手势');
       }
     } finally {
       _responseStopwatch.stop();
@@ -642,45 +661,30 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   void _handleElementDragUpdate(Offset currentPosition) {
     try {
-      // 🔍[RESIZE_FIX] ✅ _handleElementDragUpdate被调用！ - 方法开始
-      debugPrint('🔍[RESIZE_FIX] ✅ _handleElementDragUpdate被调用！ - 方法开始');
+      debugPrint('[DRAG_DEBUG] _handleElementDragUpdate被调用，当前位置: $currentPosition');
       
       final dx = currentPosition.dx - _dragStart.dx;
       final dy = currentPosition.dy - _dragStart.dy;
 
       // 获取缩放因子并调整拖拽偏移
-      // 注意：当画布放大时，用户的手势应该对应更大的元素移动
-      // 因此不需要除以缩放因子，直接使用原始偏移量即可
       final scaleFactor = getScaleFactor();
-      final adjustedDx = dx; // 移除缩放调整，直接使用原始偏移
-      final adjustedDy = dy; // 移除缩放调整，直接使用原始偏移
+      final adjustedDx = dx; // 直接使用原始偏移
+      final adjustedDy = dy; // 直接使用原始偏移
 
-      debugPrint('🔍[RESIZE_FIX] 元素拖拽 Live阶段详情:');
-      debugPrint('🔍[RESIZE_FIX]   - 当前位置: $currentPosition');
-      debugPrint('🔍[RESIZE_FIX]   - 起始位置: $_dragStart');
-      debugPrint('🔍[RESIZE_FIX]   - 原始偏移: dx=$dx, dy=$dy');
-      debugPrint('🔍[RESIZE_FIX]   - 调整后偏移: dx=$adjustedDx, dy=$adjustedDy');
-      debugPrint('🔍[RESIZE_FIX]   - 缩放因子: $scaleFactor');
-      
-      debugPrint('🔍[RESIZE_FIX] 准备调用updateDragOffset...');
+      debugPrint('[DRAG_DEBUG] 拖拽偏移计算: dx=$dx, dy=$dy, 缩放因子=$scaleFactor');
       
       // 更新拖拽状态
       dragStateManager.updateDragOffset(Offset(adjustedDx, adjustedDy));
       _isDragging = true;
 
-      debugPrint('🔍[RESIZE_FIX] updateDragOffset调用完成');
+      debugPrint('[DRAG_DEBUG] updateDragOffset调用完成，准备触发onDragUpdate');
 
-      // 🔍[RESIZE_FIX] Live阶段：跳过Controller批量更新，避免Canvas重建
-      // 让DragPreviewLayer处理视觉反馈，Controller在拖拽结束时更新
-      debugPrint('🔍[RESIZE_FIX] 跳过Live阶段Controller更新，保持拖拽流畅');
-
-      debugPrint('🔍[RESIZE_FIX] 准备调用onDragUpdate...');
       onDragUpdate();
-      debugPrint('🔍[RESIZE_FIX] ✅ _handleElementDragUpdate完成');
+      debugPrint('[DRAG_DEBUG] _handleElementDragUpdate完成');
       
     } catch (e, stackTrace) {
-      debugPrint('❌ _handleElementDragUpdate异常: $e');
-      debugPrint('❌ 堆栈跟踪: $stackTrace');
+      debugPrint('[DRAG_DEBUG] ❌ _handleElementDragUpdate异常: $e');
+      debugPrint('[DRAG_DEBUG] ❌ 堆栈跟踪: $stackTrace');
     }
   }
 
@@ -765,8 +769,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   Future<void> _handleLegacyPanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) async {
-    debugPrint(
-        'handlePanStart - currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
+    debugPrint('[DRAG_DEBUG] ===== _handleLegacyPanStart被调用 =====');
+    debugPrint('[DRAG_DEBUG] currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
 
     _isPanStartHandling = true; // 标记正在处理PanStart
     _dragStart = details.localPosition;
@@ -806,6 +810,9 @@ class SmartCanvasGestureHandler implements GestureContext {
               details.localPosition.dy <= y + height;
 
           if (isInside && controller.state.selectedElementIds.contains(id)) {
+            debugPrint('[DRAG_DEBUG] 检测到点击已选中元素: $id');
+            debugPrint('[DRAG_DEBUG] 当前选中的所有元素: ${controller.state.selectedElementIds}');
+            
             // Check if element is locked
             final isLocked = element['locked'] == true;
             bool isLayerLocked = false;
@@ -816,10 +823,16 @@ class SmartCanvasGestureHandler implements GestureContext {
               }
             }
 
+            debugPrint('[DRAG_DEBUG] 元素锁定状态: isLocked=$isLocked, isLayerLocked=$isLayerLocked');
+
             if (!isLocked && !isLayerLocked) {
-              debugPrint('【元素拖拽】开始拖拽已选中元素: $id (工具: ${controller.state.currentTool})');
+              debugPrint('[DRAG_DEBUG] 开始拖拽已选中元素: $id (工具: ${controller.state.currentTool})');
+              debugPrint('[DRAG_DEBUG] 准备调用_setupElementDragging...');
               _setupElementDragging(elements);
+              debugPrint('[DRAG_DEBUG] _setupElementDragging调用完成');
               return;
+            } else {
+              debugPrint('[DRAG_DEBUG] 元素被锁定，无法拖拽');
             }
             break;
           }
@@ -846,8 +859,7 @@ class SmartCanvasGestureHandler implements GestureContext {
     final scaleFactor = getScaleFactor();
     final inverseScale = scaleFactor > 0 ? 1.0 / scaleFactor : 1.0;
 
-    // 🔍[RESIZE_FIX] Legacy路径调试
-    debugPrint('🔍[RESIZE_FIX] Legacy PanUpdate路径: currentPosition=$currentPosition, isDragging=${dragStateManager.isDragging}, mode=$_currentMode');
+    debugPrint('[DRAG_DEBUG] PanUpdate: currentPosition=$currentPosition, isDragging=${dragStateManager.isDragging}, mode=$_currentMode');
 
     if (controller.state.isPreviewMode) {
       _handlePreviewModePan(currentPosition, inverseScale);
@@ -855,7 +867,7 @@ class SmartCanvasGestureHandler implements GestureContext {
     }
 
     if (dragStateManager.isDragging) {
-      debugPrint('🔍[RESIZE_FIX] Legacy路径 -> _handleElementDragUpdate');
+      debugPrint('[DRAG_DEBUG] 检测到拖拽状态，调用_handleElementDragUpdate');
       _handleElementDragUpdate(currentPosition);
     } else if (_currentMode == _GestureMode.selectionBox) {
       // 处理选择框更新
@@ -1119,6 +1131,9 @@ class SmartCanvasGestureHandler implements GestureContext {
       }
     }
 
+    debugPrint('[DRAG_DEBUG] 准备调用dragStateManager.startDrag...');
+    debugPrint('[DRAG_DEBUG] 拖拽参数: elementIds=${controller.state.selectedElementIds.toSet()}, startPosition=$_dragStart');
+    
     dragStateManager.startDrag(
       elementIds: controller.state.selectedElementIds.toSet(),
       startPosition: _dragStart,
@@ -1126,6 +1141,8 @@ class SmartCanvasGestureHandler implements GestureContext {
       elementStartProperties: elementStartProperties, // 🔧 传递完整属性
     );
 
+    debugPrint('[DRAG_DEBUG] dragStateManager.startDrag调用完成');
+    debugPrint('[DRAG_DEBUG] dragStateManager.isDragging = ${dragStateManager.isDragging}');
     debugPrint('【SmartCanvasGestureHandler】开始元素拖拽，选中元素: ${controller.state.selectedElementIds}');
     debugPrint('🔧 已传递 ${elementStartProperties.length} 个元素的初始属性到DragStateManager');
     onDragStart(
