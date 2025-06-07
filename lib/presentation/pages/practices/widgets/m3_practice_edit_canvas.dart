@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
@@ -143,8 +144,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   @override
   Widget build(BuildContext context) {
     // 🔍[RESIZE_FIX] Canvas build方法被调用
-    debugPrint(
-        '🔍[RESIZE_FIX] Canvas.build() 开始 - selectedCount=${widget.controller.state.selectedElementIds.length}, isReadyForDrag=$_isReadyForDrag, isDragging=$_isDragging');
+    AppLogger.debug(
+      '画布构建开始',
+      tag: 'Canvas',
+      data: {
+        'selectedCount': widget.controller.state.selectedElementIds.length,
+        'isReadyForDrag': _isReadyForDrag,
+        'isDragging': _isDragging,
+      },
+    );
 
     // Track performance for main canvas rebuilds
     _performanceMonitor.trackWidgetRebuild('M3PracticeEditCanvas');
@@ -159,14 +167,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       builder: (context, child) {
         final colorScheme = Theme.of(context).colorScheme;
 
-        print('🔄 Canvas: build() called');
-        print(
-            '🔄 Canvas: Current tool: ${widget.controller.state.currentTool}');
-        print(
-            '🔄 Canvas: Selected elements: ${widget.controller.state.selectedElementIds.length}');
-        print(
-            '🔄 Canvas: Total elements: ${widget.controller.state.currentPageElements.length}');
-        debugPrint('Canvas rebuild');
+        AppLogger.debug(
+          '画布重建',
+          tag: 'Canvas',
+          data: {
+            'currentTool': widget.controller.state.currentTool,
+            'selectedElementsCount': widget.controller.state.selectedElementIds.length,
+            'totalElementsCount': widget.controller.state.currentPageElements.length,
+          },
+        );
 
         if (widget.controller.state.pages.isEmpty) {
           return Center(
@@ -187,14 +196,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           );
         }
         final elements = widget.controller.state.currentPageElements;
-        print(
-            '🔍 Canvas: ListenableBuilder - elements.length = ${elements.length}');
-        print(
-            '🔍 Canvas: ListenableBuilder - elements.runtimeType = ${elements.runtimeType}');
-        if (elements.isNotEmpty) {
-          print(
-              '🔍 Canvas: ListenableBuilder - first element: ${elements.first}');
-        }
+        AppLogger.debug(
+          '画布元素状态',
+          tag: 'Canvas',
+          data: {
+            'elementsCount': elements.length,
+            'elementsType': elements.runtimeType.toString(),
+            'hasElements': elements.isNotEmpty,
+            'firstElementPreview': elements.isNotEmpty ? elements.first['type'] ?? 'unknown' : null,
+          },
+        );
         // 用性能覆盖层包装画布
         return perf.PerformanceOverlay(
           showOverlay: DragConfig.showPerformanceOverlay,
@@ -225,7 +236,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   @override
   void initState() {
     super.initState();
-    print('🏗️ Canvas: initState called');
+    AppLogger.info(
+      '画布组件初始化开始',
+      tag: 'Canvas',
+    );
 
     try {
       // 阶段1: 初始化核心组件
@@ -240,10 +254,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       // 阶段4: 初始化UI和手势处理
       _initializeUIComponents();
 
-      print('🏗️ Canvas: 分层+元素级混合优化策略组件初始化完成');
+      AppLogger.info(
+        '画布分层和元素级混合优化策略组件初始化完成',
+        tag: 'Canvas',
+      );
     } catch (e, stackTrace) {
-      debugPrint('❌ Canvas: 初始化失败 - $e');
-      debugPrint('Stack trace: $stackTrace');
+      AppLogger.error(
+        '画布初始化失败',
+        tag: 'Canvas',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // 回退到基础模式
       _fallbackToBasicMode();
     }
@@ -275,8 +296,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Apply the rotation delta
     final newRotation = rotation + rotationDelta;
 
-    debugPrint(
-        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation'); // Update rotation
+    AppLogger.debug(
+      '旋转元素',
+      tag: 'Canvas',
+      data: {
+        'elementId': elementId,
+        'delta': '$delta',
+        'rotationDelta': rotationDelta,
+        'newRotation': newRotation,
+      },
+    ); // Update rotation
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
@@ -289,7 +318,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void togglePerformanceOverlay() {
     setState(() {
       DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
-      debugPrint('性能覆盖层显示: ${DragConfig.showPerformanceOverlay ? '开启' : '关闭'}');
+      AppLogger.debug(
+        '切换性能覆盖层显示',
+        tag: 'Canvas',
+        data: {'enabled': DragConfig.showPerformanceOverlay},
+      );
     });
   }
 
@@ -355,8 +388,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
       // 如果位置有变化，更新元素属性
       if (snappedX != x || snappedY != y) {
-        debugPrint(
-            '网格吸附: 元素 $elementId 位置从 ($x, $y) 吸附到 ($snappedX, $snappedY)');
+        AppLogger.debug(
+          '网格吸附',
+          tag: 'Canvas',
+          data: {
+            'elementId': elementId,
+            'from': {'x': x, 'y': y},
+            'to': {'x': snappedX, 'y': snappedY},
+          },
+        );
 
         widget.controller.updateElementProperties(elementId, {
           'x': snappedX,
@@ -408,7 +448,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         backgroundColor = ElementUtils.parseColor(colorStr);
       }
     } catch (e) {
-      debugPrint('Error parsing background color: $e');
+      AppLogger.warning(
+        '背景色解析失败',
+        tag: 'Canvas',
+        error: e,
+      );
     }
 
     return ContentRenderLayer.withFullParams(
@@ -506,7 +550,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                         if (previewPosition != null) {
                           displayX = previewPosition.dx;
                           displayY = previewPosition.dy;
-                          debugPrint('🔧 控制点使用位置预览: ($displayX, $displayY)');
+                          AppLogger.debug(
+        '控制点位置预览',
+        tag: 'Canvas',
+        data: {'x': displayX, 'y': displayY},
+      );
                         }
                       }
                     }
@@ -678,10 +726,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Update content render controller with current elements
     _contentRenderController.initializeElements(elements);
 
-    print(
-        '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
-    debugPrint(
-        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+    AppLogger.debug(
+      '构建页面内容',
+      tag: 'Canvas',
+      data: {'selectedElementsCount': widget.controller.state.selectedElementIds.length},
+    );
 
     // Calculate page dimensions for layout purposes
     final pageSize = ElementUtils.calculatePixelSize(page);
@@ -690,11 +739,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     final pageKey =
         '${page['width']}_${page['height']}_${page['orientation']}_${page['dpi']}';
     if (_lastPageKey != null && _lastPageKey != pageKey) {
-      debugPrint('🔧【页面变化检测】页面尺寸改变: $_lastPageKey -> $pageKey');
+      AppLogger.debug(
+        '页面变化检测：页面尺寸改变',
+        tag: 'Canvas',
+        data: {'from': _lastPageKey, 'to': pageKey},
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _fitPageToScreen();
-          debugPrint('🔧【页面变化检测】自动重置视图位置');
+          AppLogger.debug('页面变化检测：自动重置视图位置', tag: 'Canvas');
         }
       });
     }
@@ -1179,7 +1232,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 创建集字元素
   void _createCollectionElement(Offset position) {
-    debugPrint('🎯 创建集字元素: position=$position');
+    AppLogger.info(
+      '创建集字元素',
+      tag: 'Canvas',
+      data: {'position': '$position'},
+    );
 
     // 调用controller创建集字元素，现在返回元素ID
     final newElementId =
@@ -1188,13 +1245,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.selectElement(newElementId);
-      debugPrint('✅ 创建集字元素成功: $newElementId');
+      AppLogger.info(
+        '创建集字元素成功',
+        tag: 'Canvas',
+        data: {'elementId': newElementId},
+      );
     });
   }
 
   /// 创建图像元素
   void _createImageElement(Offset position) {
-    debugPrint('🎯 创建图像元素: position=$position');
+    AppLogger.info(
+      '创建图像元素',
+      tag: 'Canvas',
+      data: {'position': '$position'},
+    );
 
     // 调用controller创建图像元素，现在返回元素ID
     final newElementId =
@@ -1203,7 +1268,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.selectElement(newElementId);
-      debugPrint('✅ 创建图像元素成功: $newElementId');
+      AppLogger.info(
+        '创建图像元素成功',
+        tag: 'Canvas',
+        data: {'elementId': newElementId},
+      );
     });
   }
 

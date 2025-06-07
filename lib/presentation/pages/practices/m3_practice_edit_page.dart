@@ -1,40 +1,34 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/persistent_panel_provider.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
-// import '../../widgets/practice/edit_toolbar.dart';
-// import '../../widgets/practice/file_operations.dart';
-// import '../../widgets/practice/page_thumbnail_strip.dart';
 import '../../widgets/practice/file_operations.dart';
 import '../../widgets/practice/m3_edit_toolbar.dart';
 import '../../widgets/practice/m3_page_thumbnail_strip.dart';
 import '../../widgets/practice/m3_practice_layer_panel.dart';
 import '../../widgets/practice/m3_top_navigation_bar.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
-// import '../../widgets/practice/practice_layer_panel.dart';
-// import '../../widgets/practice/practice_property_panel.dart';
-// import '../../widgets/practice/top_navigation_bar.dart';
 import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
 import '../../widgets/practice/undo_redo_manager.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
-// import 'widgets/m3_content_tools_panel.dart' - Removed as elements were moved to toolbar;
 import 'widgets/m3_practice_edit_canvas.dart';
-// import 'widgets/content_tools_panel.dart';
-// import 'widgets/practice_edit_canvas.dart';
 import 'widgets/practice_title_edit_dialog.dart';
 
 /// Material 3 version of the Practice Edit page
@@ -147,13 +141,21 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-
     // When window size changes (maximize/restore), automatically reset view position
     // Use a small delay to ensure the UI has finished updating
+    final start = DateTime.now();
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         _controller.resetViewPosition();
-        debugPrint('Auto reset view position after window size change');
+        final duration = DateTime.now().difference(start).inMilliseconds;
+        AppLogger.debug(
+          '窗口大小变化后自动重置视图位置',
+          tag: 'PracticeEdit',
+          data: {
+            'timestamp': DateTime.now().toIso8601String(),
+            'durationMs': duration,
+          },
+        );
       }
     });
   }
@@ -201,17 +203,33 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void initState() {
     super.initState();
 
+    AppLogger.info(
+      '初始化字帖编辑页面',
+      tag: 'PracticeEdit',
+      data: {
+        'practiceId': widget.practiceId,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
     // Add window observer to monitor window changes
     WidgetsBinding.instance.addObserver(this);
 
     // Create or get the PracticeService instance
     final practiceService = ref.read(practiceServiceProvider);
-    _controller =
-        PracticeEditController(practiceService); // Pass canvasKey to controller
+    _controller = PracticeEditController(practiceService);
     _controller.setCanvasKey(_canvasKey);
 
     // Set preview mode callback
     _controller.setPreviewModeCallback((isPreview) {
+      AppLogger.info(
+        '切换预览模式',
+        tag: 'PracticeEdit',
+        data: {
+          'isPreview': isPreview,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
       setState(() {
         _isPreviewMode = isPreview;
       });
@@ -225,11 +243,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // Initialize zoom controller
     _transformationController = TransformationController();
-    debugPrint(
-        '【平移】PracticeEditPageRefactored.initState: 初始化 transformationController=$_transformationController, 值=${_transformationController.value}');
+    AppLogger.debug(
+      '初始化变换控制器',
+      tag: 'PracticeEdit',
+      data: {
+        'controller': _transformationController.toString(),
+        'value': _transformationController.value.toString(),
+      },
+    );
 
     // Initialize keyboard handler
-    _initKeyboardHandler(); // Make sure controller state matches our initial empty tool state
+    _initKeyboardHandler();
     _controller.state.currentTool = _currentTool;
 
     // Initialize panel states from persistent storage
@@ -237,20 +261,26 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // Schedule a callback to connect the canvas after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Connect canvas to controller for reset view functionality
       _setupCanvasReference();
-    }); // Start clipboard monitoring
+    });
+
+    // Start clipboard monitoring
     _checkClipboardContent().then((hasContent) {
-      // Initialize both the boolean and the ValueNotifier
       _clipboardHasContent = hasContent;
       _clipboardNotifier.value = hasContent;
 
-      // Only call setState after initialization is complete
+      AppLogger.debug(
+        '初始化剪贴板状态',
+        tag: 'PracticeEdit',
+        data: {
+          'hasContent': hasContent,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
       if (mounted) {
         setState(() {});
       }
-
-      _startClipboardMonitoring();
     });
   }
 
@@ -268,10 +298,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   /// 应用格式刷样式到选中元素
   void _applyFormatBrush() {
     if (!_isFormatBrushActive || _formatBrushStyles == null) return;
-
     final selectedElements = _controller.state.getSelectedElements();
     if (selectedElements.isEmpty) return;
-
+    final stopwatch = Stopwatch()..start();
     // 准备格式刷操作所需的数据
     final List<String> targetElementIds = [];
     final List<Map<String, dynamic>> oldPropertiesList = [];
@@ -471,10 +500,19 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // 添加到撤销/重做管理器
     _controller.undoRedoManager.addOperation(formatPainterOperation);
-
+    stopwatch.stop();
+    AppLogger.debug(
+      '批量应用格式刷样式',
+      tag: 'PracticeEdit',
+      data: {
+        'elementCount': selectedElements.length,
+        'durationMs': stopwatch.elapsedMilliseconds,
+      },
+    );
     // 重置格式刷状态
     setState(() {
       _isFormatBrushActive = false;
+      _formatBrushStyles = null;
     });
   }
 
@@ -610,7 +648,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                     // 同步到controller的状态
                     _controller.state.currentTool = tool;
                     _controller.notifyListeners(); // 通知监听器更新
-                    debugPrint('工具切换为: $tool');
+                    AppLogger.info(
+                      '工具切换',
+                      tag: 'PracticeEdit',
+                      data: {
+                        'tool': tool,
+                        'timestamp': DateTime.now().toIso8601String(),
+                      },
+                    );
                   }
                 });
               },
@@ -735,7 +780,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             controller: _controller,
             page: _controller.state.currentPage,
             onPagePropertiesChanged: (properties) {
-              debugPrint('🔧【页面属性变化】收到属性更新: $properties');
+              AppLogger.info(
+                '页面属性变化',
+                tag: 'PracticeEdit',
+                data: {
+                  'properties': properties,
+                  'timestamp': DateTime.now().toIso8601String(),
+                },
+              );
               if (_controller.state.currentPageIndex >= 0) {
                 // Check if view-affecting properties are changing
                 final currentPage = _controller.state.currentPage;
@@ -745,17 +797,27 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                   properties.containsKey('height') ||
                   properties.containsKey('dpi')
                 );
-                
-                debugPrint('🔧【页面属性变化】shouldResetView: $shouldResetView, properties keys: ${properties.keys.toList()}');
-                
+                AppLogger.debug(
+                  '页面属性变化-重置视图判定',
+                  tag: 'PracticeEdit',
+                  data: {
+                    'shouldResetView': shouldResetView,
+                    'propertyKeys': properties.keys.toList(),
+                  },
+                );
                 _controller.updatePageProperties(properties);
-                
                 // Auto reset view position after page size/orientation changes
                 if (shouldResetView) {
-                  debugPrint('🔧【页面属性变化】准备自动重置视图位置');
+                  AppLogger.info(
+                    '页面属性变化-准备自动重置视图位置',
+                    tag: 'PracticeEdit',
+                  );
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _controller.resetViewPosition();
-                    debugPrint('🔧【页面属性变化】自动重置视图位置 - 完成');
+                    AppLogger.info(
+                      '页面属性变化-自动重置视图位置完成',
+                      tag: 'PracticeEdit',
+                    );
                   });
                 }
               }
@@ -860,28 +922,37 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     // Check internal clipboard first (handled by app)
     if (_clipboardElement != null) {
       final type = _clipboardElement?['type'];
-      debugPrint('检查剪贴板: 内部剪贴板有内容 - 类型: $type');
-
+      AppLogger.debug(
+        '检查剪贴板: 内部剪贴板有内容',
+        tag: 'PracticeEdit',
+        data: {'type': type},
+      );
       // Additional validation for specific types if needed
       if (type == 'characters' || type == 'character') {
         final hasIds = _clipboardElement!.containsKey('characterIds') ||
             (_clipboardElement!.containsKey('data') &&
                 _clipboardElement!['data'] is Map &&
                 _clipboardElement!['data'].containsKey('characterId'));
-        debugPrint('检查剪贴板: 字符内容有效性: $hasIds');
+        AppLogger.debug(
+          '检查剪贴板: 字符内容有效性',
+          tag: 'PracticeEdit',
+          data: {'hasIds': hasIds},
+        );
         return hasIds;
       } else if (type == 'library_items' || type == 'image') {
         final hasIds = _clipboardElement!.containsKey('itemIds') ||
             (_clipboardElement!.containsKey('imageUrl') &&
                 _clipboardElement!['imageUrl'] != null);
-        debugPrint('检查剪贴板: 图库内容有效性: $hasIds');
+        AppLogger.debug(
+          '检查剪贴板: 图库内容有效性',
+          tag: 'PracticeEdit',
+          data: {'hasIds': hasIds},
+        );
         return hasIds;
       }
-
       // For other types, just check if it exists
       return true;
     }
-
     // Then check system clipboard
     try {
       // Check for text data
@@ -889,66 +960,82 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       final hasText = clipboardData != null &&
           clipboardData.text != null &&
           clipboardData.text!.isNotEmpty;
-
-      // debugPrint('检查剪贴板: 系统剪贴板${hasText ? '有' : '没有'}文本内容');
-
+      // if (hasText) ...
       if (hasText) {
-        // Try to identify if it's a JSON and what type
         try {
           final text = clipboardData.text!;
           final json = jsonDecode(text);
-
           if (json is Map<String, dynamic> && json.containsKey('type')) {
             final type = json['type'];
-            debugPrint('检查剪贴板: 识别到JSON内容, 类型: $type');
-
-            // 特定类型的检查
+            AppLogger.debug(
+              '检查剪贴板: 识别到JSON内容',
+              tag: 'PracticeEdit',
+              data: {'type': type},
+            );
             if (type == 'characters') {
               final characterIds = json['characterIds'];
               final hasIds = characterIds != null &&
-                  characterIds is List &&
-                  characterIds.isNotEmpty;
-              debugPrint('检查剪贴板: 字符IDs: $characterIds, 有效: $hasIds');
+                  characterIds is List && characterIds.isNotEmpty;
+              AppLogger.debug(
+                '检查剪贴板: 字符IDs',
+                tag: 'PracticeEdit',
+                data: {'characterIds': characterIds, 'hasIds': hasIds},
+              );
               return hasIds;
             } else if (type == 'library_items') {
               final itemIds = json['itemIds'];
               final hasIds =
                   itemIds != null && itemIds is List && itemIds.isNotEmpty;
-              debugPrint('检查剪贴板: 图库项目IDs: $itemIds, 有效: $hasIds');
+              AppLogger.debug(
+                '检查剪贴板: 图库项目IDs',
+                tag: 'PracticeEdit',
+                data: {'itemIds': itemIds, 'hasIds': hasIds},
+              );
               return hasIds;
             } else if (json.containsKey('id') &&
                 (type == 'text' || type == 'image' || type == 'collection')) {
-              // This appears to be a direct element that can be pasted
-              debugPrint('检查剪贴板: 识别到可粘贴的元素类型: $type');
+              AppLogger.debug(
+                '检查剪贴板: 识别到可粘贴的元素类型',
+                tag: 'PracticeEdit',
+                data: {'type': type},
+              );
               return true;
             }
           }
         } catch (e) {
           // Not valid JSON, that's fine for plain text
-          // debugPrint('检查剪贴板: 不是有效的JSON，按纯文本处理: $e');
+          // AppLogger.debug('检查剪贴板: 不是有效的JSON，按纯文本处理', tag: 'PracticeEdit', data: {'error': e.toString()});
         }
-
         // Plain text can always be pasted
         return true;
       }
-
       // Check for image data in clipboard (different formats)
       try {
-        // Check for common image formats
         for (final format in ['image/png', 'image/jpeg', 'image/gif']) {
           final imageClipboardData = await Clipboard.getData(format);
           if (imageClipboardData != null) {
-            debugPrint('检查剪贴板: 系统剪贴板有 $format 图片数据');
+            AppLogger.debug(
+              '检查剪贴板: 系统剪贴板有图片数据',
+              tag: 'PracticeEdit',
+              data: {'format': format},
+            );
             return true;
           }
         }
       } catch (e) {
-        debugPrint('检查系统剪贴板图片数据错误: $e');
+        AppLogger.warning(
+          '检查系统剪贴板图片数据错误',
+          tag: 'PracticeEdit',
+          error: e,
+        );
       }
-
       return hasText;
     } catch (e) {
-      debugPrint('检查剪贴板错误: $e');
+      AppLogger.error(
+        '检查剪贴板错误',
+        tag: 'PracticeEdit',
+        error: e,
+      );
       return false;
     }
   }
@@ -1106,17 +1193,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Copy selected elements with enhanced image preloading optimization
   void _copySelectedElement() async {
-    debugPrint('开始复制选中元素（增强图像预加载）...');
-
+    AppLogger.info(
+      '开始复制选中元素（增强图像预加载）',
+      tag: 'PracticeEdit',
+      data: {'timestamp': DateTime.now().toIso8601String()},
+    );
     // Capture context reference before async operations
     final currentContext = context;
     final scaffoldMessenger = ScaffoldMessenger.of(currentContext);
-
     try {
       // Get services for image preloading
       final characterImageService = ref.read(characterImageServiceProvider);
       final imageCacheService = ref.read(imageCacheServiceProvider);
-
       // Use enhanced copy method with comprehensive image preloading
       _clipboardElement =
           await PracticeEditUtils.copySelectedElementsWithPreloading(
@@ -1125,37 +1213,40 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         characterImageService: characterImageService,
         imageCacheService: imageCacheService,
       );
-
-      debugPrint('复制结果: ${_clipboardElement != null ? '成功' : '失败'}');
-      if (_clipboardElement != null) {
-        debugPrint('复制的元素类型: ${_clipboardElement!['type']}');
-      } // Update clipboard state and paste button activation
+      AppLogger.info(
+        '复制结果',
+        tag: 'PracticeEdit',
+        data: {
+          'result': _clipboardElement != null ? '成功' : '失败',
+          'type': _clipboardElement != null ? _clipboardElement!['type'] : null,
+        },
+      );
       if (mounted) {
-        // Update both local variable and ValueNotifier
         _clipboardHasContent = _clipboardElement != null;
         _clipboardNotifier.value = _clipboardElement != null;
-
-        // Use setState only to update UI elements other than the toolbar
         setState(() {});
-        debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
-
-        // Show a snackbar notification if copy was successful
+        AppLogger.debug(
+          '设置粘贴按钮状态',
+          tag: 'PracticeEdit',
+          data: {'status': _clipboardHasContent ? '激活' : '禁用'},
+        );
         if (_clipboardElement != null) {
           scaffoldMessenger
               .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板（已预加载图像）')));
         }
       }
     } catch (e) {
-      debugPrint('复制元素时发生错误: $e');
-      // Fallback to regular copy if enhanced copy fails - don't pass context across async gap
+      AppLogger.error(
+        '复制元素时发生错误',
+        tag: 'PracticeEdit',
+        error: e,
+      );
       if (mounted) {
         _clipboardElement =
             PracticeEditUtils.copySelectedElements(_controller, context);
-
         setState(() {
           _clipboardHasContent = _clipboardElement != null;
         });
-
         if (_clipboardElement != null) {
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
@@ -1226,6 +1317,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     if (_controller.state.selectedElementIds.isEmpty) return;
 
+    AppLogger.info(
+      '用户请求删除选中元素',
+      tag: 'PracticeEdit',
+      data: {
+        'selectedCount': _controller.state.selectedElementIds.length,
+        'elementIds': _controller.state.selectedElementIds,
+      },
+    );
+
     // Show confirmation dialog
     showDialog<bool>(
       context: context,
@@ -1248,9 +1348,22 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         // Create a copy to avoid ConcurrentModificationError
         final idsToDelete =
             List<String>.from(_controller.state.selectedElementIds);
+        AppLogger.info(
+          '确认删除元素',
+          tag: 'PracticeEdit',
+          data: {
+            'deletedCount': idsToDelete.length,
+            'elementIds': idsToDelete,
+          },
+        );
         for (final id in idsToDelete) {
           _controller.deleteElement(id);
         }
+      } else {
+        AppLogger.debug(
+          '用户取消删除操作',
+          tag: 'PracticeEdit',
+        );
       }
     });
   }
@@ -1286,55 +1399,111 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   /// Group selected elements
   void _groupSelectedElements() {
     if (_controller.state.selectedElementIds.length > 1) {
+      AppLogger.info(
+        '分组选中元素',
+        tag: 'PracticeEdit',
+        data: {
+          'elementCount': _controller.state.selectedElementIds.length,
+          'elementIds': _controller.state.selectedElementIds,
+        },
+      );
       _controller.groupSelectedElements();
     }
   }
 
   /// 处理从字符管理页面复制的字符
   Future<void> _handleCharacterClipboardData(Map<String, dynamic> json) async {
-    debugPrint('处理字符剪贴板数据: $json');
+    AppLogger.debug(
+      '处理字符剪贴板数据',
+      tag: 'PracticeEdit',
+      data: {'json': json},
+    );
+
     final characterIds = List<String>.from(json['characterIds']);
-    debugPrint('字符IDs: $characterIds, 数量: ${characterIds.length}');
+    AppLogger.debug(
+      '字符IDs',
+      tag: 'PracticeEdit',
+      data: {
+        'characterIds': characterIds,
+        'count': characterIds.length,
+      },
+    );
 
     if (characterIds.isEmpty) {
-      debugPrint('没有字符ID，无法创建集字元素');
+      AppLogger.warning(
+        '没有字符ID，无法创建集字元素',
+        tag: 'PracticeEdit',
+      );
       return;
     }
 
     // 获取字符服务和图像服务
     final characterService = ref.read(characterServiceProvider);
     final characterImageService = ref.read(characterImageServiceProvider);
-    debugPrint('已获取字符服务和图像服务');
+    AppLogger.debug(
+      '已获取字符服务和图像服务',
+      tag: 'PracticeEdit',
+    );
 
     // 对于每个字符ID，创建一个集字元素
     for (int i = 0; i < characterIds.length; i++) {
       final characterId = characterIds[i];
-      debugPrint('处理字符ID: $characterId');
+      AppLogger.debug(
+        '处理字符ID',
+        tag: 'PracticeEdit',
+        data: {'characterId': characterId},
+      );
 
       try {
         // 获取字符数据
-        debugPrint('获取字符详情...');
-        final character =
-            await characterService.getCharacterDetails(characterId);
+        AppLogger.debug(
+          '获取字符详情',
+          tag: 'PracticeEdit',
+          data: {'characterId': characterId},
+        );
+        final character = await characterService.getCharacterDetails(characterId);
         if (character == null) {
-          debugPrint('无法获取字符详情，跳过');
+          AppLogger.warning(
+            '无法获取字符详情，跳过',
+            tag: 'PracticeEdit',
+            data: {'characterId': characterId},
+          );
           continue;
         }
 
-        debugPrint('成功获取字符详情');
+        AppLogger.debug('成功获取字符详情', tag: 'PracticeEdit');
         // debugPrint('成功获取字符详情: $character');
 
         // 获取字符图像 - 使用default类型和png格式
-        debugPrint('获取字符图像...');
+        AppLogger.debug(
+          '获取字符图像',
+          tag: 'PracticeEdit',
+          data: {'characterId': characterId, 'type': 'default', 'format': 'png'},
+        );
         final imageBytes = await characterImageService.getCharacterImage(
             characterId, 'default', 'png');
         if (imageBytes == null) {
-          debugPrint('无法获取字符图像，跳过');
+          AppLogger.warning(
+            '无法获取字符图像，跳过此字符',
+            tag: 'PracticeEdit',
+            data: {'characterId': characterId},
+          );
           continue;
         }
-        debugPrint('成功获取字符图像，大小: ${imageBytes.length} 字节'); // 创建新元素ID
+        AppLogger.debug(
+          '成功获取字符图像',
+          tag: 'PracticeEdit',
+          data: {
+            'characterId': characterId,
+            'imageSize': imageBytes.length,
+          },
+        ); // 创建新元素ID
         final newId = const Uuid().v4();
-        debugPrint('创建新元素ID: $newId');
+        AppLogger.debug(
+          '创建新元素ID',
+          tag: 'PracticeEdit',
+          data: {'newId': newId, 'characterId': characterId},
+        );
 
         // 计算放置位置（按顺序排列）
         final x = 100.0 + (i * 20);
@@ -1387,7 +1556,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           },
         };
 
-        debugPrint('创建新的集字元素: $newElement'); // 添加到当前页面
+        AppLogger.debug(
+          '创建新的集字元素',
+          tag: 'PracticeEdit',
+          data: {
+            'elementId': newId,
+            'type': 'collection',
+            'characterId': characterId,
+            'x': newElement['x'],
+            'y': newElement['y'],
+          },
+        ); // 添加到当前页面
 
         setState(() {
           // 从element中提取文本内容用于创建集字元素
@@ -1405,49 +1584,101 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           // 选择新添加的元素
           // 注意：我们不知道新添加元素的ID，因为它是在controller内部生成的
           // 所以我们不能直接选择它
-          debugPrint('已通过控制器方法添加集字元素到当前页面位置: ($x, $y), 内容: $characters');
+          AppLogger.info(
+            '成功添加集字元素到页面',
+            tag: 'PracticeEdit',
+            data: {
+              'position': {'x': x, 'y': y},
+              'content': characters,
+              'characterId': characterId,
+            },
+          );
         });
-      } catch (e) {
-        debugPrint('处理字符 $characterId 时出错: $e');
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          '处理字符数据失败',
+          tag: 'PracticeEdit',
+          error: e,
+          stackTrace: stackTrace,
+          data: {'characterId': characterId},
+        );
       }
     }
-    debugPrint('字符处理完成');
+    AppLogger.info(
+      '字符剪贴板数据处理完成',
+      tag: 'PracticeEdit',
+      data: {'processedCount': characterIds.length},
+    );
   }
 
   /// 处理图库项目剪贴板数据
   Future<void> _handleLibraryItemClipboardData(
       Map<String, dynamic> json) async {
-    debugPrint('处理图库项目剪贴板数据: $json');
+    AppLogger.debug(
+      '开始处理图库项目剪贴板数据',
+      tag: 'PracticeEdit',
+      data: {'jsonKeys': json.keys.toList()},
+    );
     final itemIds = List<String>.from(json['itemIds']);
-    debugPrint('图库项目IDs: $itemIds, 数量: ${itemIds.length}');
+    AppLogger.debug(
+      '解析图库项目IDs',
+      tag: 'PracticeEdit',
+      data: {'itemIds': itemIds, 'count': itemIds.length},
+    );
 
     if (itemIds.isEmpty) {
-      debugPrint('没有图库项目ID，无法创建图片元素');
+      AppLogger.warning(
+        '没有图库项目ID，无法创建图片元素',
+        tag: 'PracticeEdit',
+      );
       return;
     }
 
     // 获取图库服务
     final libraryService = ref.read(libraryServiceProvider);
-    debugPrint('已获取图库服务');
+    AppLogger.debug(
+      '已获取图库服务',
+      tag: 'PracticeEdit',
+    );
 
     // 对于每个图库项目ID，创建一个图片元素
     for (int i = 0; i < itemIds.length; i++) {
       final itemId = itemIds[i];
-      debugPrint('处理图库项目ID: $itemId');
+      AppLogger.debug(
+        '处理图库项目ID',
+        tag: 'PracticeEdit',
+        data: {'itemId': itemId, 'index': i},
+      );
 
       try {
         // 获取图库项目数据
-        debugPrint('获取图库项目数据...');
+        AppLogger.debug(
+          '获取图库项目数据',
+          tag: 'PracticeEdit',
+          data: {'itemId': itemId},
+        );
         final item = await libraryService.getItem(itemId);
         if (item == null) {
-          debugPrint('无法获取图库项目数据，跳过');
+          AppLogger.warning(
+            '无法获取图库项目数据，跳过此项目',
+            tag: 'PracticeEdit',
+            data: {'itemId': itemId},
+          );
           continue;
         }
-        debugPrint('成功获取图库项目数据, 路径: ${item.path}');
+        AppLogger.debug(
+          '成功获取图库项目数据',
+          tag: 'PracticeEdit',
+          data: {'itemId': itemId, 'path': item.path},
+        );
 
         // 创建新元素ID
         final newId = const Uuid().v4();
-        debugPrint('创建新元素ID: $newId');
+        AppLogger.debug(
+          '创建新元素ID',
+          tag: 'PracticeEdit',
+          data: {'newId': newId, 'itemId': itemId},
+        );
 
         // 计算放置位置（按顺序排列）
         final x = 100.0 + (i * 20);
@@ -1473,20 +1704,47 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'libraryItemId': itemId,
           // 其他必要的图片元素属性
         };
-        debugPrint('创建新的图片元素: $newElement'); // 添加到当前页面
+        AppLogger.debug(
+          '创建新的图片元素',
+          tag: 'PracticeEdit',
+          data: {
+            'elementId': newId,
+            'type': 'image',
+            'itemId': itemId,
+            'x': x,
+            'y': y,
+          },
+        ); // 添加到当前页面
 
         setState(() {
           // 使用控制器的公共方法添加图片元素
           // 将文件路径转换为正确的文件URI格式
           final imageUrl = 'file://${item.path.replaceAll("\\", "/")}';
           _controller.addImageElementAt(x, y, imageUrl);
-          debugPrint('已通过控制器方法添加图片元素到当前页面位置: ($x, $y), URI: $imageUrl');
+          AppLogger.info(
+            '成功添加图片元素到页面',
+            tag: 'PracticeEdit',
+            data: {
+              'position': {'x': x, 'y': y},
+              'imageUrl': imageUrl,
+              'itemId': itemId,
+            },
+          );
         });
       } catch (e) {
-        debugPrint('处理图库项目 $itemId 时出错: $e');
+        AppLogger.error(
+          '处理图库项目时出错',
+          tag: 'PracticeEdit',
+          error: e,
+          data: {'itemId': itemId},
+        );
       }
     }
-    debugPrint('图库项目处理完成');
+    AppLogger.info(
+      '图库项目剪贴板数据处理完成',
+      tag: 'PracticeEdit',
+      data: {'processedCount': itemIds.length},
+    );
   }
 
   /// Initialize panel states from persistent storage
@@ -1562,16 +1820,19 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           if (_currentTool == 'select' && tool == 'select') {
             _currentTool = '';
             _controller.exitSelectMode();
-          } else if (_currentTool == tool) {
-            // If the same tool is selected again, deselect it
-            _currentTool = '';
-            _controller.exitSelectMode();
           } else {
             _currentTool = tool;
             // 同步到controller的状态
             _controller.state.currentTool = tool;
             _controller.notifyListeners(); // 通知监听器更新
-            debugPrint('工具切换为: $tool');
+            AppLogger.info(
+              '工具切换',
+              tag: 'PracticeEdit',
+              data: {
+                'tool': tool,
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+            );
           }
         });
       },
@@ -1583,36 +1844,66 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// 在剪贴板变化时检查并输出详细日志  /// Detailed inspection of clipboard contents for debugging
   Future<void> _inspectClipboard() async {
-    debugPrint('======= 剪贴板详细检查 =======');
+    AppLogger.debug(
+      '开始剪贴板详细检查',
+      tag: 'PracticeEdit-Debug',
+    );
 
     // 检查内部剪贴板
     if (_clipboardElement != null) {
-      debugPrint('内部剪贴板内容类型: ${_clipboardElement?['type']}');
+      final type = _clipboardElement?['type'];
+      AppLogger.debug(
+        '内部剪贴板内容类型',
+        tag: 'PracticeEdit-Debug',
+        data: {'type': type},
+      );
 
       // 根据类型显示不同的信息
-      final type = _clipboardElement?['type'];
       if (type == 'characters' || type == 'character') {
         if (_clipboardElement!.containsKey('characterIds')) {
-          debugPrint('字符IDs: ${_clipboardElement!['characterIds']}');
+          AppLogger.debug(
+            '字符IDs',
+            tag: 'PracticeEdit-Debug',
+            data: {'characterIds': _clipboardElement!['characterIds']},
+          );
         } else if (_clipboardElement!.containsKey('data') &&
             _clipboardElement!['data'] is Map &&
             _clipboardElement!['data'].containsKey('characterId')) {
-          debugPrint('字符ID: ${_clipboardElement!['data']['characterId']}');
+          AppLogger.debug(
+            '字符ID',
+            tag: 'PracticeEdit-Debug',
+            data: {'characterId': _clipboardElement!['data']['characterId']},
+          );
         }
       } else if (type == 'library_items' || type == 'image') {
         if (_clipboardElement!.containsKey('itemIds')) {
-          debugPrint('图库项目IDs: ${_clipboardElement!['itemIds']}');
+          AppLogger.debug(
+            '图库项目IDs',
+            tag: 'PracticeEdit-Debug',
+            data: {'itemIds': _clipboardElement!['itemIds']},
+          );
         } else if (_clipboardElement!.containsKey('imageUrl')) {
-          debugPrint('图片URL: ${_clipboardElement!['imageUrl']}');
+          AppLogger.debug(
+            '图片URL',
+            tag: 'PracticeEdit-Debug',
+            data: {'imageUrl': _clipboardElement!['imageUrl']},
+          );
         }
       }
 
       // 完整内容（可能很长，只在调试时打印）
       if (kDebugMode) {
-        debugPrint('内部剪贴板完整内容: $_clipboardElement');
+        AppLogger.debug(
+          '内部剪贴板完整内容',
+          tag: 'PracticeEdit-Debug',
+          data: {'clipboardElement': _clipboardElement},
+        );
       }
     } else {
-      debugPrint('内部剪贴板为空');
+      AppLogger.debug(
+        '内部剪贴板为空',
+        tag: 'PracticeEdit-Debug',
+      );
     }
 
     // 检查系统剪贴板文本
@@ -1621,55 +1912,103 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       if (clipboardData != null &&
           clipboardData.text != null &&
           clipboardData.text!.isNotEmpty) {
-        debugPrint('系统剪贴板有文本内容，长度: ${clipboardData.text!.length}');
+        AppLogger.debug(
+          '系统剪贴板有文本内容',
+          tag: 'PracticeEdit-Debug',
+          data: {'length': clipboardData.text!.length},
+        );
 
         // 根据长度决定显示内容
         if (clipboardData.text!.length < 300) {
-          debugPrint('系统剪贴板文本内容: ${clipboardData.text}');
+          AppLogger.debug(
+            '系统剪贴板文本内容',
+            tag: 'PracticeEdit-Debug',
+            data: {'text': clipboardData.text},
+          );
         } else {
-          debugPrint(
-              '系统剪贴板内容太长，仅显示前100个字符: ${clipboardData.text!.substring(0, 100)}...');
+          AppLogger.debug(
+            '系统剪贴板内容太长，仅显示前100个字符',
+            tag: 'PracticeEdit-Debug',
+            data: {
+              'preview': clipboardData.text!.substring(0, 100),
+              'totalLength': clipboardData.text!.length,
+            },
+          );
         }
 
         // 尝试解析为JSON
         try {
           final json = jsonDecode(clipboardData.text!);
-          debugPrint('成功解析为JSON');
+          AppLogger.debug(
+            '成功解析为JSON',
+            tag: 'PracticeEdit-Debug',
+          );
 
           if (json is Map && json.containsKey('type')) {
             final type = json['type'];
-            debugPrint('JSON类型: $type');
+            AppLogger.debug(
+              'JSON类型',
+              tag: 'PracticeEdit-Debug',
+              data: {'type': type},
+            );
 
             // 特定类型的检查
             if (type == 'characters') {
               final characterIds = json['characterIds'];
-              debugPrint('字符IDs: $characterIds');
-              debugPrint(
-                  '字符数量: ${characterIds is List ? characterIds.length : 0}');
+              AppLogger.debug(
+                '字符IDs',
+                tag: 'PracticeEdit-Debug',
+                data: {
+                  'characterIds': characterIds,
+                  'count': characterIds is List ? characterIds.length : 0,
+                },
+              );
             } else if (type == 'library_items') {
               final itemIds = json['itemIds'];
-              debugPrint('图库项目IDs: $itemIds');
-              debugPrint('图库项目数量: ${itemIds is List ? itemIds.length : 0}');
+              AppLogger.debug(
+                '图库项目IDs',
+                tag: 'PracticeEdit-Debug',
+                data: {
+                  'itemIds': itemIds,
+                  'count': itemIds is List ? itemIds.length : 0,
+                },
+              );
             } else if (json.containsKey('id')) {
-              debugPrint('元素ID: ${json['id']}');
+              final elementData = <String, dynamic>{'id': json['id']};
               // 其他属性检查
               final props = ['width', 'height', 'x', 'y', 'text', 'imageUrl'];
               for (final prop in props) {
                 if (json.containsKey(prop)) {
-                  debugPrint('元素属性 $prop: ${json[prop]}');
+                  elementData[prop] = json[prop];
                 }
               }
+              AppLogger.debug(
+                '元素属性',
+                tag: 'PracticeEdit-Debug',
+                data: elementData,
+              );
             }
           }
         } catch (e) {
           // 不是有效的 JSON，作为纯文本处理
-          debugPrint('不是有效的JSON，作为纯文本处理: $e');
+          AppLogger.warning(
+            '不是有效的JSON，作为纯文本处理',
+            tag: 'PracticeEdit-Debug',
+            error: e,
+          );
         }
       } else {
-        debugPrint('系统剪贴板为空');
+        AppLogger.debug(
+          '系统剪贴板为空',
+          tag: 'PracticeEdit-Debug',
+        );
       }
     } catch (e) {
-      debugPrint('检查系统剪贴板时出错: $e');
+      AppLogger.error(
+        '检查系统剪贴板时出错',
+        tag: 'PracticeEdit-Debug',
+        error: e,
+      );
     }
 
     // 检查系统剪贴板图片
@@ -1678,16 +2017,27 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       for (final format in ['image/png', 'image/jpeg', 'image/gif']) {
         final imageData = await Clipboard.getData(format);
         if (imageData != null) {
-          debugPrint('系统剪贴板有 $format 格式的图片数据');
+          AppLogger.debug(
+            '系统剪贴板有图片数据',
+            tag: 'PracticeEdit-Debug',
+            data: {'format': format},
+          );
           break; // 找到一种格式即可
         }
       }
     } catch (e) {
-      debugPrint('检查系统剪贴板图片错误: $e');
+      AppLogger.error(
+        '检查系统剪贴板图片错误',
+        tag: 'PracticeEdit-Debug',
+        error: e,
+      );
     }
 
-    debugPrint('当前粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
-    debugPrint('======= 剪贴板检查结束 =======');
+    AppLogger.debug(
+      '剪贴板检查完成',
+      tag: 'PracticeEdit-Debug',
+      data: {'canPaste': _clipboardHasContent},
+    );
   }
 
   /// Load practice
@@ -1696,7 +2046,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // First check if we've already loaded this practice ID, avoid duplicate loading
     if (_controller.practiceId == id) {
-      debugPrint('Practice already loaded, skipping duplicate load: $id');
+      AppLogger.info(
+        '字帖已加载，跳过重复加载',
+        tag: 'PracticeEdit',
+        data: {'practiceId': id},
+      );
       return;
     }
 
@@ -1704,7 +2058,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      debugPrint('Starting practice load: $id');
+      AppLogger.info(
+        '开始加载字帖',
+        tag: 'PracticeEdit',
+        data: {'practiceId': id},
+      );
 
       // Call controller's loadPractice method
       final success = await _controller.loadPractice(id);
@@ -1722,12 +2080,16 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                     _controller.practiceTitle ?? ''))),
           );
 
-          debugPrint(
+          AppLogger.debug(
               'Practice loaded successfully: ${_controller.practiceTitle}');
 
           // Automatically reset view position to default state
           _controller.resetViewPosition();
-          debugPrint('Auto reset view position after practice load');
+          AppLogger.debug(
+            '加载字帖后自动重置视图位置',
+            tag: 'PracticeEdit',
+            data: {'practiceId': id},
+          );
 
           // Preload all collection element images
           _preloadAllCollectionImages();
@@ -1739,13 +2101,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           scaffoldMessenger.showSnackBar(
             SnackBar(content: Text(l10n.practiceEditPracticeLoadFailed)),
           );
-          debugPrint(
+          AppLogger.debug(
               'Practice load failed: Practice does not exist or has been deleted');
         }
       }
     } catch (e) {
       // Handle exceptions
-      debugPrint('Failed to load practice: $e');
+      AppLogger.error(
+        '加载字帖失败',
+        tag: 'PracticeEdit',
+        error: e,
+        data: {'practiceId': id},
+      );
       if (mounted) {
         // Show exception notification
         scaffoldMessenger.showSnackBar(
@@ -1783,6 +2150,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     final elements = _controller.state.currentPageElements;
     bool hasChanges = false;
+    int movedCount = 0;
 
     for (final id in _controller.state.selectedElementIds) {
       final elementIndex = elements.indexWhere((e) => e['id'] == id);
@@ -1799,10 +2167,21 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         element['x'] = (element['x'] as num).toDouble() + dx;
         element['y'] = (element['y'] as num).toDouble() + dy;
         hasChanges = true;
+        movedCount++;
       }
     }
 
     if (hasChanges) {
+      AppLogger.debug(
+        '移动选中元素',
+        tag: 'PracticeEdit',
+        data: {
+          'movedCount': movedCount,
+          'totalSelected': _controller.state.selectedElementIds.length,
+          'deltaX': dx,
+          'deltaY': dy,
+        },
+      );
       _controller.state.hasUnsavedChanges = true;
       setState(() {});
     }
@@ -1849,11 +2228,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Paste element(s)
   void _pasteElement() async {
-    debugPrint('开始粘贴操作...');
+    AppLogger.info(
+      '开始粘贴操作',
+      tag: 'PracticeEdit',
+    );
 
     // 首先尝试从内部剪贴板粘贴
     if (_clipboardElement != null) {
-      debugPrint('使用内部剪贴板内容粘贴, 类型: ${_clipboardElement!['type']}');
+      AppLogger.debug(
+        '使用内部剪贴板内容粘贴',
+        tag: 'PracticeEdit',
+        data: {'type': _clipboardElement!['type']},
+      );
 
       try {
         // Get services for cache warming
@@ -1872,7 +2258,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           // UI state will be updated by the paste operation
         });
       } catch (e) {
-        debugPrint('Enhanced paste failed, falling back to regular paste: $e');
+        AppLogger.warning(
+          '增强粘贴失败，回退到常规粘贴',
+          tag: 'PracticeEdit',
+          error: e,
+        );
         // Fallback to regular paste
         setState(() {
           PracticeEditUtils.pasteElement(_controller, _clipboardElement);
@@ -1883,41 +2273,76 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // 如果内部剪贴板为空，则尝试从系统剪贴板读取
     try {
-      debugPrint('内部剪贴板为空，尝试读取系统剪贴板...');
+      AppLogger.debug(
+        '内部剪贴板为空，尝试读取系统剪贴板',
+        tag: 'PracticeEdit',
+      );
       final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
 
       if (clipboardData == null || clipboardData.text == null) {
         // 剪贴板为空，无法粘贴
-        debugPrint('系统剪贴板为空或没有文本内容');
+        AppLogger.debug(
+          '系统剪贴板为空或没有文本内容',
+          tag: 'PracticeEdit',
+        );
         return;
       }
 
       final text = clipboardData.text!;
-      debugPrint('系统剪贴板有文本内容，长度: ${text.length}');
+      AppLogger.debug(
+        '系统剪贴板有文本内容',
+        tag: 'PracticeEdit',
+        data: {'length': text.length},
+      );
 
       // 检查是否是JSON格式
       try {
-        debugPrint('尝试解析为JSON...');
+        AppLogger.debug(
+          '尝试解析为JSON',
+          tag: 'PracticeEdit',
+        );
         final json = jsonDecode(text);
-        debugPrint('成功解析为JSON');
+        AppLogger.debug(
+          '成功解析为JSON',
+          tag: 'PracticeEdit',
+        );
 
         // 判断是哪种类型的数据
         final type = json['type'];
-        debugPrint('JSON类型: $type');
+        AppLogger.debug(
+          'JSON类型',
+          tag: 'PracticeEdit',
+          data: {'type': type},
+        );
 
         if (type == 'characters') {
           // 处理从字符管理页面复制的字符
-          debugPrint('处理字符类型数据...');
+          AppLogger.debug(
+            '处理字符类型数据',
+            tag: 'PracticeEdit',
+          );
           await _handleCharacterClipboardData(json);
-          debugPrint('字符数据处理完成');
+          AppLogger.info(
+            '字符数据处理完成',
+            tag: 'PracticeEdit',
+          );
         } else if (type == 'library_items') {
           // 处理从图库管理页面复制的图片
-          debugPrint('处理图库项目类型数据...');
+          AppLogger.debug(
+            '处理图库项目类型数据',
+            tag: 'PracticeEdit',
+          );
           await _handleLibraryItemClipboardData(json);
-          debugPrint('图库项目数据处理完成');
+          AppLogger.info(
+            '图库项目数据处理完成',
+            tag: 'PracticeEdit',
+          );
         } else {
           // 尝试作为通用 JSON 元素处理
-          debugPrint('处理通用JSON元素...');
+          AppLogger.debug(
+            '处理通用JSON元素',
+            tag: 'PracticeEdit',
+          );
           try {
             // Get services for cache warming
             final characterImageService =
@@ -1939,10 +2364,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             final hasContent = await _checkClipboardContent();
             _clipboardHasContent = hasContent;
             _clipboardNotifier.value = hasContent;
-            debugPrint('粘贴后更新剪贴板状态: ${_clipboardHasContent ? '有内容' : '无内容'}');
+            AppLogger.debug(
+              '粘贴后更新剪贴板状态',
+              tag: 'PracticeEdit',
+              data: {'hasContent': _clipboardHasContent},
+            );
           } catch (e) {
-            debugPrint(
-                'Enhanced JSON paste failed, falling back to regular paste: $e');
+            AppLogger.warning(
+              '增强JSON粘贴失败，回退到常规粘贴',
+              tag: 'PracticeEdit',
+              error: e,
+            );
             // Fallback to regular paste
             setState(() {
               PracticeEditUtils.pasteElement(_controller, json);
@@ -1956,7 +2388,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         }
       } catch (e) {
         // 不是有效的 JSON，作为纯文本处理
-        debugPrint('不是有效的JSON，作为纯文本处理: $e');
+        AppLogger.warning(
+          '不是有效的JSON，作为纯文本处理',
+          tag: 'PracticeEdit',
+          error: e,
+        );
         _createTextElement(text);
       }
 
@@ -1964,11 +2400,19 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       _checkClipboardContent().then((hasContent) {
         setState(() {
           _clipboardHasContent = hasContent;
-          debugPrint('粘贴后更新剪贴板状态: ${_clipboardHasContent ? '有内容' : '无内容'}');
+          AppLogger.debug(
+            '粘贴后更新剪贴板状态',
+            tag: 'PracticeEdit',
+            data: {'hasContent': _clipboardHasContent},
+          );
         });
       });
     } catch (e) {
-      debugPrint('粘贴操作出错: $e');
+      AppLogger.error(
+        '粘贴操作出错',
+        tag: 'PracticeEdit',
+        error: e,
+      );
     }
   }
 
@@ -2044,11 +2488,21 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     if (title == null || title.isEmpty) return;
 
     // Save practice
+    AppLogger.info(
+      '开始保存新字帖',
+      tag: 'PracticeEdit',
+      data: {'title': title},
+    );
     final result = await _controller.saveAsNewPractice(title);
 
     if (!mounted) return;
 
     if (result == true) {
+      AppLogger.info(
+        '新字帖保存成功',
+        tag: 'PracticeEdit',
+        data: {'title': title},
+      );
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(l10n.practiceEditPracticeLoaded(title))),
       );
@@ -2122,10 +2576,20 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     }
 
     // Save practice
+    AppLogger.info(
+      '开始保存字帖',
+      tag: 'PracticeEdit',
+      data: {'practiceId': _controller.practiceId},
+    );
     final result = await _controller.savePractice();
 
     if (!mounted) return false;
     if (result == true) {
+      AppLogger.info(
+        '字帖保存成功',
+        tag: 'PracticeEdit',
+        data: {'practiceId': _controller.practiceId},
+      );
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
       );
@@ -2220,7 +2684,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   /// Set up the reference to the canvas in the controller
   void _setupCanvasReference() {
     // Canvas will register itself with the controller in its initState
-    debugPrint('Canvas reference will be set up by the canvas widget itself');
+    AppLogger.debug(
+      '画布引用将由画布组件自身设置',
+      tag: 'PracticeEdit',
+    );
   }
 
   /// Show export dialog
@@ -2261,8 +2728,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         // Periodically check clipboard content
         final hasContent = await _checkClipboardContent();
         if (hasContent != _clipboardHasContent) {
-          debugPrint(
-              '剪贴板状态变化: ${_clipboardHasContent ? "有内容" : "无内容"} -> ${hasContent ? "有内容" : "无内容"}');
+          // 只在状态真正变化时记录日志，避免过度日志
+          AppLogger.debug(
+            '剪贴板状态变化',
+            tag: 'PracticeEdit',
+            data: {
+              'oldState': _clipboardHasContent ? "有内容" : "无内容",
+              'newState': hasContent ? "有内容" : "无内容",
+            },
+          );
 
           // If debugging, do a full inspection when state changes
           if (kDebugMode && hasContent) {
@@ -2285,7 +2759,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           }
         }
       } catch (e) {
-        debugPrint('剪贴板监控错误: $e');
+        AppLogger.error(
+          '剪贴板监控错误',
+          tag: 'PracticeEdit',
+          error: e,
+        );
       }
     });
   }
@@ -2360,6 +2838,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       );
 
       if (element.isNotEmpty && element['type'] == 'group') {
+        AppLogger.info(
+          '解组选中元素',
+          tag: 'PracticeEdit',
+          data: {
+            'groupId': id,
+            'groupType': element['type'],
+          },
+        );
         // Use the safe ungroup method to prevent ID conflicts
         PracticeEditUtils.safeUngroupSelectedElement(_controller);
       }
