@@ -110,7 +110,7 @@ class SelectedElementsHighlight extends StatelessWidget {
       left: x,
       top: y,
       child: Transform.rotate(
-        angle: rotation,
+        angle: rotation * (3.14159265359 / 180),
         child: SizedBox(
           width: width,
           height: height,

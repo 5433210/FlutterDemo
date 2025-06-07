@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 import '../../../../../../infrastructure/logging/logger.dart';
+import '../../../../../widgets/practice/batch_update_options.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
 import '../../content_render_controller.dart';
@@ -98,14 +99,52 @@ mixin CanvasControlPointHandlers {
       (element['y'] as num).toDouble(),
     );
 
+    // 🔧 修复：如果是组合元素，需要把所有子元素也添加到DragStateManager
+    final allElementIds = <String>{elementId};
+    final allElementPositions = <String, Offset>{elementId: elementPosition};
+    final allElementProperties = <String, Map<String, dynamic>>{
+      elementId: Map<String, dynamic>.from(element)
+    };
+
+    if (element['type'] == 'group') {
+      debugPrint('🔄 组合元素拖拽开始：收集所有子元素');
+      final content = element['content'] as Map<String, dynamic>?;
+      final children = content?['children'] as List<dynamic>? ?? [];
+      
+      final groupX = (element['x'] as num).toDouble();
+      final groupY = (element['y'] as num).toDouble();
+      
+      for (final child in children) {
+        final childMap = child as Map<String, dynamic>;
+        final childId = childMap['id'] as String;
+        
+        // 🔧 修复：子元素坐标是相对于组合的，需要转换为绝对坐标
+        final childRelativeX = (childMap['x'] as num).toDouble();
+        final childRelativeY = (childMap['y'] as num).toDouble();
+        final childAbsoluteX = groupX + childRelativeX;
+        final childAbsoluteY = groupY + childRelativeY;
+        
+        allElementIds.add(childId);
+        allElementPositions[childId] = Offset(childAbsoluteX, childAbsoluteY);
+        
+        // 🔧 为子元素创建临时的绝对坐标版本供DragStateManager使用
+        final childWithAbsoluteCoords = Map<String, dynamic>.from(childMap);
+        childWithAbsoluteCoords['x'] = childAbsoluteX;
+        childWithAbsoluteCoords['y'] = childAbsoluteY;
+        allElementProperties[childId] = childWithAbsoluteCoords;
+        
+        debugPrint('🔄 子元素 $childId: 相对坐标($childRelativeX, $childRelativeY) → 绝对坐标($childAbsoluteX, $childAbsoluteY)');
+      }
+      
+      debugPrint('🔄 组合元素包含 ${children.length} 个子元素，总共管理 ${allElementIds.length} 个元素');
+    }
+
     // 使用统一的DragStateManager处理
     dragStateManager.startDrag(
-      elementIds: {elementId},
+      elementIds: allElementIds,
       startPosition: elementPosition,
-      elementStartPositions: {elementId: elementPosition},
-      elementStartProperties: {
-        elementId: Map<String, dynamic>.from(element)
-      },
+      elementStartPositions: allElementPositions,
+      elementStartProperties: allElementProperties,
     );
 
     AppLogger.info(
@@ -113,6 +152,7 @@ mixin CanvasControlPointHandlers {
       tag: 'Canvas',
       data: {
         'elementId': elementId,
+        'totalElements': allElementIds.length,
         'isRotating': _isRotating,
         'isResizing': _isResizing,
       },
@@ -329,96 +369,513 @@ mixin CanvasControlPointHandlers {
       },
     );
 
-    if (controller.state.selectedElementIds.isEmpty) {
+    if (controller.state.selectedElementIds.isEmpty || _originalElementProperties == null) {
       return;
     }
 
     final elementId = controller.state.selectedElementIds.first;
 
-    // 获取原始元素，保留所有非几何属性
-    final originalElement = controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
+    // 🔧 关键修复：使用拖拽开始时保存的原始元素状态
+    // 而不是重新从页面获取（那可能是过时的状态）
+    final originalElement = _originalElementProperties!;
 
-    if (originalElement.isEmpty) {
-      AppLogger.warning('找不到原始元素', tag: 'Canvas', data: {'elementId': elementId});
-      return;
+    debugPrint('🔄 Commit阶段：使用拖拽开始时保存的原始状态');
+    debugPrint('🔄 原始状态: x=${originalElement['x']}, y=${originalElement['y']}, w=${originalElement['width']}, h=${originalElement['height']}, r=${originalElement['rotation']}');
+
+    // 🔧 增强调试：详细分析元素结构
+    final elementType = originalElement['type'] as String? ?? 'unknown';
+    debugPrint('🔄 处理元素类型: $elementType');
+    debugPrint('🔄 原始元素ID: $elementId');
+    debugPrint('🔄 原始元素完整结构: ${originalElement.keys}');
+    
+    if (elementType == 'group') {
+      debugPrint('🔄 发现组合元素，检查子元素...');
+      final content = originalElement['content'] as Map<String, dynamic>?;
+      if (content != null) {
+        final children = content['children'] as List<dynamic>? ?? [];
+        debugPrint('🔄 组合元素包含 ${children.length} 个子元素');
+        for (int i = 0; i < children.length && i < 3; i++) {  // 只显示前3个
+          final child = children[i] as Map<String, dynamic>;
+          debugPrint('🔄 子元素 $i: ${child['id']} (${child['type']})');
+        }
+      } else {
+        debugPrint('🔄 警告：组合元素没有content字段');
+      }
     }
 
-    // 🔧 在主导架构中应用网格吸附
-    final snappedFinalState = controller.state.snapEnabled 
-        ? applyGridSnapToProperties(finalState)
-        : finalState;
+    // 🔧 在Commit阶段应用网格吸附
+    final finalResult = calculateFinalElementProperties(finalState);
 
-    // 构建控制点主导的完整元素预览属性（使用吸附后的状态）
-    final controlPointDrivenProperties = Map<String, dynamic>.from(originalElement);
-    controlPointDrivenProperties.addAll({
-      'x': snappedFinalState['x'] ?? originalElement['x'],
-      'y': snappedFinalState['y'] ?? originalElement['y'],
-      'width': snappedFinalState['width'] ?? originalElement['width'],
-      'height': snappedFinalState['height'] ?? originalElement['height'],
-      'rotation': snappedFinalState['rotation'] ?? originalElement['rotation'],
-    });
-
-    AppLogger.debug(
-      '控制点主导的完整属性',
-      tag: 'Canvas',
-      data: controlPointDrivenProperties,
-    );
-
-    // 将控制点状态推送给DragStateManager，让DragPreviewLayer跟随
-    if (dragStateManager.isDragging && dragStateManager.isElementDragging(elementId)) {
-      AppLogger.debug('推送控制点状态到DragStateManager', tag: 'Canvas');
-      dragStateManager.updateElementPreviewProperties(elementId, controlPointDrivenProperties);
+    // 🚀 新增：检查是否为组合元素，如果是则处理子元素变换
+    if (originalElement['type'] == 'group') {
+      debugPrint('🔄 开始处理组合元素变换...');
+      _handleGroupElementTransform(originalElement, finalResult);
     } else {
-      AppLogger.debug('启动拖拽系统以支持预览', tag: 'Canvas');
-
-      // 启动拖拽系统以支持预览
-      final elementPosition = Offset(
-          (snappedFinalState['x'] ?? originalElement['x'] as num).toDouble(),
-          (snappedFinalState['y'] ?? originalElement['y'] as num).toDouble());
-
-      dragStateManager.startDrag(
-        elementIds: {elementId},
-        startPosition: elementPosition,
-        elementStartPositions: {elementId: elementPosition},
-        elementStartProperties: {elementId: controlPointDrivenProperties},
-      );
-
-      // 立即更新预览属性
-      dragStateManager.updateElementPreviewProperties(elementId, controlPointDrivenProperties);
+      debugPrint('🔄 处理单个元素变换...');
+      // 普通元素处理
+      _handleSingleElementTransform(elementId, originalElement, finalResult);
     }
-
-    // 保存最终状态，供Commit阶段使用（使用吸附后的状态）
-    _freeControlPointsFinalState = snappedFinalState;
 
     AppLogger.info('控制点主导架构处理完成', tag: 'Canvas');
   }
 
+  /// 🚀 新增：处理组合元素的变换（包括子元素变换）
+  void _handleGroupElementTransform(Map<String, dynamic> groupElement, Map<String, double> newGroupProperties) {
+    final groupId = groupElement['id'] as String;
+    
+    // 获取原始组合元素属性
+    final originalX = (groupElement['x'] as num).toDouble();
+    final originalY = (groupElement['y'] as num).toDouble();
+    final originalWidth = (groupElement['width'] as num).toDouble();
+    final originalHeight = (groupElement['height'] as num).toDouble();
+    final originalRotation = (groupElement['rotation'] as num?)?.toDouble() ?? 0.0;
+    
+    // 获取新的组合元素属性
+    final newX = newGroupProperties['x'] ?? originalX;
+    final newY = newGroupProperties['y'] ?? originalY;
+    final newWidth = newGroupProperties['width'] ?? originalWidth;
+    final newHeight = newGroupProperties['height'] ?? originalHeight;
+    final newRotation = newGroupProperties['rotation'] ?? originalRotation;
+    
+    debugPrint('🔄 组合元素变换开始');
+    debugPrint('🔄 原始属性: x=$originalX, y=$originalY, w=$originalWidth, h=$originalHeight, r=$originalRotation');
+    debugPrint('🔄 新属性: x=$newX, y=$newY, w=$newWidth, h=$newHeight, r=$newRotation');
+    
+    // 计算变换参数
+    final scaleX = originalWidth != 0 ? newWidth / originalWidth : 1.0;
+    final scaleY = originalHeight != 0 ? newHeight / originalHeight : 1.0;
+    final rotationDelta = newRotation - originalRotation;
+    
+    // 检查变换类型
+    final isOnlyTranslation = (scaleX == 1.0 && scaleY == 1.0 && rotationDelta == 0.0);
+    final isOnlyRotation = (scaleX == 1.0 && scaleY == 1.0 && rotationDelta != 0.0);
+    final hasScaling = (scaleX != 1.0 || scaleY != 1.0);
+    
+    debugPrint('🔄 变换参数: scaleX=$scaleX, scaleY=$scaleY, rotationDelta=$rotationDelta');
+    debugPrint('🔄 变换类型: 纯平移=$isOnlyTranslation, 纯旋转=$isOnlyRotation, 包含缩放=$hasScaling');
+    
+    // 🔧 修复：确保从正确的路径获取子元素
+    final content = groupElement['content'] as Map<String, dynamic>?;
+    List<dynamic> children = [];
+    
+    if (content != null) {
+      children = content['children'] as List<dynamic>? ?? [];
+      debugPrint('🔄 从content.children获取到 ${children.length} 个子元素');
+    } else {
+      // 回退：直接从根级获取children
+      children = groupElement['children'] as List<dynamic>? ?? [];
+      debugPrint('🔄 从根级children获取到 ${children.length} 个子元素');
+    }
+    
+    if (children.isEmpty) {
+      debugPrint('🔄 组合元素无子元素，只更新组合本身');
+      _updateSingleElement(groupId, newGroupProperties);
+      return;
+    }
+    
+    try {
+      // 🔧 关键修复：正确更新组合元素和子元素
+      debugPrint('🔄 开始更新组合元素和子元素...');
+      
+      // 1. 通过controller正确更新组合元素本身的属性
+      controller.updateElementProperties(groupId, {
+        'x': newX,
+        'y': newY,
+        'width': newWidth,
+        'height': newHeight,
+        'rotation': newRotation,
+      });
+      
+      debugPrint('🔄 组合元素通过controller更新完成: x=$newX, y=$newY, w=$newWidth, h=$newHeight, r=$newRotation');
+      
+      // 2. 根据变换类型处理子元素
+      if (isOnlyTranslation) {
+        // 纯平移：子元素相对位置完全不变
+        debugPrint('🔄 纯平移变换：子元素相对位置保持不变');
+        // 子元素不需要任何更新，因为它们的相对位置没有变化
+      } else if (isOnlyRotation) {
+        // 纯旋转：子元素相对位置也保持不变（整个组合在旋转）
+        debugPrint('🔄 纯旋转变换：子元素相对位置保持不变');
+        // 子元素不需要更新，因为组合整体旋转不影响子元素的相对位置
+              } else {
+          // 🔧 修复：包含缩放或复合变换时，都需要调整子元素
+          debugPrint('🔄 包含缩放或复合变换：需要调整子元素相对位置和尺寸');
+          debugPrint('🔄 变换参数: scaleX=$scaleX, scaleY=$scaleY, rotationDelta=$rotationDelta');
+          
+          // 🔧 关键修复：重新获取更新后的组合元素，确保子元素更新能保存
+          final updatedGroupElement = controller.state.currentPageElements.firstWhere(
+            (e) => e['id'] == groupId,
+            orElse: () => <String, dynamic>{},
+          );
+          
+          if (updatedGroupElement.isNotEmpty) {
+            final updatedContent = updatedGroupElement['content'] as Map<String, dynamic>?;
+            final updatedChildren = updatedContent?['children'] as List<dynamic>? ?? [];
+            
+            debugPrint('🔄 重新获取组合元素，子元素数量: ${updatedChildren.length}');
+            
+            for (int i = 0; i < updatedChildren.length; i++) {
+              final child = updatedChildren[i] as Map<String, dynamic>;
+              final childId = child['id'] as String;
+              
+              debugPrint('🔄 处理子元素 $childId (${i + 1}/${updatedChildren.length})');
+              
+              // 🔧 关键修复：使用完整的子元素变换方法处理所有情况
+              final transformedChild = _transformChildElement(
+                child,
+                originalWidth, // 使用原始组合尺寸
+                originalHeight,
+                scaleX,
+                scaleY,
+                rotationDelta,
+              );
+             
+              // 直接更新子元素的属性（这会修改实际的数据结构）
+              child['x'] = transformedChild['x'];
+              child['y'] = transformedChild['y'];
+              child['width'] = transformedChild['width'];
+              child['height'] = transformedChild['height'];
+              child['rotation'] = transformedChild['rotation'];
+              
+              debugPrint('🔄 子元素 $childId 变换完成: ${transformedChild}');
+            }
+            
+            // 🔧 强制标记为未保存状态，确保变更被保存
+            controller.state.hasUnsavedChanges = true;
+            debugPrint('🔄 已标记组合元素及子元素变换为未保存状态');
+          }
+        }
+      
+      // 3. 撤销操作已由controller.updateElementProperties自动创建
+      debugPrint('🔄 组合元素撤销操作已自动创建');
+      
+      // 4. 更新选中元素的状态（如果当前选中的是组合元素）
+      if (controller.state.selectedElementIds.contains(groupId)) {
+        // 重新获取更新后的组合元素状态
+        final updatedElement = controller.state.currentPageElements.firstWhere(
+          (e) => e['id'] == groupId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (updatedElement.isNotEmpty) {
+          controller.state.selectedElement = updatedElement;
+        }
+      }
+      
+      // 5. 触发UI更新（hasUnsavedChanges已由updateElementProperties设置）
+      controller.notifyListeners();
+      
+      debugPrint('🔄 组合元素变换完成，包含 ${children.length} 个子元素');
+    } catch (e, stackTrace) {
+      debugPrint('🔄 组合元素变换出错: $e');
+      debugPrint('🔄 堆栈跟踪: $stackTrace');
+    }
+  }
+
+  /// 🚀 新增：专门用于缩放的子元素变换（简化版）
+  Map<String, dynamic> _transformChildElementForScaling(
+    Map<String, dynamic> child,
+    double scaleX,
+    double scaleY,
+    double rotationDelta,
+  ) {
+    // 获取子元素原始属性（相对坐标）
+    final childX = (child['x'] as num).toDouble();
+    final childY = (child['y'] as num).toDouble();
+    final childWidth = (child['width'] as num).toDouble();
+    final childHeight = (child['height'] as num).toDouble();
+    final childRotation = (child['rotation'] as num?)?.toDouble() ?? 0.0;
+    
+    debugPrint('🔄 子元素缩放变换: x=$childX, y=$childY, w=$childWidth, h=$childHeight, rotation=$childRotation');
+    
+    // 应用缩放变换到位置和尺寸
+    final scaledX = childX * scaleX;
+    final scaledY = childY * scaleY;
+    final scaledWidth = childWidth * scaleX;
+    final scaledHeight = childHeight * scaleY;
+    
+    // 🔧 关键修复：子元素的相对旋转角度保持不变！
+    // 组合元素的旋转会自动带动子元素旋转，不需要叠加角度
+    final finalRotation = childRotation; // 保持原始相对角度
+    
+    final result = {
+      'x': scaledX,
+      'y': scaledY,
+      'width': math.max(scaledWidth, 1.0), // 确保最小尺寸
+      'height': math.max(scaledHeight, 1.0),
+      'rotation': finalRotation,
+    };
+    
+    debugPrint('🔄 子元素缩放完成: $result (旋转角度保持不变: $finalRotation)');
+    return result;
+  }
+
+  /// 🚀 新增：变换单个子元素（完整版，用于Live预览）
+  Map<String, dynamic> _transformChildElement(
+    Map<String, dynamic> child,
+    double originalGroupWidth,
+    double originalGroupHeight,
+    double scaleX,
+    double scaleY,
+    double rotationDelta,
+  ) {
+    // 获取子元素原始属性（相对于组合的坐标）
+    final childX = (child['x'] as num).toDouble();
+    final childY = (child['y'] as num).toDouble();
+    final childWidth = (child['width'] as num).toDouble();
+    final childHeight = (child['height'] as num).toDouble();
+    final childRotation = (child['rotation'] as num?)?.toDouble() ?? 0.0;
+    
+    debugPrint('🔄 子元素变换开始: x=$childX, y=$childY, w=$childWidth, h=$childHeight, r=$childRotation');
+    
+    // 计算子元素中心相对于组合中心的原始偏移（相对坐标）
+    final originalGroupCenterX = originalGroupWidth / 2;
+    final originalGroupCenterY = originalGroupHeight / 2;
+    final originalChildCenterX = childX + childWidth / 2;
+    final originalChildCenterY = childY + childHeight / 2;
+    final relativeX = originalChildCenterX - originalGroupCenterX;
+    final relativeY = originalChildCenterY - originalGroupCenterY;
+    
+    debugPrint('🔄 子元素中心相对组合中心的原始偏移: ($relativeX, $relativeY)');
+    
+    // Step 1: 先应用旋转变换（如果有旋转变化）
+    double rotatedRelativeX = relativeX;
+    double rotatedRelativeY = relativeY;
+    
+    if (rotationDelta != 0) {
+      debugPrint('🔄 应用旋转变换: rotationDelta=$rotationDelta°');
+      
+      // 将角度转换为弧度
+      final rotationRad = rotationDelta * (3.14159265359 / 180);
+      final cos = math.cos(rotationRad);
+      final sin = math.sin(rotationRad);
+      
+      // 绕组合中心旋转子元素的相对位置
+      rotatedRelativeX = relativeX * cos - relativeY * sin;
+      rotatedRelativeY = relativeX * sin + relativeY * cos;
+      
+      debugPrint('🔄 旋转后的相对偏移: ($rotatedRelativeX, $rotatedRelativeY)');
+    }
+    
+    // Step 2: 再应用缩放变换到位置和尺寸
+    final scaledWidth = childWidth * scaleX;
+    final scaledHeight = childHeight * scaleY;
+    
+    // 缩放旋转后的相对位置
+    final scaledRelativeX = rotatedRelativeX * scaleX;
+    final scaledRelativeY = rotatedRelativeY * scaleY;
+    
+    // 计算缩放后的组合中心
+    final scaledGroupCenterX = originalGroupCenterX * scaleX;
+    final scaledGroupCenterY = originalGroupCenterY * scaleY;
+    
+    // 计算子元素的新中心位置（相对坐标）
+    final finalChildCenterX = scaledGroupCenterX + scaledRelativeX;
+    final finalChildCenterY = scaledGroupCenterY + scaledRelativeY;
+    
+    // 转换回左上角位置（相对坐标）
+    final finalX = finalChildCenterX - scaledWidth / 2;
+    final finalY = finalChildCenterY - scaledHeight / 2;
+    final finalRotation = childRotation + rotationDelta;
+    
+    debugPrint('🔄 缩放后: 相对位置($finalX, $finalY), 尺寸($scaledWidth, $scaledHeight)');
+    
+    final result = {
+      'x': finalX,
+      'y': finalY,
+      'width': math.max(scaledWidth, 1.0), // 确保最小尺寸
+      'height': math.max(scaledHeight, 1.0),
+      'rotation': finalRotation,
+    };
+    
+    debugPrint('🔄 子元素变换完成: $result');
+    return result;
+  }
+
+  /// 🚀 新增：处理单个元素的变换
+  void _handleSingleElementTransform(String elementId, Map<String, dynamic> originalElement, Map<String, double> finalResult) {
+    _updateSingleElement(elementId, finalResult);
+    
+    // 创建撤销操作
+    if (_originalElementProperties != null) {
+      createUndoOperation(elementId, _originalElementProperties!, {
+        'x': finalResult['x']!,
+        'y': finalResult['y']!,
+        'width': finalResult['width']!,
+        'height': finalResult['height']!,
+        if (finalResult.containsKey('rotation')) 'rotation': finalResult['rotation']!,
+      });
+    }
+  }
+
+  /// 🚀 新增：更新单个元素的属性
+  void _updateSingleElement(String elementId, Map<String, double> properties) {
+    // 构建更新属性
+    final updateProperties = <String, dynamic>{};
+    properties.forEach((key, value) {
+      updateProperties[key] = value;
+    });
+    
+    // 更新元素属性
+    controller.updateElementProperties(elementId, updateProperties);
+    
+    debugPrint('🔄 元素 $elementId 属性更新: $updateProperties');
+  }
+
   /// 控制点主导架构：处理Live阶段的实时状态更新
   void handleControlPointLiveUpdate(Map<String, double> liveState) {
-    if (controller.state.selectedElementIds.isEmpty) {
+    if (controller.state.selectedElementIds.isEmpty || _originalElementProperties == null) {
       return;
     }
 
     final elementId = controller.state.selectedElementIds.first;
 
-    // 获取原始元素，保留所有非几何属性
-    final originalElement = controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
+    // 🔧 关键修复：使用拖拽开始时保存的原始状态作为基准
+    // 而不是重新从页面获取，这样确保每次变换都是基于正确的起始点
+    final originalElement = _originalElementProperties!;
 
-    if (originalElement.isEmpty) {
-      return;
-    }
+    debugPrint('🔄 Live更新：使用拖拽开始时的原始状态作为基准');
+    debugPrint('🔄 原始状态: x=${originalElement['x']}, y=${originalElement['y']}, w=${originalElement['width']}, h=${originalElement['height']}, r=${originalElement['rotation']}');
 
     // 🔧 在Live阶段应用网格吸附
     final snappedLiveState = controller.state.snapEnabled 
         ? applyGridSnapToProperties(liveState)
         : liveState;
 
+    // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
+    if (originalElement['type'] == 'group') {
+      _handleGroupElementLiveUpdate(originalElement, snappedLiveState);
+    } else {
+      // 普通元素的Live更新
+      _handleSingleElementLiveUpdate(elementId, originalElement, snappedLiveState);
+    }
+  }
+
+  /// 🚀 新增：处理组合元素的Live阶段更新
+  void _handleGroupElementLiveUpdate(Map<String, dynamic> groupElement, Map<String, double> liveState) {
+    final groupId = groupElement['id'] as String;
+    
+    // 🔧 关键修复：Live阶段需要区分"拖拽基准状态"和"当前Live状态"
+    // 使用拖拽开始时保存的状态作为变换基准
+    final dragStartGroupElement = _originalElementProperties!;
+    final baseX = (dragStartGroupElement['x'] as num).toDouble();
+    final baseY = (dragStartGroupElement['y'] as num).toDouble();
+    final baseWidth = (dragStartGroupElement['width'] as num).toDouble();
+    final baseHeight = (dragStartGroupElement['height'] as num).toDouble();
+    final baseRotation = (dragStartGroupElement['rotation'] as num?)?.toDouble() ?? 0.0;
+    
+    debugPrint('🔄 Live更新：拖拽基准状态 - x=$baseX, y=$baseY, w=$baseWidth, h=$baseHeight, r=$baseRotation');
+    
+    // 构建组合元素的预览属性
+    final newX = liveState['x'] ?? baseX;
+    final newY = liveState['y'] ?? baseY;
+    final newWidth = liveState['width'] ?? baseWidth;
+    final newHeight = liveState['height'] ?? baseHeight;
+    final newRotation = liveState['rotation'] ?? baseRotation;
+    
+    debugPrint('🔄 Live更新：组合元素目标状态 - x=$newX, y=$newY, w=$newWidth, h=$newHeight, r=$newRotation');
+    
+    final groupPreviewProperties = Map<String, dynamic>.from(groupElement);
+    groupPreviewProperties.addAll({
+      'x': newX,
+      'y': newY,
+      'width': newWidth,
+      'height': newHeight,
+      'rotation': newRotation,
+    });
+
+    // 实时更新DragStateManager，让DragPreviewLayer跟随控制点
+    if (dragStateManager.isDragging && dragStateManager.isElementDragging(groupId)) {
+      dragStateManager.updateElementPreviewProperties(groupId, groupPreviewProperties);
+      
+      // 🔧 修复：确保更新所有子元素的预览（使用拖拽基准状态的子元素）
+      final content = dragStartGroupElement['content'] as Map<String, dynamic>?;
+      final children = content?['children'] as List<dynamic>? ?? [];
+      
+      if (children.isNotEmpty) {
+        debugPrint('🔄 Live更新：开始处理 ${children.length} 个子元素');
+        
+                        // 计算相对于拖拽开始时的变换增量
+        final scaleX = baseWidth != 0 ? newWidth / baseWidth : 1.0;
+        final scaleY = baseHeight != 0 ? newHeight / baseHeight : 1.0;
+        final rotationDelta = newRotation - baseRotation;
+        
+        // 🔧 按照用户建议：叠加组合元素当前的旋转角度
+        // 获取组合元素当前的实际旋转角度（包括之前所有操作的累积）
+        final currentGroupElement = controller.state.currentPageElements.firstWhere(
+          (e) => e['id'] == groupId,
+          orElse: () => dragStartGroupElement,
+        );
+        final currentGroupRotation = (currentGroupElement['rotation'] as num?)?.toDouble() ?? 0.0;
+        final totalRotationForChild = rotationDelta + currentGroupRotation;
+        
+        debugPrint('🔄 Live更新变换参数（基于拖拽开始状态）: scaleX=$scaleX, scaleY=$scaleY, rotationDelta=$rotationDelta');
+        debugPrint('🔄   拖拽开始状态: ($baseX, $baseY), ${baseWidth}x$baseHeight, ${baseRotation}°');
+        debugPrint('🔄   当前Live状态: ($newX, $newY), ${newWidth}x$newHeight, ${newRotation}°');
+        debugPrint('🔄   组合元素当前旋转: ${currentGroupRotation}°, 子元素总旋转: ${totalRotationForChild}°');
+        
+        // 为每个子元素更新预览
+        for (int i = 0; i < children.length; i++) {
+          final childMap = children[i] as Map<String, dynamic>;
+          final childId = childMap['id'] as String;
+          
+          // 🔧 修复：检查子元素是否在DragStateManager中
+          if (dragStateManager.isElementDragging(childId)) {
+            // 🔧 关键修复：子元素Live变换的正确坐标转换
+            debugPrint('🔄 子元素 $childId Live更新：转换相对坐标到绝对坐标');
+            
+            // 🔧 关键修复：获取拖拽开始时的子元素状态作为变换基准
+            final dragStartContent = dragStartGroupElement['content'] as Map<String, dynamic>?;
+            final dragStartChildren = dragStartContent?['children'] as List<dynamic>? ?? [];
+            
+            // 找到对应的拖拽开始时的子元素状态
+            final dragStartChild = dragStartChildren.firstWhere(
+              (child) => (child as Map<String, dynamic>)['id'] == childId,
+              orElse: () => childMap, // 回退到当前子元素
+            ) as Map<String, dynamic>;
+            
+            debugPrint('🔄   找到拖拽开始时的子元素状态: ${dragStartChild['x']}, ${dragStartChild['y']}');
+            
+            // 🔧 按照用户建议：使用叠加了组合元素当前旋转角度的总旋转
+            final transformedChild = _transformChildElement(
+              dragStartChild,
+              baseWidth,
+              baseHeight,
+              scaleX,
+              scaleY,
+              totalRotationForChild, // 使用叠加后的总旋转角度
+            );
+           
+           // 4. 将变换后的相对坐标转换为绝对坐标
+           final transformedAbsoluteX = newX + transformedChild['x']!;
+           final transformedAbsoluteY = newY + transformedChild['y']!;
+           
+           // 5. 构建完整的子元素预览属性（使用绝对坐标）
+           final childPreviewProperties = Map<String, dynamic>.from(childMap);
+           childPreviewProperties.addAll({
+             'x': transformedAbsoluteX,
+             'y': transformedAbsoluteY,
+             'width': transformedChild['width']!,
+             'height': transformedChild['height']!,
+             'rotation': transformedChild['rotation']!,
+           });
+           
+           dragStateManager.updateElementPreviewProperties(childId, childPreviewProperties);
+           
+           debugPrint('🔄 Live更新子元素 $childId: 绝对坐标($transformedAbsoluteX, $transformedAbsoluteY), 尺寸(${transformedChild['width']}, ${transformedChild['height']})');
+         } else {
+           debugPrint('🔄 警告：子元素 $childId 未在DragStateManager中');
+         }
+        }
+      }
+      
+      AppLogger.debug('Live阶段：组合元素DragPreviewLayer已更新', tag: 'Canvas');
+    } else {
+      debugPrint('🔄 警告：组合元素 $groupId 未在拖拽状态或未在DragStateManager中');
+    }
+  }
+
+  /// 🚀 新增：处理单个元素的Live阶段更新
+  void _handleSingleElementLiveUpdate(String elementId, Map<String, dynamic> originalElement, Map<String, double> snappedLiveState) {
     // 构建Live阶段的预览属性（使用吸附后的状态）
     final livePreviewProperties = Map<String, dynamic>.from(originalElement);
     livePreviewProperties.addAll({

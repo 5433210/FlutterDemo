@@ -230,6 +230,71 @@ class PracticeEditController extends ChangeNotifier
       'opacity': 1.0,
     };
 
+    // 🧪 为了测试组合元素功能，创建一些测试元素
+    final testTextElement1 = {
+      'id': 'text_${_uuid.v4()}',
+      'type': 'text',
+      'x': 10.0,
+      'y': 10.0,
+      'width': 80.0,
+      'height': 30.0,
+      'rotation': 0.0,
+      'layerId': defaultLayer['id'],
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'content': {
+        'text': '测试文本1',
+        'fontSize': 16.0,
+        'fontColor': '#000000',
+        'backgroundColor': '#FFEB3B',
+        'textAlign': 'center',
+      },
+    };
+
+    final testTextElement2 = {
+      'id': 'text_${_uuid.v4()}',
+      'type': 'text',
+      'x': 20.0,
+      'y': 50.0,
+      'width': 60.0,
+      'height': 40.0,
+      'rotation': 15.0,
+      'layerId': defaultLayer['id'],
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'content': {
+        'text': '测试文本2',
+        'fontSize': 14.0,
+        'fontColor': '#FFFFFF',
+        'backgroundColor': '#FF5722',
+        'textAlign': 'center',
+      },
+    };
+
+    // 🧪 创建测试组合元素
+    final testGroupElement = {
+      'id': 'group_${_uuid.v4()}',
+      'type': 'group',
+      'x': 50.0,
+      'y': 50.0,
+      'width': 100.0,
+      'height': 100.0,
+      'rotation': 0.0,
+      'layerId': defaultLayer['id'],
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'name': '测试组合元素',
+      'content': {
+        'children': [
+          testTextElement1,
+          testTextElement2,
+        ],
+      },
+    };
+
     // 创建默认页面
     final defaultPage = {
       'id': _uuid.v4(),
@@ -244,7 +309,9 @@ class PracticeEditController extends ChangeNotifier
         'value': '#FFFFFF',
         'opacity': 1.0,
       },
-      'elements': <Map<String, dynamic>>[],
+      'elements': <Map<String, dynamic>>[
+        testGroupElement, // 🧪 添加测试组合元素
+      ],
       'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
     };
 
@@ -254,6 +321,10 @@ class PracticeEditController extends ChangeNotifier
 
     // 设置默认选中的图层
     _state.selectedLayerId = defaultLayer['id'] as String;
+
+    debugPrint('🧪 已创建测试组合元素用于验证缩放和旋转功能');
+    debugPrint('🧪 组合元素位置: (50, 50), 尺寸: 100x100');
+    debugPrint('🧪 包含两个带背景色的文本子元素');
 
     // 通知监听器
     notifyListeners();
