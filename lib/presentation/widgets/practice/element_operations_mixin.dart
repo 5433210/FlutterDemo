@@ -21,9 +21,16 @@ mixin ElementOperationsMixin on ChangeNotifier {
   void alignElements(List<String> elementIds, String alignment) {
     if (elementIds.length < 2) return; // 需要至少2个元素才能对齐
 
+    // 🔒 过滤掉锁定的元素
+    final operableElementIds = _filterOperableElements(elementIds);
+    if (operableElementIds.length < 2) {
+      debugPrint('🔒 Not enough unlocked elements to align');
+      return;
+    }
+
     // 获取所有要对齐的元素
     final elements = <Map<String, dynamic>>[];
-    for (final id in elementIds) {
+    for (final id in operableElementIds) {
       final element = state.currentPageElements.firstWhere(
         (e) => e['id'] == id,
         orElse: () => <String, dynamic>{},
@@ -54,11 +61,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
         alignValue =
             elements.map((e) => (e['x'] as num).toDouble()).reduce(math.min);
         for (final element in elements) {
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['x'] = alignValue;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'x': alignValue});
         }
         break;
 
@@ -70,11 +73,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
             .reduce(math.max);
         for (final element in elements) {
           final width = (element['width'] as num).toDouble();
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['x'] = alignValue - width;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'x': alignValue - width});
         }
         break;
 
@@ -87,11 +86,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
         for (final element in elements) {
           final width = (element['width'] as num).toDouble();
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['x'] = avgCenter - width / 2;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'x': avgCenter - width / 2});
         }
         break;
 
@@ -100,11 +95,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
         alignValue =
             elements.map((e) => (e['y'] as num).toDouble()).reduce(math.min);
         for (final element in elements) {
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['y'] = alignValue;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'y': alignValue});
         }
         break;
 
@@ -116,11 +107,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
             .reduce(math.max);
         for (final element in elements) {
           final height = (element['height'] as num).toDouble();
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['y'] = alignValue - height;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'y': alignValue - height});
         }
         break;
 
@@ -133,26 +120,25 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
         for (final element in elements) {
           final height = (element['height'] as num).toDouble();
-          final index = state.currentPageElements
-              .indexWhere((e) => e['id'] == element['id']);
-          if (index >= 0) {
-            state.currentPageElements[index]['y'] = avgCenter - height / 2;
-          }
+          _updateElementInCurrentPage(element['id'] as String, {'y': avgCenter - height / 2});
         }
         break;
     }
 
     // 保存新位置用于撤销操作
     final newPositions = <String, Map<String, double>>{};
-    for (final element in elements) {
-      final id = element['id'] as String;
-      final index = state.currentPageElements.indexWhere((e) => e['id'] == id);
-      if (index >= 0) {
-        final currentElement = state.currentPageElements[index];
-        newPositions[id] = {
-          'x': (currentElement['x'] as num).toDouble(),
-          'y': (currentElement['y'] as num).toDouble(),
-        };
+    if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+      final pageElements = state.currentPage!['elements'] as List<dynamic>;
+      for (final element in elements) {
+        final id = element['id'] as String;
+        final index = pageElements.indexWhere((e) => e['id'] == id);
+        if (index >= 0) {
+          final currentElement = pageElements[index] as Map<String, dynamic>;
+          newPositions[id] = {
+            'x': (currentElement['x'] as num).toDouble(),
+            'y': (currentElement['y'] as num).toDouble(),
+          };
+        }
       }
     }
 
@@ -197,6 +183,52 @@ mixin ElementOperationsMixin on ChangeNotifier {
   }
 
   void checkDisposed();
+
+  /// 检查元素是否可以被操作（未锁定）
+  bool _canOperateElement(String elementId) {
+    // 查找元素
+    final element = state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+    
+    if (element.isEmpty) return false;
+    
+    // 检查元素本身是否锁定
+    final isElementLocked = element['locked'] as bool? ?? false;
+    if (isElementLocked) {
+      debugPrint('🔒 Element $elementId is locked');
+      return false;
+    }
+    
+    // 检查元素所在图层是否锁定
+    final layerId = element['layerId'] as String?;
+    if (layerId != null) {
+      final layer = state.layers.firstWhere(
+        (l) => l['id'] == layerId,
+        orElse: () => <String, dynamic>{},
+      );
+      final isLayerLocked = layer['isLocked'] as bool? ?? false;
+      if (isLayerLocked) {
+        debugPrint('🔒 Layer $layerId is locked for element $elementId');
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  /// 过滤出可以操作的元素ID列表
+  List<String> _filterOperableElements(List<String> elementIds) {
+    final operableIds = elementIds.where(_canOperateElement).toList();
+    
+    if (operableIds.length != elementIds.length) {
+      final lockedCount = elementIds.length - operableIds.length;
+      debugPrint('🔒 Skipped $lockedCount locked elements');
+    }
+    
+    return operableIds;
+  }
 
   /// 创建批量元素调整大小操作（用于撤销/重做）
   void createElementResizeOperation({
@@ -276,8 +308,15 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
     if (elementIds.length < 3) return; // 至少需要3个元素才能分布
 
+    // 🔒 过滤掉锁定的元素
+    final operableElementIds = _filterOperableElements(elementIds);
+    if (operableElementIds.length < 3) {
+      debugPrint('🔒 Not enough unlocked elements to distribute');
+      return;
+    }
+
     // 获取元素
-    final elements = elementIds
+    final elements = operableElementIds
         .map((id) => state.currentPageElements.firstWhere((e) => e['id'] == id,
             orElse: () => <String, dynamic>{}))
         .where((e) => e.isNotEmpty)
@@ -309,11 +348,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
         final newX = firstX + (step * i);
 
         // 更新元素位置
-        final elementIndex = state.currentPageElements
-            .indexWhere((e) => e['id'] == element['id']);
-        if (elementIndex != -1) {
-          state.currentPageElements[elementIndex]['x'] = newX;
-        }
+        _updateElementInCurrentPage(element['id'] as String, {'x': newX});
       }
     } else if (direction == 'vertical') {
       // 按Y坐标排序
@@ -333,50 +368,44 @@ mixin ElementOperationsMixin on ChangeNotifier {
         final newY = firstY + (step * i);
 
         // 更新元素位置
-        final elementIndex = state.currentPageElements
-            .indexWhere((e) => e['id'] == element['id']);
-        if (elementIndex != -1) {
-          state.currentPageElements[elementIndex]['y'] = newY;
-        }
+        _updateElementInCurrentPage(element['id'] as String, {'y': newY});
       }
     }
 
     // 记录变更后的状态
-    final newState = Map<String, Map<String, dynamic>>.fromEntries(
-      elements.map((e) {
-        final index = state.currentPageElements
-            .indexWhere((elem) => elem['id'] == e['id']);
-        return MapEntry(
-            e['id'] as String,
-            index != -1
-                ? Map<String, dynamic>.from(state.currentPageElements[index])
-                : Map<String, dynamic>.from(e));
-      }),
-    );
+    final newState = <String, Map<String, dynamic>>{};
+    if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+      final pageElements = state.currentPage!['elements'] as List<dynamic>;
+      for (final element in elements) {
+        final id = element['id'] as String;
+        final index = pageElements.indexWhere((elem) => elem['id'] == id);
+        if (index != -1) {
+          newState[id] = Map<String, dynamic>.from(pageElements[index] as Map<String, dynamic>);
+        } else {
+          newState[id] = Map<String, dynamic>.from(element);
+        }
+      }
+    }
 
     // 添加撤销操作
     final operation = _createCustomOperation(
       execute: () {
         // Apply the new state
         for (var entry in newState.entries) {
-          final index =
-              state.currentPageElements.indexWhere((e) => e['id'] == entry.key);
-          if (index != -1) {
-            state.currentPageElements[index]['x'] = entry.value['x'];
-            state.currentPageElements[index]['y'] = entry.value['y'];
-          }
+          _updateElementInCurrentPage(entry.key, {
+            'x': entry.value['x'],
+            'y': entry.value['y'],
+          });
         }
         notifyListeners();
       },
       undo: () {
         // Apply the old state
         for (var entry in oldState.entries) {
-          final index =
-              state.currentPageElements.indexWhere((e) => e['id'] == entry.key);
-          if (index != -1) {
-            state.currentPageElements[index]['x'] = entry.value['x'];
-            state.currentPageElements[index]['y'] = entry.value['y'];
-          }
+          _updateElementInCurrentPage(entry.key, {
+            'x': entry.value['x'],
+            'y': entry.value['y'],
+          });
         }
         notifyListeners();
       },
@@ -679,11 +708,15 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
   /// 更新元素位置（带吸附功能）
   void updateElementPositionWithSnap(String id, Offset delta) {
-    final elementIndex =
-        state.currentPageElements.indexWhere((e) => e['id'] == id);
+    if (state.currentPage == null || !state.currentPage!.containsKey('elements')) {
+      return;
+    }
+    
+    final elements = state.currentPage!['elements'] as List<dynamic>;
+    final elementIndex = elements.indexWhere((e) => e['id'] == id);
     if (elementIndex < 0) return;
 
-    final element = state.currentPageElements[elementIndex];
+    final element = elements[elementIndex] as Map<String, dynamic>;
 
     // 当前位置
     double x = (element['x'] as num).toDouble();
@@ -693,7 +726,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
     double newX = x + delta.dx;
     double newY = y + delta.dy;
 
-    // 更新元素位置（这里应该调用主控制器的方法）
+    // 更新元素位置
     _updateElementInCurrentPage(id, {'x': newX, 'y': newY});
   }
 
@@ -759,75 +792,26 @@ mixin ElementOperationsMixin on ChangeNotifier {
     );
   }
 
-  /// 在当前页面中更新元素
-  void _updateElementInCurrentPage(
-      String elementId, Map<String, dynamic> properties) {
-    debugPrint('【元素操作】_updateElementInCurrentPage: 开始更新元素');
-    if (state.currentPageIndex >= 0 &&
-        state.currentPageIndex < state.pages.length) {
-      final page = state.pages[state.currentPageIndex];
-      final elements = page['elements'] as List<dynamic>;
-      final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
-
-      if (elementIndex >= 0) {
-        final element = elements[elementIndex] as Map<String, dynamic>;
-
-        // 处理大小更新时的组合控件子元素调整
-        if (element['type'] == 'group' &&
-            (properties.containsKey('width') ||
-                properties.containsKey('height'))) {
-          final oldWidth = (element['width'] as num).toDouble();
-          final oldHeight = (element['height'] as num).toDouble();
-
-          // 更新元素属性
-          properties.forEach((key, value) {
-            element[key] = value;
-          });
-
-          // 获取新的尺寸
-          final newWidth = (element['width'] as num).toDouble();
-          final newHeight = (element['height'] as num).toDouble();
-
-          // 计算缩放比例
-          final scaleX = oldWidth > 0 ? newWidth / oldWidth : 1.0;
-          final scaleY = oldHeight > 0 ? newHeight / oldHeight : 1.0;
-
-          // 获取子元素列表
-          final content = element['content'] as Map<String, dynamic>;
-          final children = content['children'] as List<dynamic>;
-
-          // 更新每个子元素的位置和大小
-          for (int i = 0; i < children.length; i++) {
-            final child = children[i] as Map<String, dynamic>;
-
-            // 获取子元素的当前位置和大小
-            final childX = (child['x'] as num).toDouble();
-            final childY = (child['y'] as num).toDouble();
-            final childWidth = (child['width'] as num).toDouble();
-            final childHeight = (child['height'] as num).toDouble();
-
-            // 根据组合控件的变形调整子元素
-            child['x'] = childX * scaleX;
-            child['y'] = childY * scaleY;
-            child['width'] = childWidth * scaleX;
-            child['height'] = childHeight * scaleY;
-          }
-        } else {
-          // 普通元素，直接更新属性
-          properties.forEach((key, value) {
-            element[key] = value;
-          });
-        }
-
-        // 如果是当前选中的元素，更新selectedElement
-        if (state.selectedElementIds.contains(elementId)) {
-          state.selectedElement = element;
-        }
-
-        state.hasUnsavedChanges = true;
-        notifyListeners();
-        debugPrint('【元素操作】_updateElementInCurrentPage: 更新完成');
+  /// 辅助方法：正确更新当前页面中的元素
+  void _updateElementInCurrentPage(String elementId, Map<String, dynamic> properties) {
+    if (state.currentPage == null || !state.currentPage!.containsKey('elements')) {
+      return;
+    }
+    
+    final elements = state.currentPage!['elements'] as List<dynamic>;
+    final index = elements.indexWhere((e) => e['id'] == elementId);
+    if (index >= 0) {
+      final element = elements[index] as Map<String, dynamic>;
+      properties.forEach((key, value) {
+        element[key] = value;
+      });
+      
+      // 更新选中元素的状态
+      if (state.selectedElementIds.contains(elementId)) {
+        state.selectedElement = element;
       }
+      
+      state.hasUnsavedChanges = true;
     }
   }
 }

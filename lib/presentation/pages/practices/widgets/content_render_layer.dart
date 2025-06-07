@@ -212,10 +212,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     _cacheManager.cleanupCache();
 
     return RepaintBoundary(
-      child: Container(
+      child: SizedBox(
         width: pageSize.width,
         height: pageSize.height,
-        color: backgroundColor,
+        // 🔧 关键修复：移除背景色，让静态背景层透过来
+        // color: backgroundColor, // 背景色由静态背景层处理
         child: Stack(
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
@@ -243,9 +244,90 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 (element['opacity'] as num?)?.toDouble() ?? 1.0;
             final elementId = element['id'] as String;
 
+            // 🔧 获取图层透明度
+            double layerOpacity = 1.0;
+            bool isLayerLocked = false;
+            if (layerId != null && widget.layers != null) {
+              final layer = widget.layers!.firstWhere(
+                (l) => l['id'] == layerId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (layer.isNotEmpty) {
+                layerOpacity = (layer['opacity'] as num?)?.toDouble() ?? 1.0;
+                isLayerLocked = layer['isLocked'] as bool? ?? false;
+              }
+            }
+
+            // 🔧 合并元素和图层的透明度
+            final finalOpacity = elementOpacity * layerOpacity;
+
             // Skip rendering elements that are being drawn by the drag preview layer
             if (widget.renderController.shouldSkipElementRendering(elementId)) {
               return const SizedBox.shrink();
+            }
+
+            // 🔧 为锁定元素添加视觉指示
+            Widget elementWidget = _getOrCreateElementWidget(element);
+            
+            // 如果元素或图层被锁定，添加锁定标志
+            final isElementLocked = element['locked'] as bool? ?? false;
+            if (isElementLocked || isLayerLocked) {
+              List<Widget> lockIcons = [];
+              
+              // 元素锁定标志 - 使用实心锁图标
+              if (isElementLocked) {
+                lockIcons.add(
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 2),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: Colors.white, width: 0.5),
+                    ),
+                    child: const Icon(
+                      Icons.lock,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              }
+              
+              // 图层锁定标志 - 使用图层锁图标  
+              if (isLayerLocked) {
+                lockIcons.add(
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: Colors.white, width: 0.5),
+                    ),
+                    child: const Icon(
+                      Icons.layers,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              }
+              
+              elementWidget = Stack(
+                children: [
+                  elementWidget,
+                  // 锁定标志 - 在右上角垂直排列
+                  if (!isPreviewMode) // 预览模式下不显示锁定标志
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: lockIcons,
+                      ),
+                    ),
+                ],
+              );
             }
 
             return Positioned(
@@ -256,11 +338,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 child: Transform.rotate(
                   angle: elementRotation * 3.14159265359 / 180,
                   child: Opacity(
-                    opacity: isHidden && !isPreviewMode ? 0.5 : elementOpacity,
+                    opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
                     child: SizedBox(
                       width: elementWidth,
                       height: elementHeight,
-                      child: _getOrCreateElementWidget(element),
+                      child: elementWidget,
                     ),
                   ),
                 ),

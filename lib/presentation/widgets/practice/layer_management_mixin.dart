@@ -16,6 +16,10 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 添加图层
   void addLayer() {
     checkDisposed();
+    
+    // 确保有当前页面
+    if (state.currentPage == null) return;
+    
     final newLayer = {
       'id': 'layer_${uuid.v4()}',
       'name': '图层 ${state.layers.length + 1}',
@@ -28,15 +32,24 @@ mixin LayerManagementMixin on ChangeNotifier {
     final operation = AddLayerOperation(
       layer: newLayer,
       addLayer: (layer) {
-        state.layers.add(layer);
+        // 直接操作当前页面的图层列表
+        if (!state.currentPage!.containsKey('layers')) {
+          state.currentPage!['layers'] = <Map<String, dynamic>>[];
+        }
+        final layers = state.currentPage!['layers'] as List<dynamic>;
+        layers.add(layer);
         state.selectedLayerId ??= layer['id'] as String;
       },
       removeLayer: (layerId) {
-        state.layers.removeWhere((l) => l['id'] == layerId);
-        if (state.selectedLayerId == layerId) {
-          state.selectedLayerId = state.layers.isNotEmpty
-              ? state.layers.first['id'] as String
-              : null;
+        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+          final layers = state.currentPage!['layers'] as List<dynamic>;
+          layers.removeWhere((l) => l['id'] == layerId);
+          if (state.selectedLayerId == layerId) {
+            final currentLayers = state.layers;
+            state.selectedLayerId = currentLayers.isNotEmpty
+                ? currentLayers.first['id'] as String
+                : null;
+          }
         }
       },
     );
@@ -49,6 +62,15 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 添加新图层
   void addNewLayer() {
     checkDisposed();
+    
+    debugPrint('🆕 LayerManagementMixin: addNewLayer called');
+    
+    // 确保有当前页面
+    if (state.currentPage == null) {
+      debugPrint('  ❌ No current page');
+      return;
+    }
+    
     final layerName = '图层 ${state.layers.length + 1}';
     final newLayer = {
       'id': 'layer_${uuid.v4()}',
@@ -59,9 +81,24 @@ mixin LayerManagementMixin on ChangeNotifier {
       'blendMode': 'normal',
     };
 
-    state.layers.add(newLayer);
+    debugPrint('  - New layer: $newLayer');
+
+    // 直接操作当前页面的图层列表
+    if (!state.currentPage!.containsKey('layers')) {
+      state.currentPage!['layers'] = <Map<String, dynamic>>[];
+      debugPrint('  - Created new layers list');
+    }
+    final layers = state.currentPage!['layers'] as List<dynamic>;
+    layers.add(newLayer);
+    
+    debugPrint('  ✅ Layer added to page, total layers: ${layers.length}');
+    
     state.selectedLayerId = newLayer['id'] as String;
+    debugPrint('  - Selected layer ID: ${state.selectedLayerId}');
+    
     markUnsaved();
+    
+    debugPrint('🔚 LayerManagementMixin: addNewLayer completed');
     notifyListeners();
   }
 
@@ -97,10 +134,15 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 删除图层
   void deleteLayer(String layerId) {
     checkDisposed();
-    final layerIndex = state.layers.indexWhere((l) => l['id'] == layerId);
+    
+    // 确保有当前页面
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
+    
+    final layers = state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex == -1) return;
 
-    final deletedLayer = state.layers[layerIndex];
+    final deletedLayer = layers[layerIndex] as Map<String, dynamic>;
 
     // 获取该图层上的所有元素
     final elementsOnLayer = state.currentPageElements
@@ -112,24 +154,39 @@ mixin LayerManagementMixin on ChangeNotifier {
       layerIndex: layerIndex,
       elementsOnLayer: elementsOnLayer,
       insertLayer: (layer, index) {
-        state.layers.insert(index, layer);
+        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+          final currentLayers = state.currentPage!['layers'] as List<dynamic>;
+          currentLayers.insert(index, layer);
+        }
       },
       removeLayer: (id) {
-        state.layers.removeWhere((l) => l['id'] == id);
-        // 删除该图层上的所有元素
-        state.currentPageElements.removeWhere((e) => e['layerId'] == id);
-        if (state.selectedLayerId == id) {
-          if (state.layers.isNotEmpty) {
-            // 选择上一个图层，如果没有则选择第一个
-            final newIndex = (layerIndex - 1).clamp(0, state.layers.length - 1);
-            state.selectedLayerId = state.layers[newIndex]['id'] as String;
-          } else {
-            state.selectedLayerId = null;
+        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+          final currentLayers = state.currentPage!['layers'] as List<dynamic>;
+          currentLayers.removeWhere((l) => l['id'] == id);
+          
+          // 删除该图层上的所有元素
+          if (state.currentPage!.containsKey('elements')) {
+            final elements = state.currentPage!['elements'] as List<dynamic>;
+            elements.removeWhere((e) => e['layerId'] == id);
+          }
+          
+          if (state.selectedLayerId == id) {
+            final remainingLayers = state.layers;
+            if (remainingLayers.isNotEmpty) {
+              // 选择上一个图层，如果没有则选择第一个
+              final newIndex = (layerIndex - 1).clamp(0, remainingLayers.length - 1);
+              state.selectedLayerId = remainingLayers[newIndex]['id'] as String;
+            } else {
+              state.selectedLayerId = null;
+            }
           }
         }
       },
       addElements: (elements) {
-        state.currentPageElements.addAll(elements);
+        if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+          final pageElements = state.currentPage!['elements'] as List<dynamic>;
+          pageElements.addAll(elements);
+        }
       },
     );
 
@@ -247,18 +304,26 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 移动图层顺序
   void moveLayer(String layerId, int newIndex) {
     checkDisposed();
-    final currentIndex = state.layers.indexWhere((l) => l['id'] == layerId);
+    
+    // 确保有当前页面
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
+    
+    final layers = state.currentPage!['layers'] as List<dynamic>;
+    final currentIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (currentIndex == -1 || newIndex == currentIndex) return;
 
-    final layer = state.layers.removeAt(currentIndex);
-    state.layers.insert(newIndex.clamp(0, state.layers.length), layer);
+    final layer = layers.removeAt(currentIndex);
+    layers.insert(newIndex.clamp(0, layers.length), layer);
 
     final operation = ReorderLayerOperation(
       oldIndex: currentIndex,
       newIndex: newIndex,
       reorderLayer: (fromIndex, toIndex) {
-        final layer = state.layers.removeAt(fromIndex);
-        state.layers.insert(toIndex.clamp(0, state.layers.length), layer);
+        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+          final currentLayers = state.currentPage!['layers'] as List<dynamic>;
+          final layer = currentLayers.removeAt(fromIndex);
+          currentLayers.insert(toIndex.clamp(0, currentLayers.length), layer);
+        }
       },
     );
 
@@ -345,7 +410,12 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 选择图层
   void selectLayer(String layerId) {
     checkDisposed();
-    if (state.layers.any((l) => l['id'] == layerId)) {
+    
+    // 确保有当前页面
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
+    
+    final layers = state.currentPage!['layers'] as List<dynamic>;
+    if (layers.any((l) => l['id'] == layerId)) {
       state.selectedLayerId = layerId;
       notifyListeners();
     }
@@ -454,11 +524,29 @@ mixin LayerManagementMixin on ChangeNotifier {
   /// 更新图层属性
   void updateLayerProperties(String layerId, Map<String, dynamic> properties) {
     checkDisposed();
-    final layerIndex = state.layers.indexWhere((l) => l['id'] == layerId);
-    if (layerIndex == -1) return;
+    
+    debugPrint('🔧 LayerManagementMixin: updateLayerProperties called');
+    debugPrint('  - layerId: $layerId');
+    debugPrint('  - properties: $properties');
+    
+    // 确保有当前页面
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
+      debugPrint('  ❌ No current page or layers');
+      return;
+    }
+    
+    final layers = state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
+    if (layerIndex == -1) {
+      debugPrint('  ❌ Layer not found with id: $layerId');
+      return;
+    }
 
     final oldProperties = <String, dynamic>{};
-    final layer = state.layers[layerIndex];
+    final layer = layers[layerIndex] as Map<String, dynamic>;
+    
+    debugPrint('  - Layer found at index: $layerIndex');
+    debugPrint('  - Current layer data: $layer');
 
     // 保存旧值
     for (final key in properties.keys) {
@@ -466,23 +554,51 @@ mixin LayerManagementMixin on ChangeNotifier {
         oldProperties[key] = layer[key];
       }
     }
+    
+    debugPrint('  - Old properties: $oldProperties');
 
     final operation = UpdateLayerPropertyOperation(
       layerId: layerId,
       oldProperties: oldProperties,
       newProperties: properties,
       updateLayer: (id, props) {
-        final index = state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          props.forEach((key, value) {
-            state.layers[index][key] = value;
-          });
+        debugPrint('🔄 Executing layer property update');
+        debugPrint('  - layerId: $id');
+        debugPrint('  - props: $props');
+        
+        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+          final currentLayers = state.currentPage!['layers'] as List<dynamic>;
+          final index = currentLayers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            final targetLayer = currentLayers[index] as Map<String, dynamic>;
+            debugPrint('  - Updating layer at index $index: $targetLayer');
+            
+            props.forEach((key, value) {
+              final oldValue = targetLayer[key];
+              targetLayer[key] = value;
+              debugPrint('    ✅ Updated $key: $oldValue -> $value');
+            });
+            
+            debugPrint('  - Layer after update: $targetLayer');
+            state.hasUnsavedChanges = true;
+          } else {
+            debugPrint('  ❌ Layer not found during update with id: $id');
+          }
+        } else {
+          debugPrint('  ❌ No current page during update');
         }
       },
     );
 
+    // 立即执行操作
+    debugPrint('🚀 Executing layer update operation immediately');
+    operation.execute();
+    
+    // 然后添加到撤销管理器
     undoRedoManager.addOperation(operation);
     markUnsaved();
+    
+    debugPrint('🔚 LayerManagementMixin: updateLayerProperties completed');
     notifyListeners();
   }
 

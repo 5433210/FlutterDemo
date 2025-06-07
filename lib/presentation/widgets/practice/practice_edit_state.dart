@@ -25,7 +25,7 @@ class PracticeEditState {
   bool gridVisible = false;
   bool snapEnabled = false;
 
-  double gridSize = 20.0;
+  double gridSize = 10.0;  // 🔧 更密集的网格，更适合精确设计
   // 状态标志
   bool hasUnsavedChanges = false;
   bool isPreviewMode = false;

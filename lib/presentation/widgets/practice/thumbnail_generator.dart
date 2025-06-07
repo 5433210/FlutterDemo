@@ -54,6 +54,7 @@ class ThumbnailGenerator {
         // 检查元素所在图层的隐藏状态
         final layerId = element['layerId'] as String?;
         bool isLayerHidden = false;
+        double layerOpacity = 1.0;
         if (layerId != null && page.containsKey('layers')) {
           final layers = page['layers'] as List<dynamic>;
           final layer = layers.firstWhere(
@@ -61,6 +62,7 @@ class ThumbnailGenerator {
             orElse: () => <String, dynamic>{},
           );
           isLayerHidden = layer['isVisible'] == false;
+          layerOpacity = (layer['opacity'] as num?)?.toDouble() ?? 1.0;
         }
         if (isLayerHidden) continue;
 
@@ -73,13 +75,16 @@ class ThumbnailGenerator {
         final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
         final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
 
+        // 🔧 合并元素和图层的透明度
+        final finalOpacity = opacity * layerOpacity;
+
         // 保存画布状态
         canvas.save();
 
         // 应用透明度
         canvas.saveLayer(
           Rect.fromLTWH(x, y, elementWidth, elementHeight),
-          Paint()..color = Colors.white.withAlpha((opacity * 255).toInt()),
+          Paint()..color = Colors.white.withAlpha((finalOpacity * 255).toInt()),
         );
 
         // 应用旋转

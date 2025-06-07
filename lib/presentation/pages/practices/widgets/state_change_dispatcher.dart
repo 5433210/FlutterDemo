@@ -244,6 +244,9 @@ class StateChangeDispatcher {
       case StateChangeType.pageChange:
         _processPageChangeEvents(events);
         break;
+      case StateChangeType.gridSettingsChange:
+        _processGridSettingsChangeEvents(events);
+        break;
     }
   }
 
@@ -314,6 +317,20 @@ class StateChangeDispatcher {
     debugPrint('📤 StateChangeDispatcher: 处理视口变化事件');
   }
 
+  /// 处理网格设置变化事件
+  void _processGridSettingsChangeEvents(List<StateChangeEvent> events) {
+    final latestEvent = events.last;
+
+    _structureListener.dispatchToLayer(
+      RenderLayerType.staticBackground,
+      GridSettingsChangeEvent(
+        gridSize: latestEvent.data['gridSize'] ?? 20.0,
+        visible: latestEvent.data['gridVisible'] ?? true,
+        timestamp: DateTime.now(),
+      ),
+    );
+  }
+
   /// 安排批处理
   void _scheduleBatchProcessing() {
     if (_batchTimer != null || _processingBatch) {
@@ -350,4 +367,5 @@ enum StateChangeType {
   viewportChange,
   layerVisibilityChange,
   pageChange,
+  gridSettingsChange,
 }

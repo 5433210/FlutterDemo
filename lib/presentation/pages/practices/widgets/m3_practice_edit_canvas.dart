@@ -317,16 +317,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     });
   }
 
-
-
-  /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
+  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
   void _applyGridSnapToSelectedElements() {
     // 只有在启用了网格吸附的情况下才进行网格吸附
     if (!widget.controller.state.snapEnabled) {
+      debugPrint('🎯 网格吸附未启用，跳过');
       return;
     }
 
     final gridSize = widget.controller.state.gridSize;
+    final selectedCount = widget.controller.state.selectedElementIds.length;
+    debugPrint('🎯 开始应用网格吸附，网格大小: $gridSize, 选中元素数: $selectedCount');
 
     // 处理所有选中元素
     for (final elementId in widget.controller.state.selectedElementIds) {
@@ -335,15 +336,22 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         orElse: () => <String, dynamic>{},
       );
 
-      if (element.isEmpty) continue;
+      if (element.isEmpty) {
+        debugPrint('🎯 元素 $elementId 不存在，跳过');
+        continue;
+      }
 
       // 跳过锁定的元素
       final isLocked = element['locked'] as bool? ?? false;
-      if (isLocked) continue;
+      if (isLocked) {
+        debugPrint('🎯 元素 $elementId 已锁定，跳过吸附');
+        continue;
+      }
 
       // 跳过锁定图层上的元素
       final layerId = element['layerId'] as String?;
       if (layerId != null && widget.controller.state.isLayerLocked(layerId)) {
+        debugPrint('🎯 元素 $elementId 在锁定图层 $layerId 上，跳过吸附');
         continue;
       }
 
@@ -357,6 +365,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
       // 如果位置有变化，更新元素属性
       if (snappedX != x || snappedY != y) {
+        debugPrint('🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)');
+        
         AppLogger.debug(
           '网格吸附',
           tag: 'Canvas',
@@ -371,11 +381,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           'x': snappedX,
           'y': snappedY,
         });
+      } else {
+        debugPrint('🎯 元素 $elementId 位置 ($x, $y) 已在网格线上，无需吸附');
       }
     }
+    
+    debugPrint('🎯 网格吸附完成');
   }
-
-
 
   /// Build widget for specific layer type
   Widget _buildLayerWidget(RenderLayerType layerType, LayerConfig config) {
@@ -685,13 +697,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                               RepaintBoundary(
                                 key:
                                     _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-                                child: _layerRenderManager.buildLayerStack(
-                                  layerOrder: [
-                                    RenderLayerType.staticBackground,
-                                    RenderLayerType.content,
-                                    RenderLayerType.dragPreview,
-                                    RenderLayerType.interaction,
-                                  ],
+                                child: Builder(
+                                  builder: (context) {
+                                    debugPrint('🎨 正在构建LayerRenderManager层级结构');
+                                    debugPrint('🎨 当前网格状态: ${widget.controller.state.gridVisible}');
+                                    final layerStack = _layerRenderManager.buildLayerStack(
+                                      layerOrder: [
+                                        RenderLayerType.staticBackground,
+                                        RenderLayerType.content,
+                                        RenderLayerType.dragPreview,
+                                        RenderLayerType.interaction,
+                                      ],
+                                    );
+                                    debugPrint('🎨 LayerRenderManager构建完成');
+                                    return layerStack;
+                                  },
                                 ),
                               ),
                             ],
@@ -841,12 +861,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       ],
     );
   }
-
-
-
-  // 计算方法已移至 CanvasControlPointHandlersMixin
-  // 创建元素的方法已移动到 CanvasElementCreators mixin
-  // 创建撤销操作方法已移至 CanvasControlPointHandlersMixin
 
   /// 🔧 调试方法：检查当前状态，帮助诊断画布平移问题
   void _debugCanvasState(String context) {
@@ -1066,8 +1080,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _elementStartPosition = elementPosition;
     });
 
-    // 处理元素平移后的网格吸附
-    _applyGridSnapToSelectedElements();
+    // 🔧 拖拽开始时不需要立即应用网格吸附
+    debugPrint('🎯 拖拽开始，网格吸附状态: ${widget.controller.state.snapEnabled}');
   }
 
   /// 处理拖拽更新 - 使用 mixin 方法
@@ -1088,7 +1102,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _isDragging = false;
     });
 
-    // 处理元素平移后的网格吸附
+    // 🔧 拖拽结束时应用网格吸附
+    debugPrint('🎯 拖拽结束，开始应用网格吸附，吸附状态: ${widget.controller.state.snapEnabled}');
     _applyGridSnapToSelectedElements();
   }
 

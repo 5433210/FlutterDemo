@@ -243,6 +243,7 @@ class _M3LayerPropertyPanelContentState
                 value: isVisible,
                 activeColor: colorScheme.primary,
                 onChanged: (value) {
+                  debugPrint('🎨 Layer visibility changed: $value');
                   widget.onLayerPropertiesChanged({'isVisible': value});
                 },
                 secondary: Icon(
@@ -274,6 +275,7 @@ class _M3LayerPropertyPanelContentState
                 value: isLocked,
                 activeColor: colorScheme.primary,
                 onChanged: (value) {
+                  debugPrint('🎨 Layer locked changed: $value');
                   widget.onLayerPropertiesChanged({'isLocked': value});
                 },
                 secondary: Icon(
@@ -318,6 +320,7 @@ class _M3LayerPropertyPanelContentState
                             activeColor: colorScheme.primary,
                             thumbColor: colorScheme.primary,
                             onChanged: (value) {
+                              debugPrint('🎨 Layer opacity changed: $value');
                               widget
                                   .onLayerPropertiesChanged({'opacity': value});
                             },
@@ -550,10 +553,14 @@ class _M3LayerPropertyPanelContentState
   // 应用图层名称更改
   void _applyNameChange() {
     final newName = _nameController.text.trim();
+    debugPrint('🎨 Layer name change: "$newName"');
+    
     if (newName.isNotEmpty) {
+      debugPrint('  ✅ Applying name change');
       widget.onLayerPropertiesChanged({'name': newName});
     } else {
       // 如果名称为空，恢复原来的名称
+      debugPrint('  ❌ Name is empty, reverting');
       _nameController.text = widget.layer['name'] as String? ?? 'Layer 1';
     }
     setState(() {

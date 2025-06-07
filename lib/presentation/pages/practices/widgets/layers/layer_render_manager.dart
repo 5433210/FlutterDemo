@@ -121,6 +121,8 @@ class LayerRenderManager {
 
   /// Get layer widget
   Widget? getLayerWidget(RenderLayerType type) {
+    debugPrint('🎨 LayerRenderManager: 请求构建层级 $type');
+    
     final config = _layerConfigs[type];
     final builder = _layerBuilders[type];
 
@@ -130,10 +132,15 @@ class LayerRenderManager {
     }
 
     if (!config.shouldRender) {
+      debugPrint('🎨 LayerRenderManager: 层级 $type 不应该渲染 (shouldRender=false)');
       return const SizedBox.shrink();
     }
 
-    return builder(config);
+    debugPrint('🎨 LayerRenderManager: 调用层级 $type 的builder');
+    final widget = builder(config);
+    debugPrint('🎨 LayerRenderManager: 层级 $type 的widget已构建: ${widget.runtimeType}');
+    
+    return widget;
   }
 
   /// Get performance summary for all layers

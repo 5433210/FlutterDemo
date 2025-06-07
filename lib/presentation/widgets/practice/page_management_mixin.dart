@@ -285,6 +285,12 @@ mixin PageManagementMixin on ChangeNotifier {
   /// 设置页面背景颜色
   void setPageBackgroundColor(String color) {
     updatePageProperties({
+      'background': {
+        'type': 'color',
+        'value': color,
+        'opacity': 1.0,
+      },
+      // 保持向后兼容
       'backgroundType': 'color',
       'backgroundColor': color,
       'backgroundImage': null,
@@ -347,10 +353,18 @@ mixin PageManagementMixin on ChangeNotifier {
   /// 更新页面属性
   void updatePageProperties(Map<String, dynamic> properties) {
     checkDisposed();
+    
+    debugPrint('🔧 PageManagementMixin.updatePageProperties: 开始更新页面属性');
+    debugPrint('  - 当前页面索引: ${state.currentPageIndex}');
+    debugPrint('  - 页面总数: ${state.pages.length}');
+    debugPrint('  - 更新属性: $properties');
+    
     if (state.currentPageIndex >= 0 &&
         state.currentPageIndex < state.pages.length) {
       final currentPage = state.pages[state.currentPageIndex];
       final oldProperties = <String, dynamic>{};
+
+      debugPrint('  - 更新前页面数据: $currentPage');
 
       // 保存旧值
       for (final key in properties.keys) {
@@ -359,10 +373,21 @@ mixin PageManagementMixin on ChangeNotifier {
         }
       }
 
+      debugPrint('  - 旧属性: $oldProperties');
+
       // 应用新值
       properties.forEach((key, value) {
         currentPage[key] = value;
+        debugPrint('    ✅ 设置 $key = $value');
       });
+
+      debugPrint('  - 更新后页面数据: $currentPage');
+      
+      // 特别检查背景数据
+      if (properties.containsKey('background')) {
+        final background = currentPage['background'];
+        debugPrint('  🎨 背景数据检查: $background');
+      }
 
       final operation = UpdatePagePropertyOperation(
         pageIndex: state.currentPageIndex,
@@ -379,7 +404,11 @@ mixin PageManagementMixin on ChangeNotifier {
 
       undoRedoManager.addOperation(operation);
       markUnsaved();
+      
+      debugPrint('🔧 PageManagementMixin.updatePageProperties: 更新完成，触发 notifyListeners');
       notifyListeners();
+    } else {
+      debugPrint('  ❌ 页面索引无效，跳过更新');
     }
   }
 }

@@ -759,6 +759,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               controller: _controller,
               layer: layer,
               onLayerPropertiesChanged: (properties) {
+                debugPrint('🏗️ Page: Layer properties changed: $properties');
                 // Update layer properties
                 _controller.updateLayerProperties(layerId, properties);
               },
@@ -2803,9 +2804,22 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Toggle grid visibility
   void _toggleGrid() {
-    setState(() {
-      _controller.state.gridVisible = !_controller.state.gridVisible;
-    });
+    final oldValue = _controller.state.gridVisible;
+    _controller.state.gridVisible = !_controller.state.gridVisible;
+    
+    debugPrint('🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}');
+    debugPrint('🎨 网格大小: ${_controller.state.gridSize}');
+    debugPrint('🎨 当前页面: ${_controller.state.currentPage != null ? "存在" : "null"}');
+    
+    // 🔧 触发网格设置变化事件，确保staticBackground层更新
+    debugPrint('🎨 调用 triggerGridSettingsChange()');
+    _controller.triggerGridSettingsChange();
+    
+    // 强制重建UI
+    debugPrint('🎨 调用 setState() 强制重建UI');
+    setState(() {});
+    
+    debugPrint('🎨 网格切换完成');
   }
 
   /// Toggle lock state of selected elements
@@ -2824,9 +2838,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Toggle snap to grid
   void _toggleSnap() {
-    setState(() {
-      _controller.state.snapEnabled = !_controller.state.snapEnabled;
-    });
+    final oldValue = _controller.state.snapEnabled;
+    _controller.state.snapEnabled = !_controller.state.snapEnabled;
+    
+    // 🔧 触发网格设置变化事件，确保状态同步
+    _controller.triggerGridSettingsChange();
+    
+    debugPrint('🎯 网格吸附切换: $oldValue → ${_controller.state.snapEnabled}');
+    debugPrint('🎯 网格大小: ${_controller.state.gridSize}');
+    
+    // 强制更新UI
+    setState(() {});
   }
 
   /// Ungroup elements

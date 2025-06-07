@@ -44,29 +44,112 @@ mixin CanvasLayerBuilders {
 
   /// 构建背景层（网格、页面背景）
   Widget buildBackgroundLayer(LayerConfig config) {
-    final currentPage = controller.state.currentPage;
-    if (currentPage == null) return const SizedBox.shrink();
+    // 🔧 关键修复：使用ListenableBuilder监听控制器状态变化
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        final currentPage = controller.state.currentPage;
+        if (currentPage == null) return const SizedBox.shrink();
 
-    AppLogger.debug(
-      '构建背景层',
-      tag: 'Canvas',
-      data: {'hasGrid': controller.state.gridVisible},
-    );
+        AppLogger.debug(
+          '构建背景层',
+          tag: 'Canvas',
+          data: {'hasGrid': controller.state.gridVisible},
+        );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(currentPage['backgroundColor'] as int? ?? Colors.white.value),
-      ),
-      child: controller.state.gridVisible
-          ? CustomPaint(
-              painter: CanvasGridPainter(
-                gridSize: controller.state.gridSize,
-                gridColor: Theme.of(context).colorScheme.outline.withValues(alpha: .3),
-              ),
-              child: Container(),
-            )
-          : null,
+        // 🔧 正确解析页面背景颜色
+        Color backgroundColor = Colors.white;
+        try {
+          final background = currentPage['background'] as Map<String, dynamic>?;
+          debugPrint('🎨 背景层构建 - background数据: $background');
+          
+          if (background != null && background['type'] == 'color') {
+            final colorStr = background['value'] as String? ?? '#FFFFFF';
+            debugPrint('🎨 背景层构建 - 颜色字符串: $colorStr');
+            
+            // 解析颜色字符串
+            if (colorStr.startsWith('#')) {
+              final hex = colorStr.substring(1);
+              if (hex.length == 6) {
+                backgroundColor = Color(int.parse('FF$hex', radix: 16));
+                debugPrint('🎨 背景层构建 - 解析6位颜色: $backgroundColor');
+              } else if (hex.length == 8) {
+                backgroundColor = Color(int.parse(hex, radix: 16));
+                debugPrint('🎨 背景层构建 - 解析8位颜色: $backgroundColor');
+              }
+            }
+          } else {
+            debugPrint('🎨 背景层构建 - 没有背景数据或类型不是color，使用默认白色');
+          }
+        } catch (e) {
+          debugPrint('🎨 背景色解析失败: $e, 使用默认白色');
+          backgroundColor = Colors.white;
+        }
+
+        debugPrint('🎨 背景层构建 - 最终背景色: $backgroundColor');
+        debugPrint('🎨 背景层构建 - 网格显示状态: ${controller.state.gridVisible}');
+        debugPrint('🎨 背景层构建 - 网格大小: ${controller.state.gridSize}');
+
+        // 🔧 修复网格渲染 - 始终渲染容器，网格根据状态显示
+        Widget childWidget;
+        if (controller.state.gridVisible) {
+          final gridColor = _getGridColor(backgroundColor, context);
+          debugPrint('🎨 背景层构建 - 创建CustomPaint，网格颜色: $gridColor');
+          
+          // 🔧 关键修复：使用明确的尺寸而不是Size.infinite
+          final currentPage = controller.state.currentPage;
+          final pageSize = currentPage != null ? ElementUtils.calculatePixelSize(currentPage) : const Size(800, 600);
+          
+          // 🔧 先创建painter并调试
+          final gridPainter = CanvasGridPainter(
+            gridSize: controller.state.gridSize,
+            gridColor: gridColor,
+          );
+          debugPrint('🎨 背景层构建 - GridPainter已创建: $gridPainter');
+          
+          childWidget = SizedBox(
+            width: pageSize.width,
+            height: pageSize.height,
+            child: CustomPaint(
+              painter: gridPainter,
+              size: pageSize,
+            ),
+          );
+          debugPrint('🎨 背景层构建 - CustomPaint已创建，明确尺寸: ${pageSize.width}x${pageSize.height}');
+        } else {
+          debugPrint('🎨 背景层构建 - 网格关闭，使用SizedBox.expand');
+          childWidget = const SizedBox.expand();
+        }
+
+        final container = Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+          ),
+          child: childWidget,
+        );
+        
+        return container;
+      },
     );
+  }
+
+  /// 计算适合背景色的网格颜色
+  Color _getGridColor(Color backgroundColor, BuildContext context) {
+    // 计算背景亮度
+    final brightness = backgroundColor.computeLuminance();
+    
+    // 根据背景亮度选择对比度合适的网格颜色
+    Color gridColor;
+    if (brightness > 0.5) {
+      // 亮色背景使用优雅的灰色网格
+      gridColor = const Color(0xFF90A4AE).withValues(alpha: 0.4);  // 蓝灰色，更优雅
+    } else {
+      // 深色背景使用淡白色网格
+      gridColor = Colors.white.withValues(alpha: 0.25);  // 降低透明度，更柔和
+    }
+    
+    debugPrint('🎨 网格颜色计算: 背景亮度=$brightness, 网格颜色=$gridColor');
+    return gridColor;
   }
 
   /// 构建内容层（元素渲染）

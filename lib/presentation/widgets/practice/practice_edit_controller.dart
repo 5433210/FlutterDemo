@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
+import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
 import 'element_operations_mixin.dart';
@@ -190,6 +191,31 @@ class PracticeEditController extends ChangeNotifier
       throw StateError(
           'A PracticeEditController was used after being disposed.');
     }
+  }
+
+  /// 触发网格设置变化事件
+  void triggerGridSettingsChange() {
+    debugPrint('🎨 triggerGridSettingsChange() 被调用');
+    debugPrint('🎨 stateDispatcher是否存在: ${stateDispatcher != null}');
+    
+    // 如果有状态分发器，触发网格设置变化事件
+    if (stateDispatcher != null) {
+      debugPrint('🎨 使用StateDispatcher分发网格设置变化事件');
+      stateDispatcher!.dispatch(StateChangeEvent(
+        type: StateChangeType.gridSettingsChange, 
+        data: {
+          'gridVisible': _state.gridVisible,
+          'gridSize': _state.gridSize,
+          'snapEnabled': _state.snapEnabled,
+        },
+      ));
+      debugPrint('🎨 StateDispatcher事件分发完成');
+    } else {
+      // 回退到直接通知监听器
+      debugPrint('🎨 StateDispatcher不存在，使用notifyListeners()');
+      notifyListeners();
+    }
+    debugPrint('🎨 triggerGridSettingsChange() 执行完毕');
   }
 
   /// 初始化默认数据

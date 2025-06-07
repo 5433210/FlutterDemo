@@ -39,18 +39,14 @@ class CanvasGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    
     final paint = Paint()
       ..color = gridColor
-      ..strokeWidth = 0.5;
-
-    AppLogger.debug(
-      '绘制网格',
-      tag: 'Canvas',
-      data: {
-        'gridSize': gridSize,
-        'canvasSize': '${size.width}x${size.height}',
-      },
-    );
+      ..strokeWidth = 0.8  // 🔧 更细更优雅的线条
+      ..style = PaintingStyle.stroke;
 
     // Draw vertical lines
     for (double x = 0; x <= size.width; x += gridSize) {

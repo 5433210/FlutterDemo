@@ -558,18 +558,29 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
 
   /// 获取背景颜色
   Color _getBackgroundColor() {
-    if (widget.page == null) return Colors.white;
+    if (widget.page == null) {
+      debugPrint('🎨 _getBackgroundColor: 页面为空，返回白色');
+      return Colors.white;
+    }
+
+    debugPrint('🎨 _getBackgroundColor: 当前页面数据: ${widget.page}');
 
     // 使用新格式
     if (widget.page!.containsKey('background') &&
         (widget.page!['background'] as Map<String, dynamic>)
             .containsKey('value')) {
-      final colorStr = (widget.page!['background']
-          as Map<String, dynamic>)['value'] as String;
-      return Color(int.parse(colorStr.substring(1), radix: 16) | 0xFF000000);
+      final background = widget.page!['background'] as Map<String, dynamic>;
+      final colorStr = background['value'] as String;
+      debugPrint('🎨 _getBackgroundColor: 解析颜色字符串: $colorStr');
+      
+      final color = Color(int.parse(colorStr.substring(1), radix: 16) | 0xFF000000);
+      debugPrint('🎨 _getBackgroundColor: 解析后的颜色: $color');
+      
+      return color;
     }
 
     // 默认白色
+    debugPrint('🎨 _getBackgroundColor: 没有背景数据，返回默认白色');
     return Colors.white;
   }
 
@@ -664,13 +675,17 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
 
   /// 更新背景颜色
   void _updateBackgroundColor(Color color) {
+    // 🔧 修复：使用正确的RGB属性（0-255整数）
     final colorHex =
-        '#${color.r.toInt().toRadixString(16).padLeft(2, '0')}${color.g.toInt().toRadixString(16).padLeft(2, '0')}${color.b.toInt().toRadixString(16).padLeft(2, '0')}${color.a.toInt().toRadixString(16).padLeft(2, '0')}';
+        '#${color.red.toRadixString(16).padLeft(2, '0')}${color.green.toRadixString(16).padLeft(2, '0')}${color.blue.toRadixString(16).padLeft(2, '0')}';
+
+    debugPrint('🎨 更新页面背景颜色: 输入=$color, 输出=$colorHex');
 
     // 使用新格式
     final background = {
       'type': 'color',
       'value': colorHex,
+      'opacity': 1.0,
     };
 
     widget.onPagePropertiesChanged({'background': background});

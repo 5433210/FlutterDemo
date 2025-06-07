@@ -177,21 +177,22 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
       final isLocked = layer['isLocked'] as bool? ?? false;
 
       // 显示图层状态图标
-      Widget icon = const SizedBox(width: 0);
+      List<Widget> icons = [];
       if (!isVisible) {
-        icon = Icon(Icons.visibility_off,
-            size: 16.0, color: colorScheme.onSurfaceVariant);
-      } else if (isLocked) {
-        icon = Icon(Icons.lock, size: 16.0, color: colorScheme.tertiary);
+        icons.add(Icon(Icons.visibility_off,
+            size: 16.0, color: colorScheme.onSurfaceVariant));
+      }
+      if (isLocked) {
+        icons.add(Icon(Icons.lock, size: 16.0, color: colorScheme.tertiary));
       }
 
       return DropdownMenuItem<String>(
         value: layerId,
         child: Row(
           children: [
-            Text(layerName),
+            Expanded(child: Text(layerName)),
             const SizedBox(width: 4.0),
-            icon,
+            ...icons,
           ],
         ),
       );

@@ -444,6 +444,9 @@ mixin ElementManagementMixin on ChangeNotifier {
     final elementIndex = elements.indexWhere((e) => e['id'] == id);
 
     if (elementIndex >= 0) {
+      // 🔧 清除图层选择，确保显示元素属性面板
+      state.selectedLayerId = null;
+      
       if (isMultiSelect) {
         // 多选模式 - 切换选择状态
         if (state.selectedElementIds.contains(id)) {
@@ -671,9 +674,10 @@ mixin ElementManagementMixin on ChangeNotifier {
             debugPrint(
                 '🚀 ElementManagement: Element added to page. Total elements now: ${elements.length}');
 
-            // 选中新添加的元素
+            // 选中新添加的元素并清除图层选择
             state.selectedElementIds = [e['id'] as String];
             state.selectedElement = e;
+            state.selectedLayerId = null; // 🔧 清除图层选择，确保显示元素属性
             state.hasUnsavedChanges = true;
 
             debugPrint(

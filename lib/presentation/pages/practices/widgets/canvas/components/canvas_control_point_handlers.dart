@@ -222,24 +222,27 @@ mixin CanvasControlPointHandlers {
         final resizeResult = calculateResizeFromFreeControlPoints(elementId, controlPointIndex);
 
         if (resizeResult != null) {
-          // 应用resize变化
-          element['x'] = resizeResult['x'];
-          element['y'] = resizeResult['y'];
-          element['width'] = resizeResult['width'];
-          element['height'] = resizeResult['height'];
+          // 🔧 在Commit阶段应用网格吸附
+          final finalResult = calculateFinalElementProperties(resizeResult);
+          
+          // 应用resize变化（使用吸附后的最终结果）
+          element['x'] = finalResult['x']!;
+          element['y'] = finalResult['y']!;
+          element['width'] = finalResult['width']!;
+          element['height'] = finalResult['height']!;
 
           AppLogger.debug(
             '应用调整大小变换',
             tag: 'Canvas',
-            data: resizeResult,
+            data: finalResult,
           );
 
           // 更新Controller中的元素属性
           controller.updateElementProperties(elementId, {
-            'x': resizeResult['x']!,
-            'y': resizeResult['y']!,
-            'width': resizeResult['width']!,
-            'height': resizeResult['height']!,
+            'x': finalResult['x']!,
+            'y': finalResult['y']!,
+            'width': finalResult['width']!,
+            'height': finalResult['height']!,
           });
         }
 
@@ -343,14 +346,19 @@ mixin CanvasControlPointHandlers {
       return;
     }
 
-    // 构建控制点主导的完整元素预览属性
+    // 🔧 在主导架构中应用网格吸附
+    final snappedFinalState = controller.state.snapEnabled 
+        ? applyGridSnapToProperties(finalState)
+        : finalState;
+
+    // 构建控制点主导的完整元素预览属性（使用吸附后的状态）
     final controlPointDrivenProperties = Map<String, dynamic>.from(originalElement);
     controlPointDrivenProperties.addAll({
-      'x': finalState['x'] ?? originalElement['x'],
-      'y': finalState['y'] ?? originalElement['y'],
-      'width': finalState['width'] ?? originalElement['width'],
-      'height': finalState['height'] ?? originalElement['height'],
-      'rotation': finalState['rotation'] ?? originalElement['rotation'],
+      'x': snappedFinalState['x'] ?? originalElement['x'],
+      'y': snappedFinalState['y'] ?? originalElement['y'],
+      'width': snappedFinalState['width'] ?? originalElement['width'],
+      'height': snappedFinalState['height'] ?? originalElement['height'],
+      'rotation': snappedFinalState['rotation'] ?? originalElement['rotation'],
     });
 
     AppLogger.debug(
@@ -368,8 +376,8 @@ mixin CanvasControlPointHandlers {
 
       // 启动拖拽系统以支持预览
       final elementPosition = Offset(
-          (finalState['x'] ?? originalElement['x'] as num).toDouble(),
-          (finalState['y'] ?? originalElement['y'] as num).toDouble());
+          (snappedFinalState['x'] ?? originalElement['x'] as num).toDouble(),
+          (snappedFinalState['y'] ?? originalElement['y'] as num).toDouble());
 
       dragStateManager.startDrag(
         elementIds: {elementId},
@@ -382,8 +390,8 @@ mixin CanvasControlPointHandlers {
       dragStateManager.updateElementPreviewProperties(elementId, controlPointDrivenProperties);
     }
 
-    // 保存最终状态，供Commit阶段使用
-    _freeControlPointsFinalState = finalState;
+    // 保存最终状态，供Commit阶段使用（使用吸附后的状态）
+    _freeControlPointsFinalState = snappedFinalState;
 
     AppLogger.info('控制点主导架构处理完成', tag: 'Canvas');
   }
@@ -406,14 +414,19 @@ mixin CanvasControlPointHandlers {
       return;
     }
 
-    // 构建Live阶段的预览属性
+    // 🔧 在Live阶段应用网格吸附
+    final snappedLiveState = controller.state.snapEnabled 
+        ? applyGridSnapToProperties(liveState)
+        : liveState;
+
+    // 构建Live阶段的预览属性（使用吸附后的状态）
     final livePreviewProperties = Map<String, dynamic>.from(originalElement);
     livePreviewProperties.addAll({
-      'x': liveState['x'] ?? originalElement['x'],
-      'y': liveState['y'] ?? originalElement['y'],
-      'width': liveState['width'] ?? originalElement['width'],
-      'height': liveState['height'] ?? originalElement['height'],
-      'rotation': liveState['rotation'] ?? originalElement['rotation'],
+      'x': snappedLiveState['x'] ?? originalElement['x'],
+      'y': snappedLiveState['y'] ?? originalElement['y'],
+      'width': snappedLiveState['width'] ?? originalElement['width'],
+      'height': snappedLiveState['height'] ?? originalElement['height'],
+      'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
     });
 
     // 实时更新DragStateManager，让DragPreviewLayer跟随控制点
@@ -425,22 +438,51 @@ mixin CanvasControlPointHandlers {
 
   /// 应用网格吸附到属性
   Map<String, double> applyGridSnapToProperties(Map<String, double> properties) {
+    if (!controller.state.snapEnabled) {
+      debugPrint('🎯 网格吸附未启用，跳过属性吸附');
+      return properties;
+    }
+
     final gridSize = controller.state.gridSize;
     final snappedProperties = <String, double>{};
+    
+    debugPrint('🎯 开始应用网格吸附 - 网格大小: $gridSize');
+    debugPrint('🎯 原始属性: $properties');
 
     if (properties.containsKey('x')) {
-      snappedProperties['x'] = (properties['x']! / gridSize).round() * gridSize;
+      final originalX = properties['x']!;
+      final snappedX = (originalX / gridSize).round() * gridSize;
+      snappedProperties['x'] = snappedX;
+      if (originalX != snappedX) {
+        debugPrint('🎯 位置X吸附: $originalX → $snappedX');
+      }
     }
     if (properties.containsKey('y')) {
-      snappedProperties['y'] = (properties['y']! / gridSize).round() * gridSize;
+      final originalY = properties['y']!;
+      final snappedY = (originalY / gridSize).round() * gridSize;
+      snappedProperties['y'] = snappedY;
+      if (originalY != snappedY) {
+        debugPrint('🎯 位置Y吸附: $originalY → $snappedY');
+      }
     }
     if (properties.containsKey('width')) {
-      snappedProperties['width'] = (properties['width']! / gridSize).round() * gridSize;
+      final originalWidth = properties['width']!;
+      final snappedWidth = (originalWidth / gridSize).round() * gridSize;
+      snappedProperties['width'] = snappedWidth;
+      if (originalWidth != snappedWidth) {
+        debugPrint('🎯 宽度吸附: $originalWidth → $snappedWidth');
+      }
     }
     if (properties.containsKey('height')) {
-      snappedProperties['height'] = (properties['height']! / gridSize).round() * gridSize;
+      final originalHeight = properties['height']!;
+      final snappedHeight = (originalHeight / gridSize).round() * gridSize;
+      snappedProperties['height'] = snappedHeight;
+      if (originalHeight != snappedHeight) {
+        debugPrint('🎯 高度吸附: $originalHeight → $snappedHeight');
+      }
     }
 
+    debugPrint('🎯 吸附后的属性: $snappedProperties');
     return snappedProperties;
   }
 
