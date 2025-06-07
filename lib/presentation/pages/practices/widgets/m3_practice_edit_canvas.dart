@@ -17,8 +17,6 @@ import '../helpers/element_utils.dart';
 import 'canvas_structure_listener.dart';
 import 'content_render_controller.dart';
 import 'drag_operation_manager.dart';
-import 'drag_preview_layer.dart';
-import 'element_change_types.dart';
 import 'layers/layer_render_manager.dart';
 import 'layers/layer_types.dart';
 import 'state_change_dispatcher.dart';
@@ -94,26 +92,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _applyGridSnapToSelectedElements();
   }
   
-  // CanvasLayerBuilders 控制点处理方法实现 - 调用 mixin 方法
-  @override
-  void handleControlPointUpdate(int controlPointIndex, Offset delta) {
-    super.handleControlPointUpdate(controlPointIndex, delta);
-  }
-  
-  @override
-  void handleControlPointDragEnd(int controlPointIndex) {
-    super.handleControlPointDragEnd(controlPointIndex);
-  }
-  
-  @override
-  void handleControlPointDragStart(int controlPointIndex) {
-    super.handleControlPointDragStart(controlPointIndex);
-  }
-  
-  @override
-  void handleControlPointDragEndWithState(int controlPointIndex, Map<String, double> finalState) {
-    super.handleControlPointDragEndWithState(controlPointIndex, finalState);
-  }
+  // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
   
   // 核心组件
   late ContentRenderController _contentRenderController;
@@ -318,12 +297,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
 
+  @override
   void resetCanvasPosition() {
     // 使用 CanvasViewControllers mixin 的方法
     super.resetCanvasPosition();
   }
 
   /// 切换性能监控覆盖层显示
+  @override
   void togglePerformanceOverlay() {
     setState(() {
       DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
@@ -335,29 +316,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     });
   }
 
-  /// 应用网格吸附到属性
-  Map<String, double> _applyGridSnapToProperties(
-      Map<String, double> properties) {
-    final gridSize = widget.controller.state.gridSize;
-    final snappedProperties = <String, double>{};
 
-    if (properties.containsKey('x')) {
-      snappedProperties['x'] = (properties['x']! / gridSize).round() * gridSize;
-    }
-    if (properties.containsKey('y')) {
-      snappedProperties['y'] = (properties['y']! / gridSize).round() * gridSize;
-    }
-    if (properties.containsKey('width')) {
-      snappedProperties['width'] =
-          (properties['width']! / gridSize).round() * gridSize;
-    }
-    if (properties.containsKey('height')) {
-      snappedProperties['height'] =
-          (properties['height']! / gridSize).round() * gridSize;
-    }
-
-    return snappedProperties;
-  }
 
   /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
   void _applyGridSnapToSelectedElements() {
@@ -415,37 +374,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     }
   }
 
-  /// Build background layer (grid, page background)
-  Widget _buildBackgroundLayer(LayerConfig config) {
-    return buildBackgroundLayer(config);
-  }
 
-  /// Build content layer (elements rendering)
-  Widget _buildContentLayer(LayerConfig config) {
-    return buildContentLayer(config);
-  }
-
-  /// Build control points for selected element
-  Widget _buildControlPoints(
-    String elementId,
-    double x,
-    double y,
-    double width,
-    double height,
-    double rotation,
-  ) {
-    return buildControlPoints(elementId, x, y, width, height, rotation);
-  }
-
-  /// Build drag preview layer
-  Widget _buildDragPreviewLayer(LayerConfig config) {
-    return buildDragPreviewLayer(config);
-  }
-
-  /// Build interaction layer (selection box, control points)
-  Widget _buildInteractionLayer(LayerConfig config) {
-    return buildInteractionLayer(config);
-  }
 
   /// Build widget for specific layer type
   Widget _buildLayerWidget(RenderLayerType layerType, LayerConfig config) {
@@ -912,10 +841,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     );
   }
 
-  /// Build UI overlay layer (for future use)
-  Widget _buildUIOverlayLayer(LayerConfig config) {
-    return buildUIOverlayLayer(config);
-  }
+
 
   // 计算方法已移至 CanvasControlPointHandlersMixin
   // 创建元素的方法已移动到 CanvasElementCreators mixin
