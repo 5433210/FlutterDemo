@@ -96,7 +96,8 @@ class M3ContentToolsPanel extends StatelessWidget {
         debugPrint('🎯 工具栏拖拽开始: elementType=$elementType');
       },
       onDragEnd: (details) {
-        debugPrint('🎯 工具栏拖拽结束: elementType=$elementType, wasAccepted=${details.wasAccepted}');
+        debugPrint(
+            '🎯 工具栏拖拽结束: elementType=$elementType, wasAccepted=${details.wasAccepted}');
       },
       // Widget shown while dragging
       feedback: Material(
@@ -160,7 +161,8 @@ class M3ContentToolsPanel extends StatelessWidget {
               break;
             case 'collection':
               // Directly add empty collection element without dialog
-              final elementId = controller.addEmptyCollectionElementAt(100.0, 100.0);
+              final elementId =
+                  controller.addEmptyCollectionElementAt(100.0, 100.0);
               print('🎯 工具栏点击创建集字元素: $elementId');
               break;
           }
