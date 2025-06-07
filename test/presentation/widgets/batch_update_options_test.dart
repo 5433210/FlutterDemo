@@ -1,4 +1,4 @@
-import 'package:charasgem/presentation/widgets/practice/practice_edit_controller.dart';
+import 'package:charasgem/presentation/widgets/practice/batch_update_options.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

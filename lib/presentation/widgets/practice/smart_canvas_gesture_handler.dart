@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../pages/practices/helpers/element_utils.dart';
+import 'batch_update_options.dart';
 import 'drag_state_manager.dart';
 import 'practice_edit_controller.dart';
 import 'smart_gesture_dispatcher.dart';

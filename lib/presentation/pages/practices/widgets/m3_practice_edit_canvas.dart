@@ -8,6 +8,7 @@ import 'canvas/components/canvas_view_controllers.dart';
 import 'canvas/components/canvas_layer_builders.dart';
 import 'canvas/components/canvas_control_point_handlers.dart';
 import 'canvas/components/canvas_gesture_handlers.dart';
+import '../../../widgets/practice/batch_update_options.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/performance_monitor.dart';

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
+import '../../../widgets/practice/undo_operations.dart';
 import '../../../widgets/practice/undo_redo_manager.dart';
 
 /// Utility methods for practice editing

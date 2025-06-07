@@ -130,7 +130,7 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             ),
-            value: layerId,
+            value: _getValidLayerId(layerId, layers),
             items: _buildLayerItems(context),
             onChanged: (value) {
               if (value != null) {
@@ -196,6 +196,22 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
         ),
       );
     }).toList();
+  }
+
+  // 获取有效的图层ID
+  String? _getValidLayerId(String? currentLayerId, List<Map<String, dynamic>> layers) {
+    // 如果当前图层ID有效，直接返回
+    if (currentLayerId != null && layers.any((layer) => layer['id'] == currentLayerId)) {
+      return currentLayerId;
+    }
+    
+    // 如果无效或为空，返回第一个可用图层的ID
+    if (layers.isNotEmpty) {
+      return layers.first['id'] as String;
+    }
+    
+    // 如果没有图层，返回null
+    return null;
   }
 
   // 更新属性

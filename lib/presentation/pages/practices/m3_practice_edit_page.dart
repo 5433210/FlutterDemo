@@ -25,6 +25,7 @@ import '../../widgets/practice/m3_practice_layer_panel.dart';
 import '../../widgets/practice/m3_top_navigation_bar.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
 import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
+import '../../widgets/practice/undo_operations.dart';
 import '../../widgets/practice/undo_redo_manager.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
