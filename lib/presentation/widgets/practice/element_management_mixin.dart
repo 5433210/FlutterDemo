@@ -286,6 +286,8 @@ mixin ElementManagementMixin on ChangeNotifier {
   void clearSelection() {
     state.selectedElementIds.clear();
     state.selectedElement = null;
+    state.selectedLayerId =
+        null; // 🔧 Also clear layer selection to properly switch to page properties
     notifyListeners();
   }
 
@@ -446,7 +448,7 @@ mixin ElementManagementMixin on ChangeNotifier {
     if (elementIndex >= 0) {
       // 🔧 清除图层选择，确保显示元素属性面板
       state.selectedLayerId = null;
-      
+
       if (isMultiSelect) {
         // 多选模式 - 切换选择状态
         if (state.selectedElementIds.contains(id)) {
@@ -711,47 +713,6 @@ mixin ElementManagementMixin on ChangeNotifier {
     undoRedoManager.addOperation(operation);
   }
 
-  /// 获取有效的图层ID
-  String _getValidLayerId() {
-    // 首先检查selectedLayerId是否有效
-    if (state.selectedLayerId != null) {
-      final isValid = state.layers.any((layer) => layer['id'] == state.selectedLayerId);
-      if (isValid) {
-        return state.selectedLayerId!;
-      }
-    }
-
-    // 如果selectedLayerId无效或为空，使用第一个可用图层
-    if (state.layers.isNotEmpty) {
-      final firstLayerId = state.layers.first['id'] as String;
-      // 更新selectedLayerId为有效值
-      state.selectedLayerId = firstLayerId;
-      return firstLayerId;
-    }
-
-    // 如果没有图层，创建一个默认图层
-    final defaultLayer = {
-      'id': 'layer_${uuid.v4()}',
-      'name': '默认图层',
-      'isVisible': true,
-      'isLocked': false,
-      'opacity': 1.0,
-    };
-    
-    // 添加到当前页面的图层列表
-    if (state.currentPage != null) {
-      if (!state.currentPage!.containsKey('layers')) {
-        state.currentPage!['layers'] = <Map<String, dynamic>>[];
-      }
-      final layers = state.currentPage!['layers'] as List<dynamic>;
-      layers.add(defaultLayer);
-    }
-
-    final layerId = defaultLayer['id'] as String;
-    state.selectedLayerId = layerId;
-    return layerId;
-  }
-
   /// 执行批量更新
   void _executeBatchUpdate(Map<String, Map<String, dynamic>> batchUpdates,
       BatchUpdateOptions options) {
@@ -840,5 +801,47 @@ mixin ElementManagementMixin on ChangeNotifier {
       state.hasUnsavedChanges = true;
       notifyListeners();
     }
+  }
+
+  /// 获取有效的图层ID
+  String _getValidLayerId() {
+    // 首先检查selectedLayerId是否有效
+    if (state.selectedLayerId != null) {
+      final isValid =
+          state.layers.any((layer) => layer['id'] == state.selectedLayerId);
+      if (isValid) {
+        return state.selectedLayerId!;
+      }
+    }
+
+    // 如果selectedLayerId无效或为空，使用第一个可用图层
+    if (state.layers.isNotEmpty) {
+      final firstLayerId = state.layers.first['id'] as String;
+      // 更新selectedLayerId为有效值
+      state.selectedLayerId = firstLayerId;
+      return firstLayerId;
+    }
+
+    // 如果没有图层，创建一个默认图层
+    final defaultLayer = {
+      'id': 'layer_${uuid.v4()}',
+      'name': '默认图层',
+      'isVisible': true,
+      'isLocked': false,
+      'opacity': 1.0,
+    };
+
+    // 添加到当前页面的图层列表
+    if (state.currentPage != null) {
+      if (!state.currentPage!.containsKey('layers')) {
+        state.currentPage!['layers'] = <Map<String, dynamic>>[];
+      }
+      final layers = state.currentPage!['layers'] as List<dynamic>;
+      layers.add(defaultLayer);
+    }
+
+    final layerId = defaultLayer['id'] as String;
+    state.selectedLayerId = layerId;
+    return layerId;
   }
 }

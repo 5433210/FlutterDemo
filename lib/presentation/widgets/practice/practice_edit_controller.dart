@@ -144,6 +144,12 @@ class PracticeEditController extends ChangeNotifier
   @override
   Uuid get uuid => _uuid;
 
+  /// 设置画布引用（供画布组件注册自己）
+  void setEditCanvas(dynamic canvas) {
+    _editCanvas = canvas;
+    debugPrint('🔧 画布已注册到控制器：${canvas.runtimeType}');
+  }
+
   /// 检查是否已销毁（为mixin提供）
   @override
   void checkDisposed() {

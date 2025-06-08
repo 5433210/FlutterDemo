@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter/services.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
@@ -26,7 +24,6 @@ import '../../widgets/practice/m3_top_navigation_bar.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
 import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
 import '../../widgets/practice/undo_operations.dart';
-import '../../widgets/practice/undo_redo_manager.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
 import 'widgets/m3_practice_edit_canvas.dart';
@@ -82,10 +79,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   // Keyboard handler
   late KeyboardHandler _keyboardHandler;
-
   // 格式刷相关变量
   Map<String, dynamic>? _formatBrushStyles;
   bool _isFormatBrushActive = false;
+  // Track whether the practice has been loaded to prevent multiple loads
+  // This prevents the "Practice loaded successfully" message from appearing
+  // every time didChangeDependencies is called (e.g., on viewport size changes)
+  bool _practiceLoaded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +134,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // Load practice in didChangeDependencies instead of initState
     // This way we can safely use context
-    if (widget.practiceId != null) {
+    // Only load once to prevent repeated loading when dependencies change (e.g., viewport size)
+    if (widget.practiceId != null && !_practiceLoaded) {
+      _practiceLoaded = true;
       _loadPractice(widget.practiceId!);
     }
   }
@@ -793,12 +795,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               if (_controller.state.currentPageIndex >= 0) {
                 // Check if view-affecting properties are changing
                 final currentPage = _controller.state.currentPage;
-                final shouldResetView = currentPage != null && (
-                  properties.containsKey('orientation') ||
-                  properties.containsKey('width') ||
-                  properties.containsKey('height') ||
-                  properties.containsKey('dpi')
-                );
+                final shouldResetView = currentPage != null &&
+                    (properties.containsKey('orientation') ||
+                        properties.containsKey('width') ||
+                        properties.containsKey('height') ||
+                        properties.containsKey('dpi'));
                 AppLogger.debug(
                   '页面属性变化-重置视图判定',
                   tag: 'PracticeEdit',
@@ -977,7 +978,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             if (type == 'characters') {
               final characterIds = json['characterIds'];
               final hasIds = characterIds != null &&
-                  characterIds is List && characterIds.isNotEmpty;
+                  characterIds is List &&
+                  characterIds.isNotEmpty;
               AppLogger.debug(
                 '检查剪贴板: 字符IDs',
                 tag: 'PracticeEdit',
@@ -1463,7 +1465,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           tag: 'PracticeEdit',
           data: {'characterId': characterId},
         );
-        final character = await characterService.getCharacterDetails(characterId);
+        final character =
+            await characterService.getCharacterDetails(characterId);
         if (character == null) {
           AppLogger.warning(
             '无法获取字符详情，跳过',
@@ -1480,7 +1483,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         AppLogger.debug(
           '获取字符图像',
           tag: 'PracticeEdit',
-          data: {'characterId': characterId, 'type': 'default', 'format': 'png'},
+          data: {
+            'characterId': characterId,
+            'type': 'default',
+            'format': 'png'
+          },
         );
         final imageBytes = await characterImageService.getCharacterImage(
             characterId, 'default', 'png');
@@ -2735,8 +2742,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             '剪贴板状态变化',
             tag: 'PracticeEdit',
             data: {
-              'oldState': _clipboardHasContent ? "有内容" : "无内容",
-              'newState': hasContent ? "有内容" : "无内容",
+              'oldState': _clipboardHasContent ? '有内容' : '无内容',
+              'newState': hasContent ? '有内容' : '无内容',
             },
           );
 
@@ -2806,19 +2813,20 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _toggleGrid() {
     final oldValue = _controller.state.gridVisible;
     _controller.state.gridVisible = !_controller.state.gridVisible;
-    
+
     debugPrint('🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}');
     debugPrint('🎨 网格大小: ${_controller.state.gridSize}');
-    debugPrint('🎨 当前页面: ${_controller.state.currentPage != null ? "存在" : "null"}');
-    
+    debugPrint(
+        '🎨 当前页面: ${_controller.state.currentPage != null ? "存在" : "null"}');
+
     // 🔧 触发网格设置变化事件，确保staticBackground层更新
     debugPrint('🎨 调用 triggerGridSettingsChange()');
     _controller.triggerGridSettingsChange();
-    
+
     // 强制重建UI
     debugPrint('🎨 调用 setState() 强制重建UI');
     setState(() {});
-    
+
     debugPrint('🎨 网格切换完成');
   }
 
@@ -2840,13 +2848,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _toggleSnap() {
     final oldValue = _controller.state.snapEnabled;
     _controller.state.snapEnabled = !_controller.state.snapEnabled;
-    
+
     // 🔧 触发网格设置变化事件，确保状态同步
     _controller.triggerGridSettingsChange();
-    
+
     debugPrint('🎯 网格吸附切换: $oldValue → ${_controller.state.snapEnabled}');
     debugPrint('🎯 网格大小: ${_controller.state.gridSize}');
-    
+
     // 强制更新UI
     setState(() {});
   }

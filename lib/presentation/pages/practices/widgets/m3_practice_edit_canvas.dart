@@ -2,12 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
-import 'canvas/components/canvas_ui_components.dart';
-import 'canvas/components/canvas_element_creators.dart';
-import 'canvas/components/canvas_view_controllers.dart';
-import 'canvas/components/canvas_layer_builders.dart';
-import 'canvas/components/canvas_control_point_handlers.dart';
-import 'canvas/components/canvas_gesture_handlers.dart';
 import '../../../widgets/practice/batch_update_options.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
@@ -15,6 +9,12 @@ import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
 import '../helpers/element_utils.dart';
+import 'canvas/components/canvas_control_point_handlers.dart';
+import 'canvas/components/canvas_element_creators.dart';
+import 'canvas/components/canvas_gesture_handlers.dart';
+import 'canvas/components/canvas_layer_builders.dart';
+import 'canvas/components/canvas_ui_components.dart';
+import 'canvas/components/canvas_view_controllers.dart';
 import 'canvas_structure_listener.dart';
 import 'content_render_controller.dart';
 import 'drag_operation_manager.dart';
@@ -42,68 +42,29 @@ class M3PracticeEditCanvas extends StatefulWidget {
 // 注意：SelectionBoxState 和 GridPainter 已移动到 canvas_ui_components.dart
 
 class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
-    with 
-      TickerProviderStateMixin, 
-      CanvasElementCreators, 
-      CanvasViewControllers, 
-      CanvasLayerBuilders,
-      CanvasControlPointHandlers,
-      CanvasGestureHandlers {
-  
-  // 实现 mixin 的抽象方法
-  @override
-  PracticeEditController get controller => widget.controller;
-  
-  @override
-  TransformationController get transformationController => widget.transformationController;
-  
-  // CanvasLayerBuilders 实现
-  @override
-  DragStateManager get dragStateManager => _dragStateManager;
-  
-  @override
-  ContentRenderController get contentRenderController => _contentRenderController;
-  
-  @override
-  ValueNotifier<SelectionBoxState> get selectionBoxNotifier => _selectionBoxNotifier;
-  
-  @override
-  bool get isPreviewMode => widget.isPreviewMode;
-  
-  // CanvasGestureHandlers 实现
-  @override
-  SmartCanvasGestureHandler get gestureHandler => _gestureHandler;
-  
-  @override
-  Offset get dragStart => _dragStart;
-  
-  @override
-  Offset get elementStartPosition => _elementStartPosition;
-  
-  @override
-  bool get isReadyForDrag => _isReadyForDrag;
-  
-  @override
-  void triggerSetState() {
-    if (mounted) setState(() {});
-  }
-  
-  @override
-  void applyGridSnapToSelectedElements() {
-    _applyGridSnapToSelectedElements();
-  }
-  
+    with
+        TickerProviderStateMixin,
+        CanvasElementCreators,
+        CanvasViewControllers,
+        CanvasLayerBuilders,
+        CanvasControlPointHandlers,
+        CanvasGestureHandlers {
   // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
-  
+
   // 核心组件
   late ContentRenderController _contentRenderController;
+
   late DragStateManager _dragStateManager;
+
   late LayerRenderManager _layerRenderManager;
+
   late PerformanceMonitor _performanceMonitor;
 
   // 优化组件
   late CanvasStructureListener _structureListener;
+
   late StateChangeDispatcher _stateDispatcher;
+
   late DragOperationManager _dragOperationManager;
 
   // UI组件
@@ -114,20 +75,57 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   // 拖拽相关状态
   Offset _dragStart = Offset.zero;
+
   Offset _elementStartPosition = Offset.zero;
 
   // 拖拽准备状态：使用普通变量避免setState时序问题
   bool _isReadyForDrag = false;
+
   // Canvas gesture handler
   late SmartCanvasGestureHandler _gestureHandler;
-
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
       ValueNotifier(SelectionBoxState());
-
   // 跟踪页面变化，用于自动重置视图
   String? _lastPageKey;
   bool _hasInitializedView = false; // 防止重复初始化视图
+
+  @override
+  ContentRenderController get contentRenderController =>
+      _contentRenderController;
+  // 实现 mixin 的抽象方法
+  @override
+  PracticeEditController get controller => widget.controller;
+  @override
+  Offset get dragStart => _dragStart;
+
+  // CanvasLayerBuilders 实现
+  @override
+  DragStateManager get dragStateManager => _dragStateManager;
+
+  @override
+  Offset get elementStartPosition => _elementStartPosition;
+
+  // CanvasGestureHandlers 实现
+  @override
+  SmartCanvasGestureHandler get gestureHandler => _gestureHandler;
+  @override
+  bool get isPreviewMode => widget.isPreviewMode;
+
+  @override
+  bool get isReadyForDrag => _isReadyForDrag;
+  @override
+  ValueNotifier<SelectionBoxState> get selectionBoxNotifier =>
+      _selectionBoxNotifier;
+
+  @override
+  TransformationController get transformationController =>
+      widget.transformationController;
+
+  @override
+  void applyGridSnapToSelectedElements() {
+    _applyGridSnapToSelectedElements();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,8 +158,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           tag: 'Canvas',
           data: {
             'currentTool': widget.controller.state.currentTool,
-            'selectedElementsCount': widget.controller.state.selectedElementIds.length,
-            'totalElementsCount': widget.controller.state.currentPageElements.length,
+            'selectedElementsCount':
+                widget.controller.state.selectedElementIds.length,
+            'totalElementsCount':
+                widget.controller.state.currentPageElements.length,
           },
         );
 
@@ -191,7 +191,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'elementsCount': elements.length,
             'elementsType': elements.runtimeType.toString(),
             'hasElements': elements.isNotEmpty,
-            'firstElementPreview': elements.isNotEmpty ? elements.first['type'] ?? 'unknown' : null,
+            'firstElementPreview': elements.isNotEmpty
+                ? elements.first['type'] ?? 'unknown'
+                : null,
           },
         );
         // 用性能覆盖层包装画布
@@ -203,8 +205,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     );
   }
 
+  /// Handle window size changes - automatically trigger reset view position
+
+
   @override
   void dispose() {
+    // 🔧 窗口大小变化处理已移至页面级别
+
     // 🔧 移除DragStateManager监听器
     _dragStateManager.removeListener(_onDragStateManagerChanged);
 
@@ -224,6 +231,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   @override
   void initState() {
     super.initState();
+
+    // 🔧 窗口大小变化处理已移至页面级别
+
     AppLogger.info(
       '画布组件初始化开始',
       tag: 'Canvas',
@@ -317,6 +327,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     });
   }
 
+  @override
+  void triggerSetState() {
+    if (mounted) setState(() {});
+  }
+
   /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
   void _applyGridSnapToSelectedElements() {
     // 只有在启用了网格吸附的情况下才进行网格吸附
@@ -366,7 +381,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       // 如果位置有变化，更新元素属性
       if (snappedX != x || snappedY != y) {
         debugPrint('🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)');
-        
+
         AppLogger.debug(
           '网格吸附',
           tag: 'Canvas',
@@ -385,7 +400,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         debugPrint('🎯 元素 $elementId 位置 ($x, $y) 已在网格线上，无需吸附');
       }
     }
-    
+
     debugPrint('🎯 网格吸附完成');
   }
 
@@ -408,7 +423,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     AppLogger.debug(
       '构建页面内容',
       tag: 'Canvas',
-      data: {'selectedElementsCount': widget.controller.state.selectedElementIds.length},
+      data: {
+        'selectedElementsCount':
+            widget.controller.state.selectedElementIds.length
+      },
     );
 
     // Calculate page dimensions for layout purposes
@@ -481,8 +499,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 },
                 onAcceptWithDetails: (data) {
                   debugPrint(
-                      '🎯 DragTarget.onAcceptWithDetails: data=${data.data}');
-                  _handleElementDrop(data.data);
+                      '🎯 DragTarget.onAcceptWithDetails: data=${data.data}, offset=${data.offset}');
+                  _handleElementDrop(data.data, data.offset);
                 },
                 builder: (context, candidateData, rejectedData) {
                   return GestureDetector(
@@ -493,7 +511,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           '🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
                       // 检查是否点击在选中元素上，如果是，准备拖拽
                       // 直接设置变量，避免setState时序问题
-                                                if (shouldHandleAnySpecialGesture(elements)) {
+                      if (shouldHandleAnySpecialGesture(elements)) {
                         debugPrint('🔥【onTapDown】点击在选中元素上，准备拖拽');
                         _isReadyForDrag = true;
                         // 🔍[RESIZE_FIX] 立即重建以禁用InteractiveViewer的panEnabled
@@ -555,19 +573,27 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     onPanStart: (_isDragging ||
                             _dragStateManager.isDragging ||
                             widget.controller.state.currentTool == 'select' ||
-                            widget.controller.state.selectedElementIds.isNotEmpty)
+                            widget
+                                .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
-                            debugPrint('[DRAG_DEBUG] ===== Canvas onPanStart被调用 =====');
-                            debugPrint('[DRAG_DEBUG] Canvas - 点击位置: ${details.localPosition}');
-                            debugPrint('[DRAG_DEBUG] Canvas - 当前选中: ${widget.controller.state.selectedElementIds}');
-                            debugPrint('[DRAG_DEBUG] Canvas - 当前工具: ${widget.controller.state.currentTool}');
+                            debugPrint(
+                                '[DRAG_DEBUG] ===== Canvas onPanStart被调用 =====');
+                            debugPrint(
+                                '[DRAG_DEBUG] Canvas - 点击位置: ${details.localPosition}');
+                            debugPrint(
+                                '[DRAG_DEBUG] Canvas - 当前选中: ${widget.controller.state.selectedElementIds}');
+                            debugPrint(
+                                '[DRAG_DEBUG] Canvas - 当前工具: ${widget.controller.state.currentTool}');
 
                             // 动态检查是否需要处理特殊手势
-                            final shouldHandle = shouldHandleAnySpecialGesture(elements);
-                            debugPrint('[DRAG_DEBUG] Canvas - shouldHandleAnySpecialGesture结果: $shouldHandle');
+                            final shouldHandle =
+                                shouldHandleAnySpecialGesture(elements);
+                            debugPrint(
+                                '[DRAG_DEBUG] Canvas - shouldHandleAnySpecialGesture结果: $shouldHandle');
 
                             if (shouldHandle) {
-                              debugPrint('[DRAG_DEBUG] Canvas - 处理特殊手势，调用_gestureHandler.handlePanStart');
+                              debugPrint(
+                                  '[DRAG_DEBUG] Canvas - 处理特殊手势，调用_gestureHandler.handlePanStart');
                               _gestureHandler.handlePanStart(details,
                                   elements.cast<Map<String, dynamic>>());
                             } else {
@@ -579,7 +605,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     onPanUpdate: (_isDragging ||
                             _dragStateManager.isDragging ||
                             widget.controller.state.currentTool == 'select' ||
-                            widget.controller.state.selectedElementIds.isNotEmpty)
+                            widget
+                                .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
                             debugPrint(
                                 '🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
@@ -612,7 +639,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     onPanEnd: (_isDragging ||
                             _dragStateManager.isDragging ||
                             widget.controller.state.currentTool == 'select' ||
-                            widget.controller.state.selectedElementIds.isNotEmpty)
+                            widget
+                                .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
                             debugPrint('🔍[RESIZE_FIX] Canvas onPanEnd被调用');
 
@@ -637,7 +665,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     onPanCancel: (_isDragging ||
                             _dragStateManager.isDragging ||
                             widget.controller.state.currentTool == 'select' ||
-                            widget.controller.state.selectedElementIds.isNotEmpty)
+                            widget
+                                .controller.state.selectedElementIds.isNotEmpty)
                         ? () {
                             debugPrint('🔍[RESIZE_FIX] Canvas onPanCancel被调用');
 
@@ -700,8 +729,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                 child: Builder(
                                   builder: (context) {
                                     debugPrint('🎨 正在构建LayerRenderManager层级结构');
-                                    debugPrint('🎨 当前网格状态: ${widget.controller.state.gridVisible}');
-                                    final layerStack = _layerRenderManager.buildLayerStack(
+                                    debugPrint(
+                                        '🎨 当前网格状态: ${widget.controller.state.gridVisible}');
+                                    final layerStack =
+                                        _layerRenderManager.buildLayerStack(
                                       layerOrder: [
                                         RenderLayerType.staticBackground,
                                         RenderLayerType.content,
@@ -995,40 +1026,87 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         '🔧【Reset View】预期效果: 让整个页面在可视区域内居中显示，scale=${scale.toStringAsFixed(3)}');
   }
 
-  /// 处理从工具栏拖拽创建元素
-  void _handleElementDrop(String elementType) {
-    print('=== 🎯 开始处理元素拖拽创建: $elementType ===');
-    debugPrint('🎯 处理元素拖拽创建: $elementType');
+  /// 处理拖拽结束 - 使用 mixin 方法
+  Future<void> _handleDragEnd() async {
+    setState(() {
+      _isDragging = false;
+    });
 
+    // 🔧 拖拽结束时应用网格吸附
+    debugPrint('🎯 拖拽结束，开始应用网格吸附，吸附状态: ${widget.controller.state.snapEnabled}');
+    _applyGridSnapToSelectedElements();
+  }
+
+  /// 处理拖拽开始 - 使用 mixin 方法
+  Future<void> _handleDragStart(
+    bool isDragging,
+    Offset dragStart,
+    Offset elementPosition,
+    Map<String, Offset> elementPositions,
+  ) async {
+    setState(() {
+      _isDragging = isDragging;
+      _dragStart = dragStart;
+      _elementStartPosition = elementPosition;
+    });
+
+    // 🔧 拖拽开始时不需要立即应用网格吸附
+    debugPrint('🎯 拖拽开始，网格吸附状态: ${widget.controller.state.snapEnabled}');
+  }
+
+  /// 处理拖拽更新 - 使用 mixin 方法
+  void _handleDragUpdate() {
+    // 如果是选择框更新，使用ValueNotifier而不是setState
+    if (_gestureHandler.isSelectionBoxActive) {
+      _selectionBoxNotifier.value = SelectionBoxState(
+        isActive: _gestureHandler.isSelectionBoxActive,
+        startPoint: _gestureHandler.selectionBoxStart,
+        endPoint: _gestureHandler.selectionBoxEnd,
+      );
+    }
+  }
+
+  /// 处理从工具栏拖拽创建元素
+  void _handleElementDrop(String elementType, [Offset? dropOffset]) {
     // 获取Canvas的渲染框
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
-      debugPrint('❌ 无法获取Canvas RenderBox');
       return;
     }
 
-    // 计算在页面内的合适位置（距离页面边缘一定距离）
+    // 获取当前页面和尺寸
     final currentPage = widget.controller.state.currentPage;
     if (currentPage == null) {
-      debugPrint('❌ 当前页面不存在');
       return;
     }
 
-    // 获取页面尺寸
     final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    Offset dropPosition;
 
-    // 在页面中心附近创建元素，添加一些随机偏移避免重叠
-    final random = DateTime.now().millisecondsSinceEpoch % 100;
-    final dropPosition = Offset(
-      pageSize.width / 2 + random - 50, // 中心位置加上-50到+50的偏移
-      pageSize.height / 2 + random - 50,
-    );
+    if (dropOffset != null) {
+      // 坐标转换：将屏幕坐标转换为画布坐标
+      // 考虑InteractiveViewer的缩放和平移变换
+      final matrix = widget.transformationController.value;
+      final scale = matrix.getMaxScaleOnAxis();
+      final translation = matrix.getTranslation();
 
-    debugPrint(
-        '🎯 在页面内创建元素: position=$dropPosition, pageSize=${pageSize.width}x${pageSize.height}');
+      // 应用逆变换：canvas_point = (screen_point - translation) / scale
+      dropPosition = Offset(
+        (dropOffset.dx - translation.x) / scale,
+        (dropOffset.dy - translation.y) / scale,
+      );
+    } else {
+      // 回退方案：使用页面中心附近创建元素，添加随机偏移避免重叠
+      final random = DateTime.now().millisecondsSinceEpoch % 100;
+      dropPosition = Offset(
+        pageSize.width / 2 + random - 50,
+        pageSize.height / 2 + random - 50,
+      );
+    }
 
     // 使用mixin中的方法处理元素拖拽创建
-    handleElementDrop(elementType, dropPosition);
+    // 禁用居中偏移，因为坐标已经正确转换
+    handleElementDrop(elementType, dropPosition, applyCenteringOffset: false);
   }
 
   /// 初始化核心组件
@@ -1065,46 +1143,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         return matrix.getMaxScaleOnAxis();
       },
     );
-  }
-
-  /// 处理拖拽开始 - 使用 mixin 方法
-  Future<void> _handleDragStart(
-    bool isDragging,
-    Offset dragStart,
-    Offset elementPosition,
-    Map<String, Offset> elementPositions,
-  ) async {
-    setState(() {
-      _isDragging = isDragging;
-      _dragStart = dragStart;
-      _elementStartPosition = elementPosition;
-    });
-
-    // 🔧 拖拽开始时不需要立即应用网格吸附
-    debugPrint('🎯 拖拽开始，网格吸附状态: ${widget.controller.state.snapEnabled}');
-  }
-
-  /// 处理拖拽更新 - 使用 mixin 方法
-  void _handleDragUpdate() {
-    // 如果是选择框更新，使用ValueNotifier而不是setState
-    if (_gestureHandler.isSelectionBoxActive) {
-      _selectionBoxNotifier.value = SelectionBoxState(
-        isActive: _gestureHandler.isSelectionBoxActive,
-        startPoint: _gestureHandler.selectionBoxStart,
-        endPoint: _gestureHandler.selectionBoxEnd,
-      );
-    }
-  }
-
-  /// 处理拖拽结束 - 使用 mixin 方法
-  Future<void> _handleDragEnd() async {
-    setState(() {
-      _isDragging = false;
-    });
-
-    // 🔧 拖拽结束时应用网格吸附
-    debugPrint('🎯 拖拽结束，开始应用网格吸附，吸附状态: ${widget.controller.state.snapEnabled}');
-    _applyGridSnapToSelectedElements();
   }
 
   /// Initialize and register layers with the LayerRenderManager
@@ -1209,9 +1247,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _initializeGestureHandler(); // 恢复使用本地方法
     print('🏗️ Canvas: GestureHandler initialized');
 
-    // 临时禁用画布注册，避免潜在的循环调用问题
+    // 🔧 修复：注册画布到控制器，支持reset view功能
     // Register this canvas with the controller for reset view functionality
-    // widget.controller.setEditCanvas(this);
+    widget.controller.setEditCanvas(this);
 
     // Set the RepaintBoundary key in the controller for screenshot functionality
     widget.controller.setCanvasKey(_repaintBoundaryKey);
@@ -1319,5 +1357,3 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   // 手势检查方法已移至 CanvasGestureHandlers mixin
 }
-
-

@@ -64,8 +64,7 @@ mixin CanvasElementCreators {
     );
 
     // 调用controller创建文本元素，现在返回元素ID
-    final newElementId =
-        controller.addTextElementAt(position.dx, position.dy);
+    final newElementId = controller.addTextElementAt(position.dx, position.dy);
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -79,8 +78,8 @@ mixin CanvasElementCreators {
   }
 
   /// 创建撤销操作 - 用于Commit阶段
-  void createUndoOperation(String elementId,
-      Map<String, dynamic> oldProperties, Map<String, dynamic> newProperties) {
+  void createUndoOperation(String elementId, Map<String, dynamic> oldProperties,
+      Map<String, dynamic> newProperties) {
     // 检查是否有实际变化
     bool hasChanges = false;
     for (final key in newProperties.keys) {
@@ -144,25 +143,49 @@ mixin CanvasElementCreators {
   }
 
   /// 处理元素拖拽创建
-  void handleElementDrop(String elementType, Offset position) {
+  void handleElementDrop(String elementType, Offset position,
+      {bool applyCenteringOffset = true}) {
     AppLogger.info(
       '处理元素拖拽创建',
       tag: 'Canvas',
       data: {
         'elementType': elementType,
         'position': '$position',
+        'applyCenteringOffset': applyCenteringOffset,
       },
     );
 
+    Offset finalPosition = position;
+
+    // 🔧 修复拖拽定位问题：只有在需要时才调整位置使元素居中在鼠标释放点
+    // 当坐标已经在上级方法中正确转换时，不需要再次调整
+    if (applyCenteringOffset) {
+      // 元素默认尺寸在element_management_mixin.dart中定义
+      switch (elementType) {
+        case 'collection':
+          // 集字元素默认 200x200，调整位置使其居中
+          finalPosition = Offset(position.dx - 100, position.dy - 100);
+          break;
+        case 'image':
+          // 图片元素默认 200x200，调整位置使其居中
+          finalPosition = Offset(position.dx - 100, position.dy - 100);
+          break;
+        case 'text':
+          // 文本元素默认 200x100，调整位置使其居中
+          finalPosition = Offset(position.dx - 100, position.dy - 50);
+          break;
+      }
+    }
+
     switch (elementType) {
       case 'collection':
-        createCollectionElement(position);
+        createCollectionElement(finalPosition);
         break;
       case 'image':
-        createImageElement(position);
+        createImageElement(finalPosition);
         break;
       case 'text':
-        createTextElement(position);
+        createTextElement(finalPosition);
         break;
       default:
         AppLogger.warning(
@@ -172,5 +195,16 @@ mixin CanvasElementCreators {
         );
         break;
     }
+
+    AppLogger.info(
+      '元素定位调整完成',
+      tag: 'Canvas',
+      data: {
+        'elementType': elementType,
+        'originalPosition': '$position',
+        'finalPosition': '$finalPosition',
+        'appliedCenteringOffset': applyCenteringOffset,
+      },
+    );
   }
-} 
+}
