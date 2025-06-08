@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_options.dart';
 import 'practice_edit_state.dart';
@@ -27,8 +28,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
   /// 设置状态变化分发器（用于分层状态管理）
   void setStateDispatcher(StateChangeDispatcher? dispatcher) {
     _stateDispatcher = dispatcher;
-    debugPrint(
-        '【批量更新】setStateDispatcher: 设置状态分发器 ${dispatcher != null ? '成功' : '为空'}');
+    EditPageLogger.controllerDebug('设置状态分发器', 
+      data: {'hasDispatcher': dispatcher != null});
   }
 
   /// 立即刷新所有待处理的更新
@@ -56,7 +57,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
 
     final updateOptions = options ?? const BatchUpdateOptions();
 
-    debugPrint('【批量更新】batchUpdateElementProperties: 元素 $elementId');
+    EditPageLogger.controllerDebug('批量更新元素属性', 
+      data: {'elementId': elementId, 'propertyCount': properties.length});
 
     // 如果有待处理的更新，合并属性
     if (_pendingUpdates.containsKey(elementId)) {
@@ -100,8 +102,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
         Map<String, Map<String, dynamic>>.from(_pendingUpdates);
     _pendingUpdates.clear();
 
-    debugPrint(
-        '【批量更新】_flushPendingUpdates: 提交 ${updatesToCommit.length} 个待处理更新');
+    EditPageLogger.controllerInfo('批量更新提交', 
+      data: {'updateCount': updatesToCommit.length});
 
     _executeBatchUpdate(updatesToCommit, options);
   }
@@ -112,7 +114,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
     BatchUpdateOptions options,
   ) {
     if (state.currentPageIndex < 0 || state.currentPageIndex >= state.pages.length) {
-      debugPrint('【批量更新】无效的页面索引，跳过更新');
+      EditPageLogger.controllerWarning('批量更新失败', 
+        data: {'reason': '无效页面索引', 'pageIndex': state.currentPageIndex});
       return;
     }
 
@@ -223,7 +226,13 @@ mixin BatchUpdateMixin on ChangeNotifier {
         notifyListeners();
       }
 
-      debugPrint('【批量更新】_executeBatchUpdate: 批量更新完成，影响元素: $updatedElementIds');
+      EditPageLogger.controllerInfo('批量更新完成', 
+        data: {
+          'affectedElements': updatedElementIds.length,
+          'elementIds': updatedElementIds,
+          'hasUndoRecord': options.recordUndoOperation,
+          'hasStateDispatcher': _stateDispatcher != null
+        });
     }
   }
 } 

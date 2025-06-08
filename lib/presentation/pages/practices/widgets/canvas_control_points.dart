@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'custom_cursors.dart';
 
 /// 画布级别的控制点组件，直接在画布上渲染所有控制点
@@ -152,23 +153,27 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
   // 获取当前缩放比例
   double get _currentScale {
     if (!mounted) {
-      debugPrint('控制点未挂载，使用初始缩放比例: ${widget.initialScale}');
+      EditPageLogger.canvasDebug('控制点未挂载', 
+        data: {'initialScale': widget.initialScale});
       return widget.initialScale;
     }
 
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
-      debugPrint('无法获取RenderBox，使用初始缩放比例: ${widget.initialScale}');
+      EditPageLogger.canvasDebug('无法获取RenderBox', 
+        data: {'initialScale': widget.initialScale});
       return widget.initialScale;
     }
 
     try {
       final matrix = renderBox.getTransformTo(null);
       final scale = matrix.getMaxScaleOnAxis();
-      debugPrint('从矩阵获取当前缩放比例: $scale');
+      EditPageLogger.canvasDebug('获取当前缩放比例', 
+        data: {'scale': scale});
       return scale;
     } catch (e) {
-      debugPrint('获取缩放矩阵出错: $e，使用初始缩放比例: ${widget.initialScale}');
+      EditPageLogger.canvasError('获取缩放矩阵失败', 
+        error: e, data: {'initialScale': widget.initialScale});
       return widget.initialScale;
     }
   }
@@ -184,7 +189,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     final scale = _currentScale;
 
     // 调试信息
-    debugPrint('控制点当前缩放比例: $scale，反向缩放系数: ${_getScaleFactor(scale)}');
+    EditPageLogger.canvasDebug('控制点缩放信息', 
+      data: {'scale': scale, 'scaleFactor': _getScaleFactor(scale)});
 
     // 控制点基础大小和缩放后的大小
     const baseControlPointSize = 8.0;
@@ -317,8 +323,15 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
         oldWidget.height != widget.height ||
         oldWidget.rotation != widget.rotation ||
         oldWidget.initialScale != widget.initialScale) {
-      debugPrint(
-          '控制点属性已更新: x=${widget.x}, y=${widget.y}, width=${widget.width}, height=${widget.height}, rotation=${widget.rotation}, scale=${widget.initialScale}');
+      EditPageLogger.canvasDebug('控制点属性更新', 
+        data: {
+          'x': widget.x,
+          'y': widget.y,
+          'width': widget.width,
+          'height': widget.height,
+          'rotation': widget.rotation,
+          'scale': widget.initialScale
+        });
 
       // 强制刷新控制点以适应新的缩放比例
       setState(() {});
@@ -348,8 +361,14 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     final controlPointSize = baseControlPointSize * scaleFactor;
     final hitAreaSize = baseHitAreaSize * scaleFactor;
 
-    debugPrint(
-        '构建控制点 $index: 当前缩放=$currentScale, 缩放系数=$scaleFactor, 控制点大小=$controlPointSize, 点击区域=$hitAreaSize');
+    EditPageLogger.canvasDebug('构建控制点', 
+      data: {
+        'index': index,
+        'currentScale': currentScale,
+        'scaleFactor': scaleFactor,
+        'controlPointSize': controlPointSize,
+        'hitAreaSize': hitAreaSize
+      });
 
     // 计算点击区域位置
     final left = position.dx - hitAreaSize / 2;
@@ -389,8 +408,13 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
         controlPointName = '未知';
     }
 
-    debugPrint(
-        '构建控制点 $index ($controlPointName) 在位置 $position，点击区域: ($left, $top, $hitAreaSize, $hitAreaSize)');
+    EditPageLogger.canvasDebug('控制点位置信息', 
+      data: {
+        'index': index,
+        'name': controlPointName,
+        'position': '${position.dx}, ${position.dy}',
+        'hitArea': '$left, $top, $hitAreaSize, $hitAreaSize'
+      });
 
     return Positioned(
       left: left,
@@ -406,7 +430,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque, // 使用opaque确保即使透明区域也能接收事件
             onPanStart: (details) {
-              debugPrint('控制点 $index 开始拖拽: ${details.localPosition}');
+              EditPageLogger.canvasDebug('控制点开始拖拽', 
+                data: {'index': index, 'localPosition': '${details.localPosition.dx}, ${details.localPosition.dy}'});
               if (isRotation) {
                 setState(() {
                   _isRotating = true;
@@ -432,11 +457,11 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                 // 确保立即处理控制点更新
                 widget.onControlPointUpdate(index, adjustedDelta);
               } catch (e) {
-                debugPrint('控制点更新错误: $e');
+                EditPageLogger.canvasError('控制点更新失败', error: e);
               }
             },
             onPanEnd: (details) {
-              debugPrint('控制点 $index 结束拖拽');
+              EditPageLogger.canvasDebug('控制点结束拖拽', data: {'index': index});
               if (isRotation) {
                 setState(() {
                   _isRotating = false;
@@ -498,7 +523,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     // 当缩放比例小于1时（即缩小时），控制点应该相对放大
     // 当缩放比例大于等于1时（即放大或不变时），控制点保持原始大小
     final factor = scale < 1.0 ? 1.0 / scale : 1.0;
-    debugPrint('计算缩放系数: 当前比例=$scale, 使用系数=$factor');
+    EditPageLogger.canvasDebug('计算缩放系数', 
+      data: {'scale': scale, 'factor': factor});
     return factor * 0.5;
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/element_cache_manager.dart';
 import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/performance_monitor.dart';
@@ -74,7 +75,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     return ListenableBuilder(
       listenable: widget.renderController,
       builder: (context, child) {
-        debugPrint('🔄 ContentRenderLayer: 响应ContentRenderController变化重建');
+        EditPageLogger.rendererDebug('ContentRenderLayer重建', 
+          data: {'trigger': 'ContentRenderController变化'});
         return _buildContent(context);
       },
     );
@@ -159,16 +161,17 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             backgroundColor = ElementUtils.parseColor(colorStr);
           }
         } catch (e) {
-          debugPrint('Error parsing background color: $e');
+          EditPageLogger.rendererError('背景颜色解析失败', error: e);
         }
       }
     }
-    debugPrint('🎨 ContentRenderLayer: build() called');
-    debugPrint('🎨 ContentRenderLayer: Elements to render: ${elements.length}');
-    debugPrint(
-        '🎨 ContentRenderLayer: Selected elements: ${selectedElementIds.length}');
-    debugPrint(
-        '🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
+    EditPageLogger.rendererDebug('ContentRenderLayer构建内容', 
+      data: {
+        'elementsCount': elements.length,
+        'selectedCount': selectedElementIds.length,
+        'cacheMetrics': _cacheManager.metrics.getReport(),
+        'isPreviewMode': isPreviewMode
+      });
 
     // Sort elements by layer order
     final sortedElements = _sortElementsByLayer(elements, layers);
@@ -184,7 +187,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Log culling metrics
     if (widget.viewportCullingManager != null) {
       final cullingMetrics = widget.viewportCullingManager!.getMetrics();
-      debugPrint('🎯 Viewport Culling: $cullingMetrics');
+      EditPageLogger.rendererDebug('视口裁剪指标', 
+        data: {'metrics': cullingMetrics});
 
       // Configure culling strategy based on element count and performance
       if (sortedElements.length > 500) {
@@ -467,8 +471,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   /// Handle element change notifications from the controller
   void _handleElementChange(ElementChangeInfo changeInfo) {
     if (mounted) {
-      debugPrint(
-          'ContentRenderLayer: Handling element change - ${changeInfo.changeType} for ${changeInfo.elementId}');
+      EditPageLogger.rendererDebug('处理元素变化', 
+        data: {
+          'changeType': changeInfo.changeType.toString(),
+          'elementId': changeInfo.elementId
+        });
 
       // Get current elements
       final currentElements =
@@ -559,13 +566,17 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           // Use preview position instead of actual position
           elementCopy['x'] = previewPosition.dx;
           elementCopy['y'] = previewPosition.dy;
-          print(
-              '🎨 ContentRenderLayer: Using preview position for dragging element $elementId: $previewPosition');
+          EditPageLogger.rendererDebug('使用拖拽预览位置', 
+            data: {
+              'elementId': elementId,
+              'previewPosition': '${previewPosition.dx}, ${previewPosition.dy}'
+            });
         }
       }
     }
 
-    print('🎨 ContentRenderLayer: Rendering element $elementId ($type)');
+    EditPageLogger.rendererDebug('渲染元素', 
+      data: {'elementId': elementId, 'type': type});
 
     // Performance tracking for complex rendering operations
     final renderStart = DateTime.now();
@@ -591,8 +602,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             isPreviewMode: widget.isPreviewMode == true);
         break;
       default:
-        print(
-            '🎨 ContentRenderLayer: Unknown element type: $type for element $elementId');
+        EditPageLogger.rendererError('未知元素类型', 
+          data: {'type': type, 'elementId': elementId});
         result = Container(
           color: Colors.grey.withAlpha(51),
           child: Center(child: Text('Unknown element type: $type')),
@@ -602,8 +613,13 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final renderTime = DateTime.now().difference(renderStart).inMilliseconds;
     if (renderTime > 8) {
       // Log slow rendering operations (> half frame at 60fps)
-      print(
-          '⚠️ ContentRenderLayer: Slow render for $elementId ($type): ${renderTime}ms');
+      EditPageLogger.performanceWarning('渲染性能警告', 
+        data: {
+          'elementId': elementId,
+          'type': type,
+          'renderTime': renderTime,
+          'threshold': 8
+        });
     }
 
     return result;

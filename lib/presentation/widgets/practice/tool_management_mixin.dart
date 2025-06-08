@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'practice_edit_state.dart';
 
 /// 工具管理功能 Mixin
@@ -12,11 +13,14 @@ mixin ToolManagementMixin on ChangeNotifier {
   void setCurrentTool(String toolName) {
     checkDisposed();
     if (state.currentTool != toolName) {
+      final oldTool = state.currentTool;
       state.currentTool = toolName;
       
       // 根据工具类型执行相应的初始化
       _initializeTool(toolName);
       
+      EditPageLogger.controllerInfo('工具切换', 
+        data: {'oldTool': oldTool, 'newTool': toolName});
       notifyListeners();
     }
   }
@@ -39,14 +43,21 @@ mixin ToolManagementMixin on ChangeNotifier {
   /// 设置吸附功能状态
   void setSnapEnabled(bool enabled) {
     checkDisposed();
-    state.snapEnabled = enabled;
-    notifyListeners();
+    if (state.snapEnabled != enabled) {
+      state.snapEnabled = enabled;
+      EditPageLogger.controllerInfo('吸附功能状态变更', 
+        data: {'enabled': enabled});
+      notifyListeners();
+    }
   }
 
   /// 切换吸附功能
   void toggleSnap() {
     checkDisposed();
-    state.snapEnabled = !state.snapEnabled;
+    final newState = !state.snapEnabled;
+    state.snapEnabled = newState;
+    EditPageLogger.controllerInfo('切换吸附功能', 
+      data: {'enabled': newState});
     notifyListeners();
   }
 
@@ -70,8 +81,14 @@ mixin ToolManagementMixin on ChangeNotifier {
   void _initializeTool(String toolName) {
     // 清除当前选择（如果切换到非选择工具）
     if (toolName != 'select') {
+      final clearedCount = state.selectedElementIds.length;
       state.selectedElementIds.clear();
       state.selectedElement = null;
+      
+      if (clearedCount > 0) {
+        EditPageLogger.controllerDebug('工具切换清除选择', 
+          data: {'newTool': toolName, 'clearedCount': clearedCount});
+      }
     }
 
     // 初始化工具特定的状态

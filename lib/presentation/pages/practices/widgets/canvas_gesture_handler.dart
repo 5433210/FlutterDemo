@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
@@ -81,7 +82,7 @@ class CanvasGestureHandler {
 
   /// Handle pan cancel
   void handlePanCancel() {
-    debugPrint('【平移】handlePanCancel: 平移操作被取消');
+    EditPageLogger.canvasDebug('平移操作被取消');
 
     // 重置所有跟踪变量
     _isPanningEmptyArea = false;
@@ -105,8 +106,11 @@ class CanvasGestureHandler {
     // Note: No need to check controller.state.currentTool == 'select' here
     // If _isDragging is true, that means we started dragging elements
     // (even in select mode) and should continue processing the drag end    // 添加日志跟踪
-    debugPrint(
-        '【平移】handlePanEnd: 拖拽结束，速度=${details.velocity.pixelsPerSecond}, 是否正在拖拽元素=${dragStateManager.isDragging}');
+    EditPageLogger.canvasDebug('拖拽结束', 
+      data: {
+        'velocity': details.velocity.pixelsPerSecond.toString(),
+        'isDragging': dragStateManager.isDragging
+      });
 
     // If in preview mode, don't handle element dragging
     if (controller.state.isPreviewMode) return;
@@ -163,7 +167,8 @@ class CanvasGestureHandler {
 
       // Create a batch translation operation if any elements moved
       if (elementIds.isNotEmpty) {
-        debugPrint('【平移】handlePanEnd: 创建批量平移操作 - ${elementIds.length}个元素');
+        EditPageLogger.canvasDebug('创建批量平移操作', 
+          data: {'elementCount': elementIds.length});
         controller.createElementTranslationOperation(
           elementIds: elementIds,
           oldPositions: oldPositions,
@@ -174,28 +179,30 @@ class CanvasGestureHandler {
       onDragEnd();
     } else {
       // 添加日志跟踪 - 平移结束
-      debugPrint('【平移】handlePanEnd: 平移画布结束'); // 计算拖拽距离，判断是否为点击还是拖拽
+      EditPageLogger.canvasDebug('平移画布结束'); // 计算拖拽距离，判断是否为点击还是拖拽
       // 使用专门的平移结束位置，如果没有则说明没有发生平移更新，使用起始位置
       final endPoint = _panEndPosition ?? _dragStart;
       final dragDistance = (_dragStart - endPoint).distance;
       final isClick = dragDistance < 3.0; // 小于3个像素视为点击而非拖拽
 
       // 添加详细的调试日志
-      debugPrint('【平移】handlePanEnd: 平移画布结束 - 详细信息：');
-      debugPrint('  起始位置: $_dragStart');
-      debugPrint('  结束位置: $endPoint');
-      debugPrint('  _panEndPosition: $_panEndPosition');
-      debugPrint('  拖拽距离: $dragDistance');
-      debugPrint('  是否为点击: $isClick');
-      debugPrint('  是否在空白区域: $_isPanningEmptyArea');
-      debugPrint('  是否按下Ctrl/Shift: ${controller.state.isCtrlOrShiftPressed}');
-      debugPrint('  平移开始时的选中元素: $_panStartSelectedElementIds');
+      EditPageLogger.canvasDebug('平移画布详细信息', 
+        data: {
+          'startPosition': '$_dragStart',
+          'endPosition': '$endPoint',
+          'panEndPosition': '$_panEndPosition',
+          'dragDistance': dragDistance,
+          'isClick': isClick,
+          'isPanningEmptyArea': _isPanningEmptyArea,
+          'isCtrlOrShiftPressed': controller.state.isCtrlOrShiftPressed,
+          'panStartSelectedElements': _panStartSelectedElementIds.length
+        });
 
       // 如果是在空白区域的点击（而非拖拽），且不按Ctrl/Shift键，则清除选择
       if (_isPanningEmptyArea &&
           isClick &&
           !controller.state.isCtrlOrShiftPressed) {
-        debugPrint('【平移】handlePanEnd: 检测到空白区域的点击操作，清除选择');
+        EditPageLogger.canvasDebug('检测到空白区域点击，清除选择');
         controller.clearSelection();
       }
       // 如果是拖拽结束且平移开始时有选中的元素，保持选中状态

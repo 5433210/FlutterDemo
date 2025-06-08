@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'practice_edit_state.dart';
 
 /// UI状态管理 Mixin
@@ -17,7 +18,10 @@ mixin UIStateMixin on ChangeNotifier {
 
   /// 退出选择模式
   void exitSelectMode() {
+    final oldTool = state.currentTool;
     state.currentTool = '';
+    EditPageLogger.controllerInfo('退出选择模式', 
+      data: {'previousTool': oldTool});
     notifyListeners();
   }
 
@@ -26,15 +30,19 @@ mixin UIStateMixin on ChangeNotifier {
     if (editCanvas != null && editCanvas.resetCanvasPosition != null) {
       try {
         editCanvas.resetCanvasPosition();
+        EditPageLogger.controllerDebug('重置视图位置成功');
       } catch (e) {
-        debugPrint('Error resetting canvas position: $e');
+        EditPageLogger.controllerError('重置视图位置失败', error: e);
       }
     }
   }
 
   /// 重置画布缩放
   void resetZoom() {
+    final oldScale = state.canvasScale;
     state.canvasScale = 1.0;
+    EditPageLogger.controllerDebug('重置画布缩放', 
+      data: {'oldScale': oldScale, 'newScale': 1.0});
     notifyListeners();
   }
 
@@ -78,6 +86,9 @@ mixin UIStateMixin on ChangeNotifier {
           ? elements
               .firstWhere((e) => e['id'] == state.selectedElementIds.first)
           : null;
+      
+      EditPageLogger.controllerInfo('全选操作完成', 
+        data: {'selectedCount': state.selectedElementIds.length});
     }
 
     notifyListeners();
@@ -86,11 +97,15 @@ mixin UIStateMixin on ChangeNotifier {
   /// 选择页面
   void selectPage(int pageIndex) {
     if (pageIndex >= 0 && pageIndex < state.pages.length) {
+      final oldIndex = state.currentPageIndex;
       state.currentPageIndex = pageIndex;
       // Clear element and layer selections to show page properties
       state.selectedElementIds.clear();
       state.selectedElement = null;
       state.selectedLayerId = null;
+      
+      EditPageLogger.controllerInfo('选择页面', 
+        data: {'oldIndex': oldIndex, 'newIndex': pageIndex});
       notifyListeners();
     }
   }
@@ -104,6 +119,7 @@ mixin UIStateMixin on ChangeNotifier {
   /// 设置当前页面
   void setCurrentPage(int index) {
     if (index >= 0 && index < state.pages.length) {
+      final oldIndex = state.currentPageIndex;
       state.currentPageIndex = index;
       // Clear element and layer selections to show page properties
       state.selectedElementIds.clear();
@@ -114,6 +130,8 @@ mixin UIStateMixin on ChangeNotifier {
       // 这里我们可以添加页面特定的图层加载逻辑
       // 目前我们使用全局图层，但将来可能需要每个页面有自己的图层
 
+      EditPageLogger.controllerInfo('设置当前页面', 
+        data: {'oldIndex': oldIndex, 'newIndex': index});
       notifyListeners();
     }
   }
@@ -126,12 +144,16 @@ mixin UIStateMixin on ChangeNotifier {
 
   /// 切换网格显示
   void toggleGrid() {
-    state.gridVisible = !state.gridVisible;
+    final newState = !state.gridVisible;
+    state.gridVisible = newState;
+    EditPageLogger.controllerDebug('切换网格显示', 
+      data: {'visible': newState});
     notifyListeners();
   }
 
   /// 切换预览模式
   void togglePreviewMode(bool isPreviewMode) {
+    final oldMode = state.isPreviewMode;
     state.isPreviewMode = isPreviewMode;
 
     // 自动重置视图位置
@@ -142,19 +164,29 @@ mixin UIStateMixin on ChangeNotifier {
       previewModeCallback!(isPreviewMode);
     }
 
+    EditPageLogger.controllerInfo('切换预览模式', 
+      data: {'oldMode': oldMode, 'newMode': isPreviewMode});
     notifyListeners();
   }
 
   /// 切换吸附功能
   void toggleSnap() {
-    state.snapEnabled = !state.snapEnabled;
+    final newState = !state.snapEnabled;
+    state.snapEnabled = newState;
+    EditPageLogger.controllerDebug('切换吸附功能', 
+      data: {'enabled': newState});
     notifyListeners();
   }
 
   /// 设置画布缩放值
   void zoomTo(double scale) {
     checkDisposed();
-    state.canvasScale = scale.clamp(0.1, 10.0); // 限制缩放范围
+    final oldScale = state.canvasScale;
+    final newScale = scale.clamp(0.1, 10.0); // 限制缩放范围
+    state.canvasScale = newScale;
+    
+    EditPageLogger.controllerDebug('设置画布缩放', 
+      data: {'oldScale': oldScale, 'newScale': newScale, 'requestedScale': scale});
     notifyListeners();
   }
 }
