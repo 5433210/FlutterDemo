@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'element_cache_manager.dart';
 import 'memory_manager.dart';
 
@@ -111,12 +112,14 @@ class AdaptiveCacheManager extends ChangeNotifier {
       _maxMemoryLimit,
     );
 
-    if (kDebugMode) {
-      print(
-        '🧠 AdaptiveCacheManager: Detected ${_formatBytes(_availableSystemMemory)} system memory, '
-        'setting cache limit to ${_formatBytes(_currentMemoryLimit)}',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '自适应缓存管理器内存检测',
+      data: {
+        'systemMemory': _formatBytes(_availableSystemMemory),
+        'cacheLimit': _formatBytes(_currentMemoryLimit),
+        'recommendedLimit': _formatBytes(recommendedLimit),
+      },
+    );
   }
 
   /// Apply balanced optimization strategy
@@ -141,11 +144,14 @@ class AdaptiveCacheManager extends ChangeNotifier {
       enableAggressiveCleanup: false,
     );
 
-    if (kDebugMode) {
-      print(
-        '⚖️ AdaptiveCacheManager: Applied balanced strategy (cache: $newCacheSize elements)',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '应用平衡缓存策略',
+      data: {
+        'strategy': 'balanced',
+        'cacheSize': newCacheSize,
+        'memoryLimit': _formatBytes((_currentMemoryLimit * 0.6).toInt()),
+      },
+    );
   }
 
   /// Apply memory-first optimization strategy
@@ -170,11 +176,15 @@ class AdaptiveCacheManager extends ChangeNotifier {
       enableAggressiveCleanup: true,
     );
 
-    if (kDebugMode) {
-      print(
-        '🛡️ AdaptiveCacheManager: Applied memory-first strategy (cache: $newCacheSize elements)',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '应用内存优先缓存策略',
+      data: {
+        'strategy': 'memory-first',
+        'cacheSize': newCacheSize,
+        'memoryLimit': _formatBytes((_currentMemoryLimit * 0.4).toInt()),
+        'aggressiveCleanup': true,
+      },
+    );
   }
 
   /// Apply performance-first optimization strategy
@@ -203,11 +213,15 @@ class AdaptiveCacheManager extends ChangeNotifier {
       );
     }
 
-    if (kDebugMode) {
-      print(
-        '🚀 AdaptiveCacheManager: Applied performance-first strategy (cache: $newCacheSize elements)',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '应用性能优先缓存策略',
+      data: {
+        'strategy': 'performance-first',
+        'cacheSize': newCacheSize,
+        'systemMemoryRatio': systemMemoryRatio,
+        'memoryLimit': _formatBytes((_currentMemoryLimit * 0.8).toInt()),
+      },
+    );
   }
 
   /// Apply adaptation strategy
@@ -375,11 +389,15 @@ class AdaptiveCacheManager extends ChangeNotifier {
     final newStrategy = _determineOptimalStrategy(memoryStats, cacheMetrics);
 
     if (newStrategy != _currentStrategy) {
-      if (kDebugMode) {
-        print(
-          '🔄 AdaptiveCacheManager: Switching strategy from $_currentStrategy to $newStrategy',
-        );
-      }
+      EditPageLogger.editPageDebug(
+        '缓存策略切换',
+        data: {
+          'fromStrategy': _currentStrategy.toString(),
+          'toStrategy': newStrategy.toString(),
+          'memoryPressure': memoryStats.pressureRatio,
+          'cacheHitRate': cacheMetrics.hitRate,
+        },
+      );
 
       _currentStrategy = newStrategy;
       await _applyStrategy(newStrategy);

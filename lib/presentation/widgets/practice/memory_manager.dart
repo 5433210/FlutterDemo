@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 /// Element bounds helper class
 class ElementBounds {
   final double x, y, width, height;
@@ -155,11 +157,14 @@ class MemoryManager extends ChangeNotifier {
   void adjustMemoryLimits({int? newMaxMemory}) {
     if (newMaxMemory != null && newMaxMemory > 0) {
       _maxMemoryBytes = newMaxMemory;
-      if (kDebugMode) {
-        print(
-          '📏 MemoryManager: Memory limit adjusted to ${_formatBytes(_maxMemoryBytes)}',
-        );
-      }
+      EditPageLogger.editPageDebug(
+        '内存管理器限制调整',
+        data: {
+          'newMaxMemory': _formatBytes(_maxMemoryBytes),
+          'oldUsage': _formatBytes(_currentMemoryUsage),
+          'pressureRatio': _currentMemoryUsage / _maxMemoryBytes,
+        },
+      );
       _checkMemoryPressure();
     }
   }
@@ -218,11 +223,14 @@ class MemoryManager extends ChangeNotifier {
         resource.dispose();
       }
 
-      if (kDebugMode) {
-        print(
-          '🗑️ MemoryManager: Disposed image resource for $elementId (${_formatBytes(resource.estimatedSize)})',
-        );
-      }
+      EditPageLogger.editPageDebug(
+        '释放图片资源',
+        data: {
+          'elementId': elementId,
+          'resourceSize': _formatBytes(resource.estimatedSize),
+          'totalMemoryUsage': _formatBytes(_currentMemoryUsage),
+        },
+      );
 
       notifyListeners();
       return true;
@@ -254,11 +262,15 @@ class MemoryManager extends ChangeNotifier {
   Future<int> performMemoryCleanup({bool aggressive = false}) async {
     final startUsage = _currentMemoryUsage;
 
-    if (kDebugMode) {
-      print(
-        '🧹 MemoryManager: Starting ${aggressive ? 'aggressive ' : ''}memory cleanup...',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '开始内存清理',
+      data: {
+        'aggressive': aggressive,
+        'currentUsage': _formatBytes(_currentMemoryUsage),
+        'maxLimit': _formatBytes(_maxMemoryBytes),
+        'pressureRatio': _currentMemoryUsage / _maxMemoryBytes,
+      },
+    );
 
     // 1. Clean up old unused image resources
     _cleanupUnusedImageResources(aggressive);
@@ -274,14 +286,15 @@ class MemoryManager extends ChangeNotifier {
     final finalUsage = _currentMemoryUsage;
     final actualFreed = startUsage - finalUsage;
 
-    if (kDebugMode) {
-      print(
-        '🧹 MemoryManager: Cleanup completed. Freed ${_formatBytes(actualFreed)}',
-      );
-      print(
-        '   Memory usage: ${_formatBytes(finalUsage)} / ${_formatBytes(_maxMemoryBytes)}',
-      );
-    }
+    EditPageLogger.editPageDebug(
+      '内存清理完成',
+      data: {
+        'freedMemory': _formatBytes(actualFreed),
+        'finalUsage': _formatBytes(finalUsage),
+        'maxLimit': _formatBytes(_maxMemoryBytes),
+        'newPressureRatio': finalUsage / _maxMemoryBytes,
+      },
+    );
 
     notifyListeners();
     return actualFreed;
@@ -314,11 +327,16 @@ class MemoryManager extends ChangeNotifier {
     // Track large elements
     if (estimatedSize > _largeElementThreshold) {
       _largeElements.add(elementId);
-      if (kDebugMode) {
-        print(
-          '🐘 MemoryManager: Large element detected - $elementId ($elementType, ${_formatBytes(estimatedSize)})',
-        );
-      }
+      EditPageLogger.editPageWarning(
+        '检测到大型元素',
+        data: {
+          'elementId': elementId,
+          'elementType': elementType,
+          'elementSize': _formatBytes(estimatedSize),
+          'threshold': _formatBytes(_largeElementThreshold),
+          'totalLargeElements': _largeElements.length,
+        },
+      );
     }
 
     _checkMemoryPressure();

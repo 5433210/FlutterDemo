@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../dialogs/practice_save_dialog.dart';
 import 'export/export_dialog.dart';
 import 'export/export_service.dart';
@@ -18,11 +19,16 @@ class FileOperations {
     PracticeEditController controller,
     String defaultFileName,
   ) async {
-    debugPrint('=== 开始导出字帖 ===');
-    debugPrint('页面数量: ${pages.length}, 默认文件名: $defaultFileName');
+    EditPageLogger.editPageDebug(
+      '开始导出字帖',
+      data: {
+        'pageCount': pages.length,
+        'defaultFileName': defaultFileName,
+      },
+    );
 
     if (pages.isEmpty) {
-      debugPrint('错误: 没有可导出的页面');
+      EditPageLogger.editPageError('没有可导出的页面');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('没有可导出的页面')),
       );
@@ -55,7 +61,7 @@ class FileOperations {
     );
 
     if (result == null) {
-      debugPrint('用户取消了导出');
+      EditPageLogger.editPageDebug('用户取消了导出');
       return;
     }
 
@@ -79,8 +85,15 @@ class FileOperations {
     final fileName = result['fileName'] as String;
     final pixelRatio = result['pixelRatio'] as double;
 
-    debugPrint(
-        '准备导出: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio');
+    EditPageLogger.editPageDebug(
+      '准备导出',
+      data: {
+        'outputPath': outputPath,
+        'exportType': exportType.name,
+        'fileName': fileName,
+        'pixelRatio': pixelRatio,
+      },
+    );
 
     // 显示导出进度
     if (context.mounted) {

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../common/editable_number_field.dart';
 import '../../common/m3_color_picker.dart';
@@ -1151,17 +1152,24 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
   // 更新内容属性
   void _updateContentProperty(String key, dynamic value) {
-    // 打印调试信息
-    developer.log('更新内容属性: $key = $value');
-    developer.log('当前书写模式: ${element['content']['writingMode']}');
+    EditPageLogger.editPageDebug(
+      '更新文本内容属性',
+      data: {
+        'key': key,
+        'value': value,
+        'currentWritingMode': element['content']?['writingMode'],
+      },
+    );
 
     final content = Map<String, dynamic>.from(
         element['content'] as Map<String, dynamic>? ?? {});
     content[key] = value;
     _updateProperty('content', content);
 
-    // 打印更新后的内容
-    developer.log('更新后的内容: $content');
+    EditPageLogger.editPageDebug(
+      '文本内容属性更新完成',
+      data: {'updatedContent': content},
+    );
   }
 
   void _updateProperty(String key, dynamic value) {

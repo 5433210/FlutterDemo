@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import 'practice_edit_controller.dart';
@@ -294,7 +295,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         color: isSelected ? colorScheme.primaryContainer : colorScheme.surface,
         borderRadius: BorderRadius.circular(8.0),
         child: InkWell(
-          onTap: onPressed,
+          onTap: () {
+            EditPageLogger.editPageDebug(
+              '工具栏元素工具切换',
+              data: {
+                'toolName': toolName,
+                'isSelected': isSelected,
+                'tooltip': tooltip,
+              },
+            );
+            onPressed();
+          },
           borderRadius: BorderRadius.circular(8.0),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),

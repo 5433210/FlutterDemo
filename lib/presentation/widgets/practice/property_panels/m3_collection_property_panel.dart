@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../application/providers/service_providers.dart';
 import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'collection_panels/m3_background_texture_panel.dart';

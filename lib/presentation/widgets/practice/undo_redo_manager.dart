@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'undo_operations.dart';
 
 /// 撤销/重做管理器
@@ -30,9 +31,14 @@ class UndoRedoManager {
 
   /// 添加操作
   void addOperation(UndoableOperation operation) {
-    debugPrint('【撤销/重做】UndoRedoManager.addOperation: 开始添加操作');
-    debugPrint(
-        '【撤销/重做】UndoRedoManager.addOperation: 操作类型=${operation.runtimeType}, 描述=${operation.description}');
+    EditPageLogger.controllerDebug(
+      '开始添加撤销重做操作',
+      data: {
+        'operationType': operation.runtimeType.toString(),
+        'description': operation.description,
+        'currentUndoStackSize': _undoStack.length,
+      },
+    );
 
     try {
       // 执行操作
@@ -47,7 +53,7 @@ class UndoRedoManager {
       // 如果超过最大栈大小，移除最早的操作
       if (_undoStack.length > _maxStackSize) {
         _undoStack.removeAt(0);
-        debugPrint('【撤销/重做】UndoRedoManager.addOperation: 撤销栈超过最大大小，已移除最早的操作');
+        EditPageLogger.controllerInfo('撤销栈超过最大大小，移除最早操作', data: {'maxStackSize': _maxStackSize});
       }
 
       // 通知状态变化
@@ -55,7 +61,7 @@ class UndoRedoManager {
         onStateChanged!();
       }
     } catch (e) {
-      debugPrint('【撤销/重做】UndoRedoManager.addOperation: 添加操作失败: $e');
+      EditPageLogger.controllerError('添加撤销重做操作失败', error: e, data: {'operationType': operation.runtimeType.toString()});
     }
   }
 

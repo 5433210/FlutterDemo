@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../../dialogs/practice_title_edit_dialog.dart';
@@ -248,6 +249,16 @@ class M3TopNavigationBar extends StatelessWidget
   /// Save practice
   Future<void> _savePractice(
       BuildContext context, AppLocalizations l10n) async {
+    EditPageLogger.editPageDebug(
+      '保存字帖练习',
+      data: {
+        'practiceId': practiceId,
+        'hasTitle': controller.practiceTitle != null,
+        'pageCount': controller.state.pages.length,
+        'hasUnsavedChanges': controller.state.hasUnsavedChanges,
+      },
+    );
+    
     await FileOperations.savePractice(
       context,
       controller.state.pages,
