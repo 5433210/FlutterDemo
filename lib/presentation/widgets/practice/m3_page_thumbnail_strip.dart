@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import 'page_operations.dart';
 
@@ -182,7 +183,18 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
           key: ValueKey('page_${page['id']}'),
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () => widget.onPageSelected(index),
+            onTap: () {
+              EditPageLogger.editPageDebug(
+                '页面缩略图选择(可排序列表)',
+                data: {
+                  'selectedIndex': index,
+                  'currentIndex': widget.currentPageIndex,
+                  'totalPages': widget.pages.length,
+                  'pageId': page['id'],
+                },
+              );
+              widget.onPageSelected(index);
+            },
             child: MouseRegion(
               cursor: SystemMouseCursors.grab,
               child: Stack(
@@ -277,7 +289,19 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
         return Padding(
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () => widget.onPageSelected(index),
+            onTap: () {
+              EditPageLogger.editPageDebug(
+                '页面缩略图选择(简单列表)',
+                data: {
+                  'selectedIndex': index,
+                  'currentIndex': widget.currentPageIndex,
+                  'totalPages': widget.pages.length,
+                  'pageId': page['id'],
+                  'pageName': page['name'] as String? ?? 'Page ${index + 1}',
+                },
+              );
+              widget.onPageSelected(index);
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

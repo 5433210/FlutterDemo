@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../image/cached_image.dart';
 import 'collection_element_renderer.dart';
 import 'text_renderer.dart';
@@ -46,17 +47,18 @@ class ElementRenderers {
     final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;
     final textureHeight = (content['textureHeight'] as num?)?.toDouble() ?? 0.0;
 
-    // 添加调试信息
-    debugPrint(
-        'ElementRenderers.buildCollectionElement: hasBackgroundTexture=$hasBackgroundTexture');
-    if (hasBackgroundTexture) {
-      debugPrint(
-          'ElementRenderers.buildCollectionElement: backgroundTexture=$backgroundTexture');
-      debugPrint(
-          'ElementRenderers.buildCollectionElement: textureApplicationRange=$textureApplicationRange');
-      debugPrint(
-          'ElementRenderers.buildCollectionElement: textureFillMode=$textureFillMode');
-    }
+    // 记录集字元素构建信息
+    EditPageLogger.rendererDebug(
+      '构建集字元素',
+      data: {
+        'hasBackgroundTexture': hasBackgroundTexture,
+        'textureApplicationRange': textureApplicationRange,
+        'textureFillMode': textureFillMode,
+        'textureOpacity': textureOpacity,
+        'characters': characters,
+        'fontSize': fontSize,
+      },
+    );
 
     return Opacity(
         opacity: opacity,
@@ -67,19 +69,17 @@ class ElementRenderers {
           decoration: BoxDecoration(color: backgroundColor),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 添加调试信息
-              debugPrint('buildCollectionElement纹理参数: \n'
-                  '  hasTexture: $hasBackgroundTexture\n'
-                  '  textureData: $backgroundTexture\n'
-                  '  fillMode: $textureFillMode\n'
-                  '  opacity: $textureOpacity\n'
-                  '  range: $textureApplicationRange');
-
-              debugPrint('ElementRenderers: 准备构建集字布局');
-              debugPrint('- 纹理数据: $backgroundTexture');
-              debugPrint('- 纹理填充模式: $textureFillMode');
-              debugPrint('- 纹理不透明度: $textureOpacity');
-              debugPrint('- 纹理应用范围: $textureApplicationRange');
+              // 记录集字布局构建参数
+              EditPageLogger.rendererDebug(
+                '构建集字布局',
+                data: {
+                  'hasTexture': hasBackgroundTexture,
+                  'fillMode': textureFillMode,
+                  'opacity': textureOpacity,
+                  'range': textureApplicationRange,
+                  'constraints': '${constraints.maxWidth}x${constraints.maxHeight}',
+                },
+              );
 
               return CollectionElementRenderer.buildCollectionLayout(
                 characters: characters,
@@ -262,7 +262,7 @@ class ElementRenderers {
         // 解析颜色
         bgColor = Color(int.parse(fullColorStr, radix: 16));
       } catch (e) {
-        debugPrint('解析背景颜色失败: $e');
+        EditPageLogger.rendererError('解析背景颜色失败', error: e);
       }
     }
 
@@ -534,7 +534,10 @@ class ElementRenderers {
           // #AARRGGBB format
           buffer.write(colorStr.substring(1));
         } else {
-          debugPrint('Invalid color format: $colorStr');
+          EditPageLogger.rendererError(
+          '无效的颜色格式',
+          data: {'colorStr': colorStr},
+        );
           return Colors.black; // Invalid format
         }
       } else {
@@ -552,7 +555,11 @@ class ElementRenderers {
 
       return color;
     } catch (e) {
-      debugPrint('Error parsing color: $e, colorStr: $colorStr');
+      EditPageLogger.rendererError(
+        '颜色解析错误',
+        data: {'colorStr': colorStr},
+        error: e,
+      );
       return Colors.black;
     }
   }

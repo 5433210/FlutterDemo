@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 
 /// 选中元素高亮组件
@@ -32,6 +33,18 @@ class SelectedElementsHighlight extends StatelessWidget {
     if (selectedElementIds.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    // 记录选中元素状态
+    EditPageLogger.canvasDebug(
+      '选择框高亮更新',
+      data: {
+        'selectedCount': selectedElementIds.length,
+        'selectedIds': selectedElementIds.toList(),
+        'canvasScale': canvasScale,
+        'hasDragManager': dragStateManager != null,
+        'isDragging': dragStateManager?.isDragging ?? false,
+      },
+    );
 
     // 如果有拖拽状态管理器，监听其变化以实时更新
     if (dragStateManager != null) {

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'memory_manager.dart';
 import 'performance_monitor.dart';
 
@@ -13,9 +14,10 @@ import 'performance_monitor.dart';
 class DevicePerformanceDetector {
   /// 检测设备性能等级
   static Future<DevicePerformanceLevel> detectDevicePerformance() async {
-    // 这里实现更复杂的设备性能检测
-    // 例如测试渲染性能、计算性能、内存可用性等
-
+    EditPageLogger.performanceInfo('开始设备性能检测');
+    
+    final timer = PerformanceTimer('设备性能检测');
+    
     // 渲染测试：评估设备的图形性能
     final renderPerformance = await _testRenderPerformance();
 
@@ -30,13 +32,30 @@ class DevicePerformanceDetector {
         renderPerformance + computePerformance + memoryPerformance;
 
     // 基于总分确定性能等级
+    DevicePerformanceLevel level;
     if (totalScore > 80) {
-      return DevicePerformanceLevel.high;
+      level = DevicePerformanceLevel.high;
     } else if (totalScore > 50) {
-      return DevicePerformanceLevel.medium;
+      level = DevicePerformanceLevel.medium;
     } else {
-      return DevicePerformanceLevel.low;
+      level = DevicePerformanceLevel.low;
     }
+
+    EditPageLogger.performanceInfo(
+      '设备性能检测完成',
+      data: {
+        'renderScore': renderPerformance,
+        'computeScore': computePerformance,
+        'memoryScore': memoryPerformance,
+        'totalScore': totalScore,
+        'performanceLevel': level.name,
+        'detectionTimeMs': timer.elapsedMilliseconds,
+      },
+    );
+    
+    timer.finish();
+
+    return level;
   }
 
   /// 测试计算性能

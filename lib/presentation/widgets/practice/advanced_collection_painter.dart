@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/cache/services/image_cache_service.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../infrastructure/providers/cache_providers.dart'
     as cache_providers;
 import '../../../infrastructure/services/character_image_service.dart';
@@ -107,7 +108,17 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 2. 遍历所有字符位置，绘制字符
       for (int i = 0; i < positions.length; i++) {
         final position = positions[i];
-        debugPrint('------字符：${position.char}， 索引：${position.index}------');
+        EditPageLogger.rendererDebug(
+          '绘制字符',
+          data: {
+            'char': position.char,
+            'index': position.index,
+            'originalIndex': position.originalIndex,
+            'x': position.x,
+            'y': position.y,
+            'size': position.size,
+          },
+        );
 
         // 如果是换行符，直接跳过，不做任何绘制
         if (position.char == '\n') continue;
@@ -141,7 +152,7 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 恢复画布状态
       canvas.restore();
     } catch (e) {
-      debugPrint('绘制异常：$e');
+      EditPageLogger.rendererError('集字画笔绘制异常', error: e);
     }
   }
 
@@ -155,46 +166,26 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 优先检查纹理配置变化 - 这是最关键的
     bool textureChanged = false;
 
-    // 详细检查纹理配置的每个属性
-    if (oldDelegate.textureConfig.enabled != textureConfig.enabled) {
-      debugPrint('🔄 shouldRepaint: 纹理启用状态变化');
-      textureChanged = true;
-    }
-
-    if (oldDelegate.textureConfig.fillMode != textureConfig.fillMode) {
-      debugPrint(
-          '🔄 shouldRepaint: 纹理填充模式变化 ${oldDelegate.textureConfig.fillMode} -> ${textureConfig.fillMode}');
-      textureChanged = true;
-    }
-
-    if (oldDelegate.textureConfig.fitMode != textureConfig.fitMode) {
-      debugPrint(
-          '🔄 shouldRepaint: 纹理适应模式变化 ${oldDelegate.textureConfig.fitMode} -> ${textureConfig.fitMode}');
-      textureChanged = true;
-    }
-
-    if (oldDelegate.textureConfig.opacity != textureConfig.opacity) {
-      debugPrint(
-          '🔄 shouldRepaint: 纹理不透明度变化 ${oldDelegate.textureConfig.opacity} -> ${textureConfig.opacity}');
-      textureChanged = true;
-    }
-
-    if (oldDelegate.textureConfig.textureWidth != textureConfig.textureWidth ||
-        oldDelegate.textureConfig.textureHeight !=
-            textureConfig.textureHeight) {
-      debugPrint('🔄 shouldRepaint: 纹理尺寸变化');
-      textureChanged = true;
-    }
-
-    // 检查纹理数据变化（路径等）
-    if (!_mapsEqual(oldDelegate.textureConfig.data, textureConfig.data)) {
-      debugPrint('🔄 shouldRepaint: 纹理数据变化');
+    // 检查纹理配置的每个属性
+    if (oldDelegate.textureConfig.enabled != textureConfig.enabled ||
+        oldDelegate.textureConfig.fillMode != textureConfig.fillMode ||
+        oldDelegate.textureConfig.fitMode != textureConfig.fitMode ||
+        oldDelegate.textureConfig.opacity != textureConfig.opacity ||
+        oldDelegate.textureConfig.textureWidth != textureConfig.textureWidth ||
+        oldDelegate.textureConfig.textureHeight != textureConfig.textureHeight ||
+        !_mapsEqual(oldDelegate.textureConfig.data, textureConfig.data)) {
       textureChanged = true;
     }
 
     if (textureChanged) {
       // 纹理配置变化时，清除相关缓存
-      debugPrint('🔄 shouldRepaint: 检测到纹理变化，清除缓存并强制重绘');
+      EditPageLogger.rendererDebug(
+        '纹理变化检测',
+        data: {
+          'action': '清除缓存并强制重绘',
+          'textureChanged': true,
+        },
+      );
       _loadingTextures.clear();
       _cacheKey = null;
       return true;
@@ -220,9 +211,7 @@ class AdvancedCollectionPainter extends CustomPainter {
         oldDelegate.letterSpacing != letterSpacing ||
         oldDelegate.lineSpacing != lineSpacing;
 
-    if (basicChanged) {
-      debugPrint('🔄 shouldRepaint: 基本属性变化');
-    }
+    // 基本属性变化时直接返回true，无需记录日志
 
     return basicChanged;
   }
@@ -269,7 +258,7 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 创建占位图像并缓存
   Future<bool> _createPlaceholderImage(String cacheKey) async {
     try {
-      debugPrint('创建占位图像: $cacheKey');
+
 
       // 创建一个简单的占位图像
       final recorder = ui.PictureRecorder();
@@ -297,44 +286,24 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 缓存图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      debugPrint('占位图像创建成功: $cacheKey');
+
       return true;
     } catch (e) {
-      debugPrint('创建占位图像失败: $e');
+      EditPageLogger.rendererError('创建占位图像失败', error: e);
       return false;
     }
   }
 
-  /// 调试工具：记录字符和索引的映射关系
+  /// 调试工具：记录字符和索引的映射关系（仅在调试模式下）
   void _debugLogCharacterIndexes() {
-    debugPrint('======= 字符索引映射 =======');
-    final List<String> chars = characters;
-    for (int i = 0; i < chars.length; i++) {
-      final char = chars[i];
-      final displayChar = char == '\n' ? '\\n' : char;
-      debugPrint('索引: $i - 字符: "$displayChar"${char == '\n' ? ' (换行符)' : ''}');
-    }
-
-    // 如果characterImages是Map，输出其键
-    if (characterImages is Map) {
-      debugPrint('======= 字符图像映射 =======');
-      final Map charImages = characterImages as Map;
-      charImages.forEach((key, value) {
-        debugPrint('图像键: $key - 值类型: ${value.runtimeType}');
-      });
-
-      // 检查是否存在characterImages子映射
-      if (charImages.containsKey('characterImages')) {
-        debugPrint('======= 子字符图像映射 =======');
-        final subMap = charImages['characterImages'];
-        if (subMap is Map) {
-          subMap.forEach((key, value) {
-            debugPrint('子图像键: $key - 值类型: ${value.runtimeType}');
-          });
-        }
-      }
-    }
-    debugPrint('============================');
+    EditPageLogger.rendererDebug(
+      '字符索引映射',
+      data: {
+        'charactersCount': characters.length,
+        'hasCharacterImages': characterImages != null,
+        'characterImagesType': characterImages.runtimeType.toString(),
+      },
+    );
   }
 
   /// 绘制字符图像
@@ -382,14 +351,10 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 当纹理启用时，不在字符区域绘制背景色
     // 这样可以让背景纹理透过来，避免被遮挡
     if (textureConfig.enabled && textureConfig.data != null) {
-      // 背景纹理模式下，跳过字符区域的背景绘制
-      debugPrint('🎨 AdvancedCollectionPainter: 跳过字符区域背景绘制，让背景纹理透过');
       return;
     }
 
     if (position.backgroundColor != Colors.transparent) {
-      debugPrint(
-          '🎨 AdvancedCollectionPainter: 绘制字符背景色 ${position.backgroundColor}');
       final bgPaint = Paint()
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
@@ -487,11 +452,7 @@ class AdvancedCollectionPainter extends CustomPainter {
       Canvas canvas, Rect rect, ui.Image image) {
     final actualTextureSize = _calculateActualTextureSize(image);
 
-    debugPrint('开始纹理渲染:');
-    debugPrint('  背景区域: $rect');
-    debugPrint('  纹理尺寸: $actualTextureSize');
-    debugPrint('  填充模式: ${textureConfig.fillMode}');
-    debugPrint('  适应模式: ${textureConfig.fitMode}');
+
 
     // 根据填充模式决定渲染策略
     switch (textureConfig.fillMode) {
@@ -518,14 +479,10 @@ class AdvancedCollectionPainter extends CustomPainter {
   ui.Image? _findCharacterImage(String char, int index) {
     // 如果没有字符图像，直接返回null
     if (characterImages == null) {
-      debugPrint('没有字符图像数据');
       return null;
     }
 
     try {
-      // 输出字符图像的类型和索引信息 - 保持原始索引不变
-      debugPrint(
-          '字符图像类型: ${characterImages.runtimeType}, 当前字符: $char, 原始索引: $index');
 
       // 如果是图像对象，直接返回
       if (characterImages is ui.Image) {
@@ -536,14 +493,12 @@ class AdvancedCollectionPainter extends CustomPainter {
       if (characterImages is Map) {
         // 尝试使用字符索引作为键 - 使用原始位置索引
         final String indexKey = index.toString();
-        debugPrint('尝试查找索引键: $indexKey');
 
         // 首先检查是否有嵌套的characterImages结构
         Map<dynamic, dynamic> targetMap = characterImages;
         if (characterImages.containsKey('characterImages')) {
           final subMap = characterImages['characterImages'];
           if (subMap is Map) {
-            debugPrint('使用嵌套的characterImages映射');
             targetMap = subMap;
           }
         }
@@ -551,7 +506,6 @@ class AdvancedCollectionPainter extends CustomPainter {
         // 检查是否有对应索引的图像数据
         if (targetMap.containsKey(indexKey)) {
           final imageData = targetMap[indexKey];
-          debugPrint('找到索引 $indexKey 的图像数据: $imageData');
 
           // 如果是字符串，直接使用
           if (imageData is String) {
@@ -562,7 +516,6 @@ class AdvancedCollectionPainter extends CustomPainter {
           else if (imageData is Map) {
             if (imageData.containsKey('characterId')) {
               final characterId = imageData['characterId'];
-              debugPrint('找到characterId: $characterId');
 
               if (characterId != null) {
                 // 使用characterId作为缓存键
@@ -572,7 +525,6 @@ class AdvancedCollectionPainter extends CustomPainter {
                 ui.Image? cachedImage =
                     _imageCacheService.tryGetUiImageSync(cacheKey);
                 if (cachedImage != null) {
-                  debugPrint('从缓存找到图像: $cacheKey');
                   return cachedImage;
                 }
 
@@ -609,10 +561,9 @@ class AdvancedCollectionPainter extends CustomPainter {
       }
 
       // 如果没有找到匹配的图像
-      debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
       return null;
     } catch (e) {
-      debugPrint('获取字符图像时出错: $e');
+      EditPageLogger.rendererError('获取字符图像时出错', error: e);
       return null;
     }
   }
@@ -668,10 +619,23 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 缓存UI图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      debugPrint('字符图像加载成功: $path');
+      EditPageLogger.rendererDebug(
+        '字符图像加载成功',
+        data: {
+          'path': path,
+          'cacheKey': cacheKey,
+        },
+      );
       return true;
     } catch (e) {
-      debugPrint('字符图像加载失败: $path, 错误: $e');
+      EditPageLogger.rendererError(
+        '字符图像加载失败',
+        data: {
+          'path': path,
+          'cacheKey': cacheKey,
+        },
+        error: e,
+      );
       return false;
     }
   }
