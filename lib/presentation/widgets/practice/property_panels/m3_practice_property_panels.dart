@@ -2,7 +2,7 @@
 export 'm3_collection_property_panel.dart';
 export 'm3_practice_property_panel_base.dart';
 export 'm3_practice_property_panel_group.dart';
-export 'm3_practice_property_panel_image.dart';
+export 'image/image_property_panel.dart';
 export 'm3_practice_property_panel_layer.dart';
 export 'm3_practice_property_panel_multi.dart';
 export 'm3_practice_property_panel_page.dart';

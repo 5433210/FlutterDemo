@@ -9,7 +9,7 @@ import 'm3_collection_property_panel.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
 import 'm3_practice_property_panel_group.dart';
-import 'm3_practice_property_panel_image.dart';
+import 'image/image_property_panel.dart';
 import 'm3_practice_property_panel_layer.dart';
 import 'm3_practice_property_panel_multi.dart';
 import 'm3_practice_property_panel_page.dart';
