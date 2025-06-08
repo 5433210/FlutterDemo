@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'property_panels/justified_text_renderer.dart';
 import 'property_panels/vertical_column_justified_text.dart';
 
@@ -159,16 +160,19 @@ class TextRenderer {
     required bool underline,
     required bool lineThrough,
   }) {
-    developer.log('====== 创建文本样式 ======');
-    developer.log('输入参数:');
-    developer.log('- fontFamily: $fontFamily');
-    developer.log('- fontWeight: $fontWeight');
-    developer.log('- fontSize: $fontSize');
-    developer.log('- fontStyle: $fontStyle');
+    EditPageLogger.editPageDebug(
+      '创建文本样式',
+      data: {
+        'fontFamily': fontFamily,
+        'fontWeight': fontWeight,
+        'fontSize': fontSize,
+        'fontStyle': fontStyle,
+      },
+    );
 
     // 验证字重是否有效
     if (!_isValidWeight(fontWeight)) {
-      developer.log('警告：无效的字重值 "$fontWeight"，将使用默认值 w400');
+      EditPageLogger.editPageWarning('无效的字重值，将使用默认值', data: {'invalidWeight': fontWeight, 'defaultWeight': 'w400'});
       fontWeight = 'w400';
     }
 
@@ -182,7 +186,7 @@ class TextRenderer {
     try {
       parsedFontColor = Color(int.parse(fontColor.replaceFirst('#', '0xFF')));
     } catch (e) {
-      developer.log('解析颜色失败: $e');
+      EditPageLogger.editPageError('解析文本颜色失败', error: e, data: {'fontColor': fontColor});
       parsedFontColor = Colors.black;
     }
 

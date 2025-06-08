@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'custom_operation.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
@@ -63,11 +64,11 @@ mixin LayerManagementMixin on ChangeNotifier {
   void addNewLayer() {
     checkDisposed();
     
-    debugPrint('🆕 LayerManagementMixin: addNewLayer called');
+    EditPageLogger.controllerDebug('添加新图层');
     
     // 确保有当前页面
     if (state.currentPage == null) {
-      debugPrint('  ❌ No current page');
+      EditPageLogger.controllerWarning('没有当前页面，无法添加图层');
       return;
     }
     

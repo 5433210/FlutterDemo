@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
@@ -354,17 +355,19 @@ mixin PageManagementMixin on ChangeNotifier {
   void updatePageProperties(Map<String, dynamic> properties) {
     checkDisposed();
     
-    debugPrint('🔧 PageManagementMixin.updatePageProperties: 开始更新页面属性');
-    debugPrint('  - 当前页面索引: ${state.currentPageIndex}');
-    debugPrint('  - 页面总数: ${state.pages.length}');
-    debugPrint('  - 更新属性: $properties');
+    EditPageLogger.controllerDebug(
+      '开始更新页面属性',
+      data: {
+        'currentPageIndex': state.currentPageIndex,
+        'totalPages': state.pages.length,
+        'updateProperties': properties,
+      },
+    );
     
     if (state.currentPageIndex >= 0 &&
         state.currentPageIndex < state.pages.length) {
       final currentPage = state.pages[state.currentPageIndex];
       final oldProperties = <String, dynamic>{};
-
-      debugPrint('  - 更新前页面数据: $currentPage');
 
       // 保存旧值
       for (final key in properties.keys) {
@@ -373,21 +376,23 @@ mixin PageManagementMixin on ChangeNotifier {
         }
       }
 
-      debugPrint('  - 旧属性: $oldProperties');
+      EditPageLogger.controllerDebug(
+        '保存页面旧属性',
+        data: {'oldProperties': oldProperties},
+      );
 
       // 应用新值
       properties.forEach((key, value) {
         currentPage[key] = value;
-        debugPrint('    ✅ 设置 $key = $value');
       });
 
-      debugPrint('  - 更新后页面数据: $currentPage');
-      
-      // 特别检查背景数据
-      if (properties.containsKey('background')) {
-        final background = currentPage['background'];
-        debugPrint('  🎨 背景数据检查: $background');
-      }
+      EditPageLogger.controllerDebug(
+        '页面属性更新完成',
+        data: {
+          'updatedKeys': properties.keys.toList(),
+          'hasBackground': properties.containsKey('background'),
+        },
+      );
 
       final operation = UpdatePagePropertyOperation(
         pageIndex: state.currentPageIndex,
@@ -405,10 +410,10 @@ mixin PageManagementMixin on ChangeNotifier {
       undoRedoManager.addOperation(operation);
       markUnsaved();
       
-      debugPrint('🔧 PageManagementMixin.updatePageProperties: 更新完成，触发 notifyListeners');
+      EditPageLogger.controllerDebug('页面属性更新完成，触发通知');
       notifyListeners();
     } else {
-      debugPrint('  ❌ 页面索引无效，跳过更新');
+      EditPageLogger.controllerWarning('页面索引无效，跳过更新');
     }
   }
 }

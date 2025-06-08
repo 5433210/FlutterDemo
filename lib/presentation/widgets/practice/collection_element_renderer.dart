@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'advanced_collection_painter.dart';
 import 'character_position.dart';
 // 引入所有已拆分的模块
@@ -69,7 +70,7 @@ class CollectionElementRenderer {
     if (ref != null) {
       // 强制清除纹理缓存
       // EnhancedTextureManager.instance.invalidateTextureCache(ref);
-      debugPrint('🧹 CollectionElementRenderer: 强制清除纹理缓存以确保立即更新');
+      EditPageLogger.editPageDebug('强制清除纹理缓存以确保立即更新');
     } // 兼容原有支持 - 无内容且无背景纹理时显示提示
     if (characters.isEmpty && !hasCharacterTexture) {
       return const Center(
@@ -144,11 +145,18 @@ class CollectionElementRenderer {
             .floor();
         charsPerCol = maxCharsPerLine > 0 ? maxCharsPerLine : 1;
 
-        debugPrint(
-            '✅ 自动换行计算 - 有效尺寸: $effectiveSize, 字体大小: $fontSize, 字间距: $letterSpacing');
-        debugPrint('✅ 每行字符数计算: 最大值=$maxCharsPerLine, 实际使用值=$charsPerCol');
-        debugPrint(
-            '✅ 总字符数: ${charList.length}, 预计行数: ${(charList.length / charsPerCol).ceil()}');
+        EditPageLogger.editPageDebug(
+          '自动换行计算',
+          data: {
+            'effectiveSize': effectiveSize,
+            'fontSize': fontSize,
+            'letterSpacing': letterSpacing,
+            'maxCharsPerLine': maxCharsPerLine,
+            'actualCharsPerCol': charsPerCol,
+            'totalChars': charList.length,
+            'estimatedLines': (charList.length / charsPerCol).ceil(),
+          },
+        );
       }
     }
 
@@ -195,8 +203,14 @@ class CollectionElementRenderer {
         String textureId = '';
 
         // 输出调试信息
-        debugPrint('集字字符内容：${isEmpty ? "空" : characters}');
-        debugPrint('初始纹理状态 - 固定模式：background，是否有纹理：$hasCharacterTexture');
+        EditPageLogger.editPageDebug(
+          '集字渲染状态',
+          data: {
+            'characters': isEmpty ? "空" : characters,
+            'hasTexture': hasCharacterTexture,
+            'mode': 'background',
+          },
+        );
 
         // 处理纹理数据
         if (hasCharacterTexture && characterTextureData != null) {

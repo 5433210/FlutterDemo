@@ -4,6 +4,7 @@ import 'package:charasgem/presentation/widgets/practice/custom_operation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
@@ -24,7 +25,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
     // 🔒 过滤掉锁定的元素
     final operableElementIds = _filterOperableElements(elementIds);
     if (operableElementIds.length < 2) {
-      debugPrint('🔒 Not enough unlocked elements to align');
+      EditPageLogger.controllerWarning('没有足够的未锁定元素进行对齐操作');
       return;
     }
 
@@ -197,7 +198,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
     // 检查元素本身是否锁定
     final isElementLocked = element['locked'] as bool? ?? false;
     if (isElementLocked) {
-      debugPrint('🔒 Element $elementId is locked');
+      EditPageLogger.controllerDebug('元素已锁定，跳过操作', data: {'elementId': elementId});
       return false;
     }
     

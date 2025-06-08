@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,7 @@ import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
+import 'utils/config/edit_page_logging_config.dart';
 import 'utils/config/logging_config.dart';
 import 'utils/keyboard/keyboard_monitor.dart';
 import 'utils/keyboard/keyboard_utils.dart';
@@ -29,6 +31,15 @@ void main() async {
   LoggingConfig.verboseStorageLogging = false;
   LoggingConfig.verboseThumbnailLogging = false;
   LoggingConfig.verboseDatabaseLogging = false;
+
+  // 初始化字帖编辑页日志配置
+  if (kDebugMode) {
+    EditPageLoggingConfig.configureForDevelopment();
+    AppLogger.info('已启用字帖编辑页开发环境日志配置', tag: 'App');
+  } else {
+    EditPageLoggingConfig.configureForProduction();
+    AppLogger.info('已启用字帖编辑页生产环境日志配置', tag: 'App');
+  }
 
   // 初始化键盘工具
   KeyboardUtils.initialize();

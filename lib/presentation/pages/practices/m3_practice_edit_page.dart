@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
@@ -151,9 +152,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       if (mounted) {
         _controller.resetViewPosition();
         final duration = DateTime.now().difference(start).inMilliseconds;
-        AppLogger.debug(
+        EditPageLogger.editPageDebug(
           '窗口大小变化后自动重置视图位置',
-          tag: 'PracticeEdit',
           data: {
             'timestamp': DateTime.now().toIso8601String(),
             'durationMs': duration,
@@ -206,9 +206,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void initState() {
     super.initState();
 
-    AppLogger.info(
+    EditPageLogger.editPageInfo(
       '初始化字帖编辑页面',
-      tag: 'PracticeEdit',
       data: {
         'practiceId': widget.practiceId,
         'timestamp': DateTime.now().toIso8601String(),
@@ -225,9 +224,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // Set preview mode callback
     _controller.setPreviewModeCallback((isPreview) {
-      AppLogger.info(
+      EditPageLogger.editPageInfo(
         '切换预览模式',
-        tag: 'PracticeEdit',
         data: {
           'isPreview': isPreview,
           'timestamp': DateTime.now().toIso8601String(),

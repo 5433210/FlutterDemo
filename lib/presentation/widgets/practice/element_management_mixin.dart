@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'batch_update_options.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
@@ -272,7 +273,7 @@ mixin ElementManagementMixin on ChangeNotifier {
     if (batchUpdates.isEmpty) return;
 
     if (state.currentPageIndex >= state.pages.length) {
-      debugPrint('【元素管理】batchUpdateElementProperties: 当前页面索引无效，无法批量更新元素属性');
+      EditPageLogger.controllerWarning('当前页面索引无效，无法批量更新元素属性');
       return;
     }
 
@@ -304,7 +305,7 @@ mixin ElementManagementMixin on ChangeNotifier {
 
       final element = Map<String, dynamic>.from(elements[elementIndex]);
 
-      debugPrint('【Undo/Redo】删除元素: $id, 类型: ${element['type']}');
+              EditPageLogger.controllerInfo('删除元素: $id, 类型: ${element['type']}');
 
       // 创建删除操作
       final operation = DeleteElementOperation(
@@ -535,7 +536,7 @@ mixin ElementManagementMixin on ChangeNotifier {
   /// 更新元素属性
   void updateElementProperties(String id, Map<String, dynamic> properties) {
     if (state.currentPageIndex >= state.pages.length) {
-      debugPrint('【控制器】updateElementProperties: 当前页面索引无效，无法更新元素属性');
+              EditPageLogger.controllerWarning('当前页面索引无效，无法更新元素属性');
       return;
     }
 
@@ -657,16 +658,19 @@ mixin ElementManagementMixin on ChangeNotifier {
 
   /// 添加元素的通用方法
   void _addElement(Map<String, dynamic> element) {
-    debugPrint('🚀 ElementManagement: Adding element to page');
-    debugPrint('🚀 ElementManagement: Element ID: ${element['id']}');
-    debugPrint('🚀 ElementManagement: Element type: ${element['type']}');
-    debugPrint(
-        '🚀 ElementManagement: Current page index: ${state.currentPageIndex}');
+    EditPageLogger.controllerDebug(
+      '添加元素到页面',
+      data: {
+        'elementId': element['id'],
+        'elementType': element['type'],
+        'currentPageIndex': state.currentPageIndex,
+      },
+    );
 
     final operation = AddElementOperation(
         element: element,
         addElement: (e) {
-          debugPrint('🚀 ElementManagement: Executing add element operation');
+          EditPageLogger.controllerDebug('执行添加元素操作');
           if (state.currentPageIndex >= 0 &&
               state.currentPageIndex < state.pages.length) {
             final page = state.pages[state.currentPageIndex];
@@ -686,7 +690,7 @@ mixin ElementManagementMixin on ChangeNotifier {
                 '🚀 ElementManagement: Element selected and notifying listeners');
             notifyListeners();
           } else {
-            debugPrint('🚀 ElementManagement: ERROR - Invalid page index');
+            EditPageLogger.controllerError('无效的页面索引');
           }
         },
         removeElement: (id) {

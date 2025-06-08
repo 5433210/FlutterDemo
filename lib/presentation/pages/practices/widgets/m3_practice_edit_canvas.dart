@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/batch_update_options.dart';
@@ -129,10 +130,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    // 🔍[RESIZE_FIX] Canvas build方法被调用
-    AppLogger.debug(
+    // 🔍[RESIZE_FIX] Canvas build方法被调用 - 使用条件日志避免性能影响
+    EditPageLogger.canvasDebug(
       '画布构建开始',
-      tag: 'Canvas',
       data: {
         'selectedCount': widget.controller.state.selectedElementIds.length,
         'isReadyForDrag': _isReadyForDrag,
@@ -153,9 +153,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       builder: (context, child) {
         final colorScheme = Theme.of(context).colorScheme;
 
-        AppLogger.debug(
+        EditPageLogger.canvasDebug(
           '画布重建',
-          tag: 'Canvas',
           data: {
             'currentTool': widget.controller.state.currentTool,
             'selectedElementsCount':
@@ -184,9 +183,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           );
         }
         final elements = widget.controller.state.currentPageElements;
-        AppLogger.debug(
+        EditPageLogger.canvasDebug(
           '画布元素状态',
-          tag: 'Canvas',
           data: {
             'elementsCount': elements.length,
             'elementsType': elements.runtimeType.toString(),
