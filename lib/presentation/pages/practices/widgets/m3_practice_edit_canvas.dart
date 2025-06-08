@@ -498,8 +498,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                   return willAccept;
                 },
                 onAcceptWithDetails: (data) {
-                  debugPrint(
-                      '🎯 DragTarget.onAcceptWithDetails: data=${data.data}, offset=${data.offset}');
+                  debugPrint('🎯[DROP] DragTarget.onAcceptWithDetails触发');
+                  debugPrint('🎯[DROP]   - 元素类型: ${data.data}');
+                  debugPrint('🎯[DROP]   - DragTarget offset: ${data.offset}');
+                  
+                  // 获取DragTarget的渲染信息
+                  final RenderBox? dragTargetBox = context.findRenderObject() as RenderBox?;
+                  if (dragTargetBox != null) {
+                    final dragTargetSize = dragTargetBox.size;
+                    final dragTargetGlobalPos = dragTargetBox.localToGlobal(Offset.zero);
+                    debugPrint('🎯[DROP]   - DragTarget尺寸: $dragTargetSize');
+                    debugPrint('🎯[DROP]   - DragTarget全局位置: $dragTargetGlobalPos');
+                  }
+                  
                   _handleElementDrop(data.data, data.offset);
                 },
                 builder: (context, candidateData, rejectedData) {
@@ -1068,33 +1079,110 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 处理从工具栏拖拽创建元素
   void _handleElementDrop(String elementType, [Offset? dropOffset]) {
-    // 获取Canvas的渲染框
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-
+    debugPrint('🎯[DROP] _handleElementDrop开始处理');
+    debugPrint('🎯[DROP]   - 元素类型: $elementType');
+    debugPrint('🎯[DROP]   - 接收到的dropOffset: $dropOffset');
+    
     // 获取当前页面和尺寸
     final currentPage = widget.controller.state.currentPage;
     if (currentPage == null) {
+      debugPrint('🎯[DROP] ❌ 无法获取当前页面，终止处理');
       return;
     }
 
     final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    debugPrint('🎯[DROP]   - 页面尺寸: ${pageSize.width}x${pageSize.height}');
+    
     Offset dropPosition;
 
     if (dropOffset != null) {
-      // 坐标转换：将屏幕坐标转换为画布坐标
-      // 考虑InteractiveViewer的缩放和平移变换
+      // 🔧 正确的坐标转换方案（基于用户的精准分析）：
+      // 1. DragTarget offset = 鼠标在窗体全局坐标的位置
+      // 2. DragTarget全局位置 = 画布视口左上角在窗体全局坐标的位置  
+      // 3. DragTarget尺寸 = 画布视口的实际大小
+      
+      debugPrint('🎯[DROP] 开始坐标处理:');
+      debugPrint('🎯[DROP]   - 鼠标全局坐标: $dropOffset');
+      
+      // 获取画布视口信息
+      final RenderBox? dragTargetBox = context.findRenderObject() as RenderBox?;
+      if (dragTargetBox == null) {
+        debugPrint('🎯[DROP] ❌ 无法获取DragTarget的RenderBox');
+        return;
+      }
+      
+      final viewportGlobalPosition = dragTargetBox.localToGlobal(Offset.zero);
+      final viewportSize = dragTargetBox.size;
+      
+      debugPrint('🎯[DROP]   - 画布视口全局位置: $viewportGlobalPosition');
+      debugPrint('🎯[DROP]   - 画布视口大小: $viewportSize');
+      
+      // 第一步：计算鼠标相对于画布视口的坐标
+      final relativeX = dropOffset.dx - viewportGlobalPosition.dx;
+      final relativeY = dropOffset.dy - viewportGlobalPosition.dy;
+      final viewportRelativePosition = Offset(relativeX, relativeY);
+      
+      debugPrint('🎯[DROP]   - 相对于视口的坐标: $viewportRelativePosition');
+      debugPrint('🎯[DROP]     * 计算过程: (${dropOffset.dx} - ${viewportGlobalPosition.dx}, ${dropOffset.dy} - ${viewportGlobalPosition.dy})');
+      
+      // 第二步：将视口坐标转换为页面逻辑坐标
+      // 使用现有的screenToCanvas方法，但传入视口相对坐标
+      dropPosition = screenToCanvas(viewportRelativePosition);
+      
+      debugPrint('🎯[DROP]   - screenToCanvas转换结果: $dropPosition');
+      
+      // 🔧 验证转换：将转换后的坐标再转换回屏幕坐标，检查是否与原始点击位置一致
+      final verifyScreenPosition = canvasToScreen(dropPosition);
+      final expectedScreenPosition = Offset(
+        viewportGlobalPosition.dx + viewportRelativePosition.dx,
+        viewportGlobalPosition.dy + viewportRelativePosition.dy,
+      );
+      
+      debugPrint('🎯[DROP]   - 坐标转换验证:');
+      debugPrint('🎯[DROP]     * 原始全局坐标: $dropOffset');
+      debugPrint('🎯[DROP]     * 重构全局坐标: $expectedScreenPosition');
+      debugPrint('🎯[DROP]     * 逆转换结果: $verifyScreenPosition');
+      debugPrint('🎯[DROP]     * 坐标误差: dx=${(verifyScreenPosition.dx - expectedScreenPosition.dx).abs().toStringAsFixed(2)}, dy=${(verifyScreenPosition.dy - expectedScreenPosition.dy).abs().toStringAsFixed(2)}');
+      
+      // 输出变换矩阵信息用于调试
       final matrix = widget.transformationController.value;
       final scale = matrix.getMaxScaleOnAxis();
       final translation = matrix.getTranslation();
-
-      // 应用逆变换：canvas_point = (screen_point - translation) / scale
-      dropPosition = Offset(
-        (dropOffset.dx - translation.x) / scale,
-        (dropOffset.dy - translation.y) / scale,
-      );
+      debugPrint('🎯[DROP]   - 变换矩阵: 缩放=$scale, 平移=(${translation.x}, ${translation.y})');
+      
+      // 🔧 添加页面边界检查和约束
+      final elementDefaultSizes = {
+        'text': const Size(200, 100),
+        'image': const Size(200, 200),
+        'collection': const Size(200, 200),
+      };
+      
+      final elementSize = elementDefaultSizes[elementType] ?? const Size(200, 100);
+      final halfWidth = elementSize.width / 2;
+      final halfHeight = elementSize.height / 2;
+      
+      debugPrint('🎯[DROP]   - 元素默认尺寸: ${elementSize.width}x${elementSize.height}');
+      
+      // 将鼠标点击位置转换为元素左上角位置（元素中心对齐）
+      final elementLeftTop = Offset(dropPosition.dx - halfWidth, dropPosition.dy - halfHeight);
+      
+      debugPrint('🎯[DROP]   - 元素中心对齐转换:');
+      debugPrint('🎯[DROP]     * 鼠标点击位置（元素中心）: $dropPosition');
+      debugPrint('🎯[DROP]     * 元素左上角位置: $elementLeftTop');
+      
+      // 约束元素左上角到页面边界内
+      final beforeConstraints = elementLeftTop;
+      
+      final constrainedX = elementLeftTop.dx.clamp(0.0, pageSize.width - elementSize.width);
+      final constrainedY = elementLeftTop.dy.clamp(0.0, pageSize.height - elementSize.height);
+      
+      dropPosition = Offset(constrainedX, constrainedY);
+      
+      debugPrint('🎯[DROP]   - 边界约束:');
+      debugPrint('🎯[DROP]     * 转换前左上角: $beforeConstraints');
+      debugPrint('🎯[DROP]     * 约束后左上角: $dropPosition');
+      debugPrint('🎯[DROP]     * 是否被约束: X${beforeConstraints.dx != constrainedX ? '✂️' : '✅'} Y${beforeConstraints.dy != constrainedY ? '✂️' : '✅'}');
+      
     } else {
       // 回退方案：使用页面中心附近创建元素，添加随机偏移避免重叠
       final random = DateTime.now().millisecondsSinceEpoch % 100;
@@ -1102,11 +1190,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         pageSize.width / 2 + random - 50,
         pageSize.height / 2 + random - 50,
       );
+      debugPrint('🎯[DROP] 使用回退方案，页面中心位置: $dropPosition');
     }
 
+    debugPrint('🎯[DROP] 准备调用handleElementDrop:');
+    debugPrint('🎯[DROP]   - 元素类型: $elementType');
+    debugPrint('🎯[DROP]   - 最终位置: $dropPosition');
+    debugPrint('🎯[DROP]   - 居中偏移: false（已在边界约束中处理）');
+    
     // 使用mixin中的方法处理元素拖拽创建
-    // 禁用居中偏移，因为坐标已经正确转换
+    // 🔧 修复：禁用居中偏移，因为上面的边界约束已经考虑了元素中心对齐
     handleElementDrop(elementType, dropPosition, applyCenteringOffset: false);
+    
+    debugPrint('🎯[DROP] _handleElementDrop处理完成');
   }
 
   /// 初始化核心组件

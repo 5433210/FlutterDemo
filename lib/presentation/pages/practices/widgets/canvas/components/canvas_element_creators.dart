@@ -11,6 +11,8 @@ mixin CanvasElementCreators {
 
   /// 创建集字元素
   void createCollectionElement(Offset position) {
+    debugPrint('🎯[DROP] 进入createCollectionElement，位置: $position');
+    
     AppLogger.info(
       '创建集字元素',
       tag: 'Canvas',
@@ -21,9 +23,12 @@ mixin CanvasElementCreators {
     final newElementId =
         controller.addCollectionElementAt(position.dx, position.dy, '');
 
+    debugPrint('🎯[DROP] 集字元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
+
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
+      debugPrint('🎯[DROP] 集字元素已选中: $newElementId');
       AppLogger.info(
         '创建集字元素成功',
         tag: 'Canvas',
@@ -34,6 +39,8 @@ mixin CanvasElementCreators {
 
   /// 创建图像元素
   void createImageElement(Offset position) {
+    debugPrint('🎯[DROP] 进入createImageElement，位置: $position');
+    
     AppLogger.info(
       '创建图像元素',
       tag: 'Canvas',
@@ -44,9 +51,12 @@ mixin CanvasElementCreators {
     final newElementId =
         controller.addImageElementAt(position.dx, position.dy, '');
 
+    debugPrint('🎯[DROP] 图像元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
+
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
+      debugPrint('🎯[DROP] 图像元素已选中: $newElementId');
       AppLogger.info(
         '创建图像元素成功',
         tag: 'Canvas',
@@ -57,6 +67,8 @@ mixin CanvasElementCreators {
 
   /// 创建文本元素
   void createTextElement(Offset position) {
+    debugPrint('🎯[DROP] 进入createTextElement，位置: $position');
+    
     AppLogger.info(
       '创建文本元素',
       tag: 'Canvas',
@@ -65,10 +77,13 @@ mixin CanvasElementCreators {
 
     // 调用controller创建文本元素，现在返回元素ID
     final newElementId = controller.addTextElementAt(position.dx, position.dy);
+    
+    debugPrint('🎯[DROP] 文本元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
+      debugPrint('🎯[DROP] 文本元素已选中: $newElementId');
       AppLogger.info(
         '创建文本元素成功',
         tag: 'Canvas',
@@ -145,37 +160,42 @@ mixin CanvasElementCreators {
   /// 处理元素拖拽创建
   void handleElementDrop(String elementType, Offset position,
       {bool applyCenteringOffset = true}) {
-    AppLogger.info(
-      '处理元素拖拽创建',
-      tag: 'Canvas',
-      data: {
-        'elementType': elementType,
-        'position': '$position',
-        'applyCenteringOffset': applyCenteringOffset,
-      },
-    );
+    debugPrint('🎯[DROP] 进入CanvasElementCreators.handleElementDrop');
+    debugPrint('🎯[DROP]   - 元素类型: $elementType');
+    debugPrint('🎯[DROP]   - 接收位置: $position');
+    debugPrint('🎯[DROP]   - 启用居中偏移: $applyCenteringOffset');
 
     Offset finalPosition = position;
 
     // 🔧 修复拖拽定位问题：只有在需要时才调整位置使元素居中在鼠标释放点
     // 当坐标已经在上级方法中正确转换时，不需要再次调整
     if (applyCenteringOffset) {
+      debugPrint('🎯[DROP] 开始计算居中偏移:');
       // 元素默认尺寸在element_management_mixin.dart中定义
       switch (elementType) {
         case 'collection':
           // 集字元素默认 200x200，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 100);
+          debugPrint('🎯[DROP]   - 集字元素 200x200: $position → $finalPosition (偏移-100,-100)');
           break;
         case 'image':
           // 图片元素默认 200x200，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 100);
+          debugPrint('🎯[DROP]   - 图片元素 200x200: $position → $finalPosition (偏移-100,-100)');
           break;
         case 'text':
           // 文本元素默认 200x100，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 50);
+          debugPrint('🎯[DROP]   - 文本元素 200x100: $position → $finalPosition (偏移-100,-50)');
           break;
+        default:
+          debugPrint('🎯[DROP]   - 未知元素类型，不应用居中偏移');
       }
+    } else {
+      debugPrint('🎯[DROP] 跳过居中偏移，直接使用原始位置');
     }
+
+    debugPrint('🎯[DROP] 最终调用create方法，位置: $finalPosition');
 
     switch (elementType) {
       case 'collection':
@@ -188,6 +208,7 @@ mixin CanvasElementCreators {
         createTextElement(finalPosition);
         break;
       default:
+        debugPrint('🎯[DROP] ❌ 未知的元素类型: $elementType');
         AppLogger.warning(
           '未知的元素类型',
           tag: 'Canvas',
@@ -196,15 +217,9 @@ mixin CanvasElementCreators {
         break;
     }
 
-    AppLogger.info(
-      '元素定位调整完成',
-      tag: 'Canvas',
-      data: {
-        'elementType': elementType,
-        'originalPosition': '$position',
-        'finalPosition': '$finalPosition',
-        'appliedCenteringOffset': applyCenteringOffset,
-      },
-    );
+    debugPrint('🎯[DROP] CanvasElementCreators.handleElementDrop处理完成');
+    debugPrint('🎯[DROP]   - 原始位置: $position');
+    debugPrint('🎯[DROP]   - 最终位置: $finalPosition');
+    debugPrint('🎯[DROP]   - 居中偏移: $applyCenteringOffset');
   }
 }
