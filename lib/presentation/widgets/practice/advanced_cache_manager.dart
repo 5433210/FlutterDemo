@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'element_cache_manager.dart';
 import 'element_snapshot.dart';
 import 'memory_manager.dart';
@@ -102,9 +104,15 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     _memoryManager.onMemoryPressure = _handleMemoryPressure;
     _memoryManager.onLowMemory = _handleLowMemory;
 
-    if (kDebugMode) {
-      print('🚀 AdvancedElementCacheManager: 已初始化高级缓存管理器');
-    }
+    EditPageLogger.controllerDebug(
+      '高级缓存管理器初始化完成',
+      data: {
+        'maxCacheEntries': _config.maxCacheEntries,
+        'memoryThreshold': _config.memoryThreshold,
+        'enablePrecaching': _config.enablePrecaching,
+        'useSnapshotSystem': _config.useSnapshotSystem,
+      },
+    );
   }
 
   /// 获取当前内存压力级别
@@ -130,9 +138,14 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     // 清理基础缓存
     _baseCacheManager.cleanupCache(force: force);
 
-    if (kDebugMode) {
-      print('🧹 AdvancedElementCacheManager: 已完成缓存清理');
-    }
+    EditPageLogger.performanceInfo(
+      '高级缓存清理完成',
+      data: {
+        'memoryPressure': _currentMemoryPressure.toString(),
+        'weakCacheSize': _weakCache.size,
+        'force': force,
+      },
+    );
   }
 
   /// 释放资源
@@ -175,9 +188,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     // 1. 首先尝试从弱引用缓存获取
     final weakCachedWidget = _weakCache.get(elementId);
     if (weakCachedWidget != null) {
-      if (kDebugMode) {
-        print('👻 AdvancedElementCacheManager: 从弱引用缓存获取 $elementId');
-      }
+      EditPageLogger.controllerDebug(
+        '从弱引用缓存获取元素',
+        data: {'elementId': elementId, 'source': 'weak_cache'},
+      );
       // 更新访问记录
       _recordAccess(elementId, {'id': elementId, 'type': elementType});
       return weakCachedWidget;
@@ -187,9 +201,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     if (_config.useSnapshotSystem && _snapshotManager != null) {
       final snapshot = _snapshotManager!.getSnapshot(elementId);
       if (snapshot != null && snapshot.cachedWidget != null) {
-        if (kDebugMode) {
-          print('📸 AdvancedElementCacheManager: 从快照获取 $elementId');
-        }
+        EditPageLogger.controllerDebug(
+          '从快照缓存获取元素',
+          data: {'elementId': elementId, 'source': 'snapshot'},
+        );
         // 更新访问记录
         _recordAccess(elementId, snapshot.properties);
         return snapshot.cachedWidget;
@@ -251,9 +266,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       _snapshotManager!.clearSnapshot(elementId);
     }
 
-    if (kDebugMode) {
-      print('🔄 AdvancedElementCacheManager: 标记元素更新 $elementId');
-    }
+    EditPageLogger.controllerDebug(
+      '标记元素更新',
+      data: {'elementId': elementId},
+    );
   }
 
   /// 预测即将使用的元素
@@ -264,9 +280,13 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       _predictedElementIds.add(elementId);
     }
 
-    if (kDebugMode) {
-      print('🔮 AdvancedElementCacheManager: 预测将使用 ${elementIds.length} 个元素');
-    }
+    EditPageLogger.controllerDebug(
+      '预测元素使用',
+      data: {
+        'predictedCount': elementIds.length,
+        'totalPredicted': _predictedElementIds.length,
+      },
+    );
   }
 
   /// 重置所有缓存
@@ -284,9 +304,14 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       _snapshotManager!.clearSnapshots();
     }
 
-    if (kDebugMode) {
-      print('🧹 AdvancedElementCacheManager: 已重置所有缓存');
-    }
+    EditPageLogger.controllerDebug(
+      '重置所有缓存',
+      data: {
+        'accessRecordsCleared': _accessRecords.length,
+        'predictedElementsCleared': _predictedElementIds.length,
+        'weakCacheCleared': _weakCache.size,
+      },
+    );
 
     notifyListeners();
   }
@@ -458,10 +483,14 @@ class AdvancedElementCacheManager extends ChangeNotifier {
         // 但保留访问记录，用于未来参考
       }
 
-      if (kDebugMode) {
-        print(
-            '🧊 AdvancedElementCacheManager: 已清理 ${elementsToRemoveList.length} 个冷缓存项');
-      }
+      EditPageLogger.performanceInfo(
+        '冷缓存清理完成',
+        data: {
+          'cleanedCount': elementsToRemoveList.length,
+          'remainingColdItems': coldElements.length - elementsToRemoveList.length,
+          'memoryPressure': _currentMemoryPressure.toString(),
+        },
+      );
     }
   }
 
@@ -487,10 +516,13 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       _baseCacheManager.markElementForUpdate(elementId);
     }
 
-    if (kDebugMode) {
-      print(
-          '🌡️ AdvancedElementCacheManager: 已清理 ${elementsToRemoveList.length} 个温缓存项');
-    }
+    EditPageLogger.performanceInfo(
+      '温缓存清理完成',
+      data: {
+        'cleanedCount': elementsToRemoveList.length,
+        'totalWarmItems': warmElements.length,
+      },
+    );
   }
 
   /// 紧急缓存清理
@@ -526,10 +558,15 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       }
     }
 
-    if (kDebugMode) {
-      print(
-          '🚨 AdvancedElementCacheManager: 紧急缓存清理 - 保留了 ${elementsToKeep.length} 个高热度项');
-    }
+    EditPageLogger.performanceWarning(
+      '紧急缓存清理完成',
+      data: {
+        'keptElements': elementsToKeep.length,
+        'veryHotElements': veryHotElements.length,
+        'keptHotElements': hotElementsToKeep,
+        'totalElementsBefore': allCachedElementIds.length,
+      },
+    );
 
     // 如果有快照系统，也清理快照
     if (_config.useSnapshotSystem && _snapshotManager != null) {
@@ -540,9 +577,13 @@ class AdvancedElementCacheManager extends ChangeNotifier {
           _snapshotManager!.clearSnapshot(elementId);
         }
       }
-      if (kDebugMode) {
-        print('🚨 AdvancedElementCacheManager: 紧急缓存清理 - 清理了不需要的快照');
-      }
+      EditPageLogger.performanceInfo(
+        '快照紧急清理完成',
+        data: {
+          'totalSnapshots': snapshots.length,
+          'keptSnapshots': elementsToKeep.length,
+        },
+      );
     }
 
     // 触发基础缓存的紧急清理
@@ -560,18 +601,25 @@ class AdvancedElementCacheManager extends ChangeNotifier {
 
   /// 处理低内存回调
   void _handleLowMemory() {
-    if (kDebugMode) {
-      print('🚨 AdvancedElementCacheManager: 检测到低内存，执行紧急缓存清理');
-    }
+    EditPageLogger.performanceWarning(
+      '检测到低内存，执行紧急缓存清理',
+      data: {
+        'previousPressureLevel': _currentMemoryPressure.toString(),
+        'newPressureLevel': MemoryPressureLevel.severe.toString(),
+      },
+    );
     _currentMemoryPressure = MemoryPressureLevel.severe;
     _emergencyCacheCleanup();
   }
 
   /// 处理内存压力回调
   void _handleMemoryPressure() {
-    if (kDebugMode) {
-      print('⚠️ AdvancedElementCacheManager: 检测到内存压力，执行缓存清理');
-    }
+    EditPageLogger.performanceWarning(
+      '检测到内存压力，执行缓存清理',
+      data: {
+        'currentPressureLevel': _currentMemoryPressure.toString(),
+      },
+    );
     _checkMemoryPressure();
     cleanupCache();
   }
@@ -771,7 +819,13 @@ class WeakElementCache {
     }
 
     if (keysToRemove.isNotEmpty) {
-      debugPrint('🧹 WeakElementCache: 已清理 ${keysToRemove.length} 个过期弱引用');
+      EditPageLogger.performanceInfo(
+        '弱引用缓存清理完成',
+        data: {
+          'cleanedCount': keysToRemove.length,
+          'remainingCount': _weakCache.keys.length,
+        },
+      );
     }
   }
 

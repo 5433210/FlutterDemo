@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
@@ -144,19 +145,11 @@ class PracticeEditController extends ChangeNotifier
   @override
   Uuid get uuid => _uuid;
 
-  /// 设置画布引用（供画布组件注册自己）
-  void setEditCanvas(dynamic canvas) {
-    _editCanvas = canvas;
-    debugPrint('🔧 画布已注册到控制器：${canvas.runtimeType}');
-  }
-
   /// 检查是否已销毁（为mixin提供）
   @override
   void checkDisposed() {
     _checkDisposed();
   }
-
-  // deleteAllLayers method removed - now using LayerManagementMixin
 
   /// 释放资源
   @override
@@ -175,6 +168,8 @@ class PracticeEditController extends ChangeNotifier
     super.dispose();
   }
 
+  // deleteAllLayers method removed - now using LayerManagementMixin
+
   /// 标记为未保存（为mixin提供）
   @override
   void markUnsaved() {
@@ -184,11 +179,55 @@ class PracticeEditController extends ChangeNotifier
   @override
   void notifyListeners() {
     if (_state.isDisposed) {
-      debugPrint('警告: 尝试在控制器销毁后调用 notifyListeners()');
+      EditPageLogger.controllerWarning(
+        '尝试在控制器销毁后调用 notifyListeners()',
+        data: {'controllerState': 'disposed'},
+      );
       return;
     }
 
     super.notifyListeners();
+  }
+
+  /// 设置画布引用（供画布组件注册自己）
+  void setEditCanvas(dynamic canvas) {
+    _editCanvas = canvas;
+    EditPageLogger.controllerDebug(
+      '画布已注册到控制器',
+      data: {'canvasType': canvas.runtimeType.toString()},
+    );
+  }
+
+  /// 触发网格设置变化事件
+  void triggerGridSettingsChange() {
+    EditPageLogger.controllerDebug(
+      '触发网格设置变化',
+      data: {
+        'hasStateDispatcher': stateDispatcher != null,
+        'gridVisible': _state.gridVisible,
+        'gridSize': _state.gridSize,
+        'snapEnabled': _state.snapEnabled,
+      },
+    );
+
+    // 如果有状态分发器，触发网格设置变化事件
+    if (stateDispatcher != null) {
+      EditPageLogger.controllerDebug('使用StateDispatcher分发网格设置变化事件');
+      stateDispatcher!.dispatch(StateChangeEvent(
+        type: StateChangeType.gridSettingsChange,
+        data: {
+          'gridVisible': _state.gridVisible,
+          'gridSize': _state.gridSize,
+          'snapEnabled': _state.snapEnabled,
+        },
+      ));
+      EditPageLogger.controllerDebug('StateDispatcher事件分发完成');
+    } else {
+      // 回退到直接通知监听器
+      EditPageLogger.controllerDebug('StateDispatcher不存在，使用notifyListeners()');
+      notifyListeners();
+    }
+    EditPageLogger.controllerDebug('网格设置变化处理完成');
   }
 
   /// 检查控制器是否已销毁，如果已销毁则抛出异常
@@ -197,31 +236,6 @@ class PracticeEditController extends ChangeNotifier
       throw StateError(
           'A PracticeEditController was used after being disposed.');
     }
-  }
-
-  /// 触发网格设置变化事件
-  void triggerGridSettingsChange() {
-    debugPrint('🎨 triggerGridSettingsChange() 被调用');
-    debugPrint('🎨 stateDispatcher是否存在: ${stateDispatcher != null}');
-    
-    // 如果有状态分发器，触发网格设置变化事件
-    if (stateDispatcher != null) {
-      debugPrint('🎨 使用StateDispatcher分发网格设置变化事件');
-      stateDispatcher!.dispatch(StateChangeEvent(
-        type: StateChangeType.gridSettingsChange, 
-        data: {
-          'gridVisible': _state.gridVisible,
-          'gridSize': _state.gridSize,
-          'snapEnabled': _state.snapEnabled,
-        },
-      ));
-      debugPrint('🎨 StateDispatcher事件分发完成');
-    } else {
-      // 回退到直接通知监听器
-      debugPrint('🎨 StateDispatcher不存在，使用notifyListeners()');
-      notifyListeners();
-    }
-    debugPrint('🎨 triggerGridSettingsChange() 执行完毕');
   }
 
   /// 初始化默认数据
@@ -315,9 +329,7 @@ class PracticeEditController extends ChangeNotifier
         'value': '#FFFFFF',
         'opacity': 1.0,
       },
-      'elements': <Map<String, dynamic>>[
-        testGroupElement, // 🧪 添加测试组合元素
-      ],
+      'elements': <Map<String, dynamic>>[],
       'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
     };
 
@@ -328,9 +340,15 @@ class PracticeEditController extends ChangeNotifier
     // 设置默认选中的图层
     _state.selectedLayerId = defaultLayer['id'] as String;
 
-    debugPrint('🧪 已创建测试组合元素用于验证缩放和旋转功能');
-    debugPrint('🧪 组合元素位置: (50, 50), 尺寸: 100x100');
-    debugPrint('🧪 包含两个带背景色的文本子元素');
+    EditPageLogger.controllerDebug(
+      '已创建测试组合元素用于验证缩放和旋转功能',
+      data: {
+        'position': '(50, 50)',
+        'size': '100x100',
+        'childrenCount': 2,
+        'childrenTypes': ['text', 'text'],
+      },
+    );
 
     // 通知监听器
     notifyListeners();

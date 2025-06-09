@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'drag_state_manager.dart';
 import 'performance_dashboard.dart';
 
@@ -104,17 +106,24 @@ class PerformanceMonitor extends ChangeNotifier {
           _dragStateManager?.getPerformanceOptimizationConfig() ?? {},
     };
 
-    debugPrint('📊 PerformanceMonitor: 拖拽性能报告生成');
-    debugPrint('   持续时间: ${duration.inMilliseconds}ms');
-    debugPrint('   总帧数: $frameCount');
-    debugPrint('   平均帧率: ${avgFps.toStringAsFixed(1)} FPS');
-
-    if (frameTimeStats.isNotEmpty) {
-      debugPrint('   平均帧时间: ${frameTimeStats['avg'].toStringAsFixed(2)}ms');
-      debugPrint('   最大帧时间: ${frameTimeStats['max'].toStringAsFixed(2)}ms');
-      debugPrint(
-          '   jank帧比例: ${frameTimeStats['jankPercentage'].toStringAsFixed(1)}%');
-    }
+    EditPageLogger.performanceInfo(
+      '拖拽性能报告生成完成',
+      data: {
+        'duration_ms': duration.inMilliseconds,
+        'frameCount': frameCount,
+        'avgFps': double.parse(avgFps.toStringAsFixed(1)),
+        'avgFrameTime_ms': frameTimeStats.isNotEmpty 
+            ? double.parse(frameTimeStats['avg'].toStringAsFixed(2)) 
+            : 0.0,
+        'maxFrameTime_ms': frameTimeStats.isNotEmpty 
+            ? double.parse(frameTimeStats['max'].toStringAsFixed(2)) 
+            : 0.0,
+        'jankPercentage': frameTimeStats.isNotEmpty 
+            ? double.parse(frameTimeStats['jankPercentage'].toStringAsFixed(1)) 
+            : 0.0,
+        'dragElementCount': _dragStateManager?.draggingElementIds.length ?? 0,
+      },
+    );
 
     // 重置状态
     _dragStartTime = null;
@@ -153,28 +162,30 @@ class PerformanceMonitor extends ChangeNotifier {
 
   /// Print detailed performance report
   void printPerformanceReport() {
-    debugPrint('\n📊 ====== Performance Report ======');
-    debugPrint('📈 Current FPS: ${_currentFPS.toStringAsFixed(1)}');
-    debugPrint('⏱️ Average Frame Time: ${_averageFrameTime.inMilliseconds}ms');
-    debugPrint('🐌 Max Frame Time: ${_maxFrameTime.inMilliseconds}ms');
-    debugPrint('❌ Slow Frames: $_slowFrameCount');
-    debugPrint('🔄 Total Rebuilds: $_totalRebuilds');
+    final Map<String, dynamic> reportData = {
+      'currentFPS': double.parse(_currentFPS.toStringAsFixed(1)),
+      'avgFrameTime_ms': _averageFrameTime.inMilliseconds,
+      'maxFrameTime_ms': _maxFrameTime.inMilliseconds,
+      'slowFrameCount': _slowFrameCount,
+      'totalRebuilds': _totalRebuilds,
+    };
 
     if (_widgetRebuildCounts.isNotEmpty) {
-      debugPrint('🏆 Top Rebuild Widgets:');
       final top = _getTopRebuildWidgets();
-      for (final widget in top) {
-        debugPrint('   ${widget['widget']}: ${widget['rebuilds']} rebuilds');
-      }
+      reportData['topRebuildWidgets'] = top.map((w) => 
+        '${w['widget']}: ${w['rebuilds']} rebuilds').toList();
     }
 
     if (_fpsHistory.isNotEmpty) {
       final avgFPS = _fpsHistory.reduce((a, b) => a + b) / _fpsHistory.length;
-      debugPrint(
-          '📊 Average FPS (last ${_fpsHistory.length}s): ${avgFPS.toStringAsFixed(1)}');
+      reportData['historicalAvgFPS'] = double.parse(avgFPS.toStringAsFixed(1));
+      reportData['historyLength'] = _fpsHistory.length;
     }
 
-    debugPrint('================================\n');
+    EditPageLogger.performanceInfo(
+      '详细性能报告',
+      data: reportData,
+    );
   }
 
   /// Reset all metrics
@@ -215,7 +226,14 @@ class PerformanceMonitor extends ChangeNotifier {
     _dragFrameTimes.clear();
     _dragFpsValues.clear();
 
-    debugPrint('🔍 PerformanceMonitor: 开始跟踪拖拽性能');
+    EditPageLogger.performanceInfo(
+      '开始跟踪拖拽性能',
+      data: {
+        'startTime': _dragStartTime?.toIso8601String(),
+        'startFrameCount': _dragStartFrameCount,
+        'currentFPS': _currentFPS,
+      },
+    );
   }
 
   /// Stop monitoring
@@ -313,7 +331,14 @@ class PerformanceMonitor extends ChangeNotifier {
     // Count slow frames (> 16.67ms for 60FPS)
     if (frameTime.inMicroseconds > 16670) {
       _slowFrameCount++;
-      debugPrint('🐌 Slow frame detected: ${frameTime.inMilliseconds}ms');
+      EditPageLogger.performanceWarning(
+        '检测到慢帧',
+        data: {
+          'frameTime_ms': frameTime.inMilliseconds,
+          'slowFrameCount': _slowFrameCount,
+          'currentFPS': _currentFPS,
+        },
+      );
     }
   }
 
@@ -326,7 +351,14 @@ class PerformanceMonitor extends ChangeNotifier {
     // Log excessive rebuilds
     final count = _widgetRebuildCounts[widgetName]!;
     if (count % 10 == 0) {
-      debugPrint('🔄 Widget $widgetName rebuilt $count times');
+      EditPageLogger.performanceWarning(
+        '组件频繁重建',
+        data: {
+          'widgetName': widgetName,
+          'rebuildCount': count,
+          'totalRebuilds': _totalRebuilds,
+        },
+      );
     }
   }
 
