@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
@@ -420,7 +421,7 @@ class PracticeEditUtils {
     if (clipboardElement == null) return;
 
     try {
-      debugPrint('Starting paste operation with cache warming');
+      EditPageLogger.editPageDebug('开始粘贴操作并预热缓存');
 
       // First, warm up caches by preloading images for elements that will be pasted
       await _warmCacheForPasteOperation(
@@ -429,9 +430,9 @@ class PracticeEditUtils {
       // Then proceed with the normal paste operation
       pasteElement(controller, clipboardElement);
 
-      debugPrint('Paste operation with cache warming completed');
+      EditPageLogger.editPageDebug('粘贴操作和缓存预热完成');
     } catch (e) {
-      debugPrint('Error in paste with cache warming: $e');
+      EditPageLogger.editPageError('粘贴操作缓存预热错误', error: e);
       // Fallback to regular paste if cache warming fails
       pasteElement(controller, clipboardElement);
     }

@@ -205,7 +205,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// Handle window size changes - automatically trigger reset view position
 
-
   @override
   void dispose() {
     // 🔧 窗口大小变化处理已移至页面级别
@@ -420,7 +419,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // 🔥 关键修复：移除每次build时的自动变换设置
     // 不再在build方法中强制设置transformationController和调用zoomTo
-    // 这些操作现在只在真正需要时进行（如初始化、重置按钮）    debugPrint('🔧【_buildPageContent】保持当前变换状态，不强制重置');
+    // 这些操作现在只在真正需要时进行（如初始化、重置按钮）
 
     return Stack(
       children: [
@@ -476,29 +475,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       } else {
                         _isReadyForDrag = false;
                       }
-
-                      // 🔍[RESIZE_FIX] 调试InteractiveViewer状态
-                      final panEnabled = !(_isDragging ||
-                          _dragStateManager.isDragging ||
-                          _isReadyForDrag);
-                      debugPrint(
-                          '🔍[RESIZE_FIX] InteractiveViewer panEnabled: $panEnabled (isDragging=$_isDragging, dragManagerDragging=${_dragStateManager.isDragging}, isReadyForDrag=$_isReadyForDrag)');
-
-                      // 🔍[RESIZE_FIX] 检查Canvas的onPanStart是否会被设置
-                      final shouldHandleGesture =
-                          shouldHandleAnySpecialGesture(elements);
-                      debugPrint(
-                          '🔍[RESIZE_FIX] Canvas onPanStart 是否设置: $shouldHandleGesture');
                     },
                     onTapUp: (details) {
                       // 重置拖拽准备状态
                       _isReadyForDrag = false;
-
-                      // 🔍[RESIZE_FIX] 调试点击和选择过程
-                      debugPrint(
-                          '🔍[RESIZE_FIX] onTapUp被调用: position=${details.localPosition}');
-                      debugPrint(
-                          '🔍[RESIZE_FIX] 当前选中元素数: ${widget.controller.state.selectedElementIds.length}');
 
                       _gestureHandler.handleTapUp(
                           details, elements.cast<Map<String, dynamic>>());
@@ -508,15 +488,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                         setState(() {});
                         // 调试选择状态变化后的情况
                         _debugCanvasState('元素选择后');
-                      }
-
-                      // 🔍[RESIZE_FIX] 选择处理后的状态
-                      debugPrint(
-                          '🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
-                      if (widget
-                          .controller.state.selectedElementIds.isNotEmpty) {
-                        debugPrint(
-                            '🔍[RESIZE_FIX] 选中的元素IDs: ${widget.controller.state.selectedElementIds}');
                       }
                     },
                     // 处理右键点击事件，用于退出select模式
@@ -532,24 +503,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
-                            debugPrint(
-                                '[DRAG_DEBUG] ===== Canvas onPanStart被调用 =====');
-                            debugPrint(
-                                '[DRAG_DEBUG] Canvas - 点击位置: ${details.localPosition}');
-                            debugPrint(
-                                '[DRAG_DEBUG] Canvas - 当前选中: ${widget.controller.state.selectedElementIds}');
-                            debugPrint(
-                                '[DRAG_DEBUG] Canvas - 当前工具: ${widget.controller.state.currentTool}');
-
                             // 动态检查是否需要处理特殊手势
                             final shouldHandle =
                                 shouldHandleAnySpecialGesture(elements);
-                            debugPrint(
-                                '[DRAG_DEBUG] Canvas - shouldHandleAnySpecialGesture结果: $shouldHandle');
 
                             if (shouldHandle) {
-                              debugPrint(
-                                  '[DRAG_DEBUG] Canvas - 处理特殊手势，调用_gestureHandler.handlePanStart');
                               _gestureHandler.handlePanStart(details,
                                   elements.cast<Map<String, dynamic>>());
                             } else {
@@ -564,14 +522,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
-                            debugPrint(
-                                '🔍[RESIZE_FIX] Canvas onPanUpdate被调用: position=${details.localPosition}');
-
                             // 处理选择框更新
                             if (widget.controller.state.currentTool ==
                                     'select' &&
                                 _gestureHandler.isSelectionBoxActive) {
-                              debugPrint('🔍[RESIZE_FIX] 处理选择框更新');
                               _gestureHandler.handlePanUpdate(details);
                               _selectionBoxNotifier.value = SelectionBoxState(
                                 isActive: true,
@@ -583,13 +537,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
                             // 处理元素拖拽
                             if (_isDragging || _dragStateManager.isDragging) {
-                              debugPrint('🔍[RESIZE_FIX] 处理元素拖拽');
                               _gestureHandler.handlePanUpdate(details);
                               return;
                             }
-
-                            // 🔧 关键：空白区域不处理，让InteractiveViewer接管
-                            debugPrint('🔍[RESIZE_FIX] 空白区域手势，不拦截');
                           }
                         : null, // 🔧 关键：设置为null让InteractiveViewer完全接管
                     onPanEnd: (_isDragging ||
@@ -654,24 +604,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       ),
                       child: Builder(
                         builder: (context) {
-                          // 添加调试信息，检查页面容器的实际渲染尺寸
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) {
-                              final RenderBox? containerBox =
-                                  context.findRenderObject() as RenderBox?;
-                              if (containerBox != null) {
-                                final containerSize = containerBox.size;
-                                debugPrint(
-                                    '🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
-
-                                // 获取容器在屏幕中的位置
-                                final containerOffset =
-                                    containerBox.localToGlobal(Offset.zero);
-                                debugPrint(
-                                    '🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
-                              }
-                            }
-                          });
                           return Stack(
                             fit: StackFit
                                 .expand, // Use expand to fill the container
@@ -684,9 +616,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                     _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
                                 child: Builder(
                                   builder: (context) {
-                                    debugPrint('🎨 正在构建LayerRenderManager层级结构');
-                                    debugPrint(
-                                        '🎨 当前网格状态: ${widget.controller.state.gridVisible}');
                                     final layerStack =
                                         _layerRenderManager.buildLayerStack(
                                       layerOrder: [
@@ -696,7 +625,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                         RenderLayerType.interaction,
                                       ],
                                     );
-                                    debugPrint('🎨 LayerRenderManager构建完成');
+
                                     return layerStack;
                                   },
                                 ),
@@ -867,7 +796,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       '画布状态详情',
       data: {
         'context': context,
-        'selectedElementIds': widget.controller.state.selectedElementIds.toList(),
+        'selectedElementIds':
+            widget.controller.state.selectedElementIds.toList(),
         'currentTool': widget.controller.state.currentTool,
       },
     );
@@ -897,9 +827,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         builder: (config) => _buildLayerWidget(RenderLayerType.content, config),
       );
 
-              EditPageLogger.canvasDebug('画布已切换到基础模式');
+      EditPageLogger.canvasDebug('画布已切换到基础模式');
     } catch (e) {
-              EditPageLogger.canvasError('画布基础模式初始化失败', error: e);
+      EditPageLogger.canvasError('画布基础模式初始化失败', error: e);
     }
   }
 
@@ -966,8 +896,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             data: {
               'expectedScale': scale.toStringAsFixed(3),
               'actualScale': appliedScale.toStringAsFixed(3),
-              'expectedTranslation': '(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})',
-              'actualTranslation': '(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})',
+              'expectedTranslation':
+                  '(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})',
+              'actualTranslation':
+                  '(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})',
             },
           );
         }
@@ -1021,7 +953,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     }
 
     final pageSize = ElementUtils.calculatePixelSize(currentPage);
-    
+
     Offset dropPosition;
 
     if (dropOffset != null) {
@@ -1032,36 +964,39 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         dropPosition = Offset(pageSize.width / 2, pageSize.height / 2);
       } else {
         final viewportGlobalPosition = dragTargetBox.localToGlobal(Offset.zero);
-        
+
         // 计算鼠标相对于画布视口的坐标
         final relativeX = dropOffset.dx - viewportGlobalPosition.dx;
         final relativeY = dropOffset.dy - viewportGlobalPosition.dy;
         final viewportRelativePosition = Offset(relativeX, relativeY);
-        
+
         // 将视口坐标转换为页面逻辑坐标
         dropPosition = screenToCanvas(viewportRelativePosition);
       }
-      
+
       // 处理边界约束
       final elementDefaultSizes = {
         'text': const Size(200, 100),
         'image': const Size(200, 200),
         'collection': const Size(200, 200),
       };
-      
-      final elementSize = elementDefaultSizes[elementType] ?? const Size(200, 100);
+
+      final elementSize =
+          elementDefaultSizes[elementType] ?? const Size(200, 100);
       final halfWidth = elementSize.width / 2;
       final halfHeight = elementSize.height / 2;
-      
+
       // 将鼠标点击位置转换为元素左上角位置（元素中心对齐）
-      final elementLeftTop = Offset(dropPosition.dx - halfWidth, dropPosition.dy - halfHeight);
-      
+      final elementLeftTop =
+          Offset(dropPosition.dx - halfWidth, dropPosition.dy - halfHeight);
+
       // 约束元素左上角到页面边界内
-      final constrainedX = elementLeftTop.dx.clamp(0.0, pageSize.width - elementSize.width);
-      final constrainedY = elementLeftTop.dy.clamp(0.0, pageSize.height - elementSize.height);
-      
+      final constrainedX =
+          elementLeftTop.dx.clamp(0.0, pageSize.width - elementSize.width);
+      final constrainedY =
+          elementLeftTop.dy.clamp(0.0, pageSize.height - elementSize.height);
+
       dropPosition = Offset(constrainedX, constrainedY);
-      
     } else {
       // 回退方案：使用页面中心附近创建元素，添加随机偏移避免重叠
       final random = DateTime.now().millisecondsSinceEpoch % 100;
@@ -1226,7 +1161,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       if (mounted && !_hasInitializedView) {
         _hasInitializedView = true;
         resetCanvasPosition(); // 使用标准的Reset View Position逻辑
-        debugPrint('🔧【initState】首次加载，执行Reset View Position');
       }
     });
   }

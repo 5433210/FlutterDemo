@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 // Context interface for gesture operations
 abstract class GestureContext {
   String get currentTool;
@@ -661,8 +663,10 @@ class SmartGestureDispatcher {
 
     // Log performance warning if response time exceeds target
     if (responseTime > _responseTimeTarget) {
-      debugPrint(
-          'Warning: Gesture response time ${responseTime.inMilliseconds}ms exceeds target ${_responseTimeTarget.inMilliseconds}ms');
+      EditPageLogger.performanceWarning('手势响应时间超出目标', data: {
+        'actualMs': responseTime.inMilliseconds,
+        'targetMs': _responseTimeTarget.inMilliseconds
+      });
     }
 
     _performanceStopwatch.reset();

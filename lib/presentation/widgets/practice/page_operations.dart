@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/practice/practice_page.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// 页面操作工具类
 class PageOperations {
@@ -209,7 +210,8 @@ class PageOperations {
   static void deletePage(List<Map<String, dynamic>> pages, int index) {
     // 确保索引有效
     if (index < 0 || index >= pages.length) {
-      debugPrint('Warning: Attempting to delete page at invalid index $index');
+      EditPageLogger.editPageWarning('尝试删除无效索引的页面', 
+        data: {'index': index, 'pagesLength': pages.length});
       return;
     }
 
@@ -269,7 +271,7 @@ class PageOperations {
 
           return finalColor;
         } catch (e) {
-          debugPrint('Error parsing color: $e');
+          EditPageLogger.editPageError('解析颜色失败', error: e);
           // 创建带透明度的白色
           final int alpha = (opacity * 255).round();
           return Colors.white.withAlpha(alpha);
@@ -299,7 +301,7 @@ class PageOperations {
 
       return finalColor;
     } catch (e) {
-      debugPrint('Error parsing color from old format: $e');
+      EditPageLogger.editPageError('解析旧格式颜色失败', error: e);
       // 创建带透明度的白色
       final int alpha = (backgroundOpacity * 255).round();
       return Colors.white.withAlpha(alpha);
@@ -334,7 +336,7 @@ class PageOperations {
             (map['backgroundOpacity'] as num?)?.toDouble() ?? 1.0,
       );
     } catch (e) {
-      debugPrint('Error converting page: $e');
+      EditPageLogger.editPageError('转换页面失败', error: e);
       return PracticePage.defaultPage();
     }
   }

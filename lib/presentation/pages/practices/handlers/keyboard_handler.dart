@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 
 /// Handles keyboard events for the practice edit page
@@ -202,7 +203,7 @@ class KeyboardHandler {
       // Handle Escape key to exit current tool
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         if (controller.state.currentTool.isNotEmpty) {
-          debugPrint('KeyboardHandler: Exiting tool mode via Escape key');
+          EditPageLogger.editPageDebug('通过Escape键退出工具模式');
           controller.exitSelectMode();
           return true;
         }
@@ -222,37 +223,37 @@ class KeyboardHandler {
         switch (event.logicalKey) {
           // Alt+T: Text tool
           case LogicalKeyboardKey.keyT:
-            debugPrint('KeyboardHandler: Selecting text tool via Alt+T');
+            EditPageLogger.editPageDebug('通过Alt+T选择文本工具');
             _selectTool('text');
             return true;
 
           // Alt+I: Image tool
           case LogicalKeyboardKey.keyI:
-            debugPrint('KeyboardHandler: Selecting image tool via Alt+I');
+            EditPageLogger.editPageDebug('通过Alt+I选择图片工具');
             _selectTool('image');
             return true;
 
           // Alt+C: Collection tool
           case LogicalKeyboardKey.keyC:
-            debugPrint('KeyboardHandler: Selecting collection tool via Alt+C');
+            EditPageLogger.editPageDebug('通过Alt+C选择集字工具');
             _selectTool('collection');
             return true;
 
           // Alt+S: Select tool
           case LogicalKeyboardKey.keyS:
-            debugPrint('KeyboardHandler: Selecting select tool via Alt+S');
+            EditPageLogger.editPageDebug('通过Alt+S选择选择工具');
             _selectTool('select');
             return true;
 
           // Alt+Q: Copy format
           case LogicalKeyboardKey.keyQ:
-            debugPrint('KeyboardHandler: Copy format via Alt+Q');
+            EditPageLogger.editPageDebug('通过Alt+Q复制格式');
             copyElementFormatting();
             return true;
 
           // Alt+W: Apply format
           case LogicalKeyboardKey.keyW:
-            debugPrint('KeyboardHandler: Apply format via Alt+W');
+            EditPageLogger.editPageDebug('通过Alt+W应用格式');
             applyFormatBrush();
             return true;
         }
@@ -275,7 +276,7 @@ class KeyboardHandler {
           // Ctrl+0: Reset view position
           case LogicalKeyboardKey.digit0:
           case LogicalKeyboardKey.numpad0:
-            debugPrint('KeyboardHandler: Resetting view position via Ctrl+0');
+            EditPageLogger.editPageDebug('通过Ctrl+0重置视图位置');
             resetViewPosition();
             return true;
 
@@ -292,10 +293,10 @@ class KeyboardHandler {
             if (_isShiftPressed) {
               // 确保只有在有选中元素时才执行复制操作
               if (controller.state.selectedElementIds.isNotEmpty) {
-                debugPrint('KeyboardHandler: 执行复制操作 (Ctrl+Shift+C)');
+                EditPageLogger.editPageDebug('执行复制操作 (Ctrl+Shift+C)');
                 copySelectedElement();
               } else {
-                debugPrint('KeyboardHandler: 忽略复制操作，因为没有选中元素');
+                EditPageLogger.editPageDebug('忽略复制操作，因为没有选中元素');
               }
               return true;
             }
@@ -304,7 +305,7 @@ class KeyboardHandler {
           // Ctrl+Shift+V: Paste copy
           case LogicalKeyboardKey.keyV:
             if (_isShiftPressed) {
-              debugPrint('KeyboardHandler: 执行粘贴操作 (Ctrl+Shift+V)');
+              EditPageLogger.editPageDebug('执行粘贴操作 (Ctrl+Shift+V)');
               pasteElement();
               return true;
             }

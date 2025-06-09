@@ -2,6 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 /// Element snapshot system for optimizing drag operations
 ///
 /// This system creates lightweight snapshots of elements at the start of drag operations,
@@ -169,7 +171,7 @@ class ElementSnapshotManager {
   void clearSnapshots() {
     _snapshots.clear();
     _widgetCache.clear();
-    debugPrint('🗑️ ElementSnapshotManager: Cleared all snapshots');
+    EditPageLogger.editPageDebug('ElementSnapshotManager清除所有快照');
   }
 
   /// Create snapshots for a list of elements
@@ -197,15 +199,15 @@ class ElementSnapshotManager {
       }
     }
 
-    debugPrint(
-        '📸 ElementSnapshotManager: Created ${snapshots.length} snapshots');
+    EditPageLogger.editPageDebug('ElementSnapshotManager创建快照', 
+      data: {'snapshotCount': snapshots.length});
     return snapshots;
   }
 
   /// Dispose and cleanup
   void dispose() {
     clearSnapshots();
-    debugPrint('🗑️ ElementSnapshotManager disposed');
+    EditPageLogger.editPageDebug('ElementSnapshotManager已释放');
   }
 
   /// Get all current snapshots
@@ -273,7 +275,8 @@ class ElementSnapshotManager {
     }
 
     if (staleIds.isNotEmpty) {
-      debugPrint('🧹 Cleaned up ${staleIds.length} stale snapshots');
+      EditPageLogger.editPageDebug('清理过期快照', 
+        data: {'staleCount': staleIds.length});
     }
   }
 
@@ -284,11 +287,11 @@ class ElementSnapshotManager {
     try {
       // This would be implemented to capture element as image
       // For now, we'll skip this complex implementation
-      debugPrint(
-          '📷 Image caching not yet implemented for ${snapshot.elementId}');
+      EditPageLogger.editPageDebug('图片缓存功能尚未实现', 
+        data: {'elementId': snapshot.elementId});
     } catch (e) {
-      debugPrint(
-          '❌ Failed to create cached image for ${snapshot.elementId}: $e');
+      EditPageLogger.editPageError('创建缓存图片失败', 
+        data: {'elementId': snapshot.elementId}, error: e);
     }
   }
 
@@ -317,8 +320,8 @@ class ElementSnapshotManager {
       _snapshots[snapshot.elementId] =
           snapshot.copyWithCachedWidget(cachedWidget);
     } catch (e) {
-      debugPrint(
-          '❌ Failed to create cached widget for ${snapshot.elementId}: $e');
+      EditPageLogger.editPageError('创建缓存组件失败', 
+        data: {'elementId': snapshot.elementId}, error: e);
     }
   }
 

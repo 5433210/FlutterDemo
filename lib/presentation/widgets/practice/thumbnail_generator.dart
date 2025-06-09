@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 /// 缩略图生成器
 class ThumbnailGenerator {
   /// 生成字帖缩略图
@@ -16,7 +18,8 @@ class ThumbnailGenerator {
     String? title,
   }) async {
     try {
-      debugPrint('开始生成缩略图，尺寸: ${width}x$height');
+      EditPageLogger.fileOpsInfo('开始生成缩略图', 
+        data: {'width': width, 'height': height});
 
       // 创建一个记录器
       final recorder = ui.PictureRecorder();
@@ -173,8 +176,7 @@ class ThumbnailGenerator {
 
       return null;
     } catch (e, stack) {
-      debugPrint('生成缩略图失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      EditPageLogger.fileOpsError('生成缩略图失败', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -185,13 +187,13 @@ class ThumbnailGenerator {
     try {
       final content = element['content'] as Map<String, dynamic>?;
       if (content == null) {
-        debugPrint('集字元素内容为空');
+        EditPageLogger.fileOpsError('集字元素内容为空');
         return;
       }
 
       final characters = content['characters'] as List<dynamic>? ?? [];
       if (characters.isEmpty) {
-        debugPrint('集字元素字符列表为空');
+        EditPageLogger.fileOpsError('集字元素字符列表为空');
         return;
       }
 

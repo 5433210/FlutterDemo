@@ -25,6 +25,9 @@ class ImageCacheService {
   /// Flutter内置缓存的引用
   final ImageCache _flutterImageCache;
 
+  // 内存中的UI图像缓存
+  final Map<String, ui.Image> _inMemoryUiImageCache = {};
+
   /// 构造函数
   ///
   /// [binaryCache] 二进制图像数据缓存
@@ -39,6 +42,21 @@ class ImageCacheService {
   /// 缓存二进制图像数据
   Future<void> cacheBinaryImage(String key, Uint8List data) async {
     await _binaryCache.put(key, data);
+  }
+
+  /// 检查缓存文件是否存在
+  ///
+  /// [key] 缓存键
+  /// 返回文件是否存在
+  bool cacheFileExists(String key) {
+    try {
+      final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
+      final cacheFile = File('${cacheDir.path}/$key');
+      return cacheFile.existsSync();
+    } catch (e) {
+      debugPrint('检查缓存文件存在性失败: $e');
+      return false;
+    }
   }
 
   /// 缓存UI图像对象
@@ -196,12 +214,9 @@ class ImageCacheService {
   Future<ui.Image?> getUiImage(String key) async {
     return await _uiImageCache.get(key);
   }
-  
-  // 内存中的UI图像缓存
-  final Map<String, ui.Image> _inMemoryUiImageCache = {};
 
   /// 同步检查缓存中是否存在指定的UI图像
-  /// 
+  ///
   /// [key] 缓存键
   /// 返回是否存在该缓存项
   bool hasCachedUiImage(String key) {
@@ -210,55 +225,39 @@ class ImageCacheService {
       if (_inMemoryUiImageCache.containsKey(key)) {
         return true;
       }
-      
+
       // 然后检查缓存文件是否存在
       final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
       final cacheFile = File('${cacheDir.path}/$key');
-      
+
       if (!cacheFile.existsSync()) {
         debugPrint('缓存文件不存在: ${cacheFile.path}');
         return false;
       }
-      
+
       return true;
     } catch (e) {
       debugPrint('检查缓存异常: $e');
       return false;
     }
   }
-  
+
   /// 尝试同步获取UI图像对象
-  /// 
+  ///
   /// [key] 缓存键
   /// 如果存在于内存缓存中，返回缓存的图像，否则返回null
   ui.Image? tryGetUiImageSync(String key) {
     try {
       // 首先检查内存缓存
       if (_inMemoryUiImageCache.containsKey(key)) {
-        debugPrint('从内存缓存中找到图像: $key');
         return _inMemoryUiImageCache[key];
       }
-      
+
       debugPrint('图像不在内存缓存中: $key');
       return null;
     } catch (e) {
       debugPrint('尝试同步获取图像异常: $e');
       return null;
-    }
-  }
-  
-  /// 检查缓存文件是否存在
-  /// 
-  /// [key] 缓存键
-  /// 返回文件是否存在
-  bool cacheFileExists(String key) {
-    try {
-      final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
-      final cacheFile = File('${cacheDir.path}/$key');
-      return cacheFile.existsSync();
-    } catch (e) {
-      debugPrint('检查缓存文件存在性失败: $e');
-      return false;
     }
   }
 }

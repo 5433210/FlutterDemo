@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/widgets/element_change_types.dart';
 import 'dirty_tracker.dart';
 import 'element_cache_manager.dart';
@@ -152,9 +153,11 @@ class SelectiveRebuildManager extends ChangeNotifier {
     final batchTime = DateTime.now().difference(startTime);
     _totalRebuildTime += batchTime;
 
-    debugPrint(
-        '🚀 SelectiveRebuildManager: Batch processed ${elementIds.length} elements, '
-        '${rebuiltElements.length} rebuilt in ${batchTime.inMilliseconds}ms');
+    EditPageLogger.performanceInfo('批量重建处理完成', data: {
+      'totalElements': elementIds.length,
+      'rebuiltElements': rebuiltElements.length,
+      'batchTimeMs': batchTime.inMilliseconds
+    });
 
     return rebuiltElements;
   }
@@ -196,8 +199,10 @@ class SelectiveRebuildManager extends ChangeNotifier {
   /// Skip rebuild for an element (used when reusing cached widget)
   void skipElementRebuild(String elementId, String reason) {
     _skippedRebuilds++;
-    debugPrint(
-        '🚀 SelectiveRebuildManager: Skipped rebuild for $elementId - $reason');
+    EditPageLogger.performanceInfo('跳过元素重建', data: {
+      'elementId': elementId,
+      'reason': reason
+    });
   }
 
   /// Mark that an element is starting rebuild

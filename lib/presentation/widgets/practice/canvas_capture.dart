@@ -6,6 +6,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 /// 画布捕获工具
 ///
 /// 用于捕获 Flutter 组件的图像
@@ -84,8 +86,7 @@ class CanvasCapture {
         wait: 100, // 等待 100 毫秒，确保组件已完全渲染
       );
     } catch (e, stack) {
-      debugPrint('捕获字帖页面失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      EditPageLogger.fileOpsError('捕获字帖页面失败', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -111,7 +112,7 @@ class CanvasCapture {
 
       // 检查 context 是否有效
       if (!context.mounted) {
-        debugPrint('Context is no longer mounted');
+        EditPageLogger.fileOpsError('Context已不再挂载');
         return null;
       }
 
@@ -125,7 +126,7 @@ class CanvasCapture {
 
       // 检查 context 是否仍然有效
       if (!context.mounted) {
-        debugPrint('Context is no longer mounted');
+        EditPageLogger.fileOpsError('Context已不再挂载');
         return null;
       }
 
@@ -144,8 +145,7 @@ class CanvasCapture {
 
       return null;
     } catch (e, stack) {
-      debugPrint('捕获组件图像失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      EditPageLogger.fileOpsError('捕获组件图像失败', error: e, stackTrace: stack);
       return null;
     }
   }

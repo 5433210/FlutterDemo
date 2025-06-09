@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import 'canvas_structure_listener.dart';
 import 'layers/layer_types.dart';
@@ -56,8 +57,11 @@ class StateChangeDispatcher {
     // 启动批处理计时器
     _scheduleBatchProcessing();
 
-    debugPrint(
-        '📤 StateChangeDispatcher: 分发事件 - ${event.type} (队列长度: ${_changeQueue.length})');
+    EditPageLogger.editPageDebug('分发状态变化事件', 
+      data: {
+        'eventType': event.type.toString(),
+        'queueLength': _changeQueue.length
+      });
   }
 
   /// 释放资源
@@ -69,7 +73,7 @@ class StateChangeDispatcher {
     _changeQueue.clear();
     _changeStats.clear();
 
-    debugPrint('📤 StateChangeDispatcher: 已释放资源');
+    EditPageLogger.editPageDebug('StateChangeDispatcher已释放资源');
   }
 
   /// 立即处理所有待处理的变化
@@ -80,7 +84,7 @@ class StateChangeDispatcher {
 
   /// 初始化分发器
   void _initializeDispatcher() {
-    debugPrint('📤 StateChangeDispatcher: 初始化完成');
+    EditPageLogger.editPageDebug('StateChangeDispatcher初始化完成');
   }
 
   /// 处理批次
@@ -97,8 +101,8 @@ class StateChangeDispatcher {
       final batchEvents = List<StateChangeEvent>.from(_changeQueue);
       _changeQueue.clear();
 
-      debugPrint(
-          '📤 StateChangeDispatcher: 开始处理批次 - ${batchEvents.length} 个事件');
+      EditPageLogger.editPageDebug('开始处理状态变化批次', 
+        data: {'eventCount': batchEvents.length});
 
       // 按类型分组处理
       final groupedEvents = <StateChangeType, List<StateChangeEvent>>{};
@@ -126,9 +130,9 @@ class StateChangeDispatcher {
         }
       }
 
-      debugPrint('📤 StateChangeDispatcher: 批次处理完成');
+      EditPageLogger.editPageDebug('状态变化批次处理完成');
     } catch (e) {
-      debugPrint('📤 StateChangeDispatcher: 批次处理错误 - $e');
+      EditPageLogger.editPageError('状态变化批次处理错误', error: e);
     } finally {
       _processingBatch = false;
 
@@ -314,7 +318,7 @@ class StateChangeDispatcher {
   /// 处理视口变化事件
   void _processViewportChangeEvents(List<StateChangeEvent> events) {
     // 处理视口变化，可能触发视口裁剪更新
-    debugPrint('📤 StateChangeDispatcher: 处理视口变化事件');
+    EditPageLogger.editPageDebug('处理视口变化事件');
   }
 
   /// 处理网格设置变化事件

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+
 /// 拖拽配置类
 class DragConfig {
   /// 批量更新延迟时间（默认16ms = 60FPS）
@@ -98,7 +100,7 @@ class DragStateManager extends ChangeNotifier {
 
   /// 取消拖拽操作
   void cancelDrag() {
-    debugPrint('❌ DragStateManager.cancelDrag() - 取消拖拽');
+    EditPageLogger.canvasDebug('取消拖拽操作');
 
     // 确保所有状态被重置
     _batchUpdateTimer?.cancel();
@@ -118,20 +120,20 @@ class DragStateManager extends ChangeNotifier {
     // 通知监听器状态更改
     notifyListeners();
 
-    debugPrint('❌ DragStateManager.cancelDrag() - 拖拽状态已完全重置');
+    EditPageLogger.canvasDebug('拖拽状态已完全重置');
   }
 
   @override
   void dispose() {
-    debugPrint('🗑️ DragStateManager.dispose() - 释放资源');
+    EditPageLogger.canvasDebug('DragStateManager释放资源');
     _batchUpdateTimer?.cancel();
     super.dispose();
   }
 
   /// 结束拖拽操作
   void endDrag({bool shouldCommitChanges = true}) {
-    debugPrint('🔥 DragStateManager.endDrag() - 结束拖拽');
-    debugPrint('   提交更改: $shouldCommitChanges');
+    EditPageLogger.canvasDebug('结束拖拽操作', 
+      data: {'shouldCommitChanges': shouldCommitChanges});
 
     // 取消批量更新定时器
     _batchUpdateTimer?.cancel();
@@ -153,16 +155,18 @@ class DragStateManager extends ChangeNotifier {
             _frameRates.fold(0, (sum, fps) => sum + fps) / _frameRates.length;
       }
 
-      debugPrint('📊 DragStateManager - 拖拽性能汇总:');
-      debugPrint('   拖拽持续时间: ${dragDuration.inMilliseconds}ms');
-      debugPrint('   总更新次数: $_updateCount');
-      debugPrint('   批量更新次数: $_batchUpdateCount');
-      debugPrint('   平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
-      debugPrint('   平均帧率: ${avgFps.toStringAsFixed(1)} FPS');
+      EditPageLogger.performanceInfo('拖拽性能汇总', data: {
+        'dragDurationMs': dragDuration.inMilliseconds,
+        'totalUpdateCount': _updateCount,
+        'batchUpdateCount': _batchUpdateCount,
+        'avgUpdateTimeMs': _avgUpdateTime,
+        'avgFps': avgFps
+      });
 
       // 检查是否有性能问题
       if (avgFps < 55) {
-        debugPrint('⚠️ 警告: 拖拽帧率低于理想值 (60 FPS)');
+        EditPageLogger.performanceWarning('拖拽帧率低于理想值', 
+          data: {'currentFps': avgFps, 'targetFps': 60});
       }
     }
 
@@ -285,9 +289,11 @@ class DragStateManager extends ChangeNotifier {
     required Map<String, Offset> elementStartPositions,
     Map<String, Map<String, dynamic>>? elementStartProperties, // 🔧 新增：初始元素属性
   }) {
-    debugPrint('🔥 DragStateManager.startDrag() - 开始拖拽');
-    debugPrint('   拖拽元素: $elementIds');
-    debugPrint('   起始位置: $startPosition');
+    EditPageLogger.canvasDebug('开始拖拽操作', data: {
+      'elementIds': elementIds.toList(),
+      'startPosition': startPosition.toString(),
+      'elementCount': elementIds.length
+    });
 
     _isDragging = true;
     _isDragPreviewActive = true;
@@ -372,12 +378,12 @@ class DragStateManager extends ChangeNotifier {
 
     // 调试信息
     if (DragConfig.debugMode && _updateCount % 10 == 0) {
-      debugPrint('📊 DragStateManager - 性能数据:');
-      debugPrint('   更新次数: $_updateCount');
-      debugPrint('   批量更新次数: $_batchUpdateCount');
-      debugPrint('   平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
-      debugPrint(
-          '   当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
+      EditPageLogger.performanceInfo('拖拽性能数据', data: {
+        'updateCount': _updateCount,
+        'batchUpdateCount': _batchUpdateCount,
+        'avgUpdateTimeMs': _avgUpdateTime,
+        'currentFps': _frameRates.isNotEmpty ? _frameRates.last : 0
+      });
     }
   }
 
@@ -420,7 +426,10 @@ class DragStateManager extends ChangeNotifier {
 
     notifyListeners();
 
-    debugPrint('📊 DragStateManager: 更新元素 $elementId 完整属性: $properties');
+    EditPageLogger.canvasDebug('更新元素预览属性', data: {
+      'elementId': elementId,
+      'properties': properties
+    });
   }
 
   /// 🔧 新增：仅更新性能监控统计，不触发通知（用于Live阶段）
@@ -453,12 +462,12 @@ class DragStateManager extends ChangeNotifier {
 
     // 调试信息
     if (DragConfig.debugMode && _updateCount % 10 == 0) {
-      debugPrint('🔍[RESIZE_FIX] DragStateManager - 性能数据 (仅统计):');
-      debugPrint('🔍[RESIZE_FIX]    更新次数: $_updateCount');
-      debugPrint(
-          '🔍[RESIZE_FIX]    平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
-      debugPrint(
-          '🔍[RESIZE_FIX]    当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
+      EditPageLogger.performanceInfo('拖拽性能统计', data: {
+        'updateCount': _updateCount,
+        'avgUpdateTimeMs': _avgUpdateTime,
+        'currentFps': _frameRates.isNotEmpty ? _frameRates.last : 0,
+        'statsOnly': true
+      });
     }
   }
 
@@ -466,7 +475,7 @@ class DragStateManager extends ChangeNotifier {
   void _commitFinalPositions() {
     if (_previewPositions.isEmpty) return;
 
-    debugPrint('💾 DragStateManager.commitFinalPositions() - 提交最终位置');
+    EditPageLogger.canvasDebug('提交最终拖拽位置');
 
     final finalUpdates = <String, Map<String, dynamic>>{};
 
@@ -488,8 +497,8 @@ class DragStateManager extends ChangeNotifier {
       final batchData = Map<String, Map<String, dynamic>>.from(_pendingUpdates);
       _pendingUpdates.clear();
 
-      debugPrint('📦 DragStateManager.batchUpdate() - 批量更新元素位置');
-      debugPrint('   更新元素数量: ${batchData.length}');
+          EditPageLogger.canvasDebug('批量更新元素位置', 
+      data: {'updateCount': batchData.length});
 
       // 统计批量更新次数
       _batchUpdateCount++;
@@ -520,9 +529,11 @@ class DragStateManager extends ChangeNotifier {
 
   /// 更新预览位置
   void _updatePreviewPositions() {
-    // 🔍[RESIZE_FIX] 调试预览位置计算
-    debugPrint(
-        '🔍[RESIZE_FIX] DragStateManager._updatePreviewPositions() - 当前拖拽偏移: $_currentDragOffset');
+    // 调试预览位置计算
+    if (DragConfig.debugMode) {
+      EditPageLogger.canvasDebug('更新预览位置', 
+        data: {'currentDragOffset': _currentDragOffset.toString()});
+    }
 
     for (final elementId in _draggingElementIds) {
       final startPos = _elementStartPositions[elementId];
@@ -530,11 +541,17 @@ class DragStateManager extends ChangeNotifier {
         final newPreviewPos = startPos + _currentDragOffset;
         _previewPositions[elementId] = newPreviewPos;
 
-        // 🔍[RESIZE_FIX] 调试每个元素的位置计算
-        debugPrint(
-            '🔍[RESIZE_FIX]    元素 $elementId: 起始位置=$startPos, 新预览位置=$newPreviewPos');
-      } else {
-        debugPrint('🔍[RESIZE_FIX]    元素 $elementId: ❌ 没有起始位置');
+        // 调试每个元素的位置计算
+        if (DragConfig.debugMode) {
+          EditPageLogger.canvasDebug('元素位置计算', data: {
+            'elementId': elementId,
+            'startPos': startPos.toString(),
+            'newPreviewPos': newPreviewPos.toString()
+          });
+        }
+      } else if (DragConfig.debugMode) {
+        EditPageLogger.canvasError('元素缺少起始位置', 
+          data: {'elementId': elementId});
       }
     }
   }
