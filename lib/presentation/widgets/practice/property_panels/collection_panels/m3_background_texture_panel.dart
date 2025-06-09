@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../infrastructure/providers/cache_providers.dart'
     as cache_providers;
 import '../../../../../infrastructure/providers/storage_providers.dart';
@@ -45,16 +46,20 @@ class _M3BackgroundTexturePanelState
     final textTheme = Theme.of(context).textTheme;
     final content = widget.element['content'] as Map<String, dynamic>;
 
-    // 调试输出元素结构，以便识别任何可能的嵌套问题
-    debugPrint('🔍 构建背景纹理面板 - 元素结构检查:');
-    debugPrint('  - 元素类型: ${widget.element['type']}');
-    debugPrint('  - 内容键: ${content.keys.toList()}');
-    if (content.containsKey('backgroundTexture')) {
-      final textureData = content['backgroundTexture'];
-      debugPrint('  - 背景纹理数据: $textureData');
-    } else {
-      debugPrint('  - 无背景纹理数据');
-    }
+    // 结构化日志记录元素构建信息
+    AppLogger.debug(
+      '构建背景纹理面板',
+      tag: 'texture_panel',
+      data: {
+        'elementType': widget.element['type'],
+        'contentKeys': content.keys.toList(),
+        'hasBackgroundTexture': content.containsKey('backgroundTexture'),
+        'backgroundTextureData': content.containsKey('backgroundTexture') 
+          ? content['backgroundTexture'] 
+          : null,
+        'operation': 'build_texture_panel',
+      },
+    );
 
     return _buildBackgroundTextureSubPanel(
         context, content, colorScheme, l10n, textTheme);
@@ -128,7 +133,14 @@ class _M3BackgroundTexturePanelState
                         icon: const Icon(Icons.delete_outline),
                         label: Text(l10n.textureRemove),
                         onPressed: () {
-                          debugPrint('✨ 尝试移除背景纹理');
+                          AppLogger.info(
+                            '用户移除背景纹理',
+                            tag: 'texture_panel',
+                            data: {
+                              'elementId': widget.element['id'],
+                              'operation': 'remove_background_texture',
+                            },
+                          );
                           widget.onContentPropertyChanged(
                               'backgroundTexture', null);
                           setState(() {});
@@ -205,7 +217,16 @@ class _M3BackgroundTexturePanelState
           ],
           onChanged: (value) {
             if (value != null) {
-              debugPrint('🔄 纹理填充模式切换: $textureFillMode -> $value');
+              AppLogger.info(
+                '纹理填充模式变更',
+                tag: 'texture_panel',
+                data: {
+                  'oldMode': textureFillMode,
+                  'newMode': value,
+                  'elementId': widget.element['id'],
+                  'operation': 'change_texture_fill_mode',
+                },
+              );
 
               // Update local state first
               _localTextureFillMode = value;
@@ -288,7 +309,16 @@ class _M3BackgroundTexturePanelState
           ],
           onChanged: (value) {
             if (value != null) {
-              debugPrint('🔄 纹理适应模式切换: $textureFitMode -> $value');
+              AppLogger.info(
+                '纹理适应模式变更',
+                tag: 'texture_panel',
+                data: {
+                  'oldMode': textureFitMode,
+                  'newMode': value,
+                  'elementId': widget.element['id'],
+                  'operation': 'change_texture_fit_mode',
+                },
+              );
               _localTextureFitMode = value;
               _updateTextureProperty('textureFitMode', value);
             }
@@ -303,10 +333,24 @@ class _M3BackgroundTexturePanelState
     // 递归查找纹理数据
     final texture = _findTextureData(content);
 
-    debugPrint('纹理预览检查: 找到纹理=${texture != null}');
+    AppLogger.debug(
+      '构建纹理预览',
+      tag: 'texture_panel',
+      data: {
+        'hasTexture': texture != null,
+        'operation': 'build_texture_preview',
+      },
+    );
 
     if (texture == null || texture.isEmpty) {
-      debugPrint('未检测到纹理：没有找到有效的 backgroundTexture 数据');
+      AppLogger.debug(
+        '无纹理数据',
+        tag: 'texture_panel',
+        data: {
+          'reason': 'no_valid_texture_data',
+          'operation': 'texture_preview_empty',
+        },
+      );
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -322,10 +366,26 @@ class _M3BackgroundTexturePanelState
     final textureId = texture['id'] as String?;
     final texturePath = texture['path'] as String?;
 
-    debugPrint('纹理数据: id=$textureId, path=$texturePath');
+    AppLogger.debug(
+      '纹理预览数据',
+      tag: 'texture_panel',
+      data: {
+        'textureId': textureId,
+        'texturePath': texturePath,
+        'operation': 'texture_preview_data',
+      },
+    );
 
     if (textureId == null || texturePath == null || texturePath.isEmpty) {
-      debugPrint('纹理数据不完整: id=$textureId, path=$texturePath');
+      AppLogger.warning(
+        '纹理数据不完整',
+        tag: 'texture_panel',
+        data: {
+          'textureId': textureId,
+          'texturePath': texturePath,
+          'operation': 'incomplete_texture_data',
+        },
+      );
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -362,8 +422,16 @@ class _M3BackgroundTexturePanelState
         break;
     }
 
-    debugPrint(
-        '纹理样式: 填充模式=$fillMode, 应用范围=$applicationRange, 预览适应方式=$previewFit');
+    AppLogger.debug(
+      '纹理预览配置',
+      tag: 'texture_panel',
+      data: {
+        'fillMode': fillMode,
+        'applicationRange': applicationRange,
+        'previewFit': previewFit.toString(),
+        'operation': 'texture_preview_config',
+      },
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
@@ -387,7 +455,15 @@ class _M3BackgroundTexturePanelState
               }
 
               if (snapshot.hasError) {
-                debugPrint('加载纹理失败: ${snapshot.error}');
+                AppLogger.error(
+                  '纹理加载失败',
+                  tag: 'texture_panel',
+                  error: snapshot.error,
+                  data: {
+                    'texturePath': texturePath,
+                    'operation': 'texture_load_error',
+                  },
+                );
                 return const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -402,7 +478,14 @@ class _M3BackgroundTexturePanelState
               }
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                debugPrint('纹理数据为空');
+                AppLogger.warning(
+                  '纹理数据为空',
+                  tag: 'texture_panel',
+                  data: {
+                    'texturePath': texturePath,
+                    'operation': 'texture_data_empty',
+                  },
+                );
                 return const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -416,8 +499,18 @@ class _M3BackgroundTexturePanelState
                   ),
                 );
               }
-              debugPrint(
-                  '纹理加载成功, 图片数据长度: ${snapshot.data!.length}, 不透明度: $textureOpacity');
+              
+              AppLogger.info(
+                '纹理加载成功',
+                tag: 'texture_panel',
+                data: {
+                  'texturePath': texturePath,
+                  'dataLength': snapshot.data!.length,
+                  'opacity': textureOpacity,
+                  'operation': 'texture_load_success',
+                },
+              );
+              
               return Opacity(
                 opacity: textureOpacity.clamp(0.0, 1.0),
                 child: Image.memory(
@@ -426,7 +519,16 @@ class _M3BackgroundTexturePanelState
                   width: double.infinity,
                   height: double.infinity,
                   errorBuilder: (context, error, stackTrace) {
-                    debugPrint('渲染纹理失败: $error');
+                    AppLogger.error(
+                      '纹理渲染失败',
+                      tag: 'texture_panel',
+                      error: error,
+                      stackTrace: stackTrace,
+                      data: {
+                        'texturePath': texturePath,
+                        'operation': 'texture_render_error',
+                      },
+                    );
                     return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -505,10 +607,25 @@ class _M3BackgroundTexturePanelState
 
       // 确保纹理数据包含必要的字段
       if (texData.containsKey('path') && texData.containsKey('id')) {
-        debugPrint('✅ 找到有效的纹理数据: ${texData['id']}');
+        AppLogger.debug(
+          '找到有效纹理数据',
+          tag: 'texture_panel',
+          data: {
+            'textureId': texData['id'],
+            'texturePath': texData['path'],
+            'operation': 'find_valid_texture_data',
+          },
+        );
         return texData;
       } else {
-        debugPrint('⚠️ 纹理数据不完整: $texData');
+        AppLogger.warning(
+          '纹理数据不完整',
+          tag: 'texture_panel',
+          data: {
+            'textureData': texData,
+            'operation': 'incomplete_texture_data',
+          },
+        );
       }
     }
 
@@ -519,11 +636,23 @@ class _M3BackgroundTexturePanelState
     if (content.containsKey('content') &&
         content['content'] != null &&
         content['content'] is Map<String, dynamic>) {
-      debugPrint('🔍 搜索嵌套内容中的纹理数据...');
+      AppLogger.debug(
+        '递归搜索嵌套内容',
+        tag: 'texture_panel',
+        data: {
+          'operation': 'recursive_texture_search',
+        },
+      );
       return _findTextureData(content['content'] as Map<String, dynamic>);
     }
 
-    debugPrint('⚠️ 未找到任何纹理数据');
+    AppLogger.debug(
+      '未找到纹理数据',
+      tag: 'texture_panel',
+      data: {
+        'operation': 'texture_data_not_found',
+      },
+    );
     return null;
   }
 
@@ -579,7 +708,14 @@ class _M3BackgroundTexturePanelState
 
     // 首先检查内存缓存
     // if (_textureCache.containsKey(cacheKey)) {
-    //   debugPrint('从内存缓存加载纹理: $cacheKey');
+    //   logger.debug(
+    //     '从内存缓存加载纹理',
+    //     data: {
+    //       'cacheKey': cacheKey,
+    //       'operation': 'load_texture_from_memory_cache',
+    //     },
+    //     tags: ['texture', 'cache'],
+    //   );
     //   return _textureCache[cacheKey]!;
     // }
 
@@ -589,11 +725,25 @@ class _M3BackgroundTexturePanelState
 
       // final imageBytes = await imageCacheService.getBinaryImage(cacheKey);
       // if (imageBytes != null) {
-      //   debugPrint('从缓存加载纹理图片: $path');
+      //   logger.debug(
+      //     '从缓存加载纹理图片',
+      //     data: {
+      //       'path': path,
+      //       'operation': 'load_texture_from_cache',
+      //     },
+      //     tags: ['texture', 'cache'],
+      //   );
       //   return imageBytes;
       // }
 
-      debugPrint('从存储加载纹理图片: $path');
+      AppLogger.debug(
+        '从存储加载纹理图片',
+        tag: 'texture_panel',
+        data: {
+          'path': path,
+          'operation': 'load_texture_from_storage',
+        },
+      );
       final imageBytesFromStorage = await storageService.readFile(path);
 
       if (imageBytesFromStorage.isNotEmpty) {
@@ -603,13 +753,29 @@ class _M3BackgroundTexturePanelState
         if (decodedImage != null) {
           imageCacheService.cacheUiImage(cacheKey, decodedImage);
         }
-        debugPrint('纹理图片加载并缓存成功: ${imageBytesFromStorage.length} bytes');
+        AppLogger.info(
+          '纹理图片加载成功',
+          tag: 'texture_panel',
+          data: {
+            'path': path,
+            'dataSize': imageBytesFromStorage.length,
+            'operation': 'texture_load_success',
+          },
+        );
         return imageBytesFromStorage;
       } else {
         throw Exception('图片文件为空');
       }
     } catch (e) {
-      debugPrint('加载纹理图片失败: $e');
+      AppLogger.error(
+        '纹理图片加载失败',
+        tag: 'texture_panel',
+        error: e,
+        data: {
+          'path': path,
+          'operation': 'texture_load_failed',
+        },
+      );
       throw Exception('无法加载纹理图片: $e');
     }
   }
@@ -621,7 +787,14 @@ class _M3BackgroundTexturePanelState
     Function(String, dynamic) onContentPropertyChanged,
   ) async {
     final l10n = AppLocalizations.of(context);
-    debugPrint('✨ 打开纹理选择对话框 - 增强版');
+    AppLogger.info(
+      '打开纹理选择对话框',
+      tag: 'texture_panel',
+      data: {
+        'elementId': widget.element['id'],
+        'operation': 'open_texture_selection_dialog',
+      },
+    );
 
     // 打开选择对话框
     final selectedTexture = await M3LibraryPickerDialog.show(
@@ -631,12 +804,27 @@ class _M3BackgroundTexturePanelState
 
     // 如果用户取消了选择，直接返回
     if (selectedTexture == null) {
-      debugPrint('❌ 用户取消了纹理选择');
+      AppLogger.info(
+        '用户取消纹理选择',
+        tag: 'texture_panel',
+        data: {
+          'operation': 'texture_selection_cancelled',
+        },
+      );
       return;
     }
 
-    debugPrint(
-        '✅ 用户选择了纹理: ID=${selectedTexture.id}, 路径=${selectedTexture.path}');
+    AppLogger.info(
+      '用户选择纹理',
+      tag: 'texture_panel',
+      data: {
+        'selectedTextureId': selectedTexture.id,
+        'selectedTexturePath': selectedTexture.path,
+        'textureWidth': selectedTexture.width,
+        'textureHeight': selectedTexture.height,
+        'operation': 'texture_selected',
+      },
+    );
 
     try {
       // 创建纹理数据对象
@@ -653,7 +841,14 @@ class _M3BackgroundTexturePanelState
       // 获取元素的完整内容
       final elementContent = widget.element['content'] as Map<String, dynamic>?;
       if (elementContent == null) {
-        debugPrint('❌ 元素内容为空，无法应用纹理');
+        AppLogger.error(
+          '元素内容为空，无法应用纹理',
+          tag: 'texture_panel',
+          data: {
+            'elementId': widget.element['id'],
+            'operation': 'apply_texture_failed_no_content',
+          },
+        );
         return;
       }
 
@@ -676,53 +871,125 @@ class _M3BackgroundTexturePanelState
       // 注意：不再在characterImages中存储背景纹理数据
       // characterImages应该只包含角色相关的图像，不包含背景纹理信息
 
-      debugPrint('🔧 应用纹理数据到元素内容...');
-      debugPrint('📊 完整的新内容: $newContent');
+      AppLogger.info(
+        '应用纹理数据到元素',
+        tag: 'texture_panel',
+        data: {
+          'elementId': widget.element['id'],
+          'textureId': selectedTexture.id,
+          'texturePath': selectedTexture.path,
+          'contentKeys': newContent.keys.toList(),
+          'operation': 'apply_texture_data',
+        },
+      );
 
       // 尝试多种更新方式以确保更新生效
-      debugPrint('📝 尝试使用onPropertyChanged更新内容...');
+      AppLogger.debug(
+        '使用onPropertyChanged更新内容',
+        tag: 'texture_panel',
+        data: {
+          'operation': 'update_content_via_property_changed',
+        },
+      );
       widget.onPropertyChanged('content', newContent);
 
       // 等待一下，确保第一次更新已处理
       await Future.delayed(const Duration(milliseconds: 50));
 
-      debugPrint('📝 尝试使用onContentPropertyChanged作为备选方案...');
+      AppLogger.debug(
+        '使用onContentPropertyChanged作为备选方案',
+        tag: 'texture_panel',
+        data: {
+          'operation': 'update_content_via_content_property_changed',
+        },
+      );
       onContentPropertyChanged('content', newContent);
 
       // // 清空缓存，强制重新加载纹理
       // _textureCache.clear();
-      // debugPrint('🧹 清空本地纹理缓存');
+      // logger.debug(
+      //   '清空本地纹理缓存',
+      //   data: {
+      //     'operation': 'clear_local_texture_cache',
+      //   },
+      //   tags: ['texture', 'cache'],
+      // );
 
       // 清除全局图像缓存
       try {
         final imageCacheService =
             ref.read(cache_providers.imageCacheServiceProvider);
         await imageCacheService.clearAll();
-        debugPrint('🔄 已清除全局图像缓存');
+        AppLogger.info(
+          '清除全局图像缓存',
+          tag: 'texture_panel',
+          data: {
+            'operation': 'clear_global_image_cache',
+          },
+        );
       } catch (e) {
-        debugPrint('⚠️ 清除全局缓存失败: $e');
+        AppLogger.warning(
+          '清除全局缓存失败',
+          tag: 'texture_panel',
+          error: e,
+          data: {
+            'operation': 'clear_global_cache_failed',
+          },
+        );
       }
 
-      debugPrint('✅ 纹理应用完成，触发界面更新');
+      AppLogger.info(
+        '纹理应用完成',
+        tag: 'texture_panel',
+        data: {
+          'elementId': widget.element['id'],
+          'operation': 'texture_application_complete',
+        },
+      );
 
       // 强制刷新UI
       setState(() {});
     } catch (e) {
-      debugPrint('❌ 应用纹理时发生错误: $e');
+      AppLogger.error(
+        '应用纹理时发生错误',
+        tag: 'texture_panel',
+        error: e,
+        data: {
+          'elementId': widget.element['id'],
+          'selectedTextureId': selectedTexture.id,
+          'operation': 'apply_texture_error',
+        },
+      );
     }
   }
 
   /// 更新纹理属性并确保更新整个内容对象
   void _updateTextureProperty(String propertyName, dynamic value) async {
     try {
-      debugPrint('⚙️ 更新纹理属性: $propertyName = $value');
+      AppLogger.debug(
+        '更新纹理属性',
+        tag: 'texture_panel',
+        data: {
+          'propertyName': propertyName,
+          'newValue': value,
+          'elementId': widget.element['id'],
+          'operation': 'update_texture_property',
+        },
+      );
 
       // 获取当前内容
       final originalContent = widget.element['content'] as Map<String, dynamic>;
 
       // 输出原始内容的属性信息
-      debugPrint('🔍 更新前的内容属性:');
-      debugPrint('  - $propertyName: ${originalContent[propertyName]}');
+      AppLogger.debug(
+        '更新前的内容属性',
+        tag: 'texture_panel',
+        data: {
+          'propertyName': propertyName,
+          'oldValue': originalContent[propertyName],
+          'operation': 'texture_property_before_update',
+        },
+      );
 
       // 创建全新的内容对象而不是修改现有对象，以避免任何引用问题
       final content = <String, dynamic>{};
@@ -737,25 +1004,48 @@ class _M3BackgroundTexturePanelState
       // characterImages应该只包含角色相关的图像，不包含背景纹理信息
 
       // 应用更新 - 正确调用onPropertyChanged更新整个content
-      debugPrint('📝 使用onPropertyChanged更新整个content对象...');
+      AppLogger.debug(
+        '使用onPropertyChanged更新整个content对象',
+        tag: 'texture_panel',
+        data: {
+          'propertyName': propertyName,
+          'operation': 'update_content_object',
+        },
+      );
       widget.onPropertyChanged('content', content);
 
       // 等待一下，确保更新已处理
       await Future.delayed(const Duration(milliseconds: 50));
 
       // 输出更新后的内容信息
-      debugPrint('✅ 属性更新完成:');
-      debugPrint('  - 更新的属性: $propertyName = $value');
+      AppLogger.info(
+        '纹理属性更新完成',
+        tag: 'texture_panel',
+        data: {
+          'propertyName': propertyName,
+          'newValue': value,
+          'elementId': widget.element['id'],
+          'operation': 'texture_property_update_complete',
+        },
+      );
 
       // 确认更新是否生效 - 获取更新后的内容进行检查
       Future.delayed(Duration.zero, () {
         final updatedContent =
             widget.element['content'] as Map<String, dynamic>?;
         if (updatedContent != null) {
-          debugPrint(
-              '  - 更新后检查: $propertyName = ${updatedContent[propertyName]}');
-          debugPrint(
-              '  - 更新${updatedContent[propertyName] == value ? "成功" : "失败"}');
+          final isUpdateSuccessful = updatedContent[propertyName] == value;
+          AppLogger.debug(
+            '纹理属性更新验证',
+            tag: 'texture_panel',
+            data: {
+              'propertyName': propertyName,
+              'expectedValue': value,
+              'actualValue': updatedContent[propertyName],
+              'updateSuccessful': isUpdateSuccessful,
+              'operation': 'texture_property_update_verification',
+            },
+          );
         }
       });
 
@@ -769,7 +1059,17 @@ class _M3BackgroundTexturePanelState
       // 刷新UI
       setState(() {});
     } catch (e) {
-      debugPrint('❌ 更新纹理属性时发生错误: $e');
+      AppLogger.error(
+        '更新纹理属性时发生错误',
+        tag: 'texture_panel',
+        error: e,
+        data: {
+          'propertyName': propertyName,
+          'value': value,
+          'elementId': widget.element['id'],
+          'operation': 'update_texture_property_error',
+        },
+      );
     }
   }
 }

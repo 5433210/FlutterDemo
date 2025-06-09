@@ -3,6 +3,7 @@ import 'package:path/path.dart' as path;
 
 import '../cache/services/image_cache_service.dart';
 import '../image/image_processor.dart';
+import '../logging/logger.dart';
 import '../storage/storage_interface.dart';
 import 'character_image_service.dart';
 
@@ -24,11 +25,30 @@ class CharacterImageServiceImpl implements CharacterImageService {
   @override
   Future<void> clearAllImageCache() async {
     try {
-      debugPrint('开始清除所有字符图像缓存');
+      AppLogger.info(
+        '开始清除所有字符图像缓存',
+        tag: 'character_image_service',
+        data: {
+          'operation': 'clear_all_image_cache_start',
+        },
+      );
       await _imageCacheService.clearAll();
-      debugPrint('字符图像缓存清除完成');
+      AppLogger.info(
+        '字符图像缓存清除完成',
+        tag: 'character_image_service',
+        data: {
+          'operation': 'clear_all_image_cache_complete',
+        },
+      );
     } catch (e) {
-      debugPrint('清除字符图像缓存失败: $e');
+      AppLogger.error(
+        '清除字符图像缓存失败',
+        tag: 'character_image_service',
+        error: e,
+        data: {
+          'operation': 'clear_all_image_cache_failed',
+        },
+      );
     }
   }
 
@@ -37,58 +57,185 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<Map<String, String>?> getAvailableFormat(String id,
       {bool preferThumbnail = false}) async {
     try {
-      debugPrint(
-          '🔍 [CharacterImageService] 获取可用格式: $id (preferThumbnail: $preferThumbnail)');
+      AppLogger.debug(
+        '获取可用格式',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'preferThumbnail': preferThumbnail,
+          'operation': 'get_available_format',
+        },
+      );
 
       // 如果优先使用预览图，则先检查非方形格式
       if (preferThumbnail) {
         // 优先检查binary格式（非方形二值化图像）
-        debugPrint('🔍 [CharacterImageService] 检查binary格式...');
+        AppLogger.debug(
+          '检查binary格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'format': 'binary',
+            'operation': 'check_format',
+          },
+        );
         if (await hasCharacterImage(id, 'binary', 'png')) {
-          debugPrint('✅ [CharacterImageService] 找到binary格式: $id');
+          AppLogger.debug(
+            '找到binary格式',
+            tag: 'character_image_service',
+            data: {
+              'characterId': id,
+              'type': 'binary',
+              'format': 'png',
+              'operation': 'format_found',
+            },
+          );
           return {'type': 'binary', 'format': 'png'};
         }
         // 其次检查transparent格式（非方形透明图像）
-        debugPrint('🔍 [CharacterImageService] 检查transparent格式...');
+        AppLogger.debug(
+          '检查transparent格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'format': 'transparent',
+            'operation': 'check_format',
+          },
+        );
         if (await hasCharacterImage(id, 'transparent', 'png')) {
-          debugPrint('✅ [CharacterImageService] 找到transparent格式: $id');
+          AppLogger.debug(
+            '找到transparent格式',
+            tag: 'character_image_service',
+            data: {
+              'characterId': id,
+              'type': 'transparent',
+              'format': 'png',
+              'operation': 'format_found',
+            },
+          );
           return {'type': 'transparent', 'format': 'png'};
         }
         // 最后检查thumbnail格式
-        debugPrint('🔍 [CharacterImageService] 检查thumbnail格式...');
+        AppLogger.debug(
+          '检查thumbnail格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'format': 'thumbnail',
+            'operation': 'check_format',
+          },
+        );
         if (await hasCharacterImage(id, 'thumbnail', 'jpg')) {
-          debugPrint('✅ [CharacterImageService] 找到thumbnail格式: $id');
+          AppLogger.debug(
+            '找到thumbnail格式',
+            tag: 'character_image_service',
+            data: {
+              'characterId': id,
+              'type': 'thumbnail',
+              'format': 'jpg',
+              'operation': 'format_found',
+            },
+          );
           return {'type': 'thumbnail', 'format': 'jpg'};
         }
       }
 
       // 优先检查square-binary格式
-      debugPrint('🔍 [CharacterImageService] 检查square-binary格式...');
+      AppLogger.debug(
+        '检查square-binary格式',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'format': 'square-binary',
+          'operation': 'check_format',
+        },
+      );
       if (await hasCharacterImage(id, 'square-binary', 'png-binary')) {
-        debugPrint('✅ [CharacterImageService] 找到square-binary格式: $id');
+        AppLogger.debug(
+          '找到square-binary格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': 'square-binary',
+            'format': 'png-binary',
+            'operation': 'format_found',
+          },
+        );
         return {'type': 'square-binary', 'format': 'png-binary'};
       }
 
       // 其次检查square-transparent格式
-      debugPrint('🔍 [CharacterImageService] 检查square-transparent格式...');
+      AppLogger.debug(
+        '检查square-transparent格式',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'format': 'square-transparent',
+          'operation': 'check_format',
+        },
+      );
       if (await hasCharacterImage(
           id, 'square-transparent', 'png-transparent')) {
-        debugPrint('✅ [CharacterImageService] 找到square-transparent格式: $id');
+        AppLogger.debug(
+          '找到square-transparent格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': 'square-transparent',
+            'format': 'png-transparent',
+            'operation': 'format_found',
+          },
+        );
         return {'type': 'square-transparent', 'format': 'png-transparent'};
       }
 
       // 最后检查square-outline格式
-      debugPrint('🔍 [CharacterImageService] 检查square-outline格式...');
+      AppLogger.debug(
+        '检查square-outline格式',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'format': 'square-outline',
+          'operation': 'check_format',
+        },
+      );
       if (await hasCharacterImage(id, 'square-outline', 'svg-outline')) {
-        debugPrint('✅ [CharacterImageService] 找到square-outline格式: $id');
+        AppLogger.debug(
+          '找到square-outline格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': 'square-outline',
+            'format': 'svg-outline',
+            'operation': 'format_found',
+          },
+        );
         return {'type': 'square-outline', 'format': 'svg-outline'};
       }
 
       // 如果没有找到任何格式，返回默认格式
-      debugPrint('❌ [CharacterImageService] 未找到任何格式，返回默认格式: $id');
+      AppLogger.warning(
+        '未找到任何格式，返回默认格式',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'defaultType': 'square-binary',
+          'defaultFormat': 'png-binary',
+          'operation': 'format_not_found_use_default',
+        },
+      );
       return {'type': 'square-binary', 'format': 'png-binary'};
     } catch (e) {
-      debugPrint('获取字符图片可用格式失败: $e');
+      AppLogger.error(
+        '获取字符图片可用格式失败',
+        tag: 'character_image_service',
+        error: e,
+        data: {
+          'characterId': id,
+          'preferThumbnail': preferThumbnail,
+          'operation': 'get_available_format_failed',
+        },
+      );
       // 返回默认格式
       return {'type': 'square-binary', 'format': 'png-binary'};
     }
@@ -100,45 +247,136 @@ class CharacterImageServiceImpl implements CharacterImageService {
       String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
-      debugPrint('🔍 [CharacterImageService] 尝试获取图像: $imagePath');
+      AppLogger.debug(
+        '尝试获取字符图像',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'type': type,
+          'format': format,
+          'imagePath': imagePath,
+          'operation': 'get_character_image',
+        },
+      );
       final cacheKey = 'file:$imagePath';
 
       // 尝试从缓存获取
       final cachedData = await _imageCacheService.getBinaryImage(cacheKey);
       if (cachedData != null) {
-        debugPrint(
-            '✅ [CharacterImageService] 从缓存获取图像: ${cachedData.length} bytes');
+        AppLogger.debug(
+          '从缓存获取图像',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'cacheKey': cacheKey,
+            'dataSize': cachedData.length,
+            'operation': 'get_image_from_cache',
+          },
+        );
         return cachedData;
       }
 
       // 使用IStorage检查文件是否存在
-      debugPrint('🔍 [CharacterImageService] 检查文件是否存在: $imagePath');
+      AppLogger.debug(
+        '检查文件是否存在',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'imagePath': imagePath,
+          'operation': 'check_file_exists',
+        },
+      );
       final fileExists = await _storage.fileExists(imagePath);
-      debugPrint('🔍 [CharacterImageService] 文件存在: $fileExists');
+      AppLogger.debug(
+        '文件存在检查结果',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'imagePath': imagePath,
+          'fileExists': fileExists,
+          'operation': 'file_exists_result',
+        },
+      );
 
       if (fileExists) {
         // 使用IStorage读取文件内容
-        debugPrint('📖 [CharacterImageService] 读取文件内容...');
+        AppLogger.debug(
+          '读取文件内容',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'imagePath': imagePath,
+            'operation': 'read_file_content',
+          },
+        );
         final bytes = await _storage.readFile(imagePath);
-        debugPrint('📖 [CharacterImageService] 读取到 ${bytes.length} 字节');
+        AppLogger.debug(
+          '文件读取完成',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'imagePath': imagePath,
+            'bytesRead': bytes.length,
+            'operation': 'file_read_complete',
+          },
+        );
         final data = bytes.isNotEmpty ? Uint8List.fromList(bytes) : null;
 
         // 缓存数据
         if (data != null) {
           await _imageCacheService.cacheBinaryImage(cacheKey, data);
-          debugPrint('✅ [CharacterImageService] 缓存图像数据: ${data.length} bytes');
+          AppLogger.info(
+            '缓存图像数据',
+            tag: 'character_image_service',
+            data: {
+              'characterId': id,
+              'type': type,
+              'format': format,
+              'cacheKey': cacheKey,
+              'dataSize': data.length,
+              'operation': 'cache_image_data',
+            },
+          );
         } else {
-          debugPrint('❌ [CharacterImageService] 文件内容为空');
+          AppLogger.warning(
+            '文件内容为空',
+            tag: 'character_image_service',
+            data: {
+              'characterId': id,
+              'imagePath': imagePath,
+              'operation': 'file_content_empty',
+            },
+          );
         }
 
         return data;
       } else {
-        debugPrint('❌ [CharacterImageService] 文件不存在: $imagePath');
+        AppLogger.warning(
+          '文件不存在',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'imagePath': imagePath,
+            'operation': 'file_not_exists',
+          },
+        );
       }
 
       return null;
     } catch (e) {
-      debugPrint('❌ [CharacterImageService] 获取字符图片失败: $e');
+      AppLogger.error(
+        '获取字符图片失败',
+        tag: 'character_image_service',
+        error: e,
+        data: {
+          'characterId': id,
+          'type': type,
+          'format': format,
+          'operation': 'get_character_image_failed',
+        },
+      );
       return null;
     }
   }
@@ -152,6 +390,19 @@ class CharacterImageServiceImpl implements CharacterImageService {
       final cacheKey =
           _imageCacheService.generateCacheKey(characterId, type, transform);
 
+      AppLogger.debug(
+        '获取处理后的字符图片',
+        tag: 'character_image_service',
+        data: {
+          'characterId': characterId,
+          'type': type,
+          'format': format,
+          'transform': transform,
+          'cacheKey': cacheKey,
+          'operation': 'get_processed_character_image',
+        },
+      );
+
       // 使用getProcessedImage方法处理图像
       return await _imageCacheService.getProcessedImage(
         cacheKey,
@@ -160,7 +411,18 @@ class CharacterImageServiceImpl implements CharacterImageService {
             originalImage, format, transform),
       );
     } catch (e) {
-      debugPrint('获取处理后的字符图片失败: $e');
+      AppLogger.error(
+        '获取处理后的字符图片失败',
+        tag: 'character_image_service',
+        error: e,
+        data: {
+          'characterId': characterId,
+          'type': type,
+          'format': format,
+          'transform': transform,
+          'operation': 'get_processed_character_image_failed',
+        },
+      );
       return null;
     }
   }
@@ -170,13 +432,44 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<bool> hasCharacterImage(String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
-      debugPrint('🔍 [CharacterImageService] 检查图像文件: $imagePath');
+      AppLogger.debug(
+        '检查图像文件',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'type': type,
+          'format': format,
+          'imagePath': imagePath,
+          'operation': 'has_character_image',
+        },
+      );
       // 使用IStorage检查文件是否存在
       final exists = await _storage.fileExists(imagePath);
-      debugPrint('🔍 [CharacterImageService] 文件存在结果: $exists');
+      AppLogger.debug(
+        '文件存在检查结果',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'type': type,
+          'format': format,
+          'imagePath': imagePath,
+          'exists': exists,
+          'operation': 'file_exists_check_result',
+        },
+      );
       return exists;
     } catch (e) {
-      debugPrint('❌ [CharacterImageService] 检查字符图片是否存在失败: $e');
+      AppLogger.error(
+        '检查字符图片是否存在失败',
+        tag: 'character_image_service',
+        error: e,
+        data: {
+          'characterId': id,
+          'type': type,
+          'format': format,
+          'operation': 'has_character_image_failed',
+        },
+      );
       return false;
     }
   }
