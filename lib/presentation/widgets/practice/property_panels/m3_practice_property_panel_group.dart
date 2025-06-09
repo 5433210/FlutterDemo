@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_practice_property_panel_base.dart';
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 组合属性面板
 class M3GroupPropertyPanel extends M3PracticePropertyPanel {
@@ -69,6 +71,20 @@ class _M3GroupPropertyPanelContentState
 
     // 获取组内元素
     final children = _getGroupChildren(widget.element['id'] as String);
+
+    EditPageLogger.propertyPanelDebug(
+      '分组属性面板构建',
+      data: {
+        'groupId': widget.element['id'],
+        'groupName': name,
+        'childrenCount': children.length,
+        'layerId': layerId,
+        'isLocked': isLocked,
+        'isHidden': isHidden,
+        'opacity': opacity,
+        'operation': 'group_panel_build',
+      },
+    );
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -722,12 +738,57 @@ class _M3GroupPropertyPanelContentState
   // 应用名称更改
   void _applyNameChange() {
     final newName = _nameController.text.trim();
-    if (newName.isNotEmpty) {
-      _updateElementProperty('name', newName);
-    } else {
+    final groupId = widget.element['id'] as String;
+    final oldName = widget.element['name'] as String? ?? 'Group';
+    
+    if (newName.isNotEmpty && newName != oldName) {
+      EditPageLogger.propertyPanelDebug(
+        '分组名称修改',
+        data: {
+          'groupId': groupId,
+          'oldName': oldName,
+          'newName': newName,
+          'operation': 'group_rename',
+        },
+      );
+      
+      try {
+        _updateElementProperty('name', newName);
+        
+        EditPageLogger.propertyPanelDebug(
+          '分组名称修改成功',
+          data: {
+            'groupId': groupId,
+            'newName': newName,
+            'operation': 'group_rename_success',
+          },
+        );
+      } catch (error, stackTrace) {
+        EditPageLogger.propertyPanelError(
+          '分组名称修改失败',
+          error: error,
+          stackTrace: stackTrace,
+          data: {
+            'groupId': groupId,
+            'newName': newName,
+            'operation': 'group_rename_error',
+          },
+        );
+      }
+    } else if (newName.isEmpty) {
       // 如果名称为空，恢复原来的名称
-      _nameController.text = widget.element['name'] as String? ?? 'Group';
+      _nameController.text = oldName;
+      
+      EditPageLogger.propertyPanelDebug(
+        '分组名称恢复',
+        data: {
+          'groupId': groupId,
+          'restoredName': oldName,
+          'operation': 'group_name_restore',
+        },
+      );
     }
+    
     setState(() {
       _isEditingName = false;
     });
@@ -738,6 +799,19 @@ class _M3GroupPropertyPanelContentState
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final groupId = widget.element['id'] as String;
+    final groupName = widget.element['name'] as String? ?? 'Group';
+    final children = _getGroupChildren(groupId);
+
+    EditPageLogger.propertyPanelDebug(
+      '显示分组删除确认对话框',
+      data: {
+        'groupId': groupId,
+        'groupName': groupName,
+        'childrenCount': children.length,
+        'operation': 'group_delete_dialog_show',
+      },
+    );
 
     showDialog(
       context: context,
@@ -746,7 +820,17 @@ class _M3GroupPropertyPanelContentState
         content: Text(l10n.deleteGroupDescription),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              EditPageLogger.propertyPanelDebug(
+                '取消删除分组',
+                data: {
+                  'groupId': groupId,
+                  'groupName': groupName,
+                  'operation': 'group_delete_cancelled',
+                },
+              );
+              Navigator.of(context).pop();
+            },
             child: Text(
               l10n.cancel,
               style: textTheme.labelLarge?.copyWith(
@@ -757,8 +841,40 @@ class _M3GroupPropertyPanelContentState
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              final id = widget.element['id'] as String;
-              widget.controller.deleteElement(id);
+              
+              EditPageLogger.propertyPanelDebug(
+                '确认删除分组',
+                data: {
+                  'groupId': groupId,
+                  'groupName': groupName,
+                  'childrenCount': children.length,
+                  'operation': 'group_delete_confirmed',
+                },
+              );
+              
+              try {
+                widget.controller.deleteElement(groupId);
+                
+                EditPageLogger.propertyPanelDebug(
+                  '分组删除成功',
+                  data: {
+                    'groupId': groupId,
+                    'groupName': groupName,
+                    'operation': 'group_delete_success',
+                  },
+                );
+              } catch (error, stackTrace) {
+                EditPageLogger.propertyPanelError(
+                  '分组删除失败',
+                  error: error,
+                  stackTrace: stackTrace,
+                  data: {
+                    'groupId': groupId,
+                    'groupName': groupName,
+                    'operation': 'group_delete_error',
+                  },
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.errorContainer,
@@ -779,7 +895,40 @@ class _M3GroupPropertyPanelContentState
   // 进入组编辑模式
   void _enterGroupEditMode() {
     final id = widget.element['id'] as String;
-    widget.controller.enterGroupEditMode(id);
+    final groupName = widget.element['name'] as String? ?? 'Group';
+    
+    EditPageLogger.propertyPanelDebug(
+      '进入分组编辑模式',
+      data: {
+        'groupId': id,
+        'groupName': groupName,
+        'operation': 'group_edit_mode_enter',
+      },
+    );
+    
+    try {
+      widget.controller.enterGroupEditMode(id);
+      
+      EditPageLogger.propertyPanelDebug(
+        '分组编辑模式启动成功',
+        data: {
+          'groupId': id,
+          'groupName': groupName,
+          'operation': 'group_edit_mode_success',
+        },
+      );
+    } catch (error, stackTrace) {
+      EditPageLogger.propertyPanelError(
+        '进入分组编辑模式失败',
+        error: error,
+        stackTrace: stackTrace,
+        data: {
+          'groupId': id,
+          'groupName': groupName,
+          'operation': 'group_edit_mode_error',
+        },
+      );
+    }
   }
 
   // 获取组内的所有元素
@@ -864,9 +1013,48 @@ class _M3GroupPropertyPanelContentState
   // 更新元素属性
   void _updateElementProperty(String key, dynamic value) {
     final id = widget.element['id'] as String;
-    widget.onElementPropertiesChanged({
-      'id': id,
-      key: value,
-    });
+    final currentValue = widget.element[key];
+    
+    if (currentValue != value) {
+      EditPageLogger.propertyPanelDebug(
+        '分组属性更新',
+        data: {
+          'groupId': id,
+          'propertyKey': key,
+          'fromValue': currentValue,
+          'toValue': value,
+          'operation': 'group_property_update',
+        },
+      );
+      
+      try {
+        widget.onElementPropertiesChanged({
+          'id': id,
+          key: value,
+        });
+        
+        EditPageLogger.propertyPanelDebug(
+          '分组属性更新成功',
+          data: {
+            'groupId': id,
+            'propertyKey': key,
+            'value': value,
+            'operation': 'group_property_update_success',
+          },
+        );
+      } catch (error, stackTrace) {
+        EditPageLogger.propertyPanelError(
+          '分组属性更新失败',
+          error: error,
+          stackTrace: stackTrace,
+          data: {
+            'groupId': id,
+            'propertyKey': key,
+            'value': value,
+            'operation': 'group_property_update_error',
+          },
+        );
+      }
+    }
   }
 }

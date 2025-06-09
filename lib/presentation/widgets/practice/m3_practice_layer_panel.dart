@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import 'practice_edit_controller.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 
 /// Material 3 layer management panel
 class M3PracticeLayerPanel extends StatefulWidget {
@@ -39,6 +41,18 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
+    final layers = widget.controller.state.layers;
+    
+    EditPageLogger.propertyPanelDebug(
+      '图层管理面板构建',
+      data: {
+        'layersCount': layers.length,
+        'selectedLayerId': widget.controller.state.selectedLayerId,
+        'editingLayerId': _editingLayerId,
+        'operation': 'layer_panel_build',
+      },
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -68,14 +82,52 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
   void _applyLayerNameChange() {
     if (_editingLayerId != null) {
       final newName = _nameController.text.trim();
-      if (newName.isNotEmpty) {
-        // Modify layer name
-        widget.controller.renameLayer(_editingLayerId!, newName);
-        // Reset edit state
-        setState(() {
-          _editingLayerId = null;
-        });
+      final layerId = _editingLayerId!;
+      final layers = widget.controller.state.layers;
+      final layer = layers.firstWhere((l) => l['id'] == layerId, orElse: () => {});
+      final oldName = layer['name'] as String? ?? 'Unknown';
+      
+      if (newName.isNotEmpty && newName != oldName) {
+        EditPageLogger.propertyPanelDebug(
+          '图层名称修改',
+          data: {
+            'layerId': layerId,
+            'oldName': oldName,
+            'newName': newName,
+            'operation': 'layer_rename',
+          },
+        );
+        
+        try {
+          // Modify layer name
+          widget.controller.renameLayer(layerId, newName);
+          
+          EditPageLogger.propertyPanelDebug(
+            '图层名称修改成功',
+            data: {
+              'layerId': layerId,
+              'newName': newName,
+              'operation': 'layer_rename_success',
+            },
+          );
+        } catch (error, stackTrace) {
+          EditPageLogger.propertyPanelError(
+            '图层名称修改失败',
+            error: error,
+            stackTrace: stackTrace,
+            data: {
+              'layerId': layerId,
+              'newName': newName,
+              'operation': 'layer_rename_error',
+            },
+          );
+        }
       }
+      
+      // Reset edit state
+      setState(() {
+        _editingLayerId = null;
+      });
     }
   }
 
@@ -107,7 +159,18 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => widget.onLayerSelect(id),
+          onTap: () {
+            EditPageLogger.propertyPanelDebug(
+              '图层选择',
+              data: {
+                'layerId': id,
+                'layerName': name,
+                'wasSelected': isSelected,
+                'operation': 'layer_select',
+              },
+            );
+            widget.onLayerSelect(id);
+          },
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -118,8 +181,19 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                   width: 32,
                   height: 32,
                   child: IconButton(
-                    onPressed: () =>
-                        widget.onLayerVisibilityToggle(id, !isVisible),
+                    onPressed: () {
+                      EditPageLogger.propertyPanelDebug(
+                        '图层可见性切换',
+                        data: {
+                          'layerId': id,
+                          'layerName': name,
+                          'fromVisible': isVisible,
+                          'toVisible': !isVisible,
+                          'operation': 'layer_visibility_toggle',
+                        },
+                      );
+                      widget.onLayerVisibilityToggle(id, !isVisible);
+                    },
                     icon: Icon(
                       isVisible ? Icons.visibility : Icons.visibility_off,
                       color:
@@ -138,7 +212,19 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                   width: 32,
                   height: 32,
                   child: IconButton(
-                    onPressed: () => widget.onLayerLockToggle(id, !isLocked),
+                    onPressed: () {
+                      EditPageLogger.propertyPanelDebug(
+                        '图层锁定状态切换',
+                        data: {
+                          'layerId': id,
+                          'layerName': name,
+                          'fromLocked': isLocked,
+                          'toLocked': !isLocked,
+                          'operation': 'layer_lock_toggle',
+                        },
+                      );
+                      widget.onLayerLockToggle(id, !isLocked);
+                    },
                     icon: Icon(
                       isLocked ? Icons.lock : Icons.lock_open,
                       color:
@@ -306,6 +392,21 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           final actualNewIndex = layers.length -
               1 -
               (newIndex > oldIndex ? newIndex - 1 : newIndex);
+          
+          final movedLayer = layers[actualOldIndex];
+          
+          EditPageLogger.propertyPanelDebug(
+            '图层重新排序',
+            data: {
+              'layerId': movedLayer['id'],
+              'layerName': movedLayer['name'],
+              'fromIndex': actualOldIndex,
+              'toIndex': actualNewIndex,
+              'totalLayers': layers.length,
+              'operation': 'layer_reorder',
+            },
+          );
+          
           widget.onReorderLayer(actualOldIndex, actualNewIndex);
         },
         proxyDecorator: (child, index, animation) {
@@ -334,7 +435,19 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           ),
           const Spacer(),
           FilledButton.icon(
-            onPressed: widget.onAddLayer,
+            onPressed: () {
+              final currentLayersCount = widget.controller.state.layers.length;
+              
+              EditPageLogger.propertyPanelDebug(
+                '添加新图层',
+                data: {
+                  'currentLayersCount': currentLayersCount,
+                  'operation': 'layer_add',
+                },
+              );
+              
+              widget.onAddLayer();
+            },
             icon: const Icon(Icons.add, size: 18),
             label: Text(l10n.practiceEditAddLayer),
             style: FilledButton.styleFrom(
@@ -394,7 +507,47 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
     );
 
     if (result == true) {
-      widget.onDeleteLayer(layerId);
+      EditPageLogger.propertyPanelDebug(
+        '确认删除图层',
+        data: {
+          'layerId': layerId,
+          'layerName': layerName,
+          'operation': 'layer_delete_confirmed',
+        },
+      );
+      
+      try {
+        widget.onDeleteLayer(layerId);
+        
+        EditPageLogger.propertyPanelDebug(
+          '图层删除成功',
+          data: {
+            'layerId': layerId,
+            'layerName': layerName,
+            'operation': 'layer_delete_success',
+          },
+        );
+      } catch (error, stackTrace) {
+        EditPageLogger.propertyPanelError(
+          '图层删除失败',
+          error: error,
+          stackTrace: stackTrace,
+          data: {
+            'layerId': layerId,
+            'layerName': layerName,
+            'operation': 'layer_delete_error',
+          },
+        );
+      }
+    } else {
+      EditPageLogger.propertyPanelDebug(
+        '取消删除图层',
+        data: {
+          'layerId': layerId,
+          'layerName': layerName,
+          'operation': 'layer_delete_cancelled',
+        },
+      );
     }
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 元素通用属性面板
 /// 用于显示元素的通用属性，如名称、ID、图层等
@@ -33,6 +35,20 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
 
     // 获取图层数据
     final layers = controller.state.layers;
+
+    EditPageLogger.propertyPanelDebug(
+      '元素通用属性面板构建',
+      data: {
+        'elementId': id,
+        'elementType': type,
+        'elementName': name,
+        'currentLayerId': layerId,
+        'isLocked': isLocked,
+        'isHidden': isHidden,
+        'availableLayersCount': layers.length,
+        'operation': 'panel_build',
+      },
+    );
 
     // 获取元素类型显示名称
     String typeDisplayName;
@@ -134,7 +150,7 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
             items: _buildLayerItems(context),
             onChanged: (value) {
               if (value != null) {
-                _updateProperty('layerId', value);
+                _updateLayerProperty(value);
               }
             },
             isExpanded: true,
@@ -208,16 +224,123 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
     
     // 如果无效或为空，返回第一个可用图层的ID
     if (layers.isNotEmpty) {
-      return layers.first['id'] as String;
+      final firstLayerId = layers.first['id'] as String;
+      
+      if (currentLayerId != null && currentLayerId != firstLayerId) {
+        EditPageLogger.propertyPanelDebug(
+          '元素图层ID自动修正',
+          data: {
+            'elementId': element['id'],
+            'invalidLayerId': currentLayerId,
+            'correctedLayerId': firstLayerId,
+            'operation': 'layer_id_correction',
+          },
+        );
+      }
+      
+      return firstLayerId;
     }
     
     // 如果没有图层，返回null
     return null;
   }
 
+  // 更新图层属性（专门处理图层变更）
+  void _updateLayerProperty(String newLayerId) {
+    final currentLayerId = element['layerId'] as String?;
+    
+    if (currentLayerId != newLayerId) {
+      EditPageLogger.propertyPanelDebug(
+        '元素图层变更',
+        data: {
+          'elementId': element['id'],
+          'elementType': element['type'],
+          'fromLayerId': currentLayerId,
+          'toLayerId': newLayerId,
+          'operation': 'layer_change',
+        },
+      );
+      
+      // 获取图层信息用于日志
+      final layers = controller.state.layers;
+      final fromLayer = layers.where((layer) => layer['id'] == currentLayerId).firstOrNull;
+      final toLayer = layers.where((layer) => layer['id'] == newLayerId).firstOrNull;
+      
+      EditPageLogger.propertyPanelDebug(
+        '图层变更详细信息',
+        data: {
+          'elementId': element['id'],
+          'fromLayerName': fromLayer?['name'],
+          'toLayerName': toLayer?['name'],
+          'fromLayerVisible': fromLayer?['isVisible'],
+          'toLayerVisible': toLayer?['isVisible'],
+          'fromLayerLocked': fromLayer?['isLocked'],
+          'toLayerLocked': toLayer?['isLocked'],
+          'operation': 'layer_change_details',
+        },
+      );
+    }
+    
+    _updateProperty('layerId', newLayerId);
+  }
+
   // 更新属性
   void _updateProperty(String key, dynamic value) {
-    final updates = {key: value};
-    onElementPropertiesChanged(updates);
+    final currentValue = element[key];
+    
+    if (currentValue != value) {
+      EditPageLogger.propertyPanelDebug(
+        '元素属性变更',
+        data: {
+          'elementId': element['id'],
+          'elementType': element['type'],
+          'propertyKey': key,
+          'fromValue': currentValue,
+          'toValue': value,
+          'operation': 'property_change',
+        },
+      );
+      
+      // 特殊属性的额外日志
+      if (key == 'locked' || key == 'hidden') {
+        EditPageLogger.propertyPanelDebug(
+          '元素状态变更',
+          data: {
+            'elementId': element['id'],
+            'statusType': key,
+            'newStatus': value,
+            'operation': 'status_change',
+          },
+        );
+      } else if (key == 'name') {
+        EditPageLogger.propertyPanelDebug(
+          '元素名称变更',
+          data: {
+            'elementId': element['id'],
+            'oldName': currentValue,
+            'newName': value,
+            'nameLength': (value as String).length,
+            'operation': 'name_change',
+          },
+        );
+      }
+    }
+    
+    try {
+      final updates = {key: value};
+      onElementPropertiesChanged(updates);
+    } catch (error, stackTrace) {
+      EditPageLogger.propertyPanelError(
+        '元素属性更新失败',
+        error: error,
+        stackTrace: stackTrace,
+        data: {
+          'elementId': element['id'],
+          'propertyKey': key,
+          'propertyValue': value,
+          'operation': 'property_update_error',
+        },
+      );
+    }
   }
 }

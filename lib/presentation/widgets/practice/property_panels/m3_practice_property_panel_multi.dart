@@ -4,6 +4,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
 import 'm3_practice_property_panel_base.dart';
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 多选属性面板
 class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
@@ -31,7 +33,25 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
         .where((e) => e.isNotEmpty)
         .toList();
 
+    EditPageLogger.propertyPanelDebug(
+      '多选属性面板构建',
+      data: {
+        'selectedCount': selectedIds.length,
+        'validElementsCount': elements.length,
+        'selectedIds': selectedIds,
+        'operation': 'multi_panel_build',
+      },
+    );
+
     if (elements.isEmpty) {
+      EditPageLogger.propertyPanelDebug(
+        '多选属性面板：无有效元素',
+        data: {
+          'selectedIds': selectedIds,
+          'operation': 'no_valid_elements',
+        },
+      );
+      
       return Center(
         child: Text(
           l10n.noElementsSelected,
@@ -47,6 +67,18 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
     final commonLocked = _getCommonLocked(elements);
     final commonHidden = _getCommonHidden(elements);
     final commonLayerId = _getCommonLayerId(elements);
+
+    EditPageLogger.propertyPanelDebug(
+      '多选共同属性计算',
+      data: {
+        'selectedCount': selectedIds.length,
+        'commonOpacity': commonOpacity,
+        'commonLocked': commonLocked,
+        'commonHidden': commonHidden,
+        'commonLayerId': commonLayerId,
+        'operation': 'common_properties_calculation',
+      },
+    );
 
     // 获取图层信息
     final layer = commonLayerId != null
@@ -481,7 +513,30 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
   // 对齐元素
   void _alignElements(String alignment) {
-    controller.alignElements(selectedIds, alignment);
+    EditPageLogger.propertyPanelDebug(
+      '多选元素对齐',
+      data: {
+        'selectedCount': selectedIds.length,
+        'selectedIds': selectedIds,
+        'alignment': alignment,
+        'operation': 'multi_alignment',
+      },
+    );
+    
+    try {
+      controller.alignElements(selectedIds, alignment);
+    } catch (error, stackTrace) {
+      EditPageLogger.propertyPanelError(
+        '多选元素对齐失败',
+        error: error,
+        stackTrace: stackTrace,
+        data: {
+          'selectedIds': selectedIds,
+          'alignment': alignment,
+          'operation': 'multi_alignment_error',
+        },
+      );
+    }
   }
 
   // 构建对齐按钮
@@ -516,7 +571,30 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
   // 分布元素
   void _distributeElements(String direction) {
-    controller.distributeElements(selectedIds, direction);
+    EditPageLogger.propertyPanelDebug(
+      '多选元素分布',
+      data: {
+        'selectedCount': selectedIds.length,
+        'selectedIds': selectedIds,
+        'direction': direction,
+        'operation': 'multi_distribution',
+      },
+    );
+    
+    try {
+      controller.distributeElements(selectedIds, direction);
+    } catch (error, stackTrace) {
+      EditPageLogger.propertyPanelError(
+        '多选元素分布失败',
+        error: error,
+        stackTrace: stackTrace,
+        data: {
+          'selectedIds': selectedIds,
+          'direction': direction,
+          'operation': 'multi_distribution_error',
+        },
+      );
+    }
   }
 
   // 获取共同的可见性状态
@@ -585,11 +663,46 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
   // 更新所有选中元素的共同属性
   void _updateAllElements(String property, dynamic value) {
-    for (var id in selectedIds) {
-      onElementPropertiesChanged({
-        'id': id,
-        property: value,
-      });
+    EditPageLogger.propertyPanelDebug(
+      '多选批量属性更新',
+      data: {
+        'selectedCount': selectedIds.length,
+        'selectedIds': selectedIds,
+        'property': property,
+        'value': value,
+        'operation': 'multi_batch_update',
+      },
+    );
+    
+    try {
+      for (var id in selectedIds) {
+        onElementPropertiesChanged({
+          'id': id,
+          property: value,
+        });
+      }
+      
+      EditPageLogger.propertyPanelDebug(
+        '多选批量属性更新完成',
+        data: {
+          'selectedCount': selectedIds.length,
+          'property': property,
+          'value': value,
+          'operation': 'multi_batch_update_complete',
+        },
+      );
+    } catch (error, stackTrace) {
+      EditPageLogger.propertyPanelError(
+        '多选批量属性更新失败',
+        error: error,
+        stackTrace: stackTrace,
+        data: {
+          'selectedIds': selectedIds,
+          'property': property,
+          'value': value,
+          'operation': 'multi_batch_update_error',
+        },
+      );
     }
   }
 }

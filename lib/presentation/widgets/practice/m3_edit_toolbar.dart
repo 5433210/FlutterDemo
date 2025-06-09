@@ -103,7 +103,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.practiceEditText} (Alt+T)',
                   toolName: 'text',
                   isSelected: currentTool == 'text',
-                  onPressed: () => onSelectTool!('text'),
+                  onPressed: () {
+                    EditPageLogger.editPageDebug(
+                      '工具栏：选择文本工具',
+                      data: {
+                        'selectedTool': 'text',
+                        'previousTool': currentTool,
+                        'operation': 'tool_select',
+                      },
+                    );
+                    onSelectTool!('text');
+                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'text')
                       : null,
@@ -114,7 +124,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.practiceEditImage} (Alt+I)',
                   toolName: 'image',
                   isSelected: currentTool == 'image',
-                  onPressed: () => onSelectTool!('image'),
+                  onPressed: () {
+                    EditPageLogger.editPageDebug(
+                      '工具栏：选择图片工具',
+                      data: {
+                        'selectedTool': 'image',
+                        'previousTool': currentTool,
+                        'operation': 'tool_select',
+                      },
+                    );
+                    onSelectTool!('image');
+                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'image')
                       : null,
@@ -125,7 +145,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.practiceEditCollection} (Alt+C)',
                   toolName: 'collection',
                   isSelected: currentTool == 'collection',
-                  onPressed: () => onSelectTool!('collection'),
+                  onPressed: () {
+                    EditPageLogger.editPageDebug(
+                      '工具栏：选择集字工具',
+                      data: {
+                        'selectedTool': 'collection',
+                        'previousTool': currentTool,
+                        'operation': 'tool_select',
+                      },
+                    );
+                    onSelectTool!('collection');
+                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'collection')
                       : null,
@@ -134,7 +164,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   context: context,
                   icon: Icons.select_all,
                   tooltip: '${l10n.practiceEditSelect} (Alt+S)',
-                  onPressed: () => onSelectTool!('select'),
+                  onPressed: () {
+                    EditPageLogger.editPageDebug(
+                      '工具栏：选择选择工具',
+                      data: {
+                        'selectedTool': 'select',
+                        'previousTool': currentTool,
+                        'operation': 'tool_select',
+                      },
+                    );
+                    onSelectTool!('select');
+                  },
                   isActive: currentTool == 'select',
                 ),
                 if (onSelectAll != null)
@@ -166,19 +206,48 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: Icons.copy,
                 tooltip: l10n.practiceEditCopy,
-                onPressed: hasSelection ? onCopy : null,
+                onPressed: hasSelection ? () {
+                  EditPageLogger.editPageDebug(
+                    '工具栏：复制操作',
+                    data: {
+                      'selectedCount': controller.state.selectedElementIds.length,
+                      'selectedIds': controller.state.selectedElementIds,
+                      'operation': 'copy_action',
+                    },
+                  );
+                  onCopy();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.paste,
                 tooltip: l10n.practiceEditPaste,
-                onPressed: canPaste ? onPaste : null,
+                onPressed: canPaste ? () {
+                  EditPageLogger.editPageDebug(
+                    '工具栏：粘贴操作',
+                    data: {
+                      'canPaste': canPaste,
+                      'operation': 'paste_action',
+                    },
+                  );
+                  onPaste();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.delete,
                 tooltip: l10n.practiceEditDelete,
-                onPressed: hasSelection ? onDelete : null,
+                onPressed: hasSelection ? () {
+                  EditPageLogger.editPageDebug(
+                    '工具栏：删除操作',
+                    data: {
+                      'selectedCount': controller.state.selectedElementIds.length,
+                      'selectedIds': controller.state.selectedElementIds,
+                      'operation': 'delete_action',
+                    },
+                  );
+                  onDelete();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,

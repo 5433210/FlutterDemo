@@ -27,7 +27,7 @@ class PracticeEditState {
   bool gridVisible = false;
   bool snapEnabled = false;
 
-  double gridSize = 10.0;  // 🔧 更密集的网格，更适合精确设计
+  double gridSize = 10.0; // 🔧 更密集的网格，更适合精确设计
   // 状态标志
   bool hasUnsavedChanges = false;
   bool isPreviewMode = false;
@@ -40,33 +40,22 @@ class PracticeEditState {
   // Canvas scale is directly exposed as a field
   /// 获取当前页面
   Map<String, dynamic>? get currentPage {
-    EditPageLogger.editPageDebug('获取当前页面', 
-      data: {
-        'currentPageIndex': currentPageIndex,
-        'pagesLength': pages.length
-      });
-    
     if (currentPageIndex >= 0 && currentPageIndex < pages.length) {
       final page = pages[currentPageIndex];
-      final elementsCount = (page['elements'] as List<dynamic>?)?.length ?? 0;
-      EditPageLogger.editPageDebug('找到当前页面', 
-        data: {'elementsCount': elementsCount});
+
       return page;
     }
-    
+
     EditPageLogger.editPageWarning('无有效的当前页面');
     return null;
   }
 
   /// 获取当前页面的元素列表
   List<Map<String, dynamic>> get currentPageElements {
-    EditPageLogger.editPageDebug('获取当前页面元素列表');
     final page = currentPage;
     if (page != null) {
       if (page.containsKey('elements')) {
         final elements = page['elements'] as List<dynamic>;
-        EditPageLogger.editPageDebug('返回页面元素', 
-          data: {'elementsCount': elements.length});
         return List<Map<String, dynamic>>.from(elements);
       } else {
         EditPageLogger.editPageWarning('页面缺少elements键');
