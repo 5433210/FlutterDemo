@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+// 移除过度详细的调试导入
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -196,7 +196,8 @@ class TextRenderer {
 
     // 获取字重数值（用于fontVariations）
     final int weightValue = _getWeightValue(fontWeight);
-    developer.log('字重数值: $weightValue (用于fontVariations)');
+    EditPageLogger.rendererDebug('字重数值设置', 
+      data: {'weightValue': weightValue});
 
     // 检查是否是思源字体，如果是则使用fontVariations
     bool isSourceHanFont =
@@ -206,7 +207,8 @@ class TextRenderer {
     TextStyle style;
     if (isSourceHanFont) {
       // 对思源字体使用fontVariations以获得更精确的字重控制
-      developer.log('使用fontVariations设置思源字体字重: $weightValue');
+              EditPageLogger.rendererDebug('使用fontVariations设置思源字体字重', 
+          data: {'weightValue': weightValue});
       style = TextStyle(
         fontSize: fontSize,
         fontFamily: fontFamily,
@@ -240,7 +242,7 @@ class TextRenderer {
 
     // 记录最终样式信息
     _logTextStyle(style, prefix: '最终');
-    developer.log('=======================');
+    EditPageLogger.rendererDebug('文本样式创建完成');
 
     return style;
   }
@@ -305,7 +307,7 @@ class TextRenderer {
     try {
       return Color(int.parse(buffer.toString(), radix: 16));
     } catch (e) {
-      developer.log('解析颜色失败: $e');
+      EditPageLogger.rendererError('解析颜色失败', error: e);
       return Colors.black;
     }
   }
@@ -339,12 +341,14 @@ class TextRenderer {
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
   }) {
-    developer.log('--- 开始水平文本渲染 ---');
-    developer.log('文本样式:');
-    developer.log('- fontFamily: ${style.fontFamily}');
-    developer.log('- fontWeight: ${style.fontWeight}');
-    developer.log('- fontSize: ${style.fontSize}');
-    developer.log('对齐方式: textAlign=$textAlign, verticalAlign=$verticalAlign');
+    EditPageLogger.rendererDebug('开始水平文本渲染', 
+      data: {
+        'fontFamily': style.fontFamily,
+        'fontWeight': style.fontWeight.toString(),
+        'fontSize': style.fontSize,
+        'textAlign': textAlign,
+        'verticalAlign': verticalAlign
+      });
     // // 添加调试日志
     // developer.log(
     //     '水平文本渲染: writingMode=$writingMode, textAlign=$textAlign, verticalAlign=$verticalAlign');
@@ -396,7 +400,7 @@ class TextRenderer {
 
     // 对于水平两端对齐，使用我们的 JustifiedTextRenderer
     if (textAlign == 'justify') {
-      developer.log('使用JustifiedTextRenderer渲染水平两端对齐文本');
+      EditPageLogger.rendererDebug('使用JustifiedTextRenderer渲染水平两端对齐文本');
 
       // 分割文本为行
       final lines = splitTextToLines(text);
@@ -434,11 +438,13 @@ class TextRenderer {
       alignment: alignment,
       child: Builder(
         builder: (context) {
-          developer.log('渲染最终文本:');
-          developer.log('- TextStyle: ${style.toString()}');
-          developer.log('- 实际字重: ${style.fontWeight}');
-          developer.log('- 实际字体: ${style.fontFamily}');
-          developer.log('- 实际字号: ${style.fontSize}');
+          EditPageLogger.rendererDebug('渲染最终文本', 
+            data: {
+              'textStyle': style.toString(),
+              'fontWeight': style.fontWeight.toString(),
+              'fontFamily': style.fontFamily,
+              'fontSize': style.fontSize
+            });
 
           return SingleChildScrollView(
             child: SizedBox(
@@ -472,10 +478,14 @@ class TextRenderer {
     Color backgroundColor = Colors.transparent,
   }) {
     // 添加调试日志
-    developer.log(
-        '画布文本元素渲染: writingMode=$writingMode, textAlign=$textAlign, verticalAlign=$verticalAlign');
-    developer.log(
-        '画布文本元素约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
+    EditPageLogger.rendererDebug('画布文本元素渲染', 
+      data: {
+        'writingMode': writingMode,
+        'textAlign': textAlign,
+        'verticalAlign': verticalAlign,
+        'constraintsWidth': constraints.maxWidth,
+        'constraintsHeight': constraints.maxHeight
+      });
 
     // 根据书写模式选择不同的渲染方式
     if (writingMode.startsWith('vertical')) {
@@ -514,20 +524,20 @@ class TextRenderer {
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
   }) {
-    developer.log('--- 开始垂直文本渲染 ---');
-    developer.log('文本样式:');
-    developer.log('- fontFamily: ${style.fontFamily}');
-    developer.log('- fontWeight: ${style.fontWeight}');
-    developer.log('- fontSize: ${style.fontSize}');
-    developer.log('渲染参数: textAlign=$textAlign, verticalAlign=$verticalAlign');
-    // 添加调试日志
-    developer.log(
-        '垂直文本渲染: writingMode=$writingMode, textAlign=$textAlign, verticalAlign=$verticalAlign');
-    developer.log(
-        '垂直文本约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-    developer.log('垂直文本内容: text=$text');
-    developer.log(
-        '垂直文本样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
+    EditPageLogger.rendererDebug('开始垂直文本渲染', 
+      data: {
+        'fontFamily': style.fontFamily,
+        'fontWeight': style.fontWeight.toString(),
+        'fontSize': style.fontSize,
+        'textAlign': textAlign,
+        'verticalAlign': verticalAlign,
+        'writingMode': writingMode,
+        'constraintsWidth': constraints.maxWidth,
+        'constraintsHeight': constraints.maxHeight,
+        'textLength': text.length,
+        'fontStyle': style.fontStyle.toString(),
+        'color': style.color.toString()
+      });
 
     // 竖排左书（vertical-l）列从左到右排列，竖排右书（vertical-r）列从右到左排列
     final isRightToLeft = writingMode == 'vertical-l';
@@ -613,13 +623,7 @@ class TextRenderer {
       containerAlignment = verticalAlignment;
     }
 
-    // 打印调试信息
-    developer.log(
-        '预览区域对齐方式: 水平=$textAlign, 垂直=$verticalAlign, 容器对齐=$containerAlignment');
-
-    // 打印调试信息
-    developer.log(
-        '竖排文本对齐方式: 水平=$textAlign, 垂直=$verticalAlign, 容器对齐=$containerAlignment');
+    // 删除过度详细的调试信息
 
     // 对于水平两端对齐，我们需要特殊处理
     if (textAlign == 'justify') {
@@ -666,8 +670,8 @@ class TextRenderer {
 
   /// 测试字重兼容性
   static void testFontWeightCompatibility(String fontFamily) {
-    developer.log('===== 开始字重兼容性测试 =====');
-    developer.log('测试字体: $fontFamily');
+    EditPageLogger.rendererDebug('字重兼容性测试', 
+      data: {'fontFamily': fontFamily});
 
     final testWeights = [
       'w100',
@@ -684,13 +688,11 @@ class TextRenderer {
     ];
 
     for (final weight in testWeights) {
-      developer.log('\n测试字重: $weight');
       final parsedWeight = _parseFontWeight(weight);
       _validateFontWeightForFamily(fontFamily, parsedWeight);
     }
 
-    developer.log('字重兼容性测试完成');
-    developer.log('=========================');
+    EditPageLogger.rendererDebug('字重兼容性测试完成');
   }
 
   /// 构建垂直方向两端对齐的文本
@@ -703,15 +705,7 @@ class TextRenderer {
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
   }) {
-    // 打印调试信息
-    developer.log(
-        '垂直两端对齐文本: textAlign=${textAlign.toString()}, isRightToLeft=$isRightToLeft');
-    developer.log(
-        '垂直两端对齐文本约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-    developer.log('垂直两端对齐文本内容: text=$text');
-    developer.log(
-        '垂直两端对齐文本样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
-    developer.log('垂直两端对齐文本行数: ${splitTextToLines(text).length}');
+    // 删除过度详细的调试信息
 
     final lines = splitTextToLines(isRightToLeft
         ? convertRTLHorizontalFittedText(text, constraints, padding, style)
@@ -900,8 +894,7 @@ class TextRenderer {
                     child: Center(
                       child: Builder(
                         builder: (context) {
-                          developer.log('渲染字符: $char');
-                          developer.log('- 使用字重: ${style.fontWeight}');
+                          // 删除过度详细的字符渲染日志
 
                           return Text(
                             softWrap: true, // 允许文本换行
@@ -988,16 +981,7 @@ class TextRenderer {
     // 创建ScrollController，用于控制滚动位置
     final ScrollController scrollController = ScrollController();
 
-    // 打印调试信息
-    developer.log(
-        '垂直文本布局: 垂直对齐=$verticalAlign, 水平对齐=$textAlign, 列数=${columns.length}');
-    developer.log(
-        '垂直文本布局约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-    developer.log('垂直文本布局书写方向: isRightToLeft=$isRightToLeft');
-    developer.log('垂直文本布局内容: text=$text');
-    developer.log(
-        '垂直文本布局样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
-    developer.log('垂直文本布局行数: ${lines.length}');
+    // 删除过度详细的布局调试信息
 
     // 对于水平两端对齐，我们需要特殊处理
     if (textAlign == 'justify' && columns.length > 1) {
@@ -1099,94 +1083,80 @@ class TextRenderer {
 
   /// 记录文本样式信息
   static void _logTextStyle(TextStyle style, {String prefix = ''}) {
-    developer.log('$prefix文本样式信息:');
-    developer.log('- 字重: ${style.fontWeight}');
-    developer.log('- 字体: ${style.fontFamily}');
-    developer.log('- 字号: ${style.fontSize}');
-    developer.log('- 颜色: ${style.color}');
-    developer.log('- 字体样式: ${style.fontStyle}');
+    EditPageLogger.rendererDebug('$prefix文本样式信息', 
+      data: {
+        'fontWeight': style.fontWeight.toString(),
+        'fontFamily': style.fontFamily,
+        'fontSize': style.fontSize,
+        'color': style.color.toString(),
+        'fontStyle': style.fontStyle.toString()
+      });
   }
 
   /// 将字符串字重值转换为 FontWeight
   static FontWeight _parseFontWeight(String weight) {
-    developer.log('===== 字重解析开始 =====');
-    developer.log('输入字重值: $weight');
-
     // 标准化字重值
     String normalizedWeight = weight.toLowerCase().trim();
 
-    try {
-      // 处理特殊的字符串值
-      if (normalizedWeight == 'normal') {
-        developer.log('转换 normal -> w400');
-        return FontWeight.w400;
-      } else if (normalizedWeight == 'bold') {
-        developer.log('转换 bold -> w700');
-        return FontWeight.w700;
-      }
+    // 处理特殊的字符串值
+    if (normalizedWeight == 'normal') {
+      return FontWeight.w400;
+    } else if (normalizedWeight == 'bold') {
+      return FontWeight.w700;
+    }
 
-      // 处理数值型字重格式（w100-w900）
-      if (normalizedWeight.startsWith('w')) {
-        // 提取数值部分
-        final weightValue = int.tryParse(normalizedWeight.substring(1));
-        if (weightValue != null &&
-            weightValue >= 100 &&
-            weightValue <= 900 &&
-            weightValue % 100 == 0) {
-          developer.log('解析数值字重: w$weightValue');
-          switch (weightValue) {
-            case 100:
-              return FontWeight.w100;
-            case 200:
-              return FontWeight.w200;
-            case 300:
-              return FontWeight.w300;
-            case 400:
-              return FontWeight.w400;
-            case 500:
-              return FontWeight.w500;
-            case 600:
-              return FontWeight.w600;
-            case 700:
-              return FontWeight.w700;
-            case 800:
-              return FontWeight.w800;
-            case 900:
-              return FontWeight.w900;
-          }
+    // 处理数值型字重格式（w100-w900）
+    if (normalizedWeight.startsWith('w')) {
+      // 提取数值部分
+      final weightValue = int.tryParse(normalizedWeight.substring(1));
+      if (weightValue != null &&
+          weightValue >= 100 &&
+          weightValue <= 900 &&
+          weightValue % 100 == 0) {
+        switch (weightValue) {
+          case 100:
+            return FontWeight.w100;
+          case 200:
+            return FontWeight.w200;
+          case 300:
+            return FontWeight.w300;
+          case 400:
+            return FontWeight.w400;
+          case 500:
+            return FontWeight.w500;
+          case 600:
+            return FontWeight.w600;
+          case 700:
+            return FontWeight.w700;
+          case 800:
+            return FontWeight.w800;
+          case 900:
+            return FontWeight.w900;
         }
       }
-
-      // 如果字重值无效，使用默认值
-      developer.log('无法识别的字重值 "$normalizedWeight"，使用默认值 w400');
-      return FontWeight.w400;
-    } finally {
-      developer.log('字重解析完成');
-      developer.log('=====================');
     }
+
+    // 如果字重值无效，使用默认值
+    EditPageLogger.rendererError('无法识别的字重值，使用默认值', 
+      data: {'invalidWeight': normalizedWeight, 'defaultWeight': 'w400'});
+    return FontWeight.w400;
   }
 
   /// 确保字体族和字重的组合有效
   static void _validateFontWeightForFamily(
       String fontFamily, FontWeight weight) {
-    developer.log('===== 字体族字重验证 =====');
-    developer.log('字体族: $fontFamily');
-    developer.log('字重: $weight');
-
     // 验证字体族是否支持该字重
     bool isSourceHanFont =
         fontFamily == 'SourceHanSans' || fontFamily == 'SourceHanSerif';
 
-    if (isSourceHanFont) {
-      developer.log('使用思源字体，支持所有字重');
-    } else {
+    if (!isSourceHanFont && weight.index > FontWeight.w700.index) {
       // 检查系统字体的字重支持情况
-      if (weight.index > FontWeight.w700.index) {
-        developer.log('警告：系统字体可能不支持 ${weight.toString()} 字重');
-      } else {
-        developer.log('使用系统默认字体，常见字重应该受支持');
-      }
+      EditPageLogger.rendererError('系统字体可能不支持该字重', 
+        data: {
+          'fontFamily': fontFamily,
+          'weight': weight.toString(),
+          'isSourceHanFont': isSourceHanFont
+        });
     }
-    developer.log('=======================');
   }
 }

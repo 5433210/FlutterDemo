@@ -461,8 +461,13 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Log performance data for complex elements
     if (renderDuration.inMilliseconds > 8) {
       // Half a frame at 60fps
-      print(
-          '⚠️ ContentRenderLayer: Slow element render - $elementId ($elementType) took ${renderDuration.inMilliseconds}ms');
+      EditPageLogger.performanceWarning('慢速元素渲染', 
+        data: {
+          'elementId': elementId,
+          'elementType': elementType,
+          'renderTime': renderDuration.inMilliseconds,
+          'threshold': 8
+        });
     }
 
     return newWidget;
@@ -723,8 +728,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // Pre-render high priority elements
     if (elementsToPrecache.isNotEmpty) {
-      print(
-          '🔄 ContentRenderLayer: Pre-caching ${elementsToPrecache.length} high-priority elements');
+      EditPageLogger.rendererDebug('开始预缓存高优先级元素', 
+        data: {'elementCount': elementsToPrecache.length});
 
       // Use a microtask to avoid blocking the UI thread during initialization
       Future.microtask(() {
@@ -734,7 +739,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             _getOrCreateElementWidget(element);
           }
         }
-        print('✅ ContentRenderLayer: Pre-caching complete');
+        EditPageLogger.rendererDebug('预缓存完成');
       });
     }
   }

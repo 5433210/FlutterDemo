@@ -427,7 +427,7 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('加载内存图片数据失败: $error');
+          EditPageLogger.rendererError('加载内存图片数据失败', error: error);
           return _buildImageErrorWidget('加载内存图片数据失败');
         },
       );
@@ -441,7 +441,7 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('加载原始图片数据失败: $error');
+          EditPageLogger.rendererError('加载原始图片数据失败', error: error);
           return _buildImageErrorWidget('加载原始图片数据失败');
         },
       );
@@ -458,12 +458,12 @@ class ElementRenderers {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            debugPrint('解码Base64图片数据失败: $error');
+            EditPageLogger.rendererError('解码Base64图片数据失败', error: error);
             return _buildImageErrorWidget('解码Base64图片数据失败');
           },
         );
       } catch (e) {
-        debugPrint('Base64解码错误: $e');
+        EditPageLogger.rendererError('Base64解码错误', error: e);
         return _buildImageErrorWidget('Base64图片数据格式错误');
       }
     }
@@ -485,7 +485,7 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('加载本地图片失败: $error');
+          EditPageLogger.rendererError('加载本地图片失败', error: error);
           return _buildImageErrorWidget('加载本地图片失败');
         },
       );

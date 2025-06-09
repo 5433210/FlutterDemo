@@ -221,7 +221,8 @@ class CollectionElementRenderer {
         final textureChangeKey = ValueKey(
             'texture_${hasEffectiveTexture}_${textureId}_${textureWidth}_${textureHeight}_${textureFillMode}_${textureFitMode}_${textureOpacity}_${DateTime.now().millisecondsSinceEpoch}');
 
-        debugPrint('🔑 创建纹理变化键: ${textureChangeKey.value}');
+        EditPageLogger.rendererDebug('创建纹理变化键', 
+          data: {'textureChangeKey': textureChangeKey.value});
 
         // 创建纹理配置，使用新的配置结构（移除应用范围，只使用背景模式）
         final textureConfig = tc.TextureConfig(
@@ -279,7 +280,7 @@ class CollectionElementRenderer {
             });
           }
         } catch (e) {
-          debugPrint('设置重绘回调失败: $e');
+          EditPageLogger.rendererError('设置重绘回调失败', error: e);
         }
         // } catch (e) {
         // // 如果创建AdvancedCollectionPainter失败，尝试使用基础绘制器
@@ -302,15 +303,16 @@ class CollectionElementRenderer {
         // }
 
         // 汇报实际生效的参数值
-        debugPrint('📍 实际使用的集字渲染参数：');
-        debugPrint('  内边距: $padding');
-        debugPrint('  书写模式: $writingMode');
-        debugPrint('  水平对齐: $textAlign');
-        debugPrint('  垂直对齐: $verticalAlign');
-        debugPrint('  字间距: $letterSpacing');
-        debugPrint('  行间距: $lineSpacing');
-        debugPrint(
-            '  自动换行: ${enableSoftLineBreak ? '√' : '✗'}'); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
+        EditPageLogger.rendererDebug('实际使用的集字渲染参数', 
+          data: {
+            'padding': padding,
+            'writingMode': writingMode,
+            'textAlign': textAlign,
+            'verticalAlign': verticalAlign,
+            'letterSpacing': letterSpacing,
+            'lineSpacing': lineSpacing,
+            'enableSoftLineBreak': enableSoftLineBreak
+          }); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
         return SizedBox(
           key: textureChangeKey, // 使用纹理变化键确保纹理变化时widget重建
           width: constraints.maxWidth,
