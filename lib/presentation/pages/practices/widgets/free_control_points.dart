@@ -95,6 +95,35 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void didUpdateWidget(FreeControlPoints oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // 🔧 DEBUG: 详细的属性变化分析（FreeControlPoints版本）
+    if (_isInitialized) {
+      EditPageLogger.editPageDebug('🔧 FreeControlPoints属性更新检测', data: {
+        'elementId': widget.elementId,
+        'position_changed': {
+          'old_x': oldWidget.x,
+          'new_x': widget.x,
+          'old_y': oldWidget.y,
+          'new_y': widget.y,
+          'x_changed': oldWidget.x != widget.x,
+          'y_changed': oldWidget.y != widget.y,
+        },
+        'size_changed': {
+          'old_width': oldWidget.width,
+          'new_width': widget.width,
+          'old_height': oldWidget.height,
+          'new_height': widget.height,
+          'width_changed': oldWidget.width != widget.width,
+          'height_changed': oldWidget.height != widget.height,
+        },
+        'rotation_changed': {
+          'old_rotation': oldWidget.rotation,
+          'new_rotation': widget.rotation,
+          'rotation_changed': oldWidget.rotation != widget.rotation,
+        },
+        'operation': 'free_control_points_update_analysis',
+      });
+    }
+
     // 🔧 修复：控制点应该跟随元素位置变化，但只在不是自己触发的变化时
     // 检查是否是外部元素拖拽导致的位置变化（而不是控制点自己的resize/rotate操作）
     if (_isInitialized &&
@@ -107,10 +136,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       final deltaX = widget.x - oldWidget.x;
       final deltaY = widget.y - oldWidget.y;
 
-      EditPageLogger.canvasDebug('控制点跟随元素移动', data: {
+      EditPageLogger.editPageDebug('🔧 FreeControlPoints跟随元素平移', data: {
         'delta': '($deltaX, $deltaY)',
         'from': '(${oldWidget.x}, ${oldWidget.y})',
-        'to': '(${widget.x}, ${widget.y})'
+        'to': '(${widget.x}, ${widget.y})',
+        'operation': 'free_control_points_follow_translation',
       });
 
       setState(() {
@@ -118,9 +148,26 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             widget.x, widget.y, widget.width, widget.height, widget.rotation);
       });
     }
+    // 🔧 修复：旋转撤销时需要更新控制点
+    else if (_isInitialized && widget.rotation != oldWidget.rotation) {
+      EditPageLogger.editPageDebug('🔧 FreeControlPoints检测到旋转变化', data: {
+        'oldRotation': oldWidget.rotation,
+        'newRotation': widget.rotation,
+        'operation': 'free_control_points_rotation_change',
+      });
+      
+      setState(() {
+        _syncWithElementPosition(
+            widget.x, widget.y, widget.width, widget.height, widget.rotation);
+      });
+    }
     // 如果是尺寸或旋转变化，保持控制点的独立状态，不响应widget变化
     else if (_isInitialized) {
-      EditPageLogger.canvasDebug('控制点保持独立状态，忽略外部尺寸/旋转变化');
+      EditPageLogger.editPageDebug('🔧 FreeControlPoints保持独立状态', data: {
+        'reason': '忽略外部尺寸变化或未初始化',
+        'isInitialized': _isInitialized,
+        'operation': 'free_control_points_ignore_change',
+      });
     }
   }
 

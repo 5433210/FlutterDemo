@@ -238,11 +238,25 @@ mixin ElementOperationsMixin on ChangeNotifier {
     required List<Map<String, dynamic>> newSizes,
   }) {
     if (elementIds.isEmpty || oldSizes.isEmpty || newSizes.isEmpty) {
-      debugPrint('【元素操作】createElementResizeOperation: 没有要更新的元素，跳过');
+      EditPageLogger.controllerDebug(
+        '没有要更新的元素，跳过调整大小操作',
+        data: {
+          'elementIds': elementIds,
+          'operation': 'create_resize_operation_skip',
+        },
+      );
       return;
     }
 
-    debugPrint('【元素操作】createElementResizeOperation: 创建元素调整大小操作');
+    EditPageLogger.controllerDebug(
+      '创建元素调整大小操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'create_resize_operation',
+      },
+    );
+    
     final operation = ResizeElementOperation(
       elementIds: elementIds,
       oldSizes: oldSizes,
@@ -252,7 +266,8 @@ mixin ElementOperationsMixin on ChangeNotifier {
       },
     );
 
-    undoRedoManager.addOperation(operation);
+    // 不立即执行，因为状态已经在控制点处理器中更新了
+    undoRedoManager.addOperation(operation, executeImmediately: false);
   }
 
   /// 创建批量元素旋转操作（用于撤销/重做）
@@ -262,11 +277,25 @@ mixin ElementOperationsMixin on ChangeNotifier {
     required List<double> newRotations,
   }) {
     if (elementIds.isEmpty || oldRotations.isEmpty || newRotations.isEmpty) {
-      debugPrint('【元素操作】createElementRotationOperation: 没有要更新的元素，跳过');
+      EditPageLogger.controllerDebug(
+        '没有要更新的元素，跳过旋转操作',
+        data: {
+          'elementIds': elementIds,
+          'operation': 'create_rotation_operation_skip',
+        },
+      );
       return;
     }
 
-    debugPrint('【元素操作】createElementRotationOperation: 创建元素旋转操作');
+    EditPageLogger.controllerDebug(
+      '创建元素旋转操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'create_rotation_operation',
+      },
+    );
+    
     final operation = ElementRotationOperation(
       elementIds: elementIds,
       oldRotations: oldRotations,
@@ -276,7 +305,34 @@ mixin ElementOperationsMixin on ChangeNotifier {
       },
     );
 
-    undoRedoManager.addOperation(operation);
+    // 不立即执行，因为状态已经在控制点处理器中更新了
+    undoRedoManager.addOperation(operation, executeImmediately: false);
+  }
+
+  /// 创建组合元素旋转操作 - 保存子元素的完整状态
+  void createGroupElementRotationOperation({
+    required String groupElementId,
+    required Map<String, dynamic> oldGroupState,
+    required Map<String, dynamic> newGroupState,
+  }) {
+    EditPageLogger.editPageDebug('创建组合元素旋转操作', data: {
+      'groupElementId': groupElementId,
+      'oldRotation': oldGroupState['rotation'],
+      'newRotation': newGroupState['rotation'],
+      'operation': 'create_group_rotation_operation',
+    });
+
+    final operation = GroupElementRotationOperation(
+      groupElementId: groupElementId,
+      oldGroupState: Map<String, dynamic>.from(oldGroupState),
+      newGroupState: Map<String, dynamic>.from(newGroupState),
+      updateElement: (id, properties) {
+        _updateElementInCurrentPage(id, properties);
+      },
+    );
+
+    // 不立即执行，因为状态已经在控制点处理器中更新了
+    undoRedoManager.addOperation(operation, executeImmediately: false);
   }
 
   /// 创建批量元素平移操作（用于撤销/重做）
@@ -286,11 +342,25 @@ mixin ElementOperationsMixin on ChangeNotifier {
     required List<Map<String, dynamic>> newPositions,
   }) {
     if (elementIds.isEmpty || oldPositions.isEmpty || newPositions.isEmpty) {
-      debugPrint('【元素操作】createElementTranslationOperation: 没有要更新的元素，跳过');
+      EditPageLogger.controllerDebug(
+        '没有要更新的元素，跳过平移操作',
+        data: {
+          'elementIds': elementIds,
+          'operation': 'create_translation_operation_skip',
+        },
+      );
       return;
     }
 
-    debugPrint('【元素操作】createElementTranslationOperation: 创建元素平移操作');
+    EditPageLogger.controllerDebug(
+      '创建元素平移操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'create_translation_operation',
+      },
+    );
+    
     final operation = ElementTranslationOperation(
       elementIds: elementIds,
       oldPositions: oldPositions,
@@ -300,7 +370,8 @@ mixin ElementOperationsMixin on ChangeNotifier {
       },
     );
 
-    undoRedoManager.addOperation(operation);
+    // 不立即执行，因为状态已经在控制点处理器中更新了
+    undoRedoManager.addOperation(operation, executeImmediately: false);
   }
 
   /// 将多个元素均匀分布
@@ -431,7 +502,19 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
   /// 组合选中的元素
   void groupSelectedElements() {
-    if (state.selectedElementIds.length <= 1) return;
+    EditPageLogger.editPageDebug('🔧 Group操作开始', data: {
+      'selectedElementIds': state.selectedElementIds,
+      'selectedCount': state.selectedElementIds.length,
+      'operation': 'group_start',
+    });
+    
+    if (state.selectedElementIds.length <= 1) {
+      EditPageLogger.editPageDebug('🔧 Group操作跳过：选中元素不足', data: {
+        'selectedCount': state.selectedElementIds.length,
+        'operation': 'group_skip_insufficient_elements',
+      });
+      return;
+    }
 
     final page = state.pages[state.currentPageIndex];
     final elements = page['elements'] as List<dynamic>;
@@ -448,7 +531,20 @@ mixin ElementOperationsMixin on ChangeNotifier {
       }
     }
 
-    if (selectedElements.isEmpty) return;
+    EditPageLogger.editPageDebug('🔧 Group操作：收集到元素', data: {
+      'selectedElementIds': state.selectedElementIds,
+      'foundElementsCount': selectedElements.length,
+      'foundElementIds': selectedElements.map((e) => e['id']).toList(),
+      'operation': 'group_collect_elements',
+    });
+
+    if (selectedElements.isEmpty) {
+      EditPageLogger.editPageDebug('🔧 Group操作失败：没有找到有效元素', data: {
+        'selectedElementIds': state.selectedElementIds,
+        'operation': 'group_no_valid_elements',
+      });
+      return;
+    }
 
     // 计算组合元素的边界
     double minX = double.infinity;
@@ -473,12 +569,28 @@ mixin ElementOperationsMixin on ChangeNotifier {
       final x = (e['x'] as num).toDouble() - minX;
       final y = (e['y'] as num).toDouble() - minY;
 
-      return {
+      final childElement = {
         ...e,
         'x': x,
         'y': y,
       };
+      
+      EditPageLogger.editPageDebug('🔧 Group操作：创建子元素', data: {
+        'originalId': e['id'],
+        'childId': childElement['id'],
+        'originalPos': {'x': e['x'], 'y': e['y']},
+        'relativePos': {'x': x, 'y': y},
+        'operation': 'group_create_child',
+      });
+      
+      return childElement;
     }).toList();
+
+    EditPageLogger.editPageDebug('🔧 Group操作：所有子元素ID', data: {
+      'childrenIds': groupChildren.map((e) => e['id']).toList(),
+      'childrenCount': groupChildren.length,
+      'operation': 'group_children_created',
+    });
 
     // 创建组合元素
     final groupElement = {
@@ -498,6 +610,13 @@ mixin ElementOperationsMixin on ChangeNotifier {
         'children': groupChildren,
       },
     };
+
+    EditPageLogger.editPageDebug('🔧 Group操作：组合元素创建', data: {
+      'groupId': groupElement['id'],
+      'groupBounds': {'x': minX, 'y': minY, 'width': maxX - minX, 'height': maxY - minY},
+      'childrenInGroup': groupElement['content']['children'].map((e) => e['id']).toList(),
+      'operation': 'group_element_created',
+    });
 
     final operation = GroupElementsOperation(
       elements: selectedElements,
@@ -541,7 +660,19 @@ mixin ElementOperationsMixin on ChangeNotifier {
       },
     );
 
+    EditPageLogger.editPageDebug('🔧 Group操作：创建撤销操作', data: {
+      'groupElementId': groupElement['id'],
+      'originalElementsCount': selectedElements.length,
+      'originalElementIds': selectedElements.map((e) => e['id']).toList(),
+      'operation': 'group_create_undo_operation',
+    });
+    
     undoRedoManager.addOperation(operation);
+    
+    EditPageLogger.editPageDebug('🔧 Group操作完成', data: {
+      'groupElementId': groupElement['id'],
+      'operation': 'group_completed',
+    });
   }
 
   /// 切换元素锁定状态
@@ -645,7 +776,6 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
       return {
         ...childMap,
-        'id': '${childMap['type']}_${uuid.v4()}', // 生成新ID避免冲突
         'x': x,
         'y': y,
       };
@@ -776,6 +906,14 @@ mixin ElementOperationsMixin on ChangeNotifier {
       }
 
       // 通知监听器更新UI
+      EditPageLogger.controllerInfo(
+        '🔧 DEBUG: 调用notifyListeners()更新UI',
+        data: {
+          'elementId': id,
+          'operation': 'notifyListeners_debug',
+        },
+      );
+      
       notifyListeners();
     }
   }
@@ -795,7 +933,23 @@ mixin ElementOperationsMixin on ChangeNotifier {
 
   /// 辅助方法：正确更新当前页面中的元素
   void _updateElementInCurrentPage(String elementId, Map<String, dynamic> properties) {
+    EditPageLogger.controllerInfo(
+      '🔧 DEBUG: _updateElementInCurrentPage 开始执行',
+      data: {
+        'elementId': elementId,
+        'properties': properties.keys.toList(),
+        'operation': 'updateElement_debug',
+      },
+    );
+
     if (state.currentPage == null || !state.currentPage!.containsKey('elements')) {
+      EditPageLogger.controllerError(
+        '🔧 DEBUG: 当前页面无效',
+        data: {
+          'elementId': elementId,
+          'operation': 'updateElement_failed_debug',
+        },
+      );
       return;
     }
     
@@ -803,16 +957,106 @@ mixin ElementOperationsMixin on ChangeNotifier {
     final index = elements.indexWhere((e) => e['id'] == elementId);
     if (index >= 0) {
       final element = elements[index] as Map<String, dynamic>;
-      properties.forEach((key, value) {
-        element[key] = value;
-      });
+      
+      EditPageLogger.controllerInfo(
+        '🔧 DEBUG: 找到元素，开始更新属性',
+        data: {
+          'elementId': elementId,
+          'elementIndex': index,
+          'oldProperties': {
+            'x': element['x'],
+            'y': element['y'], 
+            'width': element['width'],
+            'height': element['height'],
+          },
+          'newProperties': properties,
+          'operation': 'updateElement_found_debug',
+        },
+      );
+      
+      // 🔧 修复：对于组合元素的完整状态更新，直接替换整个元素
+      if (element['type'] == 'group' && properties.containsKey('content')) {
+        EditPageLogger.controllerInfo(
+          '🔧 检测到组合元素完整状态更新',
+          data: {
+            'groupElementId': elementId,
+            'isCompleteStateUpdate': true,
+            'operation': 'group_complete_state_update',
+          },
+        );
+        
+        // 完整替换元素状态
+        elements[index] = Map<String, dynamic>.from(properties);
+      } else {
+        // 逐个更新属性
+        properties.forEach((key, value) {
+          element[key] = value;
+        });
+      }
       
       // 更新选中元素的状态
       if (state.selectedElementIds.contains(elementId)) {
-        state.selectedElement = element;
+        state.selectedElement = elements[index] as Map<String, dynamic>;
+        EditPageLogger.controllerInfo(
+          '🔧 DEBUG: 更新选中元素状态',
+          data: {
+            'elementId': elementId,
+            'operation': 'updateSelected_debug',
+          },
+        );
       }
       
       state.hasUnsavedChanges = true;
+      
+      // 🔧 关键修复：强制重新渲染
+      // 通过修改元素的一个内部属性，确保缓存失效
+      final currentElement = elements[index] as Map<String, dynamic>;
+      currentElement['_forceRender'] = DateTime.now().millisecondsSinceEpoch;
+      
+      // 特别处理组合元素，清除其缓存
+      if (currentElement['type'] == 'group') {
+        // 强制设置一个变化的内部标识
+        final content = currentElement['content'] as Map<String, dynamic>? ?? {};
+        content['_cacheKey'] = DateTime.now().millisecondsSinceEpoch;
+        currentElement['content'] = content;
+      }
+      
+      EditPageLogger.controllerInfo(
+        '🔧 DEBUG: 强制元素重新渲染',
+        data: {
+          'elementId': elementId,
+          'forceRender': currentElement['_forceRender'],
+          'isGroup': currentElement['type'] == 'group',
+          'operation': 'force_rerender_debug',
+        },
+      );
+      
+      EditPageLogger.controllerInfo(
+        '🔧 DEBUG: 调用notifyListeners()更新UI',
+        data: {
+          'elementId': elementId,
+          'operation': 'notifyListeners_debug',
+        },
+      );
+      
+      notifyListeners();
+      
+      EditPageLogger.controllerInfo(
+        '🔧 DEBUG: _updateElementInCurrentPage 执行完成',
+        data: {
+          'elementId': elementId,
+          'operation': 'updateElement_complete_debug',
+        },
+      );
+    } else {
+      EditPageLogger.controllerError(
+        '🔧 DEBUG: 未找到要更新的元素',
+        data: {
+          'elementId': elementId,
+          'totalElements': elements.length,
+          'operation': 'updateElement_notfound_debug',
+        },
+      );
     }
   }
 }

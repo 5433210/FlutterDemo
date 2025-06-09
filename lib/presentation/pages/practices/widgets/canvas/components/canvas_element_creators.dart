@@ -146,45 +146,17 @@ mixin CanvasElementCreators {
       },
     );
 
-    // 根据变化类型创建对应的撤销操作
-    if (newProperties.containsKey('rotation') &&
-        oldProperties.containsKey('rotation')) {
-      // 旋转操作
-      controller.createElementRotationOperation(
-        elementIds: [elementId],
-        oldRotations: [(oldProperties['rotation'] as num).toDouble()],
-        newRotations: [(newProperties['rotation'] as num).toDouble()],
-      );
-      EditPageLogger.canvasDebug(
-        '创建旋转撤销操作',
-        data: {'undoType': 'rotation', 'elementId': elementId},
-      );
-    } else if (newProperties.keys
-        .any((key) => ['x', 'y', 'width', 'height'].contains(key))) {
-      // 调整大小/位置操作
-      final oldSize = {
-        'x': (oldProperties['x'] as num).toDouble(),
-        'y': (oldProperties['y'] as num).toDouble(),
-        'width': (oldProperties['width'] as num).toDouble(),
-        'height': (oldProperties['height'] as num).toDouble(),
-      };
-      final newSize = {
-        'x': (newProperties['x'] as num).toDouble(),
-        'y': (newProperties['y'] as num).toDouble(),
-        'width': (newProperties['width'] as num).toDouble(),
-        'height': (newProperties['height'] as num).toDouble(),
-      };
-
-      controller.createElementResizeOperation(
-        elementIds: [elementId],
-        oldSizes: [oldSize],
-        newSizes: [newSize],
-      );
-      EditPageLogger.canvasDebug(
-        '创建调整大小撤销操作',
-        data: {'undoType': 'resize', 'elementId': elementId},
-      );
-    }
+    // 注意：撤销操作由控制点处理器统一创建，这里不再重复创建
+    EditPageLogger.canvasDebug(
+      '元素属性更新完成',
+      data: {
+        'elementId': elementId,
+        'changedProperties': newProperties.keys.toList(),
+        'hasRotationChange': newProperties.containsKey('rotation'),
+        'hasSizeChange': newProperties.keys.any((key) => ['x', 'y', 'width', 'height'].contains(key)),
+        'note': '撤销操作由控制点处理器统一管理',
+      },
+    );
   }
 
   /// 处理元素拖拽创建

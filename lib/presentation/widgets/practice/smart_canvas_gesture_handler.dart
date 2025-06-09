@@ -51,6 +51,9 @@ class SmartCanvasGestureHandler implements GestureContext {
   List<String> _panStartSelectedElementIds = [];
   Offset? _panEndPosition;
   bool _isDragging = false;
+  
+  // 防止重复创建撤销操作的记录
+  final Set<String> _recentTranslationOperations = {};
 
   SmartCanvasGestureHandler({
     required this.controller,
@@ -594,12 +597,30 @@ class SmartCanvasGestureHandler implements GestureContext {
         options: BatchUpdateOptions.forDragOperation(),
       );
       
-      // 创建撤销操作
-      controller.createElementTranslationOperation(
-        elementIds: elementIds,
-        oldPositions: oldPositions,
-        newPositions: newPositions,
-      );
+      // 检查是否需要创建撤销操作（防止重复创建）
+      final operationKey = '${elementIds.join('_')}_${DateTime.now().millisecondsSinceEpoch ~/ 200}';
+      if (!_recentTranslationOperations.contains(operationKey)) {
+        _recentTranslationOperations.add(operationKey);
+        Timer(const Duration(milliseconds: 500), () {
+          _recentTranslationOperations.remove(operationKey);
+        });
+        
+        // 创建撤销操作
+        controller.createElementTranslationOperation(
+          elementIds: elementIds,
+          oldPositions: oldPositions,
+          newPositions: newPositions,
+        );
+        
+        EditPageLogger.canvasDebug('创建平移撤销操作', data: {
+          'elementCount': elementIds.length,
+          'operationKey': operationKey,
+        });
+      } else {
+        EditPageLogger.canvasDebug('跳过重复平移撤销操作', data: {
+          'operationKey': operationKey,
+        });
+      }
       
       EditPageLogger.canvasDebug('元素位置更新完成');
     }

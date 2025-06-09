@@ -573,27 +573,23 @@ class PracticeEditUtils {
       final x = (childMap['x'] as num).toDouble() + groupX;
       final y = (childMap['y'] as num).toDouble() + groupY;
 
-      // Generate a completely new ID with timestamp and index
-      final type = (childMap['type'] as String).split('_').first;
-      final newId = '${type}_${timestamp}_${index}_${getRandomString(4)}';
-      index++;
-
+      // 🔧 修复：保持原有ID，不重新生成以确保与组合元素内部引用一致
       final newElement = {
         ...childMap,
-        'id': newId,
         'x': x,
         'y': y,
       };
 
-      // Recursively update IDs for nested groups
-      if (newElement['type'] == 'group' &&
-          newElement['content'] is Map<String, dynamic> &&
-          newElement['content']['children'] is List) {
-        final grandchildren = newElement['content']['children'] as List;
-        newElement['content']['children'] = updateChildrenIds(grandchildren);
-      }
+      // Recursively update IDs for nested groups - 暂时注释掉，保持原有ID
+      // if (newElement['type'] == 'group' &&
+      //     newElement['content'] is Map<String, dynamic> &&
+      //     newElement['content']['children'] is List) {
+      //   final grandchildren = newElement['content']['children'] as List;
+      //   newElement['content']['children'] = updateChildrenIds(grandchildren);
+      // }
 
       childElements.add(newElement);
+      index++;
     }
 
     // Create operation for undo/redo support

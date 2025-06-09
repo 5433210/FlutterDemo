@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
 
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -8,6 +10,7 @@ import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
 import '../../content_render_controller.dart';
 import '../../element_change_types.dart';
+import '../../../utils/practice_edit_utils.dart';
 
 /// 画布控制点处理器
 /// 负责处理控制点相关的逻辑，包括拖拽、缩放、旋转等
@@ -34,6 +37,9 @@ mixin CanvasControlPointHandlers {
   Map<String, double>? _freeControlPointsFinalState;
   bool _isReadyForDrag = false;
   bool _isDragging = false;
+  
+  // 防止重复创建撤销操作的记录
+  final Set<String> _recentUndoOperations = {};
 
   /// 获取状态访问器
   bool get isResizing => _isResizing;
@@ -86,8 +92,66 @@ mixin CanvasControlPointHandlers {
       return;
     }
 
-    // 保存元素的原始属性
-    _originalElementProperties = Map<String, dynamic>.from(element);
+    // 🔧 DEBUG: 在保存之前先记录当前元素的实际状态
+    if (element['type'] == 'group') {
+      final content = element['content'] as Map<String, dynamic>?;
+      final children = content?['children'] as List<dynamic>? ?? [];
+      
+      // 🔧 记录组合元素内部的子元素信息
+      EditPageLogger.canvasDebug('拖拽开始时的当前组合元素状态', data: {
+        'groupId': element['id'],
+        'groupRotation': element['rotation'],
+        'childrenCount': children.length,
+        'currentChildrenIds': children.map((child) {
+          final childMap = child as Map<String, dynamic>;
+          return childMap['id'];
+        }).toList(),
+        'currentChildrenPositions': children.map((child) {
+          final childMap = child as Map<String, dynamic>;
+          return {
+            'id': childMap['id'],
+            'x': childMap['x'],
+            'y': childMap['y'],
+            'rotation': childMap['rotation'],
+          };
+        }).toList(),
+        'operation': 'group_internal_state_debug',
+      });
+      
+      // 🔧 记录画布上所有元素的ID
+      final allCanvasElements = controller.state.currentPageElements;
+      EditPageLogger.canvasDebug('画布上的所有元素', data: {
+        'totalElements': allCanvasElements.length,
+        'allElementIds': allCanvasElements.map((e) => e['id']).toList(),
+        'elementTypes': allCanvasElements.map((e) => '${e['id']}:${e['type']}').toList(),
+        'operation': 'canvas_all_elements_debug',
+      });
+    }
+
+    // 保存元素的原始属性（深拷贝，确保嵌套对象也被复制）
+    _originalElementProperties = PracticeEditUtils.deepCopyElement(element);
+    
+    // 🔧 DEBUG: 添加详细的原始状态日志
+    if (element['type'] == 'group') {
+      final content = element['content'] as Map<String, dynamic>?;
+      final children = content?['children'] as List<dynamic>? ?? [];
+      
+      EditPageLogger.canvasDebug('保存组合元素原始状态', data: {
+        'groupId': element['id'],
+        'groupRotation': element['rotation'],
+        'childrenCount': children.length,
+        'childrenPositions': children.map((child) {
+          final childMap = child as Map<String, dynamic>;
+          return {
+            'id': childMap['id'],
+            'x': childMap['x'],
+            'y': childMap['y'],
+            'rotation': childMap['rotation'],
+          };
+        }).toList(),
+        'operation': 'save_original_group_state',
+      });
+    }
 
     // 记录当前是调整大小还是旋转
     _isRotating = (controlPointIndex == 8);
@@ -205,14 +269,14 @@ mixin CanvasControlPointHandlers {
           // 应用最终旋转值
           element['rotation'] = finalRotation;
 
-          // 更新Controller中的元素属性
-          controller.updateElementProperties(elementId, {
+          // 更新Controller中的元素属性（不创建撤销操作，因为这里会统一创建）
+          controller.updateElementPropertiesWithoutUndo(elementId, {
             'rotation': finalRotation,
           });
         } else {
           // 回退：如果没有最终状态，保持当前rotation不变
           final currentRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-          controller.updateElementProperties(elementId, {
+          controller.updateElementPropertiesWithoutUndo(elementId, {
             'rotation': currentRotation,
           });
         }
@@ -241,8 +305,8 @@ mixin CanvasControlPointHandlers {
           element['width'] = finalResult['width']!;
           element['height'] = finalResult['height']!;
 
-          // 更新Controller中的元素属性
-          controller.updateElementProperties(elementId, {
+          // 更新Controller中的元素属性（不创建撤销操作，因为这里会统一创建）
+          controller.updateElementPropertiesWithoutUndo(elementId, {
             'x': finalResult['x']!,
             'y': finalResult['y']!,
             'width': finalResult['width']!,
@@ -293,7 +357,7 @@ mixin CanvasControlPointHandlers {
         setState(() {});
       }
 
-      // 添加延迟刷新确保完整可见性恢复
+      // 添加延迟刷新确保完整可见性恢复和控制点正确显示
       Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted) {
           // 标记元素为脏以强制重新渲染
@@ -309,6 +373,13 @@ mixin CanvasControlPointHandlers {
 
             // 更新控制器状态以确保UI更新
             controller.notifyListeners();
+            
+            // 再次强制触发setState确保控制点正确更新
+            Future.delayed(const Duration(milliseconds: 50), () {
+              if (mounted) {
+                setState(() {});
+              }
+            });
           }
         }
       });
@@ -410,8 +481,8 @@ mixin CanvasControlPointHandlers {
     try {
       // 🔧 关键修复：正确更新组合元素和子元素
       
-      // 1. 通过controller正确更新组合元素本身的属性
-      controller.updateElementProperties(groupId, {
+      // 1. 通过controller正确更新组合元素本身的属性（不创建撤销操作）
+      controller.updateElementPropertiesWithoutUndo(groupId, {
         'x': newX,
         'y': newY,
         'width': newWidth,
@@ -446,9 +517,16 @@ mixin CanvasControlPointHandlers {
             final child = updatedChildren[i] as Map<String, dynamic>;
             final childId = child['id'] as String;
             
-            // 🔧 关键修复：使用完整的子元素变换方法处理所有情况
+            // 🔧 关键修复：获取子元素的原始状态（拖拽开始时的状态）作为变换基准
+            final originalChildren = (groupElement['content'] as Map<String, dynamic>?)?.cast<String, dynamic>()['children'] as List<dynamic>? ?? [];
+            final originalChild = originalChildren.firstWhere(
+              (c) => (c as Map<String, dynamic>)['id'] == childId,
+              orElse: () => child, // 回退到当前子元素
+            ) as Map<String, dynamic>;
+            
+            // 使用原始子元素状态进行变换
             final transformedChild = _transformChildElement(
-              child,
+              originalChild, // 使用原始子元素状态
               originalWidth, // 使用原始组合尺寸
               originalHeight,
               scaleX,
@@ -555,6 +633,15 @@ mixin CanvasControlPointHandlers {
     final finalY = finalChildCenterY - scaledHeight / 2;
     final finalRotation = childRotation + rotationDelta;
     
+    // 🔧 DEBUG: 调试子元素旋转计算
+    EditPageLogger.canvasDebug('子元素旋转计算', data: {
+      'childId': child['id'],
+      'childOriginalRotation': childRotation,
+      'groupRotationDelta': rotationDelta,
+      'finalChildRotation': finalRotation,
+      'operation': 'child_transform_debug'
+    });
+    
     final result = {
       'x': finalX,
       'y': finalY,
@@ -590,8 +677,8 @@ mixin CanvasControlPointHandlers {
       updateProperties[key] = value;
     });
     
-    // 更新元素属性
-    controller.updateElementProperties(elementId, updateProperties);
+    // 更新元素属性（不创建撤销操作，因为控制点处理器会统一创建）
+    controller.updateElementPropertiesWithoutUndo(elementId, updateProperties);
   }
 
   /// 控制点主导架构：处理Live阶段的实时状态更新
@@ -663,15 +750,6 @@ mixin CanvasControlPointHandlers {
         final scaleY = baseHeight != 0 ? newHeight / baseHeight : 1.0;
         final rotationDelta = newRotation - baseRotation;
         
-        // 🔧 按照用户建议：叠加组合元素当前的旋转角度
-        // 获取组合元素当前的实际旋转角度（包括之前所有操作的累积）
-        final currentGroupElement = controller.state.currentPageElements.firstWhere(
-          (e) => e['id'] == groupId,
-          orElse: () => dragStartGroupElement,
-        );
-        final currentGroupRotation = (currentGroupElement['rotation'] as num?)?.toDouble() ?? 0.0;
-        final totalRotationForChild = rotationDelta + currentGroupRotation;
-        
         // 为每个子元素更新预览
         for (int i = 0; i < children.length; i++) {
           final childMap = children[i] as Map<String, dynamic>;
@@ -689,31 +767,31 @@ mixin CanvasControlPointHandlers {
               orElse: () => childMap, // 回退到当前子元素
             ) as Map<String, dynamic>;
             
-            // 🔧 按照用户建议：使用叠加了组合元素当前旋转角度的总旋转
+            // 🔧 修复：子元素只需要应用组合元素的旋转变化量，不需要叠加当前旋转角度
             final transformedChild = _transformChildElement(
               dragStartChild,
               baseWidth,
               baseHeight,
               scaleX,
               scaleY,
-              totalRotationForChild, // 使用叠加后的总旋转角度
+              rotationDelta, // 只使用旋转变化量，不叠加当前角度
             );
-           
-           // 4. 将变换后的相对坐标转换为绝对坐标
-           final transformedAbsoluteX = newX + transformedChild['x']!;
-           final transformedAbsoluteY = newY + transformedChild['y']!;
-           
-           // 5. 构建完整的子元素预览属性（使用绝对坐标）
-           final childPreviewProperties = Map<String, dynamic>.from(childMap);
-           childPreviewProperties.addAll({
-             'x': transformedAbsoluteX,
-             'y': transformedAbsoluteY,
-             'width': transformedChild['width']!,
-             'height': transformedChild['height']!,
-             'rotation': transformedChild['rotation']!,
-           });
-           
-           dragStateManager.updateElementPreviewProperties(childId, childPreviewProperties);
+     
+     // 4. 将变换后的相对坐标转换为绝对坐标
+     final transformedAbsoluteX = newX + transformedChild['x']!;
+     final transformedAbsoluteY = newY + transformedChild['y']!;
+     
+     // 5. 构建完整的子元素预览属性（使用绝对坐标）
+     final childPreviewProperties = Map<String, dynamic>.from(childMap);
+     childPreviewProperties.addAll({
+       'x': transformedAbsoluteX,
+       'y': transformedAbsoluteY,
+       'width': transformedChild['width']!,
+       'height': transformedChild['height']!,
+       'rotation': transformedChild['rotation']!,
+     });
+     
+     dragStateManager.updateElementPreviewProperties(childId, childPreviewProperties);
          }
         }
       }
@@ -824,8 +902,25 @@ mixin CanvasControlPointHandlers {
     }
 
     if (!hasChanges) {
+      EditPageLogger.canvasDebug('无实际变化，跳过撤销操作创建');
       return; // 没有变化，不需要创建撤销操作
     }
+
+    // 检查是否已经为这个元素创建了撤销操作（防止重复创建）
+    final operationKey = '${elementId}_${DateTime.now().millisecondsSinceEpoch ~/ 100}'; // 100ms内视为同一操作
+    if (_recentUndoOperations.contains(operationKey)) {
+      EditPageLogger.canvasDebug('操作过于频繁，跳过重复撤销操作', data: {
+        'elementId': elementId,
+        'operationKey': operationKey,
+      });
+      return;
+    }
+    
+    // 记录此次操作，并设置过期时间
+    _recentUndoOperations.add(operationKey);
+    Timer(const Duration(milliseconds: 200), () {
+      _recentUndoOperations.remove(operationKey);
+    });
 
     EditPageLogger.canvasDebug(
       '创建撤销操作',
@@ -833,19 +928,63 @@ mixin CanvasControlPointHandlers {
         'elementId': elementId,
         'hasRotationChange': newProperties.containsKey('rotation'),
         'hasSizeChange': newProperties.keys.any((key) => ['x', 'y', 'width', 'height'].contains(key)),
+        'operationKey': operationKey,
       },
     );
 
     // 根据变化类型创建对应的撤销操作
+    // 检查是否有实际的旋转变化
+    bool hasRotationChange = false;
     if (newProperties.containsKey('rotation') && oldProperties.containsKey('rotation')) {
-      // 旋转操作
-      controller.createElementRotationOperation(
-        elementIds: [elementId],
-        oldRotations: [(oldProperties['rotation'] as num).toDouble()],
-        newRotations: [(newProperties['rotation'] as num).toDouble()],
+      final oldRotation = (oldProperties['rotation'] as num).toDouble();
+      final newRotation = (newProperties['rotation'] as num).toDouble();
+      hasRotationChange = (oldRotation - newRotation).abs() > 0.001; // 允许微小的浮点误差
+    }
+    
+    if (hasRotationChange) {
+      // 🔧 检查是否为组合元素
+      final currentElement = controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == elementId,
+        orElse: () => <String, dynamic>{},
       );
+      
+      if (currentElement.isNotEmpty && currentElement['type'] == 'group') {
+        // 🔧 组合元素旋转：使用组合元素旋转操作
+        // 需要获取完整的组合元素状态，不只是修改的属性
+        final oldGroupState = Map<String, dynamic>.from(_originalElementProperties ?? <String, dynamic>{});
+        final newGroupState = Map<String, dynamic>.from(currentElement);
+        
+        EditPageLogger.editPageDebug('控制点处理器创建组合元素旋转撤销操作', data: {
+          'elementId': elementId,
+          'oldRotation': (oldGroupState['rotation'] as num?)?.toDouble() ?? 0.0,
+          'newRotation': (newGroupState['rotation'] as num?)?.toDouble() ?? 0.0,
+          'oldChildrenCount': ((oldGroupState['content'] as Map<String, dynamic>?)?['children'] as List<dynamic>?)?.length ?? 0,
+          'newChildrenCount': ((newGroupState['content'] as Map<String, dynamic>?)?['children'] as List<dynamic>?)?.length ?? 0,
+          'operation': 'control_point_group_rotation',
+        });
+        
+        controller.createGroupElementRotationOperation(
+          groupElementId: elementId,
+          oldGroupState: oldGroupState,
+          newGroupState: newGroupState,
+        );
+      } else {
+        // 🔧 单个元素旋转：使用普通元素旋转操作
+        EditPageLogger.editPageDebug('控制点处理器创建单个元素旋转撤销操作', data: {
+          'elementId': elementId,
+          'oldRotation': (oldProperties['rotation'] as num).toDouble(),
+          'newRotation': (newProperties['rotation'] as num).toDouble(),
+          'operation': 'control_point_rotation',
+        });
+        
+        controller.createElementRotationOperation(
+          elementIds: [elementId],
+          oldRotations: [(oldProperties['rotation'] as num).toDouble()],
+          newRotations: [(newProperties['rotation'] as num).toDouble()],
+        );
+      }
     } else if (newProperties.keys.any((key) => ['x', 'y', 'width', 'height'].contains(key))) {
-      // 调整大小/位置操作
+      // 🔧 DEBUG: 控制点调整大小/位置操作
       final oldSize = {
         'x': (oldProperties['x'] as num).toDouble(),
         'y': (oldProperties['y'] as num).toDouble(),
@@ -858,6 +997,13 @@ mixin CanvasControlPointHandlers {
         'width': (newProperties['width'] as num).toDouble(),
         'height': (newProperties['height'] as num).toDouble(),
       };
+
+      EditPageLogger.editPageDebug('控制点处理器创建resize撤销操作', data: {
+        'elementId': elementId,
+        'oldSize': oldSize,
+        'newSize': newSize,
+        'operation': 'control_point_resize',
+      });
 
       controller.createElementResizeOperation(
         elementIds: [elementId],

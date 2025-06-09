@@ -219,17 +219,33 @@ class ElementTranslationOperation implements UndoableOperation {
   @override
   void undo() {
     EditPageLogger.controllerDebug(
-      '撤销元素移动操作',
+      '🔧 DEBUG: 开始撤销元素移动操作',
       data: {
         'elementCount': elementIds.length,
         'elementIds': elementIds,
-        'operation': 'element_translation_undo',
+        'operation': 'element_translation_undo_start',
       },
     );
     
     for (int i = 0; i < elementIds.length; i++) {
+      EditPageLogger.controllerDebug(
+        '🔧 DEBUG: 撤销单个元素移动',
+        data: {
+          'elementId': elementIds[i],
+          'oldPosition': oldPositions[i],
+          'operation': 'element_translation_undo_item',
+        },
+      );
       updateElement(elementIds[i], oldPositions[i]);
     }
+    
+    EditPageLogger.controllerDebug(
+      '🔧 DEBUG: 元素移动撤销操作完成',
+      data: {
+        'elementCount': elementIds.length,
+        'operation': 'element_translation_undo_complete',
+      },
+    );
   }
 }
 
@@ -269,17 +285,33 @@ class ResizeElementOperation implements UndoableOperation {
   @override
   void undo() {
     EditPageLogger.controllerDebug(
-      '撤销元素调整大小操作',
+      '🔧 DEBUG: 开始撤销元素调整大小操作',
       data: {
         'elementCount': elementIds.length,
         'elementIds': elementIds,
-        'operation': 'resize_element_undo',
+        'operation': 'resize_element_undo_start',
       },
     );
     
     for (int i = 0; i < elementIds.length; i++) {
+      EditPageLogger.controllerDebug(
+        '🔧 DEBUG: 撤销单个元素调整大小',
+        data: {
+          'elementId': elementIds[i],
+          'oldSize': oldSizes[i],
+          'operation': 'resize_element_undo_item',
+        },
+      );
       updateElement(elementIds[i], oldSizes[i]);
     }
+    
+    EditPageLogger.controllerDebug(
+      '🔧 DEBUG: 元素调整大小撤销操作完成',
+      data: {
+        'elementCount': elementIds.length,
+        'operation': 'resize_element_undo_complete',
+      },
+    );
   }
 }
 
@@ -332,6 +364,80 @@ class ElementRotationOperation implements UndoableOperation {
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], {'rotation': oldRotations[i]});
     }
+  }
+}
+
+/// 组合元素旋转操作 - 处理子元素状态的完整保存和恢复
+class GroupElementRotationOperation implements UndoableOperation {
+  final String groupElementId;
+  final Map<String, dynamic> oldGroupState;
+  final Map<String, dynamic> newGroupState;
+  final Function(String, Map<String, dynamic>) updateElement;
+
+  @override
+  final String description = '旋转组合元素';
+
+  GroupElementRotationOperation({
+    required this.groupElementId,
+    required this.oldGroupState,
+    required this.newGroupState,
+    required this.updateElement,
+  });
+
+  @override
+  void execute() {
+    EditPageLogger.controllerDebug(
+      '执行组合元素旋转操作',
+      data: {
+        'groupElementId': groupElementId,
+        'oldRotation': oldGroupState['rotation'],
+        'newRotation': newGroupState['rotation'],
+        'operation': 'group_rotation_execute',
+      },
+    );
+    
+    // 恢复整个组合元素的状态，包括子元素
+    updateElement(groupElementId, newGroupState);
+  }
+
+  @override
+  void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销组合元素旋转操作',
+      data: {
+        'groupElementId': groupElementId,
+        'oldRotation': oldGroupState['rotation'],
+        'newRotation': newGroupState['rotation'],
+        'operation': 'group_rotation_undo',
+      },
+    );
+    
+    // 🔧 添加详细的状态调试信息
+    if (oldGroupState['type'] == 'group') {
+      final content = oldGroupState['content'] as Map<String, dynamic>?;
+      final children = content?['children'] as List<dynamic>? ?? [];
+      
+      EditPageLogger.controllerDebug('🔧 恢复组合元素完整状态', data: {
+        'groupElementId': groupElementId,
+        'restoredRotation': oldGroupState['rotation'],
+        'restoredPosition': {'x': oldGroupState['x'], 'y': oldGroupState['y']},
+        'restoredSize': {'width': oldGroupState['width'], 'height': oldGroupState['height']},
+        'restoredChildrenCount': children.length,
+        'restoredChildrenDetails': children.map((child) {
+          final childMap = child as Map<String, dynamic>;
+          return {
+            'id': childMap['id'],
+            'x': childMap['x'],
+            'y': childMap['y'],
+            'rotation': childMap['rotation'],
+          };
+        }).toList(),
+        'operation': 'detailed_undo_state_restore',
+      });
+    }
+    
+    // 恢复整个组合元素的状态，包括子元素
+    updateElement(groupElementId, oldGroupState);
   }
 }
 

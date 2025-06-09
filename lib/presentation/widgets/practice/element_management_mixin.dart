@@ -535,8 +535,13 @@ mixin ElementManagementMixin on ChangeNotifier {
 
   /// 更新元素属性
   void updateElementProperties(String id, Map<String, dynamic> properties) {
+    updateElementPropertiesInternal(id, properties, createUndoOperation: true);
+  }
+
+  /// 更新元素属性（内部方法，可控制是否创建撤销操作）
+  void updateElementPropertiesInternal(String id, Map<String, dynamic> properties, {bool createUndoOperation = true}) {
     if (state.currentPageIndex >= state.pages.length) {
-              EditPageLogger.controllerWarning('当前页面索引无效，无法更新元素属性');
+      EditPageLogger.controllerWarning('当前页面索引无效，无法更新元素属性');
       return;
     }
 
@@ -562,84 +567,82 @@ mixin ElementManagementMixin on ChangeNotifier {
         }
       });
 
-      // 检查是否只是位置变化
-      final isTranslationOnly =
-          properties.keys.every((key) => key == 'x' || key == 'y');
-
-      UndoableOperation operation;
-
-      if (isTranslationOnly) {
-        // 创建位置变化操作
-        operation = ElementTranslationOperation(
-          elementIds: [id],
-          oldPositions: [
-            {
-              'x': oldProperties['x'],
-              'y': oldProperties['y'],
-            }
-          ],
-          newPositions: [
-            {
-              'x': newProperties['x'],
-              'y': newProperties['y'],
-            }
-          ],
-          updateElement: (elementId, positionProps) {
-            if (state.currentPageIndex >= 0 &&
-                state.currentPageIndex < state.pages.length) {
-              final page = state.pages[state.currentPageIndex];
-              final elements = page['elements'] as List<dynamic>;
-              final elementIndex =
-                  elements.indexWhere((e) => e['id'] == elementId);
-
-              if (elementIndex >= 0) {
-                final element = elements[elementIndex] as Map<String, dynamic>;
-                positionProps.forEach((key, value) {
-                  element[key] = value;
-                });
-
-                // 如果是当前选中的元素，更新selectedElement
-                if (state.selectedElementIds.contains(elementId)) {
-                  state.selectedElement = element;
-                }
-
-                state.hasUnsavedChanges = true;
-                notifyListeners();
-              }
-            }
-          },
-        );
-      } else {
-        // 创建通用属性变化操作
-        operation = ElementPropertyOperation(
-          elementId: id,
-          oldProperties: oldProperties,
-          newProperties: newProperties,
-          updateElement: (id, props) {
-            if (state.currentPageIndex >= 0 &&
-                state.currentPageIndex < state.pages.length) {
-              final page = state.pages[state.currentPageIndex];
-              final elements = page['elements'] as List<dynamic>;
-              final elementIndex = elements.indexWhere((e) => e['id'] == id);
-
-              if (elementIndex >= 0) {
-                elements[elementIndex] = props;
-
-                // 如果是当前选中的元素，更新selectedElement
-                if (state.selectedElementIds.contains(id)) {
-                  state.selectedElement = props;
-                }
-
-                state.hasUnsavedChanges = true;
-                notifyListeners();
-              }
-            }
-          },
-        );
+      // 直接更新元素数据
+      elements[elementIndex] = newProperties;
+      
+      // 如果是当前选中的元素，更新selectedElement
+      if (state.selectedElementIds.contains(id)) {
+        state.selectedElement = newProperties;
       }
+      
+      state.hasUnsavedChanges = true;
 
-      undoRedoManager.addOperation(operation);
+      // 根据参数决定是否创建撤销操作
+      if (createUndoOperation) {
+        // 检查是否只是位置变化
+        final isTranslationOnly =
+            properties.keys.every((key) => key == 'x' || key == 'y');
+
+        UndoableOperation operation;
+
+        if (isTranslationOnly) {
+          // 创建位置变化操作
+          operation = ElementTranslationOperation(
+            elementIds: [id],
+            oldPositions: [
+              {
+                'x': oldProperties['x'],
+                'y': oldProperties['y'],
+              }
+            ],
+            newPositions: [
+              {
+                'x': newProperties['x'],
+                'y': newProperties['y'],
+              }
+            ],
+            updateElement: (elementId, positionProps) {
+              updateElementPropertiesInternal(elementId, positionProps, createUndoOperation: false);
+            },
+          );
+        } else {
+          // 创建通用属性变化操作
+          operation = ElementPropertyOperation(
+            elementId: id,
+            oldProperties: oldProperties,
+            newProperties: newProperties,
+            updateElement: (id, props) {
+              if (state.currentPageIndex >= 0 &&
+                  state.currentPageIndex < state.pages.length) {
+                final page = state.pages[state.currentPageIndex];
+                final elements = page['elements'] as List<dynamic>;
+                final elementIndex = elements.indexWhere((e) => e['id'] == id);
+
+                if (elementIndex >= 0) {
+                  elements[elementIndex] = props;
+
+                  if (state.selectedElementIds.contains(id)) {
+                    state.selectedElement = props;
+                  }
+                  
+                  state.hasUnsavedChanges = true;
+                  notifyListeners();
+                }
+              }
+            },
+          );
+        }
+
+        undoRedoManager.addOperation(operation, executeImmediately: false);
+      }
+      
+      notifyListeners();
     }
+  }
+
+  /// 更新元素属性（不创建撤销操作）- 供其他撤销操作处理器使用
+  void updateElementPropertiesWithoutUndo(String id, Map<String, dynamic> properties) {
+    updateElementPropertiesInternal(id, properties, createUndoOperation: false);
   }
 
   /// 更新单个元素属性
@@ -788,6 +791,9 @@ mixin ElementManagementMixin on ChangeNotifier {
                   if (state.selectedElementIds.contains(id)) {
                     state.selectedElement = props;
                   }
+                  
+                  state.hasUnsavedChanges = true;
+                  notifyListeners();
                 }
               }
             },
@@ -799,7 +805,7 @@ mixin ElementManagementMixin on ChangeNotifier {
           operationDescription: '批量更新${updatedElementIds.length}个元素',
         );
 
-        undoRedoManager.addOperation(batchOperation);
+        undoRedoManager.addOperation(batchOperation, executeImmediately: false);
       }
 
       state.hasUnsavedChanges = true;

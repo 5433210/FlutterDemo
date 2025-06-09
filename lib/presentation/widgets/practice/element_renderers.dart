@@ -178,7 +178,8 @@ class ElementRenderers {
                 );
             }
 
-            // 使用Positioned和Transform确保子元素在正确的位置和角度
+            // 🔧 恢复正确的子元素渲染逻辑
+            // 子元素需要应用自身的旋转变换
             return Positioned(
               left: x,
               top: y,
@@ -186,7 +187,6 @@ class ElementRenderers {
               height: height,
               child: Transform.rotate(
                 angle: rotation * (3.14159265359 / 180),
-                // 添加原点参数，确保旋转以元素中心为原点
                 alignment: Alignment.center,
                 child: Opacity(
                   opacity: isHidden && !isPreviewMode ? 0.5 : opacity,

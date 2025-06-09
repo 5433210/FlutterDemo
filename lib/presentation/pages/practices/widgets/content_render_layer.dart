@@ -247,6 +247,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             final elementOpacity =
                 (element['opacity'] as num?)?.toDouble() ?? 1.0;
             final elementId = element['id'] as String;
+            final elementType = element['type'] as String;
 
             // 🔧 获取图层透明度
             double layerOpacity = 1.0;
@@ -334,22 +335,34 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
               );
             }
 
+            // 组合元素不需要额外的Transform.rotate，因为子元素已经在内部被正确处理
+            final needsRotation = elementType != 'group';
+            
             return Positioned(
               left: elementX,
               top: elementY,
               child: RepaintBoundary(
                 key: ValueKey('element_repaint_$elementId'),
-                child: Transform.rotate(
-                  angle: elementRotation * 3.14159265359 / 180,
-                  child: Opacity(
-                    opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
-                    child: SizedBox(
-                      width: elementWidth,
-                      height: elementHeight,
-                      child: elementWidget,
+                child: needsRotation 
+                  ? Transform.rotate(
+                      angle: elementRotation * 3.14159265359 / 180,
+                      child: Opacity(
+                        opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
+                        child: SizedBox(
+                          width: elementWidth,
+                          height: elementHeight,
+                          child: elementWidget,
+                        ),
+                      ),
+                    )
+                  : Opacity(
+                      opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
+                      child: SizedBox(
+                        width: elementWidth,
+                        height: elementHeight,
+                        child: elementWidget,
+                      ),
                     ),
-                  ),
-                ),
               ),
             );
           }).toList(),

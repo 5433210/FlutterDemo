@@ -323,18 +323,47 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
         oldWidget.height != widget.height ||
         oldWidget.rotation != widget.rotation ||
         oldWidget.initialScale != widget.initialScale) {
-      EditPageLogger.canvasDebug('控制点属性更新', 
-        data: {
-          'x': widget.x,
-          'y': widget.y,
-          'width': widget.width,
-          'height': widget.height,
-          'rotation': widget.rotation,
-          'scale': widget.initialScale
-        });
+      
+      // 🔧 DEBUG: 详细的属性变化分析
+      EditPageLogger.editPageDebug('🔧 CanvasControlPoints属性更新', data: {
+        'elementId': widget.elementId,
+        'position_changed': {
+          'old_x': oldWidget.x,
+          'new_x': widget.x,
+          'old_y': oldWidget.y,
+          'new_y': widget.y,
+          'x_changed': oldWidget.x != widget.x,
+          'y_changed': oldWidget.y != widget.y,
+        },
+        'size_changed': {
+          'old_width': oldWidget.width,
+          'new_width': widget.width,
+          'old_height': oldWidget.height,
+          'new_height': widget.height,
+          'width_changed': oldWidget.width != widget.width,
+          'height_changed': oldWidget.height != widget.height,
+        },
+        'rotation_changed': {
+          'old_rotation': oldWidget.rotation,
+          'new_rotation': widget.rotation,
+          'rotation_changed': oldWidget.rotation != widget.rotation,
+        },
+        'scale_changed': {
+          'old_scale': oldWidget.initialScale,
+          'new_scale': widget.initialScale,
+          'scale_changed': oldWidget.initialScale != widget.initialScale,
+        },
+        'operation': 'control_points_update_analysis',
+      });
 
       // 强制刷新控制点以适应新的缩放比例
       setState(() {});
+    } else {
+      // 🔧 DEBUG: 无变化的情况
+      EditPageLogger.editPageDebug('🔧 CanvasControlPoints无属性变化', data: {
+        'elementId': widget.elementId,
+        'operation': 'control_points_no_change',
+      });
     }
   }
 
