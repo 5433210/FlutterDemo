@@ -1,6 +1,9 @@
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
+
 /// 全局图像缓存 - 增强版，统一管理UI图像资源
 class GlobalImageCache {
   // 图像缓存，使用静态Map便于全局访问
@@ -15,34 +18,53 @@ class GlobalImageCache {
   /// 添加图像到缓存
   static void put(String key, ui.Image image) {
     if (key.isEmpty) {
-      if (debugMode) debugPrint('❌ GlobalImageCache: 尝试缓存空键');
+      EditPageLogger.performanceWarning(
+        '尝试缓存空键',
+        data: {'operation': 'put', 'key': 'empty'},
+      );
       return;
     }
     
     if (image.width <= 0 || image.height <= 0) {
-      if (debugMode) debugPrint('❌ GlobalImageCache: 尝试缓存无效图像: $key');
+      EditPageLogger.performanceWarning(
+        '尝试缓存无效图像',
+        data: {
+          'key': key,
+          'width': image.width,
+          'height': image.height,
+          'operation': 'put',
+        },
+      );
       return;
     }
     
     _cache[key] = image;
     _accessCount[key] = 0;
     
-    if (debugMode) {
-      debugPrint('✅ GlobalImageCache: 成功缓存图像: $key (${image.width}x${image.height})');
-      debugPrint('ℹ️ GlobalImageCache: 当前缓存大小: ${_cache.length} 项');
-    }
+    EditPageLogger.performanceInfo(
+      '图像缓存添加成功',
+      data: {
+        'key': key,
+        'imageWidth': image.width,
+        'imageHeight': image.height,
+        'cacheSize': _cache.length,
+        'operation': 'put',
+      },
+    );
   }
 
   /// 检查缓存中是否包含指定的键
   static bool contains(String key) {
     bool result = _cache.containsKey(key);
-    if (debugMode) {
-      if (result) {
-        debugPrint('✅ GlobalImageCache: 缓存中存在键: $key');
-      } else {
-        debugPrint('⚠️ GlobalImageCache: 缓存中不存在键: $key');
-      }
-    }
+    EditPageLogger.performanceInfo(
+      '缓存键检查',
+      data: {
+        'key': key,
+        'exists': result,
+        'operation': 'contains',
+        'cacheSize': _cache.length,
+      },
+    );
     return result;
   }
 
@@ -54,14 +76,28 @@ class GlobalImageCache {
       // 更新访问计数
       _accessCount[key] = (_accessCount[key] ?? 0) + 1;
       
-      if (debugMode) {
-        debugPrint('✅ GlobalImageCache: 成功获取图像: $key (${image.width}x${image.height})');
-        debugPrint('ℹ️ GlobalImageCache: 访问计数: ${_accessCount[key]}');
-      }
-    } else if (debugMode) {
-      debugPrint('❌ GlobalImageCache: 未找到图像: $key');
-      debugPrint('ℹ️ GlobalImageCache: 当前缓存键列表:');
-      _cache.keys.toList().forEach((k) => debugPrint('   - $k'));
+      EditPageLogger.performanceInfo(
+        '图像缓存命中',
+        data: {
+          'key': key,
+          'imageWidth': image.width,
+          'imageHeight': image.height,
+          'accessCount': _accessCount[key],
+          'operation': 'get',
+          'cacheHit': true,
+        },
+      );
+    } else {
+      EditPageLogger.performanceWarning(
+        '图像缓存未命中',
+        data: {
+          'key': key,
+          'operation': 'get',
+          'cacheHit': false,
+          'availableKeys': _cache.keys.toList(),
+          'cacheSize': _cache.length,
+        },
+      );
     }
     
     return image;
@@ -72,7 +108,13 @@ class GlobalImageCache {
     int count = _cache.length;
     _cache.clear();
     _accessCount.clear();
-    if (debugMode) debugPrint('ℹ️ GlobalImageCache: 清除了 $count 项缓存');
+    EditPageLogger.performanceInfo(
+      '图像缓存清除完成',
+      data: {
+        'clearedCount': count,
+        'operation': 'clear',
+      },
+    );
   }
 
   /// 从缓存中移除特定项
@@ -80,8 +122,16 @@ class GlobalImageCache {
     bool existed = _cache.containsKey(key);
     _cache.remove(key);
     _accessCount.remove(key);
-    if (debugMode && existed) {
-      debugPrint('ℹ️ GlobalImageCache: 移除缓存项: $key');
+    if (existed) {
+      EditPageLogger.performanceInfo(
+        '移除图像缓存项',
+        data: {
+          'key': key,
+          'existed': existed,
+          'operation': 'remove',
+          'newCacheSize': _cache.length,
+        },
+      );
     }
   }
   
@@ -114,16 +164,29 @@ class GlobalImageCache {
     
     for (String key in _cache.keys) {
       if (key.startsWith(prefix)) {
-        if (debugMode) {
-          debugPrint('✅ GlobalImageCache: 根据前缀找到图像: $key (前缀: $prefix)');
-        }
+        EditPageLogger.performanceInfo(
+          '前缀匹配图像缓存命中',
+          data: {
+            'matchedKey': key,
+            'prefix': prefix,
+            'operation': 'getByPrefix',
+            'cacheHit': true,
+          },
+        );
         return _cache[key];
       }
     }
     
-    if (debugMode) {
-      debugPrint('❌ GlobalImageCache: 根据前缀未找到图像: $prefix');
-    }
+    EditPageLogger.performanceWarning(
+      '前缀匹配图像缓存未命中',
+      data: {
+        'prefix': prefix,
+        'operation': 'getByPrefix',
+        'cacheHit': false,
+        'availableKeys': _cache.keys.toList(),
+        'cacheSize': _cache.length,
+      },
+    );
     return null;
   }
 }

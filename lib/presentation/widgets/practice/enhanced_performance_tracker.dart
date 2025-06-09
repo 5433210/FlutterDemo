@@ -7,6 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
+
 /// Enhanced performance tracker with detailed metrics collection
 /// Implements Task 5.1: Enhanced frame time tracking, detailed logging, and regression detection
 class EnhancedPerformanceTracker extends ChangeNotifier {
@@ -52,8 +55,14 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
   /// Create a performance baseline for regression detection
   void createPerformanceBaseline(String name, {String? description}) {
     if (_frameTimingHistory.length < 60) {
-      debugPrint(
-          '⚠️ Not enough frame data to create baseline (need at least 60 frames)');
+      EditPageLogger.performanceWarning(
+        '无足够帧数据创建基准线',
+        data: {
+          'currentFrameCount': _frameTimingHistory.length,
+          'requiredFrameCount': 60,
+          'operation': 'createPerformanceBaseline',
+        },
+      );
       return;
     }
 
@@ -95,8 +104,17 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
       severity: PerformanceSeverity.info,
     ));
 
-    debugPrint(
-        '📊 Performance baseline "$name" created: ${avgFps.toStringAsFixed(1)} FPS');
+    EditPageLogger.performanceInfo(
+      '性能基准线创建完成',
+      data: {
+        'baselineName': name,
+        'description': description,
+        'averageFps': double.parse(avgFps.toStringAsFixed(1)),
+        'averageFrameTime_ms': avgFrameTime.inMilliseconds,
+        'jankPercentage': double.parse(jankPercentage.toStringAsFixed(2)),
+        'sampleSize': recentFrames.length,
+      },
+    );
   }
 
   /// Dispose of the tracker
@@ -226,7 +244,14 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
     await _initializeLogging();
     _startDetailedTracking();
 
-    debugPrint('🚀 EnhancedPerformanceTracker initialized');
+    EditPageLogger.performanceInfo(
+      '增强性能追踪器初始化完成',
+      data: {
+        'loggingEnabled': _loggingEnabled,
+        'maxFrameHistory': _maxFrameHistory,
+        'operation': 'initialize',
+      },
+    );
   }
 
   /// Reset all performance tracking data
@@ -238,7 +263,14 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
     _operationMetrics.clear();
     notifyListeners();
 
-    debugPrint('🔄 Performance tracker reset');
+    EditPageLogger.performanceInfo(
+      '性能追踪器重置完成',
+      data: {
+        'clearedFrameHistory': _frameTimingHistory.length,
+        'clearedEvents': _performanceEvents.length,
+        'clearedOperations': _operationMetrics.length,
+      },
+    );
   }
 
   /// Start tracking a specific operation
@@ -300,10 +332,16 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
             : PerformanceSeverity.warning,
       ));
 
-      debugPrint('⚠️ Performance regression detected! '
-          'Current FPS: ${currentAvgFps.toStringAsFixed(1)}, '
-          'Baseline: ${baselineFps.toStringAsFixed(1)} '
-          '(${regressionPercentage.toStringAsFixed(1)}% degradation)');
+      EditPageLogger.performanceWarning(
+        '检测到性能回归',
+        data: {
+          'currentFps': double.parse(currentAvgFps.toStringAsFixed(1)),
+          'baselineFps': double.parse(baselineFps.toStringAsFixed(1)),
+          'degradationPercentage': double.parse(regressionPercentage.toStringAsFixed(1)),
+          'baselineName': _currentBaseline!.name,
+          'regressionThreshold': _regressionThreshold,
+        },
+      );
     }
   }
 
@@ -319,9 +357,21 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
       _logFile = File('logs/performance/performance_log_$timestamp.json');
       _loggingEnabled = true;
 
-      debugPrint('📝 Performance logging initialized: ${_logFile.path}');
+      EditPageLogger.performanceInfo(
+        '性能日志记录初始化完成',
+        data: {
+          'logFilePath': _logFile.path,
+          'loggingEnabled': true,
+        },
+      );
     } catch (e) {
-      debugPrint('❌ Failed to initialize performance logging: $e');
+      EditPageLogger.performanceWarning(
+        '性能日志记录初始化失败',
+        data: {
+          'error': e.toString(),
+          'loggingEnabled': false,
+        },
+      );
       _loggingEnabled = false;
     }
   }
@@ -342,8 +392,15 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
 
     // Debug output for critical events
     if (event.severity == PerformanceSeverity.critical) {
-      debugPrint(
-          '🚨 CRITICAL PERFORMANCE EVENT: ${event.type} - ${event.data}');
+      EditPageLogger.performanceWarning(
+        '关键性能事件',
+        data: {
+          'eventType': event.type.toString(),
+          'eventData': event.data,
+          'severity': 'critical',
+          'timestamp': event.timestamp.toIso8601String(),
+        },
+      );
     }
   }
 
@@ -447,7 +504,14 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
         mode: FileMode.append,
       );
     } catch (e) {
-      debugPrint('❌ Failed to write performance event to file: $e');
+      EditPageLogger.performanceWarning(
+        '写入性能事件到文件失败',
+        data: {
+          'error': e.toString(),
+          'loggingEnabled': _loggingEnabled,
+          'eventType': event.type.toString(),
+        },
+      );
     }
   }
 }

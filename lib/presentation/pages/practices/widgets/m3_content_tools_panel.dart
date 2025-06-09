@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 
@@ -93,11 +95,26 @@ class M3ContentToolsPanel extends StatelessWidget {
       // Drag data is element type
       data: elementType,
       onDragStarted: () {
-        debugPrint('🎯 工具栏拖拽开始: elementType=$elementType');
+        EditPageLogger.editPageDebug(
+          '工具栏拖拽开始',
+          data: {
+            'elementType': elementType,
+            'toolName': toolName,
+            'operation': 'onDragStarted',
+          },
+        );
       },
       onDragEnd: (details) {
-        debugPrint(
-            '🎯 工具栏拖拽结束: elementType=$elementType, wasAccepted=${details.wasAccepted}');
+        EditPageLogger.editPageDebug(
+          '工具栏拖拽结束',
+          data: {
+            'elementType': elementType,
+            'toolName': toolName,
+            'wasAccepted': details.wasAccepted,
+            'velocity': details.velocity.toString(),
+            'operation': 'onDragEnd',
+          },
+        );
       },
       // Widget shown while dragging
       feedback: Material(
@@ -157,13 +174,31 @@ class M3ContentToolsPanel extends StatelessWidget {
             case 'image':
               // Directly add empty image element without dialog
               final elementId = controller.addEmptyImageElementAt(100.0, 100.0);
-              print('🎯 工具栏点击创建图像元素: $elementId');
+              EditPageLogger.editPageInfo(
+                '工具栏点击创建图像元素',
+                data: {
+                  'elementId': elementId,
+                  'elementType': 'image',
+                  'x': 100.0,
+                  'y': 100.0,
+                  'operation': 'click_create',
+                },
+              );
               break;
             case 'collection':
               // Directly add empty collection element without dialog
               final elementId =
                   controller.addEmptyCollectionElementAt(100.0, 100.0);
-              print('🎯 工具栏点击创建集字元素: $elementId');
+              EditPageLogger.editPageInfo(
+                '工具栏点击创建集字元素',
+                data: {
+                  'elementId': elementId,
+                  'elementType': 'collection',
+                  'x': 100.0,
+                  'y': 100.0,
+                  'operation': 'click_create',
+                },
+              );
               break;
           }
         },

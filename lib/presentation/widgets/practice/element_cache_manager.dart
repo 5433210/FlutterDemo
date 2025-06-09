@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'memory_manager.dart';
 
 /// 元素缓存性能指标
@@ -266,10 +268,15 @@ class ElementCacheManager extends ChangeNotifier {
         _maxSize = maxSize ?? _defaultMaxSize,
         _memoryThreshold = memoryThreshold ?? _defaultMemoryThreshold,
         _memoryManager = memoryManager {
-    if (kDebugMode) {
-      print(
-          '🧠 ElementCacheManager: Created with strategy=$strategy, maxSize=$_maxSize, memoryThreshold=${_formatBytes(_memoryThreshold)}');
-    }
+    EditPageLogger.performanceInfo(
+      '元素缓存管理器创建完成',
+      data: {
+        'strategy': strategy.toString(),
+        'maxSize': _maxSize,
+        'memoryThreshold': _memoryThreshold,
+        'memoryThresholdReadable': _formatBytes(_memoryThreshold),
+      },
+    );
 
     // Set up memory manager callbacks if provided
     if (_memoryManager != null) {
@@ -297,10 +304,16 @@ class ElementCacheManager extends ChangeNotifier {
 
     if (!needsCleanup) return;
 
-    if (kDebugMode) {
-      print(
-          '🧹 ElementCacheManager: Starting cache cleanup. Current size: ${_cache.length}, Memory: ${_formatBytes(_metrics.currentMemoryUsage)}');
-    }
+    EditPageLogger.performanceInfo(
+      '开始缓存清理',
+      data: {
+        'currentCacheSize': _cache.length,
+        'currentMemoryUsage': _metrics.currentMemoryUsage,
+        'memoryUsageReadable': _formatBytes(_metrics.currentMemoryUsage),
+        'memoryThreshold': _memoryThreshold,
+        'force': force,
+      },
+    );
 
     // 创建条目列表，排除固定项
     final entries =
@@ -308,10 +321,13 @@ class ElementCacheManager extends ChangeNotifier {
 
     // 如果没有可清理项，直接返回
     if (entries.isEmpty) {
-      if (kDebugMode) {
-        print(
-            '⚠️ ElementCacheManager: No non-pinned entries to clean up. Pinned items: ${_pinnedElements.length}');
-      }
+      EditPageLogger.performanceWarning(
+        '无可清理的非固定条目',
+        data: {
+          'pinnedItemsCount': _pinnedElements.length,
+          'totalCacheSize': _cache.length,
+        },
+      );
       return;
     }
 
@@ -358,21 +374,29 @@ class ElementCacheManager extends ChangeNotifier {
 
     final duration = DateTime.now().difference(startTime);
 
-    if (kDebugMode) {
-      print(
-          '🧹 ElementCacheManager: Cleanup completed in ${duration.inMilliseconds}ms.');
-      print(
-          '   Removed $removedCount items, freed ${_formatBytes(freedMemory)}.');
-      print(
-          '   New cache size: ${_cache.length}, Memory: ${_formatBytes(_metrics.currentMemoryUsage)}');
-    }
+    EditPageLogger.performanceInfo(
+      '缓存清理完成',
+      data: {
+        'duration_ms': duration.inMilliseconds,
+        'removedCount': removedCount,
+        'freedMemory': freedMemory,
+        'freedMemoryReadable': _formatBytes(freedMemory),
+        'newCacheSize': _cache.length,
+        'newMemoryUsage': _metrics.currentMemoryUsage,
+        'newMemoryUsageReadable': _formatBytes(_metrics.currentMemoryUsage),
+      },
+    );
 
     // 如果还是超过阈值，执行更激进的清理
     if (force && _metrics.currentMemoryUsage > _memoryThreshold) {
-      if (kDebugMode) {
-        print(
-            '⚠️ ElementCacheManager: Still over memory threshold after cleanup. Performing aggressive cleanup.');
-      }
+      EditPageLogger.performanceWarning(
+        '缓存清理后仍超过内存阈值，执行激进清理',
+        data: {
+          'currentMemoryUsage': _metrics.currentMemoryUsage,
+          'memoryThreshold': _memoryThreshold,
+          'currentCacheSize': _cache.length,
+        },
+      );
       // 清除所有非固定缓存
       _cache.removeWhere((id, entry) => !entry.isPinned);
 
@@ -385,11 +409,15 @@ class ElementCacheManager extends ChangeNotifier {
       _metrics.currentSize = _cache.length;
       _metrics.updateMemoryUsage(newMemoryUsage);
 
-      if (kDebugMode) {
-        print('🧹 ElementCacheManager: Aggressive cleanup completed.');
-        print(
-            '   New cache size: ${_cache.length}, Memory: ${_formatBytes(_metrics.currentMemoryUsage)}');
-      }
+      EditPageLogger.performanceInfo(
+        '激进缓存清理完成',
+        data: {
+          'newCacheSize': _cache.length,
+          'newMemoryUsage': _metrics.currentMemoryUsage,
+          'newMemoryUsageReadable': _formatBytes(_metrics.currentMemoryUsage),
+          'removedAllNonPinned': true,
+        },
+      );
     }
 
     notifyListeners();
@@ -435,10 +463,13 @@ class ElementCacheManager extends ChangeNotifier {
     // _metrics.currentSize = 0;
     // _metrics.updateMemoryUsage(0);
 
-    if (kDebugMode) {
-      print(
-          '🔄 ElementCacheManager: Marked all ${_elementsNeedingUpdate.length} elements for update');
-    }
+    EditPageLogger.performanceInfo(
+      '标记所有元素需要更新',
+      data: {
+        'elementCount': _elementsNeedingUpdate.length,
+        'operation': 'markAllElementsForUpdate',
+      },
+    );
 
     notifyListeners();
   }
@@ -455,9 +486,14 @@ class ElementCacheManager extends ChangeNotifier {
           _metrics.currentMemoryUsage - removedEntry.estimatedSize);
     }
 
-    if (kDebugMode) {
-      print('🔄 ElementCacheManager: Marked element $elementId for update');
-    }
+    EditPageLogger.performanceInfo(
+      '标记元素需要更新',
+      data: {
+        'elementId': elementId,
+        'wasInCache': removedEntry != null,
+        'operation': 'markElementForUpdate',
+      },
+    );
 
     notifyListeners();
   }
@@ -481,9 +517,15 @@ class ElementCacheManager extends ChangeNotifier {
       _metrics.updateMemoryUsage(_metrics.currentMemoryUsage - removedMemory);
     }
 
-    if (kDebugMode && elementIds.isNotEmpty) {
-      print(
-          '🔄 ElementCacheManager: Marked ${elementIds.length} elements for update');
+    if (elementIds.isNotEmpty) {
+      EditPageLogger.performanceInfo(
+        '批量标记元素需要更新',
+        data: {
+          'elementCount': elementIds.length,
+          'removedMemory': removedMemory,
+          'operation': 'markElementsForUpdate',
+        },
+      );
     }
 
     if (elementIds.isNotEmpty) {
@@ -509,9 +551,15 @@ class ElementCacheManager extends ChangeNotifier {
     _metrics.currentSize = 0;
     _metrics.updateMemoryUsage(0);
 
-    if (kDebugMode) {
-      print('🧹 ElementCacheManager: Cache reset');
-    }
+    EditPageLogger.performanceInfo(
+      '缓存重置完成',
+      data: {
+        'clearedCacheSize': _cache.length,
+        'clearedUpdateElements': _elementsNeedingUpdate.length,
+        'clearedPinnedElements': _pinnedElements.length,
+        'operation': 'reset',
+      },
+    );
 
     notifyListeners();
   }
@@ -583,10 +631,16 @@ class ElementCacheManager extends ChangeNotifier {
   void updateConfiguration(ElementCacheConfiguration config) {
     // Note: This implementation doesn't change _maxSize as it's final
     // In a real implementation, you might want to make _maxSize mutable
-    if (kDebugMode) {
-      print(
-          '🔧 ElementCacheManager: Configuration updated with maxSize=${config.maxCacheSize}');
-    }
+    EditPageLogger.performanceInfo(
+      '缓存配置更新',
+      data: {
+        'newMaxCacheSize': config.maxCacheSize,
+        'newMaxMemoryUsage': config.maxMemoryUsage,
+        'cleanupThreshold': config.cleanupThreshold,
+        'enableAggressiveCleanup': config.enableAggressiveCleanup,
+        'currentCacheSize': _cache.length,
+      },
+    );
 
     // Apply the cleanup threshold by triggering cleanup if needed
     if (config.enableAggressiveCleanup || _cache.length > config.maxCacheSize) {
@@ -598,10 +652,15 @@ class ElementCacheManager extends ChangeNotifier {
   void updateMaxCacheSize(int newSize) {
     // Note: Since _maxSize is final, we can't actually change it
     // This method exists for API compatibility
-    if (kDebugMode) {
-      print(
-          '🔧 ElementCacheManager: Requested to update max cache size to $newSize (current: $_maxSize)');
-    }
+    EditPageLogger.performanceInfo(
+      '请求更新最大缓存大小',
+      data: {
+        'requestedSize': newSize,
+        'currentMaxSize': _maxSize,
+        'currentCacheSize': _cache.length,
+        'note': 'maxSize is final, cannot be changed',
+      },
+    );
 
     // Trigger cleanup if current size exceeds new size
     if (_cache.length > newSize) {
@@ -618,19 +677,29 @@ class ElementCacheManager extends ChangeNotifier {
 
   /// Handle low memory callback from MemoryManager
   void _handleLowMemory() {
-    if (kDebugMode) {
-      print(
-          '🚨 ElementCacheManager: Low memory detected, triggering aggressive cleanup');
-    }
+    EditPageLogger.performanceWarning(
+      '检测到低内存，触发激进清理',
+      data: {
+        'currentCacheSize': _cache.length,
+        'currentMemoryUsage': _metrics.currentMemoryUsage,
+        'memoryThreshold': _memoryThreshold,
+        'operation': '_handleLowMemory',
+      },
+    );
     cleanupCache(force: true);
   }
 
   /// Handle memory pressure callback from MemoryManager
   void _handleMemoryPressure() {
-    if (kDebugMode) {
-      print(
-          '⚠️ ElementCacheManager: Memory pressure detected, triggering cleanup');
-    }
+    EditPageLogger.performanceWarning(
+      '检测到内存压力，触发清理',
+      data: {
+        'currentCacheSize': _cache.length,
+        'currentMemoryUsage': _metrics.currentMemoryUsage,
+        'memoryThreshold': _memoryThreshold,
+        'operation': '_handleMemoryPressure',
+      },
+    );
     cleanupCache(force: false);
   }
 }

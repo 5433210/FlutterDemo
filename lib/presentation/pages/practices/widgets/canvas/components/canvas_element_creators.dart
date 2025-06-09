@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 
@@ -11,83 +12,107 @@ mixin CanvasElementCreators {
 
   /// 创建集字元素
   void createCollectionElement(Offset position) {
-    debugPrint('🎯[DROP] 进入createCollectionElement，位置: $position');
-    
-    AppLogger.info(
-      '创建集字元素',
-      tag: 'Canvas',
-      data: {'position': '$position'},
+    EditPageLogger.canvasDebug(
+      '开始创建集字元素',
+      data: {
+        'position': '(${position.dx}, ${position.dy})',
+        'operation': 'createCollectionElement',
+      },
     );
 
     // 调用controller创建集字元素，现在返回元素ID
     final newElementId =
         controller.addCollectionElementAt(position.dx, position.dy, '');
 
-    debugPrint('🎯[DROP] 集字元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
+    EditPageLogger.canvasDebug(
+      '集字元素已创建',
+      data: {
+        'elementId': newElementId,
+        'position': '(${position.dx}, ${position.dy})',
+        'elementType': 'collection',
+      },
+    );
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
-      debugPrint('🎯[DROP] 集字元素已选中: $newElementId');
-      AppLogger.info(
-        '创建集字元素成功',
-        tag: 'Canvas',
-        data: {'elementId': newElementId},
+      EditPageLogger.canvasDebug(
+        '集字元素创建完成并已选中',
+        data: {
+          'elementId': newElementId,
+          'operation': 'post_frame_selection',
+        },
       );
     });
   }
 
   /// 创建图像元素
   void createImageElement(Offset position) {
-    debugPrint('🎯[DROP] 进入createImageElement，位置: $position');
-    
-    AppLogger.info(
-      '创建图像元素',
-      tag: 'Canvas',
-      data: {'position': '$position'},
+    EditPageLogger.canvasDebug(
+      '开始创建图像元素',
+      data: {
+        'position': '(${position.dx}, ${position.dy})',
+        'operation': 'createImageElement',
+      },
     );
 
     // 调用controller创建图像元素，现在返回元素ID
     final newElementId =
         controller.addImageElementAt(position.dx, position.dy, '');
 
-    debugPrint('🎯[DROP] 图像元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
+    EditPageLogger.canvasDebug(
+      '图像元素已创建',
+      data: {
+        'elementId': newElementId,
+        'position': '(${position.dx}, ${position.dy})',
+        'elementType': 'image',
+      },
+    );
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
-      debugPrint('🎯[DROP] 图像元素已选中: $newElementId');
-      AppLogger.info(
-        '创建图像元素成功',
-        tag: 'Canvas',
-        data: {'elementId': newElementId},
+      EditPageLogger.canvasDebug(
+        '图像元素创建完成并已选中',
+        data: {
+          'elementId': newElementId,
+          'operation': 'post_frame_selection',
+        },
       );
     });
   }
 
   /// 创建文本元素
   void createTextElement(Offset position) {
-    debugPrint('🎯[DROP] 进入createTextElement，位置: $position');
-    
-    AppLogger.info(
-      '创建文本元素',
-      tag: 'Canvas',
-      data: {'position': '$position'},
+    EditPageLogger.canvasDebug(
+      '开始创建文本元素',
+      data: {
+        'position': '(${position.dx}, ${position.dy})',
+        'operation': 'createTextElement',
+      },
     );
 
     // 调用controller创建文本元素，现在返回元素ID
     final newElementId = controller.addTextElementAt(position.dx, position.dy);
     
-    debugPrint('🎯[DROP] 文本元素已创建，ID: $newElementId，位置: (${position.dx}, ${position.dy})');
+    EditPageLogger.canvasDebug(
+      '文本元素已创建',
+      data: {
+        'elementId': newElementId,
+        'position': '(${position.dx}, ${position.dy})',
+        'elementType': 'text',
+      },
+    );
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.selectElement(newElementId);
-      debugPrint('🎯[DROP] 文本元素已选中: $newElementId');
-      AppLogger.info(
-        '创建文本元素成功',
-        tag: 'Canvas',
-        data: {'elementId': newElementId},
+      EditPageLogger.canvasDebug(
+        '文本元素创建完成并已选中',
+        data: {
+          'elementId': newElementId,
+          'operation': 'post_frame_selection',
+        },
       );
     });
   }
@@ -105,20 +130,19 @@ mixin CanvasElementCreators {
     }
 
     if (!hasChanges) {
-      AppLogger.debug(
+      EditPageLogger.canvasDebug(
         '无需创建撤销操作：没有属性变化',
-        tag: 'Canvas',
         data: {'elementId': elementId},
       );
       return; // 没有变化，不需要创建撤销操作
     }
 
-    AppLogger.debug(
+    EditPageLogger.canvasDebug(
       '创建撤销操作',
-      tag: 'Canvas',
       data: {
         'elementId': elementId,
         'changedProperties': newProperties.keys.toList(),
+        'operation': 'createUndoOperation',
       },
     );
 
@@ -131,7 +155,10 @@ mixin CanvasElementCreators {
         oldRotations: [(oldProperties['rotation'] as num).toDouble()],
         newRotations: [(newProperties['rotation'] as num).toDouble()],
       );
-      AppLogger.debug('创建旋转撤销操作', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        '创建旋转撤销操作',
+        data: {'undoType': 'rotation', 'elementId': elementId},
+      );
     } else if (newProperties.keys
         .any((key) => ['x', 'y', 'width', 'height'].contains(key))) {
       // 调整大小/位置操作
@@ -153,49 +180,96 @@ mixin CanvasElementCreators {
         oldSizes: [oldSize],
         newSizes: [newSize],
       );
-      AppLogger.debug('创建调整大小撤销操作', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        '创建调整大小撤销操作',
+        data: {'undoType': 'resize', 'elementId': elementId},
+      );
     }
   }
 
   /// 处理元素拖拽创建
   void handleElementDrop(String elementType, Offset position,
       {bool applyCenteringOffset = true}) {
-    debugPrint('🎯[DROP] 进入CanvasElementCreators.handleElementDrop');
-    debugPrint('🎯[DROP]   - 元素类型: $elementType');
-    debugPrint('🎯[DROP]   - 接收位置: $position');
-    debugPrint('🎯[DROP]   - 启用居中偏移: $applyCenteringOffset');
+    EditPageLogger.canvasDebug(
+      '开始处理元素拖拽创建',
+      data: {
+        'elementType': elementType,
+        'originalPosition': '(${position.dx}, ${position.dy})',
+        'applyCenteringOffset': applyCenteringOffset,
+        'operation': 'handleElementDrop',
+      },
+    );
 
     Offset finalPosition = position;
 
     // 🔧 修复拖拽定位问题：只有在需要时才调整位置使元素居中在鼠标释放点
     // 当坐标已经在上级方法中正确转换时，不需要再次调整
     if (applyCenteringOffset) {
-      debugPrint('🎯[DROP] 开始计算居中偏移:');
+      EditPageLogger.canvasDebug(
+        '开始计算居中偏移',
+        data: {'elementType': elementType},
+      );
       // 元素默认尺寸在element_management_mixin.dart中定义
       switch (elementType) {
         case 'collection':
           // 集字元素默认 200x200，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 100);
-          debugPrint('🎯[DROP]   - 集字元素 200x200: $position → $finalPosition (偏移-100,-100)');
+          EditPageLogger.canvasDebug(
+            '计算集字元素居中偏移',
+            data: {
+              'defaultSize': '200x200',
+              'original': '(${position.dx}, ${position.dy})',
+              'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
+              'offset': '(-100, -100)',
+            },
+          );
           break;
         case 'image':
           // 图片元素默认 200x200，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 100);
-          debugPrint('🎯[DROP]   - 图片元素 200x200: $position → $finalPosition (偏移-100,-100)');
+          EditPageLogger.canvasDebug(
+            '计算图像元素居中偏移',
+            data: {
+              'defaultSize': '200x200',
+              'original': '(${position.dx}, ${position.dy})',
+              'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
+              'offset': '(-100, -100)',
+            },
+          );
           break;
         case 'text':
           // 文本元素默认 200x100，调整位置使其居中
           finalPosition = Offset(position.dx - 100, position.dy - 50);
-          debugPrint('🎯[DROP]   - 文本元素 200x100: $position → $finalPosition (偏移-100,-50)');
+          EditPageLogger.canvasDebug(
+            '计算文本元素居中偏移',
+            data: {
+              'defaultSize': '200x100',
+              'original': '(${position.dx}, ${position.dy})',
+              'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
+              'offset': '(-100, -50)',
+            },
+          );
           break;
         default:
-          debugPrint('🎯[DROP]   - 未知元素类型，不应用居中偏移');
+          EditPageLogger.canvasDebug(
+            '未知元素类型，不应用居中偏移',
+            data: {'elementType': elementType},
+          );
       }
     } else {
-      debugPrint('🎯[DROP] 跳过居中偏移，直接使用原始位置');
+      EditPageLogger.canvasDebug(
+        '跳过居中偏移，直接使用原始位置',
+        data: {'position': '(${position.dx}, ${position.dy})'},
+      );
     }
 
-    debugPrint('🎯[DROP] 最终调用create方法，位置: $finalPosition');
+    EditPageLogger.canvasDebug(
+      '调用元素创建方法',
+      data: {
+        'elementType': elementType,
+        'finalPosition': '(${finalPosition.dx}, ${finalPosition.dy})',
+      },
+    );
 
     switch (elementType) {
       case 'collection':
@@ -208,18 +282,22 @@ mixin CanvasElementCreators {
         createTextElement(finalPosition);
         break;
       default:
-        debugPrint('🎯[DROP] ❌ 未知的元素类型: $elementType');
-        AppLogger.warning(
+        EditPageLogger.canvasError(
           '未知的元素类型',
-          tag: 'Canvas',
           data: {'elementType': elementType},
         );
         break;
     }
 
-    debugPrint('🎯[DROP] CanvasElementCreators.handleElementDrop处理完成');
-    debugPrint('🎯[DROP]   - 原始位置: $position');
-    debugPrint('🎯[DROP]   - 最终位置: $finalPosition');
-    debugPrint('🎯[DROP]   - 居中偏移: $applyCenteringOffset');
+    EditPageLogger.canvasDebug(
+      '元素拖拽创建处理完成',
+      data: {
+        'elementType': elementType,
+        'originalPosition': '(${position.dx}, ${position.dy})',
+        'finalPosition': '(${finalPosition.dx}, ${finalPosition.dy})',
+        'applyCenteringOffset': applyCenteringOffset,
+        'operation': 'handleElementDrop_completed',
+      },
+    );
   }
 }
