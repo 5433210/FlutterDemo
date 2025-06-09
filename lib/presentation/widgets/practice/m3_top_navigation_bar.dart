@@ -168,21 +168,69 @@ class M3TopNavigationBar extends StatelessWidget
 
   /// Edit title
   Future<void> _editTitle(BuildContext context, AppLocalizations l10n) async {
+    final currentTitle = controller.practiceTitle;
+    
+    EditPageLogger.editPageDebug(
+      '开始编辑标题',
+      data: {
+        'currentTitle': currentTitle,
+        'operation': 'title_edit_start',
+      },
+    );
+    
     final newTitle = await showDialog<String>(
       context: context,
       builder: (context) => PracticeTitleEditDialog(
-        initialTitle: controller.practiceTitle,
+        initialTitle: currentTitle,
         checkTitleExists: controller.checkTitleExists,
       ),
     );
 
     if (newTitle != null && newTitle.isNotEmpty) {
-      controller.updatePracticeTitle(newTitle);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditTitleUpdated(newTitle))),
+      EditPageLogger.editPageDebug(
+        '标题编辑确认',
+        data: {
+          'oldTitle': currentTitle,
+          'newTitle': newTitle,
+          'operation': 'title_edit_confirmed',
+        },
+      );
+      
+      try {
+        controller.updatePracticeTitle(newTitle);
+        
+        EditPageLogger.editPageDebug(
+          '标题更新成功',
+          data: {
+            'newTitle': newTitle,
+            'operation': 'title_update_success',
+          },
+        );
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.practiceEditTitleUpdated(newTitle))),
+          );
+        }
+      } catch (error, stackTrace) {
+        EditPageLogger.editPageError(
+          '标题更新失败',
+          error: error,
+          stackTrace: stackTrace,
+          data: {
+            'newTitle': newTitle,
+            'operation': 'title_update_error',
+          },
         );
       }
+    } else {
+      EditPageLogger.editPageDebug(
+        '标题编辑取消',
+        data: {
+          'currentTitle': currentTitle,
+          'operation': 'title_edit_cancelled',
+        },
+      );
     }
   }
 
@@ -201,7 +249,23 @@ class M3TopNavigationBar extends StatelessWidget
   /// Handle back button
   Future<void> _handleBackButton(
       BuildContext context, AppLocalizations l10n) async {
+    EditPageLogger.editPageDebug(
+      '导航返回按钮点击',
+      data: {
+        'hasUnsavedChanges': controller.state.hasUnsavedChanges,
+        'pageCount': controller.state.pages.length,
+        'operation': 'navigation_back_pressed',
+      },
+    );
+    
     if (controller.state.hasUnsavedChanges) {
+      EditPageLogger.editPageDebug(
+        '显示未保存更改确认对话框',
+        data: {
+          'operation': 'unsaved_changes_dialog_show',
+        },
+      );
+      
       final bool? result = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
@@ -211,11 +275,27 @@ class M3TopNavigationBar extends StatelessWidget
             actions: <Widget>[
               TextButton(
                 child: Text(l10n.cancel),
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () {
+                  EditPageLogger.editPageDebug(
+                    '取消离开编辑页',
+                    data: {
+                      'operation': 'navigation_back_cancelled',
+                    },
+                  );
+                  Navigator.of(context).pop(false);
+                },
               ),
               TextButton(
                 child: Text(l10n.practiceEditLeave),
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () {
+                  EditPageLogger.editPageDebug(
+                    '确认离开编辑页（丢弃更改）',
+                    data: {
+                      'operation': 'navigation_back_confirmed_discard',
+                    },
+                  );
+                  Navigator.of(context).pop(true);
+                },
               ),
             ],
           );
@@ -225,12 +305,26 @@ class M3TopNavigationBar extends StatelessWidget
       if (result == true && context.mounted) {
         // Check if we can safely pop
         if (Navigator.canPop(context)) {
+          EditPageLogger.editPageDebug(
+            '离开编辑页面',
+            data: {
+              'reason': 'user_confirmed_discard_changes',
+              'operation': 'navigation_exit',
+            },
+          );
           Navigator.of(context).pop();
         }
       }
     } else if (context.mounted) {
       // Check if we can safely pop
       if (Navigator.canPop(context)) {
+        EditPageLogger.editPageDebug(
+          '离开编辑页面',
+          data: {
+            'reason': 'no_unsaved_changes',
+            'operation': 'navigation_exit',
+          },
+        );
         Navigator.of(context).pop();
       }
     }

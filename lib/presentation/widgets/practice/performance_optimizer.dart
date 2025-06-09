@@ -41,7 +41,7 @@ class DevicePerformanceDetector {
       level = DevicePerformanceLevel.low;
     }
 
-    EditPageLogger.performanceInfo(
+      EditPageLogger.performanceInfo(
       '设备性能检测完成',
       data: {
         'renderScore': renderPerformance,
@@ -52,6 +52,19 @@ class DevicePerformanceDetector {
         'detectionTimeMs': timer.elapsedMilliseconds,
       },
     );
+    
+    // 检查性能阈值并发出警告
+    if (totalScore < 30) {
+      EditPageLogger.performanceWarning(
+        '设备性能低于推荐阈值',
+        data: {
+          'totalScore': totalScore,
+          'recommendedMinScore': 30,
+          'performanceLevel': level.name,
+          'suggestion': '建议启用低性能模式以提升用户体验',
+        },
+      );
+    }
     
     timer.finish();
 

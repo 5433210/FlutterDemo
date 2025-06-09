@@ -169,6 +169,8 @@ class MemoryManager extends ChangeNotifier {
     }
   }
 
+
+
   /// Get memory-efficient representation of an element
   MemoryEfficientElement createMemoryEfficientElement(
     Map<String, dynamic> element,
@@ -593,8 +595,39 @@ class MemoryManager extends ChangeNotifier {
   /// Update memory usage and track peak
   void _updateMemoryUsage(int delta) {
     _currentMemoryUsage = math.max(0, _currentMemoryUsage + delta);
+    
+    // 更新峰值使用量并记录日志
     if (_currentMemoryUsage > _peakMemoryUsage) {
+      final previousPeak = _peakMemoryUsage;
       _peakMemoryUsage = _currentMemoryUsage;
+      
+      EditPageLogger.performanceInfo(
+        '内存使用峰值更新',
+        data: {
+          'newPeakUsage': _formatBytes(_peakMemoryUsage),
+          'previousPeak': _formatBytes(previousPeak),
+          'currentUsage': _formatBytes(_currentMemoryUsage),
+          'maxLimit': _formatBytes(_maxMemoryBytes),
+          'peakUtilization': (_peakMemoryUsage / _maxMemoryBytes * 100).toStringAsFixed(1) + '%',
+          'delta': _formatBytes(delta),
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+      
+      // 检查是否接近内存限制
+      final utilizationPercent = _peakMemoryUsage / _maxMemoryBytes;
+      if (utilizationPercent > 0.9) {
+        EditPageLogger.performanceWarning(
+          '内存使用接近限制',
+          data: {
+            'peakUsage': _formatBytes(_peakMemoryUsage),
+            'maxLimit': _formatBytes(_maxMemoryBytes),
+            'utilizationPercent': (utilizationPercent * 100).toStringAsFixed(1),
+            'availableMemory': _formatBytes(_maxMemoryBytes - _peakMemoryUsage),
+            'suggestion': '建议及时清理不需要的资源',
+          },
+        );
+      }
     }
   }
 }

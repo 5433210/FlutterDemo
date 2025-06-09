@@ -503,6 +503,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
+                            final gestureStartTime = DateTime.now();
+                            EditPageLogger.canvasDebug(
+                              '画布拖拽开始',
+                              data: {
+                                'position': '${details.globalPosition.dx.toStringAsFixed(1)},${details.globalPosition.dy.toStringAsFixed(1)}',
+                                'localPosition': '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
+                                'currentTool': widget.controller.state.currentTool,
+                                'selectedCount': widget.controller.state.selectedElementIds.length,
+                                'isDragging': _isDragging,
+                                'dragManagerState': _dragStateManager.isDragging,
+                              },
+                            );
+
                             // 动态检查是否需要处理特殊手势
                             final shouldHandle =
                                 shouldHandleAnySpecialGesture(elements);
@@ -510,6 +523,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             if (shouldHandle) {
                               _gestureHandler.handlePanStart(details,
                                   elements.cast<Map<String, dynamic>>());
+                              
+                              final gestureProcessTime = DateTime.now().difference(gestureStartTime);
+                              EditPageLogger.canvasDebug(
+                                '手势处理完成',
+                                data: {
+                                  'gestureType': 'panStart',
+                                  'processingTimeMs': gestureProcessTime.inMilliseconds,
+                                  'elementsCount': elements.length,
+                                },
+                              );
                             } else {
                               EditPageLogger.canvasDebug('画布空白区域点击，不处理');
                               // 🔧 关键：不调用任何处理逻辑，让手势穿透

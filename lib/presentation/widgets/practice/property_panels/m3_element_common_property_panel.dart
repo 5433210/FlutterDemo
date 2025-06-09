@@ -4,7 +4,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 元素通用属性面板
 /// 用于显示元素的通用属性，如名称、ID、图层等

@@ -363,44 +363,114 @@ class FileOperations {
       return;
     }
 
+    // 开始性能监控
+    final saveStartTime = DateTime.now();
+    EditPageLogger.performanceInfo(
+      '开始保存字帖',
+      data: {
+        'pageCount': pages.length,
+        'layerCount': layers.length,
+        'practiceId': practiceId,
+        'hasTitle': controller.practiceTitle != null,
+        'practiceTitle': controller.practiceTitle,
+        'timestamp': saveStartTime.toIso8601String(),
+      },
+    );
+
     // 如果已经有字帖标题，直接保存
     if (controller.practiceTitle != null) {
-      // 确保将当前的页面内容传递给保存方法
-      final result =
-          await controller.savePractice(title: controller.practiceTitle);
+      try {
+        // 确保将当前的页面内容传递给保存方法
+        final result =
+            await controller.savePractice(title: controller.practiceTitle);
 
-      // 检查context是否仍然有效
-      if (context.mounted) {
-        if (result == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
-          );
-        } else if (result == 'title_exists') {
-          // 如果标题已存在，询问是否覆盖
-          final shouldOverwrite =
-              await _confirmOverwrite(context, controller.practiceTitle!);
-          if (shouldOverwrite && context.mounted) {
-            // 强制覆盖保存
-            final overwriteResult = await controller.savePractice(
-              title: controller.practiceTitle,
-              forceOverwrite: true,
+        final saveDuration = DateTime.now().difference(saveStartTime);
+        
+        EditPageLogger.performanceInfo(
+          '保存操作完成',
+          data: {
+            'saveResult': result.toString(),
+            'saveDurationMs': saveDuration.inMilliseconds,
+            'practiceTitle': controller.practiceTitle,
+            'pageCount': pages.length,
+            'operation': 'direct_save',
+          },
+        );
+
+        // 检查context是否仍然有效
+        if (context.mounted) {
+          if (result == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
             );
+          } else if (result == 'title_exists') {
+            // 如果标题已存在，询问是否覆盖
+            final shouldOverwrite =
+                await _confirmOverwrite(context, controller.practiceTitle!);
+            if (shouldOverwrite && context.mounted) {
+              // 强制覆盖保存
+              final overwriteStartTime = DateTime.now();
+              final overwriteResult = await controller.savePractice(
+                title: controller.practiceTitle,
+                forceOverwrite: true,
+              );
 
-            if (overwriteResult == true && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+              final overwriteDuration = DateTime.now().difference(overwriteStartTime);
+              
+              EditPageLogger.performanceInfo(
+                '覆盖保存完成',
+                data: {
+                  'overwriteResult': overwriteResult.toString(),
+                  'overwriteDurationMs': overwriteDuration.inMilliseconds,
+                  'totalDurationMs': DateTime.now().difference(saveStartTime).inMilliseconds,
+                  'practiceTitle': controller.practiceTitle,
+                },
               );
-            } else if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('保存失败，请稍后重试')),
-              );
+
+              if (overwriteResult == true && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('保存失败，请稍后重试')),
+                );
+              }
             }
+          } else {
+            // 如果保存失败，显示错误消息
+            EditPageLogger.performanceWarning(
+              '保存操作失败',
+              data: {
+                'saveResult': result.toString(),
+                'saveDurationMs': saveDuration.inMilliseconds,
+                'practiceTitle': controller.practiceTitle,
+                'pageCount': pages.length,
+              },
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('保存失败，请稍后重试')),
+            );
           }
-        } else {
-          // 如果保存失败，显示错误消息
+        }
+      } catch (error, stackTrace) {
+        final saveDuration = DateTime.now().difference(saveStartTime);
+        EditPageLogger.editPageError(
+          '保存操作异常',
+          error: error,
+          stackTrace: stackTrace,
+          data: {
+            'saveDurationMs': saveDuration.inMilliseconds,
+            'practiceTitle': controller.practiceTitle,
+            'pageCount': pages.length,
+            'operation': 'direct_save_exception',
+          },
+        );
+        
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('保存失败，请稍后重试')),
+            SnackBar(content: Text('保存失败：$error')),
           );
         }
       }

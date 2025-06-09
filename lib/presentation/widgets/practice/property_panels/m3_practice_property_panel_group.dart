@@ -4,7 +4,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_practice_property_panel_base.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 组合属性面板
 class M3GroupPropertyPanel extends M3PracticePropertyPanel {

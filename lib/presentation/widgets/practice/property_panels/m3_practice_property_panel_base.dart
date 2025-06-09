@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'm3_collection_property_panel.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
@@ -309,11 +310,38 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
               return;
             }
 
+            EditPageLogger.propertyPanelDebug(
+              '数字输入字段变更',
+              data: {
+                'fieldLabel': label,
+                'oldValue': _lastProcessedValue,
+                'newValue': text,
+                'operation': 'number_field_change',
+              },
+            );
+
             _lastProcessedValue = text;
             _debounceTimer = Timer(const Duration(milliseconds: 500), () {
               final value = double.tryParse(text);
               if (value != null) {
+                EditPageLogger.propertyPanelDebug(
+                  '数字输入字段应用值',
+                  data: {
+                    'fieldLabel': label,
+                    'appliedValue': value,
+                    'operation': 'number_field_apply',
+                  },
+                );
                 onChanged(value);
+              } else {
+                EditPageLogger.propertyPanelDebug(
+                  '数字输入字段解析失败',
+                  data: {
+                    'fieldLabel': label,
+                    'invalidText': text,
+                    'operation': 'number_field_parse_error',
+                  },
+                );
               }
             });
           },

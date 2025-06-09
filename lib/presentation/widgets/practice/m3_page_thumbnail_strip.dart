@@ -76,7 +76,17 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: widget.onAddPage,
+                      onTap: () {
+                        EditPageLogger.editPageDebug(
+                          '添加新页面',
+                          data: {
+                            'currentPageCount': widget.pages.length,
+                            'currentPageIndex': widget.currentPageIndex,
+                            'operation': 'page_add',
+                          },
+                        );
+                        widget.onAddPage();
+                      },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         width: 60,
@@ -171,7 +181,40 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
       },
       onReorder: (oldIndex, newIndex) {
         if (widget.onReorderPages != null) {
-          widget.onReorderPages!(oldIndex, newIndex);
+          EditPageLogger.editPageDebug(
+            '页面拖拽排序',
+            data: {
+              'fromIndex': oldIndex,
+              'toIndex': newIndex,
+              'totalPages': widget.pages.length,
+              'movedPageId': widget.pages[oldIndex]['id'],
+              'operation': 'page_reorder',
+            },
+          );
+          
+          try {
+            widget.onReorderPages!(oldIndex, newIndex);
+            
+            EditPageLogger.editPageDebug(
+              '页面排序成功',
+              data: {
+                'fromIndex': oldIndex,
+                'toIndex': newIndex,
+                'operation': 'page_reorder_success',
+              },
+            );
+          } catch (error, stackTrace) {
+            EditPageLogger.editPageError(
+              '页面排序失败',
+              error: error,
+              stackTrace: stackTrace,
+              data: {
+                'fromIndex': oldIndex,
+                'toIndex': newIndex,
+                'operation': 'page_reorder_error',
+              },
+            );
+          }
         }
       },
       itemCount: widget.pages.length,

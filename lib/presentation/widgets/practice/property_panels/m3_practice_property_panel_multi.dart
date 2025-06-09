@@ -5,7 +5,6 @@ import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
 import 'm3_practice_property_panel_base.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
 
 /// Material 3 多选属性面板
 class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {

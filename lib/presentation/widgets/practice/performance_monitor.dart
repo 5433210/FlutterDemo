@@ -10,6 +10,15 @@ import 'performance_dashboard.dart';
 /// Performance monitoring utility for M3Canvas optimization tracking
 class PerformanceMonitor extends ChangeNotifier {
   static final PerformanceMonitor _instance = PerformanceMonitor._internal();
+  
+  // Performance thresholds
+  static const double _fpsThresholdHigh = 55.0;
+  static const double _fpsThresholdMedium = 30.0;
+  static const double _fpsThresholdLow = 15.0;
+  static const int _frameTimeThresholdMs = 20; // Jank threshold
+  static const int _rebuildThresholdPerSecond = 100;
+  static const double _memoryThresholdPercent = 80.0;
+  
   // Frame rate tracking
   int _frameCount = 0;
   DateTime _lastFrameTime = DateTime.now();
@@ -23,6 +32,10 @@ class PerformanceMonitor extends ChangeNotifier {
 
   Duration _maxFrameTime = Duration.zero;
   int _slowFrameCount = 0;
+  
+  // Threshold tracking
+  DateTime _lastThresholdCheck = DateTime.now();
+  int _thresholdViolationCount = 0;
   // Memory tracking
   final List<int> _memoryHistory = [];
   // Widget rebuild tracking
@@ -186,6 +199,127 @@ class PerformanceMonitor extends ChangeNotifier {
       '详细性能报告',
       data: reportData,
     );
+    
+    // 检查并报告性能阈值违规
+    _checkPerformanceThresholds();
+  }
+
+  /// 检查性能阈值
+  void _checkPerformanceThresholds() {
+    final now = DateTime.now();
+    
+    // 每5秒检查一次阈值
+    if (now.difference(_lastThresholdCheck).inSeconds < 5) {
+      return;
+    }
+    
+    _lastThresholdCheck = now;
+    bool hasViolation = false;
+    
+    // 检查帧率阈值
+    if (_currentFPS < _fpsThresholdLow) {
+      hasViolation = true;
+      EditPageLogger.performanceWarning(
+        '帧率严重低于阈值',
+        data: {
+          'currentFPS': _currentFPS,
+          'threshold': _fpsThresholdLow,
+          'severity': 'critical',
+          'suggestion': '建议减少画布元素数量或启用性能优化模式',
+        },
+      );
+    } else if (_currentFPS < _fpsThresholdMedium) {
+      hasViolation = true;
+      EditPageLogger.performanceWarning(
+        '帧率低于正常阈值',
+        data: {
+          'currentFPS': _currentFPS,
+          'threshold': _fpsThresholdMedium,
+          'severity': 'moderate',
+          'suggestion': '建议优化渲染性能',
+        },
+      );
+    }
+    
+    // 检查帧时间阈值
+    if (_maxFrameTime.inMilliseconds > _frameTimeThresholdMs) {
+      hasViolation = true;
+      EditPageLogger.performanceWarning(
+        '检测到卡顿帧',
+        data: {
+          'maxFrameTime_ms': _maxFrameTime.inMilliseconds,
+          'threshold_ms': _frameTimeThresholdMs,
+          'slowFrameCount': _slowFrameCount,
+          'severity': 'moderate',
+          'suggestion': '存在界面卡顿，建议检查渲染逻辑',
+        },
+      );
+    }
+    
+    // 检查重建频率
+    if (_totalRebuilds > 0) {
+      final secondsSinceStart = now.difference(_lastFrameTime).inSeconds;
+      if (secondsSinceStart > 0) {
+        final rebuildsPerSecond = _totalRebuilds / secondsSinceStart;
+        if (rebuildsPerSecond > _rebuildThresholdPerSecond) {
+          hasViolation = true;
+          EditPageLogger.performanceWarning(
+            '组件重建频率过高',
+            data: {
+              'rebuildsPerSecond': rebuildsPerSecond.toStringAsFixed(1),
+              'threshold': _rebuildThresholdPerSecond,
+              'totalRebuilds': _totalRebuilds,
+              'severity': 'moderate',
+              'suggestion': '建议优化组件状态管理以减少不必要的重建',
+            },
+          );
+        }
+      }
+    }
+    
+    if (hasViolation) {
+      _thresholdViolationCount++;
+      EditPageLogger.performanceInfo(
+        '性能阈值违规统计',
+        data: {
+          'violationCount': _thresholdViolationCount,
+          'checkTime': now.toIso8601String(),
+        },
+      );
+    }
+  }
+
+  /// 获取性能阈值状态
+  Map<String, dynamic> getThresholdStatus() {
+    return {
+      'fpsStatus': _getFpsStatus(),
+      'frameTimeStatus': _getFrameTimeStatus(),
+      'rebuildStatus': _getRebuildStatus(),
+      'violationCount': _thresholdViolationCount,
+      'lastCheckTime': _lastThresholdCheck.toIso8601String(),
+    };
+  }
+
+  String _getFpsStatus() {
+    if (_currentFPS >= _fpsThresholdHigh) return 'excellent';
+    if (_currentFPS >= _fpsThresholdMedium) return 'good';
+    if (_currentFPS >= _fpsThresholdLow) return 'poor';
+    return 'critical';
+  }
+
+  String _getFrameTimeStatus() {
+    if (_maxFrameTime.inMilliseconds <= _frameTimeThresholdMs) return 'good';
+    return 'poor';
+  }
+
+  String _getRebuildStatus() {
+    final now = DateTime.now();
+    final secondsSinceStart = now.difference(_lastFrameTime).inSeconds;
+    if (secondsSinceStart > 0) {
+      final rebuildsPerSecond = _totalRebuilds / secondsSinceStart;
+      if (rebuildsPerSecond <= _rebuildThresholdPerSecond) return 'good';
+    }
+    return 'poor';
   }
 
   /// Reset all metrics
