@@ -84,9 +84,6 @@ class AdvancedCollectionPainter extends CustomPainter {
   }) {
     _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
     _characterImageService = ref.read(characterImageServiceProvider);
-
-    // 调试显示字符索引映射
-    _debugLogCharacterIndexes();
   }
 
   /// 主绘制方法
@@ -99,7 +96,9 @@ class AdvancedCollectionPainter extends CustomPainter {
 
       // 保存当前画布状态并设置裁剪区域
       canvas.save();
-      canvas.clipRect(availableRect); // 1. 首先绘制整体背景（如果需要）
+      canvas.clipRect(availableRect); 
+      
+      // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled && textureConfig.data != null) {
         final rect = Offset.zero & size;
         _paintTexture(canvas, rect);
@@ -108,17 +107,6 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 2. 遍历所有字符位置，绘制字符
       for (int i = 0; i < positions.length; i++) {
         final position = positions[i];
-        EditPageLogger.rendererDebug(
-          '绘制字符',
-          data: {
-            'char': position.char,
-            'index': position.index,
-            'originalIndex': position.originalIndex,
-            'x': position.x,
-            'y': position.y,
-            'size': position.size,
-          },
-        );
 
         // 如果是换行符，直接跳过，不做任何绘制
         if (position.char == '\n') continue;
@@ -179,13 +167,7 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     if (textureChanged) {
       // 纹理配置变化时，清除相关缓存
-      EditPageLogger.rendererDebug(
-        '纹理变化检测',
-        data: {
-          'action': '清除缓存并强制重绘',
-          'textureChanged': true,
-        },
-      );
+      EditPageLogger.rendererDebug('纹理变化检测：清除缓存并强制重绘');
       _loadingTextures.clear();
       _cacheKey = null;
       return true;
@@ -194,7 +176,6 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 如果有明确标记需要重绘，返回true
     if (_needsRepaint) {
       _needsRepaint = false; // 重置标志
-      debugPrint('🔄 shouldRepaint: 内部标记需要重绘');
       return true;
     }
 
@@ -210,8 +191,6 @@ class AdvancedCollectionPainter extends CustomPainter {
         oldDelegate.padding != padding ||
         oldDelegate.letterSpacing != letterSpacing ||
         oldDelegate.lineSpacing != lineSpacing;
-
-    // 基本属性变化时直接返回true，无需记录日志
 
     return basicChanged;
   }
@@ -258,8 +237,6 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 创建占位图像并缓存
   Future<bool> _createPlaceholderImage(String cacheKey) async {
     try {
-
-
       // 创建一个简单的占位图像
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
@@ -286,24 +263,11 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 缓存图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-
       return true;
     } catch (e) {
       EditPageLogger.rendererError('创建占位图像失败', error: e);
       return false;
     }
-  }
-
-  /// 调试工具：记录字符和索引的映射关系（仅在调试模式下）
-  void _debugLogCharacterIndexes() {
-    EditPageLogger.rendererDebug(
-      '字符索引映射',
-      data: {
-        'charactersCount': characters.length,
-        'hasCharacterImages': characterImages != null,
-        'characterImagesType': characterImages.runtimeType.toString(),
-      },
-    );
   }
 
   /// 绘制字符图像
@@ -388,60 +352,9 @@ class AdvancedCollectionPainter extends CustomPainter {
     final double y = rect.top + (rect.height - textPainter.height) / 2;
 
     textPainter.paint(canvas, Offset(x, y));
-
-    // 调试用：输出字符索引信息
-    debugPrint('绘制文本字符: "${position.char}" 在索引 ${position.index}');
   }
 
   /// 绘制纹理图像
-  /// 根据适应模式绘制图像
-  // void _drawImageWithFitMode(Canvas canvas, Rect rect, ui.Image image) {
-  //   final paint = Paint()
-  //     ..isAntiAlias = true
-  //     ..filterQuality = FilterQuality.high
-  //     ..color = Colors.white.withOpacity(textureConfig.opacity);
-
-  //   final srcRect =
-  //       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-  //   final srcSize = Size(image.width.toDouble(), image.height.toDouble());
-
-  //   // 根据适应模式计算目标矩形
-  //   Rect destRect;
-  //   switch (textureConfig.fitMode) {
-  //     case 'scaleToFit':
-  //       destRect = _scaleToFitRect(srcSize, rect.size, rect);
-  //       break;
-  //     case 'scaleToCover':
-  //       destRect = _scaleToCoverRect(srcSize, rect.size, rect);
-  //       break;
-  //     case 'scaleToFill':
-  //     default:
-  //       destRect = rect; // 直接填充整个区域
-  //       break;
-  //   }
-
-  //   canvas.drawImageRect(image, srcRect, destRect, paint);
-  // }
-
-  // /// 绘制纹理图像 - 实现两阶段渲染逻辑
-  // void _drawTextureImage(Canvas canvas, Rect rect, ui.Image image) {
-  //   // 第一阶段：根据纹理尺寸和适应模式处理原始纹理
-  //   final actualTextureSize = _calculateActualTextureSize(image);
-  //   final processedTexture =
-  //       _processTextureWithFitMode(image, actualTextureSize);
-
-  //   // 检查是否有fitMode设置（新的适应模式）
-  //   if (textureConfig.fitMode != 'scaleToFill') {
-  //     // 如果有适应模式，直接使用适应模式绘制
-  //     _drawImageWithFitMode(canvas, rect, processedTexture);
-  //   } else {
-  //     // 第二阶段：确保处理后的纹理按照填充模式覆盖整个背景
-  //     _renderTextureWithFillMode(
-  //         canvas, rect, processedTexture, actualTextureSize);
-  //   }
-  // }
-
-  /// 更新绘制纹理图像方法使用Matrix变换
   void _drawTextureImage(Canvas canvas, Rect rect, ui.Image image) {
     // 使用高性能的Matrix变换方案
     _drawTextureWithMatrixTransform(canvas, rect, image);
@@ -451,8 +364,6 @@ class AdvancedCollectionPainter extends CustomPainter {
   void _drawTextureWithMatrixTransform(
       Canvas canvas, Rect rect, ui.Image image) {
     final actualTextureSize = _calculateActualTextureSize(image);
-
-
 
     // 根据填充模式决定渲染策略
     switch (textureConfig.fillMode) {
@@ -483,7 +394,6 @@ class AdvancedCollectionPainter extends CustomPainter {
     }
 
     try {
-
       // 如果是图像对象，直接返回
       if (characterImages is ui.Image) {
         return characterImages;
@@ -563,7 +473,10 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 如果没有找到匹配的图像
       return null;
     } catch (e) {
-      EditPageLogger.rendererError('获取字符图像时出错', error: e);
+      EditPageLogger.rendererError('获取字符图像时出错', error: e, data: {
+        'char': char,
+        'index': index,
+      });
       return null;
     }
   }
@@ -592,8 +505,6 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 加载字符图像
   Future<bool> _loadCharacterImage(String path, String cacheKey) async {
     try {
-      debugPrint('开始加载字符图像: $path (缓存键: $cacheKey)');
-
       // 如果路径是网络路径，从网络加载
       late Uint8List bytes;
       if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -619,23 +530,16 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 缓存UI图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      EditPageLogger.rendererDebug(
-        '字符图像加载成功',
-        data: {
-          'path': path,
-          'cacheKey': cacheKey,
-        },
-      );
+      EditPageLogger.rendererDebug('字符图像加载成功', data: {
+        'path': path,
+        'cacheKey': cacheKey,
+      });
       return true;
     } catch (e) {
-      EditPageLogger.rendererError(
-        '字符图像加载失败',
-        data: {
-          'path': path,
-          'cacheKey': cacheKey,
-        },
-        error: e,
-      );
+      EditPageLogger.rendererError('字符图像加载失败', error: e, data: {
+        'path': path,
+        'cacheKey': cacheKey,
+      });
       return false;
     }
   }
@@ -644,67 +548,50 @@ class AdvancedCollectionPainter extends CustomPainter {
   Future<bool> _loadCharacterImageViaService(
       String characterId, String cacheKey) async {
     try {
-      debugPrint('🔍 通过CharacterImageService加载字符图像: $characterId');
-
       // 获取可用的图像格式
-      debugPrint('🔍 正在调用getAvailableFormat...');
       final format =
           await _characterImageService.getAvailableFormat(characterId);
       if (format == null) {
-        debugPrint('❌ getAvailableFormat返回null: $characterId');
         return false;
       }
 
-      debugPrint('✅ getAvailableFormat返回: $format');
       final type = format['type']!;
       final formatType = format['format']!;
 
       // 检查图像是否存在
-      debugPrint(
-          '🔍 检查图像是否存在: characterId=$characterId, type=$type, format=$formatType');
       final hasImage = await _characterImageService.hasCharacterImage(
           characterId, type, formatType);
-      debugPrint('🔍 hasCharacterImage返回: $hasImage');
 
       if (!hasImage) {
-        debugPrint('❌ 图像文件不存在: $characterId ($type, $formatType)');
         return false;
       }
 
       // 获取字符图像数据
-      debugPrint(
-          '📥 正在获取字符图像数据: characterId=$characterId, type=$type, format=$formatType');
       final imageData = await _characterImageService.getCharacterImage(
           characterId, type, formatType);
 
-      if (imageData == null) {
-        debugPrint('❌ getCharacterImage返回null: $characterId');
+      if (imageData == null || imageData.isEmpty) {
         return false;
       }
-
-      if (imageData.isEmpty) {
-        debugPrint('❌ getCharacterImage返回空数据: $characterId');
-        return false;
-      }
-
-      debugPrint('✅ 获取到字符图像数据，大小: ${imageData.length} bytes');
 
       // 解码图像
-      debugPrint('🎨 正在解码图像...');
       final codec = await ui.instantiateImageCodec(imageData);
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
-      debugPrint('✅ 图像解码成功，尺寸: ${image.width}x${image.height}');
-
       // 缓存UI图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      debugPrint('✅ 字符图像加载成功: $characterId, 缓存键: $cacheKey');
+      EditPageLogger.rendererDebug('字符图像服务加载成功', data: {
+        'characterId': characterId, 
+        'cacheKey': cacheKey,
+        'imageSize': '${image.width}x${image.height}',
+      });
       return true;
-    } catch (e, stackTrace) {
-      debugPrint('❌ 通过服务加载字符图像失败: $characterId, 错误: $e');
-      debugPrint('堆栈跟踪: $stackTrace');
+    } catch (e) {
+      EditPageLogger.rendererError('通过服务加载字符图像失败', error: e, data: {
+        'characterId': characterId,
+      });
       return false;
     }
   }
@@ -736,18 +623,14 @@ class AdvancedCollectionPainter extends CustomPainter {
       final frame = await codec.getNextFrame();
       return frame.image;
     } catch (e) {
-      debugPrint('纹理加载错误: $e');
+      EditPageLogger.rendererError('纹理加载错误', error: e, data: {'path': path});
       return null;
     }
   }
 
   /// 异步加载纹理图像
   void _loadTextureImageAsync(String texturePath, String cacheKey) {
-    // if (_loadingTextures.contains(cacheKey)) return;
-
-    // _loadingTextures.add(cacheKey);
     _loadTextureImage(texturePath).then((image) {
-      // _loadingTextures.remove(cacheKey);
       if (image != null) {
         _imageCacheService.cacheUiImage(cacheKey, image);
         _needsRepaint = true;
@@ -808,8 +691,6 @@ class AdvancedCollectionPainter extends CustomPainter {
         ..color = Colors.grey.withValues(alpha: 0.2) // 0.2 不透明度
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, placeholderPaint);
-
-      debugPrint('纹理正在异步加载中: $_cacheKey');
     }
   }
 
@@ -842,10 +723,6 @@ class AdvancedCollectionPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(rect);
 
-    debugPrint('Contain模式渲染:');
-    debugPrint('  背景区域: $rect');
-    debugPrint('  纹理尺寸: $textureSize');
-
     // 第一步：根据FitMode处理原始图像到纹理尺寸
     final processedTextureSize = _applyFitModeToTexture(image, textureSize);
 
@@ -867,10 +744,6 @@ class AdvancedCollectionPainter extends CustomPainter {
       height: finalSize.height,
     );
 
-    debugPrint('  处理后纹理尺寸: $processedTextureSize');
-    debugPrint('  缩放比例: $scale');
-    debugPrint('  最终绘制区域: $destRect');
-
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
@@ -891,10 +764,6 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     // 裁剪到背景区域
     canvas.clipRect(rect);
-
-    debugPrint('Cover模式渲染:');
-    debugPrint('  背景区域: $rect');
-    debugPrint('  纹理尺寸: $textureSize');
 
     // 第一步：根据FitMode处理原始图像到纹理尺寸
     final processedTextureSize = _applyFitModeToTexture(image, textureSize);
@@ -941,97 +810,9 @@ class AdvancedCollectionPainter extends CustomPainter {
     canvas.restore();
   }
 
-  /// 第一阶段：根据适应模式处理纹理 - 实现Canvas离屏渲染
-
-  /// 第一阶段：根据适应模式处理纹理 - 实现Canvas离屏渲染
-  // ui.Image _processTextureWithFitMode(ui.Image originalImage, Size targetSize) {
-  //   // 如果适应模式是默认值，直接返回原图
-  //   if (textureConfig.fitMode == 'scaleToFill') {
-  //     return originalImage;
-  //   }
-
-  //   // 计算源图像尺寸
-  //   final srcSize =
-  //       Size(originalImage.width.toDouble(), originalImage.height.toDouble());
-
-  //   // 创建离屏渲染画布
-  //   final recorder = ui.PictureRecorder();
-  //   final canvas = Canvas(recorder);
-
-  //   // 计算目标矩形
-  //   final targetRect = Rect.fromLTWH(0, 0, targetSize.width, targetSize.height);
-
-  //   // 根据适应模式计算绘制矩形
-  //   Rect drawRect;
-  //   switch (textureConfig.fitMode) {
-  //     case 'scaleToFit':
-  //       drawRect = _scaleToFitRect(srcSize, targetSize, targetRect);
-  //       break;
-  //     case 'scaleToCover':
-  //       drawRect = _scaleToCoverRect(srcSize, targetSize, targetRect);
-  //       break;
-  //     case 'scaleToFill':
-  //     default:
-  //       drawRect = _scaleToFillRect(srcSize, targetSize, targetRect);
-  //       break;
-  //   }
-
-  //   // 绘制处理后的图像
-  //   final paint = Paint()
-  //     ..isAntiAlias = true
-  //     ..filterQuality = FilterQuality.high;
-
-  //   final srcRect = Rect.fromLTWH(0, 0, srcSize.width, srcSize.height);
-  //   canvas.drawImageRect(originalImage, srcRect, drawRect, paint);
-
-  //   // 完成绘制
-  //   final picture = recorder.endRecording();
-  //   picture.dispose(); // 清理资源
-
-  //   // 这里应该将picture转换为ui.Image，但由于是同步方法的限制，
-  //   // 在实际项目中需要使用异步处理或者缓存机制
-  //   // 为了保持现有的同步API，这里返回原图像作为占位
-  //   // 真正的离屏渲染应该在异步上下文中完成
-  //   return originalImage;
-  // }
-
-  /// 渲染包含模式
-  // void _renderContainMode(
-  //     Canvas canvas, Rect rect, ui.Image image, Size textureSize, Paint paint) {
-  //   final srcRect =
-  //       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-  //   final destRect = _scaleToFitRect(textureSize, rect.size, rect);
-  //   canvas.drawImageRect(image, srcRect, destRect, paint);
-  // }
-
-  // /// 渲染覆盖模式
-  // void _renderCoverMode(
-  //     Canvas canvas, Rect rect, ui.Image image, Size textureSize, Paint paint) {
-  //   final srcRect =
-  //       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-  //   final destRect = _scaleToCoverRect(textureSize, rect.size, rect);
-  //   canvas.drawImageRect(image, srcRect, destRect, paint);
-  // }
-
-  // void _renderRepeatMode(
-  //     Canvas canvas, Rect rect, ui.Image image, Paint paint) {
-  //   final shader = ImageShader(
-  //     image,
-  //     TileMode.repeated,
-  //     TileMode.repeated,
-  //     Matrix4.identity().storage,
-  //   );
-  //   paint.shader = shader;
-  //   canvas.drawRect(rect, paint);
-  // }
   /// 渲染重复模式（带变换支持）
   void _renderRepeatModeWithTransform(
       Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
-    debugPrint('Repeat模式渲染:');
-    debugPrint('  背景区域: $rect');
-    debugPrint('  纹理尺寸: $textureSize');
-    debugPrint('  适应模式: ${textureConfig.fitMode}');
-
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
@@ -1040,8 +821,6 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     // 第一步：根据FitMode处理纹理尺寸
     final processedTextureSize = _applyFitModeToTexture(image, textureSize);
-
-    debugPrint('  处理后纹理尺寸: $processedTextureSize');
 
     // 第二步：创建ImageShader进行重复填充
     // 计算变换矩阵以正确应用纹理尺寸
@@ -1067,8 +846,6 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     // 绘制到整个背景区域
     canvas.drawRect(rect, paint);
-
-    debugPrint('  Shader变换: 缩放($scaleX, $scaleY)');
   }
 
   /// 渲染Stretch模式：拉伸纹理以完全填充背景（可能变形）
@@ -1076,10 +853,6 @@ class AdvancedCollectionPainter extends CustomPainter {
       Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
     canvas.save();
     canvas.clipRect(rect);
-
-    debugPrint('Stretch模式渲染:');
-    debugPrint('  背景区域: $rect');
-    debugPrint('  将直接拉伸到背景尺寸');
 
     final paint = Paint()
       ..isAntiAlias = true
@@ -1094,101 +867,4 @@ class AdvancedCollectionPainter extends CustomPainter {
     canvas.drawImageRect(image, srcRect, rect, paint);
     canvas.restore();
   }
-
-  /// 渲染拉伸模式
-  // void _renderStretchMode(
-  //     Canvas canvas, Rect rect, ui.Image image, Paint paint) {
-  //   final srcRect =
-  //       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-  //   canvas.drawImageRect(image, srcRect, rect, paint);
-  // }
-
-  /// 第二阶段：根据填充模式渲染纹理
-  // void _renderTextureWithFillMode(
-  //     Canvas canvas, Rect rect, ui.Image processedTexture, Size textureSize) {
-  //   final paint = Paint()
-  //     ..isAntiAlias = true
-  //     ..filterQuality = FilterQuality.high
-  //     ..color = Colors.white.withOpacity(textureConfig.opacity)
-  //     ..blendMode = BlendMode.srcOver; // 固定使用srcOver混合模式
-
-  //   // 根据填充模式渲染
-  //   switch (textureConfig.fillMode) {
-  //     case 'repeat':
-  //       _renderRepeatMode(canvas, rect, processedTexture, paint);
-  //       break;
-  //     case 'cover':
-  //       _renderCoverMode(canvas, rect, processedTexture, textureSize, paint);
-  //       break;
-  //     case 'stretch':
-  //       _renderStretchMode(canvas, rect, processedTexture, paint);
-  //       break;
-  //     case 'contain':
-  //       _renderContainMode(canvas, rect, processedTexture, textureSize, paint);
-  //       break;
-  //     default:
-  //       _renderRepeatMode(canvas, rect, processedTexture, paint);
-  //       break;
-  //   }
-  // }
-
-  /// 使用变换矩阵的填充模式渲染
-  /// 使用变换矩阵的填充模式渲染
-  // void _renderWithFillMode(
-  //     Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
-  //   final paint = Paint()
-  //     ..isAntiAlias = true
-  //     ..filterQuality = FilterQuality.high
-  //     ..color = Colors.white.withOpacity(textureConfig.opacity)
-  //     ..blendMode = BlendMode.srcOver;
-
-  //   final srcRect =
-  //       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-
-  //   switch (textureConfig.fillMode) {
-  //     case 'repeat':
-  //       // 对于repeat模式，使用shader更高效
-  //       final shader = ImageShader(
-  //         image,
-  //         TileMode.repeated,
-  //         TileMode.repeated,
-  //         Matrix4.identity().storage,
-  //       );
-  //       paint.shader = shader;
-  //       canvas.drawRect(rect, paint);
-  //       break;
-  //     case 'cover':
-  //       // 覆盖模式：确保图像覆盖整个区域，保持宽高比
-  //       final destRect = _scaleToCoverRect(
-  //           Size(image.width.toDouble(), image.height.toDouble()),
-  //           textureSize,
-  //           Rect.fromLTWH(0, 0, textureSize.width, textureSize.height));
-  //       canvas.drawImageRect(image, srcRect, destRect, paint);
-  //       break;
-  //     case 'contain':
-  //       // 包含模式：确保整个图像都可见，保持宽高比
-  //       final destRect = _scaleToFitRect(
-  //           Size(image.width.toDouble(), image.height.toDouble()),
-  //           textureSize,
-  //           Rect.fromLTWH(0, 0, textureSize.width, textureSize.height));
-  //       canvas.drawImageRect(image, srcRect, destRect, paint);
-  //       break;
-  //     case 'stretch':
-  //       // 拉伸模式：直接填充整个区域
-  //       canvas.drawImageRect(image, srcRect,
-  //           Rect.fromLTWH(0, 0, textureSize.width, textureSize.height), paint);
-  //       break;
-  //     default:
-  //       // 默认使用拉伸模式
-  //       canvas.drawImageRect(image, srcRect,
-  //           Rect.fromLTWH(0, 0, textureSize.width, textureSize.height), paint);
-  //       break;
-  //   }
-  // }
-
-  // /// 计算缩放填充模式的矩形
-  // Rect _scaleToFillRect(Size srcSize, Size destSize, Rect destRect) {
-  //   // 直接填充整个目标区域，会拉伸图像
-  //   return destRect;
-  // }
 }

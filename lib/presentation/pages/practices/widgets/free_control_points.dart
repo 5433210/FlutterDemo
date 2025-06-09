@@ -1,7 +1,8 @@
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 import 'custom_cursors.dart';
 
@@ -106,9 +107,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       final deltaX = widget.x - oldWidget.x;
       final deltaY = widget.y - oldWidget.y;
 
-      debugPrint('🔧 控制点跟随元素移动: delta=($deltaX, $deltaY)');
-      debugPrint(
-          '🔧 元素位置变化: (${oldWidget.x}, ${oldWidget.y}) → (${widget.x}, ${widget.y})');
+      EditPageLogger.canvasDebug('控制点跟随元素移动', data: {
+        'delta': '($deltaX, $deltaY)',
+        'from': '(${oldWidget.x}, ${oldWidget.y})',
+        'to': '(${widget.x}, ${widget.y})'
+      });
 
       setState(() {
         _syncWithElementPosition(
@@ -117,7 +120,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
     // 如果是尺寸或旋转变化，保持控制点的独立状态，不响应widget变化
     else if (_isInitialized) {
-      debugPrint('🔧 控制点保持独立状态，忽略外部尺寸/旋转变化');
+      EditPageLogger.canvasDebug('控制点保持独立状态，忽略外部尺寸/旋转变化');
     }
   }
 
@@ -131,21 +134,16 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       'rotation': _currentRotation * 180 / pi, // 转换为度数
     };
 
-    // 🔧 详细的调试信息，帮助诊断状态不同步问题
-    debugPrint('🔍[RESIZE_FIX] ======= FreeControlPoints最终状态分析 =======');
-    debugPrint('🔍[RESIZE_FIX] 当前计算状态: $result');
-    debugPrint('🔍[RESIZE_FIX] 对比初始状态:');
-    debugPrint(
-        '🔍[RESIZE_FIX]    x: ${widget.x} -> $_currentX (变化: ${_currentX - widget.x})');
-    debugPrint(
-        '🔍[RESIZE_FIX]    y: ${widget.y} -> $_currentY (变化: ${_currentY - widget.y})');
-    debugPrint(
-        '🔍[RESIZE_FIX]    width: ${widget.width} -> $_currentWidth (变化: ${_currentWidth - widget.width})');
-    debugPrint(
-        '🔍[RESIZE_FIX]    height: ${widget.height} -> $_currentHeight (变化: ${_currentHeight - widget.height})');
-    debugPrint(
-        '🔍[RESIZE_FIX]    rotation: ${widget.rotation} -> ${_currentRotation * 180 / pi} (变化: ${_currentRotation * 180 / pi - widget.rotation})');
-    debugPrint('🔍[RESIZE_FIX] =======================================');
+    EditPageLogger.canvasDebug('FreeControlPoints最终状态', data: {
+      'currentState': result,
+      'deltaFromInitial': {
+        'x': _currentX - widget.x,
+        'y': _currentY - widget.y,
+        'width': _currentWidth - widget.width,
+        'height': _currentHeight - widget.height,
+        'rotation': _currentRotation * 180 / pi - widget.rotation,
+      }
+    });
 
     return result;
   }
@@ -180,7 +178,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onPanStart: (details) {
-              debugPrint('🧪 测试控制点 $index ($controlPointName) 开始拖拽');
+              EditPageLogger.canvasDebug('控制点开始拖拽', data: {
+                'index': index,
+                'controlPointName': controlPointName
+              });
 
               if (index == 8) {
                 // 旋转控制点 - 初始化旋转状态
@@ -196,26 +197,20 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _updateControlPointWithConstraints(index, details.delta);
               });
 
-              debugPrint('🎯 控制点 $index 移动到: ${_controlPointPositions[index]}');
-
               // 🔧 关键：将控制点状态推送给DragStateManager
               _pushStateToCanvasAndPreview();
-
-              // 传递增量给Canvas进行Live更新
-              debugPrint('🎯 控制点 $index 传递delta: ${details.delta}');
-              // widget.onControlPointUpdate?.call(index, details.delta);
             },
             onPanEnd: (details) {
-              debugPrint(
-                  '🔍[RESIZE_FIX] 测试控制点 $index ($controlPointName) 结束拖拽');
+              EditPageLogger.canvasDebug('控制点结束拖拽', data: {
+                'index': index,
+                'controlPointName': controlPointName,
+              });
 
               // 🔧 修复时序：先传递最终计算的状态，再触发Commit阶段
-              debugPrint('🔍[RESIZE_FIX] 步骤1: 传递最终状态给Canvas');
               widget.onControlPointDragEndWithState
                   ?.call(index, getCurrentElementProperties());
 
               // 然后触发拖拽结束回调（触发Commit阶段）
-              debugPrint('🔍[RESIZE_FIX] 步骤2: 触发Commit阶段');
               widget.onControlPointDragEnd?.call(index);
             },
             child: Center(
@@ -257,9 +252,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     );
   }
 
-  /// 将屏幕坐标系的delta转换为元素本地坐标系的delta
-
-  /// 构建透明拖拽层 - 用于平移整个控制点组  /// 构建透明拖拽层，用于平移整个控制点组
+  /// 构建透明拖拽层 - 用于平移整个控制点组
   /// 🔧 新架构：以控制点为主导，让DragPreviewLayer跟随控制点状态
   Widget _buildTransparentDragLayer() {
     // 使用当前独立的矩形尺寸，不受旋转影响
@@ -275,9 +268,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     final dragLeft = centerX - dragWidth / 2;
     final dragTop = centerY - dragHeight / 2;
 
-    debugPrint(
-        '🎯 控制点透明拖拽层: left=$dragLeft, top=$dragTop, size=${dragWidth}x$dragHeight');
-
     return Positioned(
       left: dragLeft,
       top: dragTop,
@@ -285,35 +275,24 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       height: dragHeight,
       child: MouseRegion(
         cursor: SystemMouseCursors.move,
-        onEnter: (_) {
-          debugPrint('🎯 鼠标进入控制点拖拽层');
-        },
-        onExit: (_) {
-          debugPrint('🎯 鼠标离开控制点拖拽层');
-        },
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onPanStart: (details) {
-            debugPrint('🎯 控制点主导：开始平移操作');
+            EditPageLogger.canvasDebug('控制点主导：开始平移操作');
 
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
           },
           onPanUpdate: (details) {
-            debugPrint('🎯 控制点主导：平移更新 delta=${details.delta}');
-
             setState(() {
               _translateAllControlPoints(details.delta);
             });
 
             // 🔧 关键：将控制点状态推送给DragStateManager
             _pushStateToCanvasAndPreview();
-
-            // 通知Canvas进行Live更新
-            // widget.onControlPointUpdate?.call(-1, details.delta);
           },
           onPanEnd: (details) {
-            debugPrint('🎯 控制点主导：平移结束');
+            EditPageLogger.canvasDebug('控制点主导：平移结束');
 
             // 🔧 传递最终状态
             widget.onControlPointDragEndWithState
@@ -336,66 +315,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         ),
       ),
     );
-
-    // 🔧 以下是原来的实现，现在被注释掉以避免冲突：
-    /*
-    // 使用当前独立的矩形尺寸，不受旋转影响
-    const padding = 5.0;
-    final dragWidth = _currentWidth + padding * 2;
-    final dragHeight = _currentHeight + padding * 2;
-
-    // 计算旋转中心位置
-    final centerX = _currentX + _currentWidth / 2;
-    final centerY = _currentY + _currentHeight / 2;
-
-    // 计算拖拽层的左上角位置（相对于旋转中心）
-    final dragLeft = centerX - dragWidth / 2;
-    final dragTop = centerY - dragHeight / 2;
-
-    debugPrint(
-        '🧪 拖拽层位置: left=$dragLeft, top=$dragTop, size=${dragWidth}x$dragHeight');
-    return Positioned(
-      left: dragLeft,
-      top: dragTop,
-      width: dragWidth,
-      height: dragHeight,
-      // 移除旋转变换，让拖拽层保持水平不跟随旋转
-      child: MouseRegion(
-        cursor: SystemMouseCursors.move,
-        onEnter: (_) {
-          debugPrint('🧪 鼠标进入透明拖拽层');
-        },
-        onExit: (_) {
-          debugPrint('🧪 鼠标离开透明拖拽层');
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent, // 允许事件穿透到下层
-          onPanStart: (details) {
-            debugPrint('🧪 测试控制点组开始平移');
-          },
-          onPanUpdate: (details) {
-            // 直接传递屏幕坐标系的 delta，不进行任何转换
-            debugPrint('🧪 收到手势delta: ${details.delta}');
-            setState(() {
-              _translateAllControlPoints(details.delta);
-            });
-          },
-          onPanEnd: (details) {
-            debugPrint('🧪 测试控制点组结束平移');
-          },
-          child: Container(
-            width: dragWidth,
-            height: dragHeight,
-            decoration: const BoxDecoration(
-              color: Colors.transparent, // 完全透明
-              // 移除边框，使其完全不可见
-            ),
-            // 移除child内容，使其完全透明
-          ),
-        ),
-      ),
-    );
-    */
   }
 
   Rect? _calculateCurrentRectFromControlPoints() {
@@ -517,8 +436,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
 
     _isInitialized = true;
-    debugPrint(
-        '🧪 测试控制点已初始化，独立状态: 位置($_currentX, $_currentY), 大小($_currentWidth, $_currentHeight), 旋转${_currentRotation * 180 / pi}°');
+    
+    EditPageLogger.canvasDebug('控制点初始化完成', data: {
+      'position': '($_currentX, $_currentY)',
+      'size': '($_currentWidth, $_currentHeight)',
+      'rotation': '${_currentRotation * 180 / pi}°',
+    });
   }
 
   /// 初始化旋转状态
@@ -542,15 +465,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 构建当前元素的完整状态
     final currentState = getCurrentElementProperties();
 
-    debugPrint('🎯 控制点实时推送状态: $currentState');
-
     // 🔧 关键：通过onControlPointDragEndWithState实时推送状态
     // 这样DragPreviewLayer就能实时跟随控制点的变化
     if (widget.onControlPointDragEndWithState != null) {
       // 注意：这里我们在Live阶段调用，让预览层实时更新
       // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
       widget.onControlPointDragEndWithState!(-2, currentState);
-      debugPrint('🎯 已推送Live阶段状态到DragStateManager');
     }
   }
 
@@ -616,8 +536,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 同步控制点位置到元素位置 - 用于跟随外部元素移动
   void _syncWithElementPosition(
       double x, double y, double width, double height, double rotation) {
-    debugPrint('🔧 同步控制点位置: ($x, $y, ${width}x$height, $rotation°)');
-
     // 更新内部状态
     _currentX = x;
     _currentY = y;
@@ -633,11 +551,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     // 重新计算所有控制点位置
     _recalculateControlPointPositions();
-
-    debugPrint('🔧 控制点位置同步完成');
   }
-
-  /// 根据新矩形更新所有控制点位置
 
   /// 将屏幕坐标系的delta转换为元素本地坐标系的delta
   /// ⚠️ 注意：此方法仅用于调整大小操作（resize），不用于平移操作（translate）
@@ -655,12 +569,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     final localDx = screenDelta.dx * cosAngle - screenDelta.dy * sinAngle;
     final localDy = screenDelta.dx * sinAngle + screenDelta.dy * cosAngle;
 
-    debugPrint(
-        '🧪 坐标转换（仅用于resize）: 屏幕$screenDelta → 本地${Offset(localDx, localDy)}');
     return Offset(localDx, localDy);
   }
-
-  /// 平移所有控制点
 
   /// 平移所有控制点
   void _translateAllControlPoints(Offset delta) {
@@ -670,33 +580,23 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     //      鼠标向左移动10像素 → 控制点向左移动10像素 (delta.dx = -10)
     //      鼠标向右移动10像素 → 控制点向右移动10像素 (delta.dx = +10)
 
-    debugPrint('🧪 收到屏幕坐标delta: $delta (dx=${delta.dx}, dy=${delta.dy})');
-
     // 将所有控制点位置直接加上屏幕坐标系的位移量（不转换）
     for (int i = 0; i < _controlPointPositions.length; i++) {
       final currentPos = _controlPointPositions[i];
       if (currentPos != null) {
         final newPos = currentPos + delta;
         _controlPointPositions[i] = newPos;
-        debugPrint('🧪 控制点 $i: $currentPos → $newPos');
       }
     }
 
     // 同时更新独立的位置属性（直接使用屏幕delta，无转换）
-    final oldX = _currentX;
-    final oldY = _currentY;
     _currentX += delta.dx;
     _currentY += delta.dy;
 
     // 同时更新旋转中心（直接使用屏幕delta，无转换）
     if (_rotationCenter != null) {
-      final oldCenter = _rotationCenter!;
       _rotationCenter = _rotationCenter! + delta;
-      debugPrint('🧪 旋转中心: $oldCenter → $_rotationCenter');
     }
-
-    debugPrint('🧪 矩形位置更新: ($oldX, $oldY) → ($_currentX, $_currentY)');
-    debugPrint('🧪 平移完成，完全按照屏幕坐标系移动');
   }
 
   void _updateAllControlPointsFromRect(Rect rect) {
@@ -746,9 +646,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       );
       _controlPointPositions[i] = rotated;
     }
-
-    debugPrint(
-        '🧪 独立矩形已更新: 位置($_currentX, $_currentY), 大小($_currentWidth, $_currentHeight), 旋转${_currentRotation * 180 / pi}°');
   }
 
   /// 根据新的旋转角度更新所有控制点位置
@@ -802,8 +699,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       );
       _controlPointPositions[i] = rotated;
     }
-
-    debugPrint('🧪 旋转已更新: ${_currentRotation * 180 / pi}°');
   }
 
   /// 根据约束更新控制点位置 - 保持矩形边框关系
@@ -986,9 +881,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
-
-    debugPrint(
-        '🔍[RESIZE_FIX] 旋转更新: 角度变化=${deltaAngle * 180 / pi}°, 当前总角度=${_currentRotation * 180 / pi}°');
   }
 }
 

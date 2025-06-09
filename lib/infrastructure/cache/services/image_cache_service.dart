@@ -54,7 +54,7 @@ class ImageCacheService {
       final cacheFile = File('${cacheDir.path}/$key');
       return cacheFile.existsSync();
     } catch (e) {
-      debugPrint('检查缓存文件存在性失败: $e');
+      AppLogger.error('检查缓存文件存在性失败', error: e, data: {'key': key});
       return false;
     }
   }
@@ -64,7 +64,11 @@ class ImageCacheService {
     // 同时存入内存缓存和持久化缓存
     _inMemoryUiImageCache[key] = image;
     await _uiImageCache.put(key, image);
-    debugPrint('图像已缓存: $key');
+    AppLogger.debug('图像已缓存', data: {
+      'key': key,
+      'imageSize': '${image.width}x${image.height}',
+      'inMemoryCount': _inMemoryUiImageCache.length,
+    });
   }
 
   /// 清除所有图像缓存
@@ -86,7 +90,9 @@ class ImageCacheService {
       });
       return await completer.future;
     } catch (e) {
-      debugPrint('解码图像失败: $e');
+      AppLogger.error('解码图像失败', error: e, data: {
+        'bytesLength': bytes.length,
+      });
       return null;
     }
   }
@@ -167,7 +173,9 @@ class ImageCacheService {
       // 编码为 JPEG
       return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
     } catch (e) {
-      AppLogger.error('生成缩略图失败', error: e);
+      AppLogger.error('生成缩略图失败', error: e, data: {
+        'originalDataLength': data.length,
+      });
       return null;
     }
   }
@@ -231,13 +239,12 @@ class ImageCacheService {
       final cacheFile = File('${cacheDir.path}/$key');
 
       if (!cacheFile.existsSync()) {
-        debugPrint('缓存文件不存在: ${cacheFile.path}');
         return false;
       }
 
       return true;
     } catch (e) {
-      debugPrint('检查缓存异常: $e');
+      AppLogger.error('检查缓存异常', error: e, data: {'key': key});
       return false;
     }
   }
@@ -253,10 +260,9 @@ class ImageCacheService {
         return _inMemoryUiImageCache[key];
       }
 
-      debugPrint('图像不在内存缓存中: $key');
       return null;
     } catch (e) {
-      debugPrint('尝试同步获取图像异常: $e');
+      AppLogger.error('尝试同步获取图像异常', error: e, data: {'key': key});
       return null;
     }
   }

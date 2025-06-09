@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
@@ -61,40 +62,54 @@ mixin CanvasLayerBuilders {
         Color backgroundColor = Colors.white;
         try {
           final background = currentPage['background'] as Map<String, dynamic>?;
-          debugPrint('🎨 背景层构建 - background数据: $background');
+          EditPageLogger.canvasDebug('背景层构建', data: {
+            'background': '$background'
+          });
           
           if (background != null && background['type'] == 'color') {
             final colorStr = background['value'] as String? ?? '#FFFFFF';
-            debugPrint('🎨 背景层构建 - 颜色字符串: $colorStr');
+            EditPageLogger.canvasDebug('背景颜色字符串', data: {
+              'colorStr': colorStr
+            });
             
             // 解析颜色字符串
             if (colorStr.startsWith('#')) {
               final hex = colorStr.substring(1);
               if (hex.length == 6) {
                 backgroundColor = Color(int.parse('FF$hex', radix: 16));
-                debugPrint('🎨 背景层构建 - 解析6位颜色: $backgroundColor');
+                EditPageLogger.canvasDebug('解析6位颜色', data: {
+                  'backgroundColor': '$backgroundColor'
+                });
               } else if (hex.length == 8) {
                 backgroundColor = Color(int.parse(hex, radix: 16));
-                debugPrint('🎨 背景层构建 - 解析8位颜色: $backgroundColor');
+                EditPageLogger.canvasDebug('解析8位颜色', data: {
+                  'backgroundColor': '$backgroundColor'
+                });
               }
             }
           } else {
-            debugPrint('🎨 背景层构建 - 没有背景数据或类型不是color，使用默认白色');
+            EditPageLogger.canvasDebug('使用默认白色背景', data: {
+              'reason': '没有背景数据或类型不是color'
+            });
           }
         } catch (e) {
-          debugPrint('🎨 背景色解析失败: $e, 使用默认白色');
+          EditPageLogger.editPageError('背景色解析失败，使用默认白色', error: e);
           backgroundColor = Colors.white;
         }
 
-        debugPrint('🎨 背景层构建 - 最终背景色: $backgroundColor');
-        debugPrint('🎨 背景层构建 - 网格显示状态: ${controller.state.gridVisible}');
-        debugPrint('🎨 背景层构建 - 网格大小: ${controller.state.gridSize}');
+        EditPageLogger.canvasDebug('背景层最终配置', data: {
+          'backgroundColor': '$backgroundColor',
+          'gridVisible': controller.state.gridVisible,
+          'gridSize': controller.state.gridSize
+        });
 
         // 🔧 修复网格渲染 - 始终渲染容器，网格根据状态显示
         Widget childWidget;
         if (controller.state.gridVisible) {
           final gridColor = _getGridColor(backgroundColor, context);
-          debugPrint('🎨 背景层构建 - 创建CustomPaint，网格颜色: $gridColor');
+          EditPageLogger.canvasDebug('创建网格CustomPaint', data: {
+            'gridColor': '$gridColor'
+          });
           
           // 🔧 关键修复：使用明确的尺寸而不是Size.infinite
           final currentPage = controller.state.currentPage;
@@ -105,7 +120,9 @@ mixin CanvasLayerBuilders {
             gridSize: controller.state.gridSize,
             gridColor: gridColor,
           );
-          debugPrint('🎨 背景层构建 - GridPainter已创建: $gridPainter');
+          EditPageLogger.canvasDebug('GridPainter创建完成', data: {
+            'painter': '$gridPainter'
+          });
           
           childWidget = SizedBox(
             width: pageSize.width,
@@ -115,9 +132,12 @@ mixin CanvasLayerBuilders {
               size: pageSize,
             ),
           );
-          debugPrint('🎨 背景层构建 - CustomPaint已创建，明确尺寸: ${pageSize.width}x${pageSize.height}');
+          EditPageLogger.canvasDebug('CustomPaint创建完成', data: {
+            'width': pageSize.width,
+            'height': pageSize.height
+          });
         } else {
-          debugPrint('🎨 背景层构建 - 网格关闭，使用SizedBox.expand');
+          EditPageLogger.canvasDebug('网格关闭，使用SizedBox.expand');
           childWidget = const SizedBox.expand();
         }
 
@@ -148,7 +168,10 @@ mixin CanvasLayerBuilders {
       gridColor = Colors.white.withValues(alpha: 0.25);  // 降低透明度，更柔和
     }
     
-    debugPrint('🎨 网格颜色计算: 背景亮度=$brightness, 网格颜色=$gridColor');
+    EditPageLogger.canvasDebug('网格颜色计算', data: {
+      'brightness': brightness,
+      'gridColor': '$gridColor'
+    });
     return gridColor;
   }
 

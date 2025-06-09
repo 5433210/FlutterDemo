@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'layer_types.dart';
 import 'viewport_culling_manager.dart';
 
@@ -93,15 +94,12 @@ class LayerRenderManager {
 
   /// Dispose the layer manager
   void dispose() {
-    if (_isDisposed) return;
-
+    EditPageLogger.canvasDebug('LayerRenderManager资源释放');
     _isDisposed = true;
     _updateController.close();
     _layerConfigs.clear();
     _layerBuilders.clear();
     _layerMetrics.clear();
-
-    debugPrint('🎨 LayerRenderManager: Disposed');
   }
 
   /// Get layer configuration
@@ -121,24 +119,30 @@ class LayerRenderManager {
 
   /// Get layer widget
   Widget? getLayerWidget(RenderLayerType type) {
-    debugPrint('🎨 LayerRenderManager: 请求构建层级 $type');
+    EditPageLogger.canvasDebug('请求构建层级', data: {'type': type.toString()});
     
     final config = _layerConfigs[type];
     final builder = _layerBuilders[type];
 
     if (config == null || builder == null) {
-      debugPrint('⚠️ LayerRenderManager: No config or builder for layer $type');
+      EditPageLogger.editPageWarning('层级配置或构建器缺失', data: {'type': type.toString()});
       return null;
     }
 
     if (!config.shouldRender) {
-      debugPrint('🎨 LayerRenderManager: 层级 $type 不应该渲染 (shouldRender=false)');
+      EditPageLogger.canvasDebug('层级跳过渲染', data: {
+        'type': type.toString(),
+        'shouldRender': false
+      });
       return const SizedBox.shrink();
     }
 
-    debugPrint('🎨 LayerRenderManager: 调用层级 $type 的builder');
+    EditPageLogger.canvasDebug('调用层级构建器', data: {'type': type.toString()});
     final widget = builder(config);
-    debugPrint('🎨 LayerRenderManager: 层级 $type 的widget已构建: ${widget.runtimeType}');
+    EditPageLogger.canvasDebug('层级widget构建完成', data: {
+      'type': type.toString(),
+      'widgetType': widget.runtimeType.toString()
+    });
     
     return widget;
   }
@@ -171,8 +175,10 @@ class LayerRenderManager {
   void markLayerDirty(RenderLayerType type, {String? reason}) {
     if (_isDisposed) return;
 
-    debugPrint(
-        '🎨 LayerRenderManager: Layer $type marked dirty${reason != null ? ' ($reason)' : ''}');
+    EditPageLogger.canvasDebug('层级标记为脏状态', data: {
+      'type': type.toString(),
+      'reason': reason ?? 'no reason provided'
+    });
     _notifyLayerUpdate(LayerUpdateEvent.needsRebuild(type, reason));
   }
 
@@ -199,7 +205,9 @@ class LayerRenderManager {
               visibility: LayerVisibility.optimized,
             ));
 
-        debugPrint('🎨 LayerRenderManager: Auto-optimizing layer $layerType');
+        EditPageLogger.canvasDebug('自动优化层级性能', data: {
+          'layerType': layerType.toString()
+        });
       }
     }
   }
@@ -215,7 +223,7 @@ class LayerRenderManager {
     _layerConfigs[type] = config;
     _layerBuilders[type] = builder;
 
-    debugPrint('🎨 LayerRenderManager: Registered layer $type');
+    EditPageLogger.canvasDebug('注册层级', data: {'type': type.toString()});
     _notifyLayerUpdate(LayerUpdateEvent.registered(type, config));
   }
 
@@ -247,7 +255,7 @@ class LayerRenderManager {
     final oldConfig = _layerConfigs[type];
     if (oldConfig != null && oldConfig != newConfig) {
       _layerConfigs[type] = newConfig;
-      debugPrint('🎨 LayerRenderManager: Updated layer $type config');
+      EditPageLogger.canvasDebug('更新层级配置', data: {'type': type.toString()});
       _notifyLayerUpdate(
           LayerUpdateEvent.configChanged(type, oldConfig, newConfig));
     }
@@ -260,9 +268,11 @@ class LayerRenderManager {
 
     _layerMetrics[type] = metrics;
     // Note: Performance metrics are stored in _layerMetrics for layer-specific tracking
-    debugPrint('🎨 LayerRenderManager: Updated metrics for layer $type - '
-        '${metrics.averageRenderTime.inMilliseconds}ms avg, '
-        '${(metrics.cacheHitRatio * 100).toStringAsFixed(1)}% cache hits');
+    EditPageLogger.canvasDebug('更新层级性能指标', data: {
+      'type': type.toString(),
+      'averageRenderTime': '${metrics.averageRenderTime.inMilliseconds}ms',
+      'cacheHitRatio': '${(metrics.cacheHitRatio * 100).toStringAsFixed(1)}%'
+    });
   }
 
   /// Update viewport for culling optimization

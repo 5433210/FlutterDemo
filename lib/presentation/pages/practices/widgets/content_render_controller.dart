@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/dirty_tracker.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/element_cache_manager.dart';
@@ -54,10 +55,10 @@ class ContentRenderController extends ChangeNotifier {
   SelectiveRebuildManager? get rebuildManager => _rebuildManager;
 
   void agStateChanged() {
-    debugPrint('🔄 ContentRenderController: 拖拽状态变化，触发重建');
-    debugPrint('   isDragging: ${_dragStateManager?.isDragging}');
-    debugPrint(
-        '   draggingElementIds: ${_dragStateManager?.draggingElementIds}');
+    EditPageLogger.canvasDebug('拖拽状态变化，触发重建', data: {
+      'isDragging': _dragStateManager?.isDragging,
+      'draggingElementIds': _dragStateManager?.draggingElementIds
+    });
     notifyListeners();
   }
 
@@ -116,21 +117,25 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> properties,
   }) {
-    print('🎯 ContentRenderController: Initializing element $elementId');
-    print(
-        '🎯 ContentRenderController: Element properties: ${properties.keys.join(', ')}');
+    EditPageLogger.canvasDebug('初始化元素属性跟踪', data: {
+      'elementId': elementId,
+      'properties': properties.keys.join(', ')
+    });
     _lastKnownProperties[elementId] = Map.from(properties);
   }
 
   /// Initialize multiple elements at once
   void initializeElements(List<Map<String, dynamic>> elements) {
-    print(
-        '🎯 ContentRenderController: Initializing ${elements.length} elements');
+    EditPageLogger.canvasDebug('批量初始化元素', data: {
+      'elementCount': elements.length
+    });
     for (final element in elements) {
       final elementId = element['id'] as String;
       final elementType = element['type'] as String?;
-      print(
-          '🎯 ContentRenderController: - Element $elementId (type: $elementType)');
+      EditPageLogger.canvasDebug('初始化元素', data: {
+        'elementId': elementId,
+        'type': elementType
+      });
       _lastKnownProperties[elementId] = Map.from(element);
     }
   }
@@ -174,9 +179,10 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> newProperties,
   }) {
-    print('🔔 ContentRenderController: Element $elementId changed');
-    print(
-        '🔔 ContentRenderController: New properties: ${newProperties.keys.join(', ')}');
+    EditPageLogger.canvasDebug('元素属性变更通知', data: {
+      'elementId': elementId,
+      'newProperties': newProperties.keys.join(', ')
+    });
 
     final oldProperties =
         _lastKnownProperties[elementId] ?? <String, dynamic>{};
@@ -205,9 +211,10 @@ class ContentRenderController extends ChangeNotifier {
     // Notify through stream only (avoid triggering broad notifyListeners)
     _changeStreamController.add(changeInfo);
 
-    print('🔔 ContentRenderController: Change type: ${changeInfo.changeType}');
-    debugPrint(
-        'ContentRenderController: Element $elementId changed - ${changeInfo.changeType}');
+    EditPageLogger.canvasDebug('元素变更类型', data: {
+      'changeType': '${changeInfo.changeType}',
+      'elementId': elementId
+    });
   }
 
   /// Notify about element creation
@@ -234,7 +241,7 @@ class ContentRenderController extends ChangeNotifier {
 
     _changeStreamController.add(changeInfo);
 
-    debugPrint('ContentRenderController: Element $elementId created');
+    EditPageLogger.canvasDebug('元素创建通知', data: {'elementId': elementId});
   }
 
   /// Notify about element deletion
@@ -264,12 +271,15 @@ class ContentRenderController extends ChangeNotifier {
 
     _changeStreamController.add(changeInfo);
 
-    debugPrint('ContentRenderController: Element $elementId deleted');
+    EditPageLogger.canvasDebug('元素删除通知', data: {'elementId': elementId});
   }
 
   /// 刷新所有受监控的元素
   void refreshAll(String reason) {
-    debugPrint('🔄 ContentRenderController.refreshAll() - $reason');
+    EditPageLogger.canvasDebug('刷新所有受监控元素', data: {
+      'reason': reason,
+      'elementCount': _lastKnownProperties.length
+    });
 
     // 标记所有受跟踪的元素为脏状态
     for (final elementId in _lastKnownProperties.keys) {
@@ -279,8 +289,9 @@ class ContentRenderController extends ChangeNotifier {
     // 通知所有监听器
     notifyListeners();
 
-    debugPrint(
-        '🔄 ContentRenderController.refreshAll() - 完成，已刷新 ${_lastKnownProperties.length} 个元素');
+    EditPageLogger.canvasDebug('元素刷新完成', data: {
+      'refreshedCount': _lastKnownProperties.length
+    });
   }
 
   /// Reset controller state
@@ -300,8 +311,9 @@ class ContentRenderController extends ChangeNotifier {
     // 添加新的监听器
     _dragStateManager?.addListener(_onDragStateChanged);
 
-    debugPrint(
-        '🎯 ContentRenderController: DragStateManager connected with listener');
+    EditPageLogger.canvasDebug('DragStateManager连接完成', data: {
+      'hasListener': true
+    });
   }
 
   /// Check if an element should be rebuilt
@@ -319,34 +331,46 @@ class ContentRenderController extends ChangeNotifier {
     final enableDragPreview = DragConfig.enableDragPreview;
     final isDragPreviewActive = _dragStateManager?.isDragPreviewActive ?? false;
 
-    debugPrint(
-        '🔍 ContentRenderController: shouldSkipElementRendering($elementId)');
-    debugPrint('   dragStateManager: $isDragStateManagerActive');
-    debugPrint('   isDragging: $isDragging');
-    debugPrint('   isDragPreviewActive: $isDragPreviewActive');
-    debugPrint('   isElementDragging: $isElementDragging');
-    debugPrint('   enableDragPreview: $enableDragPreview');
+    EditPageLogger.canvasDebug('检查元素渲染跳过条件', data: {
+      'elementId': elementId,
+      'dragStateManager': isDragStateManagerActive,
+      'isDragging': isDragging,
+      'isDragPreviewActive': isDragPreviewActive,
+      'isElementDragging': isElementDragging,
+      'enableDragPreview': enableDragPreview
+    });
 
     // 快速退出 - 如果拖拽状态管理器无效，始终显示元素
     if (!isDragStateManagerActive) {
-      debugPrint(
-          '🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染 (无拖拽状态管理器)');
+      EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
+        'elementId': elementId,
+        'reason': '无拖拽状态管理器'
+      });
       return false;
     }
 
     // 快速退出 - 如果不在拖拽中，始终显示元素
     if (!isDragging || !isDragPreviewActive) {
-      debugPrint('🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染 (不在拖拽中)');
+      EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
+        'elementId': elementId,
+        'reason': '不在拖拽中'
+      });
       return false;
     }
 
     // 核心逻辑 - 仅当元素正在被拖拽且拖拽预览层启用时，才跳过元素渲染
     if (isElementDragging && enableDragPreview) {
-      debugPrint('🎯 ContentRenderController: ✅ 跳过元素 $elementId 渲染 (拖拽中)');
+      EditPageLogger.canvasDebug('元素渲染决策：跳过', data: {
+        'elementId': elementId,
+        'reason': '元素拖拽中且预览层启用'
+      });
       return true;
     }
 
-    debugPrint('🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染');
+    EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
+      'elementId': elementId,
+      'reason': '默认情况'
+    });
     return false;
   }
 
@@ -359,10 +383,11 @@ class ContentRenderController extends ChangeNotifier {
       final isDragPreviewActive = _dragStateManager!.isDragPreviewActive;
 
       // 添加调试信息
-      debugPrint('🔄 ContentRenderController._onDragStateChanged()');
-      debugPrint('   isDragging: $isDragging');
-      debugPrint('   isDragPreviewActive: $isDragPreviewActive');
-      debugPrint('   draggingElementIds: $draggingElementIds');
+      EditPageLogger.canvasDebug('拖拽状态变更处理', data: {
+        'isDragging': isDragging,
+        'isDragPreviewActive': isDragPreviewActive,
+        'draggingElementIds': draggingElementIds
+      });
 
       // 更新需要跳过渲染的元素列表（这些元素将在DragPreviewLayer中显示）
       _elementsToSkip.clear();
@@ -377,7 +402,7 @@ class ContentRenderController extends ChangeNotifier {
           !isDragPreviewActive &&
           draggingElementIds.isEmpty) {
         // 拖拽结束，确保所有元素可见
-        debugPrint('🔄 ContentRenderController: 拖拽结束，确保所有元素可见');
+        EditPageLogger.canvasDebug('拖拽结束，确保所有元素可见');
 
         // 延迟标记所有元素为脏状态，确保在拖拽层完全消失后再刷新
         Future.delayed(const Duration(milliseconds: 50), () {
@@ -388,8 +413,10 @@ class ContentRenderController extends ChangeNotifier {
       // 通知监听器状态已更新
       notifyListeners();
 
-      debugPrint(
-          'ContentRenderController: 拖拽状态更新，当前拖拽中: $isDragging, 元素: $draggingElementIds');
+      EditPageLogger.canvasDebug('拖拽状态更新完成', data: {
+        'isDragging': isDragging,
+        'draggingElementIds': draggingElementIds
+      });
     }
   }
 }

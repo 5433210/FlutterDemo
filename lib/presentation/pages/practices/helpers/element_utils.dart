@@ -1,4 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// Utility class for element operations
 class ElementUtils {
@@ -10,7 +13,12 @@ class ElementUtils {
     final orientation = page['orientation'] as String? ?? 'portrait';
     final dpi = (page['dpi'] as num?)?.toInt() ?? 300;
 
-    debugPrint('🔧【calculatePixelSize】页面参数: width=$width, height=$height, orientation=$orientation, dpi=$dpi');
+    EditPageLogger.canvasDebug('计算页面像素尺寸', data: {
+      'width': width,
+      'height': height,
+      'orientation': orientation,
+      'dpi': dpi
+    });
 
     // Convert mm to inches, 1 inch = 25.4mm
     final widthInches = width / 25.4;
@@ -20,7 +28,10 @@ class ElementUtils {
     final widthPixels = (widthInches * dpi).round().toDouble();
     final heightPixels = (heightInches * dpi).round().toDouble();
 
-    debugPrint('🔧【calculatePixelSize】计算结果: ${widthPixels}x$heightPixels pixels');
+    EditPageLogger.canvasDebug('像素尺寸计算结果', data: {
+      'widthPixels': widthPixels,
+      'heightPixels': heightPixels
+    });
     
     return Size(widthPixels, heightPixels);
   }
@@ -68,7 +79,9 @@ class ElementUtils {
       // Parse the color
       return Color(int.parse(hexColor, radix: 16));
     } catch (e) {
-      debugPrint('Error parsing color: $hexColor, error: $e');
+      EditPageLogger.editPageError('颜色解析失败', data: {
+        'hexColor': hexColor
+      }, error: e);
       return Colors.white; // Default to white on error
     }
   }

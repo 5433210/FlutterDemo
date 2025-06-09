@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/element_snapshot.dart';
 import 'drag_operation_manager.dart';
@@ -50,25 +51,28 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       listenable: widget.dragStateManager,
       builder: (context, child) {
         // 🔍[RESIZE_FIX] DragPreviewLayer关键调试
-        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer.build() 开始');
-        debugPrint('🔍[RESIZE_FIX]    isDragPreviewActive: ${widget.dragStateManager.isDragPreviewActive}');
-        debugPrint('🔍[RESIZE_FIX]    isDragging: ${widget.dragStateManager.isDragging}');
-        debugPrint('🔍[RESIZE_FIX]    draggingElementIds: ${widget.dragStateManager.draggingElementIds}');
+        EditPageLogger.canvasDebug('DragPreviewLayer构建开始', data: {
+          'isDragPreviewActive': widget.dragStateManager.isDragPreviewActive,
+          'isDragging': widget.dragStateManager.isDragging,
+          'draggingElementIds': widget.dragStateManager.draggingElementIds
+        });
 
         // 如果没有活动的拖拽预览，返回空容器
         if (!widget.dragStateManager.isDragPreviewActive) {
-          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: ❌ 没有活动的拖拽预览，返回空容器');
+          EditPageLogger.canvasDebug('DragPreviewLayer无活动拖拽预览');
           return const SizedBox.shrink();
         }
 
         // 获取所有正在拖拽的元素ID
         final draggingElementIds = widget.dragStateManager.draggingElementIds;
         if (draggingElementIds.isEmpty) {
-          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: ❌ 没有拖拽中的元素，返回空容器');
+          EditPageLogger.canvasDebug('DragPreviewLayer无拖拽中元素');
           return const SizedBox.shrink();
         }
 
-        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 构建预览层，拖拽元素: $draggingElementIds');
+        EditPageLogger.canvasDebug('DragPreviewLayer构建预览层', data: {
+          'draggingElementIds': draggingElementIds
+        });
 
         // 创建一个透明层，显示所有拖拽元素的预览
         return RepaintBoundary(
@@ -83,7 +87,9 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                   // 为每个元素构建单独的预览
                   return Builder(
                     builder: (context) {
-                      debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 构建元素 $elementId 的预览');
+                      EditPageLogger.canvasDebug('构建元素预览', data: {
+                        'elementId': elementId
+                      });
 
                       // 🔧 优先使用完整的预览属性（支持resize和rotate）
                       final previewProperties = widget.dragStateManager
@@ -93,7 +99,9 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                       
                       if (previewProperties != null) {
                         // 使用完整的预览属性构建元素
-                        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用完整属性预览元素 $elementId');
+                        EditPageLogger.canvasDebug('使用完整属性预览元素', data: {
+                          'elementId': elementId
+                        });
                         elementPreview = _buildFullPropertyPreview(elementId, previewProperties);
                       } else {
                         // 回退到传统的位置偏移方式
@@ -101,11 +109,16 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                             .getElementPreviewPosition(elementId);
 
                         // 🔍[RESIZE_FIX] 调试预览位置
-                        debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 预览位置: $previewPosition');
+                        EditPageLogger.canvasDebug('元素预览位置', data: {
+                          'elementId': elementId,
+                          'previewPosition': '$previewPosition'
+                        });
 
                         // 如果没有预览位置，不显示该元素
                         if (previewPosition == null) {
-                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 没有预览位置');
+                          EditPageLogger.canvasDebug('元素没有预览位置', data: {
+                            'elementId': elementId
+                          });
                           return const SizedBox.shrink();
                         }
 
@@ -116,18 +129,24 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                         );
 
                         if (element.isEmpty) {
-                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 元素 $elementId 数据未找到');
+                          EditPageLogger.canvasDebug('元素数据未找到', data: {
+                            'elementId': elementId
+                          });
                           return const SizedBox.shrink();
                         }
 
                         // 如果提供了自定义构建器，使用它构建预览
                         if (widget.elementBuilder != null) {
-                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用自定义构建器预览元素 $elementId');
+                          EditPageLogger.canvasDebug('使用自定义构建器预览元素', data: {
+                            'elementId': elementId
+                          });
                           elementPreview = widget.elementBuilder!(
                               elementId, previewPosition, element);
                         } else {
                           // 否则使用默认预览样式
-                          debugPrint('🔍[RESIZE_FIX] DragPreviewLayer: 使用默认样式预览元素 $elementId');
+                          EditPageLogger.canvasDebug('使用默认样式预览元素', data: {
+                            'elementId': elementId
+                          });
                           elementPreview = _buildDefaultPreview(
                               elementId, previewPosition, element);
                         }
@@ -153,13 +172,15 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     if (widget.dragStateManager != oldWidget.dragStateManager) {
       oldWidget.dragStateManager.removeListener(_handleDragStateChange);
       widget.dragStateManager.addListener(_handleDragStateChange);
-      debugPrint('🔄 DragPreviewLayer: DragStateManager已更新');
+      EditPageLogger.canvasDebug('DragStateManager已更新');
     }
 
     // 检查元素列表变化
     if (widget.elements.length != oldWidget.elements.length) {
-      debugPrint(
-          '🔄 DragPreviewLayer: 元素列表长度已变化 ${oldWidget.elements.length} -> ${widget.elements.length}');
+      EditPageLogger.canvasDebug('元素列表长度变化', data: {
+        'oldLength': oldWidget.elements.length,
+        'newLength': widget.elements.length
+      });
     }
   }
 
@@ -378,7 +399,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         );
     }
 
-    debugPrint('🎯 DragPreviewLayer: 使用完整属性构建预览 - 位置:($x, $y), 尺寸:(${displayWidth}, ${displayHeight}), 旋转:$elementRotation°');
+    EditPageLogger.canvasDebug('使用完整属性构建预览', data: {
+      'position': '($x, $y)',
+      'size': '(${displayWidth}, ${displayHeight})',
+      'rotation': '${elementRotation}°'
+    });
 
     // 应用位置和旋转
     return Positioned(
@@ -483,12 +508,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
 
   /// 处理拖拽状态变化
   void _handleDragStateChange() {
-    debugPrint('🔄 DragPreviewLayer: 拖拽状态变化');
-    debugPrint(
-        '   isDragPreviewActive: ${widget.dragStateManager.isDragPreviewActive}');
-    debugPrint('   isDragging: ${widget.dragStateManager.isDragging}');
-    debugPrint(
-        '   draggingElementIds: ${widget.dragStateManager.draggingElementIds}');
+    EditPageLogger.canvasDebug('拖拽状态变化', data: {
+      'isDragPreviewActive': widget.dragStateManager.isDragPreviewActive,
+      'isDragging': widget.dragStateManager.isDragging,
+      'draggingElementIds': widget.dragStateManager.draggingElementIds
+    });
 
     // 检查是否是从拖拽状态到非拖拽状态的转变
     bool isDragEnding = !widget.dragStateManager.isDragging &&
@@ -496,7 +520,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         widget.dragStateManager.draggingElementIds.isEmpty;
 
     if (isDragEnding) {
-      debugPrint('🔄 DragPreviewLayer: 拖拽操作已结束，清理预览层');
+      EditPageLogger.canvasDebug('拖拽操作结束，清理预览层');
     }
 
     // 在任何拖拽状态变化时都重建组件，以确保正确的显示/隐藏行为
@@ -509,9 +533,11 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
   void _logSnapshotAvailability() {
     if (widget.useSnapshotSystem && widget.dragOperationManager != null) {
       final snapshots = widget.dragOperationManager!.getAllSnapshots();
-      debugPrint('📊 DragPreviewLayer: 快照系统已启用，共有 ${snapshots.length} 个快照');
+      EditPageLogger.canvasDebug('快照系统已启用', data: {
+        'snapshotCount': snapshots.length
+      });
     } else {
-      debugPrint('📊 DragPreviewLayer: 快照系统未启用，使用传统预览渲染');
+      EditPageLogger.canvasDebug('快照系统未启用，使用传统预览渲染');
     }
   }
 }
