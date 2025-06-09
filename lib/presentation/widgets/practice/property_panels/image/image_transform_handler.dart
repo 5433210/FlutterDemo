@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
+
 import '../../../../../application/providers/service_providers.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -241,7 +244,22 @@ mixin ImageTransformHandler {
             );
           }
         } catch (e) {
-          debugPrint('Error applying transform: $e');
+          EditPageLogger.propertyPanelError(
+            '应用图像变换失败',
+            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            error: e,
+            data: {
+              'operation': 'apply_transform',
+              'imageUrl': imageUrl,
+              'cropLeft': safeCropLeft,
+              'cropTop': safeCropTop,
+              'cropRight': safeCropRight,
+              'cropBottom': safeCropBottom,
+              'flipHorizontal': flipHorizontal,
+              'flipVertical': flipVertical,
+              'contentRotation': contentRotation,
+            },
+          );
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -306,7 +324,15 @@ mixin ImageTransformHandler {
         if (await file.exists()) {
           return await file.readAsBytes();
         } else {
-          debugPrint('Image loading error: File not found: $filePath');
+          EditPageLogger.propertyPanelError(
+            '图像文件不存在',
+            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            data: {
+              'operation': 'load_image_file',
+              'filePath': filePath,
+              'imageUrl': imageUrl,
+            },
+          );
           return null;
         }
       } else {
@@ -314,13 +340,28 @@ mixin ImageTransformHandler {
         if (response.statusCode == 200) {
           return response.bodyBytes;
         } else {
-          debugPrint(
-              'Image loading error: HTTP request failed: ${response.statusCode}');
+          EditPageLogger.propertyPanelError(
+            'HTTP请求获取图像失败',
+            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            data: {
+              'operation': 'load_image_http',
+              'imageUrl': imageUrl,
+              'statusCode': response.statusCode,
+            },
+          );
           return null;
         }
       }
     } catch (e) {
-      debugPrint('Image loading error: $e');
+      EditPageLogger.propertyPanelError(
+        '加载图像数据失败',
+        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        error: e,
+        data: {
+          'operation': 'load_image_data',
+          'imageUrl': imageUrl,
+        },
+      );
       return null;
     }
   }

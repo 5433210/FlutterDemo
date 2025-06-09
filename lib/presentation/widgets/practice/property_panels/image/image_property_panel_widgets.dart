@@ -3,6 +3,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
@@ -711,7 +714,16 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
               });
             },
             onError: (exception, stackTrace) {
-              debugPrint('Image loading error: $exception');
+              EditPageLogger.propertyPanelError(
+                '图像加载错误',
+                tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+                error: exception,
+                stackTrace: stackTrace,
+                data: {
+                  'operation': 'image_loading',
+                  'imageUrl': imageUrl,
+                },
+              );
             },
           ));
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
+
 /// 抽象撤销操作接口
 abstract class UndoableOperation {
   String get description;
@@ -24,11 +27,26 @@ class AddElementOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行添加元素操作',
+      data: {
+        'elementId': element['id'],
+        'elementType': element['type'],
+        'operation': 'add_element_execute',
+      },
+    );
     addElement(element);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销添加元素操作',
+      data: {
+        'elementId': element['id'],
+        'operation': 'add_element_undo',
+      },
+    );
     removeElement(element['id'] as String);
   }
 }
@@ -50,11 +68,26 @@ class DeleteElementOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行删除元素操作',
+      data: {
+        'elementId': element['id'],
+        'elementType': element['type'],
+        'operation': 'delete_element_execute',
+      },
+    );
     removeElement(element['id'] as String);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销删除元素操作',
+      data: {
+        'elementId': element['id'],
+        'operation': 'delete_element_undo',
+      },
+    );
     addElement(element);
   }
 }
@@ -78,11 +111,27 @@ class ElementPropertyOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行元素属性更新操作',
+      data: {
+        'elementId': elementId,
+        'changedProperties': newProperties.keys.toList(),
+        'operation': 'property_update_execute',
+      },
+    );
     updateElement(elementId, newProperties);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销元素属性更新操作',
+      data: {
+        'elementId': elementId,
+        'restoredProperties': oldProperties.keys.toList(),
+        'operation': 'property_update_undo',
+      },
+    );
     updateElement(elementId, oldProperties);
   }
 }
@@ -103,6 +152,15 @@ class BatchOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行批量操作',
+      data: {
+        'operationCount': operations.length,
+        'description': operationDescription,
+        'operation': 'batch_execute',
+      },
+    );
+    
     for (final operation in operations) {
       operation.execute();
     }
@@ -110,6 +168,15 @@ class BatchOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销批量操作',
+      data: {
+        'operationCount': operations.length,
+        'description': operationDescription,
+        'operation': 'batch_undo',
+      },
+    );
+    
     for (final operation in operations.reversed) {
       operation.undo();
     }
@@ -135,6 +202,15 @@ class ElementTranslationOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行元素移动操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'element_translation_execute',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], newPositions[i]);
     }
@@ -142,6 +218,15 @@ class ElementTranslationOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销元素移动操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'element_translation_undo',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], oldPositions[i]);
     }
@@ -167,6 +252,15 @@ class ResizeElementOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行元素调整大小操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'resize_element_execute',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], newSizes[i]);
     }
@@ -174,6 +268,15 @@ class ResizeElementOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销元素调整大小操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'operation': 'resize_element_undo',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], oldSizes[i]);
     }
@@ -199,6 +302,16 @@ class ElementRotationOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerDebug(
+      '执行元素旋转操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'rotationValues': newRotations,
+        'operation': 'rotation_execute',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], {'rotation': newRotations[i]});
     }
@@ -206,6 +319,16 @@ class ElementRotationOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerDebug(
+      '撤销元素旋转操作',
+      data: {
+        'elementCount': elementIds.length,
+        'elementIds': elementIds,
+        'rotationValues': oldRotations,
+        'operation': 'rotation_undo',
+      },
+    );
+    
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], {'rotation': oldRotations[i]});
     }
@@ -229,11 +352,26 @@ class AddLayerOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行添加图层操作',
+      data: {
+        'layerId': layer['id'],
+        'layerName': layer['name'],
+        'operation': 'add_layer_execute',
+      },
+    );
     addLayer(layer);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销添加图层操作',
+      data: {
+        'layerId': layer['id'],
+        'operation': 'add_layer_undo',
+      },
+    );
     removeLayer(layer['id'] as String);
   }
 }
@@ -426,6 +564,16 @@ class GroupElementsOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行组合元素操作',
+      data: {
+        'elementCount': elements.length,
+        'elementIds': elements.map((e) => e['id']).toList(),
+        'groupElementId': groupElement['id'],
+        'operation': 'group_elements_execute',
+      },
+    );
+    
     // 删除原来的元素
     final elementIds = elements.map((e) => e['id'] as String).toList();
     removeElements(elementIds);
@@ -436,6 +584,15 @@ class GroupElementsOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销组合元素操作',
+      data: {
+        'groupElementId': groupElement['id'],
+        'restoredElementCount': elements.length,
+        'operation': 'group_elements_undo',
+      },
+    );
+    
     // 删除组合元素
     removeElement(groupElement['id'] as String);
     
@@ -467,6 +624,16 @@ class UngroupElementOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行取消组合元素操作',
+      data: {
+        'groupElementId': groupElement['id'],
+        'childElementCount': childElements.length,
+        'childElementIds': childElements.map((e) => e['id']).toList(),
+        'operation': 'ungroup_element_execute',
+      },
+    );
+    
     // 删除组合元素
     removeElement(groupElement['id'] as String);
     
@@ -476,6 +643,15 @@ class UngroupElementOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销取消组合元素操作',
+      data: {
+        'groupElementId': groupElement['id'],
+        'removedChildCount': childElements.length,
+        'operation': 'ungroup_element_undo',
+      },
+    );
+    
     // 删除子元素
     final childIds = childElements.map((e) => e['id'] as String).toList();
     for (final id in childIds) {
@@ -506,6 +682,15 @@ class FormatPainterOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行格式刷操作',
+      data: {
+        'targetElementCount': targetElementIds.length,
+        'targetElementIds': targetElementIds,
+        'operation': 'format_painter_execute',
+      },
+    );
+    
     for (int i = 0; i < targetElementIds.length; i++) {
       updateElement(targetElementIds[i], newPropertiesList[i]);
     }
@@ -513,6 +698,15 @@ class FormatPainterOperation implements UndoableOperation {
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销格式刷操作',
+      data: {
+        'targetElementCount': targetElementIds.length,
+        'targetElementIds': targetElementIds,
+        'operation': 'format_painter_undo',
+      },
+    );
+    
     for (int i = 0; i < targetElementIds.length; i++) {
       updateElement(targetElementIds[i], oldPropertiesList[i]);
     }
@@ -648,11 +842,27 @@ class PasteElementOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行粘贴元素操作',
+      data: {
+        'elementCount': newElements.length,
+        'elementIds': newElements.map((e) => e['id']).toList(),
+        'elementTypes': newElements.map((e) => e['type']).toList(),
+        'operation': 'paste_elements_execute',
+      },
+    );
     addElements(newElements);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销粘贴元素操作',
+      data: {
+        'elementCount': newElements.length,
+        'operation': 'paste_elements_undo',
+      },
+    );
     final elementIds = newElements.map((e) => e['id'] as String).toList();
     removeElements(elementIds);
   }
@@ -711,11 +921,30 @@ class DeletePageOperation implements UndoableOperation {
 
   @override
   void execute() {
+    EditPageLogger.controllerInfo(
+      '执行删除页面操作',
+      data: {
+        'pageId': page['id'],
+        'pageIndex': pageIndex,
+        'wasCurrentPage': wasCurrentPage,
+        'pageName': page['name'],
+        'operation': 'delete_page_execute',
+      },
+    );
     removePage(pageIndex);
   }
 
   @override
   void undo() {
+    EditPageLogger.controllerInfo(
+      '撤销删除页面操作',
+      data: {
+        'pageId': page['id'],
+        'pageIndex': pageIndex,
+        'restoredAsCurrentPage': wasCurrentPage,
+        'operation': 'delete_page_undo',
+      },
+    );
     addPage(page, pageIndex);
     if (wasCurrentPage) {
       setCurrentPageIndex(oldCurrentPageIndex);

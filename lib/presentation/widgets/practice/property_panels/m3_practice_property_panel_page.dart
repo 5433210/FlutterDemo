@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../../common/editable_number_field.dart';
 import '../../common/m3_color_picker.dart';
 import '../practice_edit_controller.dart';
@@ -675,7 +677,18 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
     final colorHex =
         '#${color.red.toRadixString(16).padLeft(2, '0')}${color.green.toRadixString(16).padLeft(2, '0')}${color.blue.toRadixString(16).padLeft(2, '0')}';
 
-    debugPrint('🎨 更新页面背景颜色: 输入=$color, 输出=$colorHex');
+    EditPageLogger.propertyPanelDebug(
+      '更新页面背景颜色',
+      tag: EditPageLoggingConfig.TAG_TEXT_PANEL,
+      data: {
+        'inputColor': color.toString(),
+        'outputColorHex': colorHex,
+        'red': color.red,
+        'green': color.green,
+        'blue': color.blue,
+        'operation': 'update_background_color',
+      },
+    );
 
     // 使用新格式
     final background = {

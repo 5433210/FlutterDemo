@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
 import 'm3_practice_property_panel_base.dart';
@@ -243,7 +245,16 @@ class _M3LayerPropertyPanelContentState
                 value: isVisible,
                 activeColor: colorScheme.primary,
                 onChanged: (value) {
-                  debugPrint('🎨 Layer visibility changed: $value');
+                  EditPageLogger.propertyPanelDebug(
+                    '图层可见性变更',
+                    tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                    data: {
+                      'layerId': widget.layer['id'],
+                      'layerName': widget.layer['name'],
+                      'newVisibility': value,
+                      'operation': 'visibility_toggle',
+                    },
+                  );
                   widget.onLayerPropertiesChanged({'isVisible': value});
                 },
                 secondary: Icon(
@@ -275,7 +286,16 @@ class _M3LayerPropertyPanelContentState
                 value: isLocked,
                 activeColor: colorScheme.primary,
                 onChanged: (value) {
-                  debugPrint('🎨 Layer locked changed: $value');
+                  EditPageLogger.propertyPanelDebug(
+                    '图层锁定状态变更',
+                    tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                    data: {
+                      'layerId': widget.layer['id'],
+                      'layerName': widget.layer['name'],
+                      'newLocked': value,
+                      'operation': 'lock_toggle',
+                    },
+                  );
                   widget.onLayerPropertiesChanged({'isLocked': value});
                 },
                 secondary: Icon(
@@ -320,7 +340,16 @@ class _M3LayerPropertyPanelContentState
                             activeColor: colorScheme.primary,
                             thumbColor: colorScheme.primary,
                             onChanged: (value) {
-                              debugPrint('🎨 Layer opacity changed: $value');
+                              EditPageLogger.propertyPanelDebug(
+                                '图层不透明度变更',
+                                tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                                data: {
+                                  'layerId': widget.layer['id'],
+                                  'layerName': widget.layer['name'],
+                                  'newOpacity': value,
+                                  'operation': 'opacity_change',
+                                },
+                              );
                               widget
                                   .onLayerPropertiesChanged({'opacity': value});
                             },
@@ -553,15 +582,42 @@ class _M3LayerPropertyPanelContentState
   // 应用图层名称更改
   void _applyNameChange() {
     final newName = _nameController.text.trim();
-    debugPrint('🎨 Layer name change: "$newName"');
+    final oldName = widget.layer['name'] as String? ?? 'Layer 1';
+    
+    EditPageLogger.propertyPanelDebug(
+      '图层名称变更',
+      tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+      data: {
+        'layerId': widget.layer['id'],
+        'oldName': oldName,
+        'newName': newName,
+        'operation': 'name_change',
+      },
+    );
     
     if (newName.isNotEmpty) {
-      debugPrint('  ✅ Applying name change');
+      EditPageLogger.propertyPanelDebug(
+        '应用图层名称变更',
+        tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+        data: {
+          'layerId': widget.layer['id'],
+          'finalName': newName,
+          'operation': 'name_change_applied',
+        },
+      );
       widget.onLayerPropertiesChanged({'name': newName});
     } else {
       // 如果名称为空，恢复原来的名称
-      debugPrint('  ❌ Name is empty, reverting');
-      _nameController.text = widget.layer['name'] as String? ?? 'Layer 1';
+      EditPageLogger.propertyPanelDebug(
+        '图层名称为空，恢复原名称',
+        tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+        data: {
+          'layerId': widget.layer['id'],
+          'revertedName': oldName,
+          'operation': 'name_change_reverted',
+        },
+      );
+      _nameController.text = oldName;
     }
     setState(() {
       _isEditingName = false;

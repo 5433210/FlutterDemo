@@ -7,6 +7,7 @@ import '../../../../application/providers/service_providers.dart';
 import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'collection_panels/m3_background_texture_panel.dart';
@@ -309,10 +310,25 @@ class _M3CollectionPropertyPanelState
           setState(() {});
         }
 
-        debugPrint('Auto-updated missing character images');
+        EditPageLogger.propertyPanelDebug(
+          '自动更新缺失字符图像完成',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'charCount': characters.length,
+            'operation': 'auto_update_missing_images',
+          },
+        );
       }
     } catch (e) {
-      debugPrint('Failed to auto-update missing character images: $e');
+      EditPageLogger.propertyPanelError(
+        '自动更新缺失字符图像失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'charCount': characters.length,
+          'operation': 'auto_update_missing_images',
+        },
+      );
     }
   }
 
@@ -405,15 +421,34 @@ class _M3CollectionPropertyPanelState
 
         // Log cleanup info
         if (keysToRemove.isNotEmpty) {
-          debugPrint(
-              'Cleaned up invalid keys in top-level characterImages: $keysToRemove');
+          EditPageLogger.propertyPanelDebug(
+            '清理字符图像信息无效键',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'removedKeys': keysToRemove,
+              'operation': 'cleanup_character_images',
+            },
+          );
         }
         if (hasNestedStructure) {
-          debugPrint('Cleaned up nested characterImages structure');
+          EditPageLogger.propertyPanelDebug(
+            '清理嵌套字符图像结构',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'cleanup_nested_structure',
+            },
+          );
         }
       }
     } catch (e) {
-      debugPrint('Failed to clean up character image info: $e');
+      EditPageLogger.propertyPanelError(
+        '清理字符图像信息失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'operation': 'cleanup_character_images',
+        },
+      );
     }
   }
 
@@ -426,7 +461,13 @@ class _M3CollectionPropertyPanelState
 
         // 检查是否有嵌套结构
         if (content.containsKey('content')) {
-          debugPrint('✨ 发现嵌套的 content 结构，开始清理...');
+          EditPageLogger.propertyPanelDebug(
+            '发现嵌套的content结构，开始清理',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'cleanup_nested_content',
+            },
+          );
 
           // 扁平化嵌套结构
           final flattenedContent = _deepFlattenContent(content);
@@ -434,11 +475,24 @@ class _M3CollectionPropertyPanelState
           // 更新元素内容
           widget.onElementPropertiesChanged({'content': flattenedContent});
 
-          debugPrint('✅ 嵌套 content 结构清理完成');
+          EditPageLogger.propertyPanelDebug(
+            '嵌套content结构清理完成',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'cleanup_nested_content_complete',
+            },
+          );
         }
       }
     } catch (e) {
-      debugPrint('❌ 清理嵌套 content 结构时出错: $e');
+      EditPageLogger.propertyPanelError(
+        '清理嵌套content结构时出错',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'operation': 'cleanup_nested_content',
+        },
+      );
     }
   }
 
@@ -712,7 +766,15 @@ class _M3CollectionPropertyPanelState
         widget.onElementPropertiesChanged({'content': updatedContent});
 
         // Log
-        debugPrint('Text updated and character image info remapped');
+        EditPageLogger.propertyPanelDebug(
+          '文本更新并重新映射字符图像信息',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'newText': value,
+            'textLength': value.length,
+            'operation': 'text_update_remap',
+          },
+        );
       } else {
         // If no characterImages, update text directly
         widget.onUpdateChars(value);
@@ -745,7 +807,16 @@ class _M3CollectionPropertyPanelState
       // Refresh UI
       setState(() {});
     } catch (e) {
-      debugPrint('Failed to select candidate character: $e');
+      EditPageLogger.propertyPanelError(
+        '选择候选字符失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'selectedCharIndex': _selectedCharIndex,
+          'entityId': entity.id,
+          'operation': 'select_candidate_character',
+        },
+      );
     }
   }
 
@@ -877,7 +948,16 @@ class _M3CollectionPropertyPanelState
 
       _updateProperty('content', updatedContent);
     } catch (e) {
-      debugPrint('Failed to update character image info: $e');
+      EditPageLogger.propertyPanelError(
+        '更新字符图像信息失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'characterIndex': index,
+          'characterId': characterId,
+          'operation': 'update_character_image',
+        },
+      );
     }
   }
 
@@ -931,7 +1011,16 @@ class _M3CollectionPropertyPanelState
       // Auto-update missing character images
       await _autoUpdateMissingCharacterImages(newText);
     } catch (e) {
-      debugPrint('Failed to update character image info: $e');
+      EditPageLogger.propertyPanelError(
+        '更新新文本字符图像失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'newText': newText,
+          'textLength': newText.length,
+          'operation': 'update_character_images_for_new_text',
+        },
+      );
     }
   }
 
@@ -968,7 +1057,14 @@ class _M3CollectionPropertyPanelState
           }
         }
 
-        debugPrint('✅ 处理 content 更新：已扁平化并合并属性');
+        EditPageLogger.propertyPanelDebug(
+          '处理content更新：已扁平化并合并属性',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'key': key,
+            'operation': 'content_update_flatten',
+          },
+        );
       } else {
         // 常规属性更新
         newContent[key] = value;
@@ -977,15 +1073,38 @@ class _M3CollectionPropertyPanelState
       // 最后检查确保没有 content 属性
       if (newContent.containsKey('content')) {
         newContent.remove('content');
-        debugPrint('⚠️ 警告: 在最终处理中移除了嵌套 content');
+        EditPageLogger.propertyPanelDebug(
+          '警告: 在最终处理中移除了嵌套content',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'key': key,
+            'operation': 'remove_nested_content',
+          },
+        );
       }
 
       // 更新元素属性
       _updateProperty('content', newContent);
 
-      debugPrint('✅ 更新内容属性 "$key"，属性数量: ${newContent.length}');
+      EditPageLogger.propertyPanelDebug(
+        '更新内容属性完成',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'key': key,
+          'propertyCount': newContent.length,
+          'operation': 'update_content_property_complete',
+        },
+      );
     } catch (e) {
-      debugPrint('❌ 更新内容属性时出错: $e');
+      EditPageLogger.propertyPanelError(
+        '更新内容属性时出错',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'key': key,
+          'operation': 'update_content_property',
+        },
+      );
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'export_service.dart';
@@ -94,6 +95,9 @@ class _ExportDialogState extends State<ExportDialog> {
   /// 页面朝向
   bool _isLandscape = false;
 
+  /// 是否自动检测页面方向
+  bool _autoDetectOrientation = true;
+
   /// 页面边距 (上, 右, 下, 左) 以厘米为单位
   final List<double> _margins = [0.0, 0.0, 0.0, 0.0];
 
@@ -131,7 +135,7 @@ class _ExportDialogState extends State<ExportDialog> {
         title: Text(l10n.export),
         content: SizedBox(
           width: 800,
-          height: 600,
+          height: 550,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -223,7 +227,13 @@ class _ExportDialogState extends State<ExportDialog> {
 
     // 使用延迟任务生成预览，避免在构建过程中触发setState
     if (widget.controller != null) {
-      Future.microtask(() => _generatePreview());
+      Future.microtask(() {
+        // 如果启用自动检测方向，先进行初始方向检测
+        if (_autoDetectOrientation) {
+          _updateOrientation();
+        }
+        _generatePreview();
+      });
     }
   }
 
@@ -471,6 +481,30 @@ class _ExportDialogState extends State<ExportDialog> {
         Text('${l10n.exportDialogPageOrientation}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
+        // 自动检测选项
+        CheckboxListTile(
+          title: const Row(
+            children: [
+              Icon(Icons.auto_fix_high),
+              SizedBox(width: 8),
+              Text('自动检测页面方向'),
+            ],
+          ),
+          value: _autoDetectOrientation,
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          onChanged: (value) {
+            setState(() {
+              _autoDetectOrientation = value!;
+              if (_autoDetectOrientation) {
+                // 立即检测并更新方向
+                _updateOrientation();
+              }
+            });
+            _generatePreview();
+          },
+        ),
+        const SizedBox(height: 8), // 手动方向选择（当自动检测关闭时可用）
         Row(
           children: [
             Expanded(
@@ -479,19 +513,26 @@ class _ExportDialogState extends State<ExportDialog> {
                   children: [
                     const Icon(Icons.stay_current_portrait),
                     const SizedBox(width: 8),
-                    Text(l10n.exportDialogPortrait),
+                    Flexible(
+                      child: Text(
+                        l10n.exportDialogPortrait,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 value: false,
                 groupValue: _isLandscape,
                 contentPadding: EdgeInsets.zero,
                 dense: true,
-                onChanged: (value) {
-                  setState(() {
-                    _isLandscape = value!;
-                  });
-                  _generatePreview();
-                },
+                onChanged: _autoDetectOrientation
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _isLandscape = value!;
+                        });
+                        _generatePreview();
+                      },
               ),
             ),
             Expanded(
@@ -500,23 +541,62 @@ class _ExportDialogState extends State<ExportDialog> {
                   children: [
                     const Icon(Icons.stay_current_landscape),
                     const SizedBox(width: 8),
-                    Text(l10n.exportDialogLandscape),
+                    Flexible(
+                      child: Text(
+                        l10n.exportDialogLandscape,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 value: true,
                 groupValue: _isLandscape,
                 contentPadding: EdgeInsets.zero,
                 dense: true,
-                onChanged: (value) {
-                  setState(() {
-                    _isLandscape = value!;
-                  });
-                  _generatePreview();
-                },
+                onChanged: _autoDetectOrientation
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _isLandscape = value!;
+                        });
+                        _generatePreview();
+                      },
               ),
             ),
           ],
         ),
+        // 显示检测到的方向信息
+        if (_autoDetectOrientation)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.blue.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '自动检测: ${_isLandscape ? l10n.exportDialogLandscape : l10n.exportDialogPortrait}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -579,6 +659,10 @@ class _ExportDialogState extends State<ExportDialog> {
                   setState(() {
                     _pageRangeType = value!;
                   });
+                  // 当切换页面范围模式时，如果启用自动检测方向，需要重新检测
+                  if (_autoDetectOrientation) {
+                    _updateOrientation();
+                  }
                   _generatePreview();
                 },
               ),
@@ -594,6 +678,11 @@ class _ExportDialogState extends State<ExportDialog> {
                   setState(() {
                     _pageRangeType = value!;
                   });
+                  // 当切换到当前页模式时，如果启用自动检测方向，需要立即检测
+                  if (_pageRangeType == PageRangeType.current &&
+                      _autoDetectOrientation) {
+                    _updateOrientation();
+                  }
                   _generatePreview();
                 },
               ),
@@ -629,6 +718,10 @@ class _ExportDialogState extends State<ExportDialog> {
             setState(() {
               _pageRangeType = value!;
             });
+            // 当切换到自定义范围模式时，如果启用自动检测方向，需要重新检测当前预览页面
+            if (_autoDetectOrientation) {
+              _updateOrientation();
+            }
             _generatePreview();
           },
         ),
@@ -654,29 +747,33 @@ class _ExportDialogState extends State<ExportDialog> {
         Text('${l10n.exportDialogPageSize}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<PdfPageFormat>(
-          value: _pageFormat,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        Expanded(
+          child: DropdownButtonFormField<PdfPageFormat>(
+            value: _pageFormat,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+            items: pageFormatMap.entries.map((entry) {
+              final double widthCm = entry.value.width / PdfPageFormat.cm;
+              final double heightCm = entry.value.height / PdfPageFormat.cm;
+              return DropdownMenuItem<PdfPageFormat>(
+                value: entry.value,
+                child: Text(
+                  '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _pageFormat = value;
+                });
+                _generatePreview();
+              }
+            },
           ),
-          items: pageFormatMap.entries.map((entry) {
-            final double widthCm = entry.value.width / PdfPageFormat.cm;
-            final double heightCm = entry.value.height / PdfPageFormat.cm;
-            return DropdownMenuItem<PdfPageFormat>(
-              value: entry.value,
-              child: Text(
-                  '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})'),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _pageFormat = value;
-              });
-              _generatePreview();
-            }
-          },
         ),
       ],
     );
@@ -835,6 +932,47 @@ class _ExportDialogState extends State<ExportDialog> {
     );
   }
 
+  /// 检测当前页面的方向
+  bool _detectPageOrientation(int pageIndex) {
+    if (widget.controller == null) {
+      return false; // 默认为portrait
+    }
+
+    try {
+      final pages = widget.controller!.state.pages;
+      if (pageIndex < 0 || pageIndex >= pages.length) {
+        return false; // 默认为portrait
+      }
+
+      final page = pages[pageIndex];
+
+      // 首先检查是否有orientation属性
+      if (page.containsKey('orientation')) {
+        final orientation = page['orientation'] as String?;
+        if (orientation != null && orientation.isNotEmpty) {
+          return orientation.toLowerCase() == 'landscape';
+        }
+      }
+
+      // 如果没有orientation属性，通过width和height判断
+      final width = (page['width'] as num?)?.toDouble() ?? 210.0;
+      final height = (page['height'] as num?)?.toDouble() ?? 297.0;
+
+      // 如果宽度大于高度，认为是横向
+      return width > height;
+    } catch (e) {
+      EditPageLogger.rendererError(
+        '检测页面方向失败',
+        error: e,
+        data: {
+          'pageIndex': pageIndex,
+          'operation': '_detectPageOrientation',
+        },
+      );
+      return false; // 默认为portrait
+    }
+  }
+
   /// 导出文件
   void _exportFile() {
     final l10n = AppLocalizations.of(context);
@@ -924,11 +1062,15 @@ class _ExportDialogState extends State<ExportDialog> {
     Navigator.of(context).pop(result);
   }
 
-  /// 生成预览图像
   Future<void> _generatePreview() async {
     // 只有在有控制器的情况下才能生成预览
     if (widget.controller == null) {
       return;
+    }
+
+    // 如果启用自动检测方向，先更新方向
+    if (_autoDetectOrientation) {
+      _updateOrientation();
     }
 
     setState(() {
@@ -987,6 +1129,8 @@ class _ExportDialogState extends State<ExportDialog> {
     }
   }
 
+  /// 检测当前页面的方向
+
   /// 获取有效的页面格式 (考虑朝向)
   PdfPageFormat _getEffectivePageFormat() {
     if (_isLandscape) {
@@ -1034,8 +1178,33 @@ class _ExportDialogState extends State<ExportDialog> {
   Future<void> _initDefaultPath() async {
     try {
       debugPrint('ExportDialog: 开始初始化默认导出路径');
-      final directory = await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
+      
+      Directory? directory;
+      try {
+        directory = await getDownloadsDirectory();
+      } catch (e) {
+        debugPrint('ExportDialog: 获取Downloads目录失败: $e');
+        // 在测试环境或不支持的平台上，使用Documents目录
+        try {
+          directory = await getApplicationDocumentsDirectory();
+        } catch (e2) {
+          debugPrint('ExportDialog: 获取Documents目录也失败: $e2');
+          // 最后尝试使用临时目录
+          try {
+            directory = await getTemporaryDirectory();
+          } catch (e3) {
+            debugPrint('ExportDialog: 获取临时目录也失败: $e3');
+            // 如果所有路径都获取失败，设置为null让用户手动选择
+            directory = null;
+          }
+        }
+      }
+      
+      if (directory == null) {
+        debugPrint('ExportDialog: 无法获取任何默认路径，用户需要手动选择');
+        return;
+      }
+
       debugPrint('ExportDialog: 获取到默认路径: ${directory.path}');
 
       // 检查目录是否存在
@@ -1053,9 +1222,11 @@ class _ExportDialogState extends State<ExportDialog> {
         debugPrint('ExportDialog: 目录写入权限测试失败: $e');
       }
 
-      setState(() {
-        _outputPath = directory.path;
-      });
+      if (mounted) {
+        setState(() {
+          _outputPath = directory!.path;
+        });
+      }
     } catch (e, stack) {
       debugPrint('ExportDialog: 获取默认路径失败: $e');
       debugPrint('ExportDialog: 堆栈跟踪: $stack');
@@ -1124,6 +1295,11 @@ class _ExportDialogState extends State<ExportDialog> {
       }
     });
 
+    // 如果启用自动检测方向，在切换页面时更新方向
+    if (_autoDetectOrientation) {
+      _updateOrientation();
+    }
+
     // 如果缓存中已有该页面的预览图，直接使用
     if (_pagePreviewCache.containsKey(pageIndex)) {
       setState(() {
@@ -1132,6 +1308,38 @@ class _ExportDialogState extends State<ExportDialog> {
     } else {
       // 否则重新生成预览
       _generatePreview();
+    }
+  }
+
+  /// 更新页面方向设置
+  void _updateOrientation() {
+    if (!_autoDetectOrientation) {
+      return;
+    }
+
+    int targetPageIndex = _previewPageIndex;
+
+    // 如果是当前页模式，使用指定的当前页
+    if (_pageRangeType == PageRangeType.current) {
+      targetPageIndex = widget.currentPageIndex;
+    }
+
+    final shouldBeLandscape = _detectPageOrientation(targetPageIndex);
+
+    if (_isLandscape != shouldBeLandscape) {
+      EditPageLogger.rendererDebug(
+        '自动调整页面方向',
+        data: {
+          'pageIndex': targetPageIndex,
+          'detectedOrientation': shouldBeLandscape ? 'landscape' : 'portrait',
+          'previousOrientation': _isLandscape ? 'landscape' : 'portrait',
+          'operation': '_updateOrientation',
+        },
+      );
+
+      setState(() {
+        _isLandscape = shouldBeLandscape;
+      });
     }
   }
 }

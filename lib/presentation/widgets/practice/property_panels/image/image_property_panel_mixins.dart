@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
+
 import '../../practice_edit_controller.dart';
 
 /// 图像属性访问器混合类
@@ -87,7 +90,21 @@ mixin ImagePropertyAccessors {
         final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
         return Color(int.parse(fullColorStr, radix: 16));
       } catch (e) {
-        debugPrint('Failed to parse background color: $e');
+        final colorStr = backgroundColor.startsWith('#')
+            ? backgroundColor.substring(1)
+            : backgroundColor;
+        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
+        EditPageLogger.propertyPanelError(
+          '解析背景颜色失败',
+          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          error: e,
+          data: {
+            'operation': 'parse_background_color',
+            'backgroundColor': backgroundColor,
+            'colorStr': colorStr,
+            'fullColorStr': fullColorStr,
+          },
+        );
       }
     }
     return Colors.transparent;
@@ -148,7 +165,17 @@ mixin ImagePropertyUpdaters {
       final renderSize = this.renderSize;
 
       if (imageSize == null || renderSize == null) {
-        debugPrint('Warning: Image size information unavailable');
+        EditPageLogger.propertyPanelDebug(
+          '图像尺寸信息不可用',
+          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          data: {
+            'operation': 'update_crop_value',
+            'key': key,
+            'value': value,
+            'imageSize': imageSize?.toString(),
+            'renderSize': renderSize?.toString(),
+          },
+        );
         return;
       }
 

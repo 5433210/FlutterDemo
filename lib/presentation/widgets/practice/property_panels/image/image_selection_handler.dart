@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/providers/service_providers.dart';
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../infrastructure/logging/logger.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../providers/library/library_management_provider.dart';
 import '../../../library/m3_library_picker_dialog.dart';
@@ -104,7 +106,16 @@ mixin ImageSelectionHandler {
           // 通知上层图片已选择
           onSelectImage();
         } catch (e) {
-          AppLogger.error('Error importing image from library: $e');
+          EditPageLogger.propertyPanelError(
+            '从图库导入图片失败',
+            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            error: e,
+            data: {
+              'selectedItemId': selectedItem.id,
+              'selectedItemPath': selectedItem.path,
+              'operation': 'import_from_library',
+            },
+          );
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -118,7 +129,14 @@ mixin ImageSelectionHandler {
         }
       }
     } catch (e) {
-      AppLogger.error('Error showing library picker: $e');
+      EditPageLogger.propertyPanelError(
+        '打开图库选择器失败',
+        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        error: e,
+        data: {
+          'operation': 'show_library_picker',
+        },
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

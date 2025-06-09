@@ -759,7 +759,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               controller: _controller,
               layer: layer,
               onLayerPropertiesChanged: (properties) {
-                debugPrint('🏗️ Page: Layer properties changed: $properties');
+                EditPageLogger.editPageDebug(
+                  '图层属性变化',
+                  data: {
+                    'layerId': layerId,
+                    'properties': properties,
+                    'operation': 'layer_properties_changed',
+                  },
+                );
                 // Update layer properties
                 _controller.updateLayerProperties(layerId, properties);
               },
@@ -782,11 +789,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             controller: _controller,
             page: _controller.state.currentPage,
             onPagePropertiesChanged: (properties) {
-              AppLogger.info(
+              EditPageLogger.editPageInfo(
                 '页面属性变化',
-                tag: 'PracticeEdit',
                 data: {
                   'properties': properties,
+                  'operation': 'page_properties_changed',
                   'timestamp': DateTime.now().toIso8601String(),
                 },
               );
@@ -798,26 +805,30 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                         properties.containsKey('width') ||
                         properties.containsKey('height') ||
                         properties.containsKey('dpi'));
-                AppLogger.debug(
+                EditPageLogger.editPageDebug(
                   '页面属性变化-重置视图判定',
-                  tag: 'PracticeEdit',
                   data: {
                     'shouldResetView': shouldResetView,
                     'propertyKeys': properties.keys.toList(),
+                    'operation': 'view_reset_decision',
                   },
                 );
                 _controller.updatePageProperties(properties);
                 // Auto reset view position after page size/orientation changes
                 if (shouldResetView) {
-                  AppLogger.info(
+                  EditPageLogger.editPageInfo(
                     '页面属性变化-准备自动重置视图位置',
-                    tag: 'PracticeEdit',
+                    data: {
+                      'operation': 'prepare_view_reset',
+                    },
                   );
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _controller.resetViewPosition();
-                    AppLogger.info(
+                    EditPageLogger.editPageInfo(
                       '页面属性变化-自动重置视图位置完成',
-                      tag: 'PracticeEdit',
+                      data: {
+                        'operation': 'view_reset_completed',
+                      },
                     );
                   });
                 }
