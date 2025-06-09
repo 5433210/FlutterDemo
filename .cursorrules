@@ -1,0 +1,131 @@
+# Flutter 项目日志优化规则
+
+## 通用日志规范
+- 禁止使用 `debugPrint()` 和 `print()` 进行日志输出
+- 必须使用结构化日志方法，避免简单字符串输出
+- 所有日志必须包含结构化数据和操作上下文
+- 使用条件日志避免生产环境性能开销
+
+## 字帖编辑页专用规范
+- 编辑页面组件必须使用 `EditPageLogger` 扩展的条件日志方法
+- 其他模块使用 `Logger` 实例的结构化日志方法
+
+## 必需的导入
+
+### 字帖编辑页组件
+```dart
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
+```
+
+### 其他模块组件
+```dart
+import '../infrastructure/logging/logger.dart';
+// 根据模块位置调整相对路径
+```
+
+## 日志方法选择
+
+### 字帖编辑页组件
+- 编辑页面相关：`EditPageLogger.editPageDebug/Info/Warning/Error`
+- 画布操作相关：`EditPageLogger.canvasDebug/Error`
+- 控制器相关：`EditPageLogger.controllerDebug/Info/Warning/Error`
+- 属性面板相关：`EditPageLogger.propertyPanelDebug/Error`
+- 渲染器相关：`EditPageLogger.rendererDebug/Error`
+- 文件操作相关：`EditPageLogger.fileOpsInfo/Error`
+- 性能监控相关：`EditPageLogger.performanceInfo/Warning`
+
+### 通用模块组件
+- 网络请求：`logger.info/warning/error` (带 'network' 标签)
+- 数据库操作：`logger.info/error` (带 'database' 标签)
+- 文件I/O：`logger.info/error` (带 'file_io' 标签)
+- 用户界面：`logger.debug/info` (带 'ui' 标签)
+- 业务逻辑：`logger.info/warning/error` (带 'business' 标签)
+- 系统事件：`logger.info/warning` (带 'system' 标签)
+- 认证授权：`logger.info/warning/error` (带 'auth' 标签)
+
+## 日志格式要求
+
+### 字帖编辑页组件
+```dart
+// ❌ 错误示例
+debugPrint('用户点击了按钮: $buttonName');
+
+// ✅ 正确示例
+EditPageLogger.editPageInfo(
+  '用户点击按钮',
+  data: {
+    'buttonName': buttonName,
+    'operation': 'button_click',
+    'timestamp': DateTime.now().toIso8601String(),
+  },
+);
+```
+
+### 通用模块组件
+```dart
+// ❌ 错误示例
+debugPrint('网络请求失败: $url');
+
+// ✅ 正确示例 - 网络请求
+logger.error(
+  '网络请求失败',
+  data: {
+    'url': url,
+    'method': 'GET',
+    'statusCode': response?.statusCode,
+    'operation': 'api_request',
+  },
+  tags: ['network', 'api'],
+);
+
+// ✅ 正确示例 - 用户操作
+logger.info(
+  '用户导航',
+  data: {
+    'from': fromRoute,
+    'to': toRoute,
+    'operation': 'navigation',
+    'userId': user?.id,
+  },
+  tags: ['ui', 'navigation'],
+);
+```
+
+## 数据结构要求
+- 使用 Map<String, dynamic> 传递结构化数据
+- 包含 'operation' 字段标识操作类型
+- 数值型数据使用正确的数据类型（int, double, bool）
+- 避免在 data 中直接拼接字符串
+- 通用模块必须使用 tags 参数进行分类标记
+- 敏感数据（密码、令牌）需要脱敏处理
+- 大型对象应转换为简化标识符（如 ID、长度等）
+
+## 性能相关
+- 使用条件日志避免不必要的字符串处理
+- 大型对象转换为简化的标识符
+- 错误处理必须包含 error 和 stackTrace 参数
+
+## 禁止模式
+- `debugPrint()`
+- `print()`
+- `log()` (dart:developer)
+- 直接字符串拼接的日志消息
+- 缺少结构化数据的日志调用
+- 在日志中直接输出敏感信息
+- 使用字符串格式化代替结构化数据
+- 忽略错误处理的堆栈跟踪信息
+
+## 标签分类规范
+- `network` - 网络请求相关
+- `database` - 数据库操作
+- `file_io` - 文件读写操作
+- `ui` - 用户界面交互
+- `business` - 业务逻辑处理
+- `auth` - 认证授权相关
+- `system` - 系统事件
+- `performance` - 性能监控
+- `error` - 错误处理
+- `navigation` - 页面导航
+- `cache` - 缓存操作
+- `validation` - 数据验证 
