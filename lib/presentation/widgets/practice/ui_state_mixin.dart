@@ -183,6 +183,18 @@ mixin UIStateMixin on ChangeNotifier {
     checkDisposed();
     final oldScale = state.canvasScale;
     final newScale = scale.clamp(0.1, 10.0); // 限制缩放范围
+    
+    // 🚀 性能优化：避免无效的缩放设置
+    if ((oldScale - newScale).abs() < 0.001) {
+      EditPageLogger.performanceInfo('跳过相同缩放值设置', 
+        data: {
+          'oldScale': oldScale, 
+          'requestedScale': scale, 
+          'optimization': 'skip_identical_zoom'
+        });
+      return;
+    }
+    
     state.canvasScale = newScale;
     
     EditPageLogger.controllerDebug('设置画布缩放', 

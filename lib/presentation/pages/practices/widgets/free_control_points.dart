@@ -91,37 +91,66 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     );
   }
 
+  // 🚀 性能优化：防止频繁日志输出的缓存
+  static String? _lastUpdateLog;
+  static DateTime? _lastUpdateTime;
+
   @override
   void didUpdateWidget(FreeControlPoints oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 🔧 DEBUG: 详细的属性变化分析（FreeControlPoints版本）
+    // 🚀 性能优化：限制日志输出频率，避免日志洪水
     if (_isInitialized) {
-      EditPageLogger.editPageDebug('🔧 FreeControlPoints属性更新检测', data: {
-        'elementId': widget.elementId,
-        'position_changed': {
-          'old_x': oldWidget.x,
-          'new_x': widget.x,
-          'old_y': oldWidget.y,
-          'new_y': widget.y,
-          'x_changed': oldWidget.x != widget.x,
-          'y_changed': oldWidget.y != widget.y,
-        },
-        'size_changed': {
-          'old_width': oldWidget.width,
-          'new_width': widget.width,
-          'old_height': oldWidget.height,
-          'new_height': widget.height,
-          'width_changed': oldWidget.width != widget.width,
-          'height_changed': oldWidget.height != widget.height,
-        },
-        'rotation_changed': {
-          'old_rotation': oldWidget.rotation,
-          'new_rotation': widget.rotation,
-          'rotation_changed': oldWidget.rotation != widget.rotation,
-        },
-        'operation': 'free_control_points_update_analysis',
-      });
+      final now = DateTime.now();
+      final updateKey = '${widget.elementId}_${widget.x}_${widget.y}_${widget.width}_${widget.height}_${widget.rotation}';
+      
+      // 只有在值真正变化或超过500ms时才输出日志
+      if (_lastUpdateLog != updateKey || 
+          _lastUpdateTime == null || 
+          now.difference(_lastUpdateTime!).inMilliseconds > 500) {
+        
+        final hasPositionChange = oldWidget.x != widget.x || oldWidget.y != widget.y;
+        final hasSizeChange = oldWidget.width != widget.width || oldWidget.height != widget.height;
+        final hasRotationChange = oldWidget.rotation != widget.rotation;
+        
+        // 只有在有实际变化时才输出DEBUG日志
+        if (hasPositionChange || hasSizeChange || hasRotationChange) {
+          EditPageLogger.editPageDebug('🔧 FreeControlPoints属性更新检测', data: {
+            'elementId': widget.elementId,
+            'position_changed': {
+              'old_x': oldWidget.x,
+              'new_x': widget.x,
+              'old_y': oldWidget.y,
+              'new_y': widget.y,
+              'x_changed': hasPositionChange,
+              'y_changed': hasPositionChange,
+            },
+            'size_changed': {
+              'old_width': oldWidget.width,
+              'new_width': widget.width,
+              'old_height': oldWidget.height,
+              'new_height': widget.height,
+              'width_changed': hasSizeChange,
+              'height_changed': hasSizeChange,
+            },
+            'rotation_changed': {
+              'old_rotation': oldWidget.rotation,
+              'new_rotation': widget.rotation,
+              'rotation_changed': hasRotationChange,
+            },
+            'operation': 'free_control_points_update_analysis',
+          });
+        } else {
+          // 无变化时使用INFO级别，减少DEBUG噪音
+          EditPageLogger.editPageInfo('🔧 控制点更新（无变化）', data: {
+            'elementId': widget.elementId,
+            'optimization': 'skip_unchanged_update',
+          });
+        }
+        
+        _lastUpdateLog = updateKey;
+        _lastUpdateTime = now;
+      }
     }
 
     // 🔧 修复：控制点应该跟随元素位置变化，但只在不是自己触发的变化时

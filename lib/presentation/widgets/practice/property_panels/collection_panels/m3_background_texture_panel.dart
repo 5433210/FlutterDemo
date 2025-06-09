@@ -39,27 +39,37 @@ class _M3BackgroundTexturePanelState
   String? _localTextureFillMode;
   String? _localTextureFitMode;
 
+  // 🚀 性能优化：纹理查询结果缓存
+  static final Map<String, Map<String, dynamic>?> _textureQueryCache = {};
+  static String? _lastQueryKey;
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     final content = widget.element['content'] as Map<String, dynamic>;
 
-    // 结构化日志记录元素构建信息
-    AppLogger.debug(
-      '构建背景纹理面板',
-      tag: 'texture_panel',
-      data: {
-        'elementType': widget.element['type'],
-        'contentKeys': content.keys.toList(),
-        'hasBackgroundTexture': content.containsKey('backgroundTexture'),
-        'backgroundTextureData': content.containsKey('backgroundTexture') 
-          ? content['backgroundTexture'] 
-          : null,
-        'operation': 'build_texture_panel',
-      },
-    );
+    // 生成查询缓存键
+    final queryKey = '${widget.element['id']}_${content.hashCode}';
+    
+    // 🚀 性能优化：检查缓存避免重复日志输出
+    if (_lastQueryKey != queryKey) {
+      AppLogger.debug(
+        '构建背景纹理面板',
+        tag: 'texture_panel',
+        data: {
+          'elementType': widget.element['type'],
+          'contentKeys': content.keys.toList(),
+          'hasBackgroundTexture': content.containsKey('backgroundTexture'),
+          'backgroundTextureData': content.containsKey('backgroundTexture') 
+            ? content['backgroundTexture'] 
+            : null,
+          'operation': 'build_texture_panel',
+        },
+      );
+      _lastQueryKey = queryKey;
+    }
 
     return _buildBackgroundTextureSubPanel(
         context, content, colorScheme, l10n, textTheme);
@@ -596,8 +606,31 @@ class _M3BackgroundTexturePanelState
     );
   }
 
-  // 查找纹理数据 - 只从content层级查找，不从characterImages查找
+  // 🚀 性能优化：带缓存的纹理数据查找
   Map<String, dynamic>? _findTextureData(Map<String, dynamic> content) {
+    // 生成缓存键
+    final cacheKey = content.hashCode.toString();
+    
+    // 检查缓存
+    if (_textureQueryCache.containsKey(cacheKey)) {
+      final cachedResult = _textureQueryCache[cacheKey];
+             if (cachedResult != null) {
+         AppLogger.info(
+           '使用纹理查询缓存',
+           tag: 'texture_panel',
+           data: {
+             'cacheKey': cacheKey,
+             'textureId': cachedResult['id'],
+             'optimization': 'texture_query_cache_hit',
+           },
+         );
+       }
+      return cachedResult;
+    }
+
+    // 缓存未命中，执行查询
+    Map<String, dynamic>? result;
+    
     // 检查参数是否有效 - 只在content级别查找backgroundTexture
     if (content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
@@ -616,7 +649,7 @@ class _M3BackgroundTexturePanelState
             'operation': 'find_valid_texture_data',
           },
         );
-        return texData;
+        result = texData;
       } else {
         AppLogger.warning(
           '纹理数据不完整',
@@ -629,11 +662,9 @@ class _M3BackgroundTexturePanelState
       }
     }
 
-    // 注意：不再从characterImages中查找背景纹理数据
-    // characterImages应该只包含角色相关的图像，不包含背景纹理
-
     // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
-    if (content.containsKey('content') &&
+    if (result == null && 
+        content.containsKey('content') &&
         content['content'] != null &&
         content['content'] is Map<String, dynamic>) {
       AppLogger.debug(
@@ -643,17 +674,29 @@ class _M3BackgroundTexturePanelState
           'operation': 'recursive_texture_search',
         },
       );
-      return _findTextureData(content['content'] as Map<String, dynamic>);
+      result = _findTextureData(content['content'] as Map<String, dynamic>);
     }
 
-    AppLogger.debug(
-      '未找到纹理数据',
-      tag: 'texture_panel',
-      data: {
-        'operation': 'texture_data_not_found',
-      },
-    );
-    return null;
+    // 缓存查询结果（包括null结果）
+    _textureQueryCache[cacheKey] = result;
+    
+    // 限制缓存大小，避免内存泄漏
+    if (_textureQueryCache.length > 50) {
+      final oldestKey = _textureQueryCache.keys.first;
+      _textureQueryCache.remove(oldestKey);
+    }
+
+    if (result == null) {
+      AppLogger.debug(
+        '未找到纹理数据',
+        tag: 'texture_panel',
+        data: {
+          'operation': 'texture_data_not_found',
+        },
+      );
+    }
+    
+    return result;
   }
 
   // 获取最新的纹理不透明度

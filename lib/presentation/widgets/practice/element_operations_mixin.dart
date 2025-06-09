@@ -6,17 +6,90 @@ import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
+import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
+import 'throttled_notification_mixin.dart'; // 包含所有节流混入
 
 /// 元素操作管理 Mixin
 /// 负责高级元素操作，如组合/解组、分布、元素变换等
-mixin ElementOperationsMixin on ChangeNotifier {
+/// 🔧 性能优化：完全集成分层架构，避免全局UI重建
+mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationMixin, DragOptimizedNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
+  
+  // 🔧 新增：分层架构接口
+  StateChangeDispatcher? get stateDispatcher;
+
+  /// 智能通知方法：优先使用分层架构，回退到节流通知
+  void _intelligentNotify({
+    StateChangeType changeType = StateChangeType.elementUpdate,
+    Map<String, dynamic>? eventData,
+    String operation = 'unknown',
+  }) {
+    if (stateDispatcher != null) {
+      // ✅ 使用分层架构进行精确更新
+      EditPageLogger.performanceInfo(
+        '使用分层架构进行精确更新',
+        data: {
+          'changeType': changeType.toString(),
+          'operation': operation,
+          'performanceOptimization': 'layer_specific_update',
+        },
+      );
+      
+      stateDispatcher!.dispatch(StateChangeEvent(
+        type: changeType,
+        data: eventData ?? {},
+      ));
+    } else {
+      // 🔄 回退：使用节流通知
+      EditPageLogger.performanceWarning(
+        'StateDispatcher不可用，使用节流通知',
+        data: {
+          'operation': operation,
+          'fallbackMethod': 'throttled_notification',
+        },
+      );
+      
+      if (this is ThrottledNotificationMixin) {
+        (this as ThrottledNotificationMixin).throttledNotifyListeners();
+      } else {
+        notifyListeners(); // 最后的回退方案
+      }
+    }
+  }
+  
+  /// 撤销/重做操作专用的更新方法
+  /// 用于撤销操作的回调函数中，确保UI正确更新
+  void _undoRedoIntelligentNotify({
+    required String elementId,
+    required String operation,
+  }) {
+    // 更新选中元素状态
+    if (state.selectedElementIds.contains(elementId)) {
+      final index = state.currentPageElements.indexWhere((e) => e['id'] == elementId);
+      if (index >= 0) {
+        state.selectedElement = state.currentPageElements[index];
+      }
+    }
+    
+    state.hasUnsavedChanges = true;
+    
+    // 使用智能通知
+    _intelligentNotify(
+      changeType: StateChangeType.elementUpdate,
+      eventData: {
+        'elementIds': [elementId],
+        'operation': operation,
+        'source': 'undo_redo',
+      },
+      operation: operation,
+    );
+  }
 
   /// 对齐指定的元素
   void alignElements(List<String> elementIds, String alignment) {
@@ -159,12 +232,10 @@ mixin ElementOperationsMixin on ChangeNotifier {
                 state.currentPageElements[index][key] = value;
               });
 
-              if (state.selectedElementIds.contains(elementId)) {
-                state.selectedElement = state.currentPageElements[index];
-              }
-
-              state.hasUnsavedChanges = true;
-              notifyListeners();
+              _undoRedoIntelligentNotify(
+                elementId: elementId,
+                operation: 'undo_redo_align',
+              );
             }
           },
         ));
@@ -180,7 +251,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
     }
 
     state.hasUnsavedChanges = true;
-    notifyListeners();
+    
+    // 🚀 使用分层架构通知元素对齐完成
+    _intelligentNotify(
+      changeType: StateChangeType.elementUpdate,
+      eventData: {
+        'operation': 'align_elements',
+        'alignmentType': alignment,
+        'elementCount': operableElementIds.length,
+      },
+      operation: 'align_elements',
+    );
   }
 
   void checkDisposed();
@@ -211,7 +292,14 @@ mixin ElementOperationsMixin on ChangeNotifier {
       );
       final isLayerLocked = layer['isLocked'] as bool? ?? false;
       if (isLayerLocked) {
-        debugPrint('🔒 Layer $layerId is locked for element $elementId');
+        EditPageLogger.controllerDebug(
+          '图层已锁定，跳过元素操作',
+          data: {
+            'layerId': layerId,
+            'elementId': elementId,
+            'operation': 'lock_check',
+          },
+        );
         return false;
       }
     }
@@ -225,7 +313,15 @@ mixin ElementOperationsMixin on ChangeNotifier {
     
     if (operableIds.length != elementIds.length) {
       final lockedCount = elementIds.length - operableIds.length;
-      debugPrint('🔒 Skipped $lockedCount locked elements');
+      EditPageLogger.controllerWarning(
+        '跳过锁定元素',
+        data: {
+          'totalElements': elementIds.length,
+          'lockedCount': lockedCount,
+          'operableCount': operableIds.length,
+          'operation': 'filter_locked_elements',
+        },
+      );
     }
     
     return operableIds;
@@ -383,7 +479,7 @@ mixin ElementOperationsMixin on ChangeNotifier {
     // 🔒 过滤掉锁定的元素
     final operableElementIds = _filterOperableElements(elementIds);
     if (operableElementIds.length < 3) {
-      debugPrint('🔒 Not enough unlocked elements to distribute');
+      EditPageLogger.controllerWarning('没有足够的未锁定元素进行分布');
       return;
     }
 
@@ -469,7 +565,15 @@ mixin ElementOperationsMixin on ChangeNotifier {
             'y': entry.value['y'],
           });
         }
-        notifyListeners();
+        // 使用智能通知系统
+        _intelligentNotify(
+          changeType: StateChangeType.elementUpdate,
+          eventData: {
+            'operation': 'redo_distribute',
+            'elementIds': newState.keys.toList(),
+          },
+          operation: 'redo_distribute',
+        );
       },
       undo: () {
         // Apply the old state
@@ -479,14 +583,32 @@ mixin ElementOperationsMixin on ChangeNotifier {
             'y': entry.value['y'],
           });
         }
-        notifyListeners();
+        // 使用智能通知系统
+        _intelligentNotify(
+          changeType: StateChangeType.elementUpdate,
+          eventData: {
+            'operation': 'undo_distribute',
+            'elementIds': oldState.keys.toList(),
+          },
+          operation: 'undo_distribute',
+        );
       },
       description: '均匀分布元素',
     );
 
     undoRedoManager.addOperation(operation);
     state.hasUnsavedChanges = true;
-    notifyListeners();
+    
+    // 🚀 使用分层架构通知元素分布完成
+    _intelligentNotify(
+      changeType: StateChangeType.elementUpdate,
+      eventData: {
+        'operation': 'distribute_elements',
+        'direction': direction,
+        'elementCount': elements.length,
+      },
+      operation: 'distribute_elements',
+    );
   }
 
   /// 进入组编辑模式
@@ -496,8 +618,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
     // state.currentEditingGroupId = groupId;
     // 清除当前选择
     state.selectedElementIds.clear();
-    // 通知UI更新
-    notifyListeners();
+    
+    // 🚀 使用分层架构通知选择变化
+    _intelligentNotify(
+      changeType: StateChangeType.selectionChange,
+      eventData: {
+        'selectedIds': state.selectedElementIds,
+        'operation': 'enter_group_edit_mode',
+        'groupId': groupId,
+      },
+      operation: 'enter_group_edit_mode',
+    );
   }
 
   /// 组合选中的元素
@@ -633,7 +764,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
           state.selectedElement = e;
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知组合元素添加
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'add_group_element',
+              'elementId': e['id'],
+              'selectedIds': state.selectedElementIds,
+            },
+            operation: 'add_group_element',
+          );
         }
       },
       removeElement: (id) {
@@ -644,7 +785,16 @@ mixin ElementOperationsMixin on ChangeNotifier {
           elements.removeWhere((e) => e['id'] == id);
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知元素移除
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'remove_element',
+              'elementId': id,
+            },
+            operation: 'remove_element',
+          );
         }
       },
       removeElements: (ids) {
@@ -655,7 +805,16 @@ mixin ElementOperationsMixin on ChangeNotifier {
           elements.removeWhere((e) => ids.contains(e['id']));
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知批量元素移除
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'remove_elements',
+              'elementIds': ids,
+            },
+            operation: 'remove_elements',
+          );
         }
       },
     );
@@ -681,9 +840,11 @@ mixin ElementOperationsMixin on ChangeNotifier {
     final currentPage = state.pages[state.currentPageIndex];
     final elements = List<Map<String, dynamic>>.from(currentPage['elements']);
 
+    bool isNowLocked = false;
     for (int i = 0; i < elements.length; i++) {
       if (elements[i]['id'] == elementId) {
-        elements[i]['isLocked'] = !(elements[i]['isLocked'] ?? false);
+        isNowLocked = !(elements[i]['isLocked'] ?? false);
+        elements[i]['isLocked'] = isNowLocked;
         break;
       }
     }
@@ -692,7 +853,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
     final updatedPage = {...currentPage, 'elements': elements};
     state.pages[state.currentPageIndex] = updatedPage;
     state.hasUnsavedChanges = true;
-    notifyListeners();
+    
+    // 🚀 使用分层架构通知元素锁定状态变化
+    _intelligentNotify(
+      changeType: StateChangeType.elementUpdate,
+      eventData: {
+        'operation': 'toggle_element_lock',
+        'elementId': elementId,
+        'isLocked': isNowLocked,
+      },
+      operation: 'toggle_element_lock',
+    );
   }
 
   /// 解组元素
@@ -742,7 +913,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
         state.selectedElement = null;
         state.hasUnsavedChanges = true;
 
-        notifyListeners();
+        // 🚀 使用分层架构通知解组操作完成
+        _intelligentNotify(
+          changeType: StateChangeType.elementUpdate,
+          eventData: {
+            'operation': 'ungroup_elements',
+            'groupId': groupId,
+            'newElementIds': newElementIds,
+            'selectedIds': state.selectedElementIds,
+          },
+          operation: 'ungroup_elements',
+        );
       }
     }
   }
@@ -796,7 +977,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
           state.selectedElement = e;
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知解组添加元素
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'ungroup_add_element',
+              'elementId': e['id'],
+              'selectedIds': state.selectedElementIds,
+            },
+            operation: 'ungroup_add_element',
+          );
         }
       },
       removeElement: (id) {
@@ -813,7 +1004,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
           }
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知解组移除元素
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'ungroup_remove_element',
+              'elementId': id,
+              'selectedIds': state.selectedElementIds,
+            },
+            operation: 'ungroup_remove_element',
+          );
         }
       },
       addElements: (elements) {
@@ -829,7 +1030,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
           state.selectedElement = null; // 多选时不显示单个元素的属性
 
           state.hasUnsavedChanges = true;
-          notifyListeners();
+          
+          // 🚀 使用分层架构通知解组批量添加元素
+          _intelligentNotify(
+            changeType: StateChangeType.elementUpdate,
+            eventData: {
+              'operation': 'ungroup_add_elements',
+              'elementIds': elements.map((e) => e['id'] as String).toList(),
+              'selectedIds': state.selectedElementIds,
+            },
+            operation: 'ungroup_add_elements',
+          );
         }
       },
     );
@@ -874,7 +1085,14 @@ mixin ElementOperationsMixin on ChangeNotifier {
     if (elementIndex >= 0) {
       final element = elements[elementIndex] as Map<String, dynamic>;
 
-      debugPrint('拖拽更新: 元素ID=$id, 缩放因子=$scaleFactor');
+      EditPageLogger.controllerDebug(
+        '拖拽更新元素属性',
+        data: {
+          'elementId': id,
+          'scaleFactor': scaleFactor,
+          'operation': 'drag_update',
+        },
+      );
 
       // 确保大小不小于最小值
       if (properties.containsKey('width')) {
@@ -905,16 +1123,17 @@ mixin ElementOperationsMixin on ChangeNotifier {
         state.selectedElement = element;
       }
 
-      // 通知监听器更新UI
-      EditPageLogger.controllerInfo(
-        '🔧 DEBUG: 调用notifyListeners()更新UI',
-        data: {
-          'elementId': id,
-          'operation': 'notifyListeners_debug',
+      // 🚀 性能重大优化：使用分层架构精确更新
+      // 只重建Content和DragPreview层，避免全局Canvas重建
+      _intelligentNotify(
+        changeType: StateChangeType.dragUpdate,
+        eventData: {
+          'elementIds': [id],
+          'operation': 'drag_element_update',
+          'properties': properties.keys.toList(),
         },
+        operation: 'drag_element_update',
       );
-      
-      notifyListeners();
     }
   }
 
@@ -1032,14 +1251,23 @@ mixin ElementOperationsMixin on ChangeNotifier {
       );
       
       EditPageLogger.controllerInfo(
-        '🔧 DEBUG: 调用notifyListeners()更新UI',
+        '🔧 性能优化：使用分层架构更新UI',
         data: {
           'elementId': elementId,
-          'operation': 'notifyListeners_debug',
+          'operation': 'layer_architecture_update',
         },
       );
       
-      notifyListeners();
+      // 🚀 使用分层架构进行精确更新
+      _intelligentNotify(
+        changeType: StateChangeType.elementUpdate,
+        eventData: {
+          'elementIds': [elementId],
+          'operation': 'update_element_properties',
+          'properties': properties.keys.toList(),
+        },
+        operation: 'update_element_properties',
+      );
       
       EditPageLogger.controllerInfo(
         '🔧 DEBUG: _updateElementInCurrentPage 执行完成',
