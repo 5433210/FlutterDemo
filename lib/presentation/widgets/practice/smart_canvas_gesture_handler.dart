@@ -537,7 +537,7 @@ class SmartCanvasGestureHandler implements GestureContext {
   void _finalizeCanvasPan() {
     final endPoint = _panEndPosition ?? _dragStart;
     final dragDistance = (_dragStart - endPoint).distance;
-    final isClick = dragDistance < 3.0;
+    final isClick = dragDistance < 1.0; // 🔧 降低点击检测阈值
 
     if (_isPanningEmptyArea &&
         isClick &&

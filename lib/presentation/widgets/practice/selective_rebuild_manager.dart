@@ -212,8 +212,17 @@ class SelectiveRebuildManager extends ChangeNotifier {
 
   /// Handle dirty tracker changes
   void _onDirtyTrackerChanged() {
-    // Notify listeners when dirty state changes
-    notifyListeners();
+    // 🚀 优化：跳过监听器通知，避免额外的ContentRenderLayer重建
+    // 脏状态变化不需要触发全局UI重建，通过智能状态分发器精确处理
+    EditPageLogger.performanceInfo(
+      'SelectiveRebuildManager跳过脏状态通知',
+      data: {
+        'optimization': 'skip_dirty_tracker_notification',
+        'reason': '避免额外的ContentRenderLayer重建',
+        'dirtyElements': _dirtyTracker.dirtyElements.length,
+      },
+    );
+    // notifyListeners(); // 🚀 已禁用以避免额外重建
   }
 }
 

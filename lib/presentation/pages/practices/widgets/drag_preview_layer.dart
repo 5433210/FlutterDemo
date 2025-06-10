@@ -51,27 +51,43 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       listenable: widget.dragStateManager,
       builder: (context, child) {
         // 🔍[RESIZE_FIX] DragPreviewLayer关键调试
+        final isDragPreviewActive = widget.dragStateManager.isDragPreviewActive;
+        final isDragging = widget.dragStateManager.isDragging;
+        final draggingElementIds = widget.dragStateManager.draggingElementIds;
+        final isSingleSelection = draggingElementIds.length == 1;
+        
         EditPageLogger.canvasDebug('DragPreviewLayer构建开始', data: {
-          'isDragPreviewActive': widget.dragStateManager.isDragPreviewActive,
-          'isDragging': widget.dragStateManager.isDragging,
-          'draggingElementIds': widget.dragStateManager.draggingElementIds
+          'isDragPreviewActive': isDragPreviewActive,
+          'isDragging': isDragging,
+          'draggingElementIds': draggingElementIds.toList(),
+          'draggingElementCount': draggingElementIds.length,
+          'isSingleSelection': isSingleSelection,
         });
 
         // 如果没有活动的拖拽预览，返回空容器
-        if (!widget.dragStateManager.isDragPreviewActive) {
+        if (!isDragPreviewActive) {
           EditPageLogger.canvasDebug('DragPreviewLayer无活动拖拽预览');
           return const SizedBox.shrink();
         }
 
         // 获取所有正在拖拽的元素ID
-        final draggingElementIds = widget.dragStateManager.draggingElementIds;
         if (draggingElementIds.isEmpty) {
           EditPageLogger.canvasDebug('DragPreviewLayer无拖拽中元素');
           return const SizedBox.shrink();
         }
 
+        // 🔧 强化单选场景日志
+        if (isSingleSelection) {
+          EditPageLogger.canvasError('🔧🔧🔧 DragPreviewLayer单选场景构建', data: {
+            'elementId': draggingElementIds.first,
+            'reason': '单选拖拽预览层激活',
+            'fix': 'single_selection_preview_build',
+          });
+        }
+
         EditPageLogger.canvasDebug('DragPreviewLayer构建预览层', data: {
-          'draggingElementIds': draggingElementIds
+          'draggingElementIds': draggingElementIds,
+          'isSingleSelection': isSingleSelection,
         });
 
         // 创建一个透明层，显示所有拖拽元素的预览
@@ -87,9 +103,17 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                   // 为每个元素构建单独的预览
                   return Builder(
                     builder: (context) {
-                      EditPageLogger.canvasDebug('构建元素预览', data: {
-                        'elementId': elementId
-                      });
+                      // 🔧 强化单选场景日志
+                      if (isSingleSelection) {
+                        EditPageLogger.canvasError('🔧🔧🔧 构建单选元素预览', data: {
+                          'elementId': elementId,
+                          'fix': 'single_selection_element_preview',
+                        });
+                      } else {
+                        EditPageLogger.canvasDebug('构建元素预览', data: {
+                          'elementId': elementId
+                        });
+                      }
 
                       // 🔧 优先使用完整的预览属性（支持resize和rotate）
                       final previewProperties = widget.dragStateManager
@@ -99,54 +123,88 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                       
                       if (previewProperties != null) {
                         // 使用完整的预览属性构建元素
-                        EditPageLogger.canvasDebug('使用完整属性预览元素', data: {
-                          'elementId': elementId
-                        });
+                        if (isSingleSelection) {
+                          EditPageLogger.canvasError('🔧🔧🔧 单选使用完整属性预览', data: {
+                            'elementId': elementId,
+                            'hasPreviewProperties': true,
+                            'fix': 'single_selection_full_properties',
+                          });
+                        } else {
+                          EditPageLogger.canvasDebug('使用完整属性预览元素', data: {
+                            'elementId': elementId
+                          });
+                        }
                         elementPreview = _buildFullPropertyPreview(elementId, previewProperties);
                       } else {
                         // 回退到传统的位置偏移方式
                         final previewPosition = widget.dragStateManager
                             .getElementPreviewPosition(elementId);
 
-                        // 🔍[RESIZE_FIX] 调试预览位置
-                        EditPageLogger.canvasDebug('元素预览位置', data: {
-                          'elementId': elementId,
-                          'previewPosition': '$previewPosition'
-                        });
-
-                        // 如果没有预览位置，不显示该元素
                         if (previewPosition == null) {
-                          EditPageLogger.canvasDebug('元素没有预览位置', data: {
-                            'elementId': elementId
-                          });
+                          // 🔧 强化单选场景：如果没有预览位置，尝试查找元素
+                          if (isSingleSelection) {
+                            EditPageLogger.canvasError('🔧🔧🔧 单选元素无预览位置', data: {
+                              'elementId': elementId,
+                              'reason': '尝试查找原始元素位置',
+                              'fix': 'single_selection_fallback_position',
+                            });
+                          } else {
+                            EditPageLogger.canvasDebug('元素预览位置为空', data: {
+                              'elementId': elementId
+                            });
+                          }
                           return const SizedBox.shrink();
                         }
 
-                        // 查找元素数据
+                        // 找到对应的元素数据
                         final element = widget.elements.firstWhere(
                           (e) => e['id'] == elementId,
                           orElse: () => <String, dynamic>{},
                         );
 
                         if (element.isEmpty) {
-                          EditPageLogger.canvasDebug('元素数据未找到', data: {
-                            'elementId': elementId
-                          });
+                          // 🔧 强化单选场景：元素数据缺失时的处理
+                          if (isSingleSelection) {
+                            EditPageLogger.canvasError('🔧🔧🔧 单选元素数据缺失', data: {
+                              'elementId': elementId,
+                              'reason': '无法找到元素数据',
+                              'fix': 'single_selection_missing_data',
+                            });
+                          } else {
+                            EditPageLogger.canvasDebug('未找到元素数据', data: {
+                              'elementId': elementId
+                            });
+                          }
                           return const SizedBox.shrink();
                         }
 
                         // 如果提供了自定义构建器，使用它构建预览
                         if (widget.elementBuilder != null) {
-                          EditPageLogger.canvasDebug('使用自定义构建器预览元素', data: {
-                            'elementId': elementId
-                          });
+                          if (isSingleSelection) {
+                            EditPageLogger.canvasError('🔧🔧🔧 单选使用自定义构建器', data: {
+                              'elementId': elementId,
+                              'fix': 'single_selection_custom_builder',
+                            });
+                          } else {
+                            EditPageLogger.canvasDebug('使用自定义构建器预览元素', data: {
+                              'elementId': elementId
+                            });
+                          }
                           elementPreview = widget.elementBuilder!(
                               elementId, previewPosition, element);
                         } else {
                           // 否则使用默认预览样式
-                          EditPageLogger.canvasDebug('使用默认样式预览元素', data: {
-                            'elementId': elementId
-                          });
+                          if (isSingleSelection) {
+                            EditPageLogger.canvasError('🔧🔧🔧 单选使用默认预览样式', data: {
+                              'elementId': elementId,
+                              'previewPosition': '${previewPosition.dx},${previewPosition.dy}',
+                              'fix': 'single_selection_default_preview',
+                            });
+                          } else {
+                            EditPageLogger.canvasDebug('使用默认样式预览元素', data: {
+                              'elementId': elementId
+                            });
+                          }
                           elementPreview = _buildDefaultPreview(
                               elementId, previewPosition, element);
                         }
@@ -523,10 +581,16 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
       EditPageLogger.canvasDebug('拖拽操作结束，清理预览层');
     }
 
-    // 在任何拖拽状态变化时都重建组件，以确保正确的显示/隐藏行为
-    if (mounted) {
-      setState(() {});
-    }
+    // 🚀 优化：拖拽预览层是独立的RepaintBoundary，自动监听DragStateManager
+    // 无需手动setState，组件会在DragStateManager状态变化时自动重建
+    EditPageLogger.canvasDebug(
+      '跳过拖拽预览层setState - 自动监听机制',
+      data: {
+        'optimization': 'avoid_preview_layer_setstate',
+        'reason': 'RepaintBoundary会自动处理状态变化',
+        'isDragEnding': !widget.dragStateManager.isDragging,
+      },
+    );
   }
 
   /// 记录快照系统的可用性

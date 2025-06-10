@@ -21,6 +21,11 @@ class ContentRenderController extends ChangeNotifier {
 
   // 需要跳过渲染的元素列表 (将在DragPreviewLayer中显示)
   final Set<String> _elementsToSkip = <String>{};
+  
+  // 🔧 拖拽状态跟踪变量
+  bool _lastIsDragging = false;
+  bool _lastIsDragPreviewActive = false;
+  Set<String> _lastDraggingElementIds = <String>{};
 
   // Smart rebuilding system components
   late final DirtyTracker _dirtyTracker;
@@ -76,15 +81,31 @@ class ContentRenderController extends ChangeNotifier {
     if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
       _lastNotificationTime = now;
       
-      EditPageLogger.canvasDebug(
-        '内容渲染控制器跳过通知',
-        data: {
-          'operation': operation,
-          'optimization': 'skip_content_render_notification',
-          'reason': 'avoid_global_ui_rebuild',
-          ...?data,
-        },
-      );
+      // 🔧 优化：减少节流通知的日志输出频率
+      if (operation == 'drag_state_update' || operation.contains('drag')) {
+        // 拖拽相关操作减少日志
+        if (now.millisecondsSinceEpoch % 100 == 0) { // 只输出1%的日志
+          EditPageLogger.canvasDebug(
+            '内容渲染控制器节流通知',
+            data: {
+              'operation': operation,
+              'optimization': 'throttled_notification_reduced_logging',
+              'reason': 'avoid_global_ui_rebuild',
+              ...?data,
+            },
+          );
+        }
+      } else {
+        EditPageLogger.canvasDebug(
+          '内容渲染控制器跳过通知',
+          data: {
+            'operation': operation,
+            'optimization': 'skip_content_render_notification',
+            'reason': 'avoid_global_ui_rebuild',
+            ...?data,
+          },
+        );
+      }
       
       // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
     } else {
@@ -95,15 +116,31 @@ class ContentRenderController extends ChangeNotifier {
         _notificationTimer = Timer(_notificationThrottle, () {
           _hasPendingUpdate = false;
           
-          EditPageLogger.canvasDebug(
-            '内容渲染控制器跳过延迟通知',
-            data: {
-              'operation': operation,
-              'optimization': 'skip_delayed_content_render_notification',
-              'reason': 'avoid_global_ui_rebuild',
-              ...?data,
-            },
-          );
+          // 🔧 优化：延迟通知也减少日志
+          if (operation == 'drag_state_update' || operation.contains('drag')) {
+            // 拖拽相关操作几乎不输出延迟日志
+            if (now.millisecondsSinceEpoch % 1000 == 0) { // 只输出0.1%的日志
+              EditPageLogger.canvasDebug(
+                '内容渲染控制器延迟节流通知',
+                data: {
+                  'operation': operation,
+                  'optimization': 'delayed_throttled_notification_minimal_logging',
+                  'reason': 'avoid_global_ui_rebuild',
+                  ...?data,
+                },
+              );
+            }
+          } else {
+            EditPageLogger.canvasDebug(
+              '内容渲染控制器跳过延迟通知',
+              data: {
+                'operation': operation,
+                'optimization': 'skip_delayed_content_render_notification',
+                'reason': 'avoid_global_ui_rebuild',
+                ...?data,
+              },
+            );
+          }
           
           // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
         });
@@ -403,55 +440,78 @@ class ContentRenderController extends ChangeNotifier {
 
   /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
   bool shouldSkipElementRendering(String elementId) {
-    // 添加调试信息
-    final isDragStateManagerActive = _dragStateManager != null;
-    final isDragging = _dragStateManager?.isDragging ?? false;
-    final isElementDragging =
-        _dragStateManager?.isElementDragging(elementId) ?? false;
+    // 🔧 添加详细调试信息，包括DragStateManager实例信息
+    final dragStateManager = _dragStateManager;
+    final isDragStateManagerActive = dragStateManager != null;
+    final isDragging = dragStateManager?.isDragging ?? false;
+    final isDragPreviewActive = dragStateManager?.isDragPreviewActive ?? false;
+    final isElementDragging = dragStateManager?.isElementDragging(elementId) ?? false;
     final enableDragPreview = DragConfig.enableDragPreview;
-    final isDragPreviewActive = _dragStateManager?.isDragPreviewActive ?? false;
-
-    EditPageLogger.canvasDebug('检查元素渲染跳过条件', data: {
+    final draggingElementIds = dragStateManager?.draggingElementIds ?? <String>{};
+    final isSingleSelection = draggingElementIds.length == 1;
+    
+    EditPageLogger.canvasError('🔧🔧🔧 shouldSkipElementRendering详细状态', data: {
       'elementId': elementId,
-      'dragStateManager': isDragStateManagerActive,
+      'dragStateManagerActive': isDragStateManagerActive,
+      'dragStateManagerHashCode': dragStateManager?.hashCode ?? 'null',
       'isDragging': isDragging,
       'isDragPreviewActive': isDragPreviewActive,
       'isElementDragging': isElementDragging,
-      'enableDragPreview': enableDragPreview
+      'enableDragPreview': enableDragPreview,
+      'draggingElementIds': draggingElementIds.toList(),
+      'draggingElementCount': draggingElementIds.length,
+      'isSingleSelection': isSingleSelection,
+      'currentTime': DateTime.now().millisecondsSinceEpoch,
     });
-
+    
     // 快速退出 - 如果拖拽状态管理器无效，始终显示元素
     if (!isDragStateManagerActive) {
-      EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
-        'elementId': elementId,
-        'reason': '无拖拽状态管理器'
-      });
+      EditPageLogger.canvasError('🔧🔧🔧 跳过渲染失败：无拖拽状态管理器', data: {'elementId': elementId});
       return false;
     }
 
     // 快速退出 - 如果不在拖拽中，始终显示元素
     if (!isDragging || !isDragPreviewActive) {
-      EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
+      EditPageLogger.canvasError('🔧🔧🔧 跳过渲染失败：不在拖拽状态', data: {
         'elementId': elementId,
-        'reason': '不在拖拽中'
+        'isDragging': isDragging,
+        'isDragPreviewActive': isDragPreviewActive,
       });
       return false;
     }
 
-    // 核心逻辑 - 仅当元素正在被拖拽且拖拽预览层启用时，才跳过元素渲染
-    if (isElementDragging && enableDragPreview) {
-      EditPageLogger.canvasDebug('元素渲染决策：跳过', data: {
+    // 🔧 强化单选检查：确保单选时的元素能够正确隐藏
+    if (isSingleSelection && draggingElementIds.contains(elementId)) {
+      EditPageLogger.canvasError('🔧🔧🔧 单选元素拖拽检查', data: {
         'elementId': elementId,
-        'reason': '元素拖拽中且预览层启用'
+        'isDraggingThisElement': true,
+        'enableDragPreview': enableDragPreview,
+        'shouldSkipForSingleSelection': enableDragPreview,
+        'fix': 'single_selection_skip_check',
       });
-      return true;
+      
+      if (enableDragPreview) {
+        EditPageLogger.canvasError('🔧🔧🔧 单选元素将被隐藏', data: {
+          'elementId': elementId,
+          'reason': '单选拖拽中，元素由预览层显示',
+        });
+        return true;
+      }
     }
 
-    EditPageLogger.canvasDebug('元素渲染决策：不跳过', data: {
+    // 核心逻辑 - 仅当元素正在被拖拽且拖拽预览层启用时，才跳过元素渲染
+    final shouldSkip = isElementDragging && enableDragPreview;
+    
+    EditPageLogger.canvasError('🔧🔧🔧 跳过渲染决策', data: {
       'elementId': elementId,
-      'reason': '默认情况'
+      'shouldSkip': shouldSkip,
+      'isElementDragging': isElementDragging,
+      'enableDragPreview': enableDragPreview,
+      'isSingleSelection': isSingleSelection,
+      'finalDecision': shouldSkip,
     });
-    return false;
+    
+    return shouldSkip;
   }
 
   /// 拖拽状态变化处理方法
@@ -461,12 +521,17 @@ class ContentRenderController extends ChangeNotifier {
       final isDragging = _dragStateManager!.isDragging;
       final draggingElementIds = _dragStateManager!.draggingElementIds;
       final isDragPreviewActive = _dragStateManager!.isDragPreviewActive;
+      
+      // 🔧 使用实例变量进行状态跟踪
 
       // 添加调试信息
       EditPageLogger.canvasDebug('拖拽状态变更处理', data: {
         'isDragging': isDragging,
         'isDragPreviewActive': isDragPreviewActive,
-        'draggingElementIds': draggingElementIds
+        'draggingElementIds': draggingElementIds,
+        'lastIsDragging': _lastIsDragging,
+        'lastIsDragPreviewActive': _lastIsDragPreviewActive,
+        'lastDraggingElementIds': _lastDraggingElementIds.toList(),
       });
 
       // 更新需要跳过渲染的元素列表（这些元素将在DragPreviewLayer中显示）
@@ -474,35 +539,90 @@ class ContentRenderController extends ChangeNotifier {
       if (isDragging && isDragPreviewActive) {
         _elementsToSkip.addAll(draggingElementIds);
 
-        // 标记这些元素为脏状态，以便下一次渲染时更新
+        // 标记拖拽元素为脏状态，使其在下次内容层重建时重新渲染
         for (final elementId in draggingElementIds) {
           markElementDirty(elementId, ElementChangeType.multiple);
         }
-      } else if (!isDragging &&
-          !isDragPreviewActive &&
-          draggingElementIds.isEmpty) {
-        // 拖拽结束，确保所有元素可见
-        EditPageLogger.canvasDebug('拖拽结束，确保所有元素可见');
-
-        // 延迟标记所有元素为脏状态，确保在拖拽层完全消失后再刷新
-        Future.delayed(const Duration(milliseconds: 50), () {
-          refreshAll('拖拽结束，恢复元素可见性');
+        
+        EditPageLogger.canvasDebug('拖拽开始：标记元素为脏状态', data: {
+          'draggingElementIds': draggingElementIds.toList(),
+          'optimization': 'mark_dragging_elements_dirty'
         });
       }
 
-      // 🚀 使用节流通知替代直接notifyListeners
-      _throttledNotifyListeners(
-        operation: 'drag_state_update',
-        data: {
+      // 🔧 更精确的拖拽开始和结束检测
+      final isJustStartedDragging = isDragging && isDragPreviewActive && draggingElementIds.isNotEmpty &&
+          (!_lastIsDragging || !_lastIsDragPreviewActive || _lastDraggingElementIds.isEmpty);
+      
+      final isJustEndedDragging = !isDragging && !isDragPreviewActive && draggingElementIds.isEmpty &&
+          (_lastIsDragging || _lastIsDragPreviewActive || _lastDraggingElementIds.isNotEmpty);
+      
+      if (isJustStartedDragging) {
+        // 拖拽刚开始：强制重建以隐藏原始元素
+        EditPageLogger.canvasError('🔧🔧🔧 拖拽开始：强制ContentRenderLayer重建', data: {
+          'reason': '隐藏拖拽中的原始元素',
+          'draggingElementIds': draggingElementIds.toList(),
+          'elementCount': draggingElementIds.length,
+          'isSingleSelection': draggingElementIds.length == 1,
+          'rebuildTrigger': 'drag_start',
+          'precise': 'just_started_dragging',
+        });
+        
+        // 强制元素缓存失效，确保shouldSkipElementRendering被调用
+        for (final elementId in draggingElementIds) {
+          EditPageLogger.canvasError('🔧🔧🔧 强制元素缓存失效', data: {
+            'elementId': elementId,
+            'reason': '确保拖拽时重新评估元素渲染',
+            'fix': 'force_cache_invalidation',
+          });
+          
+          markElementDirty(elementId, ElementChangeType.visibility);
+          _rebuildManager?.removeElement(elementId);
+        }
+        
+        // 立即通知，绕过节流机制
+        EditPageLogger.canvasError('🔧🔧🔧 拖拽开始立即通知，绕过节流', data: {
+          'reason': '确保拖拽时元素立即隐藏',
+          'bypass': 'throttle_mechanism',
+        });
+        super.notifyListeners();
+        
+      } else if (isJustEndedDragging) {
+        // 拖拽刚结束：强制重建以在新位置显示元素
+        EditPageLogger.canvasError('🔧🔧🔧 拖拽结束：强制ContentRenderLayer重建', data: {
+          'reason': '恢复元素在新位置的显示',
+          'rebuildTrigger': 'drag_end',
+          'precise': 'just_ended_dragging',
+        });
+        super.notifyListeners();
+        
+      } else {
+        // 🔧 关键优化：拖拽过程中不触发ContentRenderLayer重建
+        // 只有拖拽开始和结束时才需要重建ContentRenderLayer
+        // 拖拽过程中的元素移动由DragPreviewLayer处理
+        EditPageLogger.canvasDebug('拖拽过程中跳过ContentRenderLayer重建', data: {
+          'reason': '拖拽过程中只需要DragPreviewLayer更新',
           'isDragging': isDragging,
           'isDragPreviewActive': isDragPreviewActive,
           'draggingElementIds': draggingElementIds,
-        },
-      );
+          'isJustStarted': isJustStartedDragging,
+          'isJustEnded': isJustEndedDragging,
+          'optimization': 'skip_content_rebuild_during_drag',
+        });
+        
+        // 🔧 不调用任何通知方法，保持ContentRenderLayer稳定
+        // 拖拽过程中的视觉更新完全由DragPreviewLayer负责
+      }
+      
+      // 🔧 更新历史状态用于下次比较
+      _lastIsDragging = isDragging;
+      _lastIsDragPreviewActive = isDragPreviewActive;
+      _lastDraggingElementIds = Set.from(draggingElementIds);
 
       EditPageLogger.canvasDebug('拖拽状态更新完成', data: {
         'isDragging': isDragging,
-        'draggingElementIds': draggingElementIds
+        'draggingElementIds': draggingElementIds,
+        'rebuildTriggered': isJustStartedDragging || isJustEndedDragging,
       });
     }
   }

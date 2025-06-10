@@ -20,8 +20,8 @@ class EditPageLoggingConfig {
   static LogLevel editPageMinLevel = LogLevel.info;
 
   // 画布渲染日志控制 (高频操作，默认关闭)
-  static bool enableCanvasLogging = false;
-  static LogLevel canvasMinLevel = LogLevel.error;
+  static bool enableCanvasLogging = true;
+  static LogLevel canvasMinLevel = LogLevel.debug; // 🔧 临时启用debug级别以调试元素隐藏问题
 
   // 控制器日志控制
   static bool enableControllerLogging = true;
@@ -32,8 +32,8 @@ class EditPageLoggingConfig {
   static LogLevel propertyPanelMinLevel = LogLevel.error;
 
   // 渲染器日志控制 (高频操作，默认关闭)
-  static bool enableRendererLogging = false;
-  static LogLevel rendererMinLevel = LogLevel.error;
+  static bool enableRendererLogging = true;
+  static LogLevel rendererMinLevel = LogLevel.debug;
 
   // 文件操作日志控制
   static bool enableFileOpsLogging = true;
@@ -57,21 +57,9 @@ class EditPageLoggingConfig {
     enablePerformanceLogging = true;
     performanceMinLevel = LogLevel.info;
     // 高频日志保持关闭
-    enableCanvasLogging = false;
+    enableCanvasLogging = true;
     enablePropertyPanelLogging = false;
-    enableRendererLogging = false;
-  }
-
-  static void configureForProduction() {
-    enableEditPageLogging = true;
-    editPageMinLevel = LogLevel.warning;
-    enableControllerLogging = true;
-    controllerMinLevel = LogLevel.error;
-    enablePerformanceLogging = false;
-    // 所有高频日志关闭
-    enableCanvasLogging = false;
-    enablePropertyPanelLogging = false;
-    enableRendererLogging = false;
+    enableRendererLogging = true;
   }
 
   static void configureForPerformanceDebugging() {
@@ -86,6 +74,18 @@ class EditPageLoggingConfig {
     // 高频UI日志关闭
     enableCanvasLogging = false;
     enablePropertyPanelLogging = false;
+  }
+
+  static void configureForProduction() {
+    enableEditPageLogging = true;
+    editPageMinLevel = LogLevel.warning;
+    enableControllerLogging = true;
+    controllerMinLevel = LogLevel.error;
+    enablePerformanceLogging = false;
+    // 所有高频日志关闭
+    enableCanvasLogging = false;
+    enablePropertyPanelLogging = false;
+    enableRendererLogging = false;
   }
 
   /// 运行时动态控制方法
@@ -111,4 +111,4 @@ class EditPageLoggingConfig {
     performanceMinLevel = LogLevel.error;
     disableHighFrequencyLogs();
   }
-} 
+}

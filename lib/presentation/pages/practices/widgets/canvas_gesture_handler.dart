@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -37,6 +39,9 @@ class CanvasGestureHandler {
 
   // 追踪画布平移的结束位置，用于区分点击和拖拽
   Offset? _panEndPosition;
+  
+  // 🔧 防止重复创建撤销操作的记录（与SmartCanvasGestureHandler保持一致）
+  final Set<String> _recentTranslationOperations = {};
   CanvasGestureHandler({
     required this.controller,
     required this.dragStateManager,
@@ -167,13 +172,31 @@ class CanvasGestureHandler {
 
       // Create a batch translation operation if any elements moved
       if (elementIds.isNotEmpty) {
-        EditPageLogger.canvasDebug('创建批量平移操作', 
-          data: {'elementCount': elementIds.length});
-        controller.createElementTranslationOperation(
-          elementIds: elementIds,
-          oldPositions: oldPositions,
-          newPositions: newPositions,
-        );
+        // 🔧 检查是否需要创建撤销操作（防止重复创建）
+        final operationKey = '${elementIds.join('_')}_${DateTime.now().millisecondsSinceEpoch ~/ 200}';
+        if (!_recentTranslationOperations.contains(operationKey)) {
+          _recentTranslationOperations.add(operationKey);
+          Timer(const Duration(milliseconds: 500), () {
+            _recentTranslationOperations.remove(operationKey);
+          });
+          
+          EditPageLogger.canvasDebug('创建批量平移操作', data: {
+            'elementCount': elementIds.length,
+            'operationKey': operationKey,
+            'source': 'CanvasGestureHandler',
+          });
+          
+          controller.createElementTranslationOperation(
+            elementIds: elementIds,
+            oldPositions: oldPositions,
+            newPositions: newPositions,
+          );
+        } else {
+          EditPageLogger.canvasDebug('跳过重复平移撤销操作', data: {
+            'operationKey': operationKey,
+            'source': 'CanvasGestureHandler',
+          });
+        }
       }
 
       onDragEnd();
@@ -183,7 +206,7 @@ class CanvasGestureHandler {
       // 使用专门的平移结束位置，如果没有则说明没有发生平移更新，使用起始位置
       final endPoint = _panEndPosition ?? _dragStart;
       final dragDistance = (_dragStart - endPoint).distance;
-      final isClick = dragDistance < 3.0; // 小于3个像素视为点击而非拖拽
+      final isClick = dragDistance < 1.0; // 🔧 降低点击检测阈值
 
       // 添加详细的调试日志
       EditPageLogger.canvasDebug('平移画布详细信息', 

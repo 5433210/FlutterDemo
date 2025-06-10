@@ -1,9 +1,9 @@
 import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-
 import 'custom_cursors.dart';
 
 /// 测试版本的控制点 - 独立移动，支持旋转操作
@@ -44,25 +44,39 @@ class FreeControlPoints extends StatefulWidget {
 }
 
 class _FreeControlPointsState extends State<FreeControlPoints> {
+  // 🚀 性能优化：防止频繁日志输出的缓存
+  static String? _lastUpdateLog;
+  static DateTime? _lastUpdateTime;
+
   // 独立的控制点位置状态，不依赖元素位置
   final Map<int, Offset> _controlPointPositions = {};
   bool _isInitialized = false;
-
   // 独立的矩形属性 - 初始化后不再依赖widget属性
   double _currentX = 0.0;
   double _currentY = 0.0;
   double _currentWidth = 0.0;
+
   double _currentHeight = 0.0;
   double _currentRotation = 0.0;
-
   // 旋转相关状态
   Offset? _rotationCenter;
+
   double? _initialRotationAngle;
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
+      EditPageLogger.canvasDebug('🔥 FreeControlPoints未初始化，跳过构建', data: {
+        'elementId': widget.elementId,
+      });
       return const SizedBox.shrink();
     }
+
+    EditPageLogger.canvasDebug('🔥 FreeControlPoints构建中', data: {
+      'elementId': widget.elementId,
+      'controlPointCount': _controlPointPositions.length,
+      'currentPosition': '($_currentX, $_currentY)',
+      'currentSize': '($_currentWidth x $_currentHeight)',
+    });
 
     return Stack(
       clipBehavior: Clip.none,
@@ -91,10 +105,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     );
   }
 
-  // 🚀 性能优化：防止频繁日志输出的缓存
-  static String? _lastUpdateLog;
-  static DateTime? _lastUpdateTime;
-
   @override
   void didUpdateWidget(FreeControlPoints oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -102,17 +112,19 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 🚀 性能优化：限制日志输出频率，避免日志洪水
     if (_isInitialized) {
       final now = DateTime.now();
-      final updateKey = '${widget.elementId}_${widget.x}_${widget.y}_${widget.width}_${widget.height}_${widget.rotation}';
-      
+      final updateKey =
+          '${widget.elementId}_${widget.x}_${widget.y}_${widget.width}_${widget.height}_${widget.rotation}';
+
       // 只有在值真正变化或超过500ms时才输出日志
-      if (_lastUpdateLog != updateKey || 
-          _lastUpdateTime == null || 
+      if (_lastUpdateLog != updateKey ||
+          _lastUpdateTime == null ||
           now.difference(_lastUpdateTime!).inMilliseconds > 500) {
-        
-        final hasPositionChange = oldWidget.x != widget.x || oldWidget.y != widget.y;
-        final hasSizeChange = oldWidget.width != widget.width || oldWidget.height != widget.height;
+        final hasPositionChange =
+            oldWidget.x != widget.x || oldWidget.y != widget.y;
+        final hasSizeChange = oldWidget.width != widget.width ||
+            oldWidget.height != widget.height;
         final hasRotationChange = oldWidget.rotation != widget.rotation;
-        
+
         // 只有在有实际变化时才输出DEBUG日志
         if (hasPositionChange || hasSizeChange || hasRotationChange) {
           EditPageLogger.editPageDebug('🔧 FreeControlPoints属性更新检测', data: {
@@ -147,7 +159,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             'optimization': 'skip_unchanged_update',
           });
         }
-        
+
         _lastUpdateLog = updateKey;
         _lastUpdateTime = now;
       }
@@ -184,7 +196,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         'newRotation': widget.rotation,
         'operation': 'free_control_points_rotation_change',
       });
-      
+
       setState(() {
         _syncWithElementPosition(
             widget.x, widget.y, widget.width, widget.height, widget.rotation);
@@ -240,6 +252,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     MouseCursor cursor = _getControlPointCursor(index);
     bool isRotation = index == 8;
 
+    // EditPageLogger.canvasDebug('🔥 构建控制点', data: {
+    //   'index': index,
+    //   'controlPointName': controlPointName,
+    //   'position': '${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}',
+    //   'isRotation': isRotation,
+    // });
+
     return Positioned(
       left: position.dx - hitAreaSize / 2,
       top: position.dy - hitAreaSize / 2,
@@ -253,10 +272,19 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           hitTestBehavior: HitTestBehavior.opaque,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onPanStart: (details) {
-              EditPageLogger.canvasDebug('控制点开始拖拽', data: {
+            onTapDown: (details) {
+              EditPageLogger.canvasDebug('🔥 控制点手势检测 - TapDown', data: {
                 'index': index,
-                'controlPointName': controlPointName
+                'localPosition': '${details.localPosition}',
+                'globalPosition': '${details.globalPosition}',
+              });
+            },
+            onPanStart: (details) {
+              EditPageLogger.canvasDebug('🔥 FreeControlPoints拖拽开始', data: {
+                'index': index,
+                'controlPointName': controlPointName,
+                'localPosition': '${details.localPosition}',
+                'globalPosition': '${details.globalPosition}',
               });
 
               if (index == 8) {
@@ -512,7 +540,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
 
     _isInitialized = true;
-    
+
     EditPageLogger.canvasDebug('控制点初始化完成', data: {
       'position': '($_currentX, $_currentY)',
       'size': '($_currentWidth, $_currentHeight)',

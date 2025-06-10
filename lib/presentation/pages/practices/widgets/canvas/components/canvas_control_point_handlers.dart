@@ -211,6 +211,18 @@ mixin CanvasControlPointHandlers {
       elementStartProperties: allElementProperties,
     );
 
+    // 🔧 验证DragStateManager状态是否正确设置
+    EditPageLogger.canvasDebug(
+      '验证DragStateManager拖拽状态',
+      data: {
+        'expectedElementIds': allElementIds.toList(),
+        'actualDraggingElementIds': dragStateManager.draggingElementIds.toList(),
+        'isDragging': dragStateManager.isDragging,
+        'isDragPreviewActive': dragStateManager.isDragPreviewActive,
+        'elementCount': allElementIds.length,
+      },
+    );
+
     EditPageLogger.canvasDebug(
       '控制点拖拽预览阶段完成',
       data: {
@@ -281,12 +293,21 @@ mixin CanvasControlPointHandlers {
           });
         }
 
-        // 创建撤销操作
-        createUndoOperation(elementId, _originalElementProperties!, element);
+        // 🔧 修复：完全跳过传统路径的后续处理，避免重复元素更新
+        // 新的控制点主导架构(handleControlPointDragEndWithState)会负责全部处理
+        EditPageLogger.canvasDebug(
+          '传统旋转路径跳过 - 全部由新架构处理',
+          data: {
+            'elementId': elementId,
+            'optimization': 'skip_legacy_rotation_completely',
+            'reason': '避免与控制点主导架构重复处理',
+          },
+        );
 
         _isRotating = false;
         _originalElementProperties = null;
         EditPageLogger.canvasDebug('旋转操作完成', data: {'elementId': elementId});
+        return;
         return;
       }
 
@@ -314,10 +335,23 @@ mixin CanvasControlPointHandlers {
           });
         }
 
-        // 创建撤销操作
-        createUndoOperation(elementId, _originalElementProperties!, element);
+            // 🔧 修复：完全跳过传统路径的后续处理，避免重复元素更新
+    // 新的控制点主导架构(handleControlPointDragEndWithState)会负责全部处理
+    EditPageLogger.canvasDebug(
+      '传统控制点路径跳过 - 全部由新架构处理',
+      data: {
+        'elementId': elementId,
+        'optimization': 'skip_legacy_path_completely',
+        'reason': '避免与控制点主导架构重复处理',
+      },
+    );
+    
+    // 🚀 直接返回，不执行任何元素更新或状态分发
+    _isResizing = false;
+    _originalElementProperties = null;
+    return;
 
-        // UI更新已由createUndoOperation中的元素更新方法处理
+        // UI更新已由updateElementPropertiesWithoutUndo处理
 
         _isResizing = false;
         _originalElementProperties = null;
@@ -363,12 +397,18 @@ mixin CanvasControlPointHandlers {
       _isReadyForDrag = false;
       _isDragging = false;
 
-      // 立即触发状态更新
-      if (mounted) {
-        setState(() {});
-      }
+      // 🚀 优化：避免触发Canvas整体重建
+      // 控制点状态更新应该通过分层架构处理，不需要setState
+      EditPageLogger.canvasDebug(
+        '跳过控制点处理器setState - 使用分层架构',
+        data: {
+          'optimization': 'avoid_control_point_setstate',
+          'reason': '分层架构会自动处理必要的重建',
+        },
+      );
 
-      // 添加延迟刷新确保完整可见性恢复和控制点正确显示
+      // 🔧 修复：移除延迟cancelDrag调用，避免破坏正常拖拽状态
+      // 延迟刷新仅用于UI更新，不应影响拖拽状态管理
       Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted) {
           // 标记元素为脏以强制重新渲染
@@ -376,20 +416,16 @@ mixin CanvasControlPointHandlers {
             final elementId = controller.state.selectedElementIds.first;
             contentRenderController.markElementDirty(elementId, ElementChangeType.multiple);
 
-            // 通知DragStateManager强制清理拖拽状态
-            dragStateManager.cancelDrag();
+            // 🔧 移除不必要的cancelDrag调用 - 拖拽状态应由正常流程管理
+            // dragStateManager.cancelDrag(); // ❌ 删除：这会破坏正常拖拽状态
 
-            // 确保DragPreviewLayer不再显示该元素
-            setState(() {});
-
-            // UI更新已由markElementDirty处理，无需重复调用
-            
-            // 再次强制触发setState确保控制点正确更新
-            Future.delayed(const Duration(milliseconds: 50), () {
-              if (mounted) {
-                setState(() {});
-              }
-            });
+            EditPageLogger.canvasDebug(
+              '延迟UI刷新完成 - 不影响拖拽状态',
+              data: {
+                'optimization': 'delayed_ui_refresh_only',
+                'reason': '仅UI刷新，拖拽状态由正常流程管理',
+              },
+            );
           }
         }
       });
@@ -431,6 +467,17 @@ mixin CanvasControlPointHandlers {
     } else {
       // 普通元素处理
       _handleSingleElementTransform(elementId, originalElement, finalResult);
+    }
+
+    // 🔧 修复：在这里统一创建撤销操作，避免重复创建
+    if (_originalElementProperties != null) {
+      createUndoOperation(elementId, _originalElementProperties!, {
+        'x': finalResult['x']!,
+        'y': finalResult['y']!,
+        'width': finalResult['width']!,
+        'height': finalResult['height']!,
+        if (finalResult.containsKey('rotation')) 'rotation': finalResult['rotation']!,
+      });
     }
 
     EditPageLogger.canvasDebug('控制点主导架构处理完成', data: {'elementId': elementId});
@@ -667,16 +714,17 @@ mixin CanvasControlPointHandlers {
   void _handleSingleElementTransform(String elementId, Map<String, dynamic> originalElement, Map<String, double> finalResult) {
     _updateSingleElement(elementId, finalResult);
     
-    // 创建撤销操作
-    if (_originalElementProperties != null) {
-      createUndoOperation(elementId, _originalElementProperties!, {
-        'x': finalResult['x']!,
-        'y': finalResult['y']!,
-        'width': finalResult['width']!,
-        'height': finalResult['height']!,
-        if (finalResult.containsKey('rotation')) 'rotation': finalResult['rotation']!,
-      });
-    }
+    // 🔧 修复：避免重复创建撤销操作
+    // 撤销操作将在handleControlPointDragEndWithState的调用者处统一创建
+    // 这里只负责更新元素属性，不创建撤销操作
+    EditPageLogger.canvasDebug(
+      '单个元素变换完成 - 撤销操作将由调用者创建',
+      data: {
+        'elementId': elementId,
+        'finalResult': finalResult,
+        'optimization': 'avoid_duplicate_undo_operation',
+      },
+    );
   }
 
   /// 🚀 新增：更新单个元素的属性
@@ -883,8 +931,13 @@ mixin CanvasControlPointHandlers {
       return Map<String, double>.from(_freeControlPointsFinalState!);
     }
 
-    // 回退：如果没有最终状态，使用当前元素属性
-    EditPageLogger.editPageWarning('未找到FreeControlPoints最终状态，使用回退方案');
+    // 🔧 优化：改为DEBUG级别，避免误导性WARNING
+    EditPageLogger.editPageDebug('FreeControlPoints最终状态未设置，使用当前元素状态', data: {
+      'elementId': elementId,
+      'controlPointIndex': controlPointIndex,
+      'fallbackReason': 'final_state_not_provided',
+      'optimization': 'use_current_element_state',
+    });
     final element = controller.state.currentPageElements.firstWhere(
       (e) => e['id'] == elementId,
       orElse: () => <String, dynamic>{},
@@ -916,19 +969,22 @@ mixin CanvasControlPointHandlers {
       return; // 没有变化，不需要创建撤销操作
     }
 
-    // 检查是否已经为这个元素创建了撤销操作（防止重复创建）
-    final operationKey = '${elementId}_${DateTime.now().millisecondsSinceEpoch ~/ 100}'; // 100ms内视为同一操作
+    // 🔧 增强重复检测：基于元素ID和操作类型
+    final operationType = newProperties.containsKey('rotation') ? 'rotation' : 'resize';
+    final operationKey = '${elementId}_${operationType}_${DateTime.now().millisecondsSinceEpoch ~/ 200}'; // 200ms内视为同一操作
     if (_recentUndoOperations.contains(operationKey)) {
-      EditPageLogger.canvasDebug('操作过于频繁，跳过重复撤销操作', data: {
+      EditPageLogger.canvasDebug('🚫 检测到重复撤销操作，已跳过', data: {
         'elementId': elementId,
+        'operationType': operationType,
         'operationKey': operationKey,
+        'optimization': 'duplicate_undo_prevention',
       });
       return;
     }
     
     // 记录此次操作，并设置过期时间
     _recentUndoOperations.add(operationKey);
-    Timer(const Duration(milliseconds: 200), () {
+    Timer(const Duration(milliseconds: 500), () {
       _recentUndoOperations.remove(operationKey);
     });
 

@@ -284,8 +284,9 @@ class CanvasRebuildOptimizer extends ChangeNotifier {
 }
 
 /// 🚀 优化的Canvas监听器Widget
-/// 替代直接的ListenableBuilder，提供智能重建功能
-class OptimizedCanvasListener extends StatefulWidget {
+/// 🔧 CRITICAL FIX: 改为StatelessWidget，完全避免任何controller监听
+/// 解决拖拽隐藏时序问题的最终方案
+class OptimizedCanvasListener extends StatelessWidget {
   final PracticeEditController controller;
   final Widget Function(BuildContext context, PracticeEditController controller) builder;
   
@@ -296,34 +297,19 @@ class OptimizedCanvasListener extends StatefulWidget {
   });
   
   @override
-  State<OptimizedCanvasListener> createState() => _OptimizedCanvasListenerState();
-}
-
-class _OptimizedCanvasListenerState extends State<OptimizedCanvasListener> {
-  late CanvasRebuildOptimizer _optimizer;
-  
-  @override
-  void initState() {
-    super.initState();
-    _optimizer = CanvasRebuildOptimizer(widget.controller);
-    _optimizer.addListener(_onOptimizerRebuild);
-  }
-  
-  @override
-  void dispose() {
-    _optimizer.removeListener(_onOptimizerRebuild);
-    _optimizer.dispose();
-    super.dispose();
-  }
-  
-  void _onOptimizerRebuild() {
-    if (mounted) {
-      setState(() {});
-    }
-  }
-  
-  @override
   Widget build(BuildContext context) {
-    return widget.builder(context, widget.controller);
+    EditPageLogger.performanceInfo(
+      'OptimizedCanvasListener完全静态构建（修复版）',
+      data: {
+        'optimization': 'fully_static_canvas_listener',
+        'reason': '解决拖拽隐藏时序问题',
+        'avoidedCanvasRebuild': true,
+        'widgetType': 'StatelessWidget',
+      },
+    );
+    
+    // 直接调用builder，不监听任何状态变化
+    // Canvas重建完全由其他机制控制，避免时序问题
+    return builder(context, controller);
   }
 } 

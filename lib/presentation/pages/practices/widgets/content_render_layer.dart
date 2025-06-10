@@ -62,108 +62,48 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
 }
 
 class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
-  // 🔍[TRACKING] 静态重建计数器
-  static int _buildCount = 0;
-  static int _didUpdateWidgetCount = 0;
-  
-  /// Advanced element cache manager
+  // 🔍[TRACKING] 重建计数器
+  int _buildCount = 0;
+  int _didUpdateWidgetCount = 0;
+
+  // 性能监控器
+  late PerformanceMonitor _performanceMonitor;
+
+  // 元素缓存管理器
   late ElementCacheManager _cacheManager;
 
-  /// Performance monitor for tracking render performance
-  final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
-  
-  @override
-  Widget build(BuildContext context) {
-    // 🔍[TRACKING] ContentRenderLayer重建跟踪
-    final buildStartTime = DateTime.now();
-    _buildCount++;
-    
-    // Track performance for ContentRenderLayer rebuilds
-    _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
-
-    EditPageLogger.rendererDebug('ContentRenderLayer开始重建', 
-      data: {
-        'buildNumber': _buildCount,
-        'trigger': '来自Canvas状态变化',
-        'timestamp': buildStartTime.toIso8601String(),
-        'optimization': 'content_layer_rebuild_tracking',
-      });
-    
-    // Track performance metrics after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final buildDuration = DateTime.now().difference(buildStartTime);
-      EditPageLogger.performanceInfo(
-        'ContentRenderLayer重建完成',
-        data: {
-          'buildNumber': _buildCount,
-          'buildDuration': '${buildDuration.inMilliseconds}ms',
-          'optimization': 'content_layer_performance',
-        },
-      );
-    });
-    
-    // 🚀 直接构建内容，不再监听ContentRenderController
-    // 内容更新通过Canvas的setState()和didUpdateWidget()机制处理
-    return _buildContent(context);
-  }
-
-  @override
-  void didUpdateWidget(ContentRenderLayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // 🔍[TRACKING] didUpdateWidget调用跟踪
-    _didUpdateWidgetCount++;
-    
-    EditPageLogger.rendererDebug('ContentRenderLayer.didUpdateWidget调用', 
-      data: {
-        'didUpdateCount': _didUpdateWidgetCount,
-        'buildCount': _buildCount,
-        'trigger': 'Widget属性变化',
-        'optimization': 'content_layer_update_tracking',
-      });
-
-    // Get current and old elements
-    final oldElements = oldWidget.elements ??
-        oldWidget.controller?.state.currentPageElements ??
-        [];
-    final currentElements =
-        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
-
-    EditPageLogger.rendererDebug('ContentRenderLayer元素对比分析', 
-      data: {
-        'oldElementsCount': oldElements.length,
-        'currentElementsCount': currentElements.length,
-        'elementsChanged': oldElements.length != currentElements.length,
-        'didUpdateCount': _didUpdateWidgetCount,
-        'optimization': 'content_layer_element_diff',
-      });
-
-    // Check for element additions/removals/modifications
-    _updateElementsCache(oldElements, currentElements);
-  }
-
-  @override
-  void dispose() {
-    // Perform cleanup
-    _cacheManager.dispose();
-    super.dispose();
-  }
+  // 🔧 拖拽状态跟踪，用于智能监听切换
+  bool _lastKnownDragState = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize advanced cache manager with appropriate strategy
+    // 初始化性能监控器
+    _performanceMonitor = PerformanceMonitor();
+
+    // 🚀 初始化元素缓存管理器
     _cacheManager = ElementCacheManager(
       strategy: CacheStrategy.priorityBased,
-      // Balanced cache size for better memory management
-      maxSize: 200, // 降低到200个元素，避免内存压力
-      // 25MB memory threshold - more conservative for mobile devices
-      memoryThreshold: 25 * 1024 * 1024,
+      maxSize: 50, // 最多缓存50个元素
+      memoryThreshold: 25 * 1024 * 1024, // 25MB内存阈值
     );
 
-    // Initialize selective rebuilding system
+    // 初始化渲染控制器的选择性重建功能
     widget.renderController.initializeSelectiveRebuilding(_cacheManager);
+
+    EditPageLogger.rendererDebug('ContentRenderLayer初始化完成', data: {
+      'cacheMaxSize': 50,
+      'enableMetrics': true,
+      'optimization': 'content_layer_initialization',
+    });
+    
+    // 🔧 初始化拖拽状态跟踪
+    _lastKnownDragState = widget.renderController.isDragging;
+    
+    EditPageLogger.canvasError('🔧🔧🔧 初始化拖拽状态跟踪', data: {
+      'initialDragState': _lastKnownDragState,
+    });
 
     // Get initial elements
     final initialElements =
@@ -179,6 +119,107 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     _warmupCache(initialElements);
   }
 
+  @override
+  Widget build(BuildContext context) {
+    // 🔍[TRACKING] ContentRenderLayer重建跟踪
+    final buildStartTime = DateTime.now();
+    _buildCount++;
+
+    // Track performance for ContentRenderLayer rebuilds
+    _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
+
+    // 🔧 优化：只在关键时刻输出日志
+    final currentDragState = widget.renderController.isDragging;
+    final isDragStateChanged = currentDragState != _lastKnownDragState;
+    
+    // 只在拖拽状态变化时输出详细日志
+    if (isDragStateChanged) {
+      _lastKnownDragState = currentDragState;
+      
+      EditPageLogger.canvasError('🔧🔧🔧 ContentRenderLayer响应拖拽状态变化', data: {
+        'buildNumber': _buildCount,
+        'dragStateChanged': true,
+        'newDragState': currentDragState,
+        'reason': currentDragState ? '隐藏拖拽元素' : '显示元素在新位置',
+        'optimization': 'precise_rebuild_control',
+      });
+      
+      // 输出性能指标
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final buildDuration = DateTime.now().difference(buildStartTime);
+        EditPageLogger.performanceInfo(
+          'ContentRenderLayer关键重建完成',
+          data: {
+            'buildNumber': _buildCount,
+            'buildDuration': '${buildDuration.inMilliseconds}ms',
+            'dragStateChanged': true,
+            'newDragState': currentDragState,
+            'optimization': 'critical_rebuild_performance',
+          },
+        );
+      });
+    } else {
+      // 非拖拽状态变化的重建（这不应该频繁发生）
+      if (_buildCount % 20 == 0) { // 每20次输出一次警告
+        EditPageLogger.performanceWarning('ContentRenderLayer意外重建', data: {
+          'buildNumber': _buildCount,
+          'currentDragState': currentDragState,
+          'reason': '非拖拽状态变化引起的重建',
+          'suggestion': '检查是否有其他组件触发了不必要的重建',
+        });
+      }
+    }
+    
+    // 🔧 使用ListenableBuilder，但现在ContentRenderController已经实现了精确的通知控制
+    // 所以重建应该只在拖拽开始和结束时发生
+    return ListenableBuilder(
+      listenable: widget.renderController,
+      builder: (context, child) {
+        return _buildContent(context);
+      },
+    );
+  }
+
+  @override
+  void didUpdateWidget(ContentRenderLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 🔍[TRACKING] didUpdateWidget调用跟踪
+    _didUpdateWidgetCount++;
+
+    EditPageLogger.rendererDebug('ContentRenderLayer.didUpdateWidget调用', data: {
+      'didUpdateCount': _didUpdateWidgetCount,
+      'buildCount': _buildCount,
+      'trigger': 'Widget属性变化',
+      'optimization': 'content_layer_update_tracking',
+    });
+
+    // Get current and old elements
+    final oldElements = oldWidget.elements ??
+        oldWidget.controller?.state.currentPageElements ??
+        [];
+    final currentElements =
+        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+
+    EditPageLogger.rendererDebug('ContentRenderLayer元素对比分析', data: {
+      'oldElementsCount': oldElements.length,
+      'currentElementsCount': currentElements.length,
+      'elementsChanged': oldElements.length != currentElements.length,
+      'didUpdateCount': _didUpdateWidgetCount,
+      'optimization': 'content_layer_element_diff',
+    });
+
+    // Check for element additions/removals/modifications
+    _updateElementsCache(oldElements, currentElements);
+  }
+
+  @override
+  void dispose() {
+    // Perform cleanup
+    _cacheManager.dispose();
+    super.dispose();
+  }
+
   Widget _buildContent(BuildContext context) {
     // Get data from controller if not provided directly
     final elements =
@@ -189,6 +230,19 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final selectedElementIds = widget.selectedElementIds ??
         widget.controller?.state.selectedElementIds.toSet() ??
         <String>{};
+
+    // 🔧 优化：只在拖拽状态变化时输出构建数据
+    final isDragging = widget.renderController.isDragging;
+    if (widget.renderController.isDragging != _lastKnownDragState) {
+      EditPageLogger.rendererDebug('🔧🔧🔧 ContentRenderLayer构建开始', data: {
+        'elementsCount': elements.length,
+        'layersCount': layers.length,
+        'selectedCount': selectedElementIds.length,
+        'isPreviewMode': isPreviewMode,
+        'isDragging': isDragging,
+        'step': 'build_content_start'
+      });
+    }
 
     // Calculate page size and background color if not provided
     Size pageSize = widget.pageSize ?? const Size(800, 600);
@@ -210,13 +264,26 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         }
       }
     }
-    EditPageLogger.rendererDebug('ContentRenderLayer构建内容', 
-      data: {
+    // 🔧 严格控制：只在拖拽状态真正变化时输出构建日志
+    final wasDragStateChanged = isDragging != _lastKnownDragState;
+    if (wasDragStateChanged) {
+      EditPageLogger.rendererDebug('ContentRenderLayer构建内容 (状态变化)', data: {
         'elementsCount': elements.length,
         'selectedCount': selectedElementIds.length,
-        'cacheMetrics': _cacheManager.metrics.getReport(),
-        'isPreviewMode': isPreviewMode
+        'isDragging': isDragging,
+        'lastKnownDragState': _lastKnownDragState,
+        'buildCount': _buildCount,
+        'stateChange': 'drag_state_changed'
       });
+    } else if (_buildCount % 100 == 0) {
+      // 每100次重建输出一次警告，帮助诊断意外重建
+      EditPageLogger.performanceWarning('ContentRenderLayer意外频繁重建', data: {
+        'buildCount': _buildCount,
+        'isDragging': isDragging,
+        'reason': '非拖拽状态变化引起的重建',
+        'suggestion': '检查是否有其他组件触发了不必要的重建'
+      });
+    }
 
     // Sort elements by layer order
     final sortedElements = _sortElementsByLayer(elements, layers);
@@ -232,8 +299,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Log culling metrics
     if (widget.viewportCullingManager != null) {
       final cullingMetrics = widget.viewportCullingManager!.getMetrics();
-      EditPageLogger.rendererDebug('视口裁剪指标', 
-        data: {'metrics': cullingMetrics});
+      EditPageLogger.rendererDebug('视口裁剪指标', data: {'metrics': cullingMetrics});
 
       // Configure culling strategy based on element count and performance
       if (sortedElements.length > 500) {
@@ -257,6 +323,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       }
     }
 
+    // 🔧 优化：移除频繁的元素处理前检查日志
+
     // Trigger cache cleanup for efficient memory management
     _cacheManager.cleanupCache();
 
@@ -270,6 +338,16 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
           children: visibleElements.map((element) {
+            // 🔧 优化：只在关键时刻输出元素处理日志
+            final currentElementId = element['id'] as String;
+            if (isDragging != _lastKnownDragState && widget.renderController.isElementDragging(currentElementId)) {
+              EditPageLogger.rendererDebug('🔧🔧🔧 处理拖拽元素', data: {
+                'elementId': currentElementId,
+                'elementType': element['type'],
+                'step': 'dragging_element_processing'
+              });
+            }
+
             // Skip hidden elements in preview mode
             final isHidden = element['hidden'] == true;
             if (isHidden && isPreviewMode) {
@@ -294,6 +372,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             final elementId = element['id'] as String;
             final elementType = element['type'] as String;
 
+            // 🔧 优化：移除频繁的元素处理日志
+
             // 🔧 获取图层透明度
             double layerOpacity = 1.0;
             bool isLayerLocked = false;
@@ -311,19 +391,14 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             // 🔧 合并元素和图层的透明度
             final finalOpacity = elementOpacity * layerOpacity;
 
-            // Skip rendering elements that are being drawn by the drag preview layer
-            if (widget.renderController.shouldSkipElementRendering(elementId)) {
-              return const SizedBox.shrink();
-            }
-
-            // 🔧 为锁定元素添加视觉指示
+            // 🔧 获取元素widget（现在在_getOrCreateElementWidget中处理拖拽隐藏检查）
             Widget elementWidget = _getOrCreateElementWidget(element);
-            
+
             // 如果元素或图层被锁定，添加锁定标志
             final isElementLocked = element['locked'] as bool? ?? false;
             if (isElementLocked || isLayerLocked) {
               List<Widget> lockIcons = [];
-              
+
               // 元素锁定标志 - 使用实心锁图标
               if (isElementLocked) {
                 lockIcons.add(
@@ -343,8 +418,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                   ),
                 );
               }
-              
-              // 图层锁定标志 - 使用图层锁图标  
+
+              // 图层锁定标志 - 使用图层锁图标
               if (isLayerLocked) {
                 lockIcons.add(
                   Container(
@@ -362,7 +437,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                   ),
                 );
               }
-              
+
               elementWidget = Stack(
                 children: [
                   elementWidget,
@@ -382,32 +457,34 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
             // 组合元素不需要额外的Transform.rotate，因为子元素已经在内部被正确处理
             final needsRotation = elementType != 'group';
-            
+
             return Positioned(
               left: elementX,
               top: elementY,
               child: RepaintBoundary(
                 key: ValueKey('element_repaint_$elementId'),
-                child: needsRotation 
-                  ? Transform.rotate(
-                      angle: elementRotation * 3.14159265359 / 180,
-                      child: Opacity(
-                        opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
+                child: needsRotation
+                    ? Transform.rotate(
+                        angle: elementRotation * 3.14159265359 / 180,
+                        child: Opacity(
+                          opacity:
+                              isHidden && !isPreviewMode ? 0.5 : finalOpacity,
+                          child: SizedBox(
+                            width: elementWidth,
+                            height: elementHeight,
+                            child: elementWidget,
+                          ),
+                        ),
+                      )
+                    : Opacity(
+                        opacity:
+                            isHidden && !isPreviewMode ? 0.5 : finalOpacity,
                         child: SizedBox(
                           width: elementWidth,
                           height: elementHeight,
                           child: elementWidget,
                         ),
                       ),
-                    )
-                  : Opacity(
-                      opacity: isHidden && !isPreviewMode ? 0.5 : finalOpacity,
-                      child: SizedBox(
-                        width: elementWidth,
-                        height: elementHeight,
-                        child: elementWidget,
-                      ),
-                    ),
               ),
             );
           }).toList(),
@@ -459,6 +536,37 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   Widget _getOrCreateElementWidget(Map<String, dynamic> element) {
     final elementId = element['id'] as String;
     final elementType = element['type'] as String;
+
+    // 🔧 关键修复：优先检查元素是否应该跳过渲染（拖拽隐藏检查）
+    // 这个检查必须在缓存检查之前进行，确保拖拽中的元素被正确隐藏
+    EditPageLogger.rendererDebug('🔧🔧🔧 _getOrCreateElementWidget开始', data: {
+      'elementId': elementId,
+      'elementType': elementType,
+      'step': 'widget_creation_start'
+    });
+
+    EditPageLogger.rendererDebug('🔧🔧🔧 准备调用shouldSkipElementRendering',
+        data: {'elementId': elementId, 'step': 'before_skip_check'});
+
+    final shouldSkip =
+        widget.renderController.shouldSkipElementRendering(elementId);
+
+    EditPageLogger.rendererDebug('🔧🔧🔧 shouldSkipElementRendering返回结果', data: {
+      'elementId': elementId,
+      'shouldSkip': shouldSkip,
+      'step': 'skip_check_result'
+    });
+
+    if (shouldSkip) {
+      EditPageLogger.rendererDebug('🔧🔧🔧 元素被拖拽预览层处理，跳过内容层渲染', data: {
+        'elementId': elementId,
+        'optimization': 'drag_preview_layer_handling_from_cache'
+      });
+      return const SizedBox.shrink();
+    }
+
+    EditPageLogger.rendererDebug('🔧🔧🔧 元素未被跳过，继续处理',
+        data: {'elementId': elementId, 'step': 'continue_processing'});
 
     // Check if element should be rebuilt using selective rebuilding
     final shouldRebuild =
@@ -519,13 +627,12 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Log performance data for complex elements
     if (renderDuration.inMilliseconds > 8) {
       // Half a frame at 60fps
-      EditPageLogger.performanceWarning('慢速元素渲染', 
-        data: {
-          'elementId': elementId,
-          'elementType': elementType,
-          'renderTime': renderDuration.inMilliseconds,
-          'threshold': 8
-        });
+      EditPageLogger.performanceWarning('慢速元素渲染', data: {
+        'elementId': elementId,
+        'elementType': elementType,
+        'renderTime': renderDuration.inMilliseconds,
+        'threshold': 8
+      });
     }
 
     return newWidget;
@@ -534,11 +641,10 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   /// Handle element change notifications from the controller
   void _handleElementChange(ElementChangeInfo changeInfo) {
     if (mounted) {
-      EditPageLogger.rendererDebug('处理元素变化', 
-        data: {
-          'changeType': changeInfo.changeType.toString(),
-          'elementId': changeInfo.elementId
-        });
+      EditPageLogger.rendererDebug('处理元素变化', data: {
+        'changeType': changeInfo.changeType.toString(),
+        'elementId': changeInfo.elementId
+      });
 
       // Get current elements
       final currentElements =
@@ -568,10 +674,22 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           break;
       }
 
-      // Trigger rebuild with new data
-      if (mounted) {
-        setState(() {});
-      }
+      // 🚀 优化：跳过setState调用，避免额外重建
+      // ContentRenderLayer的重建应该通过didUpdateWidget机制处理
+      // 元素变化会通过智能状态分发器精确通知相关组件
+      EditPageLogger.rendererDebug(
+        'ContentRenderLayer跳过setState（优化版）',
+        data: {
+          'optimization': 'skip_content_layer_setstate',
+          'reason': '避免额外重建，依靠didUpdateWidget机制',
+          'changeType': changeInfo.changeType.toString(),
+          'elementId': changeInfo.elementId,
+        },
+      );
+
+      // if (mounted) {
+      //   setState(() {}); // 🚀 已禁用以避免额外重建
+      // }
     }
   }
 
@@ -629,17 +747,16 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           // Use preview position instead of actual position
           elementCopy['x'] = previewPosition.dx;
           elementCopy['y'] = previewPosition.dy;
-          EditPageLogger.rendererDebug('使用拖拽预览位置', 
-            data: {
-              'elementId': elementId,
-              'previewPosition': '${previewPosition.dx}, ${previewPosition.dy}'
-            });
+          EditPageLogger.rendererDebug('使用拖拽预览位置', data: {
+            'elementId': elementId,
+            'previewPosition': '${previewPosition.dx}, ${previewPosition.dy}'
+          });
         }
       }
     }
 
-    EditPageLogger.rendererDebug('渲染元素', 
-      data: {'elementId': elementId, 'type': type});
+    EditPageLogger.rendererDebug('渲染元素',
+        data: {'elementId': elementId, 'type': type});
 
     // Performance tracking for complex rendering operations
     final renderStart = DateTime.now();
@@ -665,8 +782,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             isPreviewMode: widget.isPreviewMode == true);
         break;
       default:
-        EditPageLogger.rendererError('未知元素类型', 
-          data: {'type': type, 'elementId': elementId});
+        EditPageLogger.rendererError('未知元素类型',
+            data: {'type': type, 'elementId': elementId});
         result = Container(
           color: Colors.grey.withAlpha(51),
           child: Center(child: Text('Unknown element type: $type')),
@@ -676,13 +793,12 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final renderTime = DateTime.now().difference(renderStart).inMilliseconds;
     if (renderTime > 8) {
       // Log slow rendering operations (> half frame at 60fps)
-      EditPageLogger.performanceWarning('渲染性能警告', 
-        data: {
-          'elementId': elementId,
-          'type': type,
-          'renderTime': renderTime,
-          'threshold': 8
-        });
+      EditPageLogger.performanceWarning('渲染性能警告', data: {
+        'elementId': elementId,
+        'type': type,
+        'renderTime': renderTime,
+        'threshold': 8
+      });
     }
 
     return result;
@@ -786,8 +902,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // Pre-render high priority elements
     if (elementsToPrecache.isNotEmpty) {
-      EditPageLogger.rendererDebug('开始预缓存高优先级元素', 
-        data: {'elementCount': elementsToPrecache.length});
+      EditPageLogger.rendererDebug('开始预缓存高优先级元素',
+          data: {'elementCount': elementsToPrecache.length});
 
       // Use a microtask to avoid blocking the UI thread during initialization
       Future.microtask(() {

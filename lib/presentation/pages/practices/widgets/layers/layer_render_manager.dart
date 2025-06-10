@@ -292,8 +292,21 @@ class LayerRenderManager {
   void _notifyLayerUpdate(LayerUpdateEvent event) {
     if (_isDisposed) return;
 
-    _updateController.add(event);
-    _updateNotifier.value++;
+    // 🚀 优化：跳过LayerRenderManager通知机制，避免额外的ContentRenderLayer重建
+    // 分层架构的重建应该完全依靠didUpdateWidget和智能状态分发器
+    EditPageLogger.canvasDebug(
+      'LayerRenderManager跳过通知（优化版）',
+      data: {
+        'layerType': event.layerType.toString(),
+        'updateType': event.updateType.toString(),
+        'reason': event.reason,
+        'optimization': 'skip_layer_manager_notification',
+        'avoidedExtraRebuild': true,
+      },
+    );
+
+    // _updateController.add(event); // 🚀 已禁用
+    // _updateNotifier.value++; // 🚀 已禁用以避免额外重建
   }
 }
 

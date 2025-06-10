@@ -141,15 +141,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     final buildStartTime = DateTime.now();
     _buildCount++;
     
+    // 🔧 CRITICAL FIX: 缓存controller状态，避免在build中访问controller.state触发依赖
+    final currentTool = widget.controller.state.currentTool;
+    final selectedElementIds = widget.controller.state.selectedElementIds;
+    final hasSelectedElements = selectedElementIds.isNotEmpty;
+    
     EditPageLogger.canvasDebug(
       '🚨 Canvas开始重建 - 主Widget.build()被调用',
       data: {
         'buildNumber': _buildCount,
-        'selectedCount': widget.controller.state.selectedElementIds.length,
+        'selectedCount': selectedElementIds.length,
         'isReadyForDrag': _isReadyForDrag,
         'isDragging': _isDragging,
         'timestamp': buildStartTime.toIso8601String(),
         'optimization': 'canvas_rebuild_tracking',
+        'cachedState': 'avoiding_controller_access_in_build',
         'stackTrace': StackTrace.current.toString().split('\n').take(5).join('\n'),
       },
     );
@@ -259,16 +265,18 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _unregisterFromIntelligentDispatcher() {
     final intelligentDispatcher = widget.controller.intelligentDispatcher;
     if (intelligentDispatcher != null) {
-      intelligentDispatcher.unregisterUIListener('canvas');
-      intelligentDispatcher.unregisterLayerListener('content');
-      intelligentDispatcher.unregisterLayerListener('interaction');
-      
+      // 🚀 优化：由于Canvas没有注册监听器，无需注销
       EditPageLogger.canvasDebug(
-        'Canvas组件已从智能状态分发器注销',
+        'Canvas组件无智能状态分发器监听器需要注销（优化版）',
         data: {
-          'operation': 'cleanup_intelligent_listeners',
+          'optimization': 'no_canvas_listeners_registered',
+          'reason': '避免额外的ContentRenderLayer重建',
         },
       );
+      
+      // intelligentDispatcher.unregisterUIListener('canvas');
+      // intelligentDispatcher.unregisterLayerListener('content');
+      // intelligentDispatcher.unregisterLayerListener('interaction');
     }
   }
 
@@ -373,7 +381,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   void triggerSetState() {
-    if (mounted) setState(() {});
+    // 🚀 优化：避免Canvas整体重建，使用分层架构
+    EditPageLogger.canvasDebug(
+      '跳过triggerSetState - 使用分层架构',
+      data: {
+        'optimization': 'avoid_trigger_setstate',
+        'reason': '分层架构会自动处理必要的重建',
+      },
+    );
   }
 
   /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
@@ -514,11 +529,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     // 🔧 关键修复：使用deferToChild确保空白区域手势能穿透到InteractiveViewer
                     behavior: HitTestBehavior.deferToChild,
                     onTapDown: (details) {
-                      // 检查是否点击在选中元素上，如果是，准备拖拽
+                      // 🔧 CRITICAL FIX: 只设置状态，不立即setState，避免时序问题
+                      // setState将在onPanStart中进行，确保拖拽状态设置后再重建
                       if (shouldHandleAnySpecialGesture(elements)) {
                         _isReadyForDrag = true;
-                        // 立即重建以禁用InteractiveViewer的panEnabled
-                        if (mounted) setState(() {});
+                        // 移除立即setState，避免Canvas在拖拽状态设置前重建
+                        EditPageLogger.canvasError('🔧🔧🔧 设置拖拽准备状态，但不立即重建', data: {
+                          'isReadyForDrag': _isReadyForDrag,
+                          'reason': 'avoid_premature_canvas_rebuild',
+                        });
                       } else {
                         _isReadyForDrag = false;
                       }
@@ -530,12 +549,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       _gestureHandler.handleTapUp(
                           details, elements.cast<Map<String, dynamic>>());
 
-                      // 🔧 关键修复：确保在选择状态变化后立即更新UI状态
-                      if (mounted) {
-                        setState(() {});
-                        // 调试选择状态变化后的情况
-                        _debugCanvasState('元素选择后');
-                      }
+                      // 🔧 CRITICAL FIX: 移除不必要的setState，避免触发Canvas重建
+                      // 选择状态变化会通过智能状态分发器自动处理，不需要全局重建
+                      EditPageLogger.canvasError('🔧🔧🔧 TapUp处理完成，跳过setState', data: {
+                        'reason': 'avoid_canvas_rebuild_on_selection',
+                        'optimization': 'smart_state_dispatcher_handles_selection',
+                      });
+                      
+                      // 调试选择状态变化后的情况（不触发重建）
+                      _debugCanvasState('元素选择后');
                     },
                     // 处理右键点击事件，用于退出select模式
                     onSecondaryTapDown: (details) =>
@@ -570,6 +592,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             if (shouldHandle) {
                               _gestureHandler.handlePanStart(details,
                                   elements.cast<Map<String, dynamic>>());
+                              
+                              // 🔧 CRITICAL FIX: 在拖拽真正开始后，立即重建以禁用panEnabled
+                              // 这确保了拖拽状态设置后，InteractiveViewer才禁用平移
+                              if (mounted && (_isDragging || _dragStateManager.isDragging)) {
+                                setState(() {});
+                                EditPageLogger.canvasError('🔧🔧🔧 拖拽开始后立即重建Canvas', data: {
+                                  'isDragging': _isDragging,
+                                  'dragManagerDragging': _dragStateManager.isDragging,
+                                  'reason': 'disable_interactive_viewer_pan',
+                                });
+                              }
                               
                               final gestureProcessTime = DateTime.now().difference(gestureStartTime);
                               EditPageLogger.canvasDebug(
@@ -979,9 +1012,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 处理拖拽结束 - 使用 mixin 方法
   Future<void> _handleDragEnd() async {
-    setState(() {
-      _isDragging = false;
-    });
+    // 🚀 优化：避免Canvas整体重建，只更新必要的状态
+    _isDragging = false;
+    
+    EditPageLogger.canvasDebug(
+      '拖拽结束 - 避免Canvas整体重建',
+      data: {
+        'optimization': 'avoid_canvas_setstate',
+        'reason': '内容层应该只在dragEnd时重建一次',
+      },
+    );
 
     // 拖拽结束时应用网格吸附
     _applyGridSnapToSelectedElements();
@@ -994,11 +1034,18 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     Offset elementPosition,
     Map<String, Offset> elementPositions,
   ) async {
-    setState(() {
-      _isDragging = isDragging;
-      _dragStart = dragStart;
-      _elementStartPosition = elementPosition;
-    });
+    // 🚀 优化：避免Canvas整体重建，只更新必要的状态
+    _isDragging = isDragging;
+    _dragStart = dragStart;
+    _elementStartPosition = elementPosition;
+    
+    EditPageLogger.canvasDebug(
+      '拖拽开始 - 避免Canvas整体重建',
+      data: {
+        'optimization': 'avoid_canvas_setstate',
+        'reason': '只有预览层和交互层需要响应拖拽开始',
+      },
+    );
   }
 
   /// 处理拖拽更新 - 使用 mixin 方法
@@ -1219,21 +1266,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       // 🚀 优化：Canvas只注册为内容层监听器，不注册交互层监听器
       // 交互层变化应该由交互层组件自己处理，而不是触发整个Canvas重建
       
-      // 注册Canvas作为内容层监听器（元素内容变化时需要重建）
-      intelligentDispatcher.registerLayerListener('content', () {
-        EditPageLogger.canvasDebug(
-          '智能状态分发器触发内容层更新',
-          data: {
-            'operation': 'intelligent_content_layer_update',
-            'optimization': 'layer_specific_rebuild',
-          },
-        );
-        
-        _layerRenderManager.markLayerDirty(
-          RenderLayerType.content,
-          reason: 'intelligent_dispatch_content_change',
-        );
-      });
+      // 🚀 优化：跳过Canvas层级的智能状态分发器监听器
+      // 内容层变化应该直接由ContentRenderLayer的didUpdateWidget处理
+      // 不需要通过智能状态分发器再次触发重建
+      EditPageLogger.canvasDebug(
+        '跳过Canvas智能状态分发器监听器注册（优化版）',
+        data: {
+          'optimization': 'skip_canvas_intelligent_dispatcher',
+          'reason': '内容层变化由didUpdateWidget直接处理',
+          'avoidedExtraRebuild': true,
+        },
+      );
+      
+      // intelligentDispatcher.registerLayerListener('content', () => {
+      //   // 这会导致额外的重建，已禁用
+      // });
       
       // 🚀 移除交互层监听器注册 - 交互层变化不应该触发Canvas重建
       // 交互层的重建应该由其自身的监听机制处理

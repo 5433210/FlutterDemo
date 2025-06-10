@@ -352,13 +352,16 @@ mixin CanvasGestureHandlers {
 
     gestureHandler.handleTapUp(details, elements);
 
-    // 触发状态更新
-    triggerSetState();
-
+    // 🚀 优化：跳过触发Canvas整体重建，使用分层架构
+    // 点击处理通过智能状态分发器进行精确通知，不需要setState
     AppLogger.debug(
-      '点击处理完成',
+      '跳过Canvas重建 - 使用分层架构',
       tag: 'Canvas',
-      data: {'selectedElementsCount': controller.state.selectedElementIds.length},
+      data: {
+        'optimization': 'avoid_tap_setstate',
+        'reason': '分层架构会自动处理必要的重建',
+        'selectedElementsCount': controller.state.selectedElementIds.length,
+      },
     );
   }
 
