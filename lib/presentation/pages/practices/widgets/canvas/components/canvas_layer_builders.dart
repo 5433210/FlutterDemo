@@ -239,97 +239,30 @@ mixin CanvasLayerBuilders {
     );
   }
 
-  /// 构建交互层（选择框、控制点）
+  /// 🚀 优化的交互层构建方法 - 独立监听选择状态变化
   Widget buildInteractionLayer(LayerConfig config) {
     if (!config.shouldRender || isPreviewMode) {
       return const SizedBox.shrink();
     }
 
-    AppLogger.debug(
-      '构建交互层',
-      tag: 'Canvas',
+    EditPageLogger.canvasDebug(
+      '构建交互层（优化版）',
       data: {
-        'hasSelection': controller.state.selectedElementIds.isNotEmpty,
-        'currentTool': controller.state.currentTool,
+        'optimization': 'independent_interaction_layer',
+        'avoidCanvasRebuild': true,
       },
     );
 
-    // 获取选中元素的控制点信息
-    String? selectedElementId;
-    double x = 0, y = 0, width = 0, height = 0, rotation = 0;
-    final elements = controller.state.currentPageElements;
-
-    if (controller.state.selectedElementIds.length == 1) {
-      selectedElementId = controller.state.selectedElementIds.first;
-      final selectedElement = elements.firstWhere(
-        (e) => e['id'] == selectedElementId,
-        orElse: () => <String, dynamic>{},
-      );
-
-      if (selectedElement.isNotEmpty) {
-        x = (selectedElement['x'] as num?)?.toDouble() ?? 0.0;
-        y = (selectedElement['y'] as num?)?.toDouble() ?? 0.0;
-        width = (selectedElement['width'] as num?)?.toDouble() ?? 0.0;
-        height = (selectedElement['height'] as num?)?.toDouble() ?? 0.0;
-        rotation = (selectedElement['rotation'] as num?)?.toDouble() ?? 0.0;
-      }
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // 选择框
-        Positioned.fill(
-          child: IgnorePointer(
-            child: RepaintBoundary(
-              key: const ValueKey('selection_box_repaint_boundary'),
-              child: ValueListenableBuilder<SelectionBoxState>(
-                valueListenable: selectionBoxNotifier,
-                builder: (context, selectionBoxState, child) {
-                  if (controller.state.currentTool == 'select' &&
-                      selectionBoxState.isActive &&
-                      selectionBoxState.startPoint != null &&
-                      selectionBoxState.endPoint != null) {
-                    return CustomPaint(
-                      size: Size.infinite,
-                      painter: SelectionBoxPainter(
-                        startPoint: selectionBoxState.startPoint!,
-                        endPoint: selectionBoxState.endPoint!,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ),
-        ),
-
-        // 多选元素高亮显示
-        Positioned.fill(
-          child: IgnorePointer(
-            child: RepaintBoundary(
-              key: ValueKey(
-                  'selected_elements_highlight_${controller.state.selectedElementIds.length}_${controller.state.selectedElementIds.hashCode}'),
-              child: SelectedElementsHighlight(
-                elements: elements,
-                selectedElementIds: controller.state.selectedElementIds.toSet(),
-                canvasScale: transformationController.value.getMaxScaleOnAxis(),
-                primaryColor: Theme.of(context).colorScheme.primary,
-                secondaryColor: Theme.of(context).colorScheme.outline,
-                dragStateManager: dragStateManager,
-              ),
-            ),
-          ),
-        ),
-
-        // 控制点
-        if (selectedElementId != null)
-          Positioned.fill(
-            child: buildControlPoints(selectedElementId, x, y, width, height, rotation),
-          ),
-      ],
+    // 🚀 使用智能监听器构建独立的交互层
+    return _SmartInteractionLayer(
+      controller: controller,
+      transformationController: transformationController,
+      selectionBoxNotifier: selectionBoxNotifier,
+      dragStateManager: dragStateManager,
+      onControlPointUpdate: handleControlPointUpdate,
+      onControlPointDragEnd: handleControlPointDragEnd,
+      onControlPointDragStart: handleControlPointDragStart,
+      onControlPointDragEndWithState: handleControlPointDragEndWithState,
     );
   }
 
@@ -476,6 +409,11 @@ mixin CanvasLayerBuilders {
         return buildUIOverlayLayer(config);
     }
   }
+
+  void dispose() {
+    // 清理资源
+    AppLogger.debug('画布图层构建器销毁', tag: 'Canvas');
+  }
 }
 
 /// 选择框绘制器
@@ -524,4 +462,294 @@ class SelectionBoxPainter extends CustomPainter {
 class CanvasDragConfig {
   static bool enableDragPreview = true;
   static bool showPerformanceOverlay = false;
+}
+
+/// 🚀 独立的智能交互层组件
+/// 直接监听智能状态分发器，不依赖Canvas重建
+class _SmartInteractionLayer extends StatefulWidget {
+  final PracticeEditController controller;
+  final TransformationController transformationController;
+  final ValueNotifier<SelectionBoxState> selectionBoxNotifier;
+  final DragStateManager dragStateManager;
+  final Function(int, Offset) onControlPointUpdate;
+  final Function(int) onControlPointDragEnd;
+  final Function(int) onControlPointDragStart;
+  final Function(int, Map<String, double>) onControlPointDragEndWithState;
+
+  const _SmartInteractionLayer({
+    required this.controller,
+    required this.transformationController,
+    required this.selectionBoxNotifier,
+    required this.dragStateManager,
+    required this.onControlPointUpdate,
+    required this.onControlPointDragEnd,
+    required this.onControlPointDragStart,
+    required this.onControlPointDragEndWithState,
+  });
+
+  @override
+  State<_SmartInteractionLayer> createState() => _SmartInteractionLayerState();
+}
+
+class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
+  // 🚀 使用ValueNotifier代替直接状态变量，避免setState触发Canvas重建
+  late ValueNotifier<Set<String>> _selectedElementIdsNotifier;
+  late ValueNotifier<String> _currentToolNotifier;
+  bool _isRegistered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedElementIdsNotifier = ValueNotifier(widget.controller.state.selectedElementIds.toSet());
+    _currentToolNotifier = ValueNotifier(widget.controller.state.currentTool);
+    _registerToIntelligentDispatcher();
+  }
+
+  @override
+  void dispose() {
+    _unregisterFromIntelligentDispatcher();
+    _selectedElementIdsNotifier.dispose();
+    _currentToolNotifier.dispose();
+    super.dispose();
+  }
+
+  /// 🚀 注册到智能状态分发器，独立监听选择状态变化
+  void _registerToIntelligentDispatcher() {
+    final intelligentDispatcher = widget.controller.intelligentDispatcher;
+    if (intelligentDispatcher != null && !_isRegistered) {
+      // 注册为交互层监听器
+      intelligentDispatcher.registerLayerListener('interaction', () {
+        if (mounted) {
+          // 🚀 使用ValueNotifier更新，避免setState触发Canvas重建
+          final newSelectedIds = widget.controller.state.selectedElementIds.toSet();
+          final newTool = widget.controller.state.currentTool;
+          
+          if (_selectedElementIdsNotifier.value != newSelectedIds) {
+            _selectedElementIdsNotifier.value = newSelectedIds;
+          }
+          
+          if (_currentToolNotifier.value != newTool) {
+            _currentToolNotifier.value = newTool;
+          }
+          
+          EditPageLogger.canvasDebug(
+            '交互层独立状态更新（无Canvas重建）',
+            data: {
+              'selectedCount': newSelectedIds.length,
+              'currentTool': newTool,
+              'optimization': 'valuenotifier_based_interaction_update',
+              'avoidedCanvasRebuild': true,
+            },
+          );
+        }
+      });
+      
+      _isRegistered = true;
+      
+      EditPageLogger.canvasDebug(
+        '智能交互层已注册监听器（优化版）',
+        data: {
+          'optimization': 'independent_interaction_monitoring_optimized',
+        },
+      );
+    }
+  }
+
+  /// 注销智能状态分发器监听
+  void _unregisterFromIntelligentDispatcher() {
+    // 注意：当前智能状态分发器的实现可能不支持注销单个监听器
+    // 这里只是标记为未注册
+    _isRegistered = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Set<String>>(
+      valueListenable: _selectedElementIdsNotifier,
+      builder: (context, selectedElementIds, child) {
+        return ValueListenableBuilder<String>(
+          valueListenable: _currentToolNotifier,
+          builder: (context, currentTool, child) {
+            EditPageLogger.canvasDebug(
+              '智能交互层重建（ValueNotifier驱动）',
+              data: {
+                'selectedCount': selectedElementIds.length,
+                'currentTool': currentTool,
+                'optimization': 'valuenotifier_driven_rebuild',
+                'avoidedCanvasRebuild': true,
+              },
+            );
+
+            // 获取选中元素的控制点信息
+            String? selectedElementId;
+            double x = 0, y = 0, width = 0, height = 0, rotation = 0;
+            final elements = widget.controller.state.currentPageElements;
+
+            if (selectedElementIds.length == 1) {
+              selectedElementId = selectedElementIds.first;
+              final selectedElement = elements.firstWhere(
+                (e) => e['id'] == selectedElementId,
+                orElse: () => <String, dynamic>{},
+              );
+
+              if (selectedElement.isNotEmpty) {
+                x = (selectedElement['x'] as num?)?.toDouble() ?? 0.0;
+                y = (selectedElement['y'] as num?)?.toDouble() ?? 0.0;
+                width = (selectedElement['width'] as num?)?.toDouble() ?? 0.0;
+                height = (selectedElement['height'] as num?)?.toDouble() ?? 0.0;
+                rotation = (selectedElement['rotation'] as num?)?.toDouble() ?? 0.0;
+              }
+            }
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                // 选择框
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: RepaintBoundary(
+                      key: const ValueKey('selection_box_repaint_boundary'),
+                      child: ValueListenableBuilder<SelectionBoxState>(
+                        valueListenable: widget.selectionBoxNotifier,
+                        builder: (context, selectionBoxState, child) {
+                          if (currentTool == 'select' &&
+                              selectionBoxState.isActive &&
+                              selectionBoxState.startPoint != null &&
+                              selectionBoxState.endPoint != null) {
+                            return CustomPaint(
+                              size: Size.infinite,
+                              painter: SelectionBoxPainter(
+                                startPoint: selectionBoxState.startPoint!,
+                                endPoint: selectionBoxState.endPoint!,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 多选元素高亮显示
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: RepaintBoundary(
+                      key: ValueKey(
+                          'selected_elements_highlight_${selectedElementIds.length}_${selectedElementIds.hashCode}'),
+                      child: SelectedElementsHighlight(
+                        elements: elements,
+                        selectedElementIds: selectedElementIds,
+                        canvasScale: widget.transformationController.value.getMaxScaleOnAxis(),
+                        primaryColor: Theme.of(context).colorScheme.primary,
+                        secondaryColor: Theme.of(context).colorScheme.outline,
+                        dragStateManager: widget.dragStateManager,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 控制点
+                if (selectedElementId != null)
+                  Positioned.fill(
+                    child: _buildControlPoints(selectedElementId, x, y, width, height, rotation),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 构建控制点
+  Widget _buildControlPoints(
+    String elementId,
+    double x,
+    double y,
+    double width,
+    double height,
+    double rotation,
+  ) {
+    // 使用绝对定位确保控制点始终可见
+    return AbsorbPointer(
+      absorbing: false,
+      child: GestureDetector(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: [
+              // 透明覆盖层确保控制点接收事件
+              Positioned.fill(
+                child: Container(
+                  color: Colors.transparent,
+                ),
+              ),
+              // 实际控制点
+              Positioned(
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                child: RepaintBoundary(
+                  key: ValueKey(
+                      'control_points_repaint_${elementId}_${(x * 1000).toInt()}_${(y * 1000).toInt()}_${(width * 100).toInt()}_${(height * 100).toInt()}'),
+                  child: Builder(builder: (context) {
+                    // 获取当前缩放值
+                    final scale = widget.transformationController.value.getMaxScaleOnAxis();
+                    
+                    // 检查是否正在拖拽并使用预览位置更新控制点
+                    final isElementBeingDragged = widget.dragStateManager.isDragging &&
+                        widget.dragStateManager.isElementDragging(elementId);
+
+                    double displayX = x;
+                    double displayY = y;
+                    double displayWidth = width;
+                    double displayHeight = height;
+                    double displayRotation = rotation;
+
+                    if (isElementBeingDragged) {
+                      // 获取预览属性
+                      final previewProperties = widget.dragStateManager.getElementPreviewProperties(elementId);
+                      if (previewProperties != null) {
+                        displayX = (previewProperties['x'] as num?)?.toDouble() ?? x;
+                        displayY = (previewProperties['y'] as num?)?.toDouble() ?? y;
+                        displayWidth = (previewProperties['width'] as num?)?.toDouble() ?? width;
+                        displayHeight = (previewProperties['height'] as num?)?.toDouble() ?? height;
+                        displayRotation = (previewProperties['rotation'] as num?)?.toDouble() ?? rotation;
+                      } else {
+                        final previewPosition = widget.dragStateManager.getElementPreviewPosition(elementId);
+                        if (previewPosition != null) {
+                          displayX = previewPosition.dx;
+                          displayY = previewPosition.dy;
+                        }
+                      }
+                    }
+
+                    return FreeControlPoints(
+                      key: ValueKey(
+                          'control_points_${elementId}_${scale.toStringAsFixed(2)}_${displayX.toInt()}_${displayY.toInt()}'),
+                      elementId: elementId,
+                      x: displayX,
+                      y: displayY,
+                      width: displayWidth,
+                      height: displayHeight,
+                      rotation: displayRotation,
+                      initialScale: scale,
+                      onControlPointUpdate: widget.onControlPointUpdate,
+                      onControlPointDragEnd: widget.onControlPointDragEnd,
+                      onControlPointDragStart: widget.onControlPointDragStart,
+                      onControlPointDragEndWithState: widget.onControlPointDragEndWithState,
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  } 
 } 

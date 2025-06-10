@@ -95,6 +95,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // 跟踪页面变化，用于自动重置视图
   String? _lastPageKey;
   bool _hasInitializedView = false; // 防止重复初始化视图
+  
+
 
   @override
   ContentRenderController get contentRenderController =>
@@ -140,7 +142,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _buildCount++;
     
     EditPageLogger.canvasDebug(
-      'Canvas开始重建',
+      '🚨 Canvas开始重建 - 主Widget.build()被调用',
       data: {
         'buildNumber': _buildCount,
         'selectedCount': widget.controller.state.selectedElementIds.length,
@@ -148,26 +150,24 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         'isDragging': _isDragging,
         'timestamp': buildStartTime.toIso8601String(),
         'optimization': 'canvas_rebuild_tracking',
+        'stackTrace': StackTrace.current.toString().split('\n').take(5).join('\n'),
       },
     );
 
     // Track performance for main canvas rebuilds
     _performanceMonitor.trackWidgetRebuild('M3PracticeEditCanvas');
 
-    // Track frame rendering performance
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _performanceMonitor.trackFrame();
-      
-      final buildDuration = DateTime.now().difference(buildStartTime);
-      EditPageLogger.performanceInfo(
-        'Canvas重建完成',
-        data: {
-          'buildNumber': _buildCount,
-          'buildDuration': '${buildDuration.inMilliseconds}ms',
-          'optimization': 'canvas_rebuild_performance',
-        },
-      );
-    });
+    // 🚀 移除PostFrameCallback机制 - 在图层级架构下已无意义
+    // 现在使用智能状态分发器和图层级性能监控，不再需要Canvas级别的PostFrameCallback
+    EditPageLogger.canvasDebug(
+      '🎯 Canvas构建完成 - 图层级架构',
+      data: {
+        'buildNumber': _buildCount,
+        'buildDuration': '${DateTime.now().difference(buildStartTime).inMilliseconds}ms',
+        'architecture': 'layer_based_rendering',
+        'optimization': 'no_postframe_callback_needed',
+      },
+    );
 
     return OptimizedCanvasListener(
       controller: widget.controller,
@@ -177,7 +177,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         final colorScheme = Theme.of(context).colorScheme;
 
         EditPageLogger.canvasDebug(
-          '智能Canvas监听器重建',
+          '🔄 智能Canvas监听器重建 - OptimizedCanvasListener.builder()被调用',
           data: {
             'listenerBuildNumber': _optimizedListenerBuildCount,
             'canvasBuildNumber': _buildCount,
@@ -185,6 +185,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'selectedElementsCount': controller.state.selectedElementIds.length,
             'totalElementsCount': controller.state.currentPageElements.length,
             'optimization': 'optimized_canvas_listener_tracking',
+            'builderStackTrace': StackTrace.current.toString().split('\n').take(3).join('\n'),
           },
         );
 
@@ -1126,8 +1127,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         enableCaching: true,
         useRepaintBoundary: true,
       ),
-      builder: (config) =>
-          _buildLayerWidget(RenderLayerType.staticBackground, config),
+      builder: (config) => _buildLayerWidget(RenderLayerType.staticBackground, config),
     );
 
     // Register content layer
@@ -1208,7 +1208,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _initializeLayers();
     EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成');
     
-    // ✅ 新添加：注册Canvas组件到智能状态分发器
+    // ✅ 新添加：注册Canvas到智能状态分发器
     _registerCanvasToIntelligentDispatcher();
   }
 
@@ -1216,25 +1216,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _registerCanvasToIntelligentDispatcher() {
     final intelligentDispatcher = widget.controller.intelligentDispatcher;
     if (intelligentDispatcher != null) {
-      // 注册Canvas作为UI组件监听器
-      intelligentDispatcher.registerUIListener('canvas', () {
-        EditPageLogger.canvasDebug(
-          '智能状态分发器触发Canvas更新',
-          data: {
-            'operation': 'intelligent_dispatch_update',
-            'optimization': 'smart_canvas_rebuild',
-          },
-        );
-        
-        if (mounted) {
-          setState(() {
-            // Canvas重建将触发 OptimizedCanvasListener
-            // 该监听器会智能地决定哪些部分需要重建
-          });
-        }
-      });
+      // 🚀 优化：Canvas只注册为内容层监听器，不注册交互层监听器
+      // 交互层变化应该由交互层组件自己处理，而不是触发整个Canvas重建
       
-      // 注册Canvas作为内容层监听器
+      // 注册Canvas作为内容层监听器（元素内容变化时需要重建）
       intelligentDispatcher.registerLayerListener('content', () {
         EditPageLogger.canvasDebug(
           '智能状态分发器触发内容层更新',
@@ -1250,28 +1235,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         );
       });
       
-      // 注册Canvas作为交互层监听器
-      intelligentDispatcher.registerLayerListener('interaction', () {
-        EditPageLogger.canvasDebug(
-          '智能状态分发器触发交互层更新',
-          data: {
-            'operation': 'intelligent_interaction_layer_update',
-            'optimization': 'layer_specific_rebuild',
-          },
-        );
-        
-        _layerRenderManager.markLayerDirty(
-          RenderLayerType.interaction,
-          reason: 'intelligent_dispatch_interaction_change',
-        );
-      });
+      // 🚀 移除交互层监听器注册 - 交互层变化不应该触发Canvas重建
+      // 交互层的重建应该由其自身的监听机制处理
       
       EditPageLogger.canvasDebug(
-        'Canvas组件已注册到智能状态分发器',
+        'Canvas组件已注册到智能状态分发器（优化版）',
         data: {
-          'uiListeners': 1,
-          'layerListeners': 2,
-          'optimization': 'intelligent_state_management',
+          'layerListeners': 1, // 只监听content层
+          'optimization': 'selective_layer_monitoring',
+          'skippedLayers': ['interaction'], // 不再监听交互层
         },
       );
     } else {
@@ -1357,10 +1329,25 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         _layerRenderManager.markLayerDirty(RenderLayerType.staticBackground,
             reason: 'Page background changed');
       } else if (event is GridSettingsChangeEvent) {
-        // 处理网格设置变化
-        if (mounted) {
-          setState(() {});
-        }
+        // 🚀 优化：只标记背景层为脏，不触发整个Canvas重建
+        _layerRenderManager.markLayerDirty(
+          RenderLayerType.staticBackground,
+          reason: 'Grid settings changed',
+        );
+        
+        EditPageLogger.canvasDebug(
+          '网格设置变化处理（优化版）',
+          data: {
+            'optimization': 'background_layer_only_rebuild',
+            'avoidedCanvasRebuild': true,
+          },
+        );
+        
+        // 🚀 移除setState调用 - 网格设置变化不应该触发整个Canvas重建
+        // 网格渲染会通过markLayerDirty机制自动重建背景层
+        // if (mounted) {
+        //   setState(() {});
+        // }
       }
     });
 
@@ -1385,16 +1372,25 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       }
     });
 
-    // 配置Interaction层级处理器
+    // 🚀 优化：配置Interaction层级处理器 - 避免触发整个Canvas重建
     _structureListener.registerLayerHandler(RenderLayerType.interaction,
         (event) {
       if (event is SelectionChangeEvent || event is ToolChangeEvent) {
-        // 选择或工具变化，重新渲染交互层
+        // 🚀 优化：只标记交互层为脏，不触发整个Canvas重建
         _layerRenderManager.markLayerDirty(RenderLayerType.interaction,
             reason: 'Selection or tool changed');
-        if (mounted) {
-          setState(() {});
-        }
+        
+        EditPageLogger.canvasDebug(
+          '交互层状态变化处理（优化版）',
+          data: {
+            'eventType': event.runtimeType.toString(),
+            'optimization': 'interaction_layer_only_rebuild',
+            'avoidedCanvasRebuild': true,
+          },
+        );
+        
+        // 🚀 移除setState调用 - 交互层变化不应该触发整个Canvas重建
+        // 交互层会通过markLayerDirty机制自动重建
       }
     });
   }

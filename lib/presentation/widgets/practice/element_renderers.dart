@@ -66,7 +66,7 @@ class ElementRenderers {
       // 异步预加载字符图像
       optimizedRenderer.preloadCharacterImages(characters);
       
-      // 记录渲染请求
+      // 🚀 优化：使用无副作用的渲染完成回调
       optimizedRenderer.renderCollectionElement(
         elementId: elementId,
         characters: characters,
@@ -77,14 +77,18 @@ class ElementRenderers {
           'textureMode': textureFillMode,
         },
         onRenderComplete: () {
+          // 🚀 只记录日志，不触发任何状态更新
           EditPageLogger.performanceInfo(
-            '优化渲染器处理完成',
+            '优化渲染器处理完成（无副作用）',
             data: {
               'elementId': elementId,
               'characters': characters.length > 10 ? '${characters.substring(0, 10)}...' : characters,
-              'optimization': 'optimized_renderer_complete',
+              'optimization': 'optimized_renderer_complete_no_side_effect',
             },
           );
+          
+          // 🚀 关键：不再触发任何可能导致Canvas重建的操作
+          // 移除了可能导致setState或notifyListeners的逻辑
         },
       );
     }

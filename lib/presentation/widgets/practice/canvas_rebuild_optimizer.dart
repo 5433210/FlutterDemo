@@ -136,13 +136,35 @@ class CanvasRebuildOptimizer extends ChangeNotifier {
   
   /// 设置智能监听
   void _setupIntelligentListening() {
-    // 监听控制器变化，但使用智能过滤
-    _controller.addListener(_analyzeControllerChange);
-    _isListening = true;
+    // 🚀 完全禁用Canvas重建优化器的controller监听
+    // 现在完全依靠智能状态分发器进行精确通知
+    EditPageLogger.performanceInfo(
+      'Canvas重建优化器已完全禁用controller监听',
+      data: {
+        'optimization': 'fully_disabled_controller_listening',
+        'reason': 'use_intelligent_state_dispatcher_only',
+      },
+    );
+    
+    // 不再添加监听器
+    // _controller.addListener(_analyzeControllerChange);
+    _isListening = false; // 标记为未监听
   }
   
   /// 分析控制器变化，决定是否需要重建
   void _analyzeControllerChange() {
+    // 🚀 临时完全禁用Canvas重建优化器，测试Canvas重建来源
+    EditPageLogger.performanceInfo(
+      'Canvas重建优化器暂时禁用',
+      data: {
+        'reason': 'debugging_canvas_rebuild_source',
+        'optimization': 'canvas_rebuild_analyzer_disabled',
+      },
+    );
+    
+    // 🚀 完全禁用分析逻辑，不检查任何变化
+    return;
+    
     // 分析变化类型，只对影响Canvas显示的变化进行重建
     final state = _controller.state;
     
@@ -161,11 +183,12 @@ class CanvasRebuildOptimizer extends ChangeNotifier {
       _lastElementCount = state.currentPageElements.length;
     }
     
-    // 选择状态变化
-    if (_lastSelectedCount != state.selectedElementIds.length) {
-      criticalChanges.add('selection_change');
-      _lastSelectedCount = state.selectedElementIds.length;
-    }
+    // 🚀 移除选择状态变化监听 - 现在交互层独立处理选择变化
+    // 选择状态变化不应该触发整个Canvas重建，只影响交互层
+    // if (_lastSelectedCount != state.selectedElementIds.length) {
+    //   criticalChanges.add('selection_change');
+    //   _lastSelectedCount = state.selectedElementIds.length;
+    // }
     
     // 工具变化
     if (_lastTool != state.currentTool) {
@@ -182,6 +205,15 @@ class CanvasRebuildOptimizer extends ChangeNotifier {
     
     // 如果有关键变化，请求重建
     if (criticalChanges.isNotEmpty) {
+      EditPageLogger.performanceInfo(
+        'Canvas重建优化器检测到关键变化',
+        data: {
+          'changes': criticalChanges,
+          'optimization': 'canvas_rebuild_analyzer',
+          'excludedChanges': ['selection_change'], // 记录被排除的变化类型
+        },
+      );
+      
       requestRebuild(criticalChanges.join('+'));
     }
   }

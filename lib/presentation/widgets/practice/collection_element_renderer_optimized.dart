@@ -31,6 +31,10 @@ class OptimizedCollectionElementRenderer {
   final Map<String, DateTime> _lastRenderTime = {};
   final Map<String, String> _lastRenderContent = {};
   static const Duration _minRenderInterval = Duration(milliseconds: 100);
+  
+  // 🚀 新增：性能优化配置
+  bool _enableRenderCompleteCallbacks = false; // 默认禁用非关键回调
+  static const bool _debugMode = false; // 调试模式开关
 
   OptimizedCollectionElementRenderer(
     this._characterImageService,
@@ -187,8 +191,24 @@ class OptimizedCollectionElementRenderer {
       'hitRate': _renderCount > 0 ? _cacheHits / _renderCount : 0.0,
       'skipRate': (_renderCount + _renderSkips) > 0 ? _renderSkips / (_renderCount + _renderSkips) : 0.0,
       'duplicateDetectionActive': _lastRenderTime.isNotEmpty,
+      'callbacksEnabled': _enableRenderCompleteCallbacks,
     };
   }
+
+  /// 🚀 启用或禁用渲染完成回调
+  void setRenderCompleteCallbacksEnabled(bool enabled) {
+    _enableRenderCompleteCallbacks = enabled;
+    EditPageLogger.performanceInfo(
+      '渲染完成回调状态变更',
+      data: {
+        'enabled': enabled,
+        'optimization': 'callback_state_change',
+      },
+    );
+  }
+
+  /// 🚀 获取当前回调启用状态
+  bool get isRenderCompleteCallbacksEnabled => _enableRenderCompleteCallbacks;
 
   /// 生成渲染状态键
   String _generateStateKey(String elementId, String characters, Map<String, dynamic> config) {
@@ -272,8 +292,32 @@ class OptimizedCollectionElementRenderer {
         configHash: request.config.hashCode,
       );
       
-      // 调用完成回调
-      request.onComplete();
+      // 🚀 优化：延迟调用完成回调，避免同步触发UI重建
+      if (_enableRenderCompleteCallbacks || _debugMode) {
+        scheduleMicrotask(() {
+          try {
+            request.onComplete();
+          } catch (e) {
+            EditPageLogger.rendererError(
+              '渲染完成回调执行失败',
+              error: e,
+              data: {
+                'elementId': request.elementId,
+                'optimization': 'callback_error',
+              },
+            );
+          }
+        });
+      } else {
+        // 🚀 性能优化：跳过非关键回调以避免额外的Canvas重建
+        EditPageLogger.performanceInfo(
+          '跳过渲染完成回调（性能优化）',
+          data: {
+            'elementId': request.elementId,
+            'optimization': 'skip_callback_for_performance',
+          },
+        );
+      }
       
     } catch (e) {
       EditPageLogger.rendererError(

@@ -2867,33 +2867,36 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Synchronize local _currentTool with controller's state.currentTool
   void _syncToolState() {
-    // Avoid setState during dragging operations to prevent canvas rebuilds
-    if (_controller.state.selectedElementIds.isNotEmpty) {
-      // Check if there's an active drag operation
-      final isDragging = _canvasKey.currentState != null;
-      if (isDragging) {
-        // Just update the local variable without setState during dragging
-        final controllerTool = _controller.state.currentTool;
-        if (_currentTool != controllerTool) {
-          _currentTool = controllerTool;
-          // Schedule a frame to update UI after dragging is complete
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              setState(() {
-                // This setState will only run after the frame is complete
-              });
-            }
-          });
-        }
-        return;
-      }
-    }
-
+    // 🚀 完全禁用传统的setState调用，避免触发页面重建
+    // 工具状态变化应该通过智能状态分发器处理，而不是通过页面级setState
+    
+    EditPageLogger.editPageDebug(
+      '检测到传统工具状态同步调用',
+      data: {
+        'currentTool': _currentTool,
+        'controllerTool': _controller.state.currentTool,
+        'recommendation': 'use_intelligent_tool_state_management',
+        'optimization': 'avoid_page_level_rebuild',
+      },
+    );
+    
+    // 🚀 只更新本地变量，不触发页面重建
+    // 工具状态变化的UI更新应该通过智能状态分发器和局部组件处理
     final controllerTool = _controller.state.currentTool;
     if (_currentTool != controllerTool) {
-      setState(() {
-        _currentTool = controllerTool;
-      });
+      _currentTool = controllerTool;
+      
+      EditPageLogger.editPageDebug(
+        '工具状态本地同步（无页面重建）',
+        data: {
+          'oldTool': _currentTool,
+          'newTool': controllerTool,
+          'optimization': 'local_sync_without_rebuild',
+        },
+      );
+      
+      // 🚀 完全移除setState调用，依赖智能状态分发器
+      // 工具相关的UI组件应该自己监听智能状态分发器的工具变化事件
     }
   }
 
