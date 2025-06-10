@@ -62,29 +62,65 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
 }
 
 class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
+  // 🔍[TRACKING] 静态重建计数器
+  static int _buildCount = 0;
+  static int _didUpdateWidgetCount = 0;
+  
   /// Advanced element cache manager
   late ElementCacheManager _cacheManager;
 
   /// Performance monitor for tracking render performance
   final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
+  
   @override
   Widget build(BuildContext context) {
+    // 🔍[TRACKING] ContentRenderLayer重建跟踪
+    final buildStartTime = DateTime.now();
+    _buildCount++;
+    
     // Track performance for ContentRenderLayer rebuilds
     _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
 
-    return ListenableBuilder(
-      listenable: widget.renderController,
-      builder: (context, child) {
-        EditPageLogger.rendererDebug('ContentRenderLayer重建', 
-          data: {'trigger': 'ContentRenderController变化'});
-        return _buildContent(context);
-      },
-    );
+    EditPageLogger.rendererDebug('ContentRenderLayer开始重建', 
+      data: {
+        'buildNumber': _buildCount,
+        'trigger': '来自Canvas状态变化',
+        'timestamp': buildStartTime.toIso8601String(),
+        'optimization': 'content_layer_rebuild_tracking',
+      });
+    
+    // Track performance metrics after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final buildDuration = DateTime.now().difference(buildStartTime);
+      EditPageLogger.performanceInfo(
+        'ContentRenderLayer重建完成',
+        data: {
+          'buildNumber': _buildCount,
+          'buildDuration': '${buildDuration.inMilliseconds}ms',
+          'optimization': 'content_layer_performance',
+        },
+      );
+    });
+    
+    // 🚀 直接构建内容，不再监听ContentRenderController
+    // 内容更新通过Canvas的setState()和didUpdateWidget()机制处理
+    return _buildContent(context);
   }
 
   @override
   void didUpdateWidget(ContentRenderLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // 🔍[TRACKING] didUpdateWidget调用跟踪
+    _didUpdateWidgetCount++;
+    
+    EditPageLogger.rendererDebug('ContentRenderLayer.didUpdateWidget调用', 
+      data: {
+        'didUpdateCount': _didUpdateWidgetCount,
+        'buildCount': _buildCount,
+        'trigger': 'Widget属性变化',
+        'optimization': 'content_layer_update_tracking',
+      });
 
     // Get current and old elements
     final oldElements = oldWidget.elements ??
@@ -92,6 +128,15 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         [];
     final currentElements =
         widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+
+    EditPageLogger.rendererDebug('ContentRenderLayer元素对比分析', 
+      data: {
+        'oldElementsCount': oldElements.length,
+        'currentElementsCount': currentElements.length,
+        'elementsChanged': oldElements.length != currentElements.length,
+        'didUpdateCount': _didUpdateWidgetCount,
+        'optimization': 'content_layer_element_diff',
+      });
 
     // Check for element additions/removals/modifications
     _updateElementsCache(oldElements, currentElements);

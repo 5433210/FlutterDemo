@@ -42,6 +42,9 @@ class M3PracticeEditPage extends ConsumerStatefulWidget {
 
 class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     with WidgetsBindingObserver {
+  // 🔍[TRACKING] 静态重建计数器
+  static int _propertyPanelBuildCount = 0;
+  
   // Controller
   late final PracticeEditController _controller;
 
@@ -182,6 +185,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   @override
   void dispose() {
+    // ✅ 注销属性面板的智能状态监听器
+    _unregisterPropertyPanelFromIntelligentDispatcher();
+    
     // Remove window observer
     WidgetsBinding.instance.removeObserver(this);
 
@@ -205,6 +211,21 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     _clipboardNotifier.dispose();
 
     super.dispose();
+  }
+
+  /// ✅ 注销属性面板的智能状态监听器
+  void _unregisterPropertyPanelFromIntelligentDispatcher() {
+    final intelligentDispatcher = _controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      intelligentDispatcher.unregisterUIListener('property_panel');
+      
+      EditPageLogger.editPageDebug(
+        '属性面板已从智能状态分发器注销',
+        data: {
+          'operation': 'cleanup_property_panel_listeners',
+        },
+      );
+    }
   }
 
   /// 生成随机字符串
@@ -280,6 +301,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     // Schedule a callback to connect the canvas after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupCanvasReference();
+      _registerPropertyPanelToIntelligentDispatcher();
     });
 
     // Start clipboard monitoring
@@ -753,6 +775,24 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
+        // 🔍[TRACKING] 属性面板重建跟踪
+        _propertyPanelBuildCount++;
+        
+        final selectedElementsCount = _controller.state.selectedElementIds.length;
+        final selectedLayerId = _controller.state.selectedLayerId;
+        
+        EditPageLogger.propertyPanelDebug(
+          '属性面板开始重建',
+          data: {
+            'buildNumber': _propertyPanelBuildCount,
+            'selectedElementsCount': selectedElementsCount,
+            'selectedLayerId': selectedLayerId,
+            'trigger': '来自Controller状态变化',
+            'timestamp': DateTime.now().toIso8601String(),
+            'optimization': 'property_panel_rebuild_tracking',
+          },
+        );
+        
         Widget panel;
 
         // Check if a layer is selected
@@ -2707,6 +2747,44 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       '画布引用将由画布组件自身设置',
       tag: 'PracticeEdit',
     );
+  }
+
+  /// ✅ 注册属性面板到智能状态分发器
+  void _registerPropertyPanelToIntelligentDispatcher() {
+    final intelligentDispatcher = _controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      // 注册属性面板作为UI组件监听器
+      intelligentDispatcher.registerUIListener('property_panel', () {
+        EditPageLogger.editPageDebug(
+          '智能状态分发器触发属性面板更新',
+          data: {
+            'operation': 'intelligent_property_panel_update',
+            'optimization': 'smart_property_panel_rebuild',
+          },
+        );
+        
+        if (mounted) {
+          setState(() {
+            // 重建属性面板
+          });
+        }
+      });
+      
+      EditPageLogger.editPageInfo(
+        '属性面板已注册到智能状态分发器',
+        data: {
+          'uiListeners': 1,
+          'optimization': 'intelligent_property_management',
+        },
+      );
+    } else {
+      EditPageLogger.editPageDebug(
+        '智能状态分发器不存在，属性面板将使用传统监听',
+        data: {
+          'fallback': 'traditional_animated_builder',
+        },
+      );
+    }
   }
 
   /// Show export dialog

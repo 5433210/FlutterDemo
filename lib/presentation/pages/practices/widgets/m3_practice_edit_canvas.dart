@@ -51,6 +51,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         CanvasLayerBuilders,
         CanvasControlPointHandlers,
         CanvasGestureHandlers {
+  // 🔍[TRACKING] 静态重建计数器
+  static int _buildCount = 0;
+  static int _optimizedListenerBuildCount = 0;
+  
   // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
 
   // 核心组件
@@ -131,13 +135,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    // 🔍[RESIZE_FIX] Canvas build方法被调用 - 使用条件日志避免性能影响
+    // 🔍[TRACKING] Canvas重建跟踪 - 记录重建触发原因
+    final buildStartTime = DateTime.now();
+    _buildCount++;
+    
     EditPageLogger.canvasDebug(
-      '画布构建开始',
+      'Canvas开始重建',
       data: {
+        'buildNumber': _buildCount,
         'selectedCount': widget.controller.state.selectedElementIds.length,
         'isReadyForDrag': _isReadyForDrag,
         'isDragging': _isDragging,
+        'timestamp': buildStartTime.toIso8601String(),
+        'optimization': 'canvas_rebuild_tracking',
       },
     );
 
@@ -147,20 +157,34 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Track frame rendering performance
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _performanceMonitor.trackFrame();
+      
+      final buildDuration = DateTime.now().difference(buildStartTime);
+      EditPageLogger.performanceInfo(
+        'Canvas重建完成',
+        data: {
+          'buildNumber': _buildCount,
+          'buildDuration': '${buildDuration.inMilliseconds}ms',
+          'optimization': 'canvas_rebuild_performance',
+        },
+      );
     });
 
     return OptimizedCanvasListener(
       controller: widget.controller,
       builder: (context, controller) {
+        _optimizedListenerBuildCount++;
+        
         final colorScheme = Theme.of(context).colorScheme;
 
         EditPageLogger.canvasDebug(
-          '画布智能重建',
+          '智能Canvas监听器重建',
           data: {
+            'listenerBuildNumber': _optimizedListenerBuildCount,
+            'canvasBuildNumber': _buildCount,
             'currentTool': controller.state.currentTool,
             'selectedElementsCount': controller.state.selectedElementIds.length,
             'totalElementsCount': controller.state.currentPageElements.length,
-            'optimization': 'optimized_canvas_listener',
+            'optimization': 'optimized_canvas_listener_tracking',
           },
         );
 
@@ -184,7 +208,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         }
         final elements = controller.state.currentPageElements;
         EditPageLogger.canvasDebug(
-          '画布元素状态',
+          'Canvas元素状态检查',
           data: {
             'elementsCount': elements.length,
             'elementsType': elements.runtimeType.toString(),
@@ -192,7 +216,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'firstElementPreview': elements.isNotEmpty
                 ? elements.first['type'] ?? 'unknown'
                 : null,
-            'optimization': 'optimized_element_tracking',
+            'canvasBuildNumber': _buildCount,
+            'optimization': 'canvas_element_tracking',
           },
         );
         // 用性能覆盖层包装画布
@@ -208,6 +233,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   void dispose() {
+    // ✅ 注销智能状态分发器监听器
+    _unregisterFromIntelligentDispatcher();
+    
     // 🔧 窗口大小变化处理已移至页面级别
 
     // 🔧 移除DragStateManager监听器
@@ -224,6 +252,23 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _dragOperationManager.dispose();
 
     super.dispose();
+  }
+
+  // ✅ 新方法：注销智能状态分发器监听器
+  void _unregisterFromIntelligentDispatcher() {
+    final intelligentDispatcher = widget.controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      intelligentDispatcher.unregisterUIListener('canvas');
+      intelligentDispatcher.unregisterLayerListener('content');
+      intelligentDispatcher.unregisterLayerListener('interaction');
+      
+      EditPageLogger.canvasDebug(
+        'Canvas组件已从智能状态分发器注销',
+        data: {
+          'operation': 'cleanup_intelligent_listeners',
+        },
+      );
+    }
   }
 
   @override
@@ -1162,6 +1207,81 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Register layers with the layer render manager
     _initializeLayers();
     EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成');
+    
+    // ✅ 新添加：注册Canvas组件到智能状态分发器
+    _registerCanvasToIntelligentDispatcher();
+  }
+
+  // ✅ 新方法：注册Canvas到智能状态分发器
+  void _registerCanvasToIntelligentDispatcher() {
+    final intelligentDispatcher = widget.controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      // 注册Canvas作为UI组件监听器
+      intelligentDispatcher.registerUIListener('canvas', () {
+        EditPageLogger.canvasDebug(
+          '智能状态分发器触发Canvas更新',
+          data: {
+            'operation': 'intelligent_dispatch_update',
+            'optimization': 'smart_canvas_rebuild',
+          },
+        );
+        
+        if (mounted) {
+          setState(() {
+            // Canvas重建将触发 OptimizedCanvasListener
+            // 该监听器会智能地决定哪些部分需要重建
+          });
+        }
+      });
+      
+      // 注册Canvas作为内容层监听器
+      intelligentDispatcher.registerLayerListener('content', () {
+        EditPageLogger.canvasDebug(
+          '智能状态分发器触发内容层更新',
+          data: {
+            'operation': 'intelligent_content_layer_update',
+            'optimization': 'layer_specific_rebuild',
+          },
+        );
+        
+        _layerRenderManager.markLayerDirty(
+          RenderLayerType.content,
+          reason: 'intelligent_dispatch_content_change',
+        );
+      });
+      
+      // 注册Canvas作为交互层监听器
+      intelligentDispatcher.registerLayerListener('interaction', () {
+        EditPageLogger.canvasDebug(
+          '智能状态分发器触发交互层更新',
+          data: {
+            'operation': 'intelligent_interaction_layer_update',
+            'optimization': 'layer_specific_rebuild',
+          },
+        );
+        
+        _layerRenderManager.markLayerDirty(
+          RenderLayerType.interaction,
+          reason: 'intelligent_dispatch_interaction_change',
+        );
+      });
+      
+      EditPageLogger.canvasDebug(
+        'Canvas组件已注册到智能状态分发器',
+        data: {
+          'uiListeners': 1,
+          'layerListeners': 2,
+          'optimization': 'intelligent_state_management',
+        },
+      );
+    } else {
+      EditPageLogger.canvasDebug(
+        '智能状态分发器不存在，无法注册Canvas监听器',
+        data: {
+          'fallback': 'traditional_notify_listeners',
+        },
+      );
+    }
   }
 
   /// 初始化UI组件

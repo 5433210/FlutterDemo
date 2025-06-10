@@ -747,16 +747,17 @@ class ElementCacheManager extends ChangeNotifier {
       _lastNotificationTime = now;
       
       EditPageLogger.performanceInfo(
-        '元素缓存管理器通知',
+        '元素缓存管理器跳过通知',
         data: {
           'operation': operation,
           'cacheSize': _cache.length,
-          'optimization': 'throttled_cache_manager_notification',
+          'optimization': 'skip_cache_manager_notification',
+          'reason': 'avoid_global_ui_rebuild',
           ...?data,
         },
       );
       
-      super.notifyListeners();
+      // super.notifyListeners(); // 🚀 已禁用以避免触发全局UI重建
     } else {
       // 缓存待处理的更新
       if (!_hasPendingUpdate) {
@@ -766,16 +767,17 @@ class ElementCacheManager extends ChangeNotifier {
           _hasPendingUpdate = false;
           
           EditPageLogger.performanceInfo(
-            '元素缓存管理器延迟通知',
+            '元素缓存管理器跳过延迟通知',
             data: {
               'operation': operation,
               'cacheSize': _cache.length,
-              'optimization': 'throttled_delayed_cache_notification',
+              'optimization': 'skip_delayed_cache_notification',
+              'reason': 'avoid_global_ui_rebuild',
               ...?data,
             },
           );
           
-          super.notifyListeners();
+          // super.notifyListeners(); // 🚀 已禁用以避免触发全局UI重建
         });
       }
     }

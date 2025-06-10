@@ -317,9 +317,17 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       },
     );
 
-    // 条件通知：只在必要时通知监听器
+    // 🚀 禁用传统通知：避免触发全局UI重建
     if (hasListeners) {
-      notifyListeners();
+      EditPageLogger.performanceInfo(
+        '高级缓存管理器跳过传统通知',
+        data: {
+          'reason': 'avoid_global_ui_rebuild',
+          'optimization': 'skip_traditional_notification',
+          'hasListeners': hasListeners,
+        },
+      );
+      // notifyListeners(); // 🚀 已禁用
     }
   }
 
@@ -443,9 +451,18 @@ class AdvancedElementCacheManager extends ChangeNotifier {
           break;
       }
 
-      // 条件通知：只在内存压力显著变化时通知监听器
+      // 🚀 禁用传统通知：避免触发全局UI重建
       if (hasListeners) {
-        notifyListeners();
+        EditPageLogger.performanceInfo(
+          '高级缓存管理器跳过内存压力通知',
+          data: {
+            'reason': 'avoid_global_ui_rebuild',
+            'optimization': 'skip_memory_pressure_notification',
+            'hasListeners': hasListeners,
+            'memoryPressureLevel': _currentMemoryPressure.toString(),
+          },
+        );
+        // notifyListeners(); // 🚀 已禁用
       }
     }
   }
@@ -677,15 +694,17 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _minNotificationInterval) {
       _lastNotificationTime = now;
-      notifyListeners();
       
       EditPageLogger.performanceInfo(
-        '智能通知触发',
+        '高级缓存管理器跳过智能通知',
         data: {
+          'reason': 'avoid_global_ui_rebuild',
+          'optimization': 'skip_intelligent_notification',
           'notificationType': 'cache_update',
           'timeSinceLastNotification': now.difference(_lastNotificationTime).inMilliseconds,
         },
       );
+      // notifyListeners(); // 🚀 已禁用
     }
   }
 

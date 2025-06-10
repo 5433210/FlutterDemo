@@ -98,7 +98,19 @@ class PracticeEditController extends ChangeNotifier
         // 更新撤销/重做状态
         _state.canUndo = _undoRedoManager.canUndo;
         _state.canRedo = _undoRedoManager.canRedo;
-        notifyListeners();
+        
+        // 🚀 使用智能状态分发器替代传统的 notifyListeners
+        intelligentNotify(
+          changeType: 'undo_redo_state_change',
+          operation: 'undo_redo_state_update',
+          eventData: {
+            'canUndo': _state.canUndo,
+            'canRedo': _state.canRedo,
+            'operation': 'undo_redo_state_update',
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+          affectedUIComponents: ['undo_redo_toolbar', 'menu_bar'],
+        );
       },
     );
 
@@ -195,7 +207,15 @@ class PracticeEditController extends ChangeNotifier
 
   @override
   void notifyListeners() {
-    AppLogger.debug('------------notifyListeners--------------');
+    EditPageLogger.controllerWarning(
+      '⚠️ 检测到传统 notifyListeners() 调用',
+      data: {
+        'controllerState': _state.isDisposed ? 'disposed' : 'active',
+        'recommendation': 'use_intelligent_notification_instead',
+        'stack_trace': StackTrace.current.toString().split('\n').take(3).join('\n'),
+      },
+    );
+    
     if (_state.isDisposed) {
       EditPageLogger.controllerWarning(
         '尝试在控制器销毁后调用 notifyListeners()',
@@ -204,7 +224,8 @@ class PracticeEditController extends ChangeNotifier
       return;
     }
 
-    super.notifyListeners();
+    // 🚀 不再执行传统的 notifyListeners，依赖智能状态分发器
+    // super.notifyListeners();
   }
 
   /// 设置画布引用（供画布组件注册自己）
@@ -241,9 +262,21 @@ class PracticeEditController extends ChangeNotifier
       ));
       EditPageLogger.controllerDebug('StateDispatcher事件分发完成');
     } else {
-      // 回退到直接通知监听器
-      EditPageLogger.controllerDebug('StateDispatcher不存在，使用notifyListeners()');
-      notifyListeners();
+      // 🚀 使用智能状态分发器替代传统的 notifyListeners
+      EditPageLogger.controllerDebug('StateDispatcher不存在，使用智能状态分发器');
+      intelligentNotify(
+        changeType: 'grid_settings_change',
+        operation: 'grid_settings_change',
+        eventData: {
+          'gridVisible': _state.gridVisible,
+          'gridSize': _state.gridSize,
+          'snapEnabled': _state.snapEnabled,
+          'operation': 'grid_settings_change',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedLayers: ['background'],
+        affectedUIComponents: ['canvas'],
+      );
     }
     EditPageLogger.controllerDebug('网格设置变化处理完成');
   }
@@ -367,7 +400,19 @@ class PracticeEditController extends ChangeNotifier
       },
     );
 
-    // 通知监听器
-    notifyListeners();
+    // 🚀 使用智能状态分发器替代传统的 notifyListeners
+    intelligentNotify(
+      changeType: 'controller_init',
+      operation: 'init_default_data',
+      eventData: {
+        'pagesCount': _state.pages.length,
+        'layersCount': 1,
+        'selectedLayerId': _state.selectedLayerId,
+        'operation': 'init_default_data',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['canvas', 'property_panel'],
+    );
   }
 }

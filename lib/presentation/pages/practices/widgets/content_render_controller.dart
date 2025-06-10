@@ -77,15 +77,16 @@ class ContentRenderController extends ChangeNotifier {
       _lastNotificationTime = now;
       
       EditPageLogger.canvasDebug(
-        '内容渲染控制器通知',
+        '内容渲染控制器跳过通知',
         data: {
           'operation': operation,
-          'optimization': 'throttled_content_render_notification',
+          'optimization': 'skip_content_render_notification',
+          'reason': 'avoid_global_ui_rebuild',
           ...?data,
         },
       );
       
-      super.notifyListeners();
+      // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
     } else {
       // 缓存待处理的更新
       if (!_hasPendingUpdate) {
@@ -95,15 +96,16 @@ class ContentRenderController extends ChangeNotifier {
           _hasPendingUpdate = false;
           
           EditPageLogger.canvasDebug(
-            '内容渲染控制器延迟通知',
+            '内容渲染控制器跳过延迟通知',
             data: {
               'operation': operation,
-              'optimization': 'throttled_delayed_notification',
+              'optimization': 'skip_delayed_content_render_notification',
+              'reason': 'avoid_global_ui_rebuild',
               ...?data,
             },
           );
           
-          super.notifyListeners();
+          // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
         });
       }
     }

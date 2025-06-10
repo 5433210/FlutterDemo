@@ -8,6 +8,9 @@ import 'practice_edit_controller.dart';
 class IntelligentStateDispatcher {
   final PracticeEditController _controller;
 
+  // 🔍[TRACKING] 静态分发计数器
+  static int _dispatchCount = 0;
+
   // 🔧 分层监听器管理
   final Map<String, Set<VoidCallback>> _layerListeners = {};
   final Map<String, Set<VoidCallback>> _elementListeners = {};
@@ -54,10 +57,35 @@ class IntelligentStateDispatcher {
     List<String>? affectedUIComponents,
   }) {
     final dispatchStartTime = DateTime.now();
+    _dispatchCount++;
+
+    // 🔍[TRACKING] 分发开始跟踪
+    EditPageLogger.performanceInfo(
+      '智能状态分发开始',
+      data: {
+        'dispatchNumber': _dispatchCount,
+        'changeType': changeType,
+        'operation': operation,
+        'affectedElements': affectedElements?.length ?? 0,
+        'affectedLayers': affectedLayers?.length ?? 0,
+        'affectedUIComponents': affectedUIComponents?.length ?? 0,
+        'timestamp': dispatchStartTime.toIso8601String(),
+        'optimization': 'intelligent_dispatch_tracking',
+      },
+    );
 
     // 检查状态是否实际发生变化
     if (_hasNoActualChange(changeType, eventData)) {
       _skippedDispatches++;
+      EditPageLogger.performanceInfo(
+        '智能状态分发跳过（无变化）',
+        data: {
+          'dispatchNumber': _dispatchCount,
+          'changeType': changeType,
+          'skipReason': 'no_actual_change',
+          'optimization': 'intelligent_dispatch_skip',
+        },
+      );
       return;
     }
 
@@ -65,41 +93,23 @@ class IntelligentStateDispatcher {
     _totalDispatches++;
     _dispatchCounts[changeType] = (_dispatchCounts[changeType] ?? 0) + 1;
 
-    EditPageLogger.performanceInfo(
-      '智能状态分发开始',
-      data: {
-        'changeType': changeType,
-        'operation': operation,
-        'affectedElements': affectedElements?.length ?? 0,
-        'affectedLayers': affectedLayers?.length ?? 0,
-        'affectedUIComponents': affectedUIComponents?.length ?? 0,
-        'stats': {
-          'totalDispatches': _totalDispatches,
-          'skippedDispatches': _skippedDispatches,
-          'skipRate': _totalDispatches > 0
-              ? _skippedDispatches / _totalDispatches
-              : 0.0,
-          'dispatchCounts': Map.from(_dispatchCounts),
-          'layerListenerCounts':
-              _layerListeners.map((k, v) => MapEntry(k, v.length)),
-          'elementListenerCounts':
-              _elementListeners.map((k, v) => MapEntry(k, v.length)),
-          'uiListenerCounts': _uiListeners.map((k, v) => MapEntry(k, v.length)),
-        },
-      },
-    );
-
     bool hasListeners = false;
     int notificationCount = 0;
+    final notificationDetails = <String, Map<String, dynamic>>{};
 
     // 1. 通知特定元素的监听器
     if (affectedElements != null) {
       for (final elementId in affectedElements) {
-        _notifyElementListeners(elementId, changeType);
         final elementListeners = _elementListeners[elementId];
         if (elementListeners != null && elementListeners.isNotEmpty) {
+          _notifyElementListeners(elementId, changeType);
           hasListeners = true;
           notificationCount += elementListeners.length;
+          notificationDetails['element_$elementId'] = {
+            'type': 'element',
+            'id': elementId,
+            'listenerCount': elementListeners.length,
+          };
         }
       }
     }
@@ -107,11 +117,16 @@ class IntelligentStateDispatcher {
     // 2. 通知相关图层的监听器
     if (affectedLayers != null) {
       for (final layerId in affectedLayers) {
-        _notifyLayerListeners(layerId, changeType);
         final layerListeners = _layerListeners[layerId];
         if (layerListeners != null && layerListeners.isNotEmpty) {
+          _notifyLayerListeners(layerId, changeType);
           hasListeners = true;
           notificationCount += layerListeners.length;
+          notificationDetails['layer_$layerId'] = {
+            'type': 'layer',
+            'id': layerId,
+            'listenerCount': layerListeners.length,
+          };
         }
       }
     }
@@ -119,185 +134,54 @@ class IntelligentStateDispatcher {
     // 3. 通知UI组件的监听器
     if (affectedUIComponents != null) {
       for (final uiComponent in affectedUIComponents) {
-        _notifyUIListeners(uiComponent, changeType);
         final uiListeners = _uiListeners[uiComponent];
         if (uiListeners != null && uiListeners.isNotEmpty) {
+          _notifyUIListeners(uiComponent, changeType);
           hasListeners = true;
           notificationCount += uiListeners.length;
+          notificationDetails['ui_$uiComponent'] = {
+            'type': 'ui_component',
+            'id': uiComponent,
+            'listenerCount': uiListeners.length,
+          };
         }
       }
     }
 
     // 4. 根据变更类型进行精确分发
+    if (notificationCount > 0) {
+      hasListeners = true;
+    }
+
+    // 🔧 可选：添加一些特殊的逻辑判断，但不进行重复通知
     switch (changeType) {
-      // 新增元素操作
-      case 'element_add':
-      case 'element_paste':
-      case 'element_restore':
-      case 'element_restore_batch':
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyUIListeners('element_list', changeType);
-        _notifyLayerListeners('content', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 删除元素操作
-      case 'element_delete':
-      case 'element_delete_batch':
-      case 'element_delete_selected':
-      case 'element_paste_undo':
-      case 'element_remove':
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyUIListeners('element_list', changeType);
-        _notifyLayerListeners('content', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 元素更新操作
       case 'element_update':
       case 'element_batch_update':
       case 'element_batch_update_undo_redo':
       case 'element_undo_redo':
       case 'element_order_update':
-        _notifyUIListeners('property_panel', changeType);
-        _notifyLayerListeners('content', changeType);
-        if (operation.contains('transform') ||
+        // 特殊逻辑：如果是变换操作，确保交互层被通知（如果还没有被通知的话）
+        if ((operation.contains('transform') ||
             operation.contains('position') ||
-            operation.contains('size')) {
-          _notifyUIListeners('canvas', changeType);
-          _notifyLayerListeners('interaction', changeType);
+            operation.contains('size')) &&
+            (affectedLayers == null || !affectedLayers.contains('interaction'))) {
+          final interactionListeners = _layerListeners['interaction'];
+          if (interactionListeners != null && interactionListeners.isNotEmpty) {
+            _notifyLayerListeners('interaction', changeType);
+            notificationCount += interactionListeners.length;
+            hasListeners = true;
+            notificationDetails['layer_interaction_auto'] = {
+              'type': 'layer_auto',
+              'id': 'interaction',
+              'listenerCount': interactionListeners.length,
+              'reason': 'transform_operation_auto_notify',
+            };
+          }
         }
-        hasListeners = true;
         break;
-
-      // 选择操作
-      case 'selection_change':
-      case 'element_select':
-      case 'element_deselect':
-        _notifyUIListeners('property_panel', changeType);
-        _notifyUIListeners('toolbar', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 页面管理操作
-      case 'page_add':
-      case 'page_delete':
-      case 'page_duplicate':
-      case 'page_reorder':
-      case 'page_select':
-      case 'page_update':
-        _notifyUIListeners('page_list', changeType);
-        _notifyUIListeners('canvas', changeType);
-        if (changeType == 'page_select') {
-          _notifyUIListeners('property_panel', changeType);
-          _notifyLayerListeners('content', changeType);
-          _notifyLayerListeners('interaction', changeType);
-        }
-        hasListeners = true;
-        break;
-
-      // 图层管理操作
-      case 'layer_add':
-      case 'layer_delete':
-      case 'layer_select':
-      case 'layer_visibility':
-      case 'layer_lock':
-      case 'layer_reorder':
-      case 'layer_update':
-        _notifyUIListeners('layer_panel', changeType);
-        _notifyUIListeners('canvas', changeType);
-        if (changeType == 'layer_select') {
-          _notifyUIListeners('property_panel', changeType);
-        }
-        _notifyLayerListeners('content', changeType);
-        hasListeners = true;
-        break;
-
-      // UI状态变化
-      case 'ui_tool_change':
-      case 'tool_change':
-        _notifyUIListeners('toolbar', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyUIListeners('canvas_overlay', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      case 'ui_zoom_change':
-      case 'ui_grid_toggle':
-      case 'ui_snap_toggle':
-      case 'ui_view_reset':
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('canvas_overlay', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 撤销重做操作
-      case 'undo_execute':
-      case 'redo_execute':
-      case 'history_clear':
-        _notifyUIListeners('toolbar', changeType);
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyLayerListeners('content', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 文件操作
-      case 'practice_load':
-      case 'practice_save':
-      case 'practice_save_as':
-      case 'practice_title_update':
-      case 'file_load':
-      case 'file_save':
-      case 'file_save_as':
-        _notifyUIListeners('title_bar', changeType);
-        _notifyUIListeners('status_bar', changeType);
-        _notifyUIListeners('file_menu', changeType);
-        if (changeType.contains('load')) {
-          _notifyUIListeners('page_list', changeType);
-          _notifyUIListeners('canvas', changeType);
-          _notifyUIListeners('property_panel', changeType);
-          _notifyUIListeners('toolbar', changeType);
-          _notifyLayerListeners('content', changeType);
-          _notifyLayerListeners('interaction', changeType);
-        }
-        hasListeners = true;
-        break;
-
-      // 元素高级操作
-      case 'element_add_group_element':
-      case 'element_remove_element':
-      case 'element_ungroup_remove_element':
-      case 'element_align_elements':
-      case 'element_distribute_elements':
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyLayerListeners('content', changeType);
-        _notifyLayerListeners('interaction', changeType);
-        hasListeners = true;
-        break;
-
-      // 默认：全局通知
+      
       default:
-        EditPageLogger.performanceWarning(
-          '未识别的变更类型，使用全局通知',
-          data: {
-            'changeType': changeType,
-            'operation': operation,
-          },
-        );
-        _notifyUIListeners('canvas', changeType);
-        _notifyUIListeners('property_panel', changeType);
-        _notifyLayerListeners('content', changeType);
-        hasListeners = true;
+        // 其他类型不需要特殊处理，完全依赖参数化通知
         break;
     }
 
@@ -307,15 +191,25 @@ class IntelligentStateDispatcher {
       _skippedDispatches--;
     }
 
+    // 🔍[TRACKING] 分发完成跟踪
     EditPageLogger.performanceInfo(
       '智能状态分发完成',
       data: {
+        'dispatchNumber': _dispatchCount,
         'changeType': changeType,
         'operation': operation,
         'hasListeners': hasListeners,
         'notificationCount': notificationCount,
+        'notificationDetails': notificationDetails,
         'dispatchDurationMs': dispatchDuration.inMilliseconds,
-        'skippedDispatches': _skippedDispatches,
+        'stats': {
+          'totalDispatches': _totalDispatches,
+          'skippedDispatches': _skippedDispatches,
+          'skipRate': _totalDispatches > 0
+              ? _skippedDispatches / _totalDispatches
+              : 0.0,
+        },
+        'optimization': 'intelligent_dispatch_complete',
       },
     );
   }
