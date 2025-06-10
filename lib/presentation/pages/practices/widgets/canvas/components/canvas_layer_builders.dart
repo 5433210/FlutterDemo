@@ -54,6 +54,7 @@ mixin CanvasLayerBuilders {
       '构建背景层（优化版）',
       data: {
         'hasGrid': controller.state.gridVisible,
+        'isPreviewMode': isPreviewMode,
         'optimization': 'no_controller_listener',
         'avoidedExtraRebuild': true,
       },
@@ -94,15 +95,16 @@ mixin CanvasLayerBuilders {
     EditPageLogger.canvasDebug('背景层最终配置', data: {
       'backgroundColor': '$backgroundColor',
       'gridVisible': controller.state.gridVisible,
+      'isPreviewMode': isPreviewMode,
       'gridSize': controller.state.gridSize
     });
 
-    // 网格设置和其他逻辑保持不变
-    final showGrid = controller.state.gridVisible;
+    // 🔧 网格只在编辑模式下显示，预览模式、导出、缩略图生成时不显示
+    final showGrid = controller.state.gridVisible && !isPreviewMode;
 
     Widget childWidget;
     if (showGrid) {
-      EditPageLogger.canvasDebug('网格开启，绘制网格');
+      EditPageLogger.canvasDebug('网格开启且为编辑模式，绘制网格');
       final gridColor = _getGridColor(backgroundColor, context);
       childWidget = CustomPaint(
         painter: CanvasGridPainter(
@@ -112,7 +114,15 @@ mixin CanvasLayerBuilders {
         size: Size.infinite,
       );
     } else {
-      EditPageLogger.canvasDebug('网格关闭，使用SizedBox.expand');
+      if (controller.state.gridVisible && isPreviewMode) {
+        EditPageLogger.canvasDebug('预览模式下隐藏网格', data: {
+          'reason': '网格不参与预览渲染、缩略图生成和文件导出',
+          'gridVisible': controller.state.gridVisible,
+          'isPreviewMode': isPreviewMode,
+        });
+      } else {
+        EditPageLogger.canvasDebug('网格关闭，使用SizedBox.expand');
+      }
       childWidget = const SizedBox.expand();
     }
 

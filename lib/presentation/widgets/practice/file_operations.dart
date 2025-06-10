@@ -12,6 +12,21 @@ import 'practice_edit_controller.dart';
 
 /// 文件操作工具类
 class FileOperations {
+  /// 🔧 安全地显示SnackBar，避免在widget销毁后调用导致错误
+  static void _safeShowSnackBar(
+    ScaffoldMessengerState? scaffoldMessenger,
+    SnackBar snackBar,
+  ) {
+    if (scaffoldMessenger != null) {
+      try {
+        scaffoldMessenger.showSnackBar(snackBar);
+      } catch (e) {
+        // 如果显示SnackBar失败，记录日志但不抛出异常
+        EditPageLogger.editPageError('显示SnackBar失败', error: e);
+      }
+    }
+  }
+
   /// 导出字帖
   static Future<void> exportPractice(
     BuildContext context,
@@ -95,11 +110,11 @@ class FileOperations {
       },
     );
 
-    // 显示导出进度
+    // 🔧 在异步操作开始前保存ScaffoldMessenger引用，避免后续查找已销毁的widget
+    ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('正在导出，请稍候...')),
-      );
+      scaffoldMessenger = ScaffoldMessenger.of(context);
+      _safeShowSnackBar(scaffoldMessenger, const SnackBar(content: Text('正在导出，请稍候...')));
     }
 
     try {
@@ -133,30 +148,29 @@ class FileOperations {
             final fileSize = await file.length();
             debugPrint('导出的PDF文件大小: $fileSize 字节');
 
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('PDF导出成功: $pdfPath'),
-                  action: SnackBarAction(
-                    label: '打开文件夹',
-                    onPressed: () {
-                      // 打开文件所在的文件夹
-                      final directory = path.dirname(pdfPath);
-                      Process.run('explorer.exe', [directory]);
-                    },
-                  ),
+            _safeShowSnackBar(
+              scaffoldMessenger,
+              SnackBar(
+                content: Text('PDF导出成功: $pdfPath'),
+                action: SnackBarAction(
+                  label: '打开文件夹',
+                  onPressed: () {
+                    // 打开文件所在的文件夹
+                    final directory = path.dirname(pdfPath);
+                    Process.run('explorer.exe', [directory]);
+                  },
                 ),
-              );
-            }
+              ),
+            );
           } else {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('PDF导出成功，但无法找到文件: $pdfPath')),
-              );
-            }
+            _safeShowSnackBar(
+              scaffoldMessenger,
+              SnackBar(content: Text('PDF导出成功，但无法找到文件: $pdfPath')),
+            );
           }
-        } else if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        } else {
+          _safeShowSnackBar(
+            scaffoldMessenger,
             const SnackBar(content: Text('PDF导出失败')),
           );
         }
@@ -192,25 +206,25 @@ class FileOperations {
             }
           }
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('导出${imagePaths.length}个图片成功'),
-                action: SnackBarAction(
-                  label: '打开文件夹',
-                  onPressed: () {
-                    // 打开文件所在的文件夹
-                    if (imagePaths.isNotEmpty) {
-                      final directory = path.dirname(imagePaths[0]);
-                      Process.run('explorer.exe', [directory]);
-                    }
-                  },
-                ),
+          _safeShowSnackBar(
+            scaffoldMessenger,
+            SnackBar(
+              content: Text('导出${imagePaths.length}个图片成功'),
+              action: SnackBarAction(
+                label: '打开文件夹',
+                onPressed: () {
+                  // 打开文件所在的文件夹
+                  if (imagePaths.isNotEmpty) {
+                    final directory = path.dirname(imagePaths[0]);
+                    Process.run('explorer.exe', [directory]);
+                  }
+                },
               ),
-            );
-          }
-        } else if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+            ),
+          );
+        } else {
+          _safeShowSnackBar(
+            scaffoldMessenger,
             const SnackBar(content: Text('图片导出失败')),
           );
         }
@@ -219,11 +233,10 @@ class FileOperations {
       debugPrint('导出过程中发生异常: $e');
       debugPrint('异常堆栈: $stack');
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导出失败: $e')),
-        );
-      }
+      _safeShowSnackBar(
+        scaffoldMessenger,
+        SnackBar(content: Text('导出失败: $e')),
+      );
     } finally {
       debugPrint('=== 导出字帖过程结束 ===');
     }
@@ -243,11 +256,11 @@ class FileOperations {
       return;
     }
 
-    // 显示加载提示
+    // 🔧 在异步操作开始前保存ScaffoldMessenger引用，避免后续查找已销毁的widget
+    ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('正在准备打印，请稍候...')),
-      );
+      scaffoldMessenger = ScaffoldMessenger.of(context);
+      _safeShowSnackBar(scaffoldMessenger, const SnackBar(content: Text('正在准备打印，请稍候...')));
     }
 
     try {
@@ -261,11 +274,10 @@ class FileOperations {
       );
 
       if (pageImages.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('无法捕获页面图像')),
-          );
-        }
+        _safeShowSnackBar(
+          scaffoldMessenger,
+          const SnackBar(content: Text('无法捕获页面图像')),
+        );
         return;
       }
 
@@ -280,11 +292,10 @@ class FileOperations {
       //   );
       // }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('打印准备失败: $e')),
-        );
-      }
+      _safeShowSnackBar(
+        scaffoldMessenger,
+        SnackBar(content: Text('打印准备失败: $e')),
+      );
     }
   }
 
