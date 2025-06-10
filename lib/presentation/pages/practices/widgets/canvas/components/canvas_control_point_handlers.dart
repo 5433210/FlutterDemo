@@ -317,8 +317,7 @@ mixin CanvasControlPointHandlers {
         // 创建撤销操作
         createUndoOperation(elementId, _originalElementProperties!, element);
 
-        // 确保UI更新
-        controller.notifyListeners();
+        // UI更新已由createUndoOperation中的元素更新方法处理
 
         _isResizing = false;
         _originalElementProperties = null;
@@ -339,7 +338,19 @@ mixin CanvasControlPointHandlers {
         for (final key in _originalElementProperties!.keys) {
           element[key] = _originalElementProperties![key];
         }
-        controller.notifyListeners();
+        // 🚀 使用智能状态分发器通知错误恢复
+        controller.intelligentNotify(
+          changeType: 'element_error_recovery',
+          eventData: {
+            'elementId': elementId,
+            'operation': 'control_point_error_recovery',
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+          operation: 'control_point_error_recovery',
+          affectedElements: [elementId],
+          affectedLayers: ['content'],
+          affectedUIComponents: ['canvas'],
+        );
       }
     } finally {
       // 确保清理状态
@@ -371,8 +382,7 @@ mixin CanvasControlPointHandlers {
             // 确保DragPreviewLayer不再显示该元素
             setState(() {});
 
-            // 更新控制器状态以确保UI更新
-            controller.notifyListeners();
+            // UI更新已由markElementDirty处理，无需重复调用
             
             // 再次强制触发setState确保控制点正确更新
             Future.delayed(const Duration(milliseconds: 50), () {
@@ -562,7 +572,7 @@ mixin CanvasControlPointHandlers {
       }
       
       // 5. 触发UI更新（hasUnsavedChanges已由updateElementProperties设置）
-      controller.notifyListeners();
+      // UI更新已由markElementDirty处理，无需重复调用
       
       EditPageLogger.canvasDebug('组合元素变换完成', data: {
         'groupId': groupId,

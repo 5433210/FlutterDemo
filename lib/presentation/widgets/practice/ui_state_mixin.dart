@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 
 /// UI状态管理 Mixin
 /// 负责UI相关的状态管理，如预览模式、网格显示、吸附等
-mixin UIStateMixin on ChangeNotifier {
+mixin UIStateMixin on ChangeNotifier implements IntelligentNotificationMixin {
   GlobalKey? get canvasKey;
   set canvasKey(GlobalKey? key);
   dynamic get editCanvas;
@@ -16,13 +17,26 @@ mixin UIStateMixin on ChangeNotifier {
   PracticeEditState get state;
   void checkDisposed();
 
+
+
   /// 退出选择模式
   void exitSelectMode() {
     final oldTool = state.currentTool;
     state.currentTool = '';
     EditPageLogger.controllerInfo('退出选择模式', 
       data: {'previousTool': oldTool});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知工具状态变更
+    intelligentNotify(
+      changeType: 'ui_tool_change',
+      eventData: {
+        'oldTool': oldTool,
+        'newTool': '',
+        'operation': 'exit_select_mode',
+      },
+      operation: 'exit_select_mode',
+      affectedUIComponents: ['toolbar', 'property_panel'],
+    );
   }
 
   /// 重置视图位置到默认状态
@@ -43,11 +57,25 @@ mixin UIStateMixin on ChangeNotifier {
     state.canvasScale = 1.0;
     EditPageLogger.controllerDebug('重置画布缩放', 
       data: {'oldScale': oldScale, 'newScale': 1.0});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知缩放重置
+    intelligentNotify(
+      changeType: 'ui_zoom_change',
+      eventData: {
+        'oldScale': oldScale,
+        'newScale': 1.0,
+        'operation': 'reset_zoom',
+      },
+      operation: 'reset_zoom',
+      affectedLayers: ['background', 'content', 'interaction'],
+      affectedUIComponents: ['toolbar', 'zoom_controls'],
+    );
   }
 
   /// 选择所有元素
   void selectAll() {
+    final previousIds = List<String>.from(state.selectedElementIds);
+    
     // 获取当前页面上的所有元素
     if (state.currentPageIndex >= 0 &&
         state.currentPageIndex < state.pages.length) {
@@ -91,7 +119,19 @@ mixin UIStateMixin on ChangeNotifier {
         data: {'selectedCount': state.selectedElementIds.length});
     }
 
-    notifyListeners();
+    // 🚀 使用智能状态分发器通知全选操作
+    intelligentNotify(
+      changeType: 'selection_change',
+      eventData: {
+        'selectedIds': state.selectedElementIds,
+        'previousIds': previousIds,
+        'selectionCount': state.selectedElementIds.length,
+        'operation': 'select_all',
+      },
+      operation: 'select_all',
+      affectedLayers: ['interaction'],
+      affectedUIComponents: ['property_panel', 'toolbar'],
+    );
   }
 
   /// 选择页面
@@ -106,7 +146,21 @@ mixin UIStateMixin on ChangeNotifier {
       
       EditPageLogger.controllerInfo('选择页面', 
         data: {'oldIndex': oldIndex, 'newIndex': pageIndex});
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知页面选择
+      intelligentNotify(
+        changeType: 'page_select',
+        eventData: {
+          'pageId': state.pages[pageIndex]['id'],
+          'pageName': state.pages[pageIndex]['name'],
+          'oldPageIndex': oldIndex,
+          'newPageIndex': pageIndex,
+          'operation': 'select_page',
+        },
+        operation: 'select_page',
+        affectedLayers: ['background', 'content', 'interaction'],
+        affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+      );
     }
   }
 
@@ -132,7 +186,21 @@ mixin UIStateMixin on ChangeNotifier {
 
       EditPageLogger.controllerInfo('设置当前页面', 
         data: {'oldIndex': oldIndex, 'newIndex': index});
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知当前页面设置
+      intelligentNotify(
+        changeType: 'page_select',
+        eventData: {
+          'pageId': state.pages[index]['id'],
+          'pageName': state.pages[index]['name'],
+          'oldPageIndex': oldIndex,
+          'newPageIndex': index,
+          'operation': 'set_current_page',
+        },
+        operation: 'set_current_page',
+        affectedLayers: ['background', 'content', 'interaction'],
+        affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+      );
     }
   }
 
@@ -144,11 +212,24 @@ mixin UIStateMixin on ChangeNotifier {
 
   /// 切换网格显示
   void toggleGrid() {
+    final oldState = state.gridVisible;
     final newState = !state.gridVisible;
     state.gridVisible = newState;
     EditPageLogger.controllerDebug('切换网格显示', 
       data: {'visible': newState});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知网格显示切换
+    intelligentNotify(
+      changeType: 'ui_grid_toggle',
+      eventData: {
+        'oldState': oldState,
+        'newState': newState,
+        'operation': 'toggle_grid',
+      },
+      operation: 'toggle_grid',
+      affectedLayers: ['background'],
+      affectedUIComponents: ['toolbar', 'grid_controls'],
+    );
   }
 
   /// 切换预览模式
@@ -166,16 +247,40 @@ mixin UIStateMixin on ChangeNotifier {
 
     EditPageLogger.controllerInfo('切换预览模式', 
       data: {'oldMode': oldMode, 'newMode': isPreviewMode});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知预览模式切换
+    intelligentNotify(
+      changeType: 'ui_preview_toggle',
+      eventData: {
+        'oldMode': oldMode,
+        'newMode': isPreviewMode,
+        'operation': 'toggle_preview_mode',
+      },
+      operation: 'toggle_preview_mode',
+      affectedLayers: ['background', 'content', 'interaction'],
+      affectedUIComponents: ['toolbar', 'property_panel', 'layer_panel'],
+    );
   }
 
   /// 切换吸附功能
   void toggleSnap() {
+    final oldState = state.snapEnabled;
     final newState = !state.snapEnabled;
     state.snapEnabled = newState;
     EditPageLogger.controllerDebug('切换吸附功能', 
       data: {'enabled': newState});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知吸附功能切换
+    intelligentNotify(
+      changeType: 'ui_snap_toggle',
+      eventData: {
+        'oldState': oldState,
+        'newState': newState,
+        'operation': 'toggle_snap',
+      },
+      operation: 'toggle_snap',
+      affectedUIComponents: ['toolbar', 'snap_controls'],
+    );
   }
 
   /// 设置画布缩放值
@@ -199,6 +304,19 @@ mixin UIStateMixin on ChangeNotifier {
     
     EditPageLogger.controllerDebug('设置画布缩放', 
       data: {'oldScale': oldScale, 'newScale': newScale, 'requestedScale': scale});
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知缩放变更
+    intelligentNotify(
+      changeType: 'ui_zoom_change',
+      eventData: {
+        'oldScale': oldScale,
+        'newScale': newScale,
+        'requestedScale': scale,
+        'operation': 'zoom_to',
+      },
+      operation: 'zoom_to',
+      affectedLayers: ['background', 'content', 'interaction'],
+      affectedUIComponents: ['toolbar', 'zoom_controls'],
+    );
   }
 }

@@ -9,6 +9,7 @@ import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
+import '../../../widgets/practice/canvas_rebuild_optimizer.dart';
 import '../helpers/element_utils.dart';
 import 'canvas/components/canvas_control_point_handlers.dart';
 import 'canvas/components/canvas_element_creators.dart';
@@ -148,23 +149,22 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _performanceMonitor.trackFrame();
     });
 
-    return ListenableBuilder(
-      listenable: widget.controller,
-      builder: (context, child) {
+    return OptimizedCanvasListener(
+      controller: widget.controller,
+      builder: (context, controller) {
         final colorScheme = Theme.of(context).colorScheme;
 
         EditPageLogger.canvasDebug(
-          '画布重建',
+          '画布智能重建',
           data: {
-            'currentTool': widget.controller.state.currentTool,
-            'selectedElementsCount':
-                widget.controller.state.selectedElementIds.length,
-            'totalElementsCount':
-                widget.controller.state.currentPageElements.length,
+            'currentTool': controller.state.currentTool,
+            'selectedElementsCount': controller.state.selectedElementIds.length,
+            'totalElementsCount': controller.state.currentPageElements.length,
+            'optimization': 'optimized_canvas_listener',
           },
         );
 
-        if (widget.controller.state.pages.isEmpty) {
+        if (controller.state.pages.isEmpty) {
           return Center(
             child: Text(
               'No pages available',
@@ -173,7 +173,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           );
         }
 
-        final currentPage = widget.controller.state.currentPage;
+        final currentPage = controller.state.currentPage;
         if (currentPage == null) {
           return Center(
             child: Text(
@@ -182,7 +182,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             ),
           );
         }
-        final elements = widget.controller.state.currentPageElements;
+        final elements = controller.state.currentPageElements;
         EditPageLogger.canvasDebug(
           '画布元素状态',
           data: {
@@ -192,6 +192,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'firstElementPreview': elements.isNotEmpty
                 ? elements.first['type'] ?? 'unknown'
                 : null,
+            'optimization': 'optimized_element_tracking',
           },
         );
         // 用性能覆盖层包装画布

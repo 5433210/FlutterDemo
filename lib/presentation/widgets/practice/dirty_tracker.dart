@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
 import '../../pages/practices/widgets/element_change_types.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// Tracks which elements are dirty and need rebuilding for optimized rendering
 class DirtyTracker extends ChangeNotifier {
@@ -25,6 +27,56 @@ class DirtyTracker extends ChangeNotifier {
   /// Whether batch mode is currently active
   bool _batchMode = false;
 
+  // 🚀 节流通知相关
+  Timer? _notificationTimer;
+  bool _hasPendingUpdate = false;
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+
+  /// 🚀 节流通知方法 - 避免脏状态追踪过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.canvasDebug(
+        '脏状态追踪器通知',
+        data: {
+          'operation': operation,
+          'dirtyElementsCount': _dirtyElements.length,
+          'optimization': 'throttled_dirty_tracker_notification',
+          ...?data,
+        },
+      );
+      
+      super.notifyListeners();
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+          
+          EditPageLogger.canvasDebug(
+            '脏状态追踪器延迟通知',
+            data: {
+              'operation': operation,
+              'dirtyElementsCount': _dirtyElements.length,
+              'optimization': 'throttled_delayed_dirty_notification',
+              ...?data,
+            },
+          );
+          
+          super.notifyListeners();
+        });
+      }
+    }
+  }
+
   /// Get read-only view of dirty elements
   Set<String> get dirtyElements => Set.unmodifiable(_dirtyElements);
 
@@ -39,12 +91,18 @@ class DirtyTracker extends ChangeNotifier {
     _pendingOperations.clear();
 
     if (hadDirtyElements) {
-      notifyListeners();
+      _throttledNotifyListeners(
+        operation: 'clear_all',
+        data: {
+          'hadDirtyElements': hadDirtyElements,
+        },
+      );
     }
   }
 
   @override
   void dispose() {
+    _notificationTimer?.cancel();
     _dirtyElements.clear();
     _elementVersions.clear();
     _dirtyReasons.clear();
@@ -81,7 +139,13 @@ class DirtyTracker extends ChangeNotifier {
     }
 
     if (hasChanges) {
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'end_batch',
+        data: {
+          'hasChanges': hasChanges,
+        },
+      );
     }
   }
 
@@ -129,7 +193,14 @@ class DirtyTracker extends ChangeNotifier {
 
     if (hasChanges) {
       _incrementGlobalVersion();
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'mark_all_dirty',
+        data: {
+          'elementCount': elementIds.length,
+          'changeType': changeType.toString(),
+        },
+      );
     }
   }
 
@@ -142,7 +213,13 @@ class DirtyTracker extends ChangeNotifier {
 
     if (_performMarkClean(elementId)) {
       _incrementGlobalVersion();
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'mark_element_clean',
+        data: {
+          'elementId': elementId,
+        },
+      );
     }
   }
 
@@ -155,7 +232,14 @@ class DirtyTracker extends ChangeNotifier {
 
     if (_performMarkDirty(elementId, changeType)) {
       _incrementGlobalVersion();
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'mark_element_dirty',
+        data: {
+          'elementId': elementId,
+          'changeType': changeType.toString(),
+        },
+      );
     }
   }
 
@@ -176,7 +260,13 @@ class DirtyTracker extends ChangeNotifier {
     }
 
     if (hasChanges) {
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'mark_elements_clean',
+        data: {
+          'elementCount': elementIds.length,
+        },
+      );
     }
   }
 
@@ -198,7 +288,13 @@ class DirtyTracker extends ChangeNotifier {
 
     if (hasChanges) {
       _incrementGlobalVersion();
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'mark_elements_dirty',
+        data: {
+          'elementCount': elements.length,
+        },
+      );
     }
   }
 
@@ -209,7 +305,13 @@ class DirtyTracker extends ChangeNotifier {
     _dirtyReasons.remove(elementId);
 
     if (hadElement) {
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'remove_element',
+        data: {
+          'elementId': elementId,
+        },
+      );
     }
   }
 

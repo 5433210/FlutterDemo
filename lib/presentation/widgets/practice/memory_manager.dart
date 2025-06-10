@@ -126,6 +126,10 @@ class MemoryManager extends ChangeNotifier {
   int _totalImagesDisposed = 0;
   Timer? _memoryCleanupTimer;
 
+  // 🚀 性能优化：节流通知机制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 1000); // 最多每1秒通知一次
+
   /// Memory pressure callback
   VoidCallback? onMemoryPressure;
 
@@ -169,7 +173,32 @@ class MemoryManager extends ChangeNotifier {
     }
   }
 
-
+  /// 🚀 节流通知方法 - 避免内存管理操作过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '内存管理通知',
+        data: {
+          'operation': operation,
+          'currentUsage': _formatBytes(_currentMemoryUsage),
+          'peakUsage': _formatBytes(_peakMemoryUsage),
+          'pressureRatio': _currentMemoryUsage / _maxMemoryBytes,
+          'activeImages': _imageResources.length,
+          'largeElements': _largeElements.length,
+          'optimization': 'throttled_memory_notification',
+          ...?data,
+        },
+      );
+      
+      notifyListeners();
+    }
+  }
 
   /// Get memory-efficient representation of an element
   MemoryEfficientElement createMemoryEfficientElement(
@@ -234,7 +263,14 @@ class MemoryManager extends ChangeNotifier {
         },
       );
 
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'dispose_image_resource',
+        data: {
+          'elementId': elementId,
+          'resourceSize': resource.estimatedSize,
+        },
+      );
       return true;
     }
     return false;
@@ -298,7 +334,14 @@ class MemoryManager extends ChangeNotifier {
       },
     );
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'memory_cleanup',
+      data: {
+        'freedMemory': actualFreed,
+        'aggressive': aggressive,
+      },
+    );
     return actualFreed;
   }
 
@@ -385,7 +428,14 @@ class MemoryManager extends ChangeNotifier {
         );
       }
 
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'unregister_element_memory',
+        data: {
+          'elementId': elementId,
+          'elementSize': memoryInfo.estimatedSize,
+        },
+      );
       return true;
     }
     return false;

@@ -3,12 +3,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'batch_update_options.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 
 /// 元素管理混入类 - 负责元素的增删改查操作
-mixin ElementManagementMixin on ChangeNotifier {
+mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
@@ -285,11 +286,25 @@ mixin ElementManagementMixin on ChangeNotifier {
 
   /// 清除选择
   void clearSelection() {
+    final previousIds = List<String>.from(state.selectedElementIds);
     state.selectedElementIds.clear();
     state.selectedElement = null;
     state.selectedLayerId =
         null; // 🔧 Also clear layer selection to properly switch to page properties
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知选择清除
+    intelligentNotify(
+      changeType: 'selection_change',
+      eventData: {
+        'selectedIds': <String>[],
+        'previousIds': previousIds,
+        'selectionCount': 0,
+        'operation': 'clear_selection',
+      },
+      operation: 'clear_selection',
+      affectedLayers: ['interaction'],
+      affectedUIComponents: ['property_panel', 'toolbar'],
+    );
   }
 
   /// 删除元素
@@ -311,7 +326,7 @@ mixin ElementManagementMixin on ChangeNotifier {
       final operation = DeleteElementOperation(
         element: element,
         addElement: (e) {
-          debugPrint('【Undo/Redo】撤销删除 - 恢复元素: ${e['id']}');
+          EditPageLogger.controllerDebug('【Undo/Redo】撤销删除 - 恢复元素: ${e['id']}');
           if (state.currentPageIndex >= 0 &&
               state.currentPageIndex < state.pages.length) {
             final page = state.pages[state.currentPageIndex];
@@ -325,11 +340,26 @@ mixin ElementManagementMixin on ChangeNotifier {
             }
 
             state.hasUnsavedChanges = true;
-            notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            intelligentNotify(
+              changeType: 'element_restore',
+              eventData: {
+                'elementId': e['id'],
+                'elementType': e['type'],
+                'elementCount': elements.length,
+                'operation': 'restore_element_undo',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'restore_element',
+              affectedElements: [e['id'] as String],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           }
         },
         removeElement: (elementId) {
-          debugPrint('【Undo/Redo】执行删除元素: $elementId');
+          EditPageLogger.controllerDebug('【Undo/Redo】执行删除元素: $elementId');
           if (state.currentPageIndex >= 0 &&
               state.currentPageIndex < state.pages.length) {
             final page = state.pages[state.currentPageIndex];
@@ -337,7 +367,8 @@ mixin ElementManagementMixin on ChangeNotifier {
             elements.removeWhere((e) => e['id'] == elementId);
 
             // 如果删除的是当前选中的元素，清除选择
-            if (state.selectedElementIds.contains(elementId)) {
+            final wasSelected = state.selectedElementIds.contains(elementId);
+            if (wasSelected) {
               state.selectedElementIds.remove(elementId);
               if (state.selectedElementIds.isEmpty) {
                 state.selectedElement = null;
@@ -345,7 +376,22 @@ mixin ElementManagementMixin on ChangeNotifier {
             }
 
             state.hasUnsavedChanges = true;
-            notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            intelligentNotify(
+              changeType: 'element_delete',
+              eventData: {
+                'elementId': elementId,
+                'elementCount': elements.length,
+                'wasSelected': wasSelected,
+                'operation': 'delete_element_execute',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'delete_element',
+              affectedElements: [elementId],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           }
         },
       );
@@ -359,8 +405,9 @@ mixin ElementManagementMixin on ChangeNotifier {
     if (state.selectedElementIds.isEmpty) return;
 
     final operations = <UndoableOperation>[];
+    final deletingElementIds = List<String>.from(state.selectedElementIds);
 
-    for (final id in state.selectedElementIds) {
+    for (final id in deletingElementIds) {
       if (state.currentPageIndex >= 0 &&
           state.currentPageIndex < state.pages.length) {
         final page = state.pages[state.currentPageIndex];
@@ -379,7 +426,22 @@ mixin ElementManagementMixin on ChangeNotifier {
                 final elements = page['elements'] as List<dynamic>;
                 elements.add(e);
                 state.hasUnsavedChanges = true;
-                notifyListeners();
+                
+                // 🚀 使用智能状态分发器替代直接的notifyListeners
+                intelligentNotify(
+                  changeType: 'element_restore_batch',
+                  eventData: {
+                    'elementId': e['id'],
+                    'elementType': e['type'],
+                    'elementCount': elements.length,
+                    'operation': 'restore_element_batch_undo',
+                    'timestamp': DateTime.now().toIso8601String(),
+                  },
+                  operation: 'restore_element_batch',
+                  affectedElements: [e['id'] as String],
+                  affectedLayers: ['content', 'interaction'],
+                  affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+                );
               }
             },
             removeElement: (id) {
@@ -389,7 +451,21 @@ mixin ElementManagementMixin on ChangeNotifier {
                 final elements = page['elements'] as List<dynamic>;
                 elements.removeWhere((e) => e['id'] == id);
                 state.hasUnsavedChanges = true;
-                notifyListeners();
+                
+                // 🚀 使用智能状态分发器替代直接的notifyListeners
+                intelligentNotify(
+                  changeType: 'element_delete_batch',
+                  eventData: {
+                    'elementId': id,
+                    'elementCount': elements.length,
+                    'operation': 'delete_element_batch_execute',
+                    'timestamp': DateTime.now().toIso8601String(),
+                  },
+                  operation: 'delete_element_batch',
+                  affectedElements: [id],
+                  affectedLayers: ['content', 'interaction'],
+                  affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+                );
               }
             },
           );
@@ -405,10 +481,27 @@ mixin ElementManagementMixin on ChangeNotifier {
         operationDescription: '删除${operations.length}个元素',
       );
 
+      // 清除选择状态
       state.selectedElementIds.clear();
       state.selectedElement = null;
+      state.hasUnsavedChanges = true;
 
       undoRedoManager.addOperation(batchOperation);
+      
+      // 🚀 使用智能状态分发器通知批量删除完成
+      intelligentNotify(
+        changeType: 'element_delete_selected',
+        eventData: {
+          'deletedElementIds': deletingElementIds,
+          'deletedCount': operations.length,
+          'operation': 'delete_selected_elements',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        operation: 'delete_selected_elements',
+        affectedElements: deletingElementIds,
+        affectedLayers: ['content', 'interaction'],
+        affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+      );
     }
   }
 
@@ -430,7 +523,21 @@ mixin ElementManagementMixin on ChangeNotifier {
         elements.insert(newIndex, element);
 
         state.hasUnsavedChanges = true;
-        notifyListeners();
+        
+        // 🚀 使用智能通知替代直接notifyListeners（元素顺序调整）
+        intelligentNotify(
+          changeType: 'element_order_update',
+          eventData: {
+            'elementId': elements[newIndex]['id'],
+            'oldIndex': oldIndex,
+            'newIndex': newIndex,
+            'operation': 'move_element_order',
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+          operation: 'move_element_order',
+          affectedLayers: ['content'],
+          affectedUIComponents: ['canvas', 'element_list'],
+        );
       }
     }
   }
@@ -476,7 +583,21 @@ mixin ElementManagementMixin on ChangeNotifier {
         state.selectedElement = elements[elementIndex] as Map<String, dynamic>;
       }
 
-      notifyListeners();
+      // 🚀 使用智能状态分发器通知选择变化
+      intelligentNotify(
+        changeType: 'selection_change',
+        eventData: {
+          'selectedIds': state.selectedElementIds,
+          'selectionCount': state.selectedElementIds.length,
+          'elementId': id,
+          'isMultiSelect': isMultiSelect,
+          'operation': 'select_element',
+        },
+        operation: 'select_element',
+        affectedElements: [id],
+        affectedLayers: ['interaction'],
+        affectedUIComponents: ['property_panel', 'toolbar'],
+      );
     }
   }
 
@@ -487,6 +608,7 @@ mixin ElementManagementMixin on ChangeNotifier {
       return;
     }
 
+    final previousIds = List<String>.from(state.selectedElementIds);
     state.selectedElementIds = ids;
 
     // 如果只选中了一个元素，设置selectedElement
@@ -499,7 +621,19 @@ mixin ElementManagementMixin on ChangeNotifier {
       state.selectedElement = null;
     }
 
-    notifyListeners();
+    // 🚀 使用智能状态分发器通知选择变化
+    intelligentNotify(
+      changeType: 'selection_change',
+      eventData: {
+        'selectedIds': ids,
+        'previousIds': previousIds,
+        'selectionCount': ids.length,
+        'operation': 'select_elements',
+      },
+      operation: 'select_elements',
+      affectedLayers: ['interaction'],
+      affectedUIComponents: ['property_panel', 'toolbar'],
+    );
   }
 
   /// 更新元素透明度
@@ -522,8 +656,21 @@ mixin ElementManagementMixin on ChangeNotifier {
             state.selectedElement = element;
           }
 
-          // 不修改hasUnsavedChanges，因为这是临时状态
-          notifyListeners();
+          // 🚀 使用智能通知替代直接notifyListeners（交互式透明度更新）
+          intelligentNotify(
+            changeType: 'element_update',
+            eventData: {
+              'elementId': id,
+              'property': 'opacity',
+              'value': opacity,
+              'isInteractive': true,
+              'operation': 'update_element_opacity_interactive',
+            },
+            operation: 'update_element_opacity_interactive',
+            affectedElements: [id],
+            affectedLayers: ['content'],
+            affectedUIComponents: ['property_panel'],
+          );
         }
       }
       return;
@@ -626,7 +773,20 @@ mixin ElementManagementMixin on ChangeNotifier {
                   }
                   
                   state.hasUnsavedChanges = true;
-                  notifyListeners();
+                  
+                  // 🚀 使用智能通知替代直接notifyListeners（撤销操作中的元素属性更新）
+                  intelligentNotify(
+                    changeType: 'element_undo_redo',
+                    eventData: {
+                      'elementId': id,
+                      'operation': 'element_property_undo_redo',
+                      'timestamp': DateTime.now().toIso8601String(),
+                    },
+                    operation: 'element_property_undo_redo',
+                    affectedElements: [id],
+                    affectedLayers: ['content'],
+                    affectedUIComponents: ['property_panel'],
+                  );
                 }
               }
             },
@@ -636,7 +796,20 @@ mixin ElementManagementMixin on ChangeNotifier {
         undoRedoManager.addOperation(operation, executeImmediately: false);
       }
       
-      notifyListeners();
+      // 🚀 使用智能状态分发器通知元素属性变化
+      intelligentNotify(
+        changeType: 'element_update',
+        eventData: {
+          'elementId': id,
+          'properties': properties.keys.toList(),
+          'operation': 'update_element_properties',
+          'hasUndoOperation': createUndoOperation,
+        },
+        operation: 'update_element_properties',
+        affectedElements: [id],
+        affectedLayers: ['content'],
+        affectedUIComponents: ['property_panel'],
+      );
     }
   }
 
@@ -655,7 +828,19 @@ mixin ElementManagementMixin on ChangeNotifier {
     if (state.currentPageIndex >= 0 &&
         state.currentPageIndex < state.pages.length) {
       state.hasUnsavedChanges = true;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器替代直接的notifyListeners
+      intelligentNotify(
+        changeType: 'element_order_update',
+        eventData: {
+          'operation': 'update_elements_order',
+          'pageIndex': state.currentPageIndex,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        operation: 'update_elements_order',
+        affectedLayers: ['content'],
+        affectedUIComponents: ['canvas', 'element_list'],
+      );
     }
   }
 
@@ -680,7 +865,7 @@ mixin ElementManagementMixin on ChangeNotifier {
             final elements = page['elements'] as List<dynamic>;
             elements.add(e);
 
-            debugPrint(
+            EditPageLogger.controllerDebug(
                 '🚀 ElementManagement: Element added to page. Total elements now: ${elements.length}');
 
             // 选中新添加的元素并清除图层选择
@@ -689,9 +874,25 @@ mixin ElementManagementMixin on ChangeNotifier {
             state.selectedLayerId = null; // 🔧 清除图层选择，确保显示元素属性
             state.hasUnsavedChanges = true;
 
-            debugPrint(
-                '🚀 ElementManagement: Element selected and notifying listeners');
-            notifyListeners();
+            EditPageLogger.controllerDebug(
+                '🚀 ElementManagement: Element selected and triggering intelligent notification');
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            intelligentNotify(
+              changeType: 'element_add',
+              eventData: {
+                'elementId': e['id'],
+                'elementType': e['type'],
+                'elementCount': elements.length,
+                'isSelected': true,
+                'operation': 'add_element',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'add_element',
+              affectedElements: [e['id'] as String],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           } else {
             EditPageLogger.controllerError('无效的页面索引');
           }
@@ -712,7 +913,22 @@ mixin ElementManagementMixin on ChangeNotifier {
             }
 
             state.hasUnsavedChanges = true;
-            notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            intelligentNotify(
+              changeType: 'element_remove',
+              eventData: {
+                'elementId': id,
+                'remainingElementCount': elements.length,
+                'wasSelected': state.selectedElementIds.isEmpty,
+                'operation': 'remove_element_undo',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'remove_element',
+              affectedElements: [id],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           }
         });
 
@@ -793,7 +1009,20 @@ mixin ElementManagementMixin on ChangeNotifier {
                   }
                   
                   state.hasUnsavedChanges = true;
-                  notifyListeners();
+                  
+                  // 🚀 使用智能通知替代直接notifyListeners（撤销操作中的元素属性更新）
+                  intelligentNotify(
+                    changeType: 'element_undo_redo',
+                    eventData: {
+                      'elementId': id,
+                      'operation': 'element_property_undo_redo',
+                      'timestamp': DateTime.now().toIso8601String(),
+                    },
+                    operation: 'element_property_undo_redo',
+                    affectedElements: [id],
+                    affectedLayers: ['content'],
+                    affectedUIComponents: ['property_panel'],
+                  );
                 }
               }
             },
@@ -809,7 +1038,22 @@ mixin ElementManagementMixin on ChangeNotifier {
       }
 
       state.hasUnsavedChanges = true;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器替代直接的notifyListeners
+      intelligentNotify(
+        changeType: 'element_batch_update',
+        eventData: {
+          'elementIds': updatedElementIds.toList(),
+          'elementCount': updatedElementIds.length,
+          'operation': 'batch_update',
+          'hasUndoOperation': options.recordUndoOperation,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        operation: 'batch_update',
+        affectedElements: updatedElementIds.toList(),
+        affectedLayers: ['content'],
+        affectedUIComponents: ['property_panel', 'canvas'],
+      );
     }
   }
 

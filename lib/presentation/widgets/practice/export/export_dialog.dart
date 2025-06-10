@@ -241,6 +241,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildExportTypeSelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportFormat}:',
@@ -271,6 +272,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildFileNameInput() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.fileName}:',
@@ -294,6 +296,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildFitPolicySelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogFitPolicy}:',
@@ -374,6 +377,7 @@ class _ExportDialogState extends State<ExportDialog> {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label),
@@ -408,6 +412,7 @@ class _ExportDialogState extends State<ExportDialog> {
               ),
             ),
             Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // 增加按钮
@@ -444,6 +449,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildMarginsInput() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogPageMargins}:',
@@ -476,6 +482,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildOrientationSelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogPageOrientation}:',
@@ -605,6 +612,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildOutputPathSelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogLocation}:',
@@ -641,6 +649,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildPageRangeSelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogPageRange}:',
@@ -742,13 +751,13 @@ class _ExportDialogState extends State<ExportDialog> {
     };
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogPageSize}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Expanded(
-          child: DropdownButtonFormField<PdfPageFormat>(
+        DropdownButtonFormField<PdfPageFormat>(
             value: _pageFormat,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
@@ -774,7 +783,6 @@ class _ExportDialogState extends State<ExportDialog> {
               }
             },
           ),
-        ),
       ],
     );
   }
@@ -783,6 +791,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Widget _buildPixelRatioSelector() {
     final l10n = AppLocalizations.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${l10n.exportDialogOutputQuality}:',
@@ -822,6 +831,7 @@ class _ExportDialogState extends State<ExportDialog> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
@@ -843,7 +853,8 @@ class _ExportDialogState extends State<ExportDialog> {
             ],
           ),
           const SizedBox(height: 16),
-          Expanded(
+          SizedBox(
+            height: 350, // 给预览区域一个固定高度，替代Expanded
             child: _isLoadingPreview
                 ? const Center(child: CircularProgressIndicator())
                 : _previewImage != null

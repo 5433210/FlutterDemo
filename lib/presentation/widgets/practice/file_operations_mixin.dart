@@ -2,12 +2,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../application/services/practice/practice_service.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'canvas_capture.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 import 'thumbnail_generator.dart';
 
 /// 文件操作混入类 - 负责文件的保存和加载
-mixin FileOperationsMixin on ChangeNotifier {
+mixin FileOperationsMixin on ChangeNotifier implements IntelligentNotificationMixin {
   PracticeEditState get state;
   PracticeService get practiceService;
   
@@ -58,7 +60,30 @@ mixin FileOperationsMixin on ChangeNotifier {
       state.selectedLayerId = null;
 
       state.markSaved();
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'file_load',
+        operation: 'loadPractice',
+        eventData: {
+          'practiceId': practiceId,
+          'practiceTitle': practiceTitle,
+          'pageCount': state.pages.length,
+          'currentPageIndex': state.currentPageIndex,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['page_list', 'canvas', 'property_panel', 'toolbar'],
+        affectedLayers: ['content', 'interaction'], // 文件加载影响内容和交互层
+      );
+
+      EditPageLogger.fileOpsInfo(
+        '文件加载成功',
+        data: {
+          'practiceId': practiceId,
+          'practiceTitle': practiceTitle,
+          'pageCount': state.pages.length,
+        },
+      );
 
       return true;
     } catch (e) {
@@ -121,7 +146,30 @@ mixin FileOperationsMixin on ChangeNotifier {
       practiceTitle = saveTitle;
 
       state.markSaved();
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'file_save',
+        operation: 'savePractice',
+        eventData: {
+          'practiceId': practiceId,
+          'practiceTitle': saveTitle,
+          'pageCount': state.pages.length,
+          'hasThumbnail': thumbnail != null,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['title_bar', 'status_bar', 'file_menu'],
+        affectedLayers: ['interaction'], // 文件保存主要影响交互层
+      );
+
+      EditPageLogger.fileOpsInfo(
+        '文件保存成功',
+        data: {
+          'practiceId': practiceId,
+          'practiceTitle': saveTitle,
+          'pageCount': state.pages.length,
+        },
+      );
 
       debugPrint('字帖保存成功: $saveTitle, ID: $practiceId');
       return true;
@@ -180,7 +228,30 @@ mixin FileOperationsMixin on ChangeNotifier {
       practiceTitle = title;
 
       state.markSaved();
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'file_save_as',
+        operation: 'saveAsNewPractice',
+        eventData: {
+          'practiceId': practiceId,
+          'practiceTitle': title,
+          'pageCount': state.pages.length,
+          'hasThumbnail': thumbnail != null,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['title_bar', 'status_bar', 'file_menu'],
+        affectedLayers: ['interaction'], // 另存为主要影响交互层
+      );
+
+      EditPageLogger.fileOpsInfo(
+        '文件另存为成功',
+        data: {
+          'practiceId': practiceId,
+          'practiceTitle': title,
+          'pageCount': state.pages.length,
+        },
+      );
 
       debugPrint('字帖另存为成功: $title, ID: $practiceId');
       return true;
@@ -193,9 +264,32 @@ mixin FileOperationsMixin on ChangeNotifier {
   /// 更新字帖标题
   void updatePracticeTitle(String newTitle) {
     if (practiceTitle != newTitle) {
+      final oldTitle = practiceTitle;
       practiceTitle = newTitle;
       state.markUnsaved();
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'file_title_update',
+        operation: 'updatePracticeTitle',
+        eventData: {
+          'oldTitle': oldTitle,
+          'newTitle': newTitle,
+          'practiceId': practiceId,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['title_bar', 'status_bar'],
+        affectedLayers: ['interaction'], // 标题更新主要影响交互层
+      );
+
+      EditPageLogger.fileOpsInfo(
+        '文件标题更新',
+        data: {
+          'oldTitle': oldTitle,
+          'newTitle': newTitle,
+          'practiceId': practiceId,
+        },
+      );
     }
   }
 

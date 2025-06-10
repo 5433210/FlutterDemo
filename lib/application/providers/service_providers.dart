@@ -9,8 +9,11 @@ import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../infrastructure/services/character_image_service.dart';
 import '../../infrastructure/services/character_image_service_impl.dart';
+import '../../infrastructure/monitoring/performance_monitor.dart';
 import '../../infrastructure/storage/library_storage.dart';
 import '../../infrastructure/storage/library_storage_service.dart';
+import '../../presentation/widgets/practice/collection_element_renderer_optimized.dart';
+import '../../infrastructure/cache/services/optimized_image_cache_service.dart';
 import '../repositories/library_repository_impl.dart';
 import '../services/library_import_service.dart';
 import '../services/library_service.dart';
@@ -128,4 +131,26 @@ final workServiceProvider = Provider<WorkService>((ref) {
 final workStorageProvider = Provider<WorkStorageService>((ref) {
   final storage = ref.watch(initializedStorageProvider);
   return WorkStorageService(storage: storage);
+});
+
+/// 🚀 性能监控器Provider
+final performanceMonitorProvider = Provider<PerformanceMonitor>((ref) {
+  return PerformanceMonitor();
+});
+
+/// 🚀 优化的图像缓存服务Provider
+final optimizedImageCacheServiceProvider = Provider<OptimizedImageCacheService>((ref) {
+  final performanceMonitor = ref.watch(performanceMonitorProvider);
+  return OptimizedImageCacheService(performanceMonitor);
+});
+
+/// 🚀 优化的集字渲染器Provider
+final optimizedCollectionRendererProvider = Provider<OptimizedCollectionElementRenderer>((ref) {
+  final characterImageService = ref.watch(characterImageServiceProvider);
+  final optimizedCache = ref.watch(optimizedImageCacheServiceProvider);
+  
+  return OptimizedCollectionElementRenderer(
+    characterImageService,
+    optimizedCache,
+  );
 });

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 
 /// 工具管理功能 Mixin
-mixin ToolManagementMixin on ChangeNotifier {
+mixin ToolManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   void checkDisposed();
@@ -21,7 +22,19 @@ mixin ToolManagementMixin on ChangeNotifier {
       
       EditPageLogger.controllerInfo('工具切换', 
         data: {'oldTool': oldTool, 'newTool': toolName});
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'tool_change',
+        operation: 'setCurrentTool',
+        eventData: {
+          'oldTool': oldTool,
+          'newTool': toolName,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['toolbar', 'property_panel', 'canvas_overlay'],
+        affectedLayers: ['interaction'], // 工具切换主要影响交互层
+      );
     }
   }
 
@@ -47,7 +60,18 @@ mixin ToolManagementMixin on ChangeNotifier {
       state.snapEnabled = enabled;
       EditPageLogger.controllerInfo('吸附功能状态变更', 
         data: {'enabled': enabled});
-      notifyListeners();
+      
+      // 🚀 使用智能通知替代 notifyListeners
+      intelligentNotify(
+        changeType: 'tool_snap_change',
+        operation: 'setSnapEnabled',
+        eventData: {
+          'enabled': enabled,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        affectedUIComponents: ['toolbar', 'snap_indicator'],
+        affectedLayers: ['interaction'], // 吸附功能影响交互层
+      );
     }
   }
 
@@ -58,7 +82,18 @@ mixin ToolManagementMixin on ChangeNotifier {
     state.snapEnabled = newState;
     EditPageLogger.controllerInfo('切换吸附功能', 
       data: {'enabled': newState});
-    notifyListeners();
+    
+    // 🚀 使用智能通知替代 notifyListeners
+    intelligentNotify(
+      changeType: 'tool_snap_toggle',
+      operation: 'toggleSnap',
+      eventData: {
+        'enabled': newState,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      affectedUIComponents: ['toolbar', 'snap_indicator'],
+      affectedLayers: ['interaction'], // 吸附功能影响交互层
+    );
   }
 
   /// 检查吸附功能是否启用

@@ -82,6 +82,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
   Timer? _heatMapUpdateTimer;
   Timer? _memoryPressureCheckTimer;
 
+  /// 智能通知控制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _minNotificationInterval = Duration(milliseconds: 100);
+
   /// 可预测的即将使用的元素ID集合
   final Set<String> _predictedElementIds = {};
 
@@ -313,7 +317,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
       },
     );
 
-    notifyListeners();
+    // 条件通知：只在必要时通知监听器
+    if (hasListeners) {
+      notifyListeners();
+    }
   }
 
   /// 存储元素到缓存
@@ -436,8 +443,10 @@ class AdvancedElementCacheManager extends ChangeNotifier {
           break;
       }
 
-      // 通知监听器
-      notifyListeners();
+      // 条件通知：只在内存压力显著变化时通知监听器
+      if (hasListeners) {
+        notifyListeners();
+      }
     }
   }
 
@@ -661,6 +670,25 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     }
   }
 
+  /// 智能通知：避免过于频繁的UI更新
+  void _intelligentNotify() {
+    if (!hasListeners) return;
+
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _minNotificationInterval) {
+      _lastNotificationTime = now;
+      notifyListeners();
+      
+      EditPageLogger.performanceInfo(
+        '智能通知触发',
+        data: {
+          'notificationType': 'cache_update',
+          'timeSinceLastNotification': now.difference(_lastNotificationTime).inMilliseconds,
+        },
+      );
+    }
+  }
+
   /// 更新热度图
   void _updateHeatMap() {
     // 重置热度图
@@ -677,8 +705,8 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     // 使用热度信息调整基础缓存优先级
     _adjustCachePrioritiesBasedOnHeat();
 
-    // 通知监听器
-    notifyListeners();
+    // 智能通知：避免频繁的热度图更新通知
+    _intelligentNotify();
   }
 }
 

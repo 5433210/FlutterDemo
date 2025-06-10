@@ -3,12 +3,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'custom_operation.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 
 /// 图层管理功能 Mixin
-mixin LayerManagementMixin on ChangeNotifier {
+mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
@@ -57,82 +58,25 @@ mixin LayerManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
-  }
-
-  /// 添加新图层
-  void addNewLayer() {
-    checkDisposed();
     
-    EditPageLogger.controllerDebug('添加新图层');
-    
-    // 确保有当前页面
-    if (state.currentPage == null) {
-      EditPageLogger.controllerWarning('没有当前页面，无法添加图层');
-      return;
-    }
-    
-    final layerName = '图层 ${state.layers.length + 1}';
-    final newLayer = {
-      'id': 'layer_${uuid.v4()}',
-      'name': layerName,
-      'isVisible': true,
-      'isLocked': false,
-      'opacity': 1.0,
-      'blendMode': 'normal',
-    };
-
-    EditPageLogger.controllerDebug(
-      '创建新图层',
-      data: {
+    // 🚀 使用智能状态分发器通知图层添加
+    intelligentNotify(
+      changeType: 'layer_add',
+      eventData: {
         'layerId': newLayer['id'],
-        'layerName': layerName,
-        'operation': 'add_new_layer',
-      },
-    );
-
-    // 直接操作当前页面的图层列表
-    if (!state.currentPage!.containsKey('layers')) {
-      state.currentPage!['layers'] = <Map<String, dynamic>>[];
-      EditPageLogger.controllerDebug(
-        '创建新图层列表',
-        data: {
-          'operation': 'create_layers_list',
-        },
-      );
-    }
-    final layers = state.currentPage!['layers'] as List<dynamic>;
-    layers.add(newLayer);
-    
-    EditPageLogger.controllerInfo(
-      '图层添加到页面完成',
-      data: {
-        'layerId': newLayer['id'],
-        'totalLayers': layers.length,
-        'operation': 'layer_added_to_page',
-      },
-    );
-    
-    state.selectedLayerId = newLayer['id'] as String;
-    EditPageLogger.controllerDebug(
-      '选择新创建的图层',
-      data: {
+        'layerName': newLayer['name'],
+        'totalLayers': state.layers.length,
         'selectedLayerId': state.selectedLayerId,
-        'operation': 'layer_selected',
+        'operation': 'add_layer',
       },
+      operation: 'add_layer',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel', 'toolbar'],
     );
-    
-    markUnsaved();
-    
-    EditPageLogger.controllerDebug(
-      '添加新图层操作完成',
-      data: {
-        'layerId': newLayer['id'],
-        'operation': 'add_new_layer_completed',
-      },
-    );
-    notifyListeners();
   }
+
+  /// 添加新图层 - addLayer的别名，用于UI回调
+  void addNewLayer() => addLayer();
 
   void checkDisposed();
 
@@ -160,7 +104,19 @@ mixin LayerManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知所有图层删除
+    intelligentNotify(
+      changeType: 'layer_delete_all',
+      eventData: {
+        'deletedLayersCount': oldLayers.length,
+        'oldSelectedLayerId': oldSelectedLayerId,
+        'operation': 'delete_all_layers',
+      },
+      operation: 'delete_all_layers',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   /// 删除图层
@@ -224,7 +180,23 @@ mixin LayerManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知图层删除
+    intelligentNotify(
+      changeType: 'layer_delete',
+      eventData: {
+        'layerId': layerId,
+        'layerName': deletedLayer['name'],
+        'layerIndex': layerIndex,
+        'elementsCount': elementsOnLayer.length,
+        'totalLayers': state.layers.length,
+        'selectedLayerId': state.selectedLayerId,
+        'operation': 'delete_layer',
+      },
+      operation: 'delete_layer',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   void duplicateLayer(String layerId) {
@@ -304,7 +276,7 @@ mixin LayerManagementMixin on ChangeNotifier {
               state.selectedLayerId = newLayerId;
               state.hasUnsavedChanges = true;
             }
-            notifyListeners();
+            // 注意：这里不直接调用notifyListeners，由外层的intelligentNotify处理
           },
           undo: () {
             if (state.currentPageIndex >= 0 &&
@@ -318,7 +290,7 @@ mixin LayerManagementMixin on ChangeNotifier {
 
               state.hasUnsavedChanges = true;
             }
-            notifyListeners();
+            // 注意：这里不直接调用notifyListeners，由外层的intelligentNotify处理
           },
           description: '添加复制图层中的元素',
         ),
@@ -327,6 +299,23 @@ mixin LayerManagementMixin on ChangeNotifier {
     );
 
     undoRedoManager.addOperation(operation);
+    
+    // 🚀 使用智能状态分发器通知图层复制
+    intelligentNotify(
+      changeType: 'layer_duplicate',
+      eventData: {
+        'originalLayerId': layerId,
+        'duplicatedLayerId': newLayerId,
+        'originalLayerName': originalLayer['name'],
+        'duplicatedLayerName': duplicatedLayer['name'],
+        'elementsCount': elementsOnLayer.length,
+        'totalLayers': state.layers.length,
+        'operation': 'duplicate_layer',
+      },
+      operation: 'duplicate_layer',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel', 'toolbar'],
+    );
   }
 
   // void markUnsaved();
@@ -361,7 +350,22 @@ mixin LayerManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知图层移动
+    intelligentNotify(
+      changeType: 'layer_reorder',
+      eventData: {
+        'layerId': layerId,
+        'layerName': layer['name'],
+        'oldIndex': currentIndex,
+        'newIndex': newIndex,
+        'totalLayers': state.layers.length,
+        'operation': 'move_layer',
+      },
+      operation: 'move_layer',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel'],
+    );
   }
 
   /// 重命名图层
@@ -395,7 +399,20 @@ mixin LayerManagementMixin on ChangeNotifier {
     }
 
     state.hasUnsavedChanges = true;
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知图层重排序
+    intelligentNotify(
+      changeType: 'layer_reorder',
+      eventData: {
+        'oldIndex': oldIndex,
+        'newIndex': newIndex,
+        'totalLayers': layers.length,
+        'operation': 'reorder_layer',
+      },
+      operation: 'reorder_layer',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel'],
+    );
   }
 
   /// 重新排序图层
@@ -432,11 +449,25 @@ mixin LayerManagementMixin on ChangeNotifier {
         }
 
         state.hasUnsavedChanges = true;
-        notifyListeners();
+        // 注意：这里不直接调用notifyListeners，由外层的intelligentNotify处理
       },
     );
 
     undoRedoManager.addOperation(operation);
+    
+    // 🚀 使用智能状态分发器通知图层重排序
+    intelligentNotify(
+      changeType: 'layer_reorder',
+      eventData: {
+        'oldIndex': oldIndex,
+        'newIndex': newIndex,
+        'totalLayers': state.layers.length,
+        'operation': 'reorder_layers',
+      },
+      operation: 'reorder_layers',
+      affectedLayers: ['content'],
+      affectedUIComponents: ['layer_panel'],
+    );
   }
 
   /// 选择图层
@@ -448,8 +479,21 @@ mixin LayerManagementMixin on ChangeNotifier {
     
     final layers = state.currentPage!['layers'] as List<dynamic>;
     if (layers.any((l) => l['id'] == layerId)) {
+      final oldSelectedLayerId = state.selectedLayerId;
       state.selectedLayerId = layerId;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知图层选择
+      intelligentNotify(
+        changeType: 'layer_select',
+        eventData: {
+          'layerId': layerId,
+          'layerName': layers.firstWhere((l) => l['id'] == layerId)['name'],
+          'oldSelectedLayerId': oldSelectedLayerId,
+          'operation': 'select_layer',
+        },
+        operation: 'select_layer',
+        affectedUIComponents: ['layer_panel', 'property_panel'],
+      );
     }
   }
 
@@ -516,8 +560,16 @@ mixin LayerManagementMixin on ChangeNotifier {
 
       undoRedoManager.addOperation(batchOperation);
     } else {
-      // 如果没有需要修改的图层，直接通知UI刷新
-      notifyListeners();
+      // 如果没有需要修改的图层，使用智能通知刷新UI
+      intelligentNotify(
+        changeType: 'layer_update',
+        eventData: {
+          'operation': 'show_all_layers_no_change',
+          'totalLayers': layers.length,
+        },
+        operation: 'show_all_layers_no_change',
+        affectedUIComponents: ['layer_panel'],
+      );
     }
   }
 
@@ -533,7 +585,19 @@ mixin LayerManagementMixin on ChangeNotifier {
     if (layerIndex >= 0) {
       layers[layerIndex]['isLocked'] = isLocked;
       state.hasUnsavedChanges = true;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知图层锁定状态切换
+      intelligentNotify(
+        changeType: 'layer_update',
+        eventData: {
+          'layerId': layerId,
+          'layerName': layers[layerIndex]['name'],
+          'isLocked': isLocked,
+          'operation': 'toggle_layer_lock',
+        },
+        operation: 'toggle_layer_lock',
+        affectedUIComponents: ['layer_panel', 'property_panel'],
+      );
     }
   }
 
@@ -549,7 +613,20 @@ mixin LayerManagementMixin on ChangeNotifier {
     if (layerIndex >= 0) {
       layers[layerIndex]['isVisible'] = isVisible;
       state.hasUnsavedChanges = true;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知图层可见性切换
+      intelligentNotify(
+        changeType: 'layer_update',
+        eventData: {
+          'layerId': layerId,
+          'layerName': layers[layerIndex]['name'],
+          'isVisible': isVisible,
+          'operation': 'toggle_layer_visibility',
+        },
+        operation: 'toggle_layer_visibility',
+        affectedLayers: ['content'],
+        affectedUIComponents: ['layer_panel', 'property_panel'],
+      );
     }
   }
 
@@ -631,7 +708,23 @@ mixin LayerManagementMixin on ChangeNotifier {
     markUnsaved();
     
     EditPageLogger.controllerDebug('🔚 LayerManagementMixin: updateLayerProperties completed');
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知图层属性更新
+    intelligentNotify(
+      changeType: 'layer_update',
+      eventData: {
+        'layerId': layerId,
+        'layerName': layer['name'],
+        'updatedProperties': properties.keys.toList(),
+        'hasVisibilityChange': properties.containsKey('isVisible'),
+        'hasLockChange': properties.containsKey('isLocked'),
+        'hasOpacityChange': properties.containsKey('opacity'),
+        'operation': 'update_layer_properties',
+      },
+      operation: 'update_layer_properties',
+      affectedLayers: properties.containsKey('isVisible') ? ['content'] : null,
+      affectedUIComponents: ['layer_panel', 'property_panel'],
+    );
   }
 
   /// 创建自定义操作

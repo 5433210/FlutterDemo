@@ -114,6 +114,23 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                   _controller
                       .togglePreviewMode(_isPreviewMode); // Notify controller
                 });
+                
+                // Reset view position when toggling preview mode
+                EditPageLogger.editPageInfo(
+                  '预览模式切换后重置视图位置',
+                  data: {
+                    'isPreviewMode': _isPreviewMode,
+                    'operation': 'preview_toggle_reset_view',
+                    'timestamp': DateTime.now().toIso8601String(),
+                  },
+                );
+                
+                // 延迟重置视图位置，确保预览模式UI完全更新完成
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) {
+                    _controller.resetViewPosition();
+                  }
+                });
               },
               showThumbnails: _showThumbnails,
               onThumbnailToggle: (bool value) {
@@ -287,13 +304,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Add a new page
   void _addNewPage() {
-    // Use controller directly without setState since it will notify listeners
-    PracticeEditUtils.addNewPage(_controller, context);
-    // Only trigger a rebuild if we're not in a drag operation
-    if (_canvasKey.currentState == null ||
-        !_canvasKey.currentState!.context.mounted) {
-      setState(() {});
-    }
+    // Use controller's mixin method which includes proper state management
+    _controller.addNewPage();
+    // The controller will notify listeners automatically through intelligent notification
   }
 
   /// 应用格式刷样式到选中元素
@@ -492,8 +505,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             // 标记有未保存的更改
             _controller.state.hasUnsavedChanges = true;
 
-            // 通知监听器
-            _controller.notifyListeners();
+            // 通知监听器已由setCurrentTool处理
           }
         }
       },
@@ -564,15 +576,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
               // Edit canvas - NOT wrapped in AnimatedBuilder to prevent rebuilds
               Expanded(
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height - 150,
-                  child: ProviderScope(
-                    child: M3PracticeEditCanvas(
-                      key: _canvasKey,
-                      controller: _controller,
-                      isPreviewMode: _isPreviewMode,
-                      transformationController: _transformationController,
-                    ),
+                child: ProviderScope(
+                  child: M3PracticeEditCanvas(
+                    key: _canvasKey,
+                    controller: _controller,
+                    isPreviewMode: _isPreviewMode,
+                    transformationController: _transformationController,
                   ),
                 ),
               ),
@@ -647,8 +656,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                   } else {
                     _currentTool = tool;
                     // 同步到controller的状态
-                    _controller.state.currentTool = tool;
-                    _controller.notifyListeners(); // 通知监听器更新
+                    _controller.setCurrentTool(tool);
                     AppLogger.info(
                       '工具切换',
                       tag: 'PracticeEdit',
@@ -732,9 +740,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       pages: _controller.state.pages,
       currentPageIndex: _controller.state.currentPageIndex,
       onPageSelected: (index) {
-        setState(() {
-          _controller.state.currentPageIndex = index;
-        });
+        _controller.switchToPage(index);
       },
       onAddPage: _addNewPage,
       onDeletePage: _deletePage,
@@ -1313,15 +1319,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     return copy;
   }
 
-  /// Delete a page  /// Delete a page
+  /// Delete a page
   void _deletePage(int index) {
-    // Use controller directly without setState since it will notify listeners
-    PracticeEditUtils.deletePage(_controller, index, context);
-    // Only trigger a rebuild if we're not in a drag operation
-    if (_canvasKey.currentState == null ||
-        !_canvasKey.currentState!.context.mounted) {
-      setState(() {});
-    }
+    // Use controller's mixin method which includes proper state management
+    _controller.deletePage(index);
+    // The controller will notify listeners automatically through intelligent notification
   }
 
   /// Delete selected elements
@@ -1841,8 +1843,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           } else {
             _currentTool = tool;
             // 同步到controller的状态
-            _controller.state.currentTool = tool;
-            _controller.notifyListeners(); // 通知监听器更新
+            _controller.setCurrentTool(tool);
             AppLogger.info(
               '工具切换',
               tag: 'PracticeEdit',
@@ -2444,9 +2445,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Reorder pages
   void _reorderPages(int oldIndex, int newIndex) {
-    setState(() {
-      PracticeEditUtils.reorderPages(_controller, oldIndex, newIndex);
-    });
+    // Use controller's mixin method which includes proper state management
+    _controller.reorderPages(oldIndex, newIndex);
+    // The controller will notify listeners automatically through intelligent notification
   }
 
   /// Save as new practice

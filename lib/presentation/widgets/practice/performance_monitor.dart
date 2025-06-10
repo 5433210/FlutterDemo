@@ -11,6 +11,10 @@ import 'performance_dashboard.dart';
 class PerformanceMonitor extends ChangeNotifier {
   static final PerformanceMonitor _instance = PerformanceMonitor._internal();
   
+  // 🚀 性能优化：节流通知机制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 500); // 最多每500ms通知一次
+  
   // Performance thresholds
   static const double _fpsThresholdHigh = 55.0;
   static const double _fpsThresholdMedium = 30.0;
@@ -53,6 +57,31 @@ class PerformanceMonitor extends ChangeNotifier {
   factory PerformanceMonitor() => _instance;
 
   PerformanceMonitor._internal();
+
+  /// 🚀 节流通知方法 - 避免性能监控本身影响性能
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '性能监控通知',
+        data: {
+          'operation': operation,
+          'currentFPS': _currentFPS,
+          'totalRebuilds': _totalRebuilds,
+          'slowFrameCount': _slowFrameCount,
+          'optimization': 'throttled_performance_notification',
+          ...?data,
+        },
+      );
+      
+      notifyListeners();
+    }
+  }
   Duration get averageFrameTime => _averageFrameTime;
   // Getters for current metrics
   double get currentFPS => _currentFPS;
@@ -335,7 +364,14 @@ class PerformanceMonitor extends ChangeNotifier {
     _widgetRebuildCounts.clear();
     _totalRebuilds = 0;
     _memoryHistory.clear();
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'reset_metrics',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   /// 设置拖拽状态管理器以便监控拖拽性能
@@ -433,9 +469,16 @@ class PerformanceMonitor extends ChangeNotifier {
     _lastFrameTime = now;
     _frameCount++;
 
-    // 每60帧（大约1秒）通知监听器一次，避免过于频繁的更新
+    // 🚀 每60帧（大约1秒）使用节流通知，避免过于频繁的更新
     if (_frameCount % 60 == 0) {
-      notifyListeners();
+      _throttledNotifyListeners(
+        operation: 'track_frame',
+        data: {
+          'frameCount': _frameCount,
+          'frameTime_ms': frameTime,
+          'isDragging': _dragStateManager?.isDragging ?? false,
+        },
+      );
     }
   }
 

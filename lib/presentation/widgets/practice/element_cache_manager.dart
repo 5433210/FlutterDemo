@@ -1,7 +1,10 @@
 import 'dart:math' as math;
+import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -258,6 +261,12 @@ class ElementCacheManager extends ChangeNotifier {
   /// Memory manager for comprehensive resource tracking
   MemoryManager? _memoryManager;
 
+  /// 🚀 节流通知相关
+  Timer? _notificationTimer;
+  bool _hasPendingUpdate = false;
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+
   /// 创建一个新的元素缓存管理器
   ElementCacheManager({
     CacheStrategy strategy = CacheStrategy.leastRecentlyUsed,
@@ -420,7 +429,14 @@ class ElementCacheManager extends ChangeNotifier {
       );
     }
 
-    notifyListeners();
+    _throttledNotifyListeners(operation: 'cleanupCache', data: {
+      'removedCount': removedCount,
+      'freedMemory': freedMemory,
+      'freedMemoryReadable': _formatBytes(freedMemory),
+      'newCacheSize': _cache.length,
+      'newMemoryUsage': _metrics.currentMemoryUsage,
+      'newMemoryUsageReadable': _formatBytes(_metrics.currentMemoryUsage),
+    });
   }
 
   /// 检查元素是否需要更新
@@ -471,7 +487,9 @@ class ElementCacheManager extends ChangeNotifier {
       },
     );
 
-    notifyListeners();
+    _throttledNotifyListeners(operation: 'markAllElementsForUpdate', data: {
+      'elementCount': _elementsNeedingUpdate.length,
+    });
   }
 
   /// 标记指定元素需要更新
@@ -495,7 +513,10 @@ class ElementCacheManager extends ChangeNotifier {
       },
     );
 
-    notifyListeners();
+    _throttledNotifyListeners(operation: 'markElementForUpdate', data: {
+      'elementId': elementId,
+      'wasInCache': removedEntry != null,
+    });
   }
 
   /// 标记多个元素需要更新
@@ -529,7 +550,10 @@ class ElementCacheManager extends ChangeNotifier {
     }
 
     if (elementIds.isNotEmpty) {
-      notifyListeners();
+      _throttledNotifyListeners(operation: 'markElementsForUpdate', data: {
+        'elementCount': elementIds.length,
+        'removedMemory': removedMemory,
+      });
     }
   }
 
@@ -561,7 +585,11 @@ class ElementCacheManager extends ChangeNotifier {
       },
     );
 
-    notifyListeners();
+    _throttledNotifyListeners(operation: 'reset', data: {
+      'clearedCacheSize': _cache.length,
+      'clearedUpdateElements': _elementsNeedingUpdate.length,
+      'clearedPinnedElements': _pinnedElements.length,
+    });
   }
 
   /// Set memory manager for resource tracking
@@ -616,6 +644,12 @@ class ElementCacheManager extends ChangeNotifier {
       // 使用Future.microtask延迟清理，避免在构建过程中执行
       Future.microtask(() => cleanupCache());
     }
+
+    _throttledNotifyListeners(operation: 'storeElementWidget', data: {
+      'elementId': elementId,
+      'estimatedSize': estimatedSize,
+      'priority': priority.toString(),
+    });
   }
 
   /// 取消固定元素
@@ -701,5 +735,49 @@ class ElementCacheManager extends ChangeNotifier {
       },
     );
     cleanupCache(force: false);
+  }
+
+  /// 🚀 节流通知方法 - 避免缓存管理器过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '元素缓存管理器通知',
+        data: {
+          'operation': operation,
+          'cacheSize': _cache.length,
+          'optimization': 'throttled_cache_manager_notification',
+          ...?data,
+        },
+      );
+      
+      super.notifyListeners();
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+          
+          EditPageLogger.performanceInfo(
+            '元素缓存管理器延迟通知',
+            data: {
+              'operation': operation,
+              'cacheSize': _cache.length,
+              'optimization': 'throttled_delayed_cache_notification',
+              ...?data,
+            },
+          );
+          
+          super.notifyListeners();
+        });
+      }
+    }
   }
 }

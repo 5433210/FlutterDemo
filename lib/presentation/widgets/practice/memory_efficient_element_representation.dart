@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'enhanced_ondemand_resource_loader.dart';
 import 'memory_manager.dart';
 
@@ -49,7 +52,7 @@ enum ElementRepresentationMode {
 }
 
 /// Enhanced memory-efficient element representation system
-class MemoryEfficientElementRepresentation extends ChangeNotifier {
+class MemoryEfficientElementRepresentation with ChangeNotifier {
   static const int _largeElementThreshold = 1024 * 1024; // 1MB
   static const int _previewDimension = 128; // 128x128 preview thumbnails
   static const double _compressionQuality =
@@ -62,17 +65,28 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
   final Map<String, Uint8List> _compressedData = {};
   final Set<String> _loadingElements = {};
 
-  /// Performance tracking
+  // 优化配置
+  final int _maxCachedRepresentations;
+
+  // 性能统计
   int _totalRepresentations = 0;
   int _memoryOptimizedCount = 0;
   int _previewGeneratedCount = 0;
   int _compressionSavedBytes = 0;
 
+  // 🚀 节流通知相关
+  Timer? _notificationTimer;
+  bool _hasPendingUpdate = false;
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+
   MemoryEfficientElementRepresentation({
     required MemoryManager memoryManager,
     required EnhancedOnDemandResourceLoader resourceLoader,
+    int maxCachedRepresentations = 10,
   })  : _memoryManager = memoryManager,
-        _resourceLoader = resourceLoader {
+        _resourceLoader = resourceLoader,
+        _maxCachedRepresentations = maxCachedRepresentations {
     _initializeRepresentationSystem();
   }
 
@@ -91,7 +105,16 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
     _representations.clear();
     _compressedData.clear();
     _loadingElements.clear();
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'clear_all_representations',
+      data: {
+        'clearedRepresentations': _representations.length,
+        'clearedCompressedData': _compressedData.length,
+        'clearedLoadingElements': _loadingElements.length,
+      },
+    );
 
     if (kDebugMode) {
       debugPrint(
@@ -124,7 +147,16 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
           await _generateRepresentation(elementId, elementData, mode);
       if (representation != null) {
         _representations[elementId] = representation;
-        notifyListeners();
+        
+        // 🚀 使用节流通知替代直接notifyListeners
+        _throttledNotifyListeners(
+          operation: 'create_representation',
+          data: {
+            'elementId': elementId,
+            'mode': representation.mode.toString(),
+            'totalRepresentations': _representations.length,
+          },
+        );
       }
       return representation;
     } finally {
@@ -175,7 +207,15 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
     final representation = _representations.remove(elementId);
     if (representation != null) {
       _compressedData.remove(elementId);
-      notifyListeners();
+      
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'remove_representation',
+        data: {
+          'elementId': elementId,
+          'remainingRepresentations': _representations.length,
+        },
+      );
     }
   }
 
@@ -625,6 +665,50 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 100));
     }
     return _representations[elementId];
+  }
+
+  /// 🚀 节流通知方法 - 避免内存高效表示管理器过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '内存高效表示管理器通知',
+        data: {
+          'operation': operation,
+          'representationCount': _representations.length,
+          'optimization': 'throttled_memory_efficient_notification',
+          ...?data,
+        },
+      );
+      
+      super.notifyListeners();
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+          
+          EditPageLogger.performanceInfo(
+            '内存高效表示管理器延迟通知',
+            data: {
+              'operation': operation,
+              'representationCount': _representations.length,
+              'optimization': 'throttled_delayed_memory_efficient_notification',
+              ...?data,
+            },
+          );
+          
+          super.notifyListeners();
+        });
+      }
+    }
   }
 }
 

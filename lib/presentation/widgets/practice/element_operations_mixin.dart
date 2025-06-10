@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
-import '../../pages/practices/widgets/state_change_dispatcher.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
@@ -14,54 +14,12 @@ import 'throttled_notification_mixin.dart'; // 包含所有节流混入
 
 /// 元素操作管理 Mixin
 /// 负责高级元素操作，如组合/解组、分布、元素变换等
-/// 🔧 性能优化：完全集成分层架构，避免全局UI重建
-mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationMixin, DragOptimizedNotificationMixin {
+/// 🔧 性能优化：完全集成智能状态分发架构，避免全局UI重建
+mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificationMixin, ThrottledNotificationMixin, DragOptimizedNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
-  
-  // 🔧 新增：分层架构接口
-  StateChangeDispatcher? get stateDispatcher;
-
-  /// 智能通知方法：优先使用分层架构，回退到节流通知
-  void _intelligentNotify({
-    StateChangeType changeType = StateChangeType.elementUpdate,
-    Map<String, dynamic>? eventData,
-    String operation = 'unknown',
-  }) {
-    if (stateDispatcher != null) {
-      // ✅ 使用分层架构进行精确更新
-      EditPageLogger.performanceInfo(
-        '使用分层架构进行精确更新',
-        data: {
-          'changeType': changeType.toString(),
-          'operation': operation,
-          'performanceOptimization': 'layer_specific_update',
-        },
-      );
-      
-      stateDispatcher!.dispatch(StateChangeEvent(
-        type: changeType,
-        data: eventData ?? {},
-      ));
-    } else {
-      // 🔄 回退：使用节流通知
-      EditPageLogger.performanceWarning(
-        'StateDispatcher不可用，使用节流通知',
-        data: {
-          'operation': operation,
-          'fallbackMethod': 'throttled_notification',
-        },
-      );
-      
-      if (this is ThrottledNotificationMixin) {
-        (this as ThrottledNotificationMixin).throttledNotifyListeners();
-      } else {
-        notifyListeners(); // 最后的回退方案
-      }
-    }
-  }
   
   /// 撤销/重做操作专用的更新方法
   /// 用于撤销操作的回调函数中，确保UI正确更新
@@ -79,15 +37,19 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
     
     state.hasUnsavedChanges = true;
     
-    // 使用智能通知
-    _intelligentNotify(
-      changeType: StateChangeType.elementUpdate,
+    // 🚀 使用新的智能通知架构
+    intelligentNotify(
+      changeType: 'element_undo_redo',
+      operation: operation,
       eventData: {
-        'elementIds': [elementId],
+        'elementId': elementId,
         'operation': operation,
         'source': 'undo_redo',
+        'timestamp': DateTime.now().toIso8601String(),
       },
-      operation: operation,
+      affectedElements: [elementId],
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['property_panel', 'canvas'],
     );
   }
 
@@ -253,14 +215,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
     state.hasUnsavedChanges = true;
     
     // 🚀 使用分层架构通知元素对齐完成
-    _intelligentNotify(
-      changeType: StateChangeType.elementUpdate,
+    intelligentNotify(
+      changeType: 'element_align_elements',
+      operation: 'align_elements',
       eventData: {
-        'operation': 'align_elements',
         'alignmentType': alignment,
         'elementCount': operableElementIds.length,
       },
-      operation: 'align_elements',
+      affectedElements: elementIds,
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['canvas'],
     );
   }
 
@@ -566,13 +530,15 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           });
         }
         // 使用智能通知系统
-        _intelligentNotify(
-          changeType: StateChangeType.elementUpdate,
+        intelligentNotify(
+          changeType: 'element_redo_distribute',
+          operation: 'redo_distribute',
           eventData: {
-            'operation': 'redo_distribute',
             'elementIds': newState.keys.toList(),
           },
-          operation: 'redo_distribute',
+          affectedElements: newState.keys.toList(),
+          affectedLayers: ['content', 'interaction'],
+          affectedUIComponents: ['canvas'],
         );
       },
       undo: () {
@@ -584,13 +550,15 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           });
         }
         // 使用智能通知系统
-        _intelligentNotify(
-          changeType: StateChangeType.elementUpdate,
+        intelligentNotify(
+          changeType: 'element_undo_distribute',
+          operation: 'undo_distribute',
           eventData: {
-            'operation': 'undo_distribute',
             'elementIds': oldState.keys.toList(),
           },
-          operation: 'undo_distribute',
+          affectedElements: oldState.keys.toList(),
+          affectedLayers: ['content', 'interaction'],
+          affectedUIComponents: ['canvas'],
         );
       },
       description: '均匀分布元素',
@@ -600,14 +568,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
     state.hasUnsavedChanges = true;
     
     // 🚀 使用分层架构通知元素分布完成
-    _intelligentNotify(
-      changeType: StateChangeType.elementUpdate,
+    intelligentNotify(
+      changeType: 'element_distribute_elements',
+      operation: 'distribute_elements',
       eventData: {
-        'operation': 'distribute_elements',
         'direction': direction,
         'elementCount': elements.length,
       },
-      operation: 'distribute_elements',
+      affectedElements: elements.map((e) => e['id'] as String).toList(),
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['canvas'],
     );
   }
 
@@ -620,14 +590,17 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
     state.selectedElementIds.clear();
     
     // 🚀 使用分层架构通知选择变化
-    _intelligentNotify(
-      changeType: StateChangeType.selectionChange,
+    intelligentNotify(
+      changeType: 'element_selection_change',
+      operation: 'enter_group_edit_mode',
       eventData: {
         'selectedIds': state.selectedElementIds,
         'operation': 'enter_group_edit_mode',
         'groupId': groupId,
       },
-      operation: 'enter_group_edit_mode',
+      affectedElements: state.selectedElementIds,
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['canvas'],
     );
   }
 
@@ -766,14 +739,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知组合元素添加
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_add_group_element',
+            operation: 'add_group_element',
             eventData: {
-              'operation': 'add_group_element',
               'elementId': e['id'],
               'selectedIds': state.selectedElementIds,
             },
-            operation: 'add_group_element',
+            affectedElements: [e['id'] as String],
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -787,13 +762,15 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知元素移除
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_remove_element',
+            operation: 'remove_element',
             eventData: {
-              'operation': 'remove_element',
               'elementId': id,
             },
-            operation: 'remove_element',
+            affectedElements: [id],
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -807,13 +784,15 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知批量元素移除
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_remove_elements',
+            operation: 'remove_elements',
             eventData: {
-              'operation': 'remove_elements',
               'elementIds': ids,
             },
-            operation: 'remove_elements',
+            affectedElements: ids,
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -855,14 +834,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
     state.hasUnsavedChanges = true;
     
     // 🚀 使用分层架构通知元素锁定状态变化
-    _intelligentNotify(
-      changeType: StateChangeType.elementUpdate,
+    intelligentNotify(
+      changeType: 'element_toggle_element_lock',
+      operation: 'toggle_element_lock',
       eventData: {
-        'operation': 'toggle_element_lock',
         'elementId': elementId,
         'isLocked': isNowLocked,
       },
-      operation: 'toggle_element_lock',
+      affectedElements: [elementId],
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['canvas'],
     );
   }
 
@@ -914,15 +895,17 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
         state.hasUnsavedChanges = true;
 
         // 🚀 使用分层架构通知解组操作完成
-        _intelligentNotify(
-          changeType: StateChangeType.elementUpdate,
+        intelligentNotify(
+          changeType: 'element_ungroup_elements',
+          operation: 'ungroup_elements',
           eventData: {
-            'operation': 'ungroup_elements',
             'groupId': groupId,
             'newElementIds': newElementIds,
             'selectedIds': state.selectedElementIds,
           },
-          operation: 'ungroup_elements',
+          affectedElements: newElementIds,
+          affectedLayers: ['content', 'interaction'],
+          affectedUIComponents: ['canvas'],
         );
       }
     }
@@ -979,14 +962,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知解组添加元素
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_ungroup_add_element',
+            operation: 'ungroup_add_element',
             eventData: {
-              'operation': 'ungroup_add_element',
               'elementId': e['id'],
               'selectedIds': state.selectedElementIds,
             },
-            operation: 'ungroup_add_element',
+            affectedElements: [e['id'] as String],
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -1006,14 +991,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知解组移除元素
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_ungroup_remove_element',
+            operation: 'ungroup_remove_element',
             eventData: {
-              'operation': 'ungroup_remove_element',
               'elementId': id,
               'selectedIds': state.selectedElementIds,
             },
-            operation: 'ungroup_remove_element',
+            affectedElements: [id],
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -1032,14 +1019,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
           state.hasUnsavedChanges = true;
           
           // 🚀 使用分层架构通知解组批量添加元素
-          _intelligentNotify(
-            changeType: StateChangeType.elementUpdate,
+          intelligentNotify(
+            changeType: 'element_ungroup_add_elements',
+            operation: 'ungroup_add_elements',
             eventData: {
-              'operation': 'ungroup_add_elements',
               'elementIds': elements.map((e) => e['id'] as String).toList(),
               'selectedIds': state.selectedElementIds,
             },
-            operation: 'ungroup_add_elements',
+            affectedElements: elements.map((e) => e['id'] as String).toList(),
+            affectedLayers: ['content', 'interaction'],
+            affectedUIComponents: ['canvas'],
           );
         }
       },
@@ -1125,14 +1114,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
 
       // 🚀 性能重大优化：使用分层架构精确更新
       // 只重建Content和DragPreview层，避免全局Canvas重建
-      _intelligentNotify(
-        changeType: StateChangeType.dragUpdate,
+      intelligentNotify(
+        changeType: 'element_drag_update',
+        operation: 'drag_element_update',
         eventData: {
           'elementIds': [id],
-          'operation': 'drag_element_update',
           'properties': properties.keys.toList(),
         },
-        operation: 'drag_element_update',
+        affectedElements: [id],
+        affectedLayers: ['content', 'interaction'],
+        affectedUIComponents: ['canvas'],
       );
     }
   }
@@ -1259,14 +1250,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements ThrottledNotificationM
       );
       
       // 🚀 使用分层架构进行精确更新
-      _intelligentNotify(
-        changeType: StateChangeType.elementUpdate,
+      intelligentNotify(
+        changeType: 'element_update_element_properties',
+        operation: 'update_element_properties',
         eventData: {
           'elementIds': [elementId],
-          'operation': 'update_element_properties',
           'properties': properties.keys.toList(),
         },
-        operation: 'update_element_properties',
+        affectedElements: [elementId],
+        affectedLayers: ['content', 'interaction'],
+        affectedUIComponents: ['canvas'],
       );
       
       EditPageLogger.controllerInfo(

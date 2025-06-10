@@ -377,12 +377,11 @@ class FileOperations {
       },
     );
 
-    // 如果已经有字帖标题，直接保存
-    if (controller.practiceTitle != null) {
+    // 如果已经有字帖标题且字帖已保存过，直接保存
+    if (controller.practiceTitle != null && controller.practiceId != null) {
       try {
-        // 确保将当前的页面内容传递给保存方法
-        final result =
-            await controller.savePractice(title: controller.practiceTitle);
+        // 对于已保存过的字帖，直接保存不需要传入标题
+        final result = await controller.savePractice();
 
         final saveDuration = DateTime.now().difference(saveStartTime);
         
@@ -411,7 +410,6 @@ class FileOperations {
               // 强制覆盖保存
               final overwriteStartTime = DateTime.now();
               final overwriteResult = await controller.savePractice(
-                title: controller.practiceTitle,
                 forceOverwrite: true,
               );
 

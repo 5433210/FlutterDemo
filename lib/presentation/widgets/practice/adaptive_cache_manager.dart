@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -8,7 +9,7 @@ import 'element_cache_manager.dart';
 import 'memory_manager.dart';
 
 /// Adaptive cache manager that optimizes cache sizes based on available memory
-class AdaptiveCacheManager extends ChangeNotifier {
+class AdaptiveCacheManager with ChangeNotifier {
   static const int _defaultBaseMemoryLimit = 64 * 1024 * 1024; // 64MB base
   static const int _maxMemoryLimit = 512 * 1024 * 1024; // 512MB max
   static const double _memoryPressureThreshold = 0.75; // 75% memory usage
@@ -28,6 +29,12 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
   /// Performance metrics for adaptation decisions
   final List<PerformanceSnapshot> _performanceHistory = [];
+
+  /// 🚀 节流通知相关
+  Timer? _notificationTimer;
+  bool _hasPendingUpdate = false;
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
 
   AdaptiveCacheManager({
     required MemoryManager memoryManager,
@@ -401,7 +408,12 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
       _currentStrategy = newStrategy;
       await _applyStrategy(newStrategy);
-      notifyListeners();
+      _throttledNotifyListeners(operation: 'Adaptation', data: {
+        'fromStrategy': _currentStrategy.toString(),
+        'toStrategy': newStrategy.toString(),
+        'memoryPressure': memoryStats.pressureRatio,
+        'cacheHitRate': cacheMetrics.hitRate,
+      });
     }
 
     // Fine-tune cache sizes based on performance
@@ -430,6 +442,50 @@ class AdaptiveCacheManager extends ChangeNotifier {
     _adaptationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _performAdaptation();
     });
+  }
+
+  /// 🚀 节流通知方法 - 避免自适应缓存管理器过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '自适应缓存管理器通知',
+        data: {
+          'operation': operation,
+          'currentStrategy': _currentStrategy.toString(),
+          'optimization': 'throttled_adaptive_cache_notification',
+          ...?data,
+        },
+      );
+      
+      super.notifyListeners();
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+          
+          EditPageLogger.performanceInfo(
+            '自适应缓存管理器延迟通知',
+            data: {
+              'operation': operation,
+              'currentStrategy': _currentStrategy.toString(),
+              'optimization': 'throttled_delayed_adaptive_notification',
+              ...?data,
+            },
+          );
+          
+          super.notifyListeners();
+        });
+      }
+    }
   }
 }
 

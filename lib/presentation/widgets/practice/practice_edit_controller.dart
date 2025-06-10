@@ -3,20 +3,23 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
 import 'element_operations_mixin.dart';
+import 'intelligent_notification_mixin.dart';
+import 'intelligent_state_dispatcher.dart';
 import 'layer_management_mixin.dart';
 import 'page_management_mixin.dart';
 import 'practice_edit_state.dart';
 import 'practice_persistence_mixin.dart';
+import 'throttled_notification_mixin.dart';
 import 'tool_management_mixin.dart';
 import 'ui_state_mixin.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 import 'undo_redo_mixin.dart';
-import 'throttled_notification_mixin.dart';
 
 /// 自定义操作
 class CustomOperation implements UndoableOperation {
@@ -56,7 +59,8 @@ class PracticeEditController extends ChangeNotifier
         BatchUpdateMixin,
         UIStateMixin,
         ThrottledNotificationMixin,
-        DragOptimizedNotificationMixin {
+        DragOptimizedNotificationMixin,
+        IntelligentNotificationMixin {
   // 状态
   final PracticeEditState _state = PracticeEditState();
 
@@ -84,6 +88,9 @@ class PracticeEditController extends ChangeNotifier
   // Reference to the edit canvas
   dynamic _editCanvas;
 
+  // 🚀 智能状态分发器
+  late IntelligentStateDispatcher _intelligentDispatcher;
+
   /// 构造函数
   PracticeEditController(this._practiceService) {
     _undoRedoManager = UndoRedoManager(
@@ -94,6 +101,9 @@ class PracticeEditController extends ChangeNotifier
         notifyListeners();
       },
     );
+
+    // 初始化智能状态分发器
+    _intelligentDispatcher = IntelligentStateDispatcher(this);
 
     // 初始化默认数据
     _initDefaultData();
@@ -113,13 +123,17 @@ class PracticeEditController extends ChangeNotifier
   @override
   dynamic get editCanvas => _editCanvas;
 
+  /// 获取智能状态分发器（为IntelligentNotificationMixin提供）
+  @override
+  dynamic get intelligentDispatcher => _intelligentDispatcher;
+
   /// 检查字帖是否已保存过
   @override
-  bool get isSaved => _practiceId != null;
+  bool get isSaved => currentPracticeId != null;
 
   /// 获取当前字帖ID
   @override
-  String? get practiceId => _practiceId;
+  String? get practiceId => currentPracticeId;
 
   /// 获取字帖服务（为mixin提供）
   @override
@@ -127,7 +141,7 @@ class PracticeEditController extends ChangeNotifier
 
   /// 获取当前字帖标题
   @override
-  String? get practiceTitle => _practiceTitle;
+  String? get practiceTitle => currentPracticeTitle;
 
   @override
   Function(bool)? get previewModeCallback => _previewModeCallback;
@@ -181,6 +195,7 @@ class PracticeEditController extends ChangeNotifier
 
   @override
   void notifyListeners() {
+    AppLogger.debug('------------notifyListeners--------------');
     if (_state.isDisposed) {
       EditPageLogger.controllerWarning(
         '尝试在控制器销毁后调用 notifyListeners()',

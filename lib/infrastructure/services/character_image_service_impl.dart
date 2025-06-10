@@ -12,6 +12,14 @@ class CharacterImageServiceImpl implements CharacterImageService {
   final IStorage _storage;
   final ImageCacheService _imageCacheService;
   final ImageProcessor _imageProcessor;
+  
+  // 🚀 性能优化：缓存命中率统计
+  int _cacheHits = 0;
+  int _cacheMisses = 0;
+  final Map<String, DateTime> _lastLogTime = {};
+  
+  // 🚀 性能优化：批量请求去重
+  final Map<String, Future<Uint8List?>> _pendingRequests = {};
 
   CharacterImageServiceImpl({
     required IStorage storage,
@@ -247,124 +255,31 @@ class CharacterImageServiceImpl implements CharacterImageService {
       String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
-      AppLogger.debug(
-        '尝试获取字符图像',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'type': type,
-          'format': format,
-          'imagePath': imagePath,
-          'operation': 'get_character_image',
-        },
-      );
       final cacheKey = 'file:$imagePath';
 
-      // 尝试从缓存获取
-      final cachedData = await _imageCacheService.getBinaryImage(cacheKey);
-      if (cachedData != null) {
+      // 🚀 优化：防止重复请求
+      if (_pendingRequests.containsKey(cacheKey)) {
         AppLogger.debug(
-          '从缓存获取图像',
+          '复用正在进行的图像请求',
           tag: 'character_image_service',
           data: {
             'characterId': id,
-            'type': type,
-            'format': format,
             'cacheKey': cacheKey,
-            'dataSize': cachedData.length,
-            'operation': 'get_image_from_cache',
+            'optimization': 'request_deduplication',
           },
         );
-        return cachedData;
+        return await _pendingRequests[cacheKey]!;
       }
 
-      // 使用IStorage检查文件是否存在
-      AppLogger.debug(
-        '检查文件是否存在',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'imagePath': imagePath,
-          'operation': 'check_file_exists',
-        },
-      );
-      final fileExists = await _storage.fileExists(imagePath);
-      AppLogger.debug(
-        '文件存在检查结果',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'imagePath': imagePath,
-          'fileExists': fileExists,
-          'operation': 'file_exists_result',
-        },
-      );
+      // 创建请求Future
+      final requestFuture = _loadCharacterImageInternal(id, type, format, imagePath, cacheKey);
+      _pendingRequests[cacheKey] = requestFuture;
 
-      if (fileExists) {
-        // 使用IStorage读取文件内容
-        AppLogger.debug(
-          '读取文件内容',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'imagePath': imagePath,
-            'operation': 'read_file_content',
-          },
-        );
-        final bytes = await _storage.readFile(imagePath);
-        AppLogger.debug(
-          '文件读取完成',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'imagePath': imagePath,
-            'bytesRead': bytes.length,
-            'operation': 'file_read_complete',
-          },
-        );
-        final data = bytes.isNotEmpty ? Uint8List.fromList(bytes) : null;
-
-        // 缓存数据
-        if (data != null) {
-          await _imageCacheService.cacheBinaryImage(cacheKey, data);
-          AppLogger.info(
-            '缓存图像数据',
-            tag: 'character_image_service',
-            data: {
-              'characterId': id,
-              'type': type,
-              'format': format,
-              'cacheKey': cacheKey,
-              'dataSize': data.length,
-              'operation': 'cache_image_data',
-            },
-          );
-        } else {
-          AppLogger.warning(
-            '文件内容为空',
-            tag: 'character_image_service',
-            data: {
-              'characterId': id,
-              'imagePath': imagePath,
-              'operation': 'file_content_empty',
-            },
-          );
-        }
-
-        return data;
-      } else {
-        AppLogger.warning(
-          '文件不存在',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'imagePath': imagePath,
-            'operation': 'file_not_exists',
-          },
-        );
+      try {
+        return await requestFuture;
+      } finally {
+        _pendingRequests.remove(cacheKey);
       }
-
-      return null;
     } catch (e) {
       AppLogger.error(
         '获取字符图片失败',
@@ -379,6 +294,111 @@ class CharacterImageServiceImpl implements CharacterImageService {
       );
       return null;
     }
+  }
+
+  /// 🚀 内部图像加载方法
+  Future<Uint8List?> _loadCharacterImageInternal(
+    String id, 
+    String type, 
+    String format, 
+    String imagePath, 
+    String cacheKey
+  ) async {
+    // 尝试从缓存获取
+    final cachedData = await _imageCacheService.getBinaryImage(cacheKey);
+    if (cachedData != null) {
+      _cacheHits++;
+      
+      // 🚀 优化：减少重复日志，每个图像每分钟最多记录一次
+      final now = DateTime.now();
+      final lastLog = _lastLogTime[cacheKey];
+      if (lastLog == null || now.difference(lastLog).inMinutes >= 1) {
+        AppLogger.debug(
+          '从缓存获取图像',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'cacheKey': cacheKey,
+            'dataSize': cachedData.length,
+            'cacheHitRate': _getCacheHitRate(),
+            'operation': 'get_image_from_cache',
+          },
+        );
+        _lastLogTime[cacheKey] = now;
+      }
+      return cachedData;
+    }
+
+    _cacheMisses++;
+
+    // 使用IStorage检查文件是否存在
+    final fileExists = await _storage.fileExists(imagePath);
+    
+    if (fileExists) {
+      // 使用IStorage读取文件内容
+      final bytes = await _storage.readFile(imagePath);
+      final data = bytes.isNotEmpty ? Uint8List.fromList(bytes) : null;
+
+      // 缓存数据
+      if (data != null) {
+        await _imageCacheService.cacheBinaryImage(cacheKey, data);
+        AppLogger.info(
+          '缓存图像数据',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'cacheKey': cacheKey,
+            'dataSize': data.length,
+            'cacheHitRate': _getCacheHitRate(),
+            'operation': 'cache_image_data',
+          },
+        );
+      } else {
+        AppLogger.warning(
+          '文件内容为空',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'imagePath': imagePath,
+            'operation': 'file_content_empty',
+          },
+        );
+      }
+
+      return data;
+    } else {
+      AppLogger.warning(
+        '文件不存在',
+        tag: 'character_image_service',
+        data: {
+          'characterId': id,
+          'imagePath': imagePath,
+          'operation': 'file_not_exists',
+        },
+      );
+    }
+
+    return null;
+  }
+
+  /// 🚀 获取缓存命中率
+  double _getCacheHitRate() {
+    final total = _cacheHits + _cacheMisses;
+    return total > 0 ? _cacheHits / total : 0.0;
+  }
+
+  /// 🚀 获取缓存统计信息
+  Map<String, dynamic> getCacheStats() {
+    return {
+      'cacheHits': _cacheHits,
+      'cacheMisses': _cacheMisses,
+      'hitRate': _getCacheHitRate(),
+      'pendingRequests': _pendingRequests.length,
+    };
   }
 
   /// 获取处理后的字符图片

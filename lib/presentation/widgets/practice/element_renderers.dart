@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/monitoring/performance_monitor.dart';
+import '../../../application/providers/service_providers.dart';
 import '../image/cached_image.dart';
 import 'collection_element_renderer.dart';
 import 'text_renderer.dart';
@@ -14,6 +16,14 @@ class ElementRenderers {
   /// 构建集字元素
   static Widget buildCollectionElement(Map<String, dynamic> element,
       {WidgetRef? ref, bool isPreviewMode = false}) {
+    final startTime = DateTime.now();
+    
+    // 🚀 记录性能监控
+    if (ref != null) {
+      final performanceMonitor = ref.read(performanceMonitorProvider);
+      performanceMonitor.recordOperation('collection_element_build_start', Duration.zero);
+    }
+    
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
@@ -36,6 +46,7 @@ class ElementRenderers {
         content['backgroundTexture'] != null &&
         content['backgroundTexture'] is Map<String, dynamic> &&
         (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty;
+    
     final backgroundTexture = hasBackgroundTexture
         ? content['backgroundTexture'] as Map<String, dynamic>
         : null;
@@ -47,6 +58,37 @@ class ElementRenderers {
     final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;
     final textureHeight = (content['textureHeight'] as num?)?.toDouble() ?? 0.0;
 
+    // 🚀 使用优化的集字渲染器进行预处理
+    if (ref != null && characters.isNotEmpty) {
+      final optimizedRenderer = ref.read(optimizedCollectionRendererProvider);
+      final elementId = element['id'] as String? ?? 'unknown';
+      
+      // 异步预加载字符图像
+      optimizedRenderer.preloadCharacterImages(characters);
+      
+      // 记录渲染请求
+      optimizedRenderer.renderCollectionElement(
+        elementId: elementId,
+        characters: characters,
+        config: {
+          'fontSize': fontSize,
+          'writingMode': writingMode,
+          'hasTexture': hasBackgroundTexture,
+          'textureMode': textureFillMode,
+        },
+        onRenderComplete: () {
+          EditPageLogger.performanceInfo(
+            '优化渲染器处理完成',
+            data: {
+              'elementId': elementId,
+              'characters': characters.length > 10 ? '${characters.substring(0, 10)}...' : characters,
+              'optimization': 'optimized_renderer_complete',
+            },
+          );
+        },
+      );
+    }
+
     // 记录集字元素构建信息
     EditPageLogger.rendererDebug(
       '构建集字元素',
@@ -57,10 +99,11 @@ class ElementRenderers {
         'textureOpacity': textureOpacity,
         'characters': characters,
         'fontSize': fontSize,
+        'optimization': 'element_build',
       },
     );
 
-    return Opacity(
+    final result = Opacity(
         opacity: opacity,
         child: Container(
           width: double.infinity,
@@ -78,6 +121,7 @@ class ElementRenderers {
                   'opacity': textureOpacity,
                   'range': textureApplicationRange,
                   'constraints': '${constraints.maxWidth}x${constraints.maxHeight}',
+                  'optimization': 'layout_build',
                 },
               );
 
@@ -107,6 +151,27 @@ class ElementRenderers {
             },
           ),
         ));
+    
+    // 🚀 记录总体性能
+    if (ref != null) {
+      final duration = DateTime.now().difference(startTime);
+      final performanceMonitor = ref.read(performanceMonitorProvider);
+      performanceMonitor.recordOperation('collection_element_build_complete', duration);
+      
+      if (duration.inMilliseconds > 16) { // 超过一帧时间
+        EditPageLogger.performanceWarning(
+          '集字元素构建耗时过长',
+          data: {
+            'duration': duration.inMilliseconds,
+            'characters': characters.length,
+            'hasTexture': hasBackgroundTexture,
+            'optimization': 'performance_warning',
+          },
+        );
+      }
+    }
+    
+    return result;
   }
 
   /// 构建组合元素

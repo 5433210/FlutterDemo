@@ -21,6 +21,10 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
   static const double _regressionThreshold =
       0.85; // 15% degradation triggers regression
 
+  // 🚀 性能优化：节流通知机制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 500); // 最多每500ms通知一次
+
   // Frame timing detailed tracking
   final List<FrameTimingData> _frameTimingHistory = [];
   final int _maxFrameHistory = 1000; // Keep last 1000 frames
@@ -261,7 +265,14 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
     _fpsQueue.clear();
     _frameTimeQueue.clear();
     _operationMetrics.clear();
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'reset',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
 
     EditPageLogger.performanceInfo(
       '性能追踪器重置完成',
@@ -467,7 +478,15 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
       ));
     }
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'record_frame_timing',
+      data: {
+        'frameTime_ms': frameData.frameTime.inMilliseconds,
+        'fps': frameData.fps,
+        'jank': frameData.jank,
+      },
+    );
   }
 
   /// Start detailed performance tracking
@@ -512,6 +531,31 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
           'eventType': event.type.toString(),
         },
       );
+    }
+  }
+
+  /// 🚀 节流通知方法 - 避免性能跟踪本身影响性能
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '增强性能跟踪器通知',
+        data: {
+          'operation': operation,
+          'frameHistoryCount': _frameTimingHistory.length,
+          'performanceEventsCount': _performanceEvents.length,
+          'operationMetricsCount': _operationMetrics.length,
+          'optimization': 'throttled_enhanced_tracker_notification',
+          ...?data,
+        },
+      );
+      
+      notifyListeners();
     }
   }
 }

@@ -467,8 +467,9 @@ class KeyboardHandler {
       controller.exitSelectMode();
     } else {
       // Otherwise select the tool
-      controller.state.currentTool = toolName;
-      controller.notifyListeners();
+      if (toolName != null && controller.state.currentTool != toolName) {
+        controller.setCurrentTool(toolName);
+      }
     }
   }
 }

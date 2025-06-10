@@ -37,6 +37,11 @@ class DragConfig {
 /// 实现拖拽过程中的批量位置更新和性能优化
 class DragStateManager extends ChangeNotifier {
   static const Duration _batchUpdateDelay = Duration(milliseconds: 16); // 60FPS
+  
+  // 🚀 性能优化：节流通知机制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60FPS节流
+  
   // 拖拽状态相关
   bool _isDragging = false;
   bool _isDragPreviewActive = false;
@@ -117,8 +122,13 @@ class DragStateManager extends ChangeNotifier {
     _elementStartProperties.clear();
     _pendingUpdates.clear();
 
-    // 通知监听器状态更改
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'cancel_drag',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
 
     EditPageLogger.canvasDebug('拖拽状态已完全重置');
   }
@@ -182,7 +192,15 @@ class DragStateManager extends ChangeNotifier {
     _elementStartProperties.clear();
     _pendingUpdates.clear();
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'end_drag',
+      data: {
+        'shouldCommitChanges': shouldCommitChanges,
+        'updateCount': _updateCount,
+        'batchUpdateCount': _batchUpdateCount,
+      },
+    );
   }
 
   /// 获取拖拽统计信息
@@ -335,7 +353,14 @@ class DragStateManager extends ChangeNotifier {
     _updateTimes.clear();
     _frameRates.clear();
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'start_drag',
+      data: {
+        'elementCount': _draggingElementIds.length,
+        'startPosition': '${startPosition.dx.toStringAsFixed(1)},${startPosition.dy.toStringAsFixed(1)}',
+      },
+    );
   }
 
   /// 更新拖拽偏移量
@@ -374,7 +399,14 @@ class DragStateManager extends ChangeNotifier {
     // 立即处理批量更新，不使用定时器
     _processBatchUpdate();
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'update_drag_offset',
+      data: {
+        'offset': '${newOffset.dx.toStringAsFixed(1)},${newOffset.dy.toStringAsFixed(1)}',
+        'updateCount': _updateCount,
+      },
+    );
 
     // 调试信息
     if (DragConfig.debugMode && _updateCount % 10 == 0) {
@@ -424,7 +456,14 @@ class DragStateManager extends ChangeNotifier {
     // 立即处理批量更新
     _processBatchUpdate();
 
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'update_element_preview_properties',
+      data: {
+        'elementId': elementId,
+        'propertiesCount': properties.length,
+      },
+    );
 
     EditPageLogger.canvasDebug('更新元素预览属性', data: {
       'elementId': elementId,
@@ -573,6 +612,32 @@ class DragStateManager extends ChangeNotifier {
         
         _previewProperties[elementId] = updatedProperties;
       }
+    }
+  }
+
+  /// 🚀 节流通知方法 - 避免拖拽操作过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '拖拽状态通知',
+        data: {
+          'operation': operation,
+          'isDragging': _isDragging,
+          'draggingElementCount': _draggingElementIds.length,
+          'currentOffset': '${_currentDragOffset.dx.toStringAsFixed(1)},${_currentDragOffset.dy.toStringAsFixed(1)}',
+          'pendingUpdates': _pendingUpdates.length,
+          'optimization': 'throttled_drag_notification',
+          ...?data,
+        },
+      );
+      
+      notifyListeners();
     }
   }
 }

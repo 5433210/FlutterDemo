@@ -390,7 +390,22 @@ class PracticeEditUtils {
             }
 
             controller.state.hasUnsavedChanges = true;
-            controller.notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            controller.intelligentNotify(
+              changeType: 'element_paste',
+              eventData: {
+                'elementIds': elements.map((e) => e['id'] as String).toList(),
+                'elementCount': elements.length,
+                'isMultiElement': elements.length > 1,
+                'operation': 'paste_elements',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'paste_elements',
+              affectedElements: elements.map((e) => e['id'] as String).toList(),
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           }
         },
         removeElements: (ids) {
@@ -406,7 +421,21 @@ class PracticeEditUtils {
             controller.state.selectedElement = null;
 
             controller.state.hasUnsavedChanges = true;
-            controller.notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            controller.intelligentNotify(
+              changeType: 'element_paste_undo',
+              eventData: {
+                'removedIds': ids,
+                'removedCount': ids.length,
+                'operation': 'paste_elements_undo',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'paste_elements_undo',
+              affectedElements: ids,
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+            );
           }
         },
       ),
@@ -611,7 +640,20 @@ class PracticeEditUtils {
             controller.state.selectedElement = e;
 
             controller.state.hasUnsavedChanges = true;
-            controller.notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            controller.intelligentNotify(
+              changeType: 'element_ungroup_add_group',
+              eventData: {
+                'elementId': e['id'],
+                'operation': 'ungroup_add_group_element',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'ungroup_add_group_element',
+              affectedElements: [e['id'] as String],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel'],
+            );
           }
         },
         removeElement: (id) {
@@ -630,7 +672,20 @@ class PracticeEditUtils {
             }
 
             controller.state.hasUnsavedChanges = true;
-            controller.notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            controller.intelligentNotify(
+              changeType: 'element_ungroup_remove',
+              eventData: {
+                'elementId': id,
+                'operation': 'ungroup_remove_element',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'ungroup_remove_element',
+              affectedElements: [id],
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel'],
+            );
           }
         },
         addElements: (elements) {
@@ -648,7 +703,21 @@ class PracticeEditUtils {
             controller.state.selectedElement = null; // 多选时不显示单个元素的属性
 
             controller.state.hasUnsavedChanges = true;
-            controller.notifyListeners();
+            
+            // 🚀 使用智能状态分发器替代直接的notifyListeners
+            controller.intelligentNotify(
+              changeType: 'element_ungroup_add_elements',
+              eventData: {
+                'elementIds': elements.map((e) => e['id'] as String).toList(),
+                'elementCount': elements.length,
+                'operation': 'ungroup_add_elements',
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+              operation: 'ungroup_add_elements',
+              affectedElements: elements.map((e) => e['id'] as String).toList(),
+              affectedLayers: ['content', 'interaction'],
+              affectedUIComponents: ['canvas', 'property_panel'],
+            );
           }
         },
       ),

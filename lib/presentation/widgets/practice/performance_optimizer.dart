@@ -317,94 +317,101 @@ class PerformanceOptimizerFactory {
     _instance = SelfAdaptivePerformanceOptimizer(
       memoryManager: memoryManager,
       performanceMonitor: performanceMonitor,
-      initialConfig: initialConfig,
-      detectedPerformanceLevel: detectedPerformanceLevel,
-      vsync: vsync,
     );
     return _instance!;
   }
 }
 
 /// 自适应性能优化器
-/// 根据设备性能和当前运行状态动态调整优化参数
+/// 根据设备性能和当前运行状态自动调整性能配置
 class SelfAdaptivePerformanceOptimizer extends ChangeNotifier {
-  /// 内存管理器
+  final PerformanceMonitor _performanceMonitor;
   final MemoryManager _memoryManager;
 
-  /// 性能监控器
-  final PerformanceMonitor _performanceMonitor;
+  // 🚀 性能优化：节流通知机制
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 1000); // 最多每1秒通知一次
 
-  /// 当前性能配置
-  PerformanceOptimizationConfig _config;
+  // 性能配置
+  PerformanceOptimizationConfig _config =
+      const PerformanceOptimizationConfig();
 
-  /// 检测到的设备性能等级
-  DevicePerformanceLevel _devicePerformanceLevel;
+  // 设备性能等级
+  DevicePerformanceLevel _devicePerformanceLevel = DevicePerformanceLevel.medium;
 
-  /// 上次检测和调整时间
-  DateTime _lastAdaptationTime = DateTime.now();
-
-  /// 性能检测历史
-  final List<Map<String, dynamic>> _performanceHistory = [];
-
-  /// 性能压力计数器
+  // 性能监控状态
   int _performancePressureCount = 0;
-
-  /// 是否已经应用了内存压力优化
   bool _memoryPressureOptimizationApplied = false;
-
-  /// 上次内存压力级别
+  DateTime _lastAdaptationTime = DateTime.now();
   MemoryPressureLevel _lastMemoryPressureLevel = MemoryPressureLevel.normal;
 
-  /// 帧率计算器
-  final Ticker? _ticker;
+  // 性能历史记录
+  final List<Map<String, dynamic>> _performanceHistory = [];
 
-  /// 是否启用了帧率限制
+  // 帧率限制相关
+  Ticker? _ticker;
   bool _frameRateLimitEnabled = false;
 
-  /// 创建自适应性能优化器
   SelfAdaptivePerformanceOptimizer({
-    required MemoryManager memoryManager,
     required PerformanceMonitor performanceMonitor,
-    PerformanceOptimizationConfig? initialConfig,
-    DevicePerformanceLevel? detectedPerformanceLevel,
-    TickerProvider? vsync,
-  })  : _memoryManager = memoryManager,
-        _performanceMonitor = performanceMonitor,
-        _devicePerformanceLevel =
-            detectedPerformanceLevel ?? DevicePerformanceLevel.medium,
-        _config = initialConfig ??
-            PerformanceOptimizationConfig.forMediumPerformance(),
-        _ticker = vsync?.createTicker((_) {}) {
+    required MemoryManager memoryManager,
+  })  : _performanceMonitor = performanceMonitor,
+        _memoryManager = memoryManager {
     // 初始化时检测设备性能
-    if (detectedPerformanceLevel == null) {
-      _detectDevicePerformance();
-    }
+    _detectDevicePerformance();
+
+    // 创建Ticker用于帧率控制
+    _ticker = Ticker((elapsed) {});
 
     // 开始性能监控
     _startPerformanceMonitoring();
-
-    if (kDebugMode) {
-      print('🚀 SelfAdaptivePerformanceOptimizer: 初始化完成');
-      print('   检测到设备性能等级: $_devicePerformanceLevel');
-      print('   初始配置: ${_config.toJson()}');
-    }
   }
 
-  /// 获取当前性能优化配置
+  // Getters
   PerformanceOptimizationConfig get config => _config;
-
-  /// 获取检测到的设备性能等级
   DevicePerformanceLevel get devicePerformanceLevel => _devicePerformanceLevel;
-
-  /// 获取性能历史数据
   List<Map<String, dynamic>> get performanceHistory =>
       List.unmodifiable(_performanceHistory);
+
+  /// 🚀 节流通知方法 - 避免性能优化器本身影响性能
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.performanceInfo(
+        '性能优化器通知',
+        data: {
+          'operation': operation,
+          'devicePerformanceLevel': _devicePerformanceLevel.name,
+          'currentFps': _performanceMonitor.currentFPS,
+          'memoryPressureLevel': _lastMemoryPressureLevel.name,
+          'optimization': 'throttled_performance_optimizer_notification',
+          ...?data,
+        },
+      );
+      
+      notifyListeners();
+    }
+  }
 
   /// 应用新的性能优化配置
   void applyConfiguration(PerformanceOptimizationConfig newConfig) {
     _config = newConfig;
     _applyFrameRateLimit(newConfig.maxFrameRate);
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'apply_configuration',
+      data: {
+        'maxFrameRate': newConfig.maxFrameRate,
+        'renderQuality': newConfig.renderQuality,
+        'useLowQualityMode': newConfig.useLowQualityMode,
+      },
+    );
 
     if (kDebugMode) {
       print('⚙️ SelfAdaptivePerformanceOptimizer: 应用新配置');
@@ -473,7 +480,15 @@ class SelfAdaptivePerformanceOptimizer extends ChangeNotifier {
     _applyFrameRateLimit(_config.maxFrameRate);
     _performancePressureCount = 0;
     _memoryPressureOptimizationApplied = false;
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'reset_to_default',
+      data: {
+        'devicePerformanceLevel': _devicePerformanceLevel.name,
+        'maxFrameRate': _config.maxFrameRate,
+      },
+    );
 
     if (kDebugMode) {
       print('🔄 SelfAdaptivePerformanceOptimizer: 重置为默认配置');
@@ -499,7 +514,15 @@ class SelfAdaptivePerformanceOptimizer extends ChangeNotifier {
     }
 
     _applyFrameRateLimit(_config.maxFrameRate);
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'set_device_performance_level',
+      data: {
+        'performanceLevel': level.name,
+        'maxFrameRate': _config.maxFrameRate,
+      },
+    );
 
     if (kDebugMode) {
       print('📱 SelfAdaptivePerformanceOptimizer: 设置设备性能等级为 $level');
@@ -595,7 +618,17 @@ class SelfAdaptivePerformanceOptimizer extends ChangeNotifier {
       _applyFrameRateLimit(newConfig.maxFrameRate);
       _lastAdaptationTime = now;
       _performancePressureCount = 0;
-      notifyListeners();
+      
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'adapt_to_current_performance',
+        data: {
+          'currentFps': currentFPS,
+          'avgFrameTime_ms': avgFrameTime,
+          'underPerformancePressure': underPerformancePressure,
+          'newMaxFrameRate': newConfig.maxFrameRate,
+        },
+      );
     }
   }
 
@@ -631,7 +664,16 @@ class SelfAdaptivePerformanceOptimizer extends ChangeNotifier {
           _config = memoryOptimizedConfig;
           _memoryPressureOptimizationApplied = true;
           _applyFrameRateLimit(_config.maxFrameRate);
-          notifyListeners();
+          
+          // 🚀 使用节流通知替代直接notifyListeners
+          _throttledNotifyListeners(
+            operation: 'adapt_to_memory_pressure',
+            data: {
+              'memoryPressureLevel': memoryPressureLevel.name,
+              'memoryUsageRatio': memoryStats.pressureRatio,
+              'maxFrameRate': _config.maxFrameRate,
+            },
+          );
 
           if (kDebugMode) {
             print(

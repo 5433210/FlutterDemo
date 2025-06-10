@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 
 /// 页面管理功能 Mixin
-mixin PageManagementMixin on ChangeNotifier {
+mixin PageManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
@@ -58,9 +59,24 @@ mixin PageManagementMixin on ChangeNotifier {
       },
     );
 
-    undoRedoManager.addOperation(operation);
+    // 添加操作到撤销历史，但立即执行以确保UI更新
+    undoRedoManager.addOperation(operation, executeImmediately: true);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知页面添加
+    intelligentNotify(
+      changeType: 'page_add',
+      eventData: {
+        'pageId': newPage['id'],
+        'pageName': newPage['name'],
+        'pageIndex': state.pages.length - 1,
+        'totalPages': state.pages.length,
+        'operation': 'add_new_page',
+      },
+      operation: 'add_new_page',
+      affectedLayers: ['background', 'content'],
+      affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   /// 添加页面
@@ -78,7 +94,21 @@ mixin PageManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知页面添加
+    intelligentNotify(
+      changeType: 'page_add',
+      eventData: {
+        'pageId': page['id'],
+        'pageName': page['name'],
+        'pageIndex': state.pages.length - 1,
+        'totalPages': state.pages.length,
+        'operation': 'add_page',
+      },
+      operation: 'add_page',
+      affectedLayers: ['background', 'content'],
+      affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   void checkDisposed();
@@ -117,7 +147,22 @@ mixin PageManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知页面删除
+    intelligentNotify(
+      changeType: 'page_delete',
+      eventData: {
+        'pageId': deletedPage['id'],
+        'pageName': deletedPage['name'],
+        'pageIndex': index,
+        'totalPages': state.pages.length,
+        'wasCurrentPage': wasCurrentPage,
+        'operation': 'delete_page',
+      },
+      operation: 'delete_page',
+      affectedLayers: ['background', 'content'],
+      affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   /// 复制页面
@@ -155,7 +200,24 @@ mixin PageManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知页面复制
+    intelligentNotify(
+      changeType: 'page_duplicate',
+      eventData: {
+        'originalPageId': originalPage['id'],
+        'duplicatedPageId': duplicatedPage['id'],
+        'originalPageName': originalPage['name'],
+        'duplicatedPageName': duplicatedPage['name'],
+        'pageIndex': index + 1,
+        'totalPages': state.pages.length,
+        'elementsCount': duplicatedElements.length,
+        'operation': 'duplicate_page',
+      },
+      operation: 'duplicate_page',
+      affectedLayers: ['background', 'content'],
+      affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+    );
   }
 
   void markUnsaved();
@@ -207,7 +269,22 @@ mixin PageManagementMixin on ChangeNotifier {
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    notifyListeners();
+    
+    // 🚀 使用智能状态分发器通知页面移动
+    intelligentNotify(
+      changeType: 'page_reorder',
+      eventData: {
+        'pageId': page['id'],
+        'pageName': page['name'],
+        'fromIndex': fromIndex,
+        'toIndex': toIndex,
+        'totalPages': state.pages.length,
+        'operation': 'move_page',
+      },
+      operation: 'move_page',
+      affectedLayers: ['background', 'content'],
+      affectedUIComponents: ['page_panel', 'toolbar'],
+    );
   }
 
   /// 重命名页面
@@ -231,7 +308,20 @@ mixin PageManagementMixin on ChangeNotifier {
 
       undoRedoManager.addOperation(operation);
       markUnsaved();
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知页面重命名
+      intelligentNotify(
+        changeType: 'page_update',
+        eventData: {
+          'pageId': state.pages[index]['id'],
+          'pageIndex': index,
+          'oldName': oldName,
+          'newName': newName,
+          'operation': 'rename_page',
+        },
+        operation: 'rename_page',
+        affectedUIComponents: ['page_panel', 'property_panel'],
+      );
     }
   }
 
@@ -276,11 +366,25 @@ mixin PageManagementMixin on ChangeNotifier {
         }
 
         state.hasUnsavedChanges = true;
-        notifyListeners();
+        // 注意：这里不直接调用notifyListeners，由外层的intelligentNotify处理
       },
     );
 
     undoRedoManager.addOperation(operation);
+    
+    // 🚀 使用智能状态分发器通知页面重排序
+    intelligentNotify(
+      changeType: 'page_reorder',
+      eventData: {
+        'oldIndex': oldIndex,
+        'newIndex': newIndex,
+        'totalPages': state.pages.length,
+        'currentPageIndex': state.currentPageIndex,
+        'operation': 'reorder_pages',
+      },
+      operation: 'reorder_pages',
+      affectedUIComponents: ['page_panel', 'toolbar'],
+    );
   }
 
   /// 设置页面背景颜色
@@ -320,11 +424,27 @@ mixin PageManagementMixin on ChangeNotifier {
     if (index >= 0 &&
         index < state.pages.length &&
         index != state.currentPageIndex) {
+      final oldPageIndex = state.currentPageIndex;
       state.currentPageIndex = index;
       // 清除选择
       state.selectedElementIds.clear();
       state.selectedElement = null;
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知页面切换
+      intelligentNotify(
+        changeType: 'page_select',
+        eventData: {
+          'pageId': state.pages[index]['id'],
+          'pageName': state.pages[index]['name'],
+          'oldPageIndex': oldPageIndex,
+          'newPageIndex': index,
+          'totalPages': state.pages.length,
+          'operation': 'switch_to_page',
+        },
+        operation: 'switch_to_page',
+        affectedLayers: ['background', 'content', 'interaction'],
+        affectedUIComponents: ['page_panel', 'toolbar', 'property_panel'],
+      );
     }
   }
 
@@ -347,7 +467,20 @@ mixin PageManagementMixin on ChangeNotifier {
 
       undoRedoManager.addOperation(operation);
       markUnsaved();
-      notifyListeners();
+      
+      // 🚀 使用智能状态分发器通知页面更新
+      intelligentNotify(
+        changeType: 'page_update',
+        eventData: {
+          'pageId': updatedPage['id'],
+          'pageIndex': index,
+          'updatedProperties': updatedPage.keys.toList(),
+          'operation': 'update_page',
+        },
+        operation: 'update_page',
+        affectedLayers: ['background', 'content'],
+        affectedUIComponents: ['page_panel', 'property_panel'],
+      );
     }
   }
 
@@ -410,8 +543,23 @@ mixin PageManagementMixin on ChangeNotifier {
       undoRedoManager.addOperation(operation);
       markUnsaved();
       
-      EditPageLogger.controllerDebug('页面属性更新完成，触发通知');
-      notifyListeners();
+      EditPageLogger.controllerDebug('页面属性更新完成，触发智能通知');
+      
+      // 🚀 使用智能状态分发器通知页面属性更新
+      intelligentNotify(
+        changeType: 'page_update',
+        eventData: {
+          'pageId': currentPage['id'],
+          'pageIndex': state.currentPageIndex,
+          'updatedProperties': properties.keys.toList(),
+          'hasBackground': properties.containsKey('background'),
+          'hasSize': properties.containsKey('width') || properties.containsKey('height'),
+          'operation': 'update_page_properties',
+        },
+        operation: 'update_page_properties',
+        affectedLayers: properties.containsKey('background') ? ['background'] : ['content'],
+        affectedUIComponents: ['property_panel', 'page_panel'],
+      );
     } else {
       EditPageLogger.controllerWarning('页面索引无效，跳过更新');
     }

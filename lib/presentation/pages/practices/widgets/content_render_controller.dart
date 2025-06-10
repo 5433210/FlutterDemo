@@ -26,6 +26,12 @@ class ContentRenderController extends ChangeNotifier {
   late final DirtyTracker _dirtyTracker;
   SelectiveRebuildManager? _rebuildManager;
 
+  // 🚀 节流通知相关
+  Timer? _notificationTimer;
+  bool _hasPendingUpdate = false;
+  DateTime _lastNotificationTime = DateTime.now();
+  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+
   /// Initialize the controller with optional selective rebuilding
   ContentRenderController({
     bool enableSelectiveRebuilding = true,
@@ -54,12 +60,69 @@ class ContentRenderController extends ChangeNotifier {
   /// Get selective rebuild manager (may be null if not enabled)
   SelectiveRebuildManager? get rebuildManager => _rebuildManager;
 
+  /// 流式元素变更通知
+  Stream<ElementChangeInfo> get elementChanges =>
+      _changeStreamController.stream;
+
+  /// 获取需要跳过渲染的元素列表
+  Set<String> get elementsToSkip => Set.unmodifiable(_elementsToSkip);
+
+  /// 🚀 节流通知方法 - 避免内容渲染控制器过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+      
+      EditPageLogger.canvasDebug(
+        '内容渲染控制器通知',
+        data: {
+          'operation': operation,
+          'optimization': 'throttled_content_render_notification',
+          ...?data,
+        },
+      );
+      
+      super.notifyListeners();
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+          
+          EditPageLogger.canvasDebug(
+            '内容渲染控制器延迟通知',
+            data: {
+              'operation': operation,
+              'optimization': 'throttled_delayed_notification',
+              ...?data,
+            },
+          );
+          
+          super.notifyListeners();
+        });
+      }
+    }
+  }
+
   void agStateChanged() {
     EditPageLogger.canvasDebug('拖拽状态变化，触发重建', data: {
       'isDragging': _dragStateManager?.isDragging,
       'draggingElementIds': _dragStateManager?.draggingElementIds
     });
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'drag_state_changed',
+      data: {
+        'isDragging': _dragStateManager?.isDragging,
+        'draggingElementIds': _dragStateManager?.draggingElementIds,
+      },
+    );
   }
 
   /// Clear change history
@@ -69,6 +132,7 @@ class ContentRenderController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _notificationTimer?.cancel();
     _changeStreamController.close();
     _dirtyTracker.dispose();
     _rebuildManager?.dispose();
@@ -286,8 +350,14 @@ class ContentRenderController extends ChangeNotifier {
       markElementDirty(elementId, ElementChangeType.multiple);
     }
 
-    // 通知所有监听器
-    notifyListeners();
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'refresh_all',
+      data: {
+        'reason': reason,
+        'elementCount': _lastKnownProperties.length,
+      },
+    );
 
     EditPageLogger.canvasDebug('元素刷新完成', data: {
       'refreshedCount': _lastKnownProperties.length
@@ -298,7 +368,15 @@ class ContentRenderController extends ChangeNotifier {
   void reset() {
     _changeHistory.clear();
     _lastKnownProperties.clear();
-    notifyListeners();
+    
+    // 🚀 使用节流通知替代直接notifyListeners
+    _throttledNotifyListeners(
+      operation: 'reset',
+      data: {
+        'historyCleared': true,
+        'propertiesCleared': true,
+      },
+    );
   }
 
   /// 设置拖拽状态管理器
@@ -410,8 +488,15 @@ class ContentRenderController extends ChangeNotifier {
         });
       }
 
-      // 通知监听器状态已更新
-      notifyListeners();
+      // 🚀 使用节流通知替代直接notifyListeners
+      _throttledNotifyListeners(
+        operation: 'drag_state_update',
+        data: {
+          'isDragging': isDragging,
+          'isDragPreviewActive': isDragPreviewActive,
+          'draggingElementIds': draggingElementIds,
+        },
+      );
 
       EditPageLogger.canvasDebug('拖拽状态更新完成', data: {
         'isDragging': isDragging,
