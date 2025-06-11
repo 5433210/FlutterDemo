@@ -207,15 +207,6 @@ class PracticeEditController extends ChangeNotifier
 
   @override
   void notifyListeners() {
-    EditPageLogger.controllerWarning(
-      '⚠️ 检测到传统 notifyListeners() 调用',
-      data: {
-        'controllerState': _state.isDisposed ? 'disposed' : 'active',
-        'recommendation': 'use_intelligent_notification_instead',
-        'stack_trace': StackTrace.current.toString().split('\n').take(3).join('\n'),
-      },
-    );
-    
     if (_state.isDisposed) {
       EditPageLogger.controllerWarning(
         '尝试在控制器销毁后调用 notifyListeners()',
@@ -224,8 +215,16 @@ class PracticeEditController extends ChangeNotifier
       return;
     }
 
-    // 🚀 不再执行传统的 notifyListeners，依赖智能状态分发器
-    // super.notifyListeners();
+    EditPageLogger.controllerDebug(
+      '执行传统 notifyListeners() 调用',
+      data: {
+        'controllerState': 'active',
+        'reason': 'temporary_fallback_during_transition',
+      },
+    );
+
+    // 🔧 临时恢复传统的 notifyListeners，确保UI更新
+    super.notifyListeners();
   }
 
   /// 设置画布引用（供画布组件注册自己）

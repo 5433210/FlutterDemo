@@ -327,6 +327,11 @@ class IntelligentStateDispatcher {
     return false;
   }
 
+  /// 🔍 检查特定UI组件是否有监听器
+  bool hasUIComponentListener(String uiComponent) {
+    return _uiListeners[uiComponent]?.isNotEmpty == true;
+  }
+
   /// 注册元素监听器
   void registerElementListener(String elementId, VoidCallback listener) {
     _elementListeners.putIfAbsent(elementId, () => <VoidCallback>{});
