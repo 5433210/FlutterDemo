@@ -103,24 +103,17 @@ class DragStateManager extends ChangeNotifier {
   int get updateCount => _updateCount;
   List<double> get updateTimes => List.unmodifiable(_updateTimes);
 
-  /// 取消拖拽操作
+  /// 取消拖拽
   void cancelDrag() {
-    // 🔧 添加调用栈信息
-    final stackTrace = StackTrace.current;
-    final stackLines = stackTrace.toString().split('\n').take(5).join('\n');
-    
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager.cancelDrag被调用', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementCount': _draggingElementIds.length,
-      'stackTrace': stackLines,
-      'timestamp': DateTime.now().toIso8601String(),
+    EditPageLogger.canvasDebug('DragStateManager取消拖拽', data: {
+      'hasDraggedElements': _draggingElementIds.isNotEmpty,
+      'draggedCount': _draggingElementIds.length,
     });
 
-    // 确保所有状态被重置
+    // 取消批量更新定时器
     _batchUpdateTimer?.cancel();
 
-    // 强制重置所有拖拽状态
+    // 重置状态
     _isDragging = false;
     _isDragPreviewActive = false;
     _draggingElementIds.clear();
@@ -132,30 +125,12 @@ class DragStateManager extends ChangeNotifier {
     _elementStartProperties.clear();
     _pendingUpdates.clear();
 
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager取消拖拽完成', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementCount': _draggingElementIds.length,
+    EditPageLogger.canvasDebug('拖拽取消完成', data: {
+      'action': 'drag_cancelled_and_state_cleared',
     });
 
-    // 🚀 特殊处理：拖拽取消时立即通知，不使用节流
-    EditPageLogger.performanceInfo(
-      '拖拽状态通知',
-      data: {
-        'operation': 'cancel_drag',
-        'isDragging': false,
-        'draggingElementCount': 0,
-        'currentOffset': '0.0,0.0',
-        'pendingUpdates': 0,
-        'optimization': 'throttled_drag_notification',
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
-    
-    // 立即通知，不等待节流
+    // 立即通知监听器
     notifyListeners();
-
-    EditPageLogger.canvasDebug('拖拽状态已完全重置');
   }
 
   @override
@@ -167,25 +142,58 @@ class DragStateManager extends ChangeNotifier {
 
   /// 结束拖拽操作
   void endDrag({bool shouldCommitChanges = true}) {
-    // 🔧 添加调用栈信息
-    final stackTrace = StackTrace.current;
-    final stackLines = stackTrace.toString().split('\n').take(5).join('\n');
-    
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager.endDrag被调用', data: {
-      'shouldCommitChanges': shouldCommitChanges,
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementCount': _draggingElementIds.length,
-      'stackTrace': stackLines,
-      'timestamp': DateTime.now().toIso8601String(),
+    EditPageLogger.canvasDebug('DragStateManager结束拖拽', data: {
+      'draggedElementsCount': _draggingElementIds.length,
+      'hasValidUpdate': _pendingUpdates.isNotEmpty,
     });
 
-    // 取消批量更新定时器
-    _batchUpdateTimer?.cancel();
+    try {
+      // 执行批量更新
+      if (_onBatchUpdate != null && _pendingUpdates.isNotEmpty) {
+        final batchUpdates = Map<String, Map<String, dynamic>>.from(_pendingUpdates);
+        _pendingUpdates.clear();
 
-    if (shouldCommitChanges) {
-      // 最终提交所有更改
-      _commitFinalPositions();
+        EditPageLogger.canvasDebug('批量更新元素位置', 
+          data: {'updateCount': batchUpdates.length});
+
+        // 统计批量更新次数
+        _batchUpdateCount++;
+
+        _onBatchUpdate!(batchUpdates);
+
+        EditPageLogger.fileOpsInfo('拖拽结束批量更新', data: {
+          'updatedElements': batchUpdates.keys.toList(),
+          'updateCount': batchUpdates.length,
+        });
+      }
+
+      // 重置状态
+      _isDragging = false;
+      _isDragPreviewActive = false;
+      _draggingElementIds.clear();
+      _dragStartPosition = Offset.zero;
+      _currentDragOffset = Offset.zero;
+      _elementStartPositions.clear();
+      _previewPositions.clear();
+      _previewProperties.clear();
+      _elementStartProperties.clear();
+
+      EditPageLogger.canvasDebug('拖拽结束完成', data: {
+        'result': 'drag_ended_successfully',
+      });
+    } catch (e, stackTrace) {
+      EditPageLogger.canvasError('拖拽结束时出错', error: e, stackTrace: stackTrace);
+      // 确保清除状态
+      _isDragging = false;
+      _isDragPreviewActive = false;
+      _draggingElementIds.clear();
+      _dragStartPosition = Offset.zero;
+      _currentDragOffset = Offset.zero;
+      _elementStartPositions.clear();
+      _previewPositions.clear();
+      _previewProperties.clear();
+      _elementStartProperties.clear();
+      _pendingUpdates.clear();
     }
 
     // 记录拖拽性能数据
@@ -214,24 +222,6 @@ class DragStateManager extends ChangeNotifier {
           data: {'currentFps': avgFps, 'targetFps': 60});
       }
     }
-
-    // 重置状态
-    _isDragging = false;
-    _isDragPreviewActive = false;
-    _draggingElementIds.clear();
-    _dragStartPosition = Offset.zero;
-    _currentDragOffset = Offset.zero;
-    _elementStartPositions.clear();
-    _previewPositions.clear();
-    _previewProperties.clear();
-    _elementStartProperties.clear();
-    _pendingUpdates.clear();
-
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager结束拖拽完成', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementCount': _draggingElementIds.length,
-    });
 
     // 🚀 特殊处理：拖拽结束时立即通知，不使用节流
     // 确保拖拽预览层能立即响应状态变化
@@ -360,12 +350,11 @@ class DragStateManager extends ChangeNotifier {
   }) {
     final isSingleSelection = elementIds.length == 1;
     
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager.startDrag被调用', data: {
+    EditPageLogger.canvasDebug('DragStateManager开始拖拽', data: {
       'elementIds': elementIds.toList(),
       'startPosition': startPosition.toString(),
       'elementCount': elementIds.length,
       'isSingleSelection': isSingleSelection,
-      'timestamp': DateTime.now().toIso8601String(),
     });
 
     _isDragging = true;
@@ -374,13 +363,9 @@ class DragStateManager extends ChangeNotifier {
     _dragStartPosition = startPosition;
     _currentDragOffset = Offset.zero;
 
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager状态设置完成', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementIds': _draggingElementIds.toList(),
-      'elementCount': _draggingElementIds.length,
+    EditPageLogger.canvasDebug('拖拽状态设置完成', data: {
+      'draggedCount': _draggingElementIds.length,
       'isSingleSelection': isSingleSelection,
-      'dragStateManagerHashCode': hashCode,
     });
 
     // 缓存元素起始位置
@@ -396,18 +381,16 @@ class DragStateManager extends ChangeNotifier {
         
         // 🔧 强化单选场景：确保单选时预览位置正确设置
         if (isSingleSelection) {
-          EditPageLogger.canvasError('🔧🔧🔧 单选元素预览位置设置', data: {
+          EditPageLogger.canvasDebug('设置单选元素预览位置', data: {
             'elementId': elementId,
             'previewPosition': '${startPos.dx},${startPos.dy}',
-            'fix': 'single_selection_preview_position',
           });
         }
       } else {
         // 🔧 强化单选场景：缺失起始位置的处理
         if (isSingleSelection) {
-          EditPageLogger.canvasError('🔧🔧🔧 单选元素缺失起始位置', data: {
+          EditPageLogger.canvasDebug('单选元素缺失起始位置', data: {
             'elementId': elementId,
-            'fix': 'single_selection_missing_start_position',
           });
         }
       }
@@ -424,11 +407,10 @@ class DragStateManager extends ChangeNotifier {
       if (isSingleSelection && elementStartProperties.isNotEmpty) {
         final elementId = elementIds.first;
         final properties = elementStartProperties[elementId];
-        EditPageLogger.canvasError('🔧🔧🔧 单选元素属性设置', data: {
+        EditPageLogger.canvasDebug('单选元素属性设置完成', data: {
           'elementId': elementId,
           'hasProperties': properties != null,
           'propertiesKeys': properties?.keys.toList() ?? [],
-          'fix': 'single_selection_properties_setup',
         });
       }
     }
@@ -446,32 +428,13 @@ class DragStateManager extends ChangeNotifier {
     _updateTimes.clear();
     _frameRates.clear();
 
-    // 🚀 特殊处理：拖拽开始时立即通知，不使用节流
-    // 确保ContentRenderController能立即响应拖拽开始状态
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager开始通知监听器', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementIds': _draggingElementIds.toList(),
-      'isSingleSelection': isSingleSelection,
-    });
-
-    // 立即通知，不等待节流
+         EditPageLogger.canvasDebug('通知监听器拖拽开始');
+    
+    // 通知监听器
     notifyListeners();
 
-    EditPageLogger.canvasError('🔧🔧🔧 DragStateManager.startDrag完成', data: {
-      'isDragging': _isDragging,
-      'isDragPreviewActive': _isDragPreviewActive,
-      'draggingElementCount': _draggingElementIds.length,
-      'isSingleSelection': isSingleSelection,
-    });
-
-    // 🔧 CRITICAL FIX: PostFrameCallback已不需要，立即通知就足够了
-    // ContentRenderController的_onDragStateChanged会处理重建
-    EditPageLogger.canvasError('🔧🔧🔧 拖拽状态设置完成，单次通知足够', data: {
-      'isDragging': _isDragging,
-      'reason': 'single_notification_sufficient',
-      'optimization': 'avoid_duplicate_notifications',
-      'isSingleSelection': isSingleSelection,
+    EditPageLogger.canvasDebug('DragStateManager.startDrag完成', data: {
+      'success': true,
     });
   }
 
@@ -648,8 +611,8 @@ class DragStateManager extends ChangeNotifier {
       final batchData = Map<String, Map<String, dynamic>>.from(_pendingUpdates);
       _pendingUpdates.clear();
 
-          EditPageLogger.canvasDebug('批量更新元素位置', 
-      data: {'updateCount': batchData.length});
+      EditPageLogger.canvasDebug('批量更新元素位置', 
+        data: {'updateCount': batchData.length});
 
       // 统计批量更新次数
       _batchUpdateCount++;
@@ -700,10 +663,10 @@ class DragStateManager extends ChangeNotifier {
             'newPreviewPos': newPreviewPos.toString()
           });
         }
-      } else if (DragConfig.debugMode) {
-        EditPageLogger.canvasError('元素缺少起始位置', 
-          data: {'elementId': elementId});
-      }
+              } else if (DragConfig.debugMode) {
+         EditPageLogger.canvasDebug('元素缺少起始位置', 
+           data: {'elementId': elementId});
+        }
     }
   }
 

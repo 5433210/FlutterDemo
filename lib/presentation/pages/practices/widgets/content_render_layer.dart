@@ -242,16 +242,13 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       }
     }
 
-    // 🔧 关键修复：如果元素顺序发生了变化，强制清理缓存以确保重绘
+    // 处理元素顺序变化，确保重绘
     if (elementOrderChanged) {
-      EditPageLogger.rendererDebug('🔧 元素顺序变化检测到，强制清理缓存并标记所有元素为脏状态', data: {
-        'reason': 'element_order_affects_rendering_z_index',
-        'action': 'force_cache_clear_and_mark_dirty',
+      EditPageLogger.rendererDebug('元素顺序变化检测到，开始重建渲染', data: {
         'elementCount': currentElements.length,
       });
       
-      // 🔧 核心修复：将所有元素标记为脏状态，强制重建
-      // 元素顺序变化影响渲染层级，必须重新渲染所有元素
+      // 将所有元素标记为脏状态，强制重建
       for (final element in currentElements) {
         final elementId = element['id'] as String;
         widget.renderController.markElementDirty(elementId, ElementChangeType.multiple);
@@ -262,11 +259,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       
       // 标记所有元素需要更新，确保缓存系统重建所有元素
       _cacheManager.markAllElementsForUpdate(currentElements);
-      
-      EditPageLogger.rendererDebug('🔧 元素顺序变化处理完成', data: {
-        'action': 'all_elements_marked_dirty_and_cache_cleared',
-        'elementCount': currentElements.length,
-      });
       
       // 标记需要重建
       if (mounted) {
@@ -298,18 +290,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         widget.controller?.state.selectedElementIds.toSet() ??
         <String>{};
 
-    // 🔧 优化：只在拖拽状态变化时输出构建数据
     final isDragging = widget.renderController.isDragging;
-    if (widget.renderController.isDragging != _lastKnownDragState) {
-      EditPageLogger.rendererDebug('🔧🔧🔧 ContentRenderLayer构建开始', data: {
-        'elementsCount': elements.length,
-        'layersCount': layers.length,
-        'selectedCount': selectedElementIds.length,
-        'isPreviewMode': isPreviewMode,
-        'isDragging': isDragging,
-        'step': 'build_content_start'
-      });
-    }
 
     // Calculate page size and background color if not provided
     Size pageSize = widget.pageSize ?? const Size(800, 600);
@@ -331,24 +312,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         }
       }
     }
-    // 🔧 严格控制：只在拖拽状态真正变化时输出构建日志
+    // 在需要时记录重建日志
     final wasDragStateChanged = isDragging != _lastKnownDragState;
     if (wasDragStateChanged) {
-      EditPageLogger.rendererDebug('ContentRenderLayer构建内容 (状态变化)', data: {
-        'elementsCount': elements.length,
-        'selectedCount': selectedElementIds.length,
+      EditPageLogger.rendererDebug('拖拽状态变化', data: {
         'isDragging': isDragging,
-        'lastKnownDragState': _lastKnownDragState,
-        'buildCount': _buildCount,
-        'stateChange': 'drag_state_changed'
-      });
-    } else if (_buildCount % 100 == 0) {
-      // 每100次重建输出一次警告，帮助诊断意外重建
-      EditPageLogger.performanceWarning('ContentRenderLayer意外频繁重建', data: {
-        'buildCount': _buildCount,
-        'isDragging': isDragging,
-        'reason': '非拖拽状态变化引起的重建',
-        'suggestion': '检查是否有其他组件触发了不必要的重建'
       });
     }
 
@@ -390,8 +358,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       }
     }
 
-    // 🔧 优化：移除频繁的元素处理前检查日志
-
     // Trigger cache cleanup for efficient memory management
     _cacheManager.cleanupCache();
 
@@ -399,21 +365,12 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       child: SizedBox(
         width: pageSize.width,
         height: pageSize.height,
-        // 🔧 关键修复：移除背景色，让静态背景层透过来
-        // color: backgroundColor, // 背景色由静态背景层处理
+        // 背景色由静态背景层处理
         child: Stack(
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
           children: visibleElements.map((element) {
-            // 🔧 优化：只在关键时刻输出元素处理日志
             final currentElementId = element['id'] as String;
-            if (isDragging != _lastKnownDragState && widget.renderController.isElementDragging(currentElementId)) {
-              EditPageLogger.rendererDebug('🔧🔧🔧 处理拖拽元素', data: {
-                'elementId': currentElementId,
-                'elementType': element['type'],
-                'step': 'dragging_element_processing'
-              });
-            }
 
             // Skip hidden elements in preview mode
             final isHidden = element['hidden'] == true;

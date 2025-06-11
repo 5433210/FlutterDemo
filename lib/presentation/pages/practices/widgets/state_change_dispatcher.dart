@@ -277,12 +277,10 @@ class StateChangeDispatcher {
   /// 处理元素顺序变化事件
   void _processElementOrderChangeEvents(List<StateChangeEvent> events) {
     for (final event in events) {
-      // 🔧 关键修复：延迟处理以确保操作完成后再重建Canvas
-      // 使用SchedulerBinding确保在当前帧完成后再处理
+      // 延迟处理以确保操作完成后再重建Canvas
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        EditPageLogger.canvasError('🔧🔧🔧 延迟处理元素顺序变化事件', data: {
+        EditPageLogger.editPageDebug('处理元素顺序变化事件', data: {
           'elementId': event.data['elementId'] ?? '',
-          'reason': 'ensure_operation_completed_before_rebuild',
         });
         
         // 强制清除所有元素缓存
