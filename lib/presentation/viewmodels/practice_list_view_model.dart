@@ -1,25 +1,41 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/practice/practice_service.dart';
 import '../../domain/models/practice/practice_filter.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../services/practice_list_refresh_service.dart';
 import 'states/practice_list_state.dart';
 
 class PracticeListViewModel extends StateNotifier<PracticeListState> {
   final PracticeService _practiceService;
+  final PracticeListRefreshService _refreshService;
   Timer? _searchDebounce;
+  StreamSubscription<PracticeListRefreshEvent>? _refreshSubscription;
 
-  PracticeListViewModel(this._practiceService)
+  PracticeListViewModel(this._practiceService, this._refreshService)
       : super(PracticeListState(
           isLoading: false,
           filter: const PracticeFilter(),
           practices: const [],
           searchQuery: '',
         )) {
+    // 验证刷新服务连接
+    AppLogger.debug(
+      'PracticeListViewModel初始化',
+      data: {
+        'viewModelInstance': hashCode,
+        'refreshServiceInstance': _refreshService.hashCode,
+        'operation': 'view_model_init',
+      },
+    );
+    
     Future.microtask(() => _initializeData());
+    _setupRefreshListener();
   }
 
   // 清除所选练习
@@ -55,6 +71,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _refreshSubscription?.cancel();
     super.dispose();
   }
 
@@ -342,6 +359,130 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
 
     // 保存过滤器状态
     state.persist();
+  }
+
+  /// 强制刷新并清理特定字帖的缓存
+  Future<void> _forceRefreshWithCacheClear(String practiceId) async {
+    try {
+      AppLogger.debug(
+        '强制刷新字帖列表并清理缓存',
+        data: {
+          'practiceId': practiceId,
+          'operation': 'force_refresh_with_cache_clear',
+        },
+      );
+
+      // 1. 清理Flutter图像缓存
+      final imageCache = PaintingBinding.instance.imageCache;
+      
+      // 2. 强制清理Live Images
+      imageCache.clearLiveImages();
+      
+      // 3. 完全清理整个图像缓存以确保缩略图更新
+      // 注意：这会影响性能，但确保缩略图问题被彻底解决
+      imageCache.clear();
+      
+      AppLogger.debug(
+        '已清理所有图像缓存',
+        data: {
+          'practiceId': practiceId,
+          'method': 'clear_all_cache',
+        },
+      );
+
+      // 4. 添加延迟确保文件系统操作完成
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // 5. 重新加载字帖列表
+      await loadPractices(forceRefresh: true);
+
+      AppLogger.debug(
+        '强制刷新完成',
+        data: {
+          'practiceId': practiceId,
+          'practicesCount': state.practices.length,
+        },
+      );
+
+    } catch (e) {
+      AppLogger.debug(
+        '强制刷新失败',
+        data: {
+          'practiceId': practiceId,
+          'error': e.toString(),
+        },
+      );
+      
+      // 即使缓存清理失败，也尝试重新加载列表
+      await loadPractices(forceRefresh: true);
+    }
+  }
+
+  /// 设置刷新监听器
+  void _setupRefreshListener() {
+    AppLogger.debug(
+      '正在设置字帖列表刷新监听器',
+      data: {
+        'viewModelInstance': hashCode,
+        'operation': 'setup_refresh_listener',
+      },
+    );
+    
+    _refreshSubscription = _refreshService.refreshStream.listen((event) {
+      AppLogger.debug(
+        '收到字帖列表刷新事件',
+        data: {
+          'practiceId': event.practiceId,
+          'reason': event.reason.toString(),
+          'metadata': event.metadata,
+          'viewModelInstance': hashCode,
+        },
+      );
+
+      // 根据事件类型决定如何刷新
+      switch (event.reason) {
+        case PracticeRefreshReason.saved:
+        case PracticeRefreshReason.updated:
+          AppLogger.debug(
+            '开始刷新字帖列表（保存/更新事件）',
+            data: {
+              'practiceId': event.practiceId,
+              'reason': event.reason.toString(),
+            },
+          );
+          // 字帖保存或更新后，清理缓存并重新加载列表以显示最新的缩略图
+          _forceRefreshWithCacheClear(event.practiceId);
+          break;
+        case PracticeRefreshReason.deleted:
+          AppLogger.debug(
+            '开始刷新字帖列表（删除事件）',
+            data: {
+              'practiceId': event.practiceId,
+            },
+          );
+          // 字帖删除后，重新加载列表
+          loadPractices(forceRefresh: true);
+          break;
+        case PracticeRefreshReason.batchOperation:
+          AppLogger.debug(
+            '开始刷新字帖列表（批量操作事件）',
+            data: {
+              'practiceId': event.practiceId,
+            },
+          );
+          // 批量操作后，重新加载列表
+          loadPractices(forceRefresh: true);
+          break;
+      }
+    });
+    
+    AppLogger.debug(
+      '字帖列表刷新监听器设置完成',
+      data: {
+        'viewModelInstance': hashCode,
+        'subscriptionActive': _refreshSubscription != null,
+      },
+    );
   }
 
   // 初始化数据

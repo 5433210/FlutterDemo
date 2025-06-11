@@ -353,12 +353,11 @@ class M3TopNavigationBar extends StatelessWidget
       },
     );
     
-    await FileOperations.savePractice(
+    // 使用优化的保存服务
+    await FileOperations.savePracticeOptimized(
       context,
-      controller.state.pages,
-      controller.state.layers.cast<Map<String, dynamic>>(),
-      practiceId,
       controller,
+      canvasKey: controller.canvasKey,
     );
   }
 }

@@ -9,7 +9,6 @@ import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
-import '../../../widgets/practice/canvas_rebuild_optimizer.dart';
 import '../helpers/element_utils.dart';
 import 'canvas/components/canvas_control_point_handlers.dart';
 import 'canvas/components/canvas_element_creators.dart';
@@ -41,11 +40,27 @@ class M3PracticeEditCanvas extends StatefulWidget {
   State<M3PracticeEditCanvas> createState() => _M3PracticeEditCanvasState();
 }
 
+class OptimizedCanvasListener extends StatefulWidget {
+  final Widget child;
+  final ContentRenderController controller;
+  final bool isPreviewMode;
+
+  const OptimizedCanvasListener({
+    super.key,
+    required this.child,
+    required this.controller,
+    this.isPreviewMode = false,
+  });
+
+  @override
+  State<OptimizedCanvasListener> createState() =>
+      _OptimizedCanvasListenerState();
+}
+
 // 注意：SelectionBoxState 和 GridPainter 已移动到 canvas_ui_components.dart
 
 class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     with
-        TickerProviderStateMixin,
         CanvasElementCreators,
         CanvasViewControllers,
         CanvasLayerBuilders,
@@ -54,7 +69,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // 🔍[TRACKING] 静态重建计数器
   static int _buildCount = 0;
   static int _optimizedListenerBuildCount = 0;
-  
+
   // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
 
   // 核心组件
@@ -78,6 +93,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   // 状态管理
   bool _isDragging = false;
+  bool _isDisposed = false; // 防止PostFrameCallback在dispose后执行
 
   // 拖拽相关状态
   Offset _dragStart = Offset.zero;
@@ -95,8 +111,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // 跟踪页面变化，用于自动重置视图
   String? _lastPageKey;
   bool _hasInitializedView = false; // 防止重复初始化视图
-  
-
 
   @override
   ContentRenderController get contentRenderController =>
@@ -117,11 +131,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // CanvasGestureHandlers 实现
   @override
   SmartCanvasGestureHandler get gestureHandler => _gestureHandler;
+  // 为mixin提供dispose状态检查
   @override
-  bool get isPreviewMode => widget.isPreviewMode;
+  bool get isDisposed => _isDisposed;
 
   @override
+  bool get isPreviewMode => widget.isPreviewMode;
+  @override
   bool get isReadyForDrag => _isReadyForDrag;
+
   @override
   ValueNotifier<SelectionBoxState> get selectionBoxNotifier =>
       _selectionBoxNotifier;
@@ -140,12 +158,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // 🔍[TRACKING] Canvas重建跟踪 - 记录重建触发原因
     final buildStartTime = DateTime.now();
     _buildCount++;
-    
+
     // 🔧 CRITICAL FIX: 缓存controller状态，避免在build中访问controller.state触发依赖
     final currentTool = widget.controller.state.currentTool;
     final selectedElementIds = widget.controller.state.selectedElementIds;
     final hasSelectedElements = selectedElementIds.isNotEmpty;
-    
+
     EditPageLogger.canvasDebug(
       '🚨 Canvas开始重建 - 主Widget.build()被调用',
       data: {
@@ -156,7 +174,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         'timestamp': buildStartTime.toIso8601String(),
         'optimization': 'canvas_rebuild_tracking',
         'cachedState': 'avoiding_controller_access_in_build',
-        'stackTrace': StackTrace.current.toString().split('\n').take(5).join('\n'),
+        'stackTrace':
+            StackTrace.current.toString().split('\n').take(5).join('\n'),
       },
     );
 
@@ -169,70 +188,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       '🎯 Canvas构建完成 - 图层级架构',
       data: {
         'buildNumber': _buildCount,
-        'buildDuration': '${DateTime.now().difference(buildStartTime).inMilliseconds}ms',
+        'buildDuration':
+            '${DateTime.now().difference(buildStartTime).inMilliseconds}ms',
         'architecture': 'layer_based_rendering',
         'optimization': 'no_postframe_callback_needed',
       },
     );
 
     return OptimizedCanvasListener(
-      controller: widget.controller,
-      builder: (context, controller) {
-        _optimizedListenerBuildCount++;
-        
-        final colorScheme = Theme.of(context).colorScheme;
-
-        EditPageLogger.canvasDebug(
-          '🔄 智能Canvas监听器重建 - OptimizedCanvasListener.builder()被调用',
-          data: {
-            'listenerBuildNumber': _optimizedListenerBuildCount,
-            'canvasBuildNumber': _buildCount,
-            'currentTool': controller.state.currentTool,
-            'selectedElementsCount': controller.state.selectedElementIds.length,
-            'totalElementsCount': controller.state.currentPageElements.length,
-            'optimization': 'optimized_canvas_listener_tracking',
-            'builderStackTrace': StackTrace.current.toString().split('\n').take(3).join('\n'),
-          },
-        );
-
-        if (controller.state.pages.isEmpty) {
-          return Center(
-            child: Text(
-              'No pages available',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          );
-        }
-
-        final currentPage = controller.state.currentPage;
-        if (currentPage == null) {
-          return Center(
-            child: Text(
-              'Current page does not exist',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          );
-        }
-        final elements = controller.state.currentPageElements;
-        EditPageLogger.canvasDebug(
-          'Canvas元素状态检查',
-          data: {
-            'elementsCount': elements.length,
-            'elementsType': elements.runtimeType.toString(),
-            'hasElements': elements.isNotEmpty,
-            'firstElementPreview': elements.isNotEmpty
-                ? elements.first['type'] ?? 'unknown'
-                : null,
-            'canvasBuildNumber': _buildCount,
-            'optimization': 'canvas_element_tracking',
-          },
-        );
-        // 用性能覆盖层包装画布
-        return perf.PerformanceOverlay(
-          showOverlay: DragConfig.showPerformanceOverlay,
-          child: _buildPageContent(currentPage, elements, colorScheme),
-        );
-      },
+      controller: _contentRenderController,
+      child: _buildCanvasContent(),
     );
   }
 
@@ -240,44 +205,103 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   void dispose() {
-    // ✅ 注销智能状态分发器监听器
-    _unregisterFromIntelligentDispatcher();
-    
-    // 🔧 窗口大小变化处理已移至页面级别
+    // 🔧 CRITICAL FIX: 立即设置dispose标志，防止PostFrameCallback在dispose后执行
+    _isDisposed = true;
 
-    // 🔧 移除DragStateManager监听器
-    _dragStateManager.removeListener(_onDragStateManagerChanged);
+    debugPrint('🔍 Canvas dispose: Starting disposal process...');
 
-    _selectionBoxNotifier.dispose();
-    _contentRenderController.dispose();
-    _dragStateManager.dispose();
-    _layerRenderManager.dispose();
-
-    // 释放新的混合优化策略组件
-    _structureListener.dispose();
-    _stateDispatcher.dispose();
-    _dragOperationManager.dispose();
-
-    super.dispose();
-  }
-
-  // ✅ 新方法：注销智能状态分发器监听器
-  void _unregisterFromIntelligentDispatcher() {
-    final intelligentDispatcher = widget.controller.intelligentDispatcher;
-    if (intelligentDispatcher != null) {
-      // 🚀 优化：由于Canvas没有注册监听器，无需注销
-      EditPageLogger.canvasDebug(
-        'Canvas组件无智能状态分发器监听器需要注销（优化版）',
+    try {
+      EditPageLogger.editPageDebug(
+        '销毁Canvas组件',
         data: {
-          'optimization': 'no_canvas_listeners_registered',
-          'reason': '避免额外的ContentRenderLayer重建',
+          'timestamp': DateTime.now().toIso8601String(),
+          'operation': 'canvas_dispose',
         },
       );
-      
-      // intelligentDispatcher.unregisterUIListener('canvas');
-      // intelligentDispatcher.unregisterLayerListener('content');
-      // intelligentDispatcher.unregisterLayerListener('interaction');
+    } catch (e) {
+      debugPrint('Canvas dispose logging failed: $e');
     }
+
+    // 🔧 CRITICAL FIX: 先处理自己的资源，最后调用super.dispose()
+
+    // 使用安全的资源释放方式
+    try {
+      _gestureHandler.dispose();
+      debugPrint('Canvas dispose: gesture handler disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose gesture handler: $e');
+    }
+
+    try {
+      _contentRenderController.dispose();
+      debugPrint('Canvas dispose: content render controller disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose content render controller: $e');
+    }
+
+    try {
+      _dragStateManager.dispose();
+      debugPrint('Canvas dispose: drag state manager disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose drag state manager: $e');
+    }
+
+    try {
+      _selectionBoxNotifier.dispose();
+      debugPrint('Canvas dispose: selection box notifier disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose selection box notifier: $e');
+    }
+
+    try {
+      _structureListener.dispose();
+      debugPrint('Canvas dispose: structure listener disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose structure listener: $e');
+    }
+
+    try {
+      _stateDispatcher.dispose();
+      debugPrint('Canvas dispose: state dispatcher disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose state dispatcher: $e');
+    }
+
+    try {
+      _dragOperationManager.dispose();
+      debugPrint('Canvas dispose: drag operation manager disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose drag operation manager: $e');
+    }
+
+    try {
+      _layerRenderManager.dispose();
+      debugPrint('Canvas dispose: layer render manager disposed');
+    } catch (e) {
+      debugPrint('Failed to dispose layer render manager: $e');
+    }
+
+    // 🔧 CRITICAL FIX: 注销智能状态分发器监听器
+    try {
+      _unregisterFromIntelligentDispatcher();
+      debugPrint('Canvas dispose: intelligent dispatcher unregistered');
+    } catch (e) {
+      debugPrint('Failed to unregister from intelligent dispatcher: $e');
+    }
+
+    // 注意：不要 dispose 单例的 PerformanceMonitor
+    try {
+      debugPrint(
+          'Canvas dispose: PerformanceMonitor reference removed (singleton not disposed)');
+    } catch (e) {
+      debugPrint('Failed to remove performance monitor reference: $e');
+    }
+
+    debugPrint('Canvas dispose: About to call super.dispose()');
+
+    // 🔧 CRITICAL FIX: 确保调用super.dispose()，但用更安全的方式
+    super.dispose();
+    debugPrint('Canvas dispose: super.dispose() called successfully');
   }
 
   @override
@@ -450,6 +474,40 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     }
   }
 
+  Widget _buildCanvasContent() {
+    _optimizedListenerBuildCount++;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final controller = widget.controller;
+
+    if (controller.state.pages.isEmpty) {
+      return Center(
+        child: Text(
+          'No pages available',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    final currentPage = controller.state.currentPage;
+    if (currentPage == null) {
+      return Center(
+        child: Text(
+          'Current page does not exist',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    final elements = controller.state.currentPageElements;
+
+    // 用性能覆盖层包装画布
+    return perf.PerformanceOverlay(
+      showOverlay: DragConfig.showPerformanceOverlay,
+      child: _buildPageContent(currentPage, elements, colorScheme),
+    );
+  }
+
   /// Build widget for specific layer type
   Widget _buildLayerWidget(RenderLayerType layerType, LayerConfig config) {
     return buildLayerWidget(layerType, config);
@@ -472,7 +530,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         '${page['width']}_${page['height']}_${page['orientation']}_${page['dpi']}';
     if (_lastPageKey != null && _lastPageKey != pageKey) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && !_isDisposed) {
           _fitPageToScreen();
         }
       });
@@ -534,10 +592,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       if (shouldHandleAnySpecialGesture(elements)) {
                         _isReadyForDrag = true;
                         // 移除立即setState，避免Canvas在拖拽状态设置前重建
-                        EditPageLogger.canvasError('🔧🔧🔧 设置拖拽准备状态，但不立即重建', data: {
-                          'isReadyForDrag': _isReadyForDrag,
-                          'reason': 'avoid_premature_canvas_rebuild',
-                        });
+                        EditPageLogger.canvasError('🔧🔧🔧 设置拖拽准备状态，但不立即重建',
+                            data: {
+                              'isReadyForDrag': _isReadyForDrag,
+                              'reason': 'avoid_premature_canvas_rebuild',
+                            });
                       } else {
                         _isReadyForDrag = false;
                       }
@@ -551,11 +610,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
                       // 🔧 CRITICAL FIX: 移除不必要的setState，避免触发Canvas重建
                       // 选择状态变化会通过智能状态分发器自动处理，不需要全局重建
-                      EditPageLogger.canvasError('🔧🔧🔧 TapUp处理完成，跳过setState', data: {
-                        'reason': 'avoid_canvas_rebuild_on_selection',
-                        'optimization': 'smart_state_dispatcher_handles_selection',
-                      });
-                      
+                      EditPageLogger.canvasError('🔧🔧🔧 TapUp处理完成，跳过setState',
+                          data: {
+                            'reason': 'avoid_canvas_rebuild_on_selection',
+                            'optimization':
+                                'smart_state_dispatcher_handles_selection',
+                          });
+
                       // 调试选择状态变化后的情况（不触发重建）
                       _debugCanvasState('元素选择后');
                     },
@@ -576,12 +637,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             EditPageLogger.canvasDebug(
                               '画布拖拽开始',
                               data: {
-                                'position': '${details.globalPosition.dx.toStringAsFixed(1)},${details.globalPosition.dy.toStringAsFixed(1)}',
-                                'localPosition': '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
-                                'currentTool': widget.controller.state.currentTool,
-                                'selectedCount': widget.controller.state.selectedElementIds.length,
+                                'position':
+                                    '${details.globalPosition.dx.toStringAsFixed(1)},${details.globalPosition.dy.toStringAsFixed(1)}',
+                                'localPosition':
+                                    '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
+                                'currentTool':
+                                    widget.controller.state.currentTool,
+                                'selectedCount': widget
+                                    .controller.state.selectedElementIds.length,
                                 'isDragging': _isDragging,
-                                'dragManagerState': _dragStateManager.isDragging,
+                                'dragManagerState':
+                                    _dragStateManager.isDragging,
                               },
                             );
 
@@ -592,24 +658,32 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             if (shouldHandle) {
                               _gestureHandler.handlePanStart(details,
                                   elements.cast<Map<String, dynamic>>());
-                              
+
                               // 🔧 CRITICAL FIX: 在拖拽真正开始后，立即重建以禁用panEnabled
                               // 这确保了拖拽状态设置后，InteractiveViewer才禁用平移
-                              if (mounted && (_isDragging || _dragStateManager.isDragging)) {
+                              if (mounted &&
+                                  (_isDragging ||
+                                      _dragStateManager.isDragging)) {
                                 setState(() {});
-                                EditPageLogger.canvasError('🔧🔧🔧 拖拽开始后立即重建Canvas', data: {
-                                  'isDragging': _isDragging,
-                                  'dragManagerDragging': _dragStateManager.isDragging,
-                                  'reason': 'disable_interactive_viewer_pan',
-                                });
+                                EditPageLogger.canvasError(
+                                    '🔧🔧🔧 拖拽开始后立即重建Canvas',
+                                    data: {
+                                      'isDragging': _isDragging,
+                                      'dragManagerDragging':
+                                          _dragStateManager.isDragging,
+                                      'reason':
+                                          'disable_interactive_viewer_pan',
+                                    });
                               }
-                              
-                              final gestureProcessTime = DateTime.now().difference(gestureStartTime);
+
+                              final gestureProcessTime =
+                                  DateTime.now().difference(gestureStartTime);
                               EditPageLogger.canvasDebug(
                                 '手势处理完成',
                                 data: {
                                   'gestureType': 'panStart',
-                                  'processingTimeMs': gestureProcessTime.inMilliseconds,
+                                  'processingTimeMs':
+                                      gestureProcessTime.inMilliseconds,
                                   'elementsCount': elements.length,
                                 },
                               );
@@ -986,7 +1060,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // 只在变换应用失败时记录错误日志
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted && !_isDisposed) {
         final appliedMatrix = widget.transformationController.value;
         final appliedScale = appliedMatrix.getMaxScaleOnAxis();
         final appliedTranslation = appliedMatrix.getTranslation();
@@ -1014,7 +1088,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   Future<void> _handleDragEnd() async {
     // 🚀 优化：避免Canvas整体重建，只更新必要的状态
     _isDragging = false;
-    
+
     EditPageLogger.canvasDebug(
       '拖拽结束 - 避免Canvas整体重建',
       data: {
@@ -1038,7 +1112,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _isDragging = isDragging;
     _dragStart = dragStart;
     _elementStartPosition = elementPosition;
-    
+
     EditPageLogger.canvasDebug(
       '拖拽开始 - 避免Canvas整体重建',
       data: {
@@ -1127,6 +1201,36 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     handleElementDrop(elementType, dropPosition, applyCenteringOffset: false);
   }
 
+  /// 处理智能状态分发器的内容更新
+  void _handleIntelligentDispatcherContentUpdate() {
+    if (!mounted) return;
+
+    EditPageLogger.canvasDebug('处理智能状态分发器内容更新', data: {
+      'operation': 'intelligent_dispatcher_content_update',
+    });
+
+    // 发送元素更新和顺序变化事件，确保所有变化都被正确处理
+    _stateDispatcher.dispatch(StateChangeEvent(
+      type: StateChangeType.elementUpdate,
+      data: {
+        'reason': 'intelligent_dispatcher_content_update',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      },
+    ));
+
+    // 同时发送元素顺序变化事件，确保顺序变化被正确处理
+    _stateDispatcher.dispatch(StateChangeEvent(
+      type: StateChangeType.elementOrderChange,
+      data: {
+        'reason': 'intelligent_dispatcher_order_change',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'elementId': '',
+        'oldIndex': 0,
+        'newIndex': 0,
+      },
+    ));
+  }
+
   /// 初始化核心组件
   void _initializeCoreComponents() {
     // 内容渲染控制器 - 用于管理元素渲染和优化
@@ -1174,7 +1278,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         enableCaching: true,
         useRepaintBoundary: true,
       ),
-      builder: (config) => _buildLayerWidget(RenderLayerType.staticBackground, config),
+      builder: (config) =>
+          _buildLayerWidget(RenderLayerType.staticBackground, config),
     );
 
     // Register content layer
@@ -1254,67 +1359,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Register layers with the layer render manager
     _initializeLayers();
     EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成');
-    
+
     // ✅ 新添加：注册Canvas到智能状态分发器
     _registerCanvasToIntelligentDispatcher();
-  }
-
-  // ✅ 新方法：注册Canvas到智能状态分发器
-  void _registerCanvasToIntelligentDispatcher() {
-    final intelligentDispatcher = widget.controller.intelligentDispatcher;
-    if (intelligentDispatcher != null) {
-      // 🚀 关键修复：注册内容层监听器以处理元素顺序变化
-      // 这是必需的，因为ContentRenderLayer的didUpdateWidget不能捕获所有变化
-      intelligentDispatcher.registerLayerListener('content', () {
-        // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
-        _handleIntelligentDispatcherContentUpdate();
-      });
-      
-      EditPageLogger.canvasDebug(
-        'Canvas组件已注册到智能状态分发器',
-        data: {
-          'layerListeners': 1,
-          'purpose': '监听内容层变化',
-        },
-      );
-    } else {
-      EditPageLogger.canvasDebug(
-        '智能状态分发器不存在，无法注册Canvas监听器',
-        data: {
-          'fallback': 'traditional_notify_listeners',
-        },
-      );
-    }
-  }
-
-  /// 处理智能状态分发器的内容更新
-  void _handleIntelligentDispatcherContentUpdate() {
-    if (!mounted) return;
-    
-    EditPageLogger.canvasDebug('处理智能状态分发器内容更新', data: {
-      'operation': 'intelligent_dispatcher_content_update',
-    });
-    
-    // 发送元素更新和顺序变化事件，确保所有变化都被正确处理
-    _stateDispatcher.dispatch(StateChangeEvent(
-      type: StateChangeType.elementUpdate,
-      data: {
-        'reason': 'intelligent_dispatcher_content_update',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      },
-    ));
-    
-    // 同时发送元素顺序变化事件，确保顺序变化被正确处理
-    _stateDispatcher.dispatch(StateChangeEvent(
-      type: StateChangeType.elementOrderChange,
-      data: {
-        'reason': 'intelligent_dispatcher_order_change',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-        'elementId': '',
-        'oldIndex': 0,
-        'newIndex': 0,
-      },
-    ));
   }
 
   /// 初始化UI组件
@@ -1335,7 +1382,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // 🔍 恢复初始化时的reset，用于对比两次调用
     // Schedule initial reset view position on first load (只执行一次)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_hasInitializedView) {
+      if (mounted && !_hasInitializedView && !_isDisposed) {
         _hasInitializedView = true;
         resetCanvasPosition(); // 使用标准的Reset View Position逻辑
       }
@@ -1344,6 +1391,34 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 处理DragStateManager状态变化
   void _onDragStateManagerChanged() {}
+
+  // ✅ 新方法：注册Canvas到智能状态分发器
+  void _registerCanvasToIntelligentDispatcher() {
+    final intelligentDispatcher = widget.controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      // 🚀 关键修复：注册内容层监听器以处理元素顺序变化
+      // 这是必需的，因为ContentRenderLayer的didUpdateWidget不能捕获所有变化
+      intelligentDispatcher.registerLayerListener('content', () {
+        // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
+        _handleIntelligentDispatcherContentUpdate();
+      });
+
+      EditPageLogger.canvasDebug(
+        'Canvas组件已注册到智能状态分发器',
+        data: {
+          'layerListeners': 1,
+          'purpose': '监听内容层变化',
+        },
+      );
+    } else {
+      EditPageLogger.canvasDebug(
+        '智能状态分发器不存在，无法注册Canvas监听器',
+        data: {
+          'fallback': 'traditional_notify_listeners',
+        },
+      );
+    }
+  }
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
@@ -1395,7 +1470,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           RenderLayerType.staticBackground,
           reason: 'Grid settings changed',
         );
-        
+
         EditPageLogger.canvasDebug(
           '网格设置变化处理（优化版）',
           data: {
@@ -1403,7 +1478,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'avoidedCanvasRebuild': true,
           },
         );
-        
+
         // 🚀 移除setState调用 - 网格设置变化不应该触发整个Canvas重建
         // 网格渲染会通过markLayerDirty机制自动重建背景层
         // if (mounted) {
@@ -1427,11 +1502,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           'reason': 'layer_visibility_changed',
           'action': 'force_content_layer_rebuild',
         });
-        
+
         // 通知LayerRenderManager重新渲染Content层
         _layerRenderManager.markLayerDirty(RenderLayerType.content,
             reason: 'Layer visibility changed: ${event.layerId}');
-            
+
         // 🔧 关键修复：强制触发Canvas重建以立即显示图层变化效果
         if (mounted) {
           setState(() {
@@ -1444,15 +1519,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           'oldIndex': event.oldIndex,
           'newIndex': event.newIndex,
         });
-        
+
         // 延迟重建，确保操作完成后再处理
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          
+          if (!mounted || _isDisposed) return;
+
           // 通知LayerRenderManager重新渲染Content层
           _layerRenderManager.markLayerDirty(RenderLayerType.content,
               reason: 'Element order changed: ${event.elementId}');
-              
+
           // 强制触发Canvas重建以立即显示元素顺序变化效果
           setState(() {
             // 触发Canvas重建，确保元素顺序变化立即生效
@@ -1478,7 +1553,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         // 🚀 优化：只标记交互层为脏，不触发整个Canvas重建
         _layerRenderManager.markLayerDirty(RenderLayerType.interaction,
             reason: 'Selection or tool changed');
-        
+
         EditPageLogger.canvasDebug(
           '交互层状态变化处理（优化版）',
           data: {
@@ -1487,12 +1562,64 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'avoidedCanvasRebuild': true,
           },
         );
-        
+
         // 🚀 移除setState调用 - 交互层变化不应该触发整个Canvas重建
         // 交互层会通过markLayerDirty机制自动重建
       }
     });
   }
 
+  // ✅ 新方法：注销智能状态分发器监听器
+  void _unregisterFromIntelligentDispatcher() {
+    try {
+      final intelligentDispatcher = widget.controller.intelligentDispatcher;
+      if (intelligentDispatcher != null) {
+        // 🚀 优化：由于Canvas没有注册监听器，无需注销
+        // 在dispose过程中使用debugPrint而不是EditPageLogger
+        debugPrint('Canvas组件无智能状态分发器监听器需要注销（优化版）');
+
+        // intelligentDispatcher.unregisterUIListener('canvas');
+        // intelligentDispatcher.unregisterLayerListener('content');
+        // intelligentDispatcher.unregisterLayerListener('interaction');
+      }
+    } catch (e) {
+      // 在dispose过程中使用debugPrint而不是EditPageLogger
+      debugPrint('注销智能状态分发器监听器失败: $e');
+    }
+  }
+
   // 手势检查方法已移至 CanvasGestureHandlers mixin
+}
+
+class _OptimizedCanvasListenerState extends State<OptimizedCanvasListener> {
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void dispose() {
+    try {
+      widget.controller.removeListener(_onControllerChanged);
+    } catch (e) {
+      debugPrint('Failed to remove controller listener: $e');
+    }
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      try {
+        setState(() {});
+      } catch (e) {
+        debugPrint('Failed to setState in OptimizedCanvasListener: $e');
+      }
+    }
+  }
 }

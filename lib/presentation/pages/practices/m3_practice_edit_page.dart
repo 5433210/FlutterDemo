@@ -2100,84 +2100,46 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   }
 
   /// Load practice
-  Future<void> _loadPractice(String id) async {
-    final l10n = AppLocalizations.of(context);
-
-    // First check if we've already loaded this practice ID, avoid duplicate loading
-    if (_controller.practiceId == id) {
-      AppLogger.info(
-        '字帖已加载，跳过重复加载',
-        tag: 'PracticeEdit',
-        data: {'practiceId': id},
-      );
-      return;
-    }
-
-    // Save a reference before starting async operation
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+  Future<void> _loadPractice(String practiceId) async {
+    if (!mounted) return;
 
     try {
-      AppLogger.info(
+      EditPageLogger.editPageInfo(
         '开始加载字帖',
-        tag: 'PracticeEdit',
-        data: {'practiceId': id},
+        data: {
+          'practiceId': practiceId,
+        },
       );
 
-      // Call controller's loadPractice method
-      final success = await _controller.loadPractice(id);
-      if (success) {
-        // Load success, update UI
-        if (mounted) {
-          setState(() {
-            // No need to reset transformation here, resetViewPosition() will handle it
-          });
+             final practice = await _controller.practiceService.getPractice(practiceId);
+       if (!mounted) return;
 
-          // Show success notification
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-                content: Text(l10n.practiceEditPracticeLoaded(
-                    _controller.practiceTitle ?? ''))),
-          );
+       if (practice == null) {
+         if (!mounted) return;
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('字帖不存在')),
+         );
+         return;
+       }
 
-          AppLogger.debug(
-              'Practice loaded successfully: ${_controller.practiceTitle}');
+       // 更新控制器状态
+       _controller.updatePractice(practice);
 
-          // Automatically reset view position to default state
-          _controller.resetViewPosition();
-          AppLogger.debug(
-            '加载字帖后自动重置视图位置',
-            tag: 'PracticeEdit',
-            data: {'practiceId': id},
-          );
-
-          // Preload all collection element images
-          _preloadAllCollectionImages();
-        }
-      } else {
-        // Load failed
-        if (mounted) {
-          // Show failure notification
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditPracticeLoadFailed)),
-          );
-          AppLogger.debug(
-              'Practice load failed: Practice does not exist or has been deleted');
-        }
-      }
-    } catch (e) {
-      // Handle exceptions
-      AppLogger.error(
+    } catch (e, stackTrace) {
+      if (!mounted) return;
+      
+      EditPageLogger.editPageError(
         '加载字帖失败',
-        tag: 'PracticeEdit',
         error: e,
-        data: {'practiceId': id},
+        stackTrace: stackTrace,
+        data: {
+          'practiceId': practiceId,
+        },
       );
-      if (mounted) {
-        // Show exception notification
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditLoadFailed('$e'))),
-        );
-      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('加载字帖失败')),
+      );
     }
   }
 
@@ -2971,6 +2933,47 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         // Use the safe ungroup method to prevent ID conflicts
         PracticeEditUtils.safeUngroupSelectedElement(_controller);
       }
+    }
+  }
+
+  /// Toggle preview mode
+  void _togglePreviewMode() {
+    EditPageLogger.editPageInfo(
+      '切换预览模式',
+      data: {
+        'currentMode': _isPreviewMode ? 'preview' : 'edit',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+    
+    // 在切换模式前确保所有操作都已完成
+    if (_isPreviewMode) {
+      // 从预览模式切换回编辑模式
+      setState(() {
+        _isPreviewMode = false;
+      });
+      
+      // 通知控制器预览模式已关闭
+      _controller.onPreviewModeChanged(false);
+    } else {
+      // 从编辑模式切换到预览模式
+      // 确保所有拖拽操作都已结束
+      if (_controller.state.isDragging) {
+        EditPageLogger.editPageWarning(
+          '拖拽操作未完成时切换预览模式',
+          data: {
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+        return;
+      }
+      
+      setState(() {
+        _isPreviewMode = true;
+      });
+      
+      // 通知控制器预览模式已开启
+      _controller.onPreviewModeChanged(true);
     }
   }
 }

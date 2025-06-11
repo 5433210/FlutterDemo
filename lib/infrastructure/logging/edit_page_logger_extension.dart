@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../../utils/config/edit_page_logging_config.dart';
 import 'log_level.dart';
 import 'logger.dart';
@@ -228,13 +230,22 @@ extension EditPageLogger on AppLogger {
       Object? error,
       StackTrace? stackTrace,
       Map<String, dynamic>? data}) {
-    if (EditPageLoggingConfig.enableFileOpsLogging &&
-        _shouldLog(LogLevel.error, EditPageLoggingConfig.fileOpsMinLevel)) {
-      AppLogger.error(message,
-          tag: tag ?? EditPageLoggingConfig.TAG_FILE_OPS,
-          error: error,
-          stackTrace: stackTrace,
-          data: data);
+    try {
+      if (EditPageLoggingConfig.enableFileOpsLogging &&
+          _shouldLog(LogLevel.error, EditPageLoggingConfig.fileOpsMinLevel)) {
+        AppLogger.error(message,
+            tag: tag ?? EditPageLoggingConfig.TAG_FILE_OPS,
+            error: error,
+            stackTrace: stackTrace,
+            data: data);
+      }
+    } catch (e) {
+      // 如果日志记录失败，使用debugPrint作为备用
+      try {
+        debugPrint('EditPageLogger.fileOpsError: 日志记录失败: $e, 原始消息: $message');
+      } catch (_) {
+        // 如果连debugPrint都失败，静默忽略
+      }
     }
   }
 

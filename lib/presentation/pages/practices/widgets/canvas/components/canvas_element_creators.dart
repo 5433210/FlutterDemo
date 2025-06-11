@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 
 /// 画布元素创建器
@@ -9,6 +8,9 @@ import '../../../../../widgets/practice/practice_edit_controller.dart';
 mixin CanvasElementCreators {
   /// 获取控制器（由使用此mixin的类实现）
   PracticeEditController get controller;
+
+  /// 检查组件是否已dispose（由使用此mixin的类实现）
+  bool get isDisposed;
 
   /// 创建集字元素
   void createCollectionElement(Offset position) {
@@ -35,14 +37,16 @@ mixin CanvasElementCreators {
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.selectElement(newElementId);
-      EditPageLogger.canvasDebug(
-        '集字元素创建完成并已选中',
-        data: {
-          'elementId': newElementId,
-          'operation': 'post_frame_selection',
-        },
-      );
+      if (!isDisposed) {
+        controller.selectElement(newElementId);
+        EditPageLogger.canvasDebug(
+          '集字元素创建完成并已选中',
+          data: {
+            'elementId': newElementId,
+            'operation': 'post_frame_selection',
+          },
+        );
+      }
     });
   }
 
@@ -71,14 +75,16 @@ mixin CanvasElementCreators {
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.selectElement(newElementId);
-      EditPageLogger.canvasDebug(
-        '图像元素创建完成并已选中',
-        data: {
-          'elementId': newElementId,
-          'operation': 'post_frame_selection',
-        },
-      );
+      if (!isDisposed) {
+        controller.selectElement(newElementId);
+        EditPageLogger.canvasDebug(
+          '图像元素创建完成并已选中',
+          data: {
+            'elementId': newElementId,
+            'operation': 'post_frame_selection',
+          },
+        );
+      }
     });
   }
 
@@ -94,7 +100,7 @@ mixin CanvasElementCreators {
 
     // 调用controller创建文本元素，现在返回元素ID
     final newElementId = controller.addTextElementAt(position.dx, position.dy);
-    
+
     EditPageLogger.canvasDebug(
       '文本元素已创建',
       data: {
@@ -106,14 +112,16 @@ mixin CanvasElementCreators {
 
     // 等待一帧后选择新创建的元素
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.selectElement(newElementId);
-      EditPageLogger.canvasDebug(
-        '文本元素创建完成并已选中',
-        data: {
-          'elementId': newElementId,
-          'operation': 'post_frame_selection',
-        },
-      );
+      if (!isDisposed) {
+        controller.selectElement(newElementId);
+        EditPageLogger.canvasDebug(
+          '文本元素创建完成并已选中',
+          data: {
+            'elementId': newElementId,
+            'operation': 'post_frame_selection',
+          },
+        );
+      }
     });
   }
 
@@ -153,7 +161,8 @@ mixin CanvasElementCreators {
         'elementId': elementId,
         'changedProperties': newProperties.keys.toList(),
         'hasRotationChange': newProperties.containsKey('rotation'),
-        'hasSizeChange': newProperties.keys.any((key) => ['x', 'y', 'width', 'height'].contains(key)),
+        'hasSizeChange': newProperties.keys
+            .any((key) => ['x', 'y', 'width', 'height'].contains(key)),
         'note': '撤销操作由控制点处理器统一管理',
       },
     );

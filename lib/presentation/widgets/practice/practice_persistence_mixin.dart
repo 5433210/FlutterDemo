@@ -12,46 +12,23 @@ import 'thumbnail_generator.dart';
 /// 字帖持久化管理 Mixin
 /// 负责字帖的保存、加载、缩略图生成等功能
 mixin PracticePersistenceMixin on ChangeNotifier {
-  // 抽象接口
-  PracticeEditState get state;
-  PracticeService get practiceService;
   GlobalKey? get canvasKey;
-  Function(bool)? get previewModeCallback;
-  String? get practiceTitle;
-  String? get practiceId;
-  
-  void checkDisposed();
-
-  // 私有字段 - 需要在使用此mixin的类中声明
-  String? _practiceId;
-  String? _practiceTitle;
+  // 抽象字段 - 需要在使用此mixin的类中实现
+  String? get currentPracticeId;
+  set currentPracticeId(String? value);
+  String? get currentPracticeTitle;
+  set currentPracticeTitle(String? value);
 
   /// 检查字帖是否已保存过
-  bool get isSaved => _practiceId != null;
+  bool get isSaved => currentPracticeId != null;
 
-  /// 获取当前字帖ID
-  String? get currentPracticeId => _practiceId;
+  String? get practiceId;
 
-  /// 获取当前字帖标题
-  String? get currentPracticeTitle => _practiceTitle;
-
-  /// 检查标题是否已存在
-  Future<bool> checkTitleExists(String title) async {
-    // 如果是当前字帖的标题，不算冲突
-    if (_practiceTitle == title) {
-      return false;
-    }
-
-    try {
-      // 查询是否有相同标题的字帖，排除当前ID
-      return await practiceService.isTitleExists(title,
-          excludeId: _practiceId);
-    } catch (e) {
-      debugPrint('检查标题是否存在时出错: $e');
-      // 发生错误时假设标题不存在
-      return false;
-    }
-  }
+  PracticeService get practiceService;
+  String? get practiceTitle;
+  Function(bool)? get previewModeCallback;
+  // 抽象接口
+  PracticeEditState get state;
 
   /// 从 RepaintBoundary 捕获图像
   Future<Uint8List?> captureFromRepaintBoundary(GlobalKey key) async {
@@ -90,6 +67,26 @@ mixin PracticePersistenceMixin on ChangeNotifier {
     }
   }
 
+  void checkDisposed();
+
+  /// 检查标题是否已存在
+  Future<bool> checkTitleExists(String title) async {
+    // 如果是当前字帖的标题，不算冲突
+    if (currentPracticeTitle == title) {
+      return false;
+    }
+
+    try {
+      // 查询是否有相同标题的字帖，排除当前ID
+      return await practiceService.isTitleExists(title,
+          excludeId: currentPracticeId);
+    } catch (e) {
+      debugPrint('检查标题是否存在时出错: $e');
+      // 发生错误时假设标题不存在
+      return false;
+    }
+  }
+
   /// 加载字帖
   Future<bool> loadPractice(String id) async {
     try {
@@ -97,8 +94,8 @@ mixin PracticePersistenceMixin on ChangeNotifier {
       if (practice == null) return false;
 
       // 更新字帖数据
-      _practiceId = practice['id'] as String;
-      _practiceTitle = practice['title'] as String;
+      currentPracticeId = practice['id'] as String;
+      currentPracticeTitle = practice['title'] as String;
       state.pages = List<Map<String, dynamic>>.from(practice['pages'] as List);
 
       // 如果有页面，选择第一个页面
@@ -169,14 +166,14 @@ mixin PracticePersistenceMixin on ChangeNotifier {
       );
 
       // 更新ID和标题
-      _practiceId = result.id;
-      _practiceTitle = title;
+      currentPracticeId = result.id;
+      currentPracticeTitle = title;
 
       // 标记为已保存
       state.markSaved();
       notifyListeners();
 
-      debugPrint('字帖另存为成功: $title, ID: $_practiceId');
+      debugPrint('字帖另存为成功: $title, ID: $currentPracticeId');
       return true;
     } catch (e) {
       debugPrint('另存为字帖失败: $e');
@@ -197,18 +194,18 @@ mixin PracticePersistenceMixin on ChangeNotifier {
     if (state.pages.isEmpty) return false;
 
     // 如果未提供标题且从未保存过，返回false表示需要提示用户输入标题
-    if (title == null && _practiceId == null) {
+    if (title == null && currentPracticeId == null) {
       return false;
     }
 
     // 使用当前标题或传入的新标题
-    final saveTitle = title ?? _practiceTitle;
+    final saveTitle = title ?? currentPracticeTitle;
     if (saveTitle == null || saveTitle.isEmpty) {
       return false;
     }
 
     // 如果是新标题（非当前标题），检查标题是否存在
-    if (!forceOverwrite && title != null && title != _practiceTitle) {
+    if (!forceOverwrite && title != null && title != currentPracticeTitle) {
       final exists = await checkTitleExists(title);
       if (exists) {
         // 标题已存在，返回特殊值通知调用者需要确认覆盖
@@ -217,7 +214,7 @@ mixin PracticePersistenceMixin on ChangeNotifier {
     }
 
     try {
-      debugPrint('开始保存字帖: $saveTitle, ID: $_practiceId');
+      debugPrint('开始保存字帖: $saveTitle, ID: $currentPracticeId');
 
       // 生成缩略图
       final thumbnail = await _generateThumbnail();
@@ -229,21 +226,21 @@ mixin PracticePersistenceMixin on ChangeNotifier {
 
       // 保存字帖 - 使用现有ID或创建新ID
       final result = await practiceService.savePractice(
-        id: _practiceId, // 如果是null，将创建新字帖
+        id: currentPracticeId, // 如果是null，将创建新字帖
         title: saveTitle,
         pages: pagesToSave,
         thumbnail: thumbnail,
       );
 
       // 更新ID和标题
-      _practiceId = result.id;
-      _practiceTitle = saveTitle;
+      currentPracticeId = result.id;
+      currentPracticeTitle = saveTitle;
 
       // 标记为已保存
       state.markSaved();
       notifyListeners();
 
-      debugPrint('字帖保存成功: $saveTitle, ID: $_practiceId');
+      debugPrint('字帖保存成功: $saveTitle, ID: $currentPracticeId');
       return true;
     } catch (e) {
       debugPrint('保存字帖失败: $e');
@@ -253,8 +250,8 @@ mixin PracticePersistenceMixin on ChangeNotifier {
 
   /// 更新字帖标题
   void updatePracticeTitle(String newTitle) {
-    if (_practiceTitle != newTitle) {
-      _practiceTitle = newTitle;
+    if (currentPracticeTitle != newTitle) {
+      currentPracticeTitle = newTitle;
       state.hasUnsavedChanges = true;
       notifyListeners();
     }
@@ -276,27 +273,29 @@ mixin PracticePersistenceMixin on ChangeNotifier {
       const thumbWidth = 300.0;
       const thumbHeight = 400.0;
 
-      // 临时进入预览模式
-      bool wasInPreviewMode = false;
-      if (previewModeCallback != null) {
-        // 假设当前不在预览模式
-        wasInPreviewMode = false;
-
-        // 切换到预览模式
-        previewModeCallback!(true);
-
-        // 等待一帧，确保 RepaintBoundary 已经渲染
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-
-      // 如果有画布 GlobalKey，使用 RepaintBoundary 捕获
+      // 智能缩略图生成：尝试在当前状态生成，失败则快速切换
+      bool wasInPreviewMode = state.isPreviewMode;
       Uint8List? thumbnail;
+
+      // 首先尝试在当前状态下捕获
       if (canvasKey != null) {
         thumbnail = await captureFromRepaintBoundary(canvasKey!);
       }
 
-      // 恢复原来的预览模式状态
-      if (previewModeCallback != null && !wasInPreviewMode) {
+      // 如果在编辑模式下捕获失败，则快速切换到预览模式
+      if (thumbnail == null &&
+          !wasInPreviewMode &&
+          previewModeCallback != null) {
+        previewModeCallback!(true);
+
+        // 更短的等待时间，减少用户感知
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        if (canvasKey != null) {
+          thumbnail = await captureFromRepaintBoundary(canvasKey!);
+        }
+
+        // 立即恢复
         previewModeCallback!(false);
       }
 
@@ -321,7 +320,7 @@ mixin PracticePersistenceMixin on ChangeNotifier {
         firstPage,
         width: thumbWidth,
         height: thumbHeight,
-        title: _practiceTitle,
+        title: currentPracticeTitle,
       );
 
       return fallbackThumbnail;
@@ -354,4 +353,4 @@ mixin PracticePersistenceMixin on ChangeNotifier {
       return pageCopy;
     }).toList();
   }
-} 
+}

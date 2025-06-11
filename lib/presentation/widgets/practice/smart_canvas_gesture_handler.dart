@@ -116,11 +116,41 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   /// Cleanup resources
   void dispose() {
+    EditPageLogger.canvasDebug('手势处理器销毁', data: {
+      'timestamp': DateTime.now().toIso8601String(),
+      'activePointers': _activePointers.length,
+      'gestureHistory': _gestureHistory.length,
+    });
+    
+    // 释放手势分发器
     _gestureDispatcher.dispose();
+    
+    // 取消冲突解决定时器
     _conflictResolutionTimer?.cancel();
+    
+    // 清理所有状态
     _activePointers.clear();
     _gestureHistory.clear();
     _responseTimes.clear();
+    
+    // 重置多指触控状态
+    _isMultiTouchActive = false;
+    _multiTouchState = null;
+    _currentMode = _GestureMode.idle;
+    
+    // 清理拖拽相关状态
+    _dragStart = Offset.zero;
+    _elementStartPosition = Offset.zero;
+    _elementStartPositions.clear();
+    _isSelectionBoxActive = false;
+    _isPanningEmptyArea = false;
+    _isPanStartHandling = false;
+    _selectionBoxStart = null;
+    _selectionBoxEnd = null;
+    _panStartSelectedElementIds = [];
+    _panEndPosition = null;
+    _isDragging = false;
+    _recentTranslationOperations.clear();
   }
 
   @override

@@ -199,7 +199,9 @@ class AppLogger {
           return match.group(1)?.split('.').first;
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      // 安全处理任何错误，避免在dispose过程中崩溃
+    }
     return null;
   }
 
@@ -239,14 +241,19 @@ class AppLogger {
     final entry = _logQueue.removeAt(0);
 
     try {
-      // 实际的日志处理
+      // 实际的日志处理 - 添加安全检查
       log(entry.level, entry.message,
           tag: entry.tag,
           error: entry.error,
           stackTrace: entry.stackTrace,
           data: entry.data);
     } catch (e) {
-      debugPrint('Error processing log: $e');
+      // 使用debugPrint避免递归日志错误
+      try {
+        debugPrint('Error processing log: $e');
+      } catch (_) {
+        // 如果连debugPrint都失败，静默忽略
+      }
     } finally {
       // 继续处理队列中的下一个日志
       _processLogQueue();

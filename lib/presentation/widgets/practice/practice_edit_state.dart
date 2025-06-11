@@ -4,8 +4,13 @@ import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// 字帖编辑状态类
 class PracticeEditState {
+  // 字帖基本信息
+  String? practiceId;
+  String? practiceTitle;
+
   // 画布相关
   double canvasScale = 1.0;
+  bool isDragging = false; // 添加拖拽状态跟踪
 
   // 页面相关
   List<Map<String, dynamic>> pages = [];
@@ -160,4 +165,6 @@ class PracticeEditState {
   void markUnsaved() {
     hasUnsavedChanges = true;
   }
+
+
 }

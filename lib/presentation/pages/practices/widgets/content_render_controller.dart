@@ -171,13 +171,68 @@ class ContentRenderController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _notificationTimer?.cancel();
-    _changeStreamController.close();
-    _dirtyTracker.dispose();
-    _rebuildManager?.dispose();
-    // 移除拖拽状态监听器
-    _dragStateManager?.removeListener(_onDragStateChanged);
-    super.dispose();
+    // 使用三重保护确保super.dispose()一定被调用
+    bool superDisposeCompleted = false;
+    
+    try {
+      try {
+        _notificationTimer?.cancel();
+      } catch (e) {
+        debugPrint('取消通知计时器失败: $e');
+      }
+      
+      try {
+        _changeStreamController.close();
+      } catch (e) {
+        debugPrint('关闭stream controller失败: $e');
+      }
+      
+      try {
+        _dirtyTracker.dispose();
+      } catch (e) {
+        debugPrint('dispose dirty tracker失败: $e');
+      }
+      
+      try {
+        _rebuildManager?.dispose();
+      } catch (e) {
+        debugPrint('dispose rebuild manager失败: $e');
+      }
+      
+      try {
+        // 移除拖拽状态监听器
+        _dragStateManager?.removeListener(_onDragStateChanged);
+      } catch (e) {
+        debugPrint('移除拖拽状态监听器失败: $e');
+      }
+      
+    } catch (e) {
+      debugPrint('ContentRenderController dispose过程中发生异常: $e');
+    } finally {
+      // 无论如何都确保super.dispose()被调用
+      if (!superDisposeCompleted) {
+        try {
+          super.dispose();
+          superDisposeCompleted = true;
+        } catch (disposeError) {
+          debugPrint('ContentRenderController super.dispose()调用失败: $disposeError');
+          // 尝试第三次调用
+          try {
+            super.dispose();
+            superDisposeCompleted = true;
+          } catch (finalError) {
+            debugPrint('ContentRenderController 最终super.dispose()调用失败: $finalError');
+            // 即使最终失败，也标记为完成，避免无限循环
+            superDisposeCompleted = true;
+          }
+        }
+      }
+    }
+    
+    // 额外的安全检查：如果所有尝试都失败，强制标记完成
+    if (!superDisposeCompleted) {
+      debugPrint('警告：ContentRenderController super.dispose()可能未能成功调用');
+    }
   }
 
   /// Get changes for a specific element

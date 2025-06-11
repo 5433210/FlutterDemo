@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
@@ -70,7 +69,7 @@ class PracticeEditController extends ChangeNotifier
   // UUID生成器
   final Uuid _uuid = const Uuid();
 
-  // 字帖ID和标题
+  // 字帖ID和标题 - 为 PracticePersistenceMixin 提供实现
   String? _practiceId;
   String? _practiceTitle;
 
@@ -98,7 +97,7 @@ class PracticeEditController extends ChangeNotifier
         // 更新撤销/重做状态
         _state.canUndo = _undoRedoManager.canUndo;
         _state.canRedo = _undoRedoManager.canRedo;
-        
+
         // 🚀 使用智能状态分发器替代传统的 notifyListeners
         intelligentNotify(
           changeType: 'undo_redo_state_change',
@@ -131,6 +130,25 @@ class PracticeEditController extends ChangeNotifier
 
   /// 获取画布缩放值
   double get canvasScale => _state.canvasScale;
+
+  // 实现 PracticePersistenceMixin 需要的抽象字段
+  @override
+  String? get currentPracticeId => _practiceId;
+
+  @override
+  set currentPracticeId(String? value) {
+    _practiceId = value;
+    notifyListeners();
+  }
+
+  @override
+  String? get currentPracticeTitle => _practiceTitle;
+
+  @override
+  set currentPracticeTitle(String? value) {
+    _practiceTitle = value;
+    notifyListeners();
+  }
 
   @override
   dynamic get editCanvas => _editCanvas;
@@ -227,6 +245,31 @@ class PracticeEditController extends ChangeNotifier
     super.notifyListeners();
   }
 
+  /// 处理预览模式变化
+  void onPreviewModeChanged(bool isPreviewMode) {
+    EditPageLogger.controllerInfo(
+      '预览模式变化',
+      data: {
+        'isPreviewMode': isPreviewMode,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
+    // 更新状态
+    _state.isPreviewMode = isPreviewMode;
+
+    // 通知监听器
+    intelligentNotify(
+      changeType: 'preview_mode_change',
+      operation: 'preview_mode_update',
+      eventData: {
+        'isPreviewMode': isPreviewMode,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      affectedUIComponents: ['canvas', 'toolbar', 'property_panel'],
+    );
+  }
+
   /// 设置画布引用（供画布组件注册自己）
   void setEditCanvas(dynamic canvas) {
     _editCanvas = canvas;
@@ -278,6 +321,36 @@ class PracticeEditController extends ChangeNotifier
       );
     }
     EditPageLogger.controllerDebug('网格设置变化处理完成');
+  }
+
+  /// 更新字帖数据
+  void updatePractice(dynamic practice) {
+    final practiceMap = practice is Map<String, dynamic>
+        ? practice
+        : (practice?.toJson() ?? <String, dynamic>{});
+
+    EditPageLogger.controllerInfo(
+      '更新字帖数据',
+      data: {
+        'practiceId': practiceMap['id'] ?? practice?.id,
+        'title': practiceMap['title'] ?? practice?.title,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
+    // 更新 mixin 字段（用于标题显示）
+    currentPracticeId = practiceMap['id'] ?? practice?.id;
+    currentPracticeTitle = practiceMap['title'] ?? practice?.title;
+
+    // 更新状态字段（用于页面数据）
+    _state.practiceId = practiceMap['id'] ?? practice?.id;
+    _state.practiceTitle = practiceMap['title'] ?? practice?.title;
+    _state.pages = List<Map<String, dynamic>>.from(
+        practiceMap['pages'] ?? practice?.pages ?? []);
+    _state.currentPageIndex = 0;
+
+    // 通知监听器
+    notifyListeners();
   }
 
   /// 检查控制器是否已销毁，如果已销毁则抛出异常

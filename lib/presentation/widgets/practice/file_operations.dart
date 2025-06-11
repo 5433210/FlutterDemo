@@ -4,29 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../dialogs/optimized_save_dialog.dart';
 import '../../dialogs/practice_save_dialog.dart';
+import '../../services/practice_list_refresh_service.dart';
 import 'export/export_dialog.dart';
 import 'export/export_service.dart';
 import 'export/page_renderer.dart';
+import 'optimized_save_service.dart';
 import 'practice_edit_controller.dart';
 
 /// 文件操作工具类
 class FileOperations {
-  /// 🔧 安全地显示SnackBar，避免在widget销毁后调用导致错误
-  static void _safeShowSnackBar(
-    ScaffoldMessengerState? scaffoldMessenger,
-    SnackBar snackBar,
-  ) {
-    if (scaffoldMessenger != null) {
-      try {
-        scaffoldMessenger.showSnackBar(snackBar);
-      } catch (e) {
-        // 如果显示SnackBar失败，记录日志但不抛出异常
-        EditPageLogger.editPageError('显示SnackBar失败', error: e);
-      }
-    }
-  }
-
   /// 导出字帖
   static Future<void> exportPractice(
     BuildContext context,
@@ -114,7 +102,8 @@ class FileOperations {
     ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
       scaffoldMessenger = ScaffoldMessenger.of(context);
-      _safeShowSnackBar(scaffoldMessenger, const SnackBar(content: Text('正在导出，请稍候...')));
+      _safeShowSnackBar(
+          scaffoldMessenger, const SnackBar(content: Text('正在导出，请稍候...')));
     }
 
     try {
@@ -260,7 +249,8 @@ class FileOperations {
     ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
       scaffoldMessenger = ScaffoldMessenger.of(context);
-      _safeShowSnackBar(scaffoldMessenger, const SnackBar(content: Text('正在准备打印，请稍候...')));
+      _safeShowSnackBar(
+          scaffoldMessenger, const SnackBar(content: Text('正在准备打印，请稍候...')));
     }
 
     try {
@@ -322,42 +312,8 @@ class FileOperations {
 
     if (title == null || title.isEmpty) return;
 
-    // 调用控制器的saveAsNewPractice方法
-    final result = await controller.saveAsNewPractice(title);
-
-    // 检查context是否仍然有效
-    if (context.mounted) {
-      if (result == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('字帖 "$title" 已保存')),
-        );
-      } else if (result == 'title_exists') {
-        // 如果标题已存在，询问是否覆盖
-        final shouldOverwrite = await _confirmOverwrite(context, title);
-        if (shouldOverwrite && context.mounted) {
-          // 强制覆盖保存
-          final overwriteResult = await controller.saveAsNewPractice(
-            title,
-            forceOverwrite: true,
-          );
-
-          if (overwriteResult == true && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
-            );
-          } else if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('保存失败，请稍后重试')),
-            );
-          }
-        }
-      } else {
-        // 如果保存失败，显示错误消息
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存失败，请稍后重试')),
-        );
-      }
-    }
+    // 🔧 修复：统一使用优化的保存服务，确保与Save操作行为一致
+    await _saveAsWithOptimizedService(context, controller, title);
   }
 
   /// 保存字帖
@@ -395,7 +351,7 @@ class FileOperations {
         final result = await controller.savePractice();
 
         final saveDuration = DateTime.now().difference(saveStartTime);
-        
+
         EditPageLogger.performanceInfo(
           '保存操作完成',
           data: {
@@ -410,6 +366,29 @@ class FileOperations {
         // 检查context是否仍然有效
         if (context.mounted) {
           if (result == true) {
+            // 通知字帖列表刷新
+            if (controller.practiceId != null) {
+              final refreshService = PracticeListRefreshService();
+
+              EditPageLogger.fileOpsInfo(
+                '准备发送字帖列表刷新通知',
+                data: {
+                  'practiceId': controller.practiceId!,
+                  'operation': 'practice_saved',
+                },
+              );
+
+              refreshService.notifyPracticeSaved(controller.practiceId!);
+
+              EditPageLogger.fileOpsInfo(
+                '字帖列表刷新通知已发送',
+                data: {
+                  'practiceId': controller.practiceId!,
+                  'operation': 'practice_saved',
+                },
+              );
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
             );
@@ -424,19 +403,27 @@ class FileOperations {
                 forceOverwrite: true,
               );
 
-              final overwriteDuration = DateTime.now().difference(overwriteStartTime);
-              
+              final overwriteDuration =
+                  DateTime.now().difference(overwriteStartTime);
+
               EditPageLogger.performanceInfo(
                 '覆盖保存完成',
                 data: {
                   'overwriteResult': overwriteResult.toString(),
                   'overwriteDurationMs': overwriteDuration.inMilliseconds,
-                  'totalDurationMs': DateTime.now().difference(saveStartTime).inMilliseconds,
+                  'totalDurationMs':
+                      DateTime.now().difference(saveStartTime).inMilliseconds,
                   'practiceTitle': controller.practiceTitle,
                 },
               );
 
               if (overwriteResult == true && context.mounted) {
+                // 通知字帖列表刷新
+                if (controller.practiceId != null) {
+                  final refreshService = PracticeListRefreshService();
+                  refreshService.notifyPracticeSaved(controller.practiceId!);
+                }
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
@@ -476,7 +463,7 @@ class FileOperations {
             'operation': 'direct_save_exception',
           },
         );
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('保存失败：$error')),
@@ -505,6 +492,12 @@ class FileOperations {
     // 检查context是否仍然有效
     if (context.mounted) {
       if (result == true) {
+        // 通知字帖列表刷新
+        if (controller.practiceId != null) {
+          final refreshService = PracticeListRefreshService();
+          refreshService.notifyPracticeSaved(controller.practiceId!);
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('字帖 "$title" 已保存')),
         );
@@ -519,6 +512,12 @@ class FileOperations {
           );
 
           if (overwriteResult == true && context.mounted) {
+            // 通知字帖列表刷新
+            if (controller.practiceId != null) {
+              final refreshService = PracticeListRefreshService();
+              refreshService.notifyPracticeSaved(controller.practiceId!);
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
             );
@@ -532,6 +531,100 @@ class FileOperations {
         // 如果保存失败，显示错误消息
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('保存失败，请稍后重试')),
+        );
+      }
+    }
+  }
+
+  /// 优化的保存字帖方法
+  ///
+  /// 特点：
+  /// 1. 不进入预览模式生成缩略图
+  /// 2. 显示保存进度，禁用用户操作
+  /// 3. 自动更新缓存
+  static Future<void> savePracticeOptimized(
+    BuildContext context,
+    PracticeEditController controller, {
+    String? title,
+    bool forceOverwrite = false,
+    GlobalKey? canvasKey,
+  }) async {
+    try {
+      // 如果是新字帖且没有提供标题，显示保存对话框
+      if (!controller.isSaved && title == null) {
+        final inputTitle = await showDialog<String>(
+          context: context,
+          builder: (context) => PracticeSaveDialog(
+            initialTitle: '',
+            isSaveAs: false,
+            checkTitleExists: controller.checkTitleExists,
+          ),
+        );
+
+        if (inputTitle == null || inputTitle.isEmpty) return;
+        title = inputTitle;
+      }
+
+      // 创建保存Future
+      final saveFuture = OptimizedSaveService.savePracticeOptimized(
+        controller: controller,
+        context: context,
+        title: title,
+        forceOverwrite: forceOverwrite,
+        canvasKey: canvasKey,
+        onProgress: (progress, message) {
+          // 进度回调在对话框内部处理
+        },
+      );
+
+      // 显示保存进度对话框
+      final result = await showOptimizedSaveDialog(
+        context: context,
+        saveFuture: saveFuture,
+        title: title ?? controller.practiceTitle ?? '未命名字帖',
+      );
+
+      if (!context.mounted) return;
+
+      // 处理保存结果
+      if (result != null) {
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result.message ?? '保存成功')),
+          );
+        } else if (result.error == 'title_exists') {
+          // 处理标题冲突
+          final shouldOverwrite = await _confirmOverwrite(context, title!);
+          if (shouldOverwrite && context.mounted) {
+            // 重试保存，强制覆盖
+            await savePracticeOptimized(
+              context,
+              controller,
+              title: title,
+              forceOverwrite: true,
+              canvasKey: canvasKey,
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result.error ?? '保存失败')),
+          );
+        }
+      }
+    } catch (e) {
+      // 只有在context仍然mounted时才记录日志，避免dispose错误
+      if (context.mounted) {
+        EditPageLogger.fileOpsError(
+          '优化保存过程异常',
+          error: e,
+          data: {
+            'title': title,
+            'hasCanvasKey': canvasKey != null,
+          },
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败：${e.toString()}')),
         );
       }
     }
@@ -559,5 +652,62 @@ class FileOperations {
     );
 
     return result ?? false;
+  }
+
+  /// 🔧 安全地显示SnackBar，避免在widget销毁后调用导致错误
+  static void _safeShowSnackBar(
+    ScaffoldMessengerState? scaffoldMessenger,
+    SnackBar snackBar,
+  ) {
+    if (scaffoldMessenger != null) {
+      try {
+        scaffoldMessenger.showSnackBar(snackBar);
+      } catch (e) {
+        // 如果显示SnackBar失败，记录日志但不抛出异常
+        EditPageLogger.editPageError('显示SnackBar失败', error: e);
+      }
+    }
+  }
+
+  /// 使用优化服务执行另存为操作
+  static Future<void> _saveAsWithOptimizedService(
+    BuildContext context,
+    PracticeEditController controller,
+    String title,
+  ) async {
+    // 临时保存当前ID，用于另存为操作
+    final originalId = controller.practiceId;
+    final originalTitle = controller.practiceTitle;
+
+    try {
+      // 清除当前ID，确保创建新字帖
+      controller.currentPracticeId = null;
+
+      // 使用优化的保存服务，避免预览模式切换
+      await savePracticeOptimized(
+        context,
+        controller,
+        title: title,
+        forceOverwrite: false,
+        canvasKey: controller.canvasKey,
+      );
+    } catch (e) {
+      // 如果保存失败，恢复原始状态
+      if (controller.practiceId == null && originalId != null) {
+        controller.currentPracticeId = originalId;
+        controller.currentPracticeTitle = originalTitle;
+      }
+
+      // 记录错误但不重新抛出，savePracticeOptimized已经处理了UI反馈
+      EditPageLogger.fileOpsError(
+        'Save As操作失败',
+        error: e,
+        data: {
+          'title': title,
+          'originalId': originalId,
+          'originalTitle': originalTitle,
+        },
+      );
+    }
   }
 }

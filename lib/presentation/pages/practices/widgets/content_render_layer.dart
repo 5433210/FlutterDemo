@@ -274,9 +274,43 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   @override
   void dispose() {
-    // Perform cleanup
-    _cacheManager.dispose();
-    super.dispose();
+    // 使用三重保护确保super.dispose()一定被调用
+    bool superDisposeCompleted = false;
+    
+    try {
+      try {
+        _cacheManager.dispose();
+      } catch (e) {
+        debugPrint('dispose cache manager失败: $e');
+      }
+      
+    } catch (e) {
+      debugPrint('ContentRenderLayer dispose过程中发生异常: $e');
+    } finally {
+      // 无论如何都确保super.dispose()被调用
+      if (!superDisposeCompleted) {
+        try {
+          super.dispose();
+          superDisposeCompleted = true;
+        } catch (disposeError) {
+          debugPrint('ContentRenderLayer super.dispose()调用失败: $disposeError');
+          // 尝试第三次调用
+          try {
+            super.dispose();
+            superDisposeCompleted = true;
+          } catch (finalError) {
+            debugPrint('ContentRenderLayer 最终super.dispose()调用失败: $finalError');
+            // 即使最终失败，也标记为完成，避免无限循环
+            superDisposeCompleted = true;
+          }
+        }
+      }
+    }
+    
+    // 额外的安全检查：如果所有尝试都失败，强制标记完成
+    if (!superDisposeCompleted) {
+      debugPrint('警告：ContentRenderLayer super.dispose()可能未能成功调用');
+    }
   }
 
   Widget _buildContent(BuildContext context) {

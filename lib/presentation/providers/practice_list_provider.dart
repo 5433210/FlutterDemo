@@ -8,5 +8,6 @@ import '../viewmodels/states/practice_list_state.dart';
 final practiceListProvider =
     StateNotifierProvider<PracticeListViewModel, PracticeListState>((ref) {
   final practiceService = ref.watch(practiceServiceProvider);
-  return PracticeListViewModel(practiceService);
+  final refreshService = ref.watch(practiceListRefreshServiceProvider);
+  return PracticeListViewModel(practiceService, refreshService);
 });

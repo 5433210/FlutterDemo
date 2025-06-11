@@ -394,6 +394,8 @@ mixin CanvasLayerBuilders {
   void dispose() {
     // 清理资源
     AppLogger.debug('画布图层构建器销毁', tag: 'Canvas');
+    // 🔧 注意：mixin不能调用super.dispose()，这是正常的
+    // dispose链将由主类的super.dispose()调用处理
   }
 
   void handleControlPointDragEnd(int controlPointIndex);

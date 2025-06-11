@@ -24,6 +24,7 @@ import '../services/storage/practice_storage_service.dart';
 import '../services/storage/work_storage_service.dart';
 import '../services/work/work_image_service.dart';
 import '../services/work/work_service.dart';
+import '../../presentation/services/practice_list_refresh_service.dart';
 import 'repository_providers.dart';
 
 /// 集字图片服务提供者
@@ -89,6 +90,11 @@ final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
   final service = PracticeStorageService(storage: storage);
   debugPrint('PracticeStorageService 实例创建成功');
   return service;
+});
+
+/// Practice List Refresh Service Provider
+final practiceListRefreshServiceProvider = Provider<PracticeListRefreshService>((ref) {
+  return PracticeListRefreshService();
 });
 
 final practiceServiceProvider = Provider<PracticeService>((ref) {
