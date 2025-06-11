@@ -559,7 +559,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       // 调试选择状态变化后的情况（不触发重建）
                       _debugCanvasState('元素选择后');
                     },
-                    // 处理右键点击事件，用于退出select模式
+                    // 处理右键点击事件，用于上下文菜单等功能
                     onSecondaryTapDown: (details) =>
                         _gestureHandler.handleSecondaryTapDown(details),
                     onSecondaryTapUp: (details) =>

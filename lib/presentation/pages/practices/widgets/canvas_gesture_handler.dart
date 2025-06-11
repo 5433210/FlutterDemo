@@ -559,17 +559,12 @@ class CanvasGestureHandler {
   }
 
   /// Handle right-click (secondary button) tap down event
-  /// Used to exit select mode
+  /// 移除右键退出Select工具状态的功能
   void handleSecondaryTapDown(TapDownDetails details) {
-    // If in select mode, exit it
-    if (controller.state.currentTool == 'select') {
-      debugPrint('Right-click detected, exiting select mode');
-      // Exit select mode
-      controller.exitSelectMode();
-      // Cancel selection box if active
-      if (_isSelectionBoxActive) {
-        cancelSelectionBox();
-      }
+    // 移除右键退出select模式的功能
+    // 保留取消选择框的功能
+    if (_isSelectionBoxActive) {
+      cancelSelectionBox();
       onDragUpdate();
     }
   }
@@ -577,20 +572,13 @@ class CanvasGestureHandler {
   /// Handle right click on canvas
   void handleSecondaryTapUp(
       TapUpDetails details, List<Map<String, dynamic>> elements) {
-    // If in select mode, cancel selection box
-    if (controller.state.currentTool == 'select') {
-      // Cancel selection box if active
-      if (_isSelectionBoxActive) {
-        _isSelectionBoxActive = false;
-        _selectionBoxStart = null;
-        _selectionBoxEnd = null;
-        onDragUpdate();
-      }
-
-      // Exit select mode
-      controller.state.currentTool = '';
+    // 移除右键退出select模式的功能
+    // 保留取消选择框的功能
+    if (_isSelectionBoxActive) {
+      _isSelectionBoxActive = false;
+      _selectionBoxStart = null;
+      _selectionBoxEnd = null;
       onDragUpdate();
-      return;
     }
 
     // If in preview mode, don't handle secondary tap
@@ -623,15 +611,10 @@ class CanvasGestureHandler {
     }
     if (!hitSelectedElement) {
       // Right click on blank area or non-selected element
-      // 只有在select模式下右键点击空白区域时才退出select模式，但不清除选中状态      if (controller.state.currentTool == 'select') {
-      debugPrint('【右键】handleSecondaryTapUp: 右键退出select模式，但保持选中状态');
-      // 这里可以添加退出select模式的逻辑，但不清除选中的元素
-      // controller.state.currentTool = ''; // 如果需要退出select模式
+      // 移除右键退出select模式的功能，保持当前选择状态
+      // Don't start element dragging
+      onDragStart(false, Offset.zero, Offset.zero, {});
     }
-    // 注释掉原来的清除选择逻辑
-    // controller.clearSelection();
-    // Don't start element dragging
-    onDragStart(false, Offset.zero, Offset.zero, {});
   }
 
   /// Handle tap up event on canvas

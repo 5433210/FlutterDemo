@@ -379,23 +379,18 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   /// Handle right-click events
   void handleSecondaryTapDown(TapDownDetails details) {
-    if (controller.state.currentTool == 'select') {
-      controller.exitSelectMode();
-      if (_isSelectionBoxActive) {
-        cancelSelectionBox();
-      }
+    // 移除右键退出Select工具状态的功能
+    // 保留取消选择框的功能
+    if (_isSelectionBoxActive) {
+      cancelSelectionBox();
       onDragUpdate();
     }
   }
 
   void handleSecondaryTapUp(
       TapUpDetails details, List<Map<String, dynamic>> elements) {
-    // Implementation for right-click handling
-    if (controller.state.currentTool == 'select') {
-      controller.state.currentTool = '';
-      onDragUpdate();
-      return;
-    }
+    // 移除右键退出Select工具状态的功能
+    // 右键仅用于上下文菜单等其他功能
   }
 
   /// Enhanced tap handling with smart gesture recognition
