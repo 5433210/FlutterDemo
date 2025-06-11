@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../infrastructure/logging/logger.dart';
+
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
 import '../../../presentation/pages/settings/m3_settings_page.dart';
@@ -55,33 +57,28 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     final navState = ref.watch(globalNavigationProvider);
     final selectedIndex = navState.currentSectionIndex;
 
-    // 检测功能区切换
+    // 检测功能区切换 - 使用WidgetsBinding.instance.addPostFrameCallback避免在build中修改状态
     if (_lastSelectedIndex != selectedIndex) {
       // 记录从哪个功能区切换到哪个功能区
-      developer.log('导航从功能区 $_lastSelectedIndex 切换到功能区 $selectedIndex',
-          name: 'MainNavigation');
+      AppLogger.info(
+        '主导航功能区切换',
+        data: {
+          'fromSection': _lastSelectedIndex,
+          'toSection': selectedIndex,
+          'operation': 'section_switch',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        tag: 'Navigation',
+      );
 
-      // 特别跟踪进入字帖列表页（功能区2）的情况
-      // if (selectedIndex == 2) {
-      //   developer.log('进入字帖列表页，开始监控内存使用', name: 'MemoryTracker');
-
-      //   // 确保功能区被初始化
-      //   if (!_initializedSections.contains(selectedIndex)) {
-      //     setState(() {
-      //       _initializedSections.add(selectedIndex);
-      //     });
-      //   }
-      // }
-
-      // // 特别跟踪离开字帖列表页的情况
-      // if (_lastSelectedIndex == 2 && selectedIndex != 2) {
-      //   developer.log('离开字帖列表页，记录内存使用', name: 'MemoryTracker');
-
-      //   // _memoryTracker.takeMemorySnapshot('离开字帖列表页');
-      // }
-
-      // 更新最后访问的功能区
-      _lastSelectedIndex = selectedIndex;
+      // 延迟到当前帧结束后处理状态更新，避免在build中修改状态
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _lastSelectedIndex != selectedIndex) {
+          setState(() {
+            _lastSelectedIndex = selectedIndex;
+          });
+        }
+      });
     }
 
     return LayoutBuilder(
@@ -177,25 +174,43 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                             // 使用Stack+Offstage实现懒加载功能区
                             child: Stack(
                               children: List.generate(5, (index) {
+                                // 检查当前索引是否应该被初始化
+                                final shouldInitialize = index == selectedIndex;
+                                final isInitialized = _initializedSections.contains(index);
+                                
+                                // 如果当前索引应该被初始化但还未初始化，延迟初始化
+                                if (shouldInitialize && !isInitialized) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted && !_initializedSections.contains(index)) {
+                                      setState(() {
+                                        _initializedSections.add(index);
+                                      });
+                                    }
+                                  });
+                                }
+                                
                                 // 仅当当前选中或已初始化时才创建导航器
-                                if (index == selectedIndex) {
-                                  // 添加到已初始化集合
-                                  _initializedSections.add(index);
+                                if (index == selectedIndex && isInitialized) {
                                   // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
                                   return KeyedSubtree(
                                     key: ValueKey('navigator_$index'),
                                     child: _buildNavigator(index),
                                   );
-                                } else if (_initializedSections
-                                    .contains(index)) {
+                                } else if (isInitialized && index != selectedIndex) {
                                   // 已初始化但非当前选中的功能区隐藏显示
                                   return Offstage(
                                     offstage: true,
-                                    child: _buildNavigator(index),
+                                    child: KeyedSubtree(
+                                      key: ValueKey('navigator_$index'),
+                                      child: _buildNavigator(index),
+                                    ),
                                   );
                                 } else {
-                                  // 未初始化的功能区返回空容器
-                                  return const SizedBox.shrink();
+                                  // 未初始化的功能区返回固定Key的空容器，确保Widget树结构稳定
+                                  return KeyedSubtree(
+                                    key: ValueKey('empty_$index'),
+                                    child: const SizedBox.shrink(),
+                                  );
                                 }
                               }),
                             ),
@@ -237,8 +252,33 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
 
   @override
   void dispose() {
+    // 取消定时器
     _memoryCleanupTimer?.cancel();
+    
+    // 移除生命周期观察者
     WidgetsBinding.instance.removeObserver(this);
+    
+    // 清理所有导航器的GlobalKey引用，确保没有遗留的依赖项
+    for (final navigatorKey in _navigatorKeys.values) {
+      // 尝试通过导航器的currentState访问来触发任何未完成的清理
+      try {
+        navigatorKey.currentState?.dispose();
+      } catch (e) {
+        // 忽略清理过程中的异常，因为某些导航器可能已经被销毁
+        AppLogger.warning(
+          '导航器清理时发生异常',
+          data: {
+            'error': e.toString(),
+            'operation': 'navigator_cleanup',
+          },
+          tag: 'Navigation',
+        );
+      }
+    }
+    
+    // 清空初始化集合
+    _initializedSections.clear();
+    
     super.dispose();
   }
 
@@ -371,8 +411,9 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     final currentIndex = ref.read(globalNavigationProvider).currentSectionIndex;
     final lastIndex = _lastSelectedIndex;
     
-    // 延迟执行，确保当前帧渲染完成
-    Future.microtask(() {
+    // 使用WidgetsBinding.instance.addPostFrameCallback代替Future.microtask
+    // 这样可以确保在正确的Widget生命周期时机执行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       
       // 找出可以被清理的功能区（除了当前选中的和最后访问的）
@@ -392,6 +433,18 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
         setState(() {
           _initializedSections.removeAll(sectionsToRemove);
         });
+        
+        // 添加日志以追踪清理行为
+        AppLogger.info(
+          '清理未使用的功能区',
+          data: {
+            'sectionsToRemove': sectionsToRemove.toList(),
+            'currentIndex': currentIndex,
+            'lastIndex': lastIndex,
+            'operation': 'memory_cleanup',
+          },
+          tag: 'Navigation',
+        );
       }
     });
   }

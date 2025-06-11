@@ -39,7 +39,6 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         ImageTransformHandler {
   // 内部状态
   late final ValueNotifier<bool> _isImageLoadedNotifier;
-  late final AppLocalizations _l10n;
   bool _isImporting = false;
   BuildContext? _dialogContext;
 
@@ -203,7 +202,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _l10n = AppLocalizations.of(context);
+    // 本地化对象直接在需要时从context获取，无需缓存
   }
 
   @override
