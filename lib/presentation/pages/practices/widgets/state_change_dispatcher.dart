@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
@@ -117,10 +118,12 @@ class StateChangeDispatcher {
         StateChangeType.dragEnd,
         StateChangeType.selectionChange,
         StateChangeType.elementUpdate,
+        StateChangeType.elementOrderChange,  // 🔧 修复：添加元素顺序变化处理
         StateChangeType.toolChange,
         StateChangeType.viewportChange,
         StateChangeType.layerVisibilityChange,
         StateChangeType.pageChange,
+        StateChangeType.gridSettingsChange,  // 🔧 修复：也添加网格设置变化处理
       ];
 
       for (final type in priorityOrder) {
@@ -245,6 +248,9 @@ class StateChangeDispatcher {
       case StateChangeType.layerVisibilityChange:
         _processLayerVisibilityChangeEvents(events);
         break;
+      case StateChangeType.elementOrderChange:
+        _processElementOrderChangeEvents(events);
+        break;
       case StateChangeType.pageChange:
         _processPageChangeEvents(events);
         break;
@@ -266,6 +272,54 @@ class StateChangeDispatcher {
         ),
       );
     }
+  }
+
+  /// 处理元素顺序变化事件
+  void _processElementOrderChangeEvents(List<StateChangeEvent> events) {
+    for (final event in events) {
+      // 🔧 关键修复：延迟处理以确保操作完成后再重建Canvas
+      // 使用SchedulerBinding确保在当前帧完成后再处理
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        EditPageLogger.canvasError('🔧🔧🔧 延迟处理元素顺序变化事件', data: {
+          'elementId': event.data['elementId'] ?? '',
+          'reason': 'ensure_operation_completed_before_rebuild',
+        });
+        
+        // 强制清除所有元素缓存
+        _clearAllElementCache();
+        
+        // 发送强制重建信号
+        _structureListener.dispatchToLayer(
+          RenderLayerType.content,
+          ElementsChangeEvent(
+            elements: _controller.state.currentPageElements,
+            timestamp: DateTime.now(),
+          ),
+        );
+        
+        _structureListener.dispatchToLayer(
+          RenderLayerType.content,
+          ElementOrderChangeEvent(
+            elementId: event.data['elementId'] ?? '',
+            oldIndex: event.data['oldIndex'] ?? 0,
+            newIndex: event.data['newIndex'] ?? 0,
+            timestamp: DateTime.now(),
+          ),
+        );
+      });
+    }
+  }
+
+  /// 清除所有元素缓存，强制重新渲染
+  void _clearAllElementCache() {
+    // 通过发送一个特殊的事件来通知ContentRenderLayer清除缓存
+    _structureListener.dispatchToLayer(
+      RenderLayerType.content,
+      ElementsChangeEvent(
+        elements: _controller.state.currentPageElements,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   /// 处理页面变化事件
@@ -370,6 +424,7 @@ enum StateChangeType {
   toolChange,
   viewportChange,
   layerVisibilityChange,
+  elementOrderChange,
   pageChange,
   gridSettingsChange,
 }

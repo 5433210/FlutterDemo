@@ -1263,34 +1263,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _registerCanvasToIntelligentDispatcher() {
     final intelligentDispatcher = widget.controller.intelligentDispatcher;
     if (intelligentDispatcher != null) {
-      // 🚀 优化：Canvas只注册为内容层监听器，不注册交互层监听器
-      // 交互层变化应该由交互层组件自己处理，而不是触发整个Canvas重建
-      
-      // 🚀 优化：跳过Canvas层级的智能状态分发器监听器
-      // 内容层变化应该直接由ContentRenderLayer的didUpdateWidget处理
-      // 不需要通过智能状态分发器再次触发重建
-      EditPageLogger.canvasDebug(
-        '跳过Canvas智能状态分发器监听器注册（优化版）',
-        data: {
-          'optimization': 'skip_canvas_intelligent_dispatcher',
-          'reason': '内容层变化由didUpdateWidget直接处理',
-          'avoidedExtraRebuild': true,
-        },
-      );
-      
-      // intelligentDispatcher.registerLayerListener('content', () => {
-      //   // 这会导致额外的重建，已禁用
-      // });
-      
-      // 🚀 移除交互层监听器注册 - 交互层变化不应该触发Canvas重建
-      // 交互层的重建应该由其自身的监听机制处理
+      // 🚀 关键修复：注册内容层监听器以处理元素顺序变化
+      // 这是必需的，因为ContentRenderLayer的didUpdateWidget不能捕获所有变化
+      intelligentDispatcher.registerLayerListener('content', () {
+        // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
+        _handleIntelligentDispatcherContentUpdate();
+      });
       
       EditPageLogger.canvasDebug(
-        'Canvas组件已注册到智能状态分发器（优化版）',
+        'Canvas组件已注册到智能状态分发器（修复版）',
         data: {
-          'layerListeners': 1, // 只监听content层
-          'optimization': 'selective_layer_monitoring',
-          'skippedLayers': ['interaction'], // 不再监听交互层
+          'layerListeners': 1, // 监听content层
+          'optimization': 'handle_element_order_changes',
+          'purpose': '确保元素顺序变化能立即生效',
         },
       );
     } else {
@@ -1301,6 +1286,39 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         },
       );
     }
+  }
+
+  /// 处理智能状态分发器的内容更新
+  void _handleIntelligentDispatcherContentUpdate() {
+    if (!mounted) return;
+    
+    EditPageLogger.canvasDebug('🔧 处理智能状态分发器内容更新', data: {
+      'operation': 'intelligent_dispatcher_content_update',
+      'action': 'trigger_state_change_dispatcher_for_all_changes',
+    });
+    
+    // 🔧 修复：发送多种类型的状态变化事件，确保所有情况都被覆盖
+    // 由于我们不知道具体是什么类型的变化，我们发送通用的元素更新事件
+    // 以及可能的元素顺序变化事件，让StateChangeDispatcher处理
+    _stateDispatcher.dispatch(StateChangeEvent(
+      type: StateChangeType.elementUpdate,
+      data: {
+        'reason': 'intelligent_dispatcher_content_update',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      },
+    ));
+    
+    // 🔧 关键修复：也发送元素顺序变化事件，确保顺序变化被处理
+    _stateDispatcher.dispatch(StateChangeEvent(
+      type: StateChangeType.elementOrderChange,
+      data: {
+        'reason': 'intelligent_dispatcher_potential_order_change',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'elementId': '', // 空的elementId表示可能的顺序变化
+        'oldIndex': 0,
+        'newIndex': 0,
+      },
+    ));
   }
 
   /// 初始化UI组件
@@ -1406,6 +1424,62 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         // 通知LayerRenderManager重新渲染Content层
         _layerRenderManager.markLayerDirty(RenderLayerType.content,
             reason: 'Elements changed');
+      } else if (event is LayerVisibilityChangeEvent) {
+        EditPageLogger.canvasDebug('🔧 图层可见性变化，强制重建内容层', data: {
+          'layerId': event.layerId,
+          'visible': event.visible,
+          'reason': 'layer_visibility_changed',
+          'action': 'force_content_layer_rebuild',
+        });
+        
+        // 通知LayerRenderManager重新渲染Content层
+        _layerRenderManager.markLayerDirty(RenderLayerType.content,
+            reason: 'Layer visibility changed: ${event.layerId}');
+            
+        // 🔧 关键修复：强制触发Canvas重建以立即显示图层变化效果
+        if (mounted) {
+          setState(() {
+            // 这个setState会触发整个Canvas重建，确保图层变化立即生效
+          });
+        }
+      } else if (event is ElementOrderChangeEvent) {
+        EditPageLogger.canvasError('🔧🔧🔧 收到ElementOrderChangeEvent！', data: {
+          'elementId': event.elementId,
+          'oldIndex': event.oldIndex,
+          'newIndex': event.newIndex,
+          'reason': 'element_order_changed',
+          'action': 'delayed_force_content_layer_rebuild',
+          'mounted': mounted,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+        
+        // 🔧 关键修复：延迟重建，确保操作完成后再处理
+        // 使用addPostFrameCallback确保在操作完成后再重建Canvas
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          
+          EditPageLogger.canvasError('🔧🔧🔧 延迟处理ElementOrderChangeEvent', data: {
+            'elementId': event.elementId,
+            'reason': 'post_frame_callback_execution',
+            'mounted': mounted,
+          });
+          
+          // 通知LayerRenderManager重新渲染Content层
+          _layerRenderManager.markLayerDirty(RenderLayerType.content,
+              reason: 'Element order changed: ${event.elementId}');
+              
+          // 强制触发Canvas重建以立即显示元素顺序变化效果
+          EditPageLogger.canvasError('🔧🔧🔧 延迟调用setState强制Canvas重建！', data: {
+            'reason': 'delayed_element_order_changed_force_rebuild',
+            'elementId': event.elementId,
+          });
+          
+          setState(() {
+            // 这个setState会触发整个Canvas重建，确保元素顺序变化立即生效
+          });
+          
+          EditPageLogger.canvasError('🔧🔧🔧 延迟setState调用完成！');
+        });
       }
     });
 

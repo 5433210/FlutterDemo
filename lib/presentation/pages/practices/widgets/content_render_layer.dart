@@ -201,13 +201,80 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final currentElements =
         widget.elements ?? widget.controller?.state.currentPageElements ?? [];
 
-    EditPageLogger.rendererDebug('ContentRenderLayer元素对比分析', data: {
+    // 🔧 新增：检查图层变化
+    final oldLayers = oldWidget.layers ?? oldWidget.controller?.state.layers ?? [];
+    final currentLayers = widget.layers ?? widget.controller?.state.layers ?? [];
+
+    // 检查图层是否发生变化
+    final layersChanged = _hasLayersChanged(oldLayers, currentLayers);
+    final elementsChanged = oldElements.length != currentElements.length;
+    
+    // 🔧 关键修复：检查元素顺序是否发生变化
+    final elementOrderChanged = _hasElementOrderChanged(oldElements, currentElements);
+
+    EditPageLogger.rendererDebug('ContentRenderLayer变化分析', data: {
       'oldElementsCount': oldElements.length,
       'currentElementsCount': currentElements.length,
-      'elementsChanged': oldElements.length != currentElements.length,
+      'oldLayersCount': oldLayers.length,
+      'currentLayersCount': currentLayers.length,
+      'elementsChanged': elementsChanged,
+      'layersChanged': layersChanged,
+      'elementOrderChanged': elementOrderChanged,
       'didUpdateCount': _didUpdateWidgetCount,
-      'optimization': 'content_layer_element_diff',
+      'optimization': 'content_layer_comprehensive_diff',
     });
+
+    // 如果图层发生了变化，强制清理缓存以确保重绘
+    if (layersChanged) {
+      EditPageLogger.rendererDebug('🔧 图层变化检测到，强制清理缓存', data: {
+        'reason': 'layer_visibility_or_properties_changed',
+        'action': 'force_cache_clear_and_rebuild',
+      });
+      
+      // 清理缓存以确保使用最新的图层状态
+      _cacheManager.cleanupCache(force: true);
+      
+      // 标记需要重建
+      if (mounted) {
+        setState(() {
+          // 强制重绘以反映图层变化
+        });
+      }
+    }
+
+    // 🔧 关键修复：如果元素顺序发生了变化，强制清理缓存以确保重绘
+    if (elementOrderChanged) {
+      EditPageLogger.rendererDebug('🔧 元素顺序变化检测到，强制清理缓存并标记所有元素为脏状态', data: {
+        'reason': 'element_order_affects_rendering_z_index',
+        'action': 'force_cache_clear_and_mark_dirty',
+        'elementCount': currentElements.length,
+      });
+      
+      // 🔧 核心修复：将所有元素标记为脏状态，强制重建
+      // 元素顺序变化影响渲染层级，必须重新渲染所有元素
+      for (final element in currentElements) {
+        final elementId = element['id'] as String;
+        widget.renderController.markElementDirty(elementId, ElementChangeType.multiple);
+      }
+      
+      // 强制清理缓存以确保使用最新的元素顺序
+      _cacheManager.cleanupCache(force: true);
+      
+      // 标记所有元素需要更新，确保缓存系统重建所有元素
+      _cacheManager.markAllElementsForUpdate(currentElements);
+      
+      EditPageLogger.rendererDebug('🔧 元素顺序变化处理完成', data: {
+        'action': 'all_elements_marked_dirty_and_cache_cleared',
+        'elementCount': currentElements.length,
+      });
+      
+      // 标记需要重建
+      if (mounted) {
+        setState(() {
+          // 强制重绘以反映元素顺序变化
+        });
+      }
+    }
 
     // Check for element additions/removals/modifications
     _updateElementsCache(oldElements, currentElements);
@@ -703,6 +770,110 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       orElse: () => <String, dynamic>{},
     );
     return layer.isNotEmpty ? layer['isVisible'] == false : false;
+  }
+
+  /// 检查图层是否发生了变化
+  bool _hasLayersChanged(List<Map<String, dynamic>> oldLayers, List<Map<String, dynamic>> currentLayers) {
+    // 首先检查数量是否变化
+    if (oldLayers.length != currentLayers.length) {
+      return true;
+    }
+
+    // 检查每个图层的关键属性是否变化
+    for (int i = 0; i < oldLayers.length; i++) {
+      final oldLayer = oldLayers[i];
+      final currentLayer = currentLayers[i];
+
+      // 检查ID是否匹配
+      if (oldLayer['id'] != currentLayer['id']) {
+        return true;
+      }
+
+      // 检查影响渲染的关键属性
+      final oldVisible = oldLayer['isVisible'] as bool? ?? true;
+      final currentVisible = currentLayer['isVisible'] as bool? ?? true;
+      
+      final oldOpacity = (oldLayer['opacity'] as num?)?.toDouble() ?? 1.0;
+      final currentOpacity = (currentLayer['opacity'] as num?)?.toDouble() ?? 1.0;
+      
+      final oldLocked = oldLayer['isLocked'] as bool? ?? false;
+      final currentLocked = currentLayer['isLocked'] as bool? ?? false;
+
+      // 如果任何关键属性发生变化，则认为图层已变化
+      if (oldVisible != currentVisible || 
+          oldOpacity != currentOpacity || 
+          oldLocked != currentLocked) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// 检查元素顺序是否发生了变化
+  bool _hasElementOrderChanged(List<Map<String, dynamic>> oldElements, List<Map<String, dynamic>> currentElements) {
+    // 🔧 添加详细调试日志
+    EditPageLogger.rendererDebug('🔧 检查元素顺序变化', data: {
+      'oldCount': oldElements.length,
+      'currentCount': currentElements.length,
+      'oldElementIds': oldElements.map((e) => e['id'] as String).toList(),
+      'currentElementIds': currentElements.map((e) => e['id'] as String).toList(),
+    });
+    
+    // 如果数量不同，不是单纯的顺序变化
+    if (oldElements.length != currentElements.length) {
+      EditPageLogger.rendererDebug('🔧 元素数量不同，不是顺序变化', data: {
+        'oldCount': oldElements.length,
+        'currentCount': currentElements.length,
+      });
+      return false;
+    }
+
+    // 检查元素ID的顺序是否发生变化
+    bool orderChanged = false;
+    for (int i = 0; i < oldElements.length; i++) {
+      final oldElementId = oldElements[i]['id'] as String?;
+      final currentElementId = currentElements[i]['id'] as String?;
+      
+      if (oldElementId != currentElementId) {
+        EditPageLogger.rendererDebug('🔧 发现位置 $i 的元素ID不同', data: {
+          'position': i,
+          'oldElementId': oldElementId,
+          'currentElementId': currentElementId,
+        });
+        orderChanged = true;
+        break;
+      }
+    }
+    
+    if (!orderChanged) {
+      EditPageLogger.rendererDebug('🔧 所有位置元素ID相同，无顺序变化');
+      return false;
+    }
+    
+    // 进一步验证：确保这确实是顺序变化而不是元素替换
+    // 检查新列表是否包含所有旧元素的ID
+    final oldElementIds = oldElements.map((e) => e['id'] as String).toSet();
+    final currentElementIds = currentElements.map((e) => e['id'] as String).toSet();
+    
+    final isSameElements = oldElementIds.length == currentElementIds.length && 
+        oldElementIds.every((id) => currentElementIds.contains(id));
+    
+    EditPageLogger.rendererDebug('🔧 验证是否为真正的顺序变化', data: {
+      'orderChanged': orderChanged,
+      'isSameElements': isSameElements,
+      'result': orderChanged && isSameElements,
+      'oldElementIds': oldElementIds.toList(),
+      'currentElementIds': currentElementIds.toList(),
+    });
+    
+    if (orderChanged && isSameElements) {
+      EditPageLogger.rendererDebug('🔧 ✅ 确认为元素顺序变化！');
+      return true;
+    } else {
+      EditPageLogger.rendererDebug('🔧 ❌ 不是纯粹的顺序变化');
+      return false;
+    }
   }
 
   /// Deep comparison of two maps

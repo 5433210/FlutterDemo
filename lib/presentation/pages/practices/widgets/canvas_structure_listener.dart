@@ -247,6 +247,21 @@ class ElementsChangeEvent {
   });
 }
 
+/// 元素顺序变化事件
+class ElementOrderChangeEvent {
+  final String elementId;
+  final int oldIndex;
+  final int newIndex;
+  final DateTime timestamp;
+
+  ElementOrderChangeEvent({
+    required this.elementId,
+    required this.oldIndex,
+    required this.newIndex,
+    required this.timestamp,
+  });
+}
+
 /// 网格设置变化事件
 class GridSettingsChangeEvent {
   final double gridSize;
