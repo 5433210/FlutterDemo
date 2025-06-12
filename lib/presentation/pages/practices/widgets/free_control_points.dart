@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../widgets/practice/guideline_alignment/guideline_manager.dart';
+import '../../../widgets/practice/guideline_alignment/guideline_types.dart';
 import 'custom_cursors.dart';
 
 /// 测试版本的控制点 - 独立移动，支持旋转操作
@@ -20,9 +22,12 @@ class FreeControlPoints extends StatefulWidget {
   final Function(int, Offset)? onControlPointUpdate;
   final Function(int)? onControlPointDragStart;
   final Function(int)? onControlPointDragEnd;
-
   // 🔧 新增：传递最终状态的回调
   final Function(int, Map<String, double>)? onControlPointDragEndWithState;
+
+  // 🔧 新增：参考线对齐回调
+  final Function(List<Guideline>)? onGuidelinesUpdated;
+  final AlignmentMode? alignmentMode;
 
   const FreeControlPoints({
     Key? key,
@@ -37,6 +42,8 @@ class FreeControlPoints extends StatefulWidget {
     this.onControlPointDragStart,
     this.onControlPointDragEnd,
     this.onControlPointDragEndWithState,
+    this.onGuidelinesUpdated,
+    this.alignmentMode,
   }) : super(key: key);
 
   @override
@@ -55,13 +62,15 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   double _currentX = 0.0;
   double _currentY = 0.0;
   double _currentWidth = 0.0;
-
   double _currentHeight = 0.0;
   double _currentRotation = 0.0;
   // 旋转相关状态
   Offset? _rotationCenter;
-
   double? _initialRotationAngle;
+
+  // 🔧 新增：参考线对齐相关状态
+  List<Guideline> _activeGuidelines = [];
+  String? _dragStartElementId;
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -242,6 +251,78 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _initializeControlPointPositions();
   }
 
+  /// 🔧 新增：应用参考线对齐
+  Offset _applyGuidelineAlignment(Offset delta, String elementId) {
+    if (widget.alignmentMode != AlignmentMode.guideline) {
+      EditPageLogger.canvasDebug('FreeControlPoints参考线对齐跳过', data: {
+        'reason': '对齐模式不是guideline',
+        'currentMode': widget.alignmentMode?.name ?? 'null',
+        'elementId': elementId,
+      });
+      return delta;
+    }
+
+    try {
+      // 应用delta得到新位置
+      final newBounds = Rect.fromLTWH(_currentX + delta.dx,
+          _currentY + delta.dy, _currentWidth, _currentHeight);
+
+      // 调用GuidelineManager进行对齐检测
+      final alignmentResult = GuidelineManager.instance.detectAlignment(
+        elementId: elementId,
+        currentPosition: newBounds.topLeft,
+        elementSize: newBounds.size,
+      );
+
+      if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
+        // 获取对齐后的位置
+        final alignedX =
+            alignmentResult['alignedX'] as double? ?? newBounds.left;
+        final alignedY =
+            alignmentResult['alignedY'] as double? ?? newBounds.top;
+        final guidelines =
+            alignmentResult['guidelines'] as List<Guideline>? ?? [];
+
+        // 更新活动参考线
+        setState(() {
+          _activeGuidelines = guidelines;
+        });
+
+        // 通知外部更新参考线
+        widget.onGuidelinesUpdated?.call(guidelines);
+
+        EditPageLogger.canvasDebug('FreeControlPoints参考线对齐生效', data: {
+          'elementId': elementId,
+          'originalDelta': '$delta',
+          'alignedPosition': '($alignedX, $alignedY)',
+          'guidelinesCount': guidelines.length,
+        });
+
+        // 返回对齐后的delta
+        return Offset(
+          alignedX - _currentX,
+          alignedY - _currentY,
+        );
+      } else {
+        // 没有对齐，清除参考线
+        if (_activeGuidelines.isNotEmpty) {
+          setState(() {
+            _activeGuidelines.clear();
+          });
+          widget.onGuidelinesUpdated?.call([]);
+        }
+      }
+    } catch (e) {
+      EditPageLogger.canvasDebug('参考线对齐计算失败', data: {
+        'error': e.toString(),
+        'elementId': elementId,
+        'delta': '$delta',
+      });
+    }
+
+    return delta;
+  }
+
   /// 构建测试控制点 - 独立移动，不更新元素
   Widget _buildTestControlPoint(int index) {
     final position = _controlPointPositions[index]!;
@@ -384,12 +465,25 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           onPanStart: (details) {
             EditPageLogger.canvasDebug('控制点主导：开始平移操作');
 
+            // 🔧 新增：记录拖拽开始的元素ID
+            _dragStartElementId = widget.elementId;
+
+            // 清除之前的参考线
+            _clearGuidelines();
+
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
           },
           onPanUpdate: (details) {
+            // 🔧 新增：应用参考线对齐
+            var finalDelta = details.delta;
+            if (_dragStartElementId != null) {
+              finalDelta =
+                  _applyGuidelineAlignment(details.delta, _dragStartElementId!);
+            }
+
             setState(() {
-              _translateAllControlPoints(details.delta);
+              _translateAllControlPoints(finalDelta);
             });
 
             // 🔧 关键：将控制点状态推送给DragStateManager
@@ -397,6 +491,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           },
           onPanEnd: (details) {
             EditPageLogger.canvasDebug('控制点主导：平移结束');
+
+            // 🔧 新增：清除参考线和拖拽状态
+            _clearGuidelines();
+            _dragStartElementId = null;
 
             // 🔧 传递最终状态
             widget.onControlPointDragEndWithState
@@ -434,6 +532,16 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       bottomRight.dx - 8,
       bottomRight.dy - 8,
     );
+  }
+
+  /// 🔧 新增：清除参考线
+  void _clearGuidelines() {
+    if (_activeGuidelines.isNotEmpty) {
+      setState(() {
+        _activeGuidelines.clear();
+      });
+      widget.onGuidelinesUpdated?.call([]);
+    }
   }
 
   MouseCursor _getControlPointCursor(int index) {
@@ -981,9 +1089,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _currentRotation += deltaAngle;
 
     // 🔧 修复：更新初始角度，避免累积误差
-    _initialRotationAngle = newAngle;
-
-    // 重新计算所有控制点的位置
+    _initialRotationAngle = newAngle; // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
   }
 }

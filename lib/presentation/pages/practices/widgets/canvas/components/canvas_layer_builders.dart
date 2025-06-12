@@ -285,7 +285,6 @@ mixin CanvasLayerBuilders {
                         }
                       }
                     }
-
                     return FreeControlPoints(
                       key: ValueKey(
                           'control_points_${elementId}_${scale.toStringAsFixed(2)}_${displayX.toInt()}_${displayY.toInt()}'),
@@ -301,6 +300,11 @@ mixin CanvasLayerBuilders {
                       onControlPointDragStart: handleControlPointDragStart,
                       onControlPointDragEndWithState:
                           handleControlPointDragEndWithState,
+                      alignmentMode: controller.state.alignmentMode,
+                      onGuidelinesUpdated: (guidelines) {
+                        // 更新控制器中的活动参考线
+                        controller.updateActiveGuidelines(guidelines);
+                      },
                     );
                   }),
                 ),
@@ -744,7 +748,6 @@ class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
                         }
                       }
                     }
-
                     return FreeControlPoints(
                       key: ValueKey(
                           'control_points_${elementId}_${scale.toStringAsFixed(2)}_${displayX.toInt()}_${displayY.toInt()}'),
@@ -760,6 +763,11 @@ class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
                       onControlPointDragStart: widget.onControlPointDragStart,
                       onControlPointDragEndWithState:
                           widget.onControlPointDragEndWithState,
+                      alignmentMode: widget.controller.state.alignmentMode,
+                      onGuidelinesUpdated: (guidelines) {
+                        // 更新控制器中的活动参考线
+                        widget.controller.updateActiveGuidelines(guidelines);
+                      },
                     );
                   }),
                 ),

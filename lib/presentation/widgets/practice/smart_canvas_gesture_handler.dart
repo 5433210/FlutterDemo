@@ -50,7 +50,6 @@ class SmartCanvasGestureHandler implements GestureContext {
   bool _isPanStartHandling = false;
   Offset? _selectionBoxStart;
   Offset? _selectionBoxEnd;
-  List<String> _panStartSelectedElementIds = [];
   Offset? _panEndPosition;
   bool _isDragging = false;
 
@@ -149,7 +148,6 @@ class SmartCanvasGestureHandler implements GestureContext {
     _isPanStartHandling = false;
     _selectionBoxStart = null;
     _selectionBoxEnd = null;
-    _panStartSelectedElementIds = [];
     _panEndPosition = null;
     _isDragging = false;
     _recentTranslationOperations.clear();
@@ -631,9 +629,7 @@ class SmartCanvasGestureHandler implements GestureContext {
         !controller.state.isCtrlOrShiftPressed) {
       controller.clearSelection();
     }
-
     _isPanningEmptyArea = false;
-    _panStartSelectedElementIds = [];
     _panEndPosition = null;
     onDragEnd();
   }
@@ -770,14 +766,6 @@ class SmartCanvasGestureHandler implements GestureContext {
     onDragUpdate();
   }
 
-  void _handleCanvasPanUpdate(Offset currentPosition, double inverseScale) {
-    // 画布平移由InteractiveViewer处理，这里不做任何操作
-    EditPageLogger.canvasDebug('画布平移更新操作',
-        data: {'position': '$currentPosition', 'note': '由InteractiveViewer处理'});
-    _panEndPosition = currentPosition;
-    // 不调用onDragUpdate，让InteractiveViewer处理
-  }
-
   void _handleElementDragUpdate(Offset currentPosition) {
     try {
       EditPageLogger.canvasDebug('元素拖拽更新', data: {
@@ -788,53 +776,14 @@ class SmartCanvasGestureHandler implements GestureContext {
       final dx = currentPosition.dx - _dragStart.dx;
       final dy = currentPosition.dy - _dragStart.dy;
 
-      var finalOffset = Offset(dx, dy);
-
-      // 🔧 新增：参考线对齐检测
+      var finalOffset = Offset(dx, dy); // 🔧 新增：参考线对齐检测
       if (controller.state.alignmentMode == AlignmentMode.guideline &&
           controller.state.selectedElementIds.length == 1) {
         final elementId = controller.state.selectedElementIds.first;
-        final element = controller.state.currentPageElements.firstWhere(
-          (e) => e['id'] == elementId,
-          orElse: () => <String, dynamic>{},
-        );
-
-        if (element.isNotEmpty) {
-          final currentBounds = Rect.fromLTWH(
-            (element['x'] as num).toDouble() + dx,
-            (element['y'] as num).toDouble() + dy,
-            (element['width'] as num).toDouble(),
-            (element['height'] as num).toDouble(),
-          );
-
-          final alignmentResult = GuidelineManager.instance.detectAlignment(
-            elementId: elementId,
-            currentPosition: currentBounds.topLeft,
-            elementSize: currentBounds.size,
-          );
-
-          if (alignmentResult != null &&
-              alignmentResult['hasAlignment'] == true) {
-            // 计算对齐后的偏移
-            final alignedPosition = alignmentResult['position'] as Offset;
-            final alignedX =
-                alignedPosition.dx - (element['x'] as num).toDouble();
-            final alignedY =
-                alignedPosition.dy - (element['y'] as num).toDouble();
-            finalOffset = Offset(alignedX, alignedY);
-
-            // 更新活动参考线用于渲染
-            final guidelines = alignmentResult['guidelines'] as List<Guideline>;
-            controller.updateActiveGuidelines(guidelines);
-
-            EditPageLogger.canvasDebug('参考线对齐生效', data: {
-              'originalOffset': Offset(dx, dy),
-              'alignedOffset': finalOffset,
-              'guidelinesCount': guidelines.length,
-            });
-          } else {
-            controller.clearActiveGuidelines();
-          }
+        final alignedOffset =
+            _applyGuidelineAlignment(elementId, Offset(dx, dy));
+        if (alignedOffset != null) {
+          finalOffset = alignedOffset;
         }
       }
 
@@ -1416,11 +1365,10 @@ class _GestureEventRecord {
   final _GestureMode mode;
   final Duration timeStamp;
   final Map<String, dynamic> metadata;
-
   _GestureEventRecord({
     required this.mode,
     required this.timeStamp,
-    this.metadata = const {},
+    required this.metadata,
   });
 }
 
@@ -1429,7 +1377,6 @@ enum _GestureMode {
   pan,
   elementDrag,
   selectionBox,
-  canvasPan,
   multiTouch,
 }
 
