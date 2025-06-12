@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'guideline_alignment/guideline_types.dart';
 
 /// 字帖编辑状态类
 class PracticeEditState {
@@ -27,12 +28,17 @@ class PracticeEditState {
   List<String> selectedElementIds = [];
 
   Map<String, dynamic>? selectedElement;
-
   // 辅助功能相关
   bool gridVisible = false;
-  bool snapEnabled = false;
+  bool snapEnabled = false; // 保留兼容性，但逐步迁移到alignmentMode
+  AlignmentMode alignmentMode = AlignmentMode.none; // 新的对齐模式
+  double snapThreshold = 5.0; // 参考线对齐阈值
 
   double gridSize = 10.0; // 🔧 更密集的网格，更适合精确设计
+
+  // 参考线相关状态
+  List<Guideline> activeGuidelines = [];
+  bool isGuidelinePreviewActive = false;
   // 状态标志
   bool hasUnsavedChanges = false;
   bool isPreviewMode = false;
@@ -71,6 +77,16 @@ class PracticeEditState {
     return [];
   }
 
+  /// 获取对齐阈值（优先使用snapThreshold，回退到gridSize的一半）
+  double get effectiveSnapThreshold {
+    if (alignmentMode == AlignmentMode.guideline) {
+      return snapThreshold;
+    } else if (alignmentMode == AlignmentMode.gridSnap) {
+      return gridSize / 2.0;
+    }
+    return 0.0;
+  }
+
   /// 检查是否有未保存的更改
   bool get hasChanges => hasUnsavedChanges;
 
@@ -78,6 +94,16 @@ class PracticeEditState {
   bool get isCtrlOrShiftPressed {
     final instance = HardwareKeyboard.instance;
     return instance.isControlPressed || instance.isShiftPressed;
+  }
+
+  /// 检查是否启用网格贴附
+  bool get isGridSnapEnabled {
+    return alignmentMode == AlignmentMode.gridSnap || snapEnabled;
+  }
+
+  /// 检查是否启用参考线对齐
+  bool get isGuidelineAlignmentEnabled {
+    return alignmentMode == AlignmentMode.guideline;
   }
 
   /// 获取当前页面的图层列表
@@ -166,5 +192,46 @@ class PracticeEditState {
     hasUnsavedChanges = true;
   }
 
+  /// 设置特定的对齐模式
+  void setAlignmentMode(AlignmentMode mode) {
+    if (alignmentMode != mode) {
+      alignmentMode = mode;
+      snapEnabled = mode == AlignmentMode.gridSnap; // 兼容性
 
+      EditPageLogger.editPageInfo('设置对齐模式', data: {
+        'alignmentMode': mode.name,
+        'operation': 'alignment_mode_set',
+      });
+    }
+  }
+
+  /// 切换对齐模式
+  void toggleAlignmentMode() {
+    switch (alignmentMode) {
+      case AlignmentMode.none:
+        alignmentMode = AlignmentMode.gridSnap;
+        snapEnabled = true; // 兼容性
+        EditPageLogger.editPageInfo('切换到网格贴附模式', data: {
+          'alignmentMode': alignmentMode.name,
+          'operation': 'alignment_mode_toggle',
+        });
+        break;
+      case AlignmentMode.gridSnap:
+        alignmentMode = AlignmentMode.guideline;
+        snapEnabled = false; // 兼容性
+        EditPageLogger.editPageInfo('切换到参考线对齐模式', data: {
+          'alignmentMode': alignmentMode.name,
+          'operation': 'alignment_mode_toggle',
+        });
+        break;
+      case AlignmentMode.guideline:
+        alignmentMode = AlignmentMode.none;
+        snapEnabled = false; // 兼容性
+        EditPageLogger.editPageInfo('切换到无辅助模式', data: {
+          'alignmentMode': alignmentMode.name,
+          'operation': 'alignment_mode_toggle',
+        });
+        break;
+    }
+  }
 }

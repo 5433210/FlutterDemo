@@ -8,6 +8,8 @@ import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/helpers/element_utils.dart';
 import 'batch_update_options.dart';
 import 'drag_state_manager.dart';
+import 'guideline_alignment/guideline_manager.dart';
+import 'guideline_alignment/guideline_types.dart';
 import 'practice_edit_controller.dart';
 import 'smart_gesture_dispatcher.dart';
 
@@ -51,7 +53,7 @@ class SmartCanvasGestureHandler implements GestureContext {
   List<String> _panStartSelectedElementIds = [];
   Offset? _panEndPosition;
   bool _isDragging = false;
-  
+
   // 防止重复创建撤销操作的记录
   final Set<String> _recentTranslationOperations = {};
 
@@ -121,23 +123,23 @@ class SmartCanvasGestureHandler implements GestureContext {
       'activePointers': _activePointers.length,
       'gestureHistory': _gestureHistory.length,
     });
-    
+
     // 释放手势分发器
     _gestureDispatcher.dispose();
-    
+
     // 取消冲突解决定时器
     _conflictResolutionTimer?.cancel();
-    
+
     // 清理所有状态
     _activePointers.clear();
     _gestureHistory.clear();
     _responseTimes.clear();
-    
+
     // 重置多指触控状态
     _isMultiTouchActive = false;
     _multiTouchState = null;
     _currentMode = _GestureMode.idle;
-    
+
     // 清理拖拽相关状态
     _dragStart = Offset.zero;
     _elementStartPosition = Offset.zero;
@@ -252,14 +254,13 @@ class SmartCanvasGestureHandler implements GestureContext {
   /// Enhanced pan start with smart gesture detection
   Future<void> handlePanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) async {
-    
     EditPageLogger.canvasDebug('手势开始处理', data: {
       'position': '${details.localPosition}',
       'selectedElements': controller.state.selectedElementIds.length,
       'currentTool': controller.state.currentTool,
       'elementCount': elements.length,
     });
-    
+
     _responseStopwatch.start();
 
     try {
@@ -271,7 +272,7 @@ class SmartCanvasGestureHandler implements GestureContext {
           'selectedCount': controller.state.selectedElementIds.length
         });
       }
-      
+
       if (controller.state.selectedElementIds.isNotEmpty) {
         for (int i = elements.length - 1; i >= 0; i--) {
           final element = elements[i];
@@ -337,16 +338,14 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   /// Enhanced pan update with smart gesture recognition
   Future<void> handlePanUpdate(DragUpdateDetails details) async {
-    
     EditPageLogger.canvasDebug('手势更新处理', data: {
       'position': '${details.localPosition}',
       'isDragging': dragStateManager.isDragging,
     });
-    
+
     _responseStopwatch.start();
 
     try {
-      
       // Handle selection box updates first (highest priority)
       if (_isSelectionBoxActive) {
         EditPageLogger.canvasDebug('选择框活跃状态更新');
@@ -499,21 +498,84 @@ class SmartCanvasGestureHandler implements GestureContext {
       'delta': '$delta',
       'isBatched': isBatched,
     });
-    
+
+    // 🔧 新增：在SmartGestureDispatcher路径中也应用参考线对齐
+    var finalOffset = delta;
+    if (controller.state.alignmentMode == AlignmentMode.guideline &&
+        controller.state.selectedElementIds.length == 1) {
+      final alignedOffset = _applyGuidelineAlignment(elementId, delta);
+      if (alignedOffset != null) {
+        finalOffset = alignedOffset;
+      }
+    }
+
     if (isBatched) {
-      dragStateManager.updateDragOffset(delta);
+      dragStateManager.updateDragOffset(finalOffset);
       // 🔍[RESIZE_FIX] 性能监控：只更新统计，不触发通知
       dragStateManager.updatePerformanceStatsOnly();
     } else {
       // Direct update for immediate response
-      dragStateManager.updateDragOffset(delta);
+      dragStateManager.updateDragOffset(finalOffset);
       // 🔍[RESIZE_FIX] 性能监控：只更新统计，不触发通知
       dragStateManager.updatePerformanceStatsOnly();
     }
-    
-    EditPageLogger.canvasDebug('SmartGestureDispatcher路径优化: 跳过Controller更新保持流畅性');
+
+    EditPageLogger.canvasDebug(
+        'SmartGestureDispatcher路径优化: 跳过Controller更新保持流畅性');
     onDragUpdate();
     return GestureDispatchResult.handled();
+  }
+
+  /// 通用的参考线对齐检测方法
+  /// 返回对齐后的偏移量，如果没有对齐则返回null
+  Offset? _applyGuidelineAlignment(String elementId, Offset delta) {
+    if (controller.state.alignmentMode != AlignmentMode.guideline) {
+      return null;
+    }
+
+    final element = controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return null;
+
+    final currentBounds = Rect.fromLTWH(
+      (element['x'] as num).toDouble() + delta.dx,
+      (element['y'] as num).toDouble() + delta.dy,
+      (element['width'] as num).toDouble(),
+      (element['height'] as num).toDouble(),
+    );
+
+    final alignmentResult = GuidelineManager.instance.detectAlignment(
+      elementId: elementId,
+      currentPosition: currentBounds.topLeft,
+      elementSize: currentBounds.size,
+    );
+
+    if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
+      // 计算对齐后的偏移
+      final alignedPosition = alignmentResult['position'] as Offset;
+      final alignedX = alignedPosition.dx - (element['x'] as num).toDouble();
+      final alignedY = alignedPosition.dy - (element['y'] as num).toDouble();
+      final alignedOffset = Offset(alignedX, alignedY);
+
+      // 更新活动参考线用于渲染
+      final guidelines = alignmentResult['guidelines'] as List<Guideline>;
+      controller.updateActiveGuidelines(guidelines);
+
+      EditPageLogger.canvasDebug('参考线对齐生效', data: {
+        'elementId': elementId,
+        'originalOffset': delta,
+        'alignedOffset': alignedOffset,
+        'guidelinesCount': guidelines.length,
+      });
+
+      return alignedOffset;
+    } else {
+      controller.clearActiveGuidelines();
+      return null;
+    }
   }
 
   double _calculateAngle(Offset a, Offset b) {
@@ -603,7 +665,7 @@ class SmartCanvasGestureHandler implements GestureContext {
         elementIds.add(elementId);
         oldPositions.add({'x': startPosition.dx, 'y': startPosition.dy});
         newPositions.add({'x': finalX, 'y': finalY});
-        
+
         // 准备批量更新数据
         finalUpdates[elementId] = {
           'x': finalX,
@@ -614,29 +676,29 @@ class SmartCanvasGestureHandler implements GestureContext {
 
     // 🔍[RESIZE_FIX] Commit阶段：一次性批量更新Controller
     if (finalUpdates.isNotEmpty) {
-      EditPageLogger.canvasDebug('批量更新元素最终位置', data: {
-        'updateCount': finalUpdates.length
-      });
+      EditPageLogger.canvasDebug('批量更新元素最终位置',
+          data: {'updateCount': finalUpdates.length});
       controller.batchUpdateElementProperties(
         finalUpdates,
         options: BatchUpdateOptions.forDragOperation(),
       );
-      
+
       // 检查是否需要创建撤销操作（防止重复创建）
-      final operationKey = '${elementIds.join('_')}_${DateTime.now().millisecondsSinceEpoch ~/ 200}';
+      final operationKey =
+          '${elementIds.join('_')}_${DateTime.now().millisecondsSinceEpoch ~/ 200}';
       if (!_recentTranslationOperations.contains(operationKey)) {
         _recentTranslationOperations.add(operationKey);
         Timer(const Duration(milliseconds: 500), () {
           _recentTranslationOperations.remove(operationKey);
         });
-        
+
         // 创建撤销操作
         controller.createElementTranslationOperation(
           elementIds: elementIds,
           oldPositions: oldPositions,
           newPositions: newPositions,
         );
-        
+
         EditPageLogger.canvasDebug('创建平移撤销操作', data: {
           'elementCount': elementIds.length,
           'operationKey': operationKey,
@@ -646,7 +708,7 @@ class SmartCanvasGestureHandler implements GestureContext {
           'operationKey': operationKey,
         });
       }
-      
+
       EditPageLogger.canvasDebug('元素位置更新完成');
     }
 
@@ -710,10 +772,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   void _handleCanvasPanUpdate(Offset currentPosition, double inverseScale) {
     // 画布平移由InteractiveViewer处理，这里不做任何操作
-    EditPageLogger.canvasDebug('画布平移更新操作', data: {
-      'position': '$currentPosition',
-      'note': '由InteractiveViewer处理'
-    });
+    EditPageLogger.canvasDebug('画布平移更新操作',
+        data: {'position': '$currentPosition', 'note': '由InteractiveViewer处理'});
     _panEndPosition = currentPosition;
     // 不调用onDragUpdate，让InteractiveViewer处理
   }
@@ -724,29 +784,77 @@ class SmartCanvasGestureHandler implements GestureContext {
         'currentPosition': '$currentPosition',
         'startPosition': '$_dragStart'
       });
-      
+
       final dx = currentPosition.dx - _dragStart.dx;
       final dy = currentPosition.dy - _dragStart.dy;
 
-      // 获取缩放因子并调整拖拽偏移
+      var finalOffset = Offset(dx, dy);
+
+      // 🔧 新增：参考线对齐检测
+      if (controller.state.alignmentMode == AlignmentMode.guideline &&
+          controller.state.selectedElementIds.length == 1) {
+        final elementId = controller.state.selectedElementIds.first;
+        final element = controller.state.currentPageElements.firstWhere(
+          (e) => e['id'] == elementId,
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (element.isNotEmpty) {
+          final currentBounds = Rect.fromLTWH(
+            (element['x'] as num).toDouble() + dx,
+            (element['y'] as num).toDouble() + dy,
+            (element['width'] as num).toDouble(),
+            (element['height'] as num).toDouble(),
+          );
+
+          final alignmentResult = GuidelineManager.instance.detectAlignment(
+            elementId: elementId,
+            currentPosition: currentBounds.topLeft,
+            elementSize: currentBounds.size,
+          );
+
+          if (alignmentResult != null &&
+              alignmentResult['hasAlignment'] == true) {
+            // 计算对齐后的偏移
+            final alignedPosition = alignmentResult['position'] as Offset;
+            final alignedX =
+                alignedPosition.dx - (element['x'] as num).toDouble();
+            final alignedY =
+                alignedPosition.dy - (element['y'] as num).toDouble();
+            finalOffset = Offset(alignedX, alignedY);
+
+            // 更新活动参考线用于渲染
+            final guidelines = alignmentResult['guidelines'] as List<Guideline>;
+            controller.updateActiveGuidelines(guidelines);
+
+            EditPageLogger.canvasDebug('参考线对齐生效', data: {
+              'originalOffset': Offset(dx, dy),
+              'alignedOffset': finalOffset,
+              'guidelinesCount': guidelines.length,
+            });
+          } else {
+            controller.clearActiveGuidelines();
+          }
+        }
+      }
+
+      // 获取缩放因子并调整拖拽偏移（不影响参考线检测）
       final scaleFactor = getScaleFactor();
-      final adjustedDx = dx; // 直接使用原始偏移
-      final adjustedDy = dy; // 直接使用原始偏移
 
       EditPageLogger.canvasDebug('拖拽偏移计算', data: {
-        'dx': dx,
-        'dy': dy,
-        'scaleFactor': scaleFactor
+        'originalOffset': Offset(dx, dy),
+        'finalOffset': finalOffset,
+        'scaleFactor': scaleFactor,
+        'alignmentMode': controller.state.alignmentMode.name,
       });
-      
+
       // 更新拖拽状态
-      dragStateManager.updateDragOffset(Offset(adjustedDx, adjustedDy));
+      dragStateManager.updateDragOffset(finalOffset);
       _isDragging = true;
 
       EditPageLogger.canvasDebug('拖拽状态更新完成，触发UI更新');
 
       onDragUpdate();
-      
     } catch (e, stackTrace) {
       EditPageLogger.canvasError('元素拖拽更新异常', error: e, stackTrace: stackTrace);
     }
@@ -795,18 +903,15 @@ class SmartCanvasGestureHandler implements GestureContext {
         controller.selectElement(id, isMultiSelect: isMultiSelect);
       }
     }
-    
-    EditPageLogger.canvasDebug('元素选择处理完成', data: {
-      'selectedElements': controller.state.selectedElementIds.length
-    });
+
+    EditPageLogger.canvasDebug('元素选择处理完成',
+        data: {'selectedElements': controller.state.selectedElementIds.length});
   }
 
   Future<GestureDispatchResult> _handleFastCanvasPan(
       double velocity, double direction) async {
-    EditPageLogger.canvasDebug('快速画布平移', data: {
-      'velocity': velocity,
-      'direction': direction
-    });
+    EditPageLogger.canvasDebug('快速画布平移',
+        data: {'velocity': velocity, 'direction': direction});
 
     // Calculate pan delta based on velocity and direction
     final deltaX = cos(direction) * velocity * 0.016; // Assume 60 FPS
@@ -823,9 +928,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   Future<void> _handleLegacyGesture(PointerEvent event) async {
     // Implement legacy gesture handling as fallback
-    EditPageLogger.canvasDebug('使用Legacy手势处理', data: {
-      'eventType': '${event.runtimeType}'
-    });
+    EditPageLogger.canvasDebug('使用Legacy手势处理',
+        data: {'eventType': '${event.runtimeType}'});
   }
 
   Future<void> _handleLegacyPanEnd(DragEndDetails details) async {
@@ -845,7 +949,6 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   Future<void> _handleLegacyPanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) async {
-    
     EditPageLogger.canvasDebug('Legacy Pan Start处理', data: {
       'currentTool': controller.state.currentTool,
       'isPreviewMode': controller.state.isPreviewMode,
@@ -859,7 +962,6 @@ class SmartCanvasGestureHandler implements GestureContext {
     try {
       // 如果不在预览模式，检查手势类型
       if (!controller.state.isPreviewMode) {
-        
         // 1. 首先检查是否点击在已选中的元素上（元素拖拽 - 在任何工具模式下都可以）
         for (int i = elements.length - 1; i >= 0; i--) {
           final element = elements[i];
@@ -892,10 +994,11 @@ class SmartCanvasGestureHandler implements GestureContext {
           if (isInside && controller.state.selectedElementIds.contains(id)) {
             EditPageLogger.canvasDebug('检测到点击已选中元素', data: {
               'elementId': id,
-              'selectedElementsCount': controller.state.selectedElementIds.length,
+              'selectedElementsCount':
+                  controller.state.selectedElementIds.length,
               'currentTool': controller.state.currentTool
             });
-            
+
             // Check if element is locked
             final isLocked = element['locked'] == true;
             bool isLayerLocked = false;
@@ -906,10 +1009,8 @@ class SmartCanvasGestureHandler implements GestureContext {
               }
             }
 
-            EditPageLogger.canvasDebug('检查元素锁定状态', data: {
-              'isLocked': isLocked,
-              'isLayerLocked': isLayerLocked
-            });
+            EditPageLogger.canvasDebug('检查元素锁定状态',
+                data: {'isLocked': isLocked, 'isLayerLocked': isLayerLocked});
 
             if (!isLocked && !isLayerLocked) {
               EditPageLogger.canvasDebug('开始拖拽已选中元素', data: {
@@ -976,7 +1077,6 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   Future<void> _handleLegacyTapUp(
       TapUpDetails details, List<Map<String, dynamic>> elements) async {
-    
     // 如果正在处理PanStart事件，跳过TapUp处理，避免时序冲突
     if (_isPanStartHandling) {
       EditPageLogger.canvasDebug('正在处理PanStart，跳过TapUp处理');
@@ -985,9 +1085,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
     // 如果当前模式不是idle，说明已经进入了特殊手势处理模式，跳过TapUp
     if (_currentMode != _GestureMode.idle) {
-      EditPageLogger.canvasDebug('当前手势模式非idle，跳过TapUp处理', data: {
-        'currentMode': '$_currentMode'
-      });
+      EditPageLogger.canvasDebug('当前手势模式非idle，跳过TapUp处理',
+          data: {'currentMode': '$_currentMode'});
       return;
     }
 
@@ -1152,10 +1251,8 @@ class SmartCanvasGestureHandler implements GestureContext {
           reason: 'No elements selected for scaling');
     }
 
-    EditPageLogger.canvasDebug('多点触控缩放', data: {
-      'scaleRatio': scaleRatio,
-      'center': '$center'
-    });
+    EditPageLogger.canvasDebug('多点触控缩放',
+        data: {'scaleRatio': scaleRatio, 'center': '$center'});
 
     // Apply scale to selected elements
     for (final elementId in controller.state.selectedElementIds) {
@@ -1205,9 +1302,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   void _setupCanvasPanning(List<Map<String, dynamic>> elements) {
     // 画布平移应该由InteractiveViewer处理，这里完全不处理
-    EditPageLogger.canvasDebug('画布平移设置', data: {
-      'note': '不拦截手势，让InteractiveViewer处理'
-    });
+    EditPageLogger.canvasDebug('画布平移设置',
+        data: {'note': '不拦截手势，让InteractiveViewer处理'});
     _currentMode = _GestureMode.idle; // 设置为idle，表示不处理任何手势
     // 重要：不设置任何拖拽状态，让GestureDetector的手势穿透到InteractiveViewer
   }
@@ -1216,7 +1312,7 @@ class SmartCanvasGestureHandler implements GestureContext {
     // 立即设置拖拽状态，防止时序问题
     _isDragging = true;
     _elementStartPositions.clear();
-    
+
     // 🔧 修复多选L形指示器：收集元素的完整初始属性
     final Map<String, Map<String, dynamic>> elementStartProperties = {};
 
@@ -1228,9 +1324,10 @@ class SmartCanvasGestureHandler implements GestureContext {
           (selectedElement['x'] as num).toDouble(),
           (selectedElement['y'] as num).toDouble(),
         );
-        
+
         // 保存完整的元素属性
-        elementStartProperties[selectedId] = Map<String, dynamic>.from(selectedElement);
+        elementStartProperties[selectedId] =
+            Map<String, dynamic>.from(selectedElement);
       }
     }
 
@@ -1239,7 +1336,7 @@ class SmartCanvasGestureHandler implements GestureContext {
       'startPosition': '$_dragStart',
       'elementCount': elementStartProperties.length
     });
-    
+
     dragStateManager.startDrag(
       elementIds: controller.state.selectedElementIds.toSet(),
       startPosition: _dragStart,

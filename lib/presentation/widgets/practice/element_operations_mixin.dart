@@ -1,57 +1,31 @@
 import 'dart:math' as math;
 
-import 'package:charasgem/presentation/widgets/practice/custom_operation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
+import 'custom_operation.dart';
+import 'guideline_alignment/guideline_manager.dart';
+import 'guideline_alignment/guideline_types.dart';
 import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
+import 'throttled_notification_mixin.dart'; // 包含所有节流混入
 import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
-import 'throttled_notification_mixin.dart'; // 包含所有节流混入
 
 /// 元素操作管理 Mixin
 /// 负责高级元素操作，如组合/解组、分布、元素变换等
 /// 🔧 性能优化：完全集成智能状态分发架构，避免全局UI重建
-mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificationMixin, ThrottledNotificationMixin, DragOptimizedNotificationMixin {
+mixin ElementOperationsMixin on ChangeNotifier
+    implements
+        IntelligentNotificationMixin,
+        ThrottledNotificationMixin,
+        DragOptimizedNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
-  
-  /// 撤销/重做操作专用的更新方法
-  /// 用于撤销操作的回调函数中，确保UI正确更新
-  void _undoRedoIntelligentNotify({
-    required String elementId,
-    required String operation,
-  }) {
-    // 更新选中元素状态
-    if (state.selectedElementIds.contains(elementId)) {
-      final index = state.currentPageElements.indexWhere((e) => e['id'] == elementId);
-      if (index >= 0) {
-        state.selectedElement = state.currentPageElements[index];
-      }
-    }
-    
-    state.hasUnsavedChanges = true;
-    
-    // 🚀 使用新的智能通知架构
-    intelligentNotify(
-      changeType: 'element_undo_redo',
-      operation: operation,
-      eventData: {
-        'elementId': elementId,
-        'operation': operation,
-        'source': 'undo_redo',
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-      affectedElements: [elementId],
-      affectedLayers: ['content', 'interaction'],
-      affectedUIComponents: ['property_panel', 'canvas'],
-    );
-  }
 
   /// 对齐指定的元素
   void alignElements(List<String> elementIds, String alignment) {
@@ -97,7 +71,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         alignValue =
             elements.map((e) => (e['x'] as num).toDouble()).reduce(math.min);
         for (final element in elements) {
-          _updateElementInCurrentPage(element['id'] as String, {'x': alignValue});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'x': alignValue});
         }
         break;
 
@@ -109,7 +84,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
             .reduce(math.max);
         for (final element in elements) {
           final width = (element['width'] as num).toDouble();
-          _updateElementInCurrentPage(element['id'] as String, {'x': alignValue - width});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'x': alignValue - width});
         }
         break;
 
@@ -122,7 +98,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
 
         for (final element in elements) {
           final width = (element['width'] as num).toDouble();
-          _updateElementInCurrentPage(element['id'] as String, {'x': avgCenter - width / 2});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'x': avgCenter - width / 2});
         }
         break;
 
@@ -131,7 +108,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         alignValue =
             elements.map((e) => (e['y'] as num).toDouble()).reduce(math.min);
         for (final element in elements) {
-          _updateElementInCurrentPage(element['id'] as String, {'y': alignValue});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'y': alignValue});
         }
         break;
 
@@ -143,7 +121,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
             .reduce(math.max);
         for (final element in elements) {
           final height = (element['height'] as num).toDouble();
-          _updateElementInCurrentPage(element['id'] as String, {'y': alignValue - height});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'y': alignValue - height});
         }
         break;
 
@@ -156,14 +135,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
 
         for (final element in elements) {
           final height = (element['height'] as num).toDouble();
-          _updateElementInCurrentPage(element['id'] as String, {'y': avgCenter - height / 2});
+          _updateElementInCurrentPage(
+              element['id'] as String, {'y': avgCenter - height / 2});
         }
         break;
     }
 
     // 保存新位置用于撤销操作
     final newPositions = <String, Map<String, double>>{};
-    if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+    if (state.currentPage != null &&
+        state.currentPage!.containsKey('elements')) {
       final pageElements = state.currentPage!['elements'] as List<dynamic>;
       for (final element in elements) {
         final id = element['id'] as String;
@@ -213,7 +194,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     }
 
     state.hasUnsavedChanges = true;
-    
+
     // 🚀 使用分层架构通知元素对齐完成
     intelligentNotify(
       changeType: 'element_align_elements',
@@ -228,68 +209,10 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     );
   }
 
+  @override
   void checkDisposed();
 
-  /// 检查元素是否可以被操作（未锁定）
-  bool _canOperateElement(String elementId) {
-    // 查找元素
-    final element = state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
-    
-    if (element.isEmpty) return false;
-    
-    // 检查元素本身是否锁定
-    final isElementLocked = element['locked'] as bool? ?? false;
-    if (isElementLocked) {
-      EditPageLogger.controllerDebug('元素已锁定，跳过操作', data: {'elementId': elementId});
-      return false;
-    }
-    
-    // 检查元素所在图层是否锁定
-    final layerId = element['layerId'] as String?;
-    if (layerId != null) {
-      final layer = state.layers.firstWhere(
-        (l) => l['id'] == layerId,
-        orElse: () => <String, dynamic>{},
-      );
-      final isLayerLocked = layer['isLocked'] as bool? ?? false;
-      if (isLayerLocked) {
-        EditPageLogger.controllerDebug(
-          '图层已锁定，跳过元素操作',
-          data: {
-            'layerId': layerId,
-            'elementId': elementId,
-            'operation': 'lock_check',
-          },
-        );
-        return false;
-      }
-    }
-    
-    return true;
-  }
-
-  /// 过滤出可以操作的元素ID列表
-  List<String> _filterOperableElements(List<String> elementIds) {
-    final operableIds = elementIds.where(_canOperateElement).toList();
-    
-    if (operableIds.length != elementIds.length) {
-      final lockedCount = elementIds.length - operableIds.length;
-      EditPageLogger.controllerWarning(
-        '跳过锁定元素',
-        data: {
-          'totalElements': elementIds.length,
-          'lockedCount': lockedCount,
-          'operableCount': operableIds.length,
-          'operation': 'filter_locked_elements',
-        },
-      );
-    }
-    
-    return operableIds;
-  }
+  void clearActiveGuidelines();
 
   /// 创建批量元素调整大小操作（用于撤销/重做）
   void createElementResizeOperation({
@@ -316,7 +239,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         'operation': 'create_resize_operation',
       },
     );
-    
+
     final operation = ResizeElementOperation(
       elementIds: elementIds,
       oldSizes: oldSizes,
@@ -355,39 +278,13 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         'operation': 'create_rotation_operation',
       },
     );
-    
+
     final operation = ElementRotationOperation(
       elementIds: elementIds,
       oldRotations: oldRotations,
       newRotations: newRotations,
       updateElement: (elementId, rotationProps) {
         _updateElementInCurrentPage(elementId, rotationProps);
-      },
-    );
-
-    // 不立即执行，因为状态已经在控制点处理器中更新了
-    undoRedoManager.addOperation(operation, executeImmediately: false);
-  }
-
-  /// 创建组合元素旋转操作 - 保存子元素的完整状态
-  void createGroupElementRotationOperation({
-    required String groupElementId,
-    required Map<String, dynamic> oldGroupState,
-    required Map<String, dynamic> newGroupState,
-  }) {
-    EditPageLogger.editPageDebug('创建组合元素旋转操作', data: {
-      'groupElementId': groupElementId,
-      'oldRotation': oldGroupState['rotation'],
-      'newRotation': newGroupState['rotation'],
-      'operation': 'create_group_rotation_operation',
-    });
-
-    final operation = GroupElementRotationOperation(
-      groupElementId: groupElementId,
-      oldGroupState: Map<String, dynamic>.from(oldGroupState),
-      newGroupState: Map<String, dynamic>.from(newGroupState),
-      updateElement: (id, properties) {
-        _updateElementInCurrentPage(id, properties);
       },
     );
 
@@ -420,13 +317,39 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         'operation': 'create_translation_operation',
       },
     );
-    
+
     final operation = ElementTranslationOperation(
       elementIds: elementIds,
       oldPositions: oldPositions,
       newPositions: newPositions,
       updateElement: (elementId, positionProps) {
         _updateElementInCurrentPage(elementId, positionProps);
+      },
+    );
+
+    // 不立即执行，因为状态已经在控制点处理器中更新了
+    undoRedoManager.addOperation(operation, executeImmediately: false);
+  }
+
+  /// 创建组合元素旋转操作 - 保存子元素的完整状态
+  void createGroupElementRotationOperation({
+    required String groupElementId,
+    required Map<String, dynamic> oldGroupState,
+    required Map<String, dynamic> newGroupState,
+  }) {
+    EditPageLogger.editPageDebug('创建组合元素旋转操作', data: {
+      'groupElementId': groupElementId,
+      'oldRotation': oldGroupState['rotation'],
+      'newRotation': newGroupState['rotation'],
+      'operation': 'create_group_rotation_operation',
+    });
+
+    final operation = GroupElementRotationOperation(
+      groupElementId: groupElementId,
+      oldGroupState: Map<String, dynamic>.from(oldGroupState),
+      newGroupState: Map<String, dynamic>.from(newGroupState),
+      updateElement: (id, properties) {
+        _updateElementInCurrentPage(id, properties);
       },
     );
 
@@ -506,13 +429,15 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
 
     // 记录变更后的状态
     final newState = <String, Map<String, dynamic>>{};
-    if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+    if (state.currentPage != null &&
+        state.currentPage!.containsKey('elements')) {
       final pageElements = state.currentPage!['elements'] as List<dynamic>;
       for (final element in elements) {
         final id = element['id'] as String;
         final index = pageElements.indexWhere((elem) => elem['id'] == id);
         if (index != -1) {
-          newState[id] = Map<String, dynamic>.from(pageElements[index] as Map<String, dynamic>);
+          newState[id] = Map<String, dynamic>.from(
+              pageElements[index] as Map<String, dynamic>);
         } else {
           newState[id] = Map<String, dynamic>.from(element);
         }
@@ -566,7 +491,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
 
     undoRedoManager.addOperation(operation);
     state.hasUnsavedChanges = true;
-    
+
     // 🚀 使用分层架构通知元素分布完成
     intelligentNotify(
       changeType: 'element_distribute_elements',
@@ -588,7 +513,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     // state.currentEditingGroupId = groupId;
     // 清除当前选择
     state.selectedElementIds.clear();
-    
+
     // 🚀 使用分层架构通知选择变化
     intelligentNotify(
       changeType: 'element_selection_change',
@@ -611,7 +536,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
       'selectedCount': state.selectedElementIds.length,
       'operation': 'group_start',
     });
-    
+
     if (state.selectedElementIds.length <= 1) {
       EditPageLogger.editPageDebug('🔧 Group操作跳过：选中元素不足', data: {
         'selectedCount': state.selectedElementIds.length,
@@ -678,7 +603,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         'x': x,
         'y': y,
       };
-      
+
       EditPageLogger.editPageDebug('🔧 Group操作：创建子元素', data: {
         'originalId': e['id'],
         'childId': childElement['id'],
@@ -686,7 +611,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         'relativePos': {'x': x, 'y': y},
         'operation': 'group_create_child',
       });
-      
+
       return childElement;
     }).toList();
 
@@ -717,8 +642,14 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
 
     EditPageLogger.editPageDebug('🔧 Group操作：组合元素创建', data: {
       'groupId': groupElement['id'],
-      'groupBounds': {'x': minX, 'y': minY, 'width': maxX - minX, 'height': maxY - minY},
-      'childrenInGroup': groupElement['content']['children'].map((e) => e['id']).toList(),
+      'groupBounds': {
+        'x': minX,
+        'y': minY,
+        'width': maxX - minX,
+        'height': maxY - minY
+      },
+      'childrenInGroup':
+          groupElement['content']['children'].map((e) => e['id']).toList(),
       'operation': 'group_element_created',
     });
 
@@ -737,7 +668,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           state.selectedElement = e;
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知组合元素添加
           intelligentNotify(
             changeType: 'element_add_group_element',
@@ -760,7 +691,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           elements.removeWhere((e) => e['id'] == id);
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知元素移除
           intelligentNotify(
             changeType: 'element_remove_element',
@@ -782,7 +713,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           elements.removeWhere((e) => ids.contains(e['id']));
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知批量元素移除
           intelligentNotify(
             changeType: 'element_remove_elements',
@@ -804,9 +735,9 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
       'originalElementIds': selectedElements.map((e) => e['id']).toList(),
       'operation': 'group_create_undo_operation',
     });
-    
+
     undoRedoManager.addOperation(operation);
-    
+
     EditPageLogger.editPageDebug('🔧 Group操作完成', data: {
       'groupElementId': groupElement['id'],
       'operation': 'group_completed',
@@ -832,7 +763,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     final updatedPage = {...currentPage, 'elements': elements};
     state.pages[state.currentPageIndex] = updatedPage;
     state.hasUnsavedChanges = true;
-    
+
     // 🚀 使用分层架构通知元素锁定状态变化
     intelligentNotify(
       changeType: 'element_toggle_element_lock',
@@ -960,7 +891,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           state.selectedElement = e;
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知解组添加元素
           intelligentNotify(
             changeType: 'element_ungroup_add_element',
@@ -989,7 +920,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           }
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知解组移除元素
           intelligentNotify(
             changeType: 'element_ungroup_remove_element',
@@ -1017,7 +948,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           state.selectedElement = null; // 多选时不显示单个元素的属性
 
           state.hasUnsavedChanges = true;
-          
+
           // 🚀 使用分层架构通知解组批量添加元素
           intelligentNotify(
             changeType: 'element_ungroup_add_elements',
@@ -1037,12 +968,16 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     undoRedoManager.addOperation(operation);
   }
 
+  // 抽象方法声明，需要在实现类中定义
+  void updateActiveGuidelines(List<Guideline> guidelines);
+
   /// 更新元素位置（带吸附功能）
   void updateElementPositionWithSnap(String id, Offset delta) {
-    if (state.currentPage == null || !state.currentPage!.containsKey('elements')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('elements')) {
       return;
     }
-    
+
     final elements = state.currentPage!['elements'] as List<dynamic>;
     final elementIndex = elements.indexWhere((e) => e['id'] == id);
     if (elementIndex < 0) return;
@@ -1082,6 +1017,22 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           'operation': 'drag_update',
         },
       );
+
+      // 🔧 新增：参考线对齐检测 (单选拖拽时)
+      if (state.alignmentMode == AlignmentMode.guideline &&
+          state.selectedElementIds.length == 1 &&
+          properties.containsKey('x') &&
+          properties.containsKey('y')) {
+        final alignedProperties =
+            _applyGuidelineAlignmentForDrag(id, properties);
+        if (alignedProperties != null) {
+          properties = alignedProperties;
+          EditPageLogger.controllerDebug('单选拖拽参考线对齐生效', data: {
+            'elementId': id,
+            'alignedPosition': '${properties['x']}, ${properties['y']}',
+          });
+        }
+      }
 
       // 确保大小不小于最小值
       if (properties.containsKey('width')) {
@@ -1128,6 +1079,105 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     }
   }
 
+  /// 应用参考线对齐到拖拽元素
+  /// 返回对齐后的属性，如果没有对齐则返回null
+  Map<String, dynamic>? _applyGuidelineAlignmentForDrag(
+      String elementId, Map<String, dynamic> properties) {
+    if (state.alignmentMode != AlignmentMode.guideline) {
+      return null;
+    }
+
+    final element = state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return null;
+
+    // 获取当前位置和尺寸
+    final currentX = (properties['x'] as num?)?.toDouble() ??
+        (element['x'] as num).toDouble();
+    final currentY = (properties['y'] as num?)?.toDouble() ??
+        (element['y'] as num).toDouble();
+    final width = (element['width'] as num).toDouble();
+    final height = (element['height'] as num).toDouble();
+
+    final currentBounds = Rect.fromLTWH(currentX, currentY, width, height);
+
+    final alignmentResult = GuidelineManager.instance.detectAlignment(
+      elementId: elementId,
+      currentPosition: currentBounds.topLeft,
+      elementSize: currentBounds.size,
+    );
+
+    if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
+      // 计算对齐后的位置
+      final alignedPosition = alignmentResult['position'] as Offset;
+
+      // 更新活动参考线用于渲染
+      final guidelines = alignmentResult['guidelines'] as List<Guideline>;
+      updateActiveGuidelines(guidelines);
+
+      EditPageLogger.controllerDebug('拖拽参考线对齐生效', data: {
+        'elementId': elementId,
+        'originalPosition': '$currentX, $currentY',
+        'alignedPosition': '${alignedPosition.dx}, ${alignedPosition.dy}',
+        'guidelinesCount': guidelines.length,
+      });
+
+      // 返回更新后的属性
+      final alignedProperties = Map<String, dynamic>.from(properties);
+      alignedProperties['x'] = alignedPosition.dx;
+      alignedProperties['y'] = alignedPosition.dy;
+      return alignedProperties;
+    } else {
+      clearActiveGuidelines();
+      return null;
+    }
+  }
+
+  /// 检查元素是否可以被操作（未锁定）
+  bool _canOperateElement(String elementId) {
+    // 查找元素
+    final element = state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return false;
+
+    // 检查元素本身是否锁定
+    final isElementLocked = element['locked'] as bool? ?? false;
+    if (isElementLocked) {
+      EditPageLogger.controllerDebug('元素已锁定，跳过操作',
+          data: {'elementId': elementId});
+      return false;
+    }
+
+    // 检查元素所在图层是否锁定
+    final layerId = element['layerId'] as String?;
+    if (layerId != null) {
+      final layer = state.layers.firstWhere(
+        (l) => l['id'] == layerId,
+        orElse: () => <String, dynamic>{},
+      );
+      final isLayerLocked = layer['isLocked'] as bool? ?? false;
+      if (isLayerLocked) {
+        EditPageLogger.controllerDebug(
+          '图层已锁定，跳过元素操作',
+          data: {
+            'layerId': layerId,
+            'elementId': elementId,
+            'operation': 'lock_check',
+          },
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// 创建自定义操作
   UndoableOperation _createCustomOperation({
     required VoidCallback execute,
@@ -1141,8 +1191,62 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
     );
   }
 
+  /// 过滤出可以操作的元素ID列表
+  List<String> _filterOperableElements(List<String> elementIds) {
+    final operableIds = elementIds.where(_canOperateElement).toList();
+
+    if (operableIds.length != elementIds.length) {
+      final lockedCount = elementIds.length - operableIds.length;
+      EditPageLogger.controllerWarning(
+        '跳过锁定元素',
+        data: {
+          'totalElements': elementIds.length,
+          'lockedCount': lockedCount,
+          'operableCount': operableIds.length,
+          'operation': 'filter_locked_elements',
+        },
+      );
+    }
+
+    return operableIds;
+  }
+
+  /// 撤销/重做操作专用的更新方法
+  /// 用于撤销操作的回调函数中，确保UI正确更新
+  void _undoRedoIntelligentNotify({
+    required String elementId,
+    required String operation,
+  }) {
+    // 更新选中元素状态
+    if (state.selectedElementIds.contains(elementId)) {
+      final index =
+          state.currentPageElements.indexWhere((e) => e['id'] == elementId);
+      if (index >= 0) {
+        state.selectedElement = state.currentPageElements[index];
+      }
+    }
+
+    state.hasUnsavedChanges = true;
+
+    // 🚀 使用新的智能通知架构
+    intelligentNotify(
+      changeType: 'element_undo_redo',
+      operation: operation,
+      eventData: {
+        'elementId': elementId,
+        'operation': operation,
+        'source': 'undo_redo',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      affectedElements: [elementId],
+      affectedLayers: ['content', 'interaction'],
+      affectedUIComponents: ['property_panel', 'canvas'],
+    );
+  }
+
   /// 辅助方法：正确更新当前页面中的元素
-  void _updateElementInCurrentPage(String elementId, Map<String, dynamic> properties) {
+  void _updateElementInCurrentPage(
+      String elementId, Map<String, dynamic> properties) {
     EditPageLogger.controllerInfo(
       '🔧 DEBUG: _updateElementInCurrentPage 开始执行',
       data: {
@@ -1152,7 +1256,8 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
       },
     );
 
-    if (state.currentPage == null || !state.currentPage!.containsKey('elements')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('elements')) {
       EditPageLogger.controllerError(
         '🔧 DEBUG: 当前页面无效',
         data: {
@@ -1162,12 +1267,12 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
       );
       return;
     }
-    
+
     final elements = state.currentPage!['elements'] as List<dynamic>;
     final index = elements.indexWhere((e) => e['id'] == elementId);
     if (index >= 0) {
       final element = elements[index] as Map<String, dynamic>;
-      
+
       EditPageLogger.controllerInfo(
         '🔧 DEBUG: 找到元素，开始更新属性',
         data: {
@@ -1175,7 +1280,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           'elementIndex': index,
           'oldProperties': {
             'x': element['x'],
-            'y': element['y'], 
+            'y': element['y'],
             'width': element['width'],
             'height': element['height'],
           },
@@ -1183,7 +1288,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           'operation': 'updateElement_found_debug',
         },
       );
-      
+
       // 🔧 修复：对于组合元素的完整状态更新，直接替换整个元素
       if (element['type'] == 'group' && properties.containsKey('content')) {
         EditPageLogger.controllerInfo(
@@ -1194,7 +1299,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
             'operation': 'group_complete_state_update',
           },
         );
-        
+
         // 完整替换元素状态
         elements[index] = Map<String, dynamic>.from(properties);
       } else {
@@ -1203,7 +1308,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           element[key] = value;
         });
       }
-      
+
       // 更新选中元素的状态
       if (state.selectedElementIds.contains(elementId)) {
         state.selectedElement = elements[index] as Map<String, dynamic>;
@@ -1215,22 +1320,23 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           },
         );
       }
-      
+
       state.hasUnsavedChanges = true;
-      
+
       // 🔧 关键修复：强制重新渲染
       // 通过修改元素的一个内部属性，确保缓存失效
       final currentElement = elements[index] as Map<String, dynamic>;
       currentElement['_forceRender'] = DateTime.now().millisecondsSinceEpoch;
-      
+
       // 特别处理组合元素，清除其缓存
       if (currentElement['type'] == 'group') {
         // 强制设置一个变化的内部标识
-        final content = currentElement['content'] as Map<String, dynamic>? ?? {};
+        final content =
+            currentElement['content'] as Map<String, dynamic>? ?? {};
         content['_cacheKey'] = DateTime.now().millisecondsSinceEpoch;
         currentElement['content'] = content;
       }
-      
+
       EditPageLogger.controllerInfo(
         '🔧 DEBUG: 强制元素重新渲染',
         data: {
@@ -1240,7 +1346,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           'operation': 'force_rerender_debug',
         },
       );
-      
+
       EditPageLogger.controllerInfo(
         '🔧 性能优化：使用分层架构更新UI',
         data: {
@@ -1248,7 +1354,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
           'operation': 'layer_architecture_update',
         },
       );
-      
+
       // 🚀 使用分层架构进行精确更新
       intelligentNotify(
         changeType: 'element_update_element_properties',
@@ -1261,7 +1367,7 @@ mixin ElementOperationsMixin on ChangeNotifier implements IntelligentNotificatio
         affectedLayers: ['content', 'interaction'],
         affectedUIComponents: ['canvas'],
       );
-      
+
       EditPageLogger.controllerInfo(
         '🔧 DEBUG: _updateElementInCurrentPage 执行完成',
         data: {

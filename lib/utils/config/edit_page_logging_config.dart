@@ -21,7 +21,7 @@ class EditPageLoggingConfig {
 
   // 画布渲染日志控制 (高频操作，默认关闭)
   static bool enableCanvasLogging = false;
-  static LogLevel canvasMinLevel = LogLevel.warning;
+  static LogLevel canvasMinLevel = LogLevel.debug;
 
   // 控制器日志控制
   static bool enableControllerLogging = true;

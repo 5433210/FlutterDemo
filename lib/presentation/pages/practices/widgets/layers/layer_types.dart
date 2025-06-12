@@ -160,6 +160,9 @@ enum RenderLayerType {
 
   /// Interaction layer (selection boxes, control points) - very high update frequency
   interaction,
+  
+  /// Guideline layer (参考线) - high update frequency during drag operations
+  guideline,
 
   /// UI overlay layer (toolbars, menus) - medium update frequency
   uiOverlay,

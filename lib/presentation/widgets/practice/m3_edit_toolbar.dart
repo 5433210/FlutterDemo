@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
+import 'guideline_alignment/guideline_types.dart';
 import 'practice_edit_controller.dart';
 
 /// Material 3 edit toolbar for practice edit page
 class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final PracticeEditController controller;
   final bool gridVisible;
-  final bool snapEnabled;
+  final bool snapEnabled; // 保留兼容性
+  final AlignmentMode alignmentMode; // 新的对齐模式
   final bool canPaste;
   final VoidCallback onToggleGrid;
-  final VoidCallback onToggleSnap;
+  final VoidCallback? onToggleSnap; // 保留兼容性
+  final VoidCallback onToggleAlignmentMode; // 新的三态切换
   final VoidCallback onCopy;
   final VoidCallback onPaste;
   final VoidCallback onGroupElements;
@@ -39,9 +42,11 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required this.controller,
     required this.gridVisible,
     required this.snapEnabled,
+    required this.alignmentMode,
     this.canPaste = false,
     required this.onToggleGrid,
-    required this.onToggleSnap,
+    this.onToggleSnap,
+    required this.onToggleAlignmentMode,
     required this.onCopy,
     required this.onPaste,
     required this.onGroupElements,
@@ -303,9 +308,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           const VerticalDivider(),
           const SizedBox(width: AppSizes.s),
 
-          // Helper functions group
+          // 对齐辅助组
           _buildToolbarGroup(
-            title: l10n.practiceEditHelperFunctions,
+            title: '对齐辅助',
             children: [
               _buildToolbarButton(
                 context: context,
@@ -316,15 +321,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: onToggleGrid,
                 isActive: gridVisible,
               ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.format_line_spacing,
-                tooltip: snapEnabled
-                    ? l10n.practiceEditDisableSnap
-                    : l10n.practiceEditEnableSnap,
-                onPressed: onToggleSnap,
-                isActive: snapEnabled,
-              ),
+              _buildAlignmentModeButton(context),
               if (onCopyFormatting != null)
                 _buildToolbarButton(
                   context: context,
@@ -451,19 +448,25 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required String tooltip,
     required VoidCallback? onPressed,
     bool isActive = false,
+    Color? customColor,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    // 计算图标颜色
+    final Color iconColor = customColor != null
+        ? customColor
+        : isActive
+            ? colorScheme.primary
+            : onPressed == null
+                ? colorScheme.onSurface.withOpacity(0.3)
+                : colorScheme.onSurface;
 
     return Tooltip(
       message: tooltip,
       child: IconButton(
         icon: Icon(
           icon,
-          color: isActive
-              ? colorScheme.primary
-              : onPressed == null
-                  ? colorScheme.onSurface.withValues(alpha: 26)
-                  : null,
+          color: iconColor,
           size: 20,
         ),
         onPressed: onPressed,
@@ -496,6 +499,42 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         // Tool buttons
         ...children,
       ],
+    );
+  }
+
+  /// 构建对齐模式按钮（三态切换）
+  Widget _buildAlignmentModeButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    IconData icon;
+    String tooltip;
+    Color? buttonColor;
+    
+    switch (alignmentMode) {
+      case AlignmentMode.none:
+        icon = Icons.crop_free; // 无辅助图标
+        tooltip = '无辅助对齐 - 点击启用网格贴附';
+        buttonColor = colorScheme.onSurface.withOpacity(0.5);
+        break;
+      case AlignmentMode.gridSnap:
+        icon = Icons.grid_view; // 网格贴附图标
+        tooltip = '网格贴附模式 - 点击切换到参考线对齐';
+        buttonColor = Colors.blue;
+        break;
+      case AlignmentMode.guideline:
+        icon = Icons.horizontal_rule; // 参考线图标
+        tooltip = '参考线对齐模式 - 点击切换到无辅助';
+        buttonColor = Colors.orange;
+        break;
+    }
+
+    return _buildToolbarButton(
+      context: context,
+      icon: icon,
+      tooltip: tooltip,
+      onPressed: onToggleAlignmentMode,
+      isActive: alignmentMode != AlignmentMode.none,
+      customColor: buttonColor,
     );
   }
 

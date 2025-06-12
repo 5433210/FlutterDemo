@@ -5,6 +5,7 @@ import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/batch_update_options.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
+import '../../../widgets/practice/guideline_alignment/guideline_renderer.dart';
 import '../../../widgets/practice/guideline_alignment/guideline_types.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/performance_monitor.dart';
@@ -69,6 +70,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         CanvasGestureHandlers {
   // 🔍[TRACKING] 静态重建计数器
   static int _buildCount = 0;
+  static int _optimizedListenerBuildCount = 0;
 
   // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
 
@@ -114,33 +116,53 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   // 实现CanvasLayerBuilders要求的抽象属性
   @override
-  List<Guideline> get activeGuidelines =>
-      widget.controller.state.activeGuidelines;
+  List<Guideline> get activeGuidelines => widget.controller.state.activeGuidelines;
+
+  @override
+  ContentRenderController get contentRenderController => _contentRenderController;
+
+  @override
+  BuildContext get context => super.context;
+
+  @override
+  PracticeEditController get controller => widget.controller;
+
+  @override
+  DragStateManager get dragStateManager => _dragStateManager;
+
+  @override
+  bool get isPreviewMode => widget.isPreviewMode;
+
+  @override
+  ValueNotifier<SelectionBoxState> get selectionBoxNotifier => _selectionBoxNotifier;
+  @override
+  TransformationController get transformationController => widget.transformationController;
 
   @override
   ContentRenderController get contentRenderController =>
       _contentRenderController;
-
+  // 实现 mixin 的抽象方法
   @override
   PracticeEditController get controller => widget.controller;
   @override
   Offset get dragStart => _dragStart;
 
+  // CanvasLayerBuilders 实现
   @override
   DragStateManager get dragStateManager => _dragStateManager;
 
   @override
   Offset get elementStartPosition => _elementStartPosition;
 
+  // CanvasGestureHandlers 实现
   @override
   SmartCanvasGestureHandler get gestureHandler => _gestureHandler;
-
+  // 为mixin提供dispose状态检查
   @override
   bool get isDisposed => _isDisposed;
 
   @override
   bool get isPreviewMode => widget.isPreviewMode;
-
   @override
   bool get isReadyForDrag => _isReadyForDrag;
 
@@ -164,7 +186,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _buildCount++;
 
     // 🔧 CRITICAL FIX: 缓存controller状态，避免在build中访问controller.state触发依赖
+    final currentTool = widget.controller.state.currentTool;
     final selectedElementIds = widget.controller.state.selectedElementIds;
+    final hasSelectedElements = selectedElementIds.isNotEmpty;
 
     EditPageLogger.canvasDebug(
       '🚨 Canvas开始重建 - 主Widget.build()被调用',
@@ -477,6 +501,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   }
 
   Widget _buildCanvasContent() {
+    _optimizedListenerBuildCount++;
+
     final colorScheme = Theme.of(context).colorScheme;
     final controller = widget.controller;
 
@@ -785,8 +811,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             fit: StackFit
                                 .expand, // Use expand to fill the container
                             clipBehavior: Clip
-                                .none, // Allow control points to extend beyond page boundaries
-                            children: [
+                                .none, // Allow control points to extend beyond page boundaries                            children: [
                               // Use LayerRenderManager to build coordinated layer stack
                               RepaintBoundary(
                                 key:
@@ -799,7 +824,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                         RenderLayerType.staticBackground,
                                         RenderLayerType.content,
                                         RenderLayerType.dragPreview,
-                                        RenderLayerType.guideline,
                                         RenderLayerType.interaction,
                                       ],
                                     );
@@ -808,6 +832,28 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                   },
                                 ),
                               ),
+                              
+                              // 参考线层 - 显示在最上层但不拦截手势
+                              if (widget.controller.state.alignmentMode == AlignmentMode.guideline &&
+                                  widget.controller.state.activeGuidelines.isNotEmpty)
+                                IgnorePointer(
+                                  child: RepaintBoundary(
+                                    child: SizedBox(
+                                      width: pageSize.width,
+                                      height: pageSize.height,
+                                      child: CustomPaint(
+                                        painter: GuidelineRenderer.createGuidelinePainter(
+                                          guidelines: widget.controller.state.activeGuidelines,
+                                          color: Colors.orange,
+                                          strokeWidth: 1.0,
+                                          showLabels: true,
+                                          dashLine: true,
+                                        ),
+                                        size: pageSize,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           );
                         },

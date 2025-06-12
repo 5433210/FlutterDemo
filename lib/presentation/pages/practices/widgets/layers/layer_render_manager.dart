@@ -57,6 +57,7 @@ class LayerRenderManager {
         [
           RenderLayerType.staticBackground,
           RenderLayerType.content,
+          RenderLayerType.guideline,
           RenderLayerType.dragPreview,
           RenderLayerType.interaction,
           RenderLayerType.uiOverlay,

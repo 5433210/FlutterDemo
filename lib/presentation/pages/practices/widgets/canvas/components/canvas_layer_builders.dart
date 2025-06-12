@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
+import '../../../../../widgets/practice/guideline_alignment/guideline_layer.dart';
+import '../../../../../widgets/practice/guideline_alignment/guideline_types.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../helpers/element_utils.dart';
 import '../../content_render_controller.dart';
@@ -22,6 +24,9 @@ class CanvasDragConfig {
 /// 画布层级构建器
 /// 负责构建画布中各个层级的Widget
 mixin CanvasLayerBuilders {
+  /// 获取活动的参考线列表（由使用此mixin的类实现）
+  List<Guideline> get activeGuidelines;
+
   /// 获取内容渲染控制器（由使用此mixin的类实现）
   ContentRenderController get contentRenderController;
 
@@ -136,7 +141,6 @@ mixin CanvasLayerBuilders {
     return container;
   }
 
-  /// 构建内容层（元素渲染）
   Widget buildContentLayer(LayerConfig config) {
     final currentPage = controller.state.currentPage;
     final elements = controller.state.currentPageElements;
@@ -343,6 +347,42 @@ mixin CanvasLayerBuilders {
     );
   }
 
+  /// 构建内容层（元素渲染）
+  /// 构建参考线层
+  Widget buildGuidelineLayer(LayerConfig config) {
+    final currentPage = controller.state.currentPage;
+    if (currentPage == null || isPreviewMode) {
+      return const SizedBox.shrink();
+    }
+
+    // 检查是否启用参考线对齐
+    if (controller.state.alignmentMode != AlignmentMode.guideline) {
+      return const SizedBox.shrink();
+    }
+
+    final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    final scale = transformationController.value.getMaxScaleOnAxis();
+
+    // 创建视口边界用于优化渲染
+    final viewportBounds = Rect.fromLTWH(0, 0, pageSize.width, pageSize.height);
+
+    EditPageLogger.editPageDebug('构建参考线层', data: {
+      'activeGuidelines': activeGuidelines.length,
+      'scale': scale,
+      'pageSize': '${pageSize.width}x${pageSize.height}',
+      'operation': 'build_guideline_layer',
+    });
+
+    return RepaintBoundary(
+      child: GuidelineLayer(
+        guidelines: activeGuidelines,
+        canvasSize: pageSize,
+        scale: scale,
+        viewportBounds: viewportBounds,
+      ),
+    );
+  }
+
   /// 🚀 优化的交互层构建方法 - 独立监听选择状态变化
   Widget buildInteractionLayer(LayerConfig config) {
     if (!config.shouldRender || isPreviewMode) {
@@ -381,6 +421,8 @@ mixin CanvasLayerBuilders {
         return buildDragPreviewLayer(config);
       case RenderLayerType.interaction:
         return buildInteractionLayer(config);
+      case RenderLayerType.guideline:
+        return buildGuidelineLayer(config);
       case RenderLayerType.uiOverlay:
         return buildUIOverlayLayer(config);
     }
