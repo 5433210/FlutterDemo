@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
+import '../../pages/practices/widgets/alignment/alignment.dart';
 import 'practice_edit_controller.dart';
 
 /// Material 3 edit toolbar for practice edit page
@@ -206,48 +207,56 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: Icons.copy,
                 tooltip: l10n.practiceEditCopy,
-                onPressed: hasSelection ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：复制操作',
-                    data: {
-                      'selectedCount': controller.state.selectedElementIds.length,
-                      'selectedIds': controller.state.selectedElementIds,
-                      'operation': 'copy_action',
-                    },
-                  );
-                  onCopy();
-                } : null,
+                onPressed: hasSelection
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：复制操作',
+                          data: {
+                            'selectedCount':
+                                controller.state.selectedElementIds.length,
+                            'selectedIds': controller.state.selectedElementIds,
+                            'operation': 'copy_action',
+                          },
+                        );
+                        onCopy();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.paste,
                 tooltip: l10n.practiceEditPaste,
-                onPressed: canPaste ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：粘贴操作',
-                    data: {
-                      'canPaste': canPaste,
-                      'operation': 'paste_action',
-                    },
-                  );
-                  onPaste();
-                } : null,
+                onPressed: canPaste
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：粘贴操作',
+                          data: {
+                            'canPaste': canPaste,
+                            'operation': 'paste_action',
+                          },
+                        );
+                        onPaste();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.delete,
                 tooltip: l10n.practiceEditDelete,
-                onPressed: hasSelection ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：删除操作',
-                    data: {
-                      'selectedCount': controller.state.selectedElementIds.length,
-                      'selectedIds': controller.state.selectedElementIds,
-                      'operation': 'delete_action',
-                    },
-                  );
-                  onDelete();
-                } : null,
+                onPressed: hasSelection
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：删除操作',
+                          data: {
+                            'selectedCount':
+                                controller.state.selectedElementIds.length,
+                            'selectedIds': controller.state.selectedElementIds,
+                            'operation': 'delete_action',
+                          },
+                        );
+                        onDelete();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
@@ -301,9 +310,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
 
           const SizedBox(width: AppSizes.s),
           const VerticalDivider(),
-          const SizedBox(width: AppSizes.s),
-
-          // Helper functions group
+          const SizedBox(width: AppSizes.s), // Helper functions group
           _buildToolbarGroup(
             title: l10n.practiceEditHelperFunctions,
             children: [
@@ -315,15 +322,6 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                     : l10n.practiceEditShowGrid,
                 onPressed: onToggleGrid,
                 isActive: gridVisible,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.format_line_spacing,
-                tooltip: snapEnabled
-                    ? l10n.practiceEditDisableSnap
-                    : l10n.practiceEditEnableSnap,
-                onPressed: onToggleSnap,
-                isActive: snapEnabled,
               ),
               if (onCopyFormatting != null)
                 _buildToolbarButton(
@@ -341,8 +339,76 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 ),
             ],
           ),
+
+          const SizedBox(width: AppSizes.s),
+          const VerticalDivider(),
+          const SizedBox(width: AppSizes.s), // Alignment mode group
+          ValueListenableBuilder<AlignmentMode>(
+            valueListenable: AlignmentModeManager.modeNotifier,
+            builder: (context, currentMode, child) {
+              return _buildAlignmentModeGroup(context, currentMode);
+            },
+          ),
         ],
       ),
+    );
+  }
+
+  /// Build alignment mode group with three exclusive buttons
+  Widget _buildAlignmentModeGroup(
+      BuildContext context, AlignmentMode currentMode) {
+    return _buildToolbarGroup(
+      title: '对齐模式',
+      children: [
+        _buildToolbarButton(
+          context: context,
+          icon: Icons.clear,
+          tooltip: '无对齐',
+          onPressed: () {
+            AlignmentModeManager.setMode(AlignmentMode.none);
+            EditPageLogger.editPageInfo(
+              '对齐模式切换',
+              data: {
+                'newMode': 'none',
+                'source': 'alignment_group',
+              },
+            );
+          },
+          isActive: currentMode == AlignmentMode.none,
+        ),
+        _buildToolbarButton(
+          context: context,
+          icon: Icons.grid_4x4,
+          tooltip: '网格对齐',
+          onPressed: () {
+            AlignmentModeManager.setMode(AlignmentMode.grid);
+            EditPageLogger.editPageInfo(
+              '对齐模式切换',
+              data: {
+                'newMode': 'grid',
+                'source': 'alignment_group',
+              },
+            );
+          },
+          isActive: currentMode == AlignmentMode.grid,
+        ),
+        _buildToolbarButton(
+          context: context,
+          icon: Icons.straighten,
+          tooltip: '参考线对齐',
+          onPressed: () {
+            AlignmentModeManager.setMode(AlignmentMode.guideLine);
+            EditPageLogger.editPageInfo(
+              '对齐模式切换',
+              data: {
+                'newMode': 'guideLine',
+                'source': 'alignment_group',
+              },
+            );
+          },
+          isActive: currentMode == AlignmentMode.guideLine,
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/helpers/element_utils.dart';
+import '../../pages/practices/widgets/alignment/alignment_types.dart';
 import 'batch_update_options.dart';
 import 'drag_state_manager.dart';
 import 'practice_edit_controller.dart';
@@ -39,6 +40,12 @@ class SmartCanvasGestureHandler implements GestureContext {
   Timer? _conflictResolutionTimer;
   _GestureMode _currentMode = _GestureMode.idle;
 
+  // Reference line alignment support
+  final ValueNotifier<List<AlignmentMatch>> _activeAlignments = ValueNotifier<List<AlignmentMatch>>([]);
+
+  /// Get the active alignments notifier for reference line display
+  ValueNotifier<List<AlignmentMatch>> get activeAlignments => _activeAlignments;
+
   // Legacy compatibility
   Offset _dragStart = Offset.zero;
   Offset _elementStartPosition = Offset.zero;
@@ -46,11 +53,11 @@ class SmartCanvasGestureHandler implements GestureContext {
   bool _isSelectionBoxActive = false;
   bool _isPanningEmptyArea = false;
   bool _isPanStartHandling = false;
+  bool _delayedDragStart = false; // 延迟拖拽启动标志
+  String? _delayedDragElementId; // 延迟拖拽的元素ID  
+  List<Map<String, dynamic>>? _delayedDragElements; // 延迟拖拽的元素列表
   Offset? _selectionBoxStart;
-  Offset? _selectionBoxEnd;
-  List<String> _panStartSelectedElementIds = [];
-  Offset? _panEndPosition;
-  bool _isDragging = false;
+  Offset? _selectionBoxEnd;  bool _isDragging = false;
   
   // 防止重复创建撤销操作的记录
   final Set<String> _recentTranslationOperations = {};
@@ -142,13 +149,10 @@ class SmartCanvasGestureHandler implements GestureContext {
     _dragStart = Offset.zero;
     _elementStartPosition = Offset.zero;
     _elementStartPositions.clear();
-    _isSelectionBoxActive = false;
-    _isPanningEmptyArea = false;
+    _isSelectionBoxActive = false;    _isPanningEmptyArea = false;
     _isPanStartHandling = false;
     _selectionBoxStart = null;
     _selectionBoxEnd = null;
-    _panStartSelectedElementIds = [];
-    _panEndPosition = null;
     _isDragging = false;
     _recentTranslationOperations.clear();
   }
@@ -196,6 +200,22 @@ class SmartCanvasGestureHandler implements GestureContext {
       'currentMode': _currentMode.toString(),
       'activePointers': _activePointers.length,
     };
+  }
+
+  /// Trigger alignment detection for a specific element
+  /// This method is called by control points handlers to enable reference line alignment
+  void triggerAlignmentDetectionForElement(String elementId) {
+    EditPageLogger.canvasDebug('触发元素对齐检测', data: {
+      'elementId': elementId,
+      'selectedElements': controller.state.selectedElementIds.length,
+    });
+    
+    // This method can be used to trigger alignment detection for reference lines
+    // when elements are being manipulated by control points
+    // The actual alignment detection implementation would depend on the specific
+    // alignment system being used in the application
+    
+    onDragUpdate(); // Trigger UI update to show alignment guides
   }
 
   // Enhanced gesture handling methods
@@ -557,22 +577,13 @@ class SmartCanvasGestureHandler implements GestureContext {
       default:
         throw ArgumentError('Unsupported event type: $eventType');
     }
-  }
-
-  void _finalizeCanvasPan() {
-    final endPoint = _panEndPosition ?? _dragStart;
-    final dragDistance = (_dragStart - endPoint).distance;
-    final isClick = dragDistance < 1.0; // 🔧 降低点击检测阈值
-
-    if (_isPanningEmptyArea &&
-        isClick &&
-        !controller.state.isCtrlOrShiftPressed) {
+  }  void _finalizeCanvasPan() {
+    // Canvas pan finalization - clear selection if panning empty area
+    if (_isPanningEmptyArea && !controller.state.isCtrlOrShiftPressed) {
       controller.clearSelection();
     }
 
     _isPanningEmptyArea = false;
-    _panStartSelectedElementIds = [];
-    _panEndPosition = null;
     onDragEnd();
   }
 
@@ -704,18 +715,7 @@ class SmartCanvasGestureHandler implements GestureContext {
 
     _isSelectionBoxActive = false;
     _selectionBoxStart = null;
-    _selectionBoxEnd = null;
-    onDragUpdate();
-  }
-
-  void _handleCanvasPanUpdate(Offset currentPosition, double inverseScale) {
-    // 画布平移由InteractiveViewer处理，这里不做任何操作
-    EditPageLogger.canvasDebug('画布平移更新操作', data: {
-      'position': '$currentPosition',
-      'note': '由InteractiveViewer处理'
-    });
-    _panEndPosition = currentPosition;
-    // 不调用onDragUpdate，让InteractiveViewer处理
+    _selectionBoxEnd = null;    onDragUpdate();
   }
 
   void _handleElementDragUpdate(Offset currentPosition) {
@@ -827,10 +827,36 @@ class SmartCanvasGestureHandler implements GestureContext {
       'eventType': '${event.runtimeType}'
     });
   }
-
   Future<void> _handleLegacyPanEnd(DragEndDetails details) async {
     if (dragStateManager.isDragging) {
       _finalizeElementDrag();
+    } else if (_delayedDragStart) {
+      // 延迟拖拽未启动就结束了，说明是点击事件
+      EditPageLogger.canvasDebug('延迟拖拽转为点击事件处理', data: {
+        'elementId': _delayedDragElementId,
+      });
+      
+      // 处理点击选择逻辑
+      if (_delayedDragElementId != null && _delayedDragElements != null) {
+        final elementId = _delayedDragElementId!;
+        final element = _delayedDragElements!.firstWhere(
+          (e) => e['id'] == elementId,
+          orElse: () => <String, dynamic>{},
+        );
+        
+        if (element.isNotEmpty) {
+          final isCurrentlySelected = controller.state.selectedElementIds.contains(elementId);
+          if (isCurrentlySelected) {
+            // 点击已选中元素，取消选择
+            controller.clearSelection();
+          }
+        }
+      }
+
+      // 清理延迟拖拽状态
+      _delayedDragStart = false;
+      _delayedDragElementId = null;
+      _delayedDragElements = null;
     } else if (_currentMode == _GestureMode.selectionBox) {
       // 结束选择框操作
       _isSelectionBoxActive = false;
@@ -909,14 +935,15 @@ class SmartCanvasGestureHandler implements GestureContext {
             EditPageLogger.canvasDebug('检查元素锁定状态', data: {
               'isLocked': isLocked,
               'isLayerLocked': isLayerLocked
-            });
-
-            if (!isLocked && !isLayerLocked) {
-              EditPageLogger.canvasDebug('开始拖拽已选中元素', data: {
+            });            if (!isLocked && !isLayerLocked) {
+              EditPageLogger.canvasDebug('设置延迟拖拽启动', data: {
                 'elementId': id,
                 'tool': controller.state.currentTool
               });
-              _setupElementDragging(elements);
+              // 不立即启动拖拽，而是标记为延迟拖拽
+              _delayedDragStart = true;
+              _delayedDragElementId = id;
+              _delayedDragElements = elements;
               return;
             } else {
               EditPageLogger.editPageWarning('元素被锁定，无法拖拽');
@@ -950,11 +977,19 @@ class SmartCanvasGestureHandler implements GestureContext {
       'currentPosition': '$currentPosition',
       'isDragging': dragStateManager.isDragging,
       'mode': '$_currentMode'
-    });
-
-    if (controller.state.isPreviewMode) {
+    });    if (controller.state.isPreviewMode) {
       _handlePreviewModePan(currentPosition, inverseScale);
       return;
+    }
+
+    // 检查是否有延迟拖拽需要启动
+    if (_delayedDragStart && _delayedDragElements != null) {
+      EditPageLogger.canvasDebug('延迟拖拽启动 - 用户开始移动');
+      _delayedDragStart = false; // 清除延迟标志
+      _setupElementDragging(_delayedDragElements!);
+      _delayedDragElementId = null;
+      _delayedDragElements = null;
+      // 继续处理移动事件
     }
 
     if (dragStateManager.isDragging) {
@@ -1319,12 +1354,10 @@ class _GestureEventRecord {
   final _GestureMode mode;
   final Duration timeStamp;
   final Map<String, dynamic> metadata;
-
   _GestureEventRecord({
     required this.mode,
     required this.timeStamp,
-    this.metadata = const {},
-  });
+  }) : metadata = const {};
 }
 
 enum _GestureMode {
@@ -1332,7 +1365,6 @@ enum _GestureMode {
   pan,
   elementDrag,
   selectionBox,
-  canvasPan,
   multiTouch,
 }
 

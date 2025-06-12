@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../alignment/alignment.dart';
 import 'base_layer.dart';
 import 'layer_types.dart';
 
-/// Interaction layer for UI controls, selection boxes, etc.
+/// Interaction layer for UI controls, selection boxes, and guide lines
 class InteractionLayer extends BaseCanvasLayer {
   final Size pageSize;
   final Widget Function()? selectionBuilder;
   final Widget Function()? controlsBuilder;
   final VoidCallback? onInteraction;
+
+  // 参考线渲染支持
+  final ValueNotifier<List<AlignmentMatch>>? activeAlignmentsNotifier;
+  final String? draggedElementId;
 
   const InteractionLayer({
     super.key,
@@ -18,6 +23,8 @@ class InteractionLayer extends BaseCanvasLayer {
     this.selectionBuilder,
     this.controlsBuilder,
     this.onInteraction,
+    this.activeAlignmentsNotifier,
+    this.draggedElementId,
   });
 
   @override
@@ -186,6 +193,37 @@ class _BackgroundPainter extends CustomPainter {
   }
 }
 
+/// 参考线绘制器
+/// 专门用于在InteractionLayer中绘制参考线
+class _GuideLinePainter extends CustomPainter {
+  final List<AlignmentMatch> activeAlignments;
+  final String draggedElementId;
+  final Size canvasSize;
+
+  const _GuideLinePainter({
+    required this.activeAlignments,
+    required this.draggedElementId,
+    required this.canvasSize,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    GuideLineRenderer.paintGuideLines(
+      canvas,
+      canvasSize,
+      activeAlignments,
+      draggedElementId,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GuideLinePainter oldDelegate) {
+    return activeAlignments != oldDelegate.activeAlignments ||
+        draggedElementId != oldDelegate.draggedElementId ||
+        canvasSize != oldDelegate.canvasSize;
+  }
+}
+
 class _InteractionLayerState extends BaseCanvasLayerState<InteractionLayer>
     with InteractiveMixin<InteractionLayer> {
   @override
@@ -200,6 +238,26 @@ class _InteractionLayerState extends BaseCanvasLayerState<InteractionLayer>
     // Add control overlay
     if (widget.controlsBuilder != null) {
       children.add(widget.controlsBuilder!());
+    }
+
+    // Add guide lines overlay
+    if (widget.activeAlignmentsNotifier != null &&
+        widget.draggedElementId != null) {
+      children.add(
+        ValueListenableBuilder<List<AlignmentMatch>>(
+          valueListenable: widget.activeAlignmentsNotifier!,
+          builder: (context, activeAlignments, child) {
+            return CustomPaint(
+              painter: _GuideLinePainter(
+                activeAlignments: activeAlignments,
+                draggedElementId: widget.draggedElementId!,
+                canvasSize: widget.pageSize,
+              ),
+              size: widget.pageSize,
+            );
+          },
+        ),
+      );
     }
 
     Widget content = SizedBox(

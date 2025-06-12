@@ -5,6 +5,7 @@ import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../helpers/element_utils.dart';
+import '../../../widgets/alignment/alignment.dart';
 import '../../content_render_controller.dart';
 import '../../content_render_layer.dart';
 import '../../drag_preview_layer.dart';
@@ -33,6 +34,9 @@ mixin CanvasLayerBuilders {
 
   /// 获取拖拽状态管理器（由使用此mixin的类实现）
   DragStateManager get dragStateManager;
+
+  /// 获取手势处理器（用于访问参考线数据，由使用此mixin的类实现）
+  dynamic get gestureHandler;
 
   /// 获取是否预览模式（由使用此mixin的类实现）
   bool get isPreviewMode;
@@ -367,6 +371,9 @@ mixin CanvasLayerBuilders {
       onControlPointDragEnd: handleControlPointDragEnd,
       onControlPointDragStart: handleControlPointDragStart,
       onControlPointDragEndWithState: handleControlPointDragEndWithState,
+      // 传递参考线数据
+      activeAlignmentsNotifier: gestureHandler?.activeAlignments,
+      draggedElementId: _getCurrentDraggedElementId(),
     );
   }
 
@@ -407,6 +414,27 @@ mixin CanvasLayerBuilders {
 
   /// 控制点事件处理方法（由使用此mixin的类实现）
   void handleControlPointUpdate(int controlPointIndex, Offset delta);
+
+  /// 获取当前拖拽的元素ID
+  String? _getCurrentDraggedElementId() {
+    // 只有在真正拖拽状态下才返回元素ID
+    if (!dragStateManager.isDragging) {
+      return null;
+    }
+
+    // 检查是否启用了参考线对齐模式
+    if (!AlignmentModeManager.isGuideLineAlignmentEnabled) {
+      return null;
+    }
+
+    // 参考线对齐只在单选状态下工作
+    final selectedIds = controller.state.selectedElementIds;
+    if (selectedIds.length == 1) {
+      return selectedIds.first;
+    }
+    
+    return null; // 多选或无选择时不支持参考线对齐
+  }
 
   /// 计算适合背景色的网格颜色
   Color _getGridColor(Color backgroundColor, BuildContext context) {
@@ -471,6 +499,126 @@ class SelectionBoxPainter extends CustomPainter {
   }
 }
 
+/// 参考线绘制器
+/// 专门用于在交互层中绘制参考线
+class _GuideLinePainter extends CustomPainter {
+  final dynamic activeAlignments;
+  final String draggedElementId;
+
+  const _GuideLinePainter({
+    required this.activeAlignments,
+    required this.draggedElementId,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    EditPageLogger.rendererDebug('参考线绘制开始', data: {
+      'size': '$size',
+      'hasActiveAlignments': activeAlignments != null,
+      'alignmentsType': activeAlignments.runtimeType.toString(),
+      'draggedElementId': draggedElementId,
+    });
+
+    // 渲染参考线
+    if (activeAlignments != null && activeAlignments is List<AlignmentMatch>) {
+      final alignmentsList = activeAlignments as List<AlignmentMatch>;
+      EditPageLogger.rendererDebug('开始绘制参考线', data: {
+        'alignmentsCount': alignmentsList.length,
+        'draggedElementId': draggedElementId,
+      });
+
+      try {
+        GuideLineRenderer.paintGuideLines(
+          canvas,
+          size,
+          alignmentsList,
+          draggedElementId,
+        );
+      } catch (e, stackTrace) {
+        EditPageLogger.rendererError('参考线渲染异常',
+            error: e,
+            stackTrace: stackTrace,
+            data: {
+              'alignmentsCount': alignmentsList.length,
+              'draggedElementId': draggedElementId,
+            });
+      }
+    } else {
+      EditPageLogger.rendererDebug('跳过参考线绘制', data: {
+        'reason': 'no_valid_alignments',
+        'hasAlignments': activeAlignments != null,
+        'alignmentsType': activeAlignments.runtimeType.toString(),
+      });
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GuideLinePainter oldDelegate) {
+    final shouldRepaint = activeAlignments != oldDelegate.activeAlignments ||
+        draggedElementId != oldDelegate.draggedElementId;
+
+    EditPageLogger.rendererDebug('_GuideLinePainter.shouldRepaint检查', data: {
+      'shouldRepaint': shouldRepaint,
+      'alignmentsChanged': activeAlignments != oldDelegate.activeAlignments,
+      'draggedElementIdChanged':
+          draggedElementId != oldDelegate.draggedElementId,
+      'currentAlignmentsCount': activeAlignments?.length ?? 0,
+      'oldAlignmentsCount': oldDelegate.activeAlignments?.length ?? 0,
+      'currentDraggedElementId': draggedElementId,
+      'oldDraggedElementId': oldDelegate.draggedElementId,
+      'operation': 'guide_line_painter_should_repaint',
+    });
+
+    return shouldRepaint;
+  }
+}
+
+/// 参考线渲染组件
+/// 专门用于在交互层中渲染参考线，使用CustomPaint提供高性能渲染
+class _GuideLineWidget extends StatelessWidget {
+  final dynamic activeAlignments;
+  final String draggedElementId;
+
+  const _GuideLineWidget({
+    required this.activeAlignments,
+    required this.draggedElementId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    EditPageLogger.rendererDebug('_GuideLineWidget构建开始', data: {
+      'activeAlignmentsCount': activeAlignments?.length ?? 0,
+      'draggedElementId': draggedElementId,
+      'hasActiveAlignments':
+          activeAlignments != null && activeAlignments.isNotEmpty,
+      'operation': 'guide_line_widget_build',
+    });
+
+    if (activeAlignments == null || activeAlignments.isEmpty) {
+      EditPageLogger.rendererDebug('_GuideLineWidget跳过渲染（无对齐数据）', data: {
+        'reason':
+            activeAlignments == null ? 'null_alignments' : 'empty_alignments',
+        'operation': 'guide_line_widget_skip',
+      });
+      return const SizedBox.shrink();
+    }
+
+    EditPageLogger.rendererDebug('_GuideLineWidget创建CustomPaint', data: {
+      'painterType': '_GuideLinePainter',
+      'activeAlignmentsCount': activeAlignments.length,
+      'operation': 'guide_line_widget_custom_paint',
+    });
+
+    return CustomPaint(
+      painter: _GuideLinePainter(
+        activeAlignments: activeAlignments,
+        draggedElementId: draggedElementId,
+      ),
+      size: Size.infinite,
+    );
+  }
+}
+
 /// 🚀 独立的智能交互层组件
 /// 直接监听智能状态分发器，不依赖Canvas重建
 class _SmartInteractionLayer extends StatefulWidget {
@@ -483,6 +631,10 @@ class _SmartInteractionLayer extends StatefulWidget {
   final Function(int) onControlPointDragStart;
   final Function(int, Map<String, double>) onControlPointDragEndWithState;
 
+  // 参考线支持
+  final dynamic activeAlignmentsNotifier;
+  final String? draggedElementId;
+
   const _SmartInteractionLayer({
     required this.controller,
     required this.transformationController,
@@ -492,6 +644,8 @@ class _SmartInteractionLayer extends StatefulWidget {
     required this.onControlPointDragEnd,
     required this.onControlPointDragStart,
     required this.onControlPointDragEndWithState,
+    this.activeAlignmentsNotifier,
+    this.draggedElementId,
   });
 
   @override
@@ -593,6 +747,73 @@ class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
                     ),
                   ),
                 ),
+
+                // 参考线渲染
+                if (widget.activeAlignmentsNotifier != null &&
+                    widget.draggedElementId != null &&
+                    AlignmentModeManager.isGuideLineAlignmentEnabled &&
+                    widget.dragStateManager.isDragging)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: RepaintBoundary(
+                        key: const ValueKey('guide_lines_repaint_boundary'),
+                        child: ValueListenableBuilder<dynamic>(
+                          valueListenable: widget.activeAlignmentsNotifier!,
+                          builder: (context, alignments, child) {
+                            EditPageLogger.canvasDebug(
+                                '参考线ValueListenableBuilder触发',
+                                data: {
+                                  'alignmentsCount': alignments?.length ?? 0,
+                                  'alignmentsData': alignments
+                                          ?.map((match) => {
+                                                'alignmentType': match
+                                                    .alignmentType
+                                                    ?.toString(),
+                                                'distance': match.distance,
+                                                'adjustment': match.adjustment
+                                                    ?.toString(),
+                                              })
+                                          ?.toList() ??
+                                      [],
+                                  'draggedElementId': widget.draggedElementId,
+                                  'isDragging':
+                                      widget.dragStateManager.isDragging,
+                                  'alignmentMode': AlignmentModeManager
+                                      .currentMode
+                                      .toString(),
+                                  'isGuideLineAlignmentEnabled':
+                                      AlignmentModeManager
+                                          .isGuideLineAlignmentEnabled,
+                                  'operation':
+                                      'guide_line_valuelistenablebuilder_triggered',
+                                });
+
+                            if (alignments == null || alignments.isEmpty) {
+                              EditPageLogger.canvasDebug('参考线数据为空，跳过渲染', data: {
+                                'reason': alignments == null
+                                    ? 'alignments_null'
+                                    : 'alignments_empty',
+                                'operation': 'guide_line_skip_render',
+                              });
+                              return const SizedBox.shrink();
+                            }
+
+                            EditPageLogger.canvasDebug('创建_GuideLineWidget组件',
+                                data: {
+                                  'alignmentsCount': alignments.length,
+                                  'draggedElementId': widget.draggedElementId,
+                                  'operation': 'guide_line_widget_create',
+                                });
+
+                            return _GuideLineWidget(
+                              activeAlignments: alignments,
+                              draggedElementId: widget.draggedElementId!,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // 控制点
                 if (selectedElementId != null)

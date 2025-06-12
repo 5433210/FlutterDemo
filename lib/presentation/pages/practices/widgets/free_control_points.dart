@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'alignment/alignment_mode_manager.dart';
+import 'alignment/alignment_types.dart';
 import 'custom_cursors.dart';
 
 /// 测试版本的控制点 - 独立移动，支持旋转操作
@@ -296,10 +298,16 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               widget.onControlPointDragStart?.call(index);
             },
             onPanUpdate: (details) {
+              // 🔥 无条件日志，确保onPanUpdate被调用
+              print('🔥🔥🔥 控制点onPanUpdate被调用！index: $index');
+              
               // 根据控制点类型应用约束移动
               setState(() {
                 _updateControlPointWithConstraints(index, details.delta);
               });
+
+              // 🎯 新增：在控制点拖拽时触发参考线对齐检测
+              _triggerAlignmentDetection();
 
               // 🔧 关键：将控制点状态推送给DragStateManager
               _pushStateToCanvasAndPreview();
@@ -391,6 +399,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             setState(() {
               _translateAllControlPoints(details.delta);
             });
+
+            // 🎯 新增：在平移时也触发参考线对齐检测
+            _triggerAlignmentDetection();
 
             // 🔧 关键：将控制点状态推送给DragStateManager
             _pushStateToCanvasAndPreview();
@@ -985,6 +996,54 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
+  }
+
+  /// 🎯 新增：在控制点拖拽时触发参考线对齐检测
+  void _triggerAlignmentDetection() {
+    // 🔥 无条件日志，确保方法被调用
+    print('🔥🔥🔥 _triggerAlignmentDetection 被调用！');
+    
+    EditPageLogger.canvasDebug('🎯 FreeControlPoints._triggerAlignmentDetection被调用', data: {
+      'elementId': widget.elementId,
+      'currentMode': AlignmentModeManager.currentMode.toString(),
+      'operation': 'trigger_alignment_detection_called',
+    });
+
+    // 检查是否启用参考线对齐模式
+    if (AlignmentModeManager.currentMode != AlignmentMode.guideLine) {
+      EditPageLogger.canvasDebug('跳过参考线对齐检测 - 模式不匹配', data: {
+        'currentMode': AlignmentModeManager.currentMode.toString(),
+        'expectedMode': AlignmentMode.guideLine.toString(),
+      });
+      return;
+    }
+
+    EditPageLogger.canvasDebug('FreeControlPoints触发参考线对齐检测', data: {
+      'elementId': widget.elementId,
+      'currentPosition': '($_currentX, $_currentY)',
+      'currentSize': '($_currentWidth x $_currentHeight)',
+      'alignmentMode': AlignmentModeManager.currentMode.toString(),
+      'operation': 'free_control_points_alignment_detection',
+    });
+
+    // 构建当前元素的临时状态用于对齐检测
+    final currentElementState = {
+      'id': widget.elementId,
+      'x': _currentX,
+      'y': _currentY,
+      'width': _currentWidth,
+      'height': _currentHeight,
+      'rotation': _currentRotation * 180 / pi, // 转换为度数
+    };
+
+    // 通过控制点更新回调传递对齐检测请求
+    // 注意：这里我们使用特殊的控制点索引-3来表示这是对齐检测请求
+    widget.onControlPointUpdate?.call(-3, Offset(0, 0));
+
+    EditPageLogger.canvasDebug('FreeControlPoints参考线对齐检测请求已发送', data: {
+      'elementId': widget.elementId,
+      'elementState': currentElementState,
+    });
   }
 }
 

@@ -27,6 +27,7 @@ import '../../widgets/practice/property_panels/m3_practice_property_panels.dart'
 import '../../widgets/practice/undo_operations.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
+import 'widgets/alignment/alignment.dart';
 import 'widgets/m3_practice_edit_canvas.dart';
 import 'widgets/practice_title_edit_dialog.dart';
 
@@ -44,7 +45,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     with WidgetsBindingObserver {
   // 🔍[TRACKING] 静态重建计数器
   static int _propertyPanelBuildCount = 0;
-  
+
   // Controller
   late final PracticeEditController _controller;
 
@@ -117,7 +118,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                   _controller
                       .togglePreviewMode(_isPreviewMode); // Notify controller
                 });
-                
+
                 // Reset view position when toggling preview mode
                 EditPageLogger.editPageInfo(
                   '预览模式切换后重置视图位置',
@@ -127,7 +128,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                     'timestamp': DateTime.now().toIso8601String(),
                   },
                 );
-                
+
                 // 延迟重置视图位置，确保预览模式UI完全更新完成
                 Future.delayed(const Duration(milliseconds: 100), () {
                   if (mounted) {
@@ -187,7 +188,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void dispose() {
     // ✅ 注销属性面板的智能状态监听器
     _unregisterPropertyPanelFromIntelligentDispatcher();
-    
+
     // Remove window observer
     WidgetsBinding.instance.removeObserver(this);
 
@@ -211,21 +212,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     _clipboardNotifier.dispose();
 
     super.dispose();
-  }
-
-  /// ✅ 注销属性面板的智能状态监听器
-  void _unregisterPropertyPanelFromIntelligentDispatcher() {
-    final intelligentDispatcher = _controller.intelligentDispatcher;
-    if (intelligentDispatcher != null) {
-      intelligentDispatcher.unregisterUIListener('property_panel');
-      
-      EditPageLogger.editPageDebug(
-        '属性面板已从智能状态分发器注销',
-        data: {
-          'operation': 'cleanup_property_panel_listeners',
-        },
-      );
-    }
   }
 
   /// 生成随机字符串
@@ -272,10 +258,28 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       setState(() {
         _isPreviewMode = isPreview;
       });
-    });
-
-    // Add listener to synchronize local _currentTool with controller's state.currentTool
+    }); // Add listener to synchronize local _currentTool with controller's state.currentTool
     _controller.addListener(_syncToolState);
+
+    // 设置对齐管理器的网格切换回调
+    AlignmentModeManager.setGridAlignmentToggleCallback((bool enable) {
+      if (enable != _controller.state.snapEnabled) {
+        if (enable) {
+          // 启用网格对齐时，确保网格可见
+          if (!_controller.state.gridVisible) {
+            _toggleGrid();
+          }
+          if (!_controller.state.snapEnabled) {
+            _toggleSnap();
+          }
+        } else {
+          // 禁用网格对齐时，关闭snap功能
+          if (_controller.state.snapEnabled) {
+            _toggleSnap();
+          }
+        }
+      }
+    });
 
     // Initialize keyboard focus node
     _focusNode = FocusNode();
@@ -777,10 +781,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       builder: (context, _) {
         // 🔍[TRACKING] 属性面板重建跟踪
         _propertyPanelBuildCount++;
-        
-        final selectedElementsCount = _controller.state.selectedElementIds.length;
+
+        final selectedElementsCount =
+            _controller.state.selectedElementIds.length;
         final selectedLayerId = _controller.state.selectedLayerId;
-        
+
         EditPageLogger.propertyPanelDebug(
           '属性面板开始重建',
           data: {
@@ -792,7 +797,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             'optimization': 'property_panel_rebuild_tracking',
           },
         );
-        
+
         Widget panel;
 
         // Check if a layer is selected
@@ -1248,8 +1253,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     });
   }
 
-  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
-
   /// Copy selected elements with enhanced image preloading optimization
   void _copySelectedElement() async {
     AppLogger.info(
@@ -1313,6 +1316,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       }
     }
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// 创建文本元素
   void _createTextElement(String text) {
@@ -2111,23 +2116,23 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         },
       );
 
-             final practice = await _controller.practiceService.getPractice(practiceId);
-       if (!mounted) return;
+      final practice =
+          await _controller.practiceService.getPractice(practiceId);
+      if (!mounted) return;
 
-       if (practice == null) {
-         if (!mounted) return;
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('字帖不存在')),
-         );
-         return;
-       }
+      if (practice == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('字帖不存在')),
+        );
+        return;
+      }
 
-       // 更新控制器状态
-       _controller.updatePractice(practice);
-
+      // 更新控制器状态
+      _controller.updatePractice(practice);
     } catch (e, stackTrace) {
       if (!mounted) return;
-      
+
       EditPageLogger.editPageError(
         '加载字帖失败',
         error: e,
@@ -2445,6 +2450,44 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         _controller, characterImageService);
   }
 
+  /// ✅ 注册属性面板到智能状态分发器
+  void _registerPropertyPanelToIntelligentDispatcher() {
+    final intelligentDispatcher = _controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      // 注册属性面板作为UI组件监听器
+      intelligentDispatcher.registerUIListener('property_panel', () {
+        EditPageLogger.editPageDebug(
+          '智能状态分发器触发属性面板更新',
+          data: {
+            'operation': 'intelligent_property_panel_update',
+            'optimization': 'smart_property_panel_rebuild',
+          },
+        );
+
+        if (mounted) {
+          setState(() {
+            // 重建属性面板
+          });
+        }
+      });
+
+      EditPageLogger.editPageInfo(
+        '属性面板已注册到智能状态分发器',
+        data: {
+          'uiListeners': 1,
+          'optimization': 'intelligent_property_management',
+        },
+      );
+    } else {
+      EditPageLogger.editPageDebug(
+        '智能状态分发器不存在，属性面板将使用传统监听',
+        data: {
+          'fallback': 'traditional_animated_builder',
+        },
+      );
+    }
+  }
+
   /// Reorder pages
   void _reorderPages(int oldIndex, int newIndex) {
     // Use controller's mixin method which includes proper state management
@@ -2711,44 +2754,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     );
   }
 
-  /// ✅ 注册属性面板到智能状态分发器
-  void _registerPropertyPanelToIntelligentDispatcher() {
-    final intelligentDispatcher = _controller.intelligentDispatcher;
-    if (intelligentDispatcher != null) {
-      // 注册属性面板作为UI组件监听器
-      intelligentDispatcher.registerUIListener('property_panel', () {
-        EditPageLogger.editPageDebug(
-          '智能状态分发器触发属性面板更新',
-          data: {
-            'operation': 'intelligent_property_panel_update',
-            'optimization': 'smart_property_panel_rebuild',
-          },
-        );
-        
-        if (mounted) {
-          setState(() {
-            // 重建属性面板
-          });
-        }
-      });
-      
-      EditPageLogger.editPageInfo(
-        '属性面板已注册到智能状态分发器',
-        data: {
-          'uiListeners': 1,
-          'optimization': 'intelligent_property_management',
-        },
-      );
-    } else {
-      EditPageLogger.editPageDebug(
-        '智能状态分发器不存在，属性面板将使用传统监听',
-        data: {
-          'fallback': 'traditional_animated_builder',
-        },
-      );
-    }
-  }
-
   /// Show export dialog
   Future<void> _showExportDialog() async {
     if (!mounted) return;
@@ -2831,7 +2836,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _syncToolState() {
     // 🚀 完全禁用传统的setState调用，避免触发页面重建
     // 工具状态变化应该通过智能状态分发器处理，而不是通过页面级setState
-    
+
     EditPageLogger.editPageDebug(
       '检测到传统工具状态同步调用',
       data: {
@@ -2841,13 +2846,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         'optimization': 'avoid_page_level_rebuild',
       },
     );
-    
+
     // 🚀 只更新本地变量，不触发页面重建
     // 工具状态变化的UI更新应该通过智能状态分发器和局部组件处理
     final controllerTool = _controller.state.currentTool;
     if (_currentTool != controllerTool) {
       _currentTool = controllerTool;
-      
+
       EditPageLogger.editPageDebug(
         '工具状态本地同步（无页面重建）',
         data: {
@@ -2856,7 +2861,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'optimization': 'local_sync_without_rebuild',
         },
       );
-      
+
       // 🚀 完全移除setState调用，依赖智能状态分发器
       // 工具相关的UI组件应该自己监听智能状态分发器的工具变化事件
     }
@@ -2881,6 +2886,47 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     setState(() {});
 
     debugPrint('🎨 网格切换完成');
+  }
+
+  /// Toggle preview mode
+  void _togglePreviewMode() {
+    EditPageLogger.editPageInfo(
+      '切换预览模式',
+      data: {
+        'currentMode': _isPreviewMode ? 'preview' : 'edit',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
+    // 在切换模式前确保所有操作都已完成
+    if (_isPreviewMode) {
+      // 从预览模式切换回编辑模式
+      setState(() {
+        _isPreviewMode = false;
+      });
+
+      // 通知控制器预览模式已关闭
+      _controller.onPreviewModeChanged(false);
+    } else {
+      // 从编辑模式切换到预览模式
+      // 确保所有拖拽操作都已结束
+      if (_controller.state.isDragging) {
+        EditPageLogger.editPageWarning(
+          '拖拽操作未完成时切换预览模式',
+          data: {
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+        return;
+      }
+
+      setState(() {
+        _isPreviewMode = true;
+      });
+
+      // 通知控制器预览模式已开启
+      _controller.onPreviewModeChanged(true);
+    }
   }
 
   /// Toggle lock state of selected elements
@@ -2936,44 +2982,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     }
   }
 
-  /// Toggle preview mode
-  void _togglePreviewMode() {
-    EditPageLogger.editPageInfo(
-      '切换预览模式',
-      data: {
-        'currentMode': _isPreviewMode ? 'preview' : 'edit',
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
-    
-    // 在切换模式前确保所有操作都已完成
-    if (_isPreviewMode) {
-      // 从预览模式切换回编辑模式
-      setState(() {
-        _isPreviewMode = false;
-      });
-      
-      // 通知控制器预览模式已关闭
-      _controller.onPreviewModeChanged(false);
-    } else {
-      // 从编辑模式切换到预览模式
-      // 确保所有拖拽操作都已结束
-      if (_controller.state.isDragging) {
-        EditPageLogger.editPageWarning(
-          '拖拽操作未完成时切换预览模式',
-          data: {
-            'timestamp': DateTime.now().toIso8601String(),
-          },
-        );
-        return;
-      }
-      
-      setState(() {
-        _isPreviewMode = true;
-      });
-      
-      // 通知控制器预览模式已开启
-      _controller.onPreviewModeChanged(true);
+  /// ✅ 注销属性面板的智能状态监听器
+  void _unregisterPropertyPanelFromIntelligentDispatcher() {
+    final intelligentDispatcher = _controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      intelligentDispatcher.unregisterUIListener('property_panel');
+
+      EditPageLogger.editPageDebug(
+        '属性面板已从智能状态分发器注销',
+        data: {
+          'operation': 'cleanup_property_panel_listeners',
+        },
+      );
     }
   }
 }
