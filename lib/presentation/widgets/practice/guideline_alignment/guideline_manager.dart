@@ -555,8 +555,7 @@ class GuidelineManager {
       'guidelines': List<Guideline>.from(_activeGuidelines),
       'hasAlignment': true,
     };
-  }
-  /// 🔹 新增：生成仅用于显示的动态参考线（不会强制对齐）
+  }  /// 🔹 新增：生成仅用于显示的动态参考线（显示移动元素自身的边界线）
   List<Guideline> generateDynamicGuidelines({
     required String elementId,
     required Offset position,
@@ -568,126 +567,96 @@ class GuidelineManager {
       return [];
     }
 
-    // 生成动态参考线，仅包含与其他元素和页面的对齐线
+    // 生成动态参考线：显示当前移动元素的边界和中心线
     final dynamicGuidelines = <Guideline>[];
 
     try {
-      // 计算当前拖拽元素的关键点
+      // 计算当前移动元素的关键位置
       final elementBounds = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
       final elementCenterX = position.dx + size.width / 2;
       final elementCenterY = position.dy + size.height / 2;
 
-      // 与其他静态元素对齐
-      for (final element in _elements) {
-        final otherElementId = element['id'] as String;
-        
-        // 跳过自身和隐藏元素
-        if (otherElementId == elementId || element['isHidden'] == true) {
-          continue;
-        }
+      // 生成水平参考线（显示元素的Y坐标相关边界）
+      // 上边线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_top_${elementId}',
+          type: GuidelineType.horizontalTopEdge,
+          position: elementBounds.top,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: elementId,
+        )
+      ));
 
-        final otherBounds = Rect.fromLTWH(
-          (element['x'] as num).toDouble(),
-          (element['y'] as num).toDouble(),
-          (element['width'] as num).toDouble(),
-          (element['height'] as num).toDouble(),
-        );
+      // 水平中心线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_h_center_${elementId}',
+          type: GuidelineType.horizontalCenterLine,
+          position: elementCenterY,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: elementId,
+        )
+      ));
 
-        final otherCenterX = otherBounds.left + otherBounds.width / 2;
-        final otherCenterY = otherBounds.top + otherBounds.height / 2;
+      // 下边线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_bottom_${elementId}',
+          type: GuidelineType.horizontalBottomEdge,
+          position: elementBounds.bottom,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: elementId,
+        )
+      ));
 
-        // 水平对齐（影响Y坐标）
-        // 顶边对齐
-        if ((elementBounds.top - otherBounds.top).abs() <= _snapThreshold * 3) {
-          dynamicGuidelines.add(_markGuidelineAsDynamic(
-            Guideline(
-              id: 'h_top_${otherElementId}',
-              type: GuidelineType.horizontalTopEdge,
-              position: otherBounds.top,
-              direction: AlignmentDirection.horizontal,
-              sourceElementId: otherElementId,
-            )
-          ));
-        }
+      // 生成垂直参考线（显示元素的X坐标相关边界）
+      // 左边线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_left_${elementId}',
+          type: GuidelineType.verticalLeftEdge,
+          position: elementBounds.left,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: elementId,
+        )
+      ));
 
-        // 水平中心对齐
-        if ((elementCenterY - otherCenterY).abs() <= _snapThreshold * 3) {
-          dynamicGuidelines.add(_markGuidelineAsDynamic(
-            Guideline(
-              id: 'h_center_${otherElementId}',
-              type: GuidelineType.horizontalCenterLine,
-              position: otherCenterY,
-              direction: AlignmentDirection.horizontal,
-              sourceElementId: otherElementId,
-            )
-          ));
-        }
+      // 垂直中心线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_v_center_${elementId}',
+          type: GuidelineType.verticalCenterLine,
+          position: elementCenterX,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: elementId,
+        )
+      ));
 
-        // 垂直对齐（影响X坐标）
-        // 左边对齐
-        if ((elementBounds.left - otherBounds.left).abs() <= _snapThreshold * 3) {
-          dynamicGuidelines.add(_markGuidelineAsDynamic(
-            Guideline(
-              id: 'v_left_${otherElementId}',
-              type: GuidelineType.verticalLeftEdge,
-              position: otherBounds.left,
-              direction: AlignmentDirection.vertical,
-              sourceElementId: otherElementId,
-            )
-          ));
-        }
+      // 右边线
+      dynamicGuidelines.add(_markGuidelineAsDynamic(
+        Guideline(
+          id: 'self_right_${elementId}',
+          type: GuidelineType.verticalRightEdge,
+          position: elementBounds.right,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: elementId,
+        )
+      ));
 
-        // 垂直中心对齐
-        if ((elementCenterX - otherCenterX).abs() <= _snapThreshold * 3) {
-          dynamicGuidelines.add(_markGuidelineAsDynamic(
-            Guideline(
-              id: 'v_center_${otherElementId}',
-              type: GuidelineType.verticalCenterLine,
-              position: otherCenterX,
-              direction: AlignmentDirection.vertical,
-              sourceElementId: otherElementId,
-            )
-          ));
-        }
-      }
-
-      // 与页面边界对齐
-      final pageCenterX = _pageSize.width / 2;
-      final pageCenterY = _pageSize.height / 2;
-      
-      // 页面水平中心对齐
-      if ((elementCenterY - pageCenterY).abs() <= _snapThreshold * 3) {
-        dynamicGuidelines.add(_markGuidelineAsDynamic(
-          Guideline(
-            id: 'page_h_center',
-            type: GuidelineType.horizontalCenterLine,
-            position: pageCenterY,
-            direction: AlignmentDirection.horizontal,
-          )
-        ));
-      }
-      
-      // 页面垂直中心对齐
-      if ((elementCenterX - pageCenterX).abs() <= _snapThreshold * 3) {
-        dynamicGuidelines.add(_markGuidelineAsDynamic(
-          Guideline(
-            id: 'page_v_center',
-            type: GuidelineType.verticalCenterLine,
-            position: pageCenterX,
-            direction: AlignmentDirection.vertical,
-          )
-        ));
-      }
-
-      EditPageLogger.editPageDebug('生成动态参考线', data: {
+      EditPageLogger.editPageDebug('生成FreeControlPoints动态参考线', data: {
         'elementId': elementId,
         'position': '${position.dx}, ${position.dy}',
+        'size': '${size.width} x ${size.height}',
+        'centerX': elementCenterX,
+        'centerY': elementCenterY,
         'dynamicGuidelinesCount': dynamicGuidelines.length,
         'isDragging': _isDragging,
+        'guidelines': dynamicGuidelines.map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}').toList(),
       });
 
     } catch (e) {
-      EditPageLogger.editPageDebug('动态参考线生成异常', data: {
+      EditPageLogger.editPageDebug('FreeControlPoints动态参考线生成异常', data: {
         'error': e.toString(),
         'elementId': elementId,
       });
