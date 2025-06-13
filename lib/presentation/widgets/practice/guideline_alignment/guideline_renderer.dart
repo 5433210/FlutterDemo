@@ -402,13 +402,32 @@ class _GuidelinePainter extends CustomPainter {
     
     canvas.drawPath(arrowPath, paint);
   }
-
   @override
   bool shouldRepaint(_GuidelinePainter oldDelegate) {
-    return guidelines.length != oldDelegate.guidelines.length ||
+    // 比较基本属性
+    if (guidelines.length != oldDelegate.guidelines.length ||
         color != oldDelegate.color ||
         strokeWidth != oldDelegate.strokeWidth ||
         showLabels != oldDelegate.showLabels ||
-        dashLine != oldDelegate.dashLine;
+        dashLine != oldDelegate.dashLine) {
+      return true;
+    }
+    
+    // 比较参考线的具体内容（位置、颜色等）
+    for (int i = 0; i < guidelines.length; i++) {
+      final current = guidelines[i];
+      final old = oldDelegate.guidelines[i];
+      
+      if (current.position != old.position ||
+          current.direction != old.direction ||
+          current.type != old.type ||
+          current.color != old.color ||
+          current.lineWeight != old.lineWeight ||
+          current.id != old.id) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
