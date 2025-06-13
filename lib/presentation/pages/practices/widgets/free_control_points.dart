@@ -255,90 +255,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _initializeControlPointPositions();
   }
 
-  /// 🔧 新增：在拖拽过程中生成参考线用于显示，但不强制对齐
-  void _generateDragGuidelines(Map<String, double> currentProperties) {
-    // 只在参考线对齐模式下生成参考线
-    if (widget.alignmentMode != AlignmentMode.guideline) {
-      return;
-    }
-
-    try {
-      // 确保GuidelineManager已启用
-      if (!GuidelineManager.instance.enabled) {
-        return;
-      }
-
-      // 🔧 关键修复：强制每次都重新计算参考线，确保实时更新
-      final alignmentResult = GuidelineManager.instance.detectAlignment(
-        elementId: widget.elementId,
-        currentPosition:
-            Offset(currentProperties['x']!, currentProperties['y']!),
-        elementSize:
-            Size(currentProperties['width']!, currentProperties['height']!),
-        rotation: currentProperties['rotation'],
-        isDynamicSource: true, // 🔹 标记为动态参考线源
-        forceUpdate: true,     // 🔹 强制刷新，忽略缓存
-        maxGuidelines: 3,      // 🔹 新增：限制参考线数量，只保留最近的几条
-      );
-
-      if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
-        final guidelines =
-            alignmentResult['guidelines'] as List<Guideline>? ?? [];
-        
-        // 获取对齐后的位置和最接近的参考线距离
-        final alignedPosition = alignmentResult['position'] as Offset?;
-        final currentPos = Offset(currentProperties['x']!, currentProperties['y']!);
-        double minDistance = double.infinity;
-        
-        if (alignedPosition != null) {
-          minDistance = (alignedPosition - currentPos).distance;
-        }
-
-        // 🔹 修改：始终更新参考线，确保实时反馈
-        // 处理参考线高亮状态 - 根据距离设置高亮
-        final processedGuidelines = guidelines.map((g) {
-          // 仅当距离小于高亮阈值时才高亮显示
-          final bool shouldHighlight = (g.distanceToTarget ?? double.infinity) <= _highlightThreshold;
-          return g.copyWith(
-            isHighlighted: shouldHighlight,
-            lineWeight: shouldHighlight ? 3.0 : 2.0, // 增加线宽，使参考线更明显
-            color: shouldHighlight 
-                ? const Color(0xFF2196F3) // 高亮蓝色
-                : const Color(0xFF4CAF50), // 普通绿色
-          );
-        }).toList();
-        
-        // 强制更新本地状态，不检查是否有变化
-        _activeGuidelines = List<Guideline>.from(processedGuidelines);
-
-        // 🔹 关键：通知外部显示参考线，确保每次都更新UI
-        if (widget.onGuidelinesUpdated != null) {
-          widget.onGuidelinesUpdated!(processedGuidelines);
-        }
-
-        EditPageLogger.editPageDebug('拖拽过程中显示参考线', data: {
-          'elementId': widget.elementId,
-          'guidelinesCount': guidelines.length,
-          'minDistance': minDistance,
-          'isHighlighted': minDistance <= _highlightThreshold,
-          'mode': 'drag_preview_only',
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        });
-      } else {
-        // 没有对齐，清除参考线
-        if (_activeGuidelines.isNotEmpty) {
-          _activeGuidelines = [];
-          widget.onGuidelinesUpdated?.call([]);
-        }
-      }
-    } catch (e) {
-      EditPageLogger.editPageDebug('拖拽参考线生成失败', data: {
-        'error': e.toString(),
-        'elementId': widget.elementId,
-      });
-    }
-  }
-
   /// 🔧 新增：对齐到最近的参考线（仅在鼠标释放时调用，只在距离很近时才对齐）
   Map<String, double> _alignToClosestGuidelines(
       Map<String, double> currentProperties) {
@@ -348,14 +264,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           'elementId': widget.elementId,
           'position': '(${currentProperties['x']}, ${currentProperties['y']})',
         });
-        
+
     // 🔹 修改：禁用拖拽结束时的参考线对齐，只返回原始属性
     // 清除所有参考线
     if (_activeGuidelines.isNotEmpty) {
       _activeGuidelines = <Guideline>[];
       widget.onGuidelinesUpdated?.call([]);
     }
-    
+
     // 直接返回未修改的属性
     return currentProperties;
   }
@@ -408,13 +324,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               if (index == 8) {
                 // 旋转控制点 - 初始化旋转状态
                 _initializeRotationState();
-              }
-
-              // 🔹 新增：初始化动态参考线显示
-              _initializeDynamicGuidelines();
-
-              // 触发拖拽开始回调
+              } // 触发拖拽开始回调
               widget.onControlPointDragStart?.call(index);
+
+              // 🔹 设置GuidelineManager的拖拽状态为true
+              GuidelineManager.instance.isDragging = true;
+
+              // 🔹 初始化动态参考线显示
+              _initializeDynamicGuidelines();
             },
             onPanUpdate: (details) {
               // 根据控制点类型应用约束移动
@@ -429,10 +346,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               EditPageLogger.canvasDebug('控制点结束拖拽', data: {
                 'index': index,
                 'controlPointName': controlPointName,
-              });
-
-              // 🔧 新增：拖拽结束时强制清除所有参考线
+              }); // 🔧 新增：拖拽结束时强制清除所有参考线
               _clearGuidelines();
+
+              // 🔹 设置GuidelineManager的拖拽状态为false
+              GuidelineManager.instance.isDragging = false;
 
               // 🔧 新增：在鼠标释放时进行参考线对齐
               var finalProperties = getCurrentElementProperties();
@@ -520,12 +438,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onPanStart: (details) {
-            EditPageLogger.canvasDebug('控制点主导：开始平移操作');
-
-            // 清除之前的参考线
+            EditPageLogger.canvasDebug('控制点主导：开始平移操作'); // 清除之前的参考线
             _clearGuidelines();
 
-            // 🔹 新增：初始化动态参考线显示
+            // 🔹 设置GuidelineManager的拖拽状态为true
+            GuidelineManager.instance.isDragging = true;
+
+            // 🔹 初始化动态参考线显示
             _initializeDynamicGuidelines();
 
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
@@ -540,10 +459,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             _refreshGuidelinesImmediately();
           },
           onPanEnd: (details) {
-            EditPageLogger.canvasDebug('控制点主导：平移结束');
-
-            // 🔹 新增：拖拽结束时强制清除所有参考线
+            EditPageLogger.canvasDebug('控制点主导：平移结束'); // 🔹 新增：拖拽结束时强制清除所有参考线
             _clearGuidelines();
+
+            // 🔹 设置GuidelineManager的拖拽状态为false
+            GuidelineManager.instance.isDragging = false;
 
             // 🔧 新增：在鼠标释放时进行参考线对齐
             var finalProperties = getCurrentElementProperties();
@@ -604,6 +524,66 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             <Guideline>[]; // Create new empty list instead of clearing
       });
       widget.onGuidelinesUpdated?.call([]);
+    }
+  }
+
+  /// 🔧 新增：在拖拽过程中生成参考线用于显示，但不强制对齐
+  void _generateDragGuidelines(Map<String, double> currentProperties) {
+    // 只在参考线对齐模式下生成参考线
+    if (widget.alignmentMode != AlignmentMode.guideline) {
+      return;
+    }
+
+    try {
+      // 确保GuidelineManager已启用
+      if (!GuidelineManager.instance.enabled) {
+        return;
+      }
+
+      // 获取当前元素位置和大小
+      final currentPos =
+          Offset(currentProperties['x']!, currentProperties['y']!);
+      final currentSize =
+          Size(currentProperties['width']!, currentProperties['height']!);
+      final rotation = currentProperties['rotation']!;
+
+      // 🔹 使用新的动态参考线生成方法
+      final dynamicGuidelines =
+          GuidelineManager.instance.generateDynamicGuidelines(
+        elementId: widget.elementId,
+        position: currentPos,
+        size: currentSize,
+        rotation: rotation,
+      );
+
+      if (dynamicGuidelines.isNotEmpty) {
+        // 更新本地参考线状态
+        _activeGuidelines = dynamicGuidelines;
+
+        // 通知外部显示参考线
+        if (widget.onGuidelinesUpdated != null) {
+          widget.onGuidelinesUpdated!(dynamicGuidelines);
+        }
+
+        EditPageLogger.editPageDebug('生成动态参考线', data: {
+          'elementId': widget.elementId,
+          'guidelinesCount': dynamicGuidelines.length,
+          'position': '${currentPos.dx}, ${currentPos.dy}',
+          'size': '${currentSize.width} x ${currentSize.height}',
+          'mode': 'dynamic_guidelines_only',
+        });
+      } else {
+        // 没有动态参考线，清空显示
+        if (_activeGuidelines.isNotEmpty) {
+          _activeGuidelines = [];
+          widget.onGuidelinesUpdated?.call([]);
+        }
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('动态参考线生成失败', data: {
+        'error': e.toString(),
+        'elementId': widget.elementId,
+      });
     }
   }
 
@@ -730,6 +710,29 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     });
   }
 
+  /// 🔹 新增：初始化动态参考线显示
+  void _initializeDynamicGuidelines() {
+    // 确保清空之前的任何参考线
+    _clearGuidelines();
+
+    // 只在参考线对齐模式下处理
+    if (widget.alignmentMode != AlignmentMode.guideline) {
+      return;
+    }
+
+    // 设置GuidelineManager为拖拽状态
+    GuidelineManager.instance.isDragging = true;
+
+    // 强制立即刷新参考线，确保初始状态正确
+    _refreshGuidelinesImmediately();
+
+    EditPageLogger.editPageDebug('初始化动态参考线', data: {
+      'elementId': widget.elementId,
+      'guidelinesCount': _activeGuidelines.length,
+      'operation': 'init_dynamic_guidelines',
+    });
+  }
+
   /// 初始化旋转状态
   void _initializeRotationState() {
     // 计算矩形中心作为旋转中心
@@ -770,7 +773,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 强制每帧清除并重新生成参考线
     _activeGuidelines = [];
     widget.onGuidelinesUpdated?.call([]);
-    
+
     // 🔹 直接生成新参考线，不考虑之前的状态
     _generateDragGuidelines(currentState);
 
@@ -778,27 +781,28 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     if (widget.onControlPointDragEndWithState != null) {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] 调用 onControlPointDragEndWithState 回调');
-      
+
       // 注意：使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
       widget.onControlPointDragEndWithState!(-2, currentState);
-      
+
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调完成');
     } else {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调为 null');
     }
-    
+
     // 🔹 新增：立即手动触发UI更新，确保参考线立即可见
     if (_activeGuidelines.isNotEmpty) {
       EditPageLogger.editPageDebug('🔍 强制刷新参考线UI', data: {
         'guidelinesCount': _activeGuidelines.length,
         'atTime': DateTime.now().millisecondsSinceEpoch,
       });
-      
+
       // 强制刷新UI以显示最新参考线
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
+        if (widget.onGuidelinesUpdated != null &&
+            _activeGuidelines.isNotEmpty) {
           widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
         }
       });
@@ -846,6 +850,70 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         _currentRotation,
       );
       _controlPointPositions[i] = rotated;
+    }
+  }
+
+  // 添加一个强制刷新参考线的方法
+  void _refreshGuidelinesImmediately() {
+    // 获取最新状态
+    final currentState = getCurrentElementProperties();
+
+    // 清除现有参考线
+    _activeGuidelines = [];
+
+    // 强制生成新参考线
+    try {
+      if (widget.alignmentMode == AlignmentMode.guideline &&
+          GuidelineManager.instance.enabled) {
+        // 直接从元素属性重新生成参考线
+        final currentPos = Offset(currentState['x']!, currentState['y']!);
+        final currentSize =
+            Size(currentState['width']!, currentState['height']!);
+        final rotation = currentState['rotation']!;
+
+        // 使用动态参考线生成方法
+        final dynamicGuidelines =
+            GuidelineManager.instance.generateDynamicGuidelines(
+          elementId: widget.elementId,
+          position: currentPos,
+          size: currentSize,
+          rotation: rotation,
+        );
+
+        // 处理生成的参考线
+        if (dynamicGuidelines.isNotEmpty) {
+          // 直接使用生成的参考线
+          _activeGuidelines = dynamicGuidelines;
+
+          // 强制通知外部更新参考线
+          if (widget.onGuidelinesUpdated != null) {
+            widget.onGuidelinesUpdated!(dynamicGuidelines);
+
+            EditPageLogger.editPageDebug('刷新动态参考线UI', data: {
+              'guidelinesCount': dynamicGuidelines.length,
+              'elementId': widget.elementId,
+              'isDynamicOnly': true,
+              'elementPosition': '(${currentPos.dx}, ${currentPos.dy})',
+            });
+          }
+        } else {
+          // 没有找到对齐点，清除参考线
+          if (_activeGuidelines.isNotEmpty) {
+            _activeGuidelines = [];
+            widget.onGuidelinesUpdated?.call([]);
+          }
+        }
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('强制刷新参考线失败', data: {
+        'error': e.toString(),
+        'elementId': widget.elementId,
+      });
+    }
+
+    // 推送元素状态更新到预览层
+    if (widget.onControlPointDragEndWithState != null) {
+      widget.onControlPointDragEndWithState!(-2, currentState);
     }
   }
 
@@ -1190,6 +1258,34 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         Rect.fromLTWH(_currentX, _currentY, _currentWidth, _currentHeight));
   }
 
+  /// 🔹 重置参考线颜色并传递到外部更新
+  void _updateGuidelineColors() {
+    // 定义固定的灰色
+    const guidelineColor = Color(0xFFA0A0A0);
+
+    if (_activeGuidelines.isNotEmpty) {
+      // 重设参考线颜色
+      final updatedGuidelines = _activeGuidelines.map((guideline) {
+        return guideline.copyWith(
+          color: guidelineColor, // 强制使用灰色
+          isHighlighted: false, // 禁用高亮
+          lineWeight: 1.5, // 使用统一线宽
+        );
+      }).toList();
+
+      _activeGuidelines = updatedGuidelines;
+
+      // 通知外部更新参考线
+      if (widget.onGuidelinesUpdated != null) {
+        EditPageLogger.editPageDebug('强制更新参考线颜色为灰色', data: {
+          'guidelineCount': _activeGuidelines.length,
+          'color': 'gray (0xFFA0A0A0)',
+        });
+        widget.onGuidelinesUpdated!(_activeGuidelines);
+      }
+    }
+  }
+
   /// 更新旋转
   void _updateRotation(Offset delta) {
     if (_rotationCenter == null || _initialRotationAngle == null) return;
@@ -1210,121 +1306,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 🔧 修复：更新初始角度，避免累积误差
     _initialRotationAngle = newAngle; // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
-  }
-
-  // 添加一个强制刷新参考线的方法
-  void _refreshGuidelinesImmediately() {
-    // 获取最新状态
-    final currentState = getCurrentElementProperties();
-    
-    // 清除现有参考线
-    _activeGuidelines = [];
-    
-    // 强制生成新参考线
-    try {
-      if (widget.alignmentMode == AlignmentMode.guideline && 
-          GuidelineManager.instance.enabled) {
-        
-        // 直接从元素属性重新生成参考线
-        final result = GuidelineManager.instance.detectAlignment(
-          elementId: widget.elementId,
-          currentPosition: Offset(currentState['x']!, currentState['y']!),
-          elementSize: Size(currentState['width']!, currentState['height']!),
-          rotation: currentState['rotation'],
-          isDynamicSource: true,
-          forceUpdate: true,     // 强制更新，跳过缓存
-          showDynamicOnly: true, // 只显示动态参考线
-        );
-        
-        // 处理生成的参考线
-        if (result != null && result['hasAlignment'] == true) {
-          final guidelines = result['guidelines'] as List<Guideline>? ?? [];
-          
-          // 直接使用生成的参考线，不修改属性
-          _activeGuidelines = List<Guideline>.from(guidelines);
-          
-          // 强制更新参考线颜色
-          _updateGuidelineColors();
-          
-          // 强制通知外部更新参考线
-          if (widget.onGuidelinesUpdated != null) {
-            EditPageLogger.editPageDebug('刷新参考线UI', data: {
-              'guidelinesCount': _activeGuidelines.length,
-              'elementId': widget.elementId,
-              'isDynamicOnly': true,
-              'elementPosition': '(${currentState['x']}, ${currentState['y']})',
-            });
-          }
-        } else {
-          // 没有找到对齐点，清除参考线
-          if (_activeGuidelines.isNotEmpty) {
-            _activeGuidelines = [];
-            widget.onGuidelinesUpdated?.call([]);
-          }
-        }
-      }
-    } catch (e) {
-      EditPageLogger.editPageDebug('强制刷新参考线失败', data: {
-        'error': e.toString(),
-        'elementId': widget.elementId,
-      });
-    }
-    
-    // 推送元素状态更新到预览层
-    if (widget.onControlPointDragEndWithState != null) {
-      widget.onControlPointDragEndWithState!(-2, currentState);
-    }
-  }
-
-  /// 🔹 新增：初始化动态参考线显示
-  void _initializeDynamicGuidelines() {
-    // 确保清空之前的任何参考线
-    _clearGuidelines();
-    
-    // 只在参考线对齐模式下处理
-    if (widget.alignmentMode != AlignmentMode.guideline) {
-      return;
-    }
-    
-    // 强制立即刷新参考线，确保初始状态正确
-    _refreshGuidelinesImmediately();
-    
-    // 强制更新参考线颜色
-    _updateGuidelineColors();
-    
-    EditPageLogger.editPageDebug('初始化动态参考线', data: {
-      'elementId': widget.elementId,
-      'guidelinesCount': _activeGuidelines.length,
-      'operation': 'init_dynamic_guidelines',
-    });
-  }
-
-  /// 🔹 重置参考线颜色并传递到外部更新
-  void _updateGuidelineColors() {
-    // 定义固定的灰色
-    const guidelineColor = Color(0xFFA0A0A0);
-    
-    if (_activeGuidelines.isNotEmpty) {
-      // 重设参考线颜色
-      final updatedGuidelines = _activeGuidelines.map((guideline) {
-        return guideline.copyWith(
-          color: guidelineColor, // 强制使用灰色
-          isHighlighted: false,   // 禁用高亮
-          lineWeight: 1.5,        // 使用统一线宽
-        );
-      }).toList();
-      
-      _activeGuidelines = updatedGuidelines;
-      
-      // 通知外部更新参考线
-      if (widget.onGuidelinesUpdated != null) {
-        EditPageLogger.editPageDebug('强制更新参考线颜色为灰色', data: {
-          'guidelineCount': _activeGuidelines.length,
-          'color': 'gray (0xFFA0A0A0)',
-        });
-        widget.onGuidelinesUpdated!(_activeGuidelines);
-      }
-    }
   }
 }
 

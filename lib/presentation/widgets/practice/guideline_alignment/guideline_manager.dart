@@ -31,6 +31,9 @@ class GuidelineManager {
   /// 参考线对齐阈值（像素）
   double _snapThreshold = 5.0;
 
+  /// 当前是否处于拖拽状态（仅显示动态参考线）
+  bool _isDragging = false;
+
   // 回调函数，用于同步参考线到外部列表
   Function(List<Guideline>)? _syncGuidelinesToOutput;
 
@@ -69,6 +72,24 @@ class GuidelineManager {
       if (!_enabled) {
         clearGuidelines();
       }
+    }
+  }
+
+  /// 获取当前拖拽状态
+  bool get isDragging => _isDragging;
+
+  /// 设置拖拽状态 - 控制是否只显示动态参考线
+  set isDragging(bool value) {
+    if (_isDragging != value) {
+      _isDragging = value;
+      // 如果从拖拽状态切换到非拖拽状态，清除所有参考线
+      if (!_isDragging) {
+        clearGuidelines();
+      }
+      EditPageLogger.editPageDebug('GuidelineManager拖拽状态切换', data: {
+        'isDragging': _isDragging,
+        'operation': 'set_dragging_state',
+      });
     }
   }
 
@@ -440,7 +461,7 @@ class GuidelineManager {
         elementId: elementId,
         position: currentPosition,
         size: elementSize,
-        rotation: rotation,
+        rotation: rotation!,
       );
 
       // 返回新生成的参考线，不影响 Manager 的主列表
@@ -536,6 +557,50 @@ class GuidelineManager {
     };
   }
 
+  /// 🔹 新增：生成仅用于显示的动态参考线（不会强制对齐）
+  List<Guideline> generateDynamicGuidelines({
+    required String elementId,
+    required Offset position,
+    required Size size,
+    double rotation = 0,
+  }) {
+    // 如果未启用，返回空列表
+    if (!_enabled) {
+      return [];
+    }
+
+    // 临时参考线列表，不会保存到管理器中
+    final dynamicGuidelines = <Guideline>[];
+
+    // 保存旧状态
+    final oldGuidelines = List<Guideline>.from(_activeGuidelines);
+
+    try {
+      // 临时清空当前参考线，为生成新参考线做准备
+      _activeGuidelines.clear();
+
+      // 复用生成逻辑
+      generateGuidelines(
+        elementId: elementId,
+        draftPosition: position,
+        draftSize: size,
+        rotation: rotation,
+        isDynamicSource: true,
+        forceUpdate: true,
+      );
+
+      // 将生成的参考线标记为动态
+      dynamicGuidelines
+          .addAll(_activeGuidelines.map((g) => _markGuidelineAsDynamic(g)));
+    } finally {
+      // 恢复原始状态
+      _activeGuidelines.clear();
+      _activeGuidelines.addAll(oldGuidelines);
+    }
+
+    return dynamicGuidelines;
+  }
+
   /// 为指定元素生成参考线
   bool generateGuidelines({
     required String elementId,
@@ -571,7 +636,7 @@ class GuidelineManager {
         elementId: elementId,
         position: draftPosition,
         size: draftSize,
-        rotation: rotation,
+        rotation: rotation!,
       );
       // 将生成的动态参考线添加到活动列表中
       // 注意：在这种模式下，这是唯一会被添加的参考线类型
@@ -1185,7 +1250,7 @@ class GuidelineManager {
     required String elementId,
     required Offset position,
     required Size size,
-    double? rotation,
+    double rotation = 0,
   }) {
     final List<Guideline> guidelines = [];
     final angle = (rotation ?? 0) * math.pi / 180;
@@ -1751,5 +1816,19 @@ class GuidelineManager {
         sourceElementBounds: pageBounds,
       ),
     ];
+  }
+
+  /// 🔹 新增：将参考线标记为动态参考线
+  Guideline _markGuidelineAsDynamic(Guideline guideline) {
+    // 添加动态前缀，以便在GuidelineLayer中识别
+    final dynamicId = guideline.id.startsWith('dynamic_')
+        ? guideline.id
+        : 'dynamic_${guideline.id}';
+
+    // 设置为灰色
+    return guideline.copyWith(
+      id: dynamicId,
+      color: const Color(0xFFA0A0A0), // 灰色
+    );
   }
 }
