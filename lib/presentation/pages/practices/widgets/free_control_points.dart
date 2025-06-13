@@ -852,7 +852,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       _controlPointPositions[i] = rotated;
     }
   }
-
   // 添加一个强制刷新参考线的方法
   void _refreshGuidelinesImmediately() {
     // 获取最新状态
@@ -870,6 +869,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         final currentSize =
             Size(currentState['width']!, currentState['height']!);
         final rotation = currentState['rotation']!;
+
+        EditPageLogger.editPageDebug('🔧 FreeControlPoints开始刷新动态参考线', data: {
+          'elementId': widget.elementId,
+          'currentPos': '${currentPos.dx}, ${currentPos.dy}',
+          'currentSize': '${currentSize.width} x ${currentSize.height}',
+          'rotation': rotation,
+          'isDragging': GuidelineManager.instance.isDragging,
+        });
 
         // 使用动态参考线生成方法
         final dynamicGuidelines =
@@ -889,11 +896,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           if (widget.onGuidelinesUpdated != null) {
             widget.onGuidelinesUpdated!(dynamicGuidelines);
 
-            EditPageLogger.editPageDebug('刷新动态参考线UI', data: {
+            EditPageLogger.editPageDebug('🔧 FreeControlPoints成功刷新动态参考线UI', data: {
               'guidelinesCount': dynamicGuidelines.length,
               'elementId': widget.elementId,
               'isDynamicOnly': true,
               'elementPosition': '(${currentPos.dx}, ${currentPos.dy})',
+              'guidelinePositions': dynamicGuidelines.map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}').toList(),
             });
           }
         } else {
