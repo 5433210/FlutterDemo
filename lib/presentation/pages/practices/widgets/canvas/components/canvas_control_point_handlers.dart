@@ -802,9 +802,7 @@ mixin CanvasControlPointHandlers {
       if (!GuidelineManager.instance.enabled) {
         EditPageLogger.editPageDebug('GuidelineManager未启用，跳过实时参考线生成');
         return;
-      }
-
-      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateRealTimeGuidelines',
+      }      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateDynamicGuidelines',
           data: {
             'elementId': elementId,
             'position':
@@ -813,37 +811,34 @@ mixin CanvasControlPointHandlers {
                 '${currentProperties['width']}x${currentProperties['height']}',
           });
 
-      // 🚀 新增：使用实时参考线生成方法（显示所有元素的参考线）
-      final hasGuidelines =
-          GuidelineManager.instance.generateRealTimeGuidelines(
-        draggedElementId: elementId,
-        draggedPosition:
-            Offset(currentProperties['x']!, currentProperties['y']!),
-        draggedSize:
-            Size(currentProperties['width']!, currentProperties['height']!),
+      // 🚀 修改：使用动态参考线生成方法（只显示动态参考线）
+      final dynamicGuidelines =
+          GuidelineManager.instance.generateDynamicGuidelines(
+        elementId: elementId,
+        position: Offset(currentProperties['x']!, currentProperties['y']!),
+        size: Size(currentProperties['width']!, currentProperties['height']!),
+        rotation: currentProperties['rotation'] ?? 0,
       );
 
-      EditPageLogger.editPageDebug('🔍 [DEBUG] generateRealTimeGuidelines 结果',
+      EditPageLogger.editPageDebug('🔍 [DEBUG] generateDynamicGuidelines 结果',
           data: {
-            'hasGuidelines': hasGuidelines,
+            'hasGuidelines': dynamicGuidelines.isNotEmpty,
+            'guidelinesCount': dynamicGuidelines.length,
           });
-      if (hasGuidelines) {
-        // 获取生成的参考线 - 🔧 修复：创建可修改的副本，避免不可修改列表错误
-        final guidelines =
-            List<Guideline>.from(GuidelineManager.instance.activeGuidelines);
-
+      
+      if (dynamicGuidelines.isNotEmpty) {
         // 通知控制器更新参考线渲染
-        controller.updateActiveGuidelines(guidelines);
+        controller.updateActiveGuidelines(dynamicGuidelines);
 
-        EditPageLogger.editPageDebug('CanvasControlPointHandlers生成实时参考线',
+        EditPageLogger.editPageDebug('CanvasControlPointHandlers生成动态参考线',
             data: {
               'elementId': elementId,
-              'guidelinesCount': guidelines.length,
+              'guidelinesCount': dynamicGuidelines.length,
               'position':
                   '(${currentProperties['x']}, ${currentProperties['y']})',
               'size':
                   '${currentProperties['width']}x${currentProperties['height']}',
-              'mode': 'real_time_display_only',
+              'mode': 'dynamic_guidelines_only',
             });
       } else {
         // 没有参考线，清除现有的

@@ -908,13 +908,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       EditPageLogger.editPageDebug('强制刷新参考线失败', data: {
         'error': e.toString(),
         'elementId': widget.elementId,
-      });
-    }
+      });    }
 
+    // 🔧 临时注释掉有问题的调用，避免类型转换错误
     // 推送元素状态更新到预览层
-    if (widget.onControlPointDragEndWithState != null) {
-      widget.onControlPointDragEndWithState!(-2, currentState);
-    }
+    // if (widget.onControlPointDragEndWithState != null) {
+    //   widget.onControlPointDragEndWithState!(-2, currentState);
+    // }
   }
 
   /// 旋转一个点
