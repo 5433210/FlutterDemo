@@ -1132,33 +1132,55 @@ mixin CanvasControlPointHandlers {
       'width': snappedLiveState['width'] ?? originalElement['width'],
       'height': snappedLiveState['height'] ?? originalElement['height'],
       'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
-    }); // 🔧 修复：在参考线模式下跳过DragStateManager更新，避免与FreeControlPoints冲突
-    // FreeControlPoints 会自主管理显示状态，无需DragPreviewLayer干预
-    final shouldUpdateDragManager = dragStateManager.isDragging &&
-        dragStateManager.isElementDragging(elementId) &&
-        !_isControlPointDominated(elementId);
-
-    if (shouldUpdateDragManager) {
-      dragStateManager.updateElementPreviewProperties(
-          elementId, livePreviewProperties);
-
+    });    // 🔧 修复：在参考线模式下，使用FreeControlPoints提供的权威位置数据
+    // 而不是重新计算，避免冲突但保持DragPreviewLayer同步
+    Map<String, dynamic> finalPreviewProperties;
+      if (_isControlPointDominated(elementId)) {
+      // 在参考线模式下，直接使用传入的位置状态作为权威数据
+      // 这确保FreeControlPoints和DragPreviewLayer显示一致
+      finalPreviewProperties = Map<String, dynamic>.from(originalElement);
+      finalPreviewProperties.addAll({
+        'x': snappedLiveState['x'] ?? originalElement['x'],
+        'y': snappedLiveState['y'] ?? originalElement['y'],
+        'width': snappedLiveState['width'] ?? originalElement['width'],
+        'height': snappedLiveState['height'] ?? originalElement['height'],
+        'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
+      });
+      
       EditPageLogger.canvasDebug(
-        'DragStateManager更新预览属性',
+        '使用FreeControlPoints权威位置数据',
         data: {
           'elementId': elementId,
-          'reason': 'non_control_point_dominated_drag',
-          'properties': livePreviewProperties,
+          'reason': 'control_point_dominated_mode',
+          'authoritative_position': finalPreviewProperties,
         },
       );
     } else {
+      // 非参考线模式，使用计算后的位置数据
+      finalPreviewProperties = livePreviewProperties;
+      
       EditPageLogger.canvasDebug(
-        '跳过DragStateManager更新 - FreeControlPoints主导',
+        '使用计算后的位置数据',
         data: {
           'elementId': elementId,
-          'isDragging': dragStateManager.isDragging,
-          'isElementDragging': dragStateManager.isElementDragging(elementId),
+          'reason': 'normal_drag_mode',
+          'calculated_position': finalPreviewProperties,
+        },
+      );
+    }
+
+    // 总是更新DragStateManager，确保预览层同步
+    if (dragStateManager.isDragging &&
+        dragStateManager.isElementDragging(elementId)) {
+      dragStateManager.updateElementPreviewProperties(
+          elementId, finalPreviewProperties);
+      
+      EditPageLogger.canvasDebug(
+        'DragStateManager同步预览属性',
+        data: {
+          'elementId': elementId,
           'isControlPointDominated': _isControlPointDominated(elementId),
-          'reason': 'avoid_conflict_with_free_control_points',
+          'properties': finalPreviewProperties,
         },
       );
     }
