@@ -76,50 +76,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   bool _lastKnownDragState = false;
 
   @override
-  void initState() {
-    super.initState();
-
-    // 初始化性能监控器
-    _performanceMonitor = PerformanceMonitor();
-
-    // 🚀 初始化元素缓存管理器
-    _cacheManager = ElementCacheManager(
-      strategy: CacheStrategy.priorityBased,
-      maxSize: 50, // 最多缓存50个元素
-      memoryThreshold: 25 * 1024 * 1024, // 25MB内存阈值
-    );
-
-    // 初始化渲染控制器的选择性重建功能
-    widget.renderController.initializeSelectiveRebuilding(_cacheManager);
-
-    EditPageLogger.rendererDebug('ContentRenderLayer初始化完成', data: {
-      'cacheMaxSize': 50,
-      'enableMetrics': true,
-      'optimization': 'content_layer_initialization',
-    });
-    
-    // 🔧 初始化拖拽状态跟踪
-    _lastKnownDragState = widget.renderController.isDragging;
-    
-    EditPageLogger.canvasError('🔧🔧🔧 初始化拖拽状态跟踪', data: {
-      'initialDragState': _lastKnownDragState,
-    });
-
-    // Get initial elements
-    final initialElements =
-        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
-
-    // Initialize controller with current elements
-    widget.renderController.initializeElements(initialElements);
-
-    // Listen to changes via stream only (more efficient than broad listener)
-    widget.renderController.changeStream.listen(_handleElementChange);
-
-    // Warm up the cache with visible elements
-    _warmupCache(initialElements);
-  }
-
-  @override
   Widget build(BuildContext context) {
     // 🔍[TRACKING] ContentRenderLayer重建跟踪
     final buildStartTime = DateTime.now();
@@ -131,19 +87,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // 🔧 优化：只在关键时刻输出日志
     final currentDragState = widget.renderController.isDragging;
     final isDragStateChanged = currentDragState != _lastKnownDragState;
-    
+
     // 只在拖拽状态变化时输出详细日志
     if (isDragStateChanged) {
       _lastKnownDragState = currentDragState;
-      
-      EditPageLogger.canvasError('🔧🔧🔧 ContentRenderLayer响应拖拽状态变化', data: {
-        'buildNumber': _buildCount,
-        'dragStateChanged': true,
-        'newDragState': currentDragState,
-        'reason': currentDragState ? '隐藏拖拽元素' : '显示元素在新位置',
-        'optimization': 'precise_rebuild_control',
-      });
-      
+
       // 输出性能指标
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final buildDuration = DateTime.now().difference(buildStartTime);
@@ -160,7 +108,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       });
     } else {
       // 非拖拽状态变化的重建（这不应该频繁发生）
-      if (_buildCount % 20 == 0) { // 每20次输出一次警告
+      if (_buildCount % 20 == 0) {
+        // 每20次输出一次警告
         EditPageLogger.performanceWarning('ContentRenderLayer意外重建', data: {
           'buildNumber': _buildCount,
           'currentDragState': currentDragState,
@@ -169,7 +118,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         });
       }
     }
-    
+
     // 🔧 使用ListenableBuilder，但现在ContentRenderController已经实现了精确的通知控制
     // 所以重建应该只在拖拽开始和结束时发生
     return ListenableBuilder(
@@ -202,15 +151,18 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         widget.elements ?? widget.controller?.state.currentPageElements ?? [];
 
     // 🔧 新增：检查图层变化
-    final oldLayers = oldWidget.layers ?? oldWidget.controller?.state.layers ?? [];
-    final currentLayers = widget.layers ?? widget.controller?.state.layers ?? [];
+    final oldLayers =
+        oldWidget.layers ?? oldWidget.controller?.state.layers ?? [];
+    final currentLayers =
+        widget.layers ?? widget.controller?.state.layers ?? [];
 
     // 检查图层是否发生变化
     final layersChanged = _hasLayersChanged(oldLayers, currentLayers);
     final elementsChanged = oldElements.length != currentElements.length;
-    
+
     // 🔧 关键修复：检查元素顺序是否发生变化
-    final elementOrderChanged = _hasElementOrderChanged(oldElements, currentElements);
+    final elementOrderChanged =
+        _hasElementOrderChanged(oldElements, currentElements);
 
     EditPageLogger.rendererDebug('ContentRenderLayer变化分析', data: {
       'oldElementsCount': oldElements.length,
@@ -230,10 +182,10 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         'reason': 'layer_visibility_or_properties_changed',
         'action': 'force_cache_clear_and_rebuild',
       });
-      
+
       // 清理缓存以确保使用最新的图层状态
       _cacheManager.cleanupCache(force: true);
-      
+
       // 标记需要重建
       if (mounted) {
         setState(() {
@@ -247,19 +199,20 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       EditPageLogger.rendererDebug('元素顺序变化检测到，开始重建渲染', data: {
         'elementCount': currentElements.length,
       });
-      
+
       // 将所有元素标记为脏状态，强制重建
       for (final element in currentElements) {
         final elementId = element['id'] as String;
-        widget.renderController.markElementDirty(elementId, ElementChangeType.multiple);
+        widget.renderController
+            .markElementDirty(elementId, ElementChangeType.multiple);
       }
-      
+
       // 强制清理缓存以确保使用最新的元素顺序
       _cacheManager.cleanupCache(force: true);
-      
+
       // 标记所有元素需要更新，确保缓存系统重建所有元素
       _cacheManager.markAllElementsForUpdate(currentElements);
-      
+
       // 标记需要重建
       if (mounted) {
         setState(() {
@@ -276,14 +229,13 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   void dispose() {
     // 使用三重保护确保super.dispose()一定被调用
     bool superDisposeCompleted = false;
-    
+
     try {
       try {
         _cacheManager.dispose();
       } catch (e) {
         debugPrint('dispose cache manager失败: $e');
       }
-      
     } catch (e) {
       debugPrint('ContentRenderLayer dispose过程中发生异常: $e');
     } finally {
@@ -306,11 +258,51 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         }
       }
     }
-    
+
     // 额外的安全检查：如果所有尝试都失败，强制标记完成
     if (!superDisposeCompleted) {
       debugPrint('警告：ContentRenderLayer super.dispose()可能未能成功调用');
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 初始化性能监控器
+    _performanceMonitor = PerformanceMonitor();
+
+    // 🚀 初始化元素缓存管理器
+    _cacheManager = ElementCacheManager(
+      strategy: CacheStrategy.priorityBased,
+      maxSize: 50, // 最多缓存50个元素
+      memoryThreshold: 25 * 1024 * 1024, // 25MB内存阈值
+    );
+
+    // 初始化渲染控制器的选择性重建功能
+    widget.renderController.initializeSelectiveRebuilding(_cacheManager);
+
+    EditPageLogger.rendererDebug('ContentRenderLayer初始化完成', data: {
+      'cacheMaxSize': 50,
+      'enableMetrics': true,
+      'optimization': 'content_layer_initialization',
+    });
+
+    // 🔧 初始化拖拽状态跟踪
+    _lastKnownDragState = widget.renderController.isDragging;
+
+    // Get initial elements
+    final initialElements =
+        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+
+    // Initialize controller with current elements
+    widget.renderController.initializeElements(initialElements);
+
+    // Listen to changes via stream only (more efficient than broad listener)
+    widget.renderController.changeStream.listen(_handleElementChange);
+
+    // Warm up the cache with visible elements
+    _warmupCache(initialElements);
   }
 
   Widget _buildContent(BuildContext context) {
@@ -597,34 +589,12 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // 🔧 关键修复：优先检查元素是否应该跳过渲染（拖拽隐藏检查）
     // 这个检查必须在缓存检查之前进行，确保拖拽中的元素被正确隐藏
-    EditPageLogger.rendererDebug('🔧🔧🔧 _getOrCreateElementWidget开始', data: {
-      'elementId': elementId,
-      'elementType': elementType,
-      'step': 'widget_creation_start'
-    });
-
-    EditPageLogger.rendererDebug('🔧🔧🔧 准备调用shouldSkipElementRendering',
-        data: {'elementId': elementId, 'step': 'before_skip_check'});
-
     final shouldSkip =
         widget.renderController.shouldSkipElementRendering(elementId);
 
-    EditPageLogger.rendererDebug('🔧🔧🔧 shouldSkipElementRendering返回结果', data: {
-      'elementId': elementId,
-      'shouldSkip': shouldSkip,
-      'step': 'skip_check_result'
-    });
-
     if (shouldSkip) {
-      EditPageLogger.rendererDebug('🔧🔧🔧 元素被拖拽预览层处理，跳过内容层渲染', data: {
-        'elementId': elementId,
-        'optimization': 'drag_preview_layer_handling_from_cache'
-      });
       return const SizedBox.shrink();
     }
-
-    EditPageLogger.rendererDebug('🔧🔧🔧 元素未被跳过，继续处理',
-        data: {'elementId': elementId, 'step': 'continue_processing'});
 
     // Check if element should be rebuilt using selective rebuilding
     final shouldRebuild =
@@ -751,20 +721,78 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     }
   }
 
-  /// Check if a layer is hidden
-  bool _isLayerHidden(String layerId) {
-    final layers = widget.layers;
-    if (layers == null) return false;
+  /// 检查元素顺序是否发生了变化
+  bool _hasElementOrderChanged(List<Map<String, dynamic>> oldElements,
+      List<Map<String, dynamic>> currentElements) {
+    // 🔧 添加详细调试日志
+    EditPageLogger.rendererDebug('🔧 检查元素顺序变化', data: {
+      'oldCount': oldElements.length,
+      'currentCount': currentElements.length,
+      'oldElementIds': oldElements.map((e) => e['id'] as String).toList(),
+      'currentElementIds':
+          currentElements.map((e) => e['id'] as String).toList(),
+    });
 
-    final layer = layers.firstWhere(
-      (l) => l['id'] == layerId,
-      orElse: () => <String, dynamic>{},
-    );
-    return layer.isNotEmpty ? layer['isVisible'] == false : false;
+    // 如果数量不同，不是单纯的顺序变化
+    if (oldElements.length != currentElements.length) {
+      EditPageLogger.rendererDebug('🔧 元素数量不同，不是顺序变化', data: {
+        'oldCount': oldElements.length,
+        'currentCount': currentElements.length,
+      });
+      return false;
+    }
+
+    // 检查元素ID的顺序是否发生变化
+    bool orderChanged = false;
+    for (int i = 0; i < oldElements.length; i++) {
+      final oldElementId = oldElements[i]['id'] as String?;
+      final currentElementId = currentElements[i]['id'] as String?;
+
+      if (oldElementId != currentElementId) {
+        EditPageLogger.rendererDebug('🔧 发现位置 $i 的元素ID不同', data: {
+          'position': i,
+          'oldElementId': oldElementId,
+          'currentElementId': currentElementId,
+        });
+        orderChanged = true;
+        break;
+      }
+    }
+
+    if (!orderChanged) {
+      EditPageLogger.rendererDebug('🔧 所有位置元素ID相同，无顺序变化');
+      return false;
+    }
+
+    // 进一步验证：确保这确实是顺序变化而不是元素替换
+    // 检查新列表是否包含所有旧元素的ID
+    final oldElementIds = oldElements.map((e) => e['id'] as String).toSet();
+    final currentElementIds =
+        currentElements.map((e) => e['id'] as String).toSet();
+
+    final isSameElements = oldElementIds.length == currentElementIds.length &&
+        oldElementIds.every((id) => currentElementIds.contains(id));
+
+    EditPageLogger.rendererDebug('🔧 验证是否为真正的顺序变化', data: {
+      'orderChanged': orderChanged,
+      'isSameElements': isSameElements,
+      'result': orderChanged && isSameElements,
+      'oldElementIds': oldElementIds.toList(),
+      'currentElementIds': currentElementIds.toList(),
+    });
+
+    if (orderChanged && isSameElements) {
+      EditPageLogger.rendererDebug('🔧 ✅ 确认为元素顺序变化！');
+      return true;
+    } else {
+      EditPageLogger.rendererDebug('🔧 ❌ 不是纯粹的顺序变化');
+      return false;
+    }
   }
 
   /// 检查图层是否发生了变化
-  bool _hasLayersChanged(List<Map<String, dynamic>> oldLayers, List<Map<String, dynamic>> currentLayers) {
+  bool _hasLayersChanged(List<Map<String, dynamic>> oldLayers,
+      List<Map<String, dynamic>> currentLayers) {
     // 首先检查数量是否变化
     if (oldLayers.length != currentLayers.length) {
       return true;
@@ -783,16 +811,17 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       // 检查影响渲染的关键属性
       final oldVisible = oldLayer['isVisible'] as bool? ?? true;
       final currentVisible = currentLayer['isVisible'] as bool? ?? true;
-      
+
       final oldOpacity = (oldLayer['opacity'] as num?)?.toDouble() ?? 1.0;
-      final currentOpacity = (currentLayer['opacity'] as num?)?.toDouble() ?? 1.0;
-      
+      final currentOpacity =
+          (currentLayer['opacity'] as num?)?.toDouble() ?? 1.0;
+
       final oldLocked = oldLayer['isLocked'] as bool? ?? false;
       final currentLocked = currentLayer['isLocked'] as bool? ?? false;
 
       // 如果任何关键属性发生变化，则认为图层已变化
-      if (oldVisible != currentVisible || 
-          oldOpacity != currentOpacity || 
+      if (oldVisible != currentVisible ||
+          oldOpacity != currentOpacity ||
           oldLocked != currentLocked) {
         return true;
       }
@@ -801,70 +830,16 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     return false;
   }
 
-  /// 检查元素顺序是否发生了变化
-  bool _hasElementOrderChanged(List<Map<String, dynamic>> oldElements, List<Map<String, dynamic>> currentElements) {
-    // 🔧 添加详细调试日志
-    EditPageLogger.rendererDebug('🔧 检查元素顺序变化', data: {
-      'oldCount': oldElements.length,
-      'currentCount': currentElements.length,
-      'oldElementIds': oldElements.map((e) => e['id'] as String).toList(),
-      'currentElementIds': currentElements.map((e) => e['id'] as String).toList(),
-    });
-    
-    // 如果数量不同，不是单纯的顺序变化
-    if (oldElements.length != currentElements.length) {
-      EditPageLogger.rendererDebug('🔧 元素数量不同，不是顺序变化', data: {
-        'oldCount': oldElements.length,
-        'currentCount': currentElements.length,
-      });
-      return false;
-    }
+  /// Check if a layer is hidden
+  bool _isLayerHidden(String layerId) {
+    final layers = widget.layers;
+    if (layers == null) return false;
 
-    // 检查元素ID的顺序是否发生变化
-    bool orderChanged = false;
-    for (int i = 0; i < oldElements.length; i++) {
-      final oldElementId = oldElements[i]['id'] as String?;
-      final currentElementId = currentElements[i]['id'] as String?;
-      
-      if (oldElementId != currentElementId) {
-        EditPageLogger.rendererDebug('🔧 发现位置 $i 的元素ID不同', data: {
-          'position': i,
-          'oldElementId': oldElementId,
-          'currentElementId': currentElementId,
-        });
-        orderChanged = true;
-        break;
-      }
-    }
-    
-    if (!orderChanged) {
-      EditPageLogger.rendererDebug('🔧 所有位置元素ID相同，无顺序变化');
-      return false;
-    }
-    
-    // 进一步验证：确保这确实是顺序变化而不是元素替换
-    // 检查新列表是否包含所有旧元素的ID
-    final oldElementIds = oldElements.map((e) => e['id'] as String).toSet();
-    final currentElementIds = currentElements.map((e) => e['id'] as String).toSet();
-    
-    final isSameElements = oldElementIds.length == currentElementIds.length && 
-        oldElementIds.every((id) => currentElementIds.contains(id));
-    
-    EditPageLogger.rendererDebug('🔧 验证是否为真正的顺序变化', data: {
-      'orderChanged': orderChanged,
-      'isSameElements': isSameElements,
-      'result': orderChanged && isSameElements,
-      'oldElementIds': oldElementIds.toList(),
-      'currentElementIds': currentElementIds.toList(),
-    });
-    
-    if (orderChanged && isSameElements) {
-      EditPageLogger.rendererDebug('🔧 ✅ 确认为元素顺序变化！');
-      return true;
-    } else {
-      EditPageLogger.rendererDebug('🔧 ❌ 不是纯粹的顺序变化');
-      return false;
-    }
+    final layer = layers.firstWhere(
+      (l) => l['id'] == layerId,
+      orElse: () => <String, dynamic>{},
+    );
+    return layer.isNotEmpty ? layer['isVisible'] == false : false;
   }
 
   /// Deep comparison of two maps

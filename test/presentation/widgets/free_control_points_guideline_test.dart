@@ -45,6 +45,7 @@ void main() {
                   capturedGuidelines = guidelines;
                   onGuidelinesUpdatedCalled = true;
                 },
+                updateGuidelineManagerElements: null, // Test can pass null
               ),
             ),
           ),
@@ -75,6 +76,7 @@ void main() {
               rotation: 0.0,
               alignmentMode: AlignmentMode.guideline,
               onGuidelinesUpdated: (guidelines) {},
+              updateGuidelineManagerElements: null, // Test can pass null
             ),
           ),
         ),

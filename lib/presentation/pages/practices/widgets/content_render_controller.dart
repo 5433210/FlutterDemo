@@ -11,8 +11,11 @@ import 'element_change_types.dart';
 
 /// Controller for managing content rendering layer updates and notifications
 class ContentRenderController extends ChangeNotifier {
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 16); // 60 FPS
   final List<ElementChangeInfo> _changeHistory = [];
   final Map<String, Map<String, dynamic>> _lastKnownProperties = {};
+
   final StreamController<ElementChangeInfo> _changeStreamController =
       StreamController<ElementChangeInfo>.broadcast();
 
@@ -21,21 +24,19 @@ class ContentRenderController extends ChangeNotifier {
 
   // 需要跳过渲染的元素列表 (将在DragPreviewLayer中显示)
   final Set<String> _elementsToSkip = <String>{};
-  
   // 🔧 拖拽状态跟踪变量
   bool _lastIsDragging = false;
   bool _lastIsDragPreviewActive = false;
-  Set<String> _lastDraggingElementIds = <String>{};
 
+  Set<String> _lastDraggingElementIds = <String>{};
   // Smart rebuilding system components
   late final DirtyTracker _dirtyTracker;
-  SelectiveRebuildManager? _rebuildManager;
 
+  SelectiveRebuildManager? _rebuildManager;
   // 🚀 节流通知相关
   Timer? _notificationTimer;
   bool _hasPendingUpdate = false;
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
 
   /// Initialize the controller with optional selective rebuilding
   ContentRenderController({
@@ -59,12 +60,6 @@ class ContentRenderController extends ChangeNotifier {
   /// Get the dirty tracker for selective rebuilding
   DirtyTracker get dirtyTracker => _dirtyTracker;
 
-  // 是否正在拖拽中
-  bool get isDragging => _dragStateManager?.isDragging ?? false;
-
-  /// Get selective rebuild manager (may be null if not enabled)
-  SelectiveRebuildManager? get rebuildManager => _rebuildManager;
-
   /// 流式元素变更通知
   Stream<ElementChangeInfo> get elementChanges =>
       _changeStreamController.stream;
@@ -72,88 +67,18 @@ class ContentRenderController extends ChangeNotifier {
   /// 获取需要跳过渲染的元素列表
   Set<String> get elementsToSkip => Set.unmodifiable(_elementsToSkip);
 
-  /// 🚀 节流通知方法 - 避免内容渲染控制器过于频繁地触发UI更新
-  void _throttledNotifyListeners({
-    required String operation,
-    Map<String, dynamic>? data,
-  }) {
-    final now = DateTime.now();
-    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
-      _lastNotificationTime = now;
-      
-      // 🔧 优化：减少节流通知的日志输出频率
-      if (operation == 'drag_state_update' || operation.contains('drag')) {
-        // 拖拽相关操作减少日志
-        if (now.millisecondsSinceEpoch % 100 == 0) { // 只输出1%的日志
-          EditPageLogger.canvasDebug(
-            '内容渲染控制器节流通知',
-            data: {
-              'operation': operation,
-              'optimization': 'throttled_notification_reduced_logging',
-              'reason': 'avoid_global_ui_rebuild',
-              ...?data,
-            },
-          );
-        }
-      } else {
-        EditPageLogger.canvasDebug(
-          '内容渲染控制器跳过通知',
-          data: {
-            'operation': operation,
-            'optimization': 'skip_content_render_notification',
-            'reason': 'avoid_global_ui_rebuild',
-            ...?data,
-          },
-        );
-      }
-      
-      // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
-    } else {
-      // 缓存待处理的更新
-      if (!_hasPendingUpdate) {
-        _hasPendingUpdate = true;
-        _notificationTimer?.cancel();
-        _notificationTimer = Timer(_notificationThrottle, () {
-          _hasPendingUpdate = false;
-          
-          // 🔧 优化：延迟通知也减少日志
-          if (operation == 'drag_state_update' || operation.contains('drag')) {
-            // 拖拽相关操作几乎不输出延迟日志
-            if (now.millisecondsSinceEpoch % 1000 == 0) { // 只输出0.1%的日志
-              EditPageLogger.canvasDebug(
-                '内容渲染控制器延迟节流通知',
-                data: {
-                  'operation': operation,
-                  'optimization': 'delayed_throttled_notification_minimal_logging',
-                  'reason': 'avoid_global_ui_rebuild',
-                  ...?data,
-                },
-              );
-            }
-          } else {
-            EditPageLogger.canvasDebug(
-              '内容渲染控制器跳过延迟通知',
-              data: {
-                'operation': operation,
-                'optimization': 'skip_delayed_content_render_notification',
-                'reason': 'avoid_global_ui_rebuild',
-                ...?data,
-              },
-            );
-          }
-          
-          // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
-        });
-      }
-    }
-  }
+  // 是否正在拖拽中
+  bool get isDragging => _dragStateManager?.isDragging ?? false;
+
+  /// Get selective rebuild manager (may be null if not enabled)
+  SelectiveRebuildManager? get rebuildManager => _rebuildManager;
 
   void agStateChanged() {
     EditPageLogger.canvasDebug('拖拽状态变化，触发重建', data: {
       'isDragging': _dragStateManager?.isDragging,
       'draggingElementIds': _dragStateManager?.draggingElementIds
     });
-    
+
     // 🚀 使用节流通知替代直接notifyListeners
     _throttledNotifyListeners(
       operation: 'drag_state_changed',
@@ -173,39 +98,38 @@ class ContentRenderController extends ChangeNotifier {
   void dispose() {
     // 使用三重保护确保super.dispose()一定被调用
     bool superDisposeCompleted = false;
-    
+
     try {
       try {
         _notificationTimer?.cancel();
       } catch (e) {
         debugPrint('取消通知计时器失败: $e');
       }
-      
+
       try {
         _changeStreamController.close();
       } catch (e) {
         debugPrint('关闭stream controller失败: $e');
       }
-      
+
       try {
         _dirtyTracker.dispose();
       } catch (e) {
         debugPrint('dispose dirty tracker失败: $e');
       }
-      
+
       try {
         _rebuildManager?.dispose();
       } catch (e) {
         debugPrint('dispose rebuild manager失败: $e');
       }
-      
+
       try {
         // 移除拖拽状态监听器
         _dragStateManager?.removeListener(_onDragStateChanged);
       } catch (e) {
         debugPrint('移除拖拽状态监听器失败: $e');
       }
-      
     } catch (e) {
       debugPrint('ContentRenderController dispose过程中发生异常: $e');
     } finally {
@@ -215,20 +139,22 @@ class ContentRenderController extends ChangeNotifier {
           super.dispose();
           superDisposeCompleted = true;
         } catch (disposeError) {
-          debugPrint('ContentRenderController super.dispose()调用失败: $disposeError');
+          debugPrint(
+              'ContentRenderController super.dispose()调用失败: $disposeError');
           // 尝试第三次调用
           try {
             super.dispose();
             superDisposeCompleted = true;
           } catch (finalError) {
-            debugPrint('ContentRenderController 最终super.dispose()调用失败: $finalError');
+            debugPrint(
+                'ContentRenderController 最终super.dispose()调用失败: $finalError');
             // 即使最终失败，也标记为完成，避免无限循环
             superDisposeCompleted = true;
           }
         }
       }
     }
-    
+
     // 额外的安全检查：如果所有尝试都失败，强制标记完成
     if (!superDisposeCompleted) {
       debugPrint('警告：ContentRenderController super.dispose()可能未能成功调用');
@@ -284,16 +210,13 @@ class ContentRenderController extends ChangeNotifier {
 
   /// Initialize multiple elements at once
   void initializeElements(List<Map<String, dynamic>> elements) {
-    EditPageLogger.canvasDebug('批量初始化元素', data: {
-      'elementCount': elements.length
-    });
+    EditPageLogger.canvasDebug('批量初始化元素',
+        data: {'elementCount': elements.length});
     for (final element in elements) {
       final elementId = element['id'] as String;
       final elementType = element['type'] as String?;
-      EditPageLogger.canvasDebug('初始化元素', data: {
-        'elementId': elementId,
-        'type': elementType
-      });
+      EditPageLogger.canvasDebug('初始化元素',
+          data: {'elementId': elementId, 'type': elementType});
       _lastKnownProperties[elementId] = Map.from(element);
     }
   }
@@ -434,10 +357,8 @@ class ContentRenderController extends ChangeNotifier {
 
   /// 刷新所有受监控的元素
   void refreshAll(String reason) {
-    EditPageLogger.canvasDebug('刷新所有受监控元素', data: {
-      'reason': reason,
-      'elementCount': _lastKnownProperties.length
-    });
+    EditPageLogger.canvasDebug('刷新所有受监控元素',
+        data: {'reason': reason, 'elementCount': _lastKnownProperties.length});
 
     // 标记所有受跟踪的元素为脏状态
     for (final elementId in _lastKnownProperties.keys) {
@@ -453,16 +374,15 @@ class ContentRenderController extends ChangeNotifier {
       },
     );
 
-    EditPageLogger.canvasDebug('元素刷新完成', data: {
-      'refreshedCount': _lastKnownProperties.length
-    });
+    EditPageLogger.canvasDebug('元素刷新完成',
+        data: {'refreshedCount': _lastKnownProperties.length});
   }
 
   /// Reset controller state
   void reset() {
     _changeHistory.clear();
     _lastKnownProperties.clear();
-    
+
     // 🚀 使用节流通知替代直接notifyListeners
     _throttledNotifyListeners(
       operation: 'reset',
@@ -483,9 +403,8 @@ class ContentRenderController extends ChangeNotifier {
     // 添加新的监听器
     _dragStateManager?.addListener(_onDragStateChanged);
 
-    EditPageLogger.canvasDebug('DragStateManager连接完成', data: {
-      'hasListener': true
-    });
+    EditPageLogger.canvasDebug('DragStateManager连接完成',
+        data: {'hasListener': true});
   }
 
   /// Check if an element should be rebuilt
@@ -500,72 +419,29 @@ class ContentRenderController extends ChangeNotifier {
     final isDragStateManagerActive = dragStateManager != null;
     final isDragging = dragStateManager?.isDragging ?? false;
     final isDragPreviewActive = dragStateManager?.isDragPreviewActive ?? false;
-    final isElementDragging = dragStateManager?.isElementDragging(elementId) ?? false;
+    final isElementDragging =
+        dragStateManager?.isElementDragging(elementId) ?? false;
     final enableDragPreview = DragConfig.enableDragPreview;
-    final draggingElementIds = dragStateManager?.draggingElementIds ?? <String>{};
+    final draggingElementIds =
+        dragStateManager?.draggingElementIds ?? <String>{};
     final isSingleSelection = draggingElementIds.length == 1;
-    
-    EditPageLogger.canvasError('🔧🔧🔧 shouldSkipElementRendering详细状态', data: {
-      'elementId': elementId,
-      'dragStateManagerActive': isDragStateManagerActive,
-      'dragStateManagerHashCode': dragStateManager?.hashCode ?? 'null',
-      'isDragging': isDragging,
-      'isDragPreviewActive': isDragPreviewActive,
-      'isElementDragging': isElementDragging,
-      'enableDragPreview': enableDragPreview,
-      'draggingElementIds': draggingElementIds.toList(),
-      'draggingElementCount': draggingElementIds.length,
-      'isSingleSelection': isSingleSelection,
-      'currentTime': DateTime.now().millisecondsSinceEpoch,
-    });
-    
+
     // 快速退出 - 如果拖拽状态管理器无效，始终显示元素
     if (!isDragStateManagerActive) {
-      EditPageLogger.canvasError('🔧🔧🔧 跳过渲染失败：无拖拽状态管理器', data: {'elementId': elementId});
       return false;
-    }
-
-    // 快速退出 - 如果不在拖拽中，始终显示元素
+    } // 快速退出 - 如果不在拖拽中，始终显示元素
     if (!isDragging || !isDragPreviewActive) {
-      EditPageLogger.canvasError('🔧🔧🔧 跳过渲染失败：不在拖拽状态', data: {
-        'elementId': elementId,
-        'isDragging': isDragging,
-        'isDragPreviewActive': isDragPreviewActive,
-      });
       return false;
-    }
-
-    // 🔧 强化单选检查：确保单选时的元素能够正确隐藏
+    } // 🔧 强化单选检查：确保单选时的元素能够正确隐藏
     if (isSingleSelection && draggingElementIds.contains(elementId)) {
-      EditPageLogger.canvasError('🔧🔧🔧 单选元素拖拽检查', data: {
-        'elementId': elementId,
-        'isDraggingThisElement': true,
-        'enableDragPreview': enableDragPreview,
-        'shouldSkipForSingleSelection': enableDragPreview,
-        'fix': 'single_selection_skip_check',
-      });
-      
       if (enableDragPreview) {
-        EditPageLogger.canvasError('🔧🔧🔧 单选元素将被隐藏', data: {
-          'elementId': elementId,
-          'reason': '单选拖拽中，元素由预览层显示',
-        });
         return true;
       }
     }
 
     // 核心逻辑 - 仅当元素正在被拖拽且拖拽预览层启用时，才跳过元素渲染
     final shouldSkip = isElementDragging && enableDragPreview;
-    
-    EditPageLogger.canvasError('🔧🔧🔧 跳过渲染决策', data: {
-      'elementId': elementId,
-      'shouldSkip': shouldSkip,
-      'isElementDragging': isElementDragging,
-      'enableDragPreview': enableDragPreview,
-      'isSingleSelection': isSingleSelection,
-      'finalDecision': shouldSkip,
-    });
-    
+
     return shouldSkip;
   }
 
@@ -576,7 +452,7 @@ class ContentRenderController extends ChangeNotifier {
       final isDragging = _dragStateManager!.isDragging;
       final draggingElementIds = _dragStateManager!.draggingElementIds;
       final isDragPreviewActive = _dragStateManager!.isDragPreviewActive;
-      
+
       // 🔧 使用实例变量进行状态跟踪
 
       // 添加调试信息
@@ -598,7 +474,7 @@ class ContentRenderController extends ChangeNotifier {
         for (final elementId in draggingElementIds) {
           markElementDirty(elementId, ElementChangeType.multiple);
         }
-        
+
         EditPageLogger.canvasDebug('拖拽开始：标记元素为脏状态', data: {
           'draggingElementIds': draggingElementIds.toList(),
           'optimization': 'mark_dragging_elements_dirty'
@@ -606,12 +482,20 @@ class ContentRenderController extends ChangeNotifier {
       }
 
       // 🔧 更精确的拖拽开始和结束检测
-      final isJustStartedDragging = isDragging && isDragPreviewActive && draggingElementIds.isNotEmpty &&
-          (!_lastIsDragging || !_lastIsDragPreviewActive || _lastDraggingElementIds.isEmpty);
-      
-      final isJustEndedDragging = !isDragging && !isDragPreviewActive && draggingElementIds.isEmpty &&
-          (_lastIsDragging || _lastIsDragPreviewActive || _lastDraggingElementIds.isNotEmpty);
-      
+      final isJustStartedDragging = isDragging &&
+          isDragPreviewActive &&
+          draggingElementIds.isNotEmpty &&
+          (!_lastIsDragging ||
+              !_lastIsDragPreviewActive ||
+              _lastDraggingElementIds.isEmpty);
+
+      final isJustEndedDragging = !isDragging &&
+          !isDragPreviewActive &&
+          draggingElementIds.isEmpty &&
+          (_lastIsDragging ||
+              _lastIsDragPreviewActive ||
+              _lastDraggingElementIds.isNotEmpty);
+
       if (isJustStartedDragging) {
         // 拖拽刚开始：强制重建以隐藏原始元素
         EditPageLogger.canvasError('🔧🔧🔧 拖拽开始：强制ContentRenderLayer重建', data: {
@@ -622,7 +506,7 @@ class ContentRenderController extends ChangeNotifier {
           'rebuildTrigger': 'drag_start',
           'precise': 'just_started_dragging',
         });
-        
+
         // 强制元素缓存失效，确保shouldSkipElementRendering被调用
         for (final elementId in draggingElementIds) {
           EditPageLogger.canvasError('🔧🔧🔧 强制元素缓存失效', data: {
@@ -630,18 +514,17 @@ class ContentRenderController extends ChangeNotifier {
             'reason': '确保拖拽时重新评估元素渲染',
             'fix': 'force_cache_invalidation',
           });
-          
+
           markElementDirty(elementId, ElementChangeType.visibility);
           _rebuildManager?.removeElement(elementId);
         }
-        
+
         // 立即通知，绕过节流机制
         EditPageLogger.canvasError('🔧🔧🔧 拖拽开始立即通知，绕过节流', data: {
           'reason': '确保拖拽时元素立即隐藏',
           'bypass': 'throttle_mechanism',
         });
         super.notifyListeners();
-        
       } else if (isJustEndedDragging) {
         // 拖拽刚结束：强制重建以在新位置显示元素
         EditPageLogger.canvasError('🔧🔧🔧 拖拽结束：强制ContentRenderLayer重建', data: {
@@ -650,7 +533,6 @@ class ContentRenderController extends ChangeNotifier {
           'precise': 'just_ended_dragging',
         });
         super.notifyListeners();
-        
       } else {
         // 🔧 关键优化：拖拽过程中不触发ContentRenderLayer重建
         // 只有拖拽开始和结束时才需要重建ContentRenderLayer
@@ -664,11 +546,11 @@ class ContentRenderController extends ChangeNotifier {
           'isJustEnded': isJustEndedDragging,
           'optimization': 'skip_content_rebuild_during_drag',
         });
-        
+
         // 🔧 不调用任何通知方法，保持ContentRenderLayer稳定
         // 拖拽过程中的视觉更新完全由DragPreviewLayer负责
       }
-      
+
       // 🔧 更新历史状态用于下次比较
       _lastIsDragging = isDragging;
       _lastIsDragPreviewActive = isDragPreviewActive;
@@ -679,6 +561,85 @@ class ContentRenderController extends ChangeNotifier {
         'draggingElementIds': draggingElementIds,
         'rebuildTriggered': isJustStartedDragging || isJustEndedDragging,
       });
+    }
+  }
+
+  /// 🚀 节流通知方法 - 避免内容渲染控制器过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+
+      // 🔧 优化：减少节流通知的日志输出频率
+      if (operation == 'drag_state_update' || operation.contains('drag')) {
+        // 拖拽相关操作减少日志
+        if (now.millisecondsSinceEpoch % 100 == 0) {
+          // 只输出1%的日志
+          EditPageLogger.canvasDebug(
+            '内容渲染控制器节流通知',
+            data: {
+              'operation': operation,
+              'optimization': 'throttled_notification_reduced_logging',
+              'reason': 'avoid_global_ui_rebuild',
+              ...?data,
+            },
+          );
+        }
+      } else {
+        EditPageLogger.canvasDebug(
+          '内容渲染控制器跳过通知',
+          data: {
+            'operation': operation,
+            'optimization': 'skip_content_render_notification',
+            'reason': 'avoid_global_ui_rebuild',
+            ...?data,
+          },
+        );
+      }
+
+      // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
+    } else {
+      // 缓存待处理的更新
+      if (!_hasPendingUpdate) {
+        _hasPendingUpdate = true;
+        _notificationTimer?.cancel();
+        _notificationTimer = Timer(_notificationThrottle, () {
+          _hasPendingUpdate = false;
+
+          // 🔧 优化：延迟通知也减少日志
+          if (operation == 'drag_state_update' || operation.contains('drag')) {
+            // 拖拽相关操作几乎不输出延迟日志
+            if (now.millisecondsSinceEpoch % 1000 == 0) {
+              // 只输出0.1%的日志
+              EditPageLogger.canvasDebug(
+                '内容渲染控制器延迟节流通知',
+                data: {
+                  'operation': operation,
+                  'optimization':
+                      'delayed_throttled_notification_minimal_logging',
+                  'reason': 'avoid_global_ui_rebuild',
+                  ...?data,
+                },
+              );
+            }
+          } else {
+            EditPageLogger.canvasDebug(
+              '内容渲染控制器跳过延迟通知',
+              data: {
+                'operation': operation,
+                'optimization': 'skip_delayed_content_render_notification',
+                'reason': 'avoid_global_ui_rebuild',
+                ...?data,
+              },
+            );
+          }
+
+          // super.notifyListeners(); // 🚀 已禁用以避免触发ContentRenderLayer重建
+        });
+      }
     }
   }
 }

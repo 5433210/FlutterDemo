@@ -7,6 +7,8 @@ import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
 import 'element_operations_mixin.dart';
+import 'guideline_alignment/guideline_manager.dart';
+import 'guideline_alignment/guideline_types.dart';
 import 'intelligent_notification_mixin.dart';
 import 'intelligent_state_dispatcher.dart';
 import 'layer_management_mixin.dart';
@@ -321,6 +323,60 @@ class PracticeEditController extends ChangeNotifier
       );
     }
     EditPageLogger.controllerDebug('网格设置变化处理完成');
+  }
+
+  /// 实现ElementManagementMixin的抽象方法 - 更新参考线管理器元素数据
+  @override
+  void updateGuidelineManagerElements() {
+    // 🔧 修复：直接实现功能，避免递归调用
+    if (state.alignmentMode != AlignmentMode.guideline) {
+      return;
+    }
+
+    checkDisposed();
+
+    // 如果当前页面存在，更新GuidelineManager的元素数据
+    if (state.currentPageIndex >= 0 && state.pages.isNotEmpty) {
+      final currentPage = state.pages[state.currentPageIndex];
+      final elements = <Map<String, dynamic>>[];
+
+      // 🔧 CRITICAL FIX: 元素直接存储在页面中，不是在图层中
+      final pageElements = currentPage['elements'] as List<dynamic>? ?? [];
+
+      for (final element in pageElements) {
+        final elementMap = element as Map<String, dynamic>;
+        elements.add({
+          'id': elementMap['id'],
+          'x': elementMap['x'],
+          'y': elementMap['y'],
+          'width': elementMap['width'],
+          'height': elementMap['height'],
+          'layerId': elementMap['layerId'],
+          'isHidden': elementMap['isHidden'] ?? false,
+        });
+      }
+
+      final pageWidth = (currentPage['width'] as num?)?.toDouble() ?? 800.0;
+      final pageHeight = (currentPage['height'] as num?)?.toDouble() ?? 600.0;
+
+      // 初始化GuidelineManager
+      GuidelineManager.instance.initialize(
+        elements: elements,
+        pageSize: Size(pageWidth, pageHeight),
+        enabled: state.alignmentMode == AlignmentMode.guideline,
+        snapThreshold: 5.0, // 使用默认阈值
+      );
+
+      // 设置参考线输出列表同步
+      GuidelineManager.instance
+          .setActiveGuidelinesOutput(state.activeGuidelines);
+
+      EditPageLogger.controllerDebug('参考线管理器元素数据更新完成', data: {
+        'elementsCount': elements.length,
+        'pageSize': '${pageWidth}x$pageHeight',
+        'enabled': state.alignmentMode == AlignmentMode.guideline,
+      });
+    }
   }
 
   /// 更新字帖数据

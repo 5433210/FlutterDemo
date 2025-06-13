@@ -305,6 +305,10 @@ mixin CanvasLayerBuilders {
                         // 更新控制器中的活动参考线
                         controller.updateActiveGuidelines(guidelines);
                       },
+                      updateGuidelineManagerElements: () {
+                        // 更新参考线管理器的元素数据
+                        controller.updateGuidelineManagerElements();
+                      },
                     );
                   }),
                 ),
@@ -767,6 +771,10 @@ class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
                       onGuidelinesUpdated: (guidelines) {
                         // 更新控制器中的活动参考线
                         widget.controller.updateActiveGuidelines(guidelines);
+                      },
+                      updateGuidelineManagerElements: () {
+                        // 更新参考线管理器的元素数据
+                        widget.controller.updateGuidelineManagerElements();
                       },
                     );
                   }),

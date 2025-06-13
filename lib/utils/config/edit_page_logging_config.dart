@@ -57,9 +57,9 @@ class EditPageLoggingConfig {
     enablePerformanceLogging = true;
     performanceMinLevel = LogLevel.info;
     // 高频日志保持关闭
-    enableCanvasLogging = true;
+    enableCanvasLogging = false;
     enablePropertyPanelLogging = false;
-    enableRendererLogging = true;
+    enableRendererLogging = false;
   }
 
   static void configureForPerformanceDebugging() {

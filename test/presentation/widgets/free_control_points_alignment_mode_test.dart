@@ -21,6 +21,7 @@ void main() {
                 rotation: 0.0,
                 alignmentMode: mode,
                 onGuidelinesUpdated: (guidelines) {},
+                updateGuidelineManagerElements: null, // Test can pass null
               ),
             ),
           ),
@@ -48,6 +49,7 @@ void main() {
               rotation: 0.0,
               alignmentMode: null, // 测试null值
               onGuidelinesUpdated: (guidelines) {},
+              updateGuidelineManagerElements: null, // Test can pass null
             ),
           ),
         ),

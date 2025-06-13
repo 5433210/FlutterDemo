@@ -9,7 +9,8 @@ import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 
 /// 元素管理混入类 - 负责元素的增删改查操作
-mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
+mixin ElementManagementMixin on ChangeNotifier
+    implements IntelligentNotificationMixin {
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
@@ -282,6 +283,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
     _executeBatchUpdate(batchUpdates, batchOptions);
   }
 
+  @override
   void checkDisposed();
 
   /// 清除选择
@@ -291,7 +293,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
     state.selectedElement = null;
     state.selectedLayerId =
         null; // 🔧 Also clear layer selection to properly switch to page properties
-    
+
     // 🚀 使用智能状态分发器通知选择清除
     intelligentNotify(
       changeType: 'selection_change',
@@ -320,7 +322,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
 
       final element = Map<String, dynamic>.from(elements[elementIndex]);
 
-              EditPageLogger.controllerInfo('删除元素: $id, 类型: ${element['type']}');
+      EditPageLogger.controllerInfo('删除元素: $id, 类型: ${element['type']}');
 
       // 创建删除操作
       final operation = DeleteElementOperation(
@@ -340,7 +342,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
             }
 
             state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             intelligentNotify(
               changeType: 'element_restore',
@@ -354,7 +356,11 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
               operation: 'restore_element',
               affectedElements: [e['id'] as String],
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
           }
         },
@@ -376,7 +382,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
             }
 
             state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             intelligentNotify(
               changeType: 'element_delete',
@@ -390,7 +396,11 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
               operation: 'delete_element',
               affectedElements: [elementId],
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
           }
         },
@@ -426,7 +436,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                 final elements = page['elements'] as List<dynamic>;
                 elements.add(e);
                 state.hasUnsavedChanges = true;
-                
+
                 // 🚀 使用智能状态分发器替代直接的notifyListeners
                 intelligentNotify(
                   changeType: 'element_restore_batch',
@@ -440,7 +450,11 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                   operation: 'restore_element_batch',
                   affectedElements: [e['id'] as String],
                   affectedLayers: ['content', 'interaction'],
-                  affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+                  affectedUIComponents: [
+                    'canvas',
+                    'property_panel',
+                    'element_list'
+                  ],
                 );
               }
             },
@@ -451,7 +465,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                 final elements = page['elements'] as List<dynamic>;
                 elements.removeWhere((e) => e['id'] == id);
                 state.hasUnsavedChanges = true;
-                
+
                 // 🚀 使用智能状态分发器替代直接的notifyListeners
                 intelligentNotify(
                   changeType: 'element_delete_batch',
@@ -464,7 +478,11 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                   operation: 'delete_element_batch',
                   affectedElements: [id],
                   affectedLayers: ['content', 'interaction'],
-                  affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+                  affectedUIComponents: [
+                    'canvas',
+                    'property_panel',
+                    'element_list'
+                  ],
                 );
               }
             },
@@ -487,7 +505,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
       state.hasUnsavedChanges = true;
 
       undoRedoManager.addOperation(batchOperation);
-      
+
       // 🚀 使用智能状态分发器通知批量删除完成
       intelligentNotify(
         changeType: 'element_delete_selected',
@@ -523,7 +541,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
         elements.insert(newIndex, element);
 
         state.hasUnsavedChanges = true;
-        
+
         // 🚀 使用智能通知替代直接notifyListeners（元素顺序调整）
         intelligentNotify(
           changeType: 'element_order_update',
@@ -686,7 +704,9 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
   }
 
   /// 更新元素属性（内部方法，可控制是否创建撤销操作）
-  void updateElementPropertiesInternal(String id, Map<String, dynamic> properties, {bool createUndoOperation = true}) {
+  void updateElementPropertiesInternal(
+      String id, Map<String, dynamic> properties,
+      {bool createUndoOperation = true}) {
     if (state.currentPageIndex >= state.pages.length) {
       EditPageLogger.controllerWarning('当前页面索引无效，无法更新元素属性');
       return;
@@ -716,12 +736,12 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
 
       // 直接更新元素数据
       elements[elementIndex] = newProperties;
-      
+
       // 如果是当前选中的元素，更新selectedElement
       if (state.selectedElementIds.contains(id)) {
         state.selectedElement = newProperties;
       }
-      
+
       state.hasUnsavedChanges = true;
 
       // 根据参数决定是否创建撤销操作
@@ -749,7 +769,8 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
               }
             ],
             updateElement: (elementId, positionProps) {
-              updateElementPropertiesInternal(elementId, positionProps, createUndoOperation: false);
+              updateElementPropertiesInternal(elementId, positionProps,
+                  createUndoOperation: false);
             },
           );
         } else {
@@ -771,9 +792,9 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                   if (state.selectedElementIds.contains(id)) {
                     state.selectedElement = props;
                   }
-                  
+
                   state.hasUnsavedChanges = true;
-                  
+
                   // 🚀 使用智能通知替代直接notifyListeners（撤销操作中的元素属性更新）
                   intelligentNotify(
                     changeType: 'element_undo_redo',
@@ -795,7 +816,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
 
         undoRedoManager.addOperation(operation, executeImmediately: false);
       }
-      
+
       // 🚀 使用智能状态分发器通知元素属性变化
       intelligentNotify(
         changeType: 'element_update',
@@ -814,7 +835,8 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
   }
 
   /// 更新元素属性（不创建撤销操作）- 供其他撤销操作处理器使用
-  void updateElementPropertiesWithoutUndo(String id, Map<String, dynamic> properties) {
+  void updateElementPropertiesWithoutUndo(
+      String id, Map<String, dynamic> properties) {
     updateElementPropertiesInternal(id, properties, createUndoOperation: false);
   }
 
@@ -828,7 +850,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
     if (state.currentPageIndex >= 0 &&
         state.currentPageIndex < state.pages.length) {
       state.hasUnsavedChanges = true;
-      
+
       // 🚀 使用智能状态分发器替代直接的notifyListeners
       intelligentNotify(
         changeType: 'element_order_update',
@@ -843,6 +865,9 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
       );
     }
   }
+
+  /// 更新参考线管理器元素数据 - 由实现类提供
+  void updateGuidelineManagerElements();
 
   /// 添加元素的通用方法
   void _addElement(Map<String, dynamic> element) {
@@ -876,7 +901,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
 
             EditPageLogger.controllerDebug(
                 '🚀 ElementManagement: Element selected and triggering intelligent notification');
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             intelligentNotify(
               changeType: 'element_add',
@@ -891,8 +916,15 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
               operation: 'add_element',
               affectedElements: [e['id'] as String],
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
+
+            // 🔧 新增：更新参考线管理器的元素数据
+            updateGuidelineManagerElements();
           } else {
             EditPageLogger.controllerError('无效的页面索引');
           }
@@ -913,7 +945,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
             }
 
             state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             intelligentNotify(
               changeType: 'element_remove',
@@ -927,8 +959,15 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
               operation: 'remove_element',
               affectedElements: [id],
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
+
+            // 🔧 新增：更新参考线管理器的元素数据
+            updateGuidelineManagerElements();
           }
         });
 
@@ -1007,9 +1046,9 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
                   if (state.selectedElementIds.contains(id)) {
                     state.selectedElement = props;
                   }
-                  
+
                   state.hasUnsavedChanges = true;
-                  
+
                   // 🚀 使用智能通知替代直接notifyListeners（撤销操作中的元素属性更新）
                   intelligentNotify(
                     changeType: 'element_undo_redo',
@@ -1038,7 +1077,7 @@ mixin ElementManagementMixin on ChangeNotifier implements IntelligentNotificatio
       }
 
       state.hasUnsavedChanges = true;
-      
+
       // 🚀 使用智能状态分发器替代直接的notifyListeners
       intelligentNotify(
         changeType: 'element_batch_update',

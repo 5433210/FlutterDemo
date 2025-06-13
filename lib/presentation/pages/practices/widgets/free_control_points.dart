@@ -24,11 +24,10 @@ class FreeControlPoints extends StatefulWidget {
   final Function(int)? onControlPointDragEnd;
   // 🔧 新增：传递最终状态的回调
   final Function(int, Map<String, double>)? onControlPointDragEndWithState;
-
   // 🔧 新增：参考线对齐回调
   final Function(List<Guideline>)? onGuidelinesUpdated;
   final AlignmentMode? alignmentMode;
-
+  final VoidCallback? updateGuidelineManagerElements;
   const FreeControlPoints({
     Key? key,
     required this.elementId,
@@ -44,6 +43,7 @@ class FreeControlPoints extends StatefulWidget {
     this.onControlPointDragEndWithState,
     this.onGuidelinesUpdated,
     this.alignmentMode,
+    this.updateGuidelineManagerElements,
   }) : super(key: key);
 
   @override
@@ -263,29 +263,30 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
 
     try {
-      // 应用delta得到新位置
-      final newBounds = Rect.fromLTWH(_currentX + delta.dx,
-          _currentY + delta.dy, _currentWidth, _currentHeight);
+      // 🔧 临时修复：确保GuidelineManager已经初始化
+      _ensureGuidelineManagerInitialized();
 
-      // 调用GuidelineManager进行对齐检测
+      // 应用delta得到新位置
+      final newBounds = Rect.fromLTWH(
+          _currentX + delta.dx,
+          _currentY + delta.dy,
+          _currentWidth,
+          _currentHeight); // 调用GuidelineManager进行对齐检测
       final alignmentResult = GuidelineManager.instance.detectAlignment(
         elementId: elementId,
         currentPosition: newBounds.topLeft,
         elementSize: newBounds.size,
       );
-
       if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
         // 获取对齐后的位置
-        final alignedX =
-            alignmentResult['alignedX'] as double? ?? newBounds.left;
-        final alignedY =
-            alignmentResult['alignedY'] as double? ?? newBounds.top;
-        final guidelines =
-            alignmentResult['guidelines'] as List<Guideline>? ?? [];
-
-        // 更新活动参考线
+        final alignedPosition =
+            alignmentResult['position'] as Offset? ?? newBounds.topLeft;
+        final alignedX = alignedPosition.dx;
+        final alignedY = alignedPosition.dy;
+        final guidelines = alignmentResult['guidelines'] as List<Guideline>? ??
+            []; // 更新活动参考线 (确保创建新的可修改列表)
         setState(() {
-          _activeGuidelines = guidelines;
+          _activeGuidelines = List<Guideline>.from(guidelines);
         });
 
         // 通知外部更新参考线
@@ -307,7 +308,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         // 没有对齐，清除参考线
         if (_activeGuidelines.isNotEmpty) {
           setState(() {
-            _activeGuidelines.clear();
+            _activeGuidelines = <Guideline>[];
           });
           widget.onGuidelinesUpdated?.call([]);
         }
@@ -317,6 +318,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         'error': e.toString(),
         'elementId': elementId,
         'delta': '$delta',
+        'stackTrace': StackTrace.current.toString(),
+        'guidelineManagerEnabled': GuidelineManager.instance.enabled,
       });
     }
 
@@ -544,6 +547,151 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
   }
 
+  /// 🔧 临时修复：确保GuidelineManager已经初始化
+  void _ensureGuidelineManagerInitialized() {
+    // 检查GuidelineManager是否已启用，如果没有则进行基本初始化
+    if (!GuidelineManager.instance.enabled) {
+      EditPageLogger.canvasDebug('FreeControlPoints临时初始化GuidelineManager',
+          data: {
+            'reason': 'GuidelineManager未启用',
+            'elementId': widget.elementId,
+          });
+
+      // 创建一个最小的元素列表用于测试
+      final testElements = [
+        {
+          'id': 'test_element_1',
+          'x': 100.0,
+          'y': 100.0,
+          'width': 50.0,
+          'height': 30.0,
+          'layerId': 'layer1',
+          'isHidden': false,
+        },
+        {
+          'id': 'test_element_2',
+          'x': 200.0,
+          'y': 100.0,
+          'width': 50.0,
+          'height': 30.0,
+          'layerId': 'layer1',
+          'isHidden': false,
+        },
+      ];
+
+      GuidelineManager.instance.initialize(
+        elements: testElements,
+        pageSize: const Size(800, 600),
+        enabled: true,
+        snapThreshold: 5.0,
+      );
+
+      EditPageLogger.canvasDebug('FreeControlPoints完成临时初始化', data: {
+        'elementsCount': testElements.length,
+        'enabled': GuidelineManager.instance.enabled,
+      });
+    }
+  }
+
+  /// 🔧 新增：生成参考线对齐
+  void _generateGuidelines(Map<String, double> currentProperties) {
+    EditPageLogger.editPageDebug('🔍 [DEBUG] _generateGuidelines 被调用', data: {
+      'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
+      'onGuidelinesUpdated':
+          widget.onGuidelinesUpdated != null ? 'exists' : 'null',
+      'elementId': widget.elementId,
+      'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+    });
+
+    // 只在参考线对齐模式下生成参考线
+    if (widget.alignmentMode != AlignmentMode.guideline ||
+        widget.onGuidelinesUpdated == null) {
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过参考线生成', data: {
+        'reason': widget.alignmentMode != AlignmentMode.guideline
+            ? 'wrong_alignment_mode'
+            : 'no_callback',
+        'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
+      });
+      return;
+    }
+
+    try {
+      // 🔧 关键：确保参考线管理器有最新的元素数据
+      if (widget.updateGuidelineManagerElements != null) {
+        EditPageLogger.editPageDebug('🔍 [DEBUG] 更新参考线管理器元素数据');
+        widget.updateGuidelineManagerElements!();
+      }
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] GuidelineManager状态检查', data: {
+        'enabled': GuidelineManager.instance.enabled,
+        'elementsCount': GuidelineManager.instance.elementCount,
+        'activeGuidelinesCount':
+            GuidelineManager.instance.activeGuidelines.length,
+      });
+
+      // 确保GuidelineManager已启用
+      if (!GuidelineManager.instance.enabled) {
+        EditPageLogger.editPageDebug('GuidelineManager未启用，跳过参考线生成');
+        return;
+      }
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateGuidelines', data: {
+        'elementId': widget.elementId,
+        'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+        'size': '${currentProperties['width']}x${currentProperties['height']}',
+        'rotation': currentProperties['rotation'],
+      });
+
+      // 生成参考线
+      final hasGuidelines = GuidelineManager.instance.generateGuidelines(
+        elementId: widget.elementId,
+        draftPosition: Offset(currentProperties['x']!, currentProperties['y']!),
+        draftSize:
+            Size(currentProperties['width']!, currentProperties['height']!),
+        rotation: currentProperties['rotation'],
+      );
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] generateGuidelines 结果', data: {
+        'hasGuidelines': hasGuidelines,
+      });
+
+      if (hasGuidelines) {
+        // 获取生成的参考线
+        final guidelines = GuidelineManager.instance.activeGuidelines;
+
+        // 更新本地状态
+        setState(() {
+          _activeGuidelines.clear();
+          _activeGuidelines.addAll(guidelines);
+        });
+
+        // 通知外部更新参考线渲染
+        widget.onGuidelinesUpdated!(guidelines);
+
+        EditPageLogger.editPageDebug('FreeControlPoints生成参考线', data: {
+          'elementId': widget.elementId,
+          'guidelinesCount': guidelines.length,
+          'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+          'size':
+              '${currentProperties['width']}x${currentProperties['height']}',
+        });
+      } else {
+        // 没有参考线，清除现有的
+        if (_activeGuidelines.isNotEmpty) {
+          setState(() {
+            _activeGuidelines.clear();
+          });
+          widget.onGuidelinesUpdated!([]);
+        }
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('参考线生成失败', data: {
+        'error': e.toString(),
+        'elementId': widget.elementId,
+      });
+    }
+  }
+
   MouseCursor _getControlPointCursor(int index) {
     switch (index) {
       case 0:
@@ -673,9 +821,20 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   }
 
   /// 🔧 控制点主导架构：将控制点状态实时推送给Canvas和DragPreviewLayer
+  /// 🔧 控制点主导架构：将控制点状态实时推送给Canvas和DragPreviewLayer
   void _pushStateToCanvasAndPreview() {
+    EditPageLogger.editPageDebug('🔍 [DEBUG] _pushStateToCanvasAndPreview 被调用');
+
     // 构建当前元素的完整状态
     final currentState = getCurrentElementProperties();
+
+    EditPageLogger.editPageDebug('🔍 [DEBUG] 当前元素状态', data: {
+      'elementId': widget.elementId,
+      'x': currentState['x'],
+      'y': currentState['y'],
+      'width': currentState['width'],
+      'height': currentState['height'],
+    });
 
     // 🔧 关键：通过onControlPointDragEndWithState实时推送状态
     // 这样DragPreviewLayer就能实时跟随控制点的变化
@@ -684,6 +843,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
       widget.onControlPointDragEndWithState!(-2, currentState);
     }
+
+    // 🔧 新增：生成参考线对齐
+    _generateGuidelines(currentState);
   }
 
   /// 重新计算控制点位置

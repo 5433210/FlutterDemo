@@ -99,6 +99,9 @@ mixin ToolManagementMixin on ChangeNotifier
         'pageSize': '${pageWidth}x$pageHeight',
         'enabled': state.alignmentMode == AlignmentMode.guideline,
       });
+
+      // 🔧 立即更新参考线管理器元素数据，确保元素同步
+      updateGuidelineManagerElements();
     }
   }
 

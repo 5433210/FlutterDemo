@@ -592,11 +592,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       if (shouldHandleAnySpecialGesture(elements)) {
                         _isReadyForDrag = true;
                         // 移除立即setState，避免Canvas在拖拽状态设置前重建
-                        EditPageLogger.canvasError('🔧🔧🔧 设置拖拽准备状态，但不立即重建',
-                            data: {
-                              'isReadyForDrag': _isReadyForDrag,
-                              'reason': 'avoid_premature_canvas_rebuild',
-                            });
                       } else {
                         _isReadyForDrag = false;
                       }
@@ -606,16 +601,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       _isReadyForDrag = false;
 
                       _gestureHandler.handleTapUp(
-                          details, elements.cast<Map<String, dynamic>>());
-
-                      // 🔧 CRITICAL FIX: 移除不必要的setState，避免触发Canvas重建
+                          details,
+                          elements.cast<
+                              Map<String,
+                                  dynamic>>()); // 🔧 CRITICAL FIX: 移除不必要的setState，避免触发Canvas重建
                       // 选择状态变化会通过智能状态分发器自动处理，不需要全局重建
-                      EditPageLogger.canvasError('🔧🔧🔧 TapUp处理完成，跳过setState',
-                          data: {
-                            'reason': 'avoid_canvas_rebuild_on_selection',
-                            'optimization':
-                                'smart_state_dispatcher_handles_selection',
-                          });
 
                       // 调试选择状态变化后的情况（不触发重建）
                       _debugCanvasState('元素选择后');
@@ -665,15 +655,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                   (_isDragging ||
                                       _dragStateManager.isDragging)) {
                                 setState(() {});
-                                EditPageLogger.canvasError(
-                                    '🔧🔧🔧 拖拽开始后立即重建Canvas',
-                                    data: {
-                                      'isDragging': _isDragging,
-                                      'dragManagerDragging':
-                                          _dragStateManager.isDragging,
-                                      'reason':
-                                          'disable_interactive_viewer_pan',
-                                    });
                               }
 
                               final gestureProcessTime =
@@ -981,6 +962,52 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     );
   }
 
+  /// 确保Canvas UI组件注册成功
+  void _ensureCanvasRegistration() {
+    final intelligentDispatcher = widget.controller.intelligentDispatcher;
+    if (intelligentDispatcher != null) {
+      final isRegistered =
+          intelligentDispatcher.hasUIComponentListener('canvas');
+
+      if (!isRegistered) {
+        EditPageLogger.performanceWarning(
+          '🔧 Canvas UI组件未注册，执行重新注册',
+          data: {
+            'reason': 'post_frame_registration_check',
+            'timing': 'after_widget_build',
+          },
+        );
+
+        // 重新尝试注册
+        intelligentDispatcher.registerUIListener('canvas', () {
+          if (mounted && !_isDisposed) {
+            setState(() {});
+            EditPageLogger.canvasDebug('Canvas UI监听器触发重建(PostFrame)');
+          }
+        });
+
+        // 验证注册成功
+        final finalCheck =
+            intelligentDispatcher.hasUIComponentListener('canvas');
+        EditPageLogger.canvasDebug(
+          'PostFrame Canvas注册检查',
+          data: {
+            'isRegistered': finalCheck,
+            'registrationStrategy': 'post_frame_callback',
+          },
+        );
+      } else {
+        EditPageLogger.canvasDebug(
+          '✅ Canvas UI组件已正确注册',
+          data: {
+            'checkTiming': 'post_frame_callback',
+            'status': 'registration_confirmed',
+          },
+        );
+      }
+    }
+  }
+
   /// 回退到基础模式（禁用优化功能）
   void _fallbackToBasicMode() {
     try {
@@ -991,9 +1018,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _performanceMonitor = PerformanceMonitor(); // 🔧 也需要初始化性能监控器
 
       // 不要重新初始化_repaintBoundaryKey，因为它已经在_initializeCoreComponents()中初始化了
-      // _repaintBoundaryKey = GlobalKey();
-
-      // 注册简化的层级
+      // _repaintBoundaryKey = GlobalKey();      // 注册简化的层级
       _layerRenderManager.registerLayer(
         type: RenderLayerType.content,
         config: const LayerConfig(
@@ -1003,6 +1028,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           useRepaintBoundary: true,
         ),
         builder: (config) => _buildLayerWidget(RenderLayerType.content, config),
+      );
+
+      // 注册参考线层（基础模式也需要支持参考线）
+      _layerRenderManager.registerLayer(
+        type: RenderLayerType.guideline,
+        config: const LayerConfig(
+          type: RenderLayerType.guideline,
+          priority: LayerPriority.medium,
+          enableCaching: false, // 禁用缓存避免潜在问题
+          useRepaintBoundary: true,
+        ),
+        builder: (config) =>
+            _buildLayerWidget(RenderLayerType.guideline, config),
       );
 
       EditPageLogger.canvasDebug('画布已切换到基础模式');
@@ -1306,6 +1344,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       ),
       builder: (config) =>
           _buildLayerWidget(RenderLayerType.dragPreview, config),
+    ); // Register guideline layer (参考线层)
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.guideline,
+      config: const LayerConfig(
+        type: RenderLayerType.guideline,
+        priority: LayerPriority.medium,
+        enableCaching: false, // High update frequency during drag operations
+        useRepaintBoundary: true,
+      ),
+      builder: (config) => _buildLayerWidget(RenderLayerType.guideline, config),
     );
 
     // Register interaction layer (selection, control points)
@@ -1359,10 +1407,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // Register layers with the layer render manager
     _initializeLayers();
-    EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成');
-
-    // ✅ 新添加：注册Canvas到智能状态分发器
+    EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成'); // ✅ 新添加：注册Canvas到智能状态分发器
     _registerCanvasToIntelligentDispatcher();
+
+    // 🚀 CRITICAL FIX: 添加PostFrameCallback确保注册在widget完全构建后执行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isDisposed) {
+        _ensureCanvasRegistration();
+      }
+    });
   }
 
   /// 初始化UI组件
@@ -1391,26 +1444,95 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   }
 
   /// 处理DragStateManager状态变化
-  void _onDragStateManagerChanged() {}
+  void _onDragStateManagerChanged() {} // ✅ 新方法：注册Canvas到智能状态分发器
 
-  // ✅ 新方法：注册Canvas到智能状态分发器
   void _registerCanvasToIntelligentDispatcher() {
     final intelligentDispatcher = widget.controller.intelligentDispatcher;
     if (intelligentDispatcher != null) {
-      // 🚀 关键修复：注册内容层监听器以处理元素顺序变化
-      // 这是必需的，因为ContentRenderLayer的didUpdateWidget不能捕获所有变化
-      intelligentDispatcher.registerLayerListener('content', () {
-        // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
-        _handleIntelligentDispatcherContentUpdate();
-      });
+      try {
+        // 🚀 关键修复：注册内容层监听器以处理元素顺序变化
+        // 这是必需的，因为ContentRenderLayer的didUpdateWidget不能捕获所有变化
+        intelligentDispatcher.registerLayerListener('content', () {
+          // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
+          _handleIntelligentDispatcherContentUpdate();
+        });
 
-      EditPageLogger.canvasDebug(
-        'Canvas组件已注册到智能状态分发器',
-        data: {
-          'layerListeners': 1,
-          'purpose': '监听内容层变化',
-        },
-      );
+        // 🚀 CRITICAL FIX: 注册Canvas作为UI组件监听器，以接收参考线更新通知
+        // 这解决了参考线UI显示问题: "UI组件没有注册监听器" (component: canvas)
+        intelligentDispatcher.registerUIListener('canvas', () {
+          if (mounted && !_isDisposed) {
+            // 重建Canvas以显示参考线更新
+            setState(() {
+              // Canvas重建，确保参考线能够显示
+            });
+
+            EditPageLogger.canvasDebug(
+              'Canvas UI监听器触发重建',
+              data: {
+                'reason': 'guideline_or_ui_update',
+                'optimization': 'intelligent_canvas_rebuild',
+              },
+            );
+          }
+        });
+
+        // 🔍 验证注册是否成功 - 添加重试机制
+        bool isRegistered = false;
+        for (int attempt = 0; attempt < 3; attempt++) {
+          isRegistered = intelligentDispatcher.hasUIComponentListener('canvas');
+          if (isRegistered) break;
+
+          // 如果注册失败，稍等一下再试
+          if (attempt < 2) {
+            Future.delayed(const Duration(milliseconds: 10), () {
+              if (!_isDisposed) {
+                intelligentDispatcher.registerUIListener('canvas', () {
+                  if (mounted && !_isDisposed) {
+                    setState(() {});
+                    EditPageLogger.canvasDebug('Canvas UI监听器触发重建(重试)');
+                  }
+                });
+              }
+            });
+          }
+        }
+
+        EditPageLogger.canvasDebug(
+          'Canvas UI组件注册验证',
+          data: {
+            'isRegistered': isRegistered,
+            'registrationTime': DateTime.now().toIso8601String(),
+            'retryCount': isRegistered ? 0 : 3,
+          },
+        );
+
+        if (isRegistered) {
+          EditPageLogger.canvasDebug(
+            '✅ Canvas组件已成功注册到智能状态分发器',
+            data: {
+              'layerListeners': 1,
+              'uiListeners': 1,
+              'purpose': '监听内容层变化和UI组件更新（包括参考线）',
+            },
+          );
+        } else {
+          EditPageLogger.performanceWarning(
+            '❌ Canvas UI组件注册失败，参考线可能无法显示',
+            data: {
+              'issue': 'ui_component_registration_failed',
+              'fallback': 'traditional_notifications',
+            },
+          );
+        }
+      } catch (e) {
+        EditPageLogger.performanceWarning(
+          '注册Canvas到智能状态分发器时发生异常',
+          data: {
+            'error': e.toString(),
+            'fallback': 'traditional_notifications',
+          },
+        );
+      }
     } else {
       EditPageLogger.canvasDebug(
         '智能状态分发器不存在，无法注册Canvas监听器',
@@ -1575,13 +1697,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     try {
       final intelligentDispatcher = widget.controller.intelligentDispatcher;
       if (intelligentDispatcher != null) {
-        // 🚀 优化：由于Canvas没有注册监听器，无需注销
+        // 🚀 修复：注销Canvas UI监听器以修复参考线功能
         // 在dispose过程中使用debugPrint而不是EditPageLogger
-        debugPrint('Canvas组件无智能状态分发器监听器需要注销（优化版）');
+        debugPrint('Canvas组件注销智能状态分发器监听器'); // 注销UI监听器（参考线更新等）
+        intelligentDispatcher.removeUIListener('canvas');
 
-        // intelligentDispatcher.unregisterUIListener('canvas');
+        // 注销层级监听器（内容变化等）
+        // Note: 目前的 IntelligentStateDispatcher 实现可能不支持具体的监听器移除
+        // 但至少尝试调用以保持代码的完整性
         // intelligentDispatcher.unregisterLayerListener('content');
-        // intelligentDispatcher.unregisterLayerListener('interaction');
       }
     } catch (e) {
       // 在dispose过程中使用debugPrint而不是EditPageLogger
