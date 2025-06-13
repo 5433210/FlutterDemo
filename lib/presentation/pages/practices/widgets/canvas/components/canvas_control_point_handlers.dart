@@ -766,7 +766,6 @@ mixin CanvasControlPointHandlers {
     if (isReadyForDrag != null) _isReadyForDrag = isReadyForDrag;
     // dragStart 和 elementStartPosition 可以被子类使用
   }
-
   /// 🚀 新增：统一处理参考线生成的方法
   void _generateRealTimeGuidelines(
       String elementId, Map<String, double> currentProperties) {
@@ -776,7 +775,19 @@ mixin CanvasControlPointHandlers {
           'elementId': elementId,
           'alignmentMode': controller.state.alignmentMode.toString(),
           'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+          'isDragging': GuidelineManager.instance.isDragging,
         });
+
+    // 🔧 关键修改：如果正在拖拽，跳过参考线生成
+    // 让FreeControlPoints负责生成动态参考线
+    if (GuidelineManager.instance.isDragging) {
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过Canvas参考线生成', data: {
+        'reason': 'dragging_in_progress',
+        'isDragging': GuidelineManager.instance.isDragging,
+        'message': 'FreeControlPoints will handle dynamic guidelines',
+      });
+      return;
+    }
 
     // 只在参考线对齐模式下生成参考线
     if (controller.state.alignmentMode != AlignmentMode.guideline) {

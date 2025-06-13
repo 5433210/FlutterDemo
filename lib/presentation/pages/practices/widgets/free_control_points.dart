@@ -918,11 +918,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         'elementId': widget.elementId,
       });    }
 
-    // 🔧 临时注释掉有问题的调用，避免类型转换错误
-    // 推送元素状态更新到预览层
-    // if (widget.onControlPointDragEndWithState != null) {
-    //   widget.onControlPointDragEndWithState!(-2, currentState);
-    // }
+    // 推送元素状态更新到预览层（但CanvasControlPointHandlers不会覆盖参考线）
+    if (widget.onControlPointDragEndWithState != null) {
+      widget.onControlPointDragEndWithState!(-2, currentState);
+    }
   }
 
   /// 旋转一个点
