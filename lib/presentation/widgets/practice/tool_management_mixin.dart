@@ -245,10 +245,14 @@ mixin ToolManagementMixin on ChangeNotifier
     state.activeGuidelines = List<Guideline>.from(guidelines);
     state.isGuidelinePreviewActive = guidelines.isNotEmpty;
 
+    // 🔧 修复：正确检测动态参考线（检查 id 而不是 type.name）
+    final isDynamic = guidelines.any((g) => g.id.startsWith('dynamic_'));
+
     EditPageLogger.controllerDebug('实时更新活动参考线', data: {
       'count': guidelines.length,
       'types': guidelines.map((g) => g.type.name).toList(),
-      'isDynamic': guidelines.any((g) => g.type.name.startsWith('dynamic_')),
+      'ids': guidelines.map((g) => g.id).toList(),
+      'isDynamic': isDynamic,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'operation': 'real_time_guideline_update',
     });
@@ -261,7 +265,7 @@ mixin ToolManagementMixin on ChangeNotifier
       operation: 'updateActiveGuidelines',
       eventData: {
         'count': guidelines.length,
-        'isDynamic': guidelines.any((g) => g.type.name.startsWith('dynamic_')),
+        'isDynamic': isDynamic,
         'timestamp': DateTime.now().toIso8601String(),
       },
       affectedUIComponents: ['canvas'],
