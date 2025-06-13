@@ -1138,8 +1138,8 @@ mixin CanvasControlPointHandlers {
     // 实时更新DragStateManager，让DragPreviewLayer跟随控制点
     if (dragStateManager.isDragging &&
         dragStateManager.isElementDragging(elementId)) {
-      // dragStateManager.updateElementPreviewProperties(
-      //     elementId, livePreviewProperties);
+      dragStateManager.updateElementPreviewProperties(
+          elementId, livePreviewProperties);
     }
   }
 
