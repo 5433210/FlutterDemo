@@ -923,9 +923,7 @@ mixin CanvasControlPointHandlers {
             final dragStartContent =
                 dragStartGroupElement['content'] as Map<String, dynamic>?;
             final dragStartChildren =
-                dragStartContent?['children'] as List<dynamic>? ?? [];
-
-            // 找到对应的拖拽开始时的子元素状态
+                dragStartContent?['children'] as List<dynamic>? ?? [];            // 找到对应的拖拽开始时的子元素状态
             final dragStartChild = dragStartChildren.firstWhere(
               (child) => (child as Map<String, dynamic>)['id'] == childId,
               orElse: () => childMap, // 回退到当前子元素
@@ -1133,13 +1131,35 @@ mixin CanvasControlPointHandlers {
       'width': snappedLiveState['width'] ?? originalElement['width'],
       'height': snappedLiveState['height'] ?? originalElement['height'],
       'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
-    });
-
-    // 实时更新DragStateManager，让DragPreviewLayer跟随控制点
-    if (dragStateManager.isDragging &&
-        dragStateManager.isElementDragging(elementId)) {
+    });    // 🔧 修复：在参考线模式下跳过DragStateManager更新，避免与FreeControlPoints冲突
+    // FreeControlPoints 会自主管理显示状态，无需DragPreviewLayer干预
+    final shouldUpdateDragManager = dragStateManager.isDragging &&
+        dragStateManager.isElementDragging(elementId) &&
+        !_isControlPointDominated(elementId);
+    
+    if (shouldUpdateDragManager) {
       dragStateManager.updateElementPreviewProperties(
           elementId, livePreviewProperties);
+      
+      EditPageLogger.canvasDebug(
+        'DragStateManager更新预览属性',
+        data: {
+          'elementId': elementId,
+          'reason': 'non_control_point_dominated_drag',
+          'properties': livePreviewProperties,
+        },
+      );
+    } else {
+      EditPageLogger.canvasDebug(
+        '跳过DragStateManager更新 - FreeControlPoints主导',
+        data: {
+          'elementId': elementId,
+          'isDragging': dragStateManager.isDragging,
+          'isElementDragging': dragStateManager.isElementDragging(elementId),
+          'isControlPointDominated': _isControlPointDominated(elementId),
+          'reason': 'avoid_conflict_with_free_control_points',
+        },
+      );
     }
   }
 
@@ -1251,5 +1271,24 @@ mixin CanvasControlPointHandlers {
 
     // 更新元素属性（不创建撤销操作，因为控制点处理器会统一创建）
     controller.updateElementPropertiesWithoutUndo(elementId, updateProperties);
+  }
+
+  /// 检查是否是控制点主导的拖拽模式
+  /// 当FreeControlPoints在参考线模式下自主管理时，应避免DragStateManager干预
+  bool _isControlPointDominated(String elementId) {
+    // 检查是否在参考线对齐模式
+    final alignmentMode = controller.state.alignmentMode;
+    if (alignmentMode != AlignmentMode.guideline) {
+      return false;
+    }
+    
+    // 检查当前是否正在拖拽该元素
+    if (!dragStateManager.isDragging || !dragStateManager.isElementDragging(elementId)) {
+      return false;
+    }
+    
+    // 在参考线模式下，FreeControlPoints会主导显示控制
+    // 为避免与DragPreviewLayer冲突，认为是控制点主导
+    return true;
   }
 }
