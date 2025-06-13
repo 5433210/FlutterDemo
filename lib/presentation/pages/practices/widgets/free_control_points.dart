@@ -552,31 +552,23 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         position: currentPos,
         size: currentSize,
         rotation: rotation,
-      );
-
-      if (dynamicGuidelines.isNotEmpty) {
-        // 更新本地参考线状态
-        _activeGuidelines = dynamicGuidelines;
-
-        // 通知外部显示参考线
-        if (widget.onGuidelinesUpdated != null) {
-          widget.onGuidelinesUpdated!(dynamicGuidelines);
-        }
-
-        EditPageLogger.editPageDebug('生成动态参考线', data: {
-          'elementId': widget.elementId,
-          'guidelinesCount': dynamicGuidelines.length,
-          'position': '${currentPos.dx}, ${currentPos.dy}',
-          'size': '${currentSize.width} x ${currentSize.height}',
-          'mode': 'dynamic_guidelines_only',
-        });
-      } else {
-        // 没有动态参考线，清空显示
-        if (_activeGuidelines.isNotEmpty) {
-          _activeGuidelines = [];
-          widget.onGuidelinesUpdated?.call([]);
-        }
+      );      // 🔧 优化：立即更新本地状态并通知外部，确保参考线能够实时跟随移动
+      _activeGuidelines = dynamicGuidelines;
+      
+      // 🔧 关键修复：无论是否有参考线都要通知外部，确保清除和显示都能及时生效
+      if (widget.onGuidelinesUpdated != null) {
+        widget.onGuidelinesUpdated!(dynamicGuidelines);
       }
+
+      EditPageLogger.editPageDebug('动态参考线实时更新', data: {
+        'elementId': widget.elementId,
+        'guidelinesCount': dynamicGuidelines.length,
+        'position': '${currentPos.dx}, ${currentPos.dy}',
+        'size': '${currentSize.width} x ${currentSize.height}',
+        'mode': 'real_time_dynamic_guidelines',
+        'isEmpty': dynamicGuidelines.isEmpty,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
     } catch (e) {
       EditPageLogger.editPageDebug('动态参考线生成失败', data: {
         'error': e.toString(),

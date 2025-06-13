@@ -245,16 +245,23 @@ mixin ToolManagementMixin on ChangeNotifier
     state.activeGuidelines = List<Guideline>.from(guidelines);
     state.isGuidelinePreviewActive = guidelines.isNotEmpty;
 
-    EditPageLogger.controllerDebug('更新活动参考线', data: {
+    EditPageLogger.controllerDebug('实时更新活动参考线', data: {
       'count': guidelines.length,
       'types': guidelines.map((g) => g.type.name).toList(),
+      'isDynamic': guidelines.any((g) => g.type.name.startsWith('dynamic_')),
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'operation': 'real_time_guideline_update',
     });
+
+    // 🔧 优化：立即通知监听器状态变化，确保参考线层能够实时刷新
+    notifyListeners();
 
     intelligentNotify(
       changeType: 'guideline_update',
       operation: 'updateActiveGuidelines',
       eventData: {
         'count': guidelines.length,
+        'isDynamic': guidelines.any((g) => g.type.name.startsWith('dynamic_')),
         'timestamp': DateTime.now().toIso8601String(),
       },
       affectedUIComponents: ['canvas'],

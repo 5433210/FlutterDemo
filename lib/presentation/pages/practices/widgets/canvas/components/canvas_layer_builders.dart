@@ -298,8 +298,7 @@ mixin CanvasLayerBuilders {
                       onControlPointUpdate: handleControlPointUpdate,
                       onControlPointDragEnd: handleControlPointDragEnd,
                       onControlPointDragStart: handleControlPointDragStart,
-                      onControlPointDragEndWithState:
-                          handleControlPointDragEndWithState,
+                      onControlPointDragEndWithState: handleControlPointDragEndWithState,
                       alignmentMode: controller.state.alignmentMode,
                       onGuidelinesUpdated: (guidelines) {
                         // 更新控制器中的活动参考线
@@ -376,18 +375,35 @@ mixin CanvasLayerBuilders {
 
     EditPageLogger.editPageDebug('构建参考线层', data: {
       'activeGuidelines': activeGuidelines.length,
+      'guidelineTypes': activeGuidelines.map((g) => g.type.name).toList(),
       'scale': scale,
       'pageSize': '${pageSize.width}x${pageSize.height}',
       'operation': 'build_guideline_layer',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return RepaintBoundary(
-      child: GuidelineLayer(
-        guidelines: activeGuidelines,
-        canvasSize: pageSize,
-        scale: scale,
-        viewportBounds: viewportBounds,
-      ),
+    // 🔧 使用 ListenableBuilder 确保参考线层能够实时响应状态变化
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        final currentActiveGuidelines = controller.state.activeGuidelines;
+        
+        EditPageLogger.editPageDebug('参考线层实时更新', data: {
+          'guidelinesCount': currentActiveGuidelines.length,
+          'guidelineTypes': currentActiveGuidelines.map((g) => g.type.name).toList(),
+          'isDynamic': currentActiveGuidelines.any((g) => g.type.name.startsWith('dynamic_')),
+          'operation': 'guideline_layer_real_time_update',
+        });
+        
+        return RepaintBoundary(
+          child: GuidelineLayer(
+            guidelines: currentActiveGuidelines,
+            canvasSize: pageSize,
+            scale: scale,
+            viewportBounds: viewportBounds,
+          ),
+        );
+      },
     );
   }
 
