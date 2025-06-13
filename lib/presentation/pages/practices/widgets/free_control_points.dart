@@ -332,16 +332,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
               // 🔹 初始化动态参考线显示
               _initializeDynamicGuidelines();
-            },
-            onPanUpdate: (details) {
-              // 先更新控制点位置
-              _updateControlPointWithConstraints(index, details.delta);
+            },            onPanUpdate: (details) {
+              setState(() {
+                // 先更新控制点位置
+                _updateControlPointWithConstraints(index, details.delta);
+              });
 
-              // 立即刷新参考线
+              // 在setState完成后立即刷新参考线
               _refreshGuidelinesImmediately();
-
-              // 最后调用setState触发UI重绘
-              setState(() {});
             },
             onPanEnd: (details) {
               EditPageLogger.canvasDebug('控制点结束拖拽', data: {
@@ -450,13 +448,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
-          },
-          onPanUpdate: (details) {
+          },          onPanUpdate: (details) {
             setState(() {
               _translateAllControlPoints(details.delta);
             });
 
-            // 强制立即刷新参考线，确保每次移动都更新
+            // 在setState完成后强制立即刷新参考线，确保每次移动都更新
             _refreshGuidelinesImmediately();
           },
           onPanEnd: (details) {
