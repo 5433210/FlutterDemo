@@ -418,6 +418,7 @@ class GuidelineManager {
     bool isDynamicSource = false,
     bool alignToStatic = false,
     bool forceUpdate = false,
+    int? maxGuidelines,
   }) {
     // 如果未启用参考线，直接返回null
     if (!_enabled) {
@@ -433,10 +434,33 @@ class GuidelineManager {
       isDynamicSource: isDynamicSource,
       alignToStatic: alignToStatic,
       forceUpdate: forceUpdate,
+      maxGuidelines: maxGuidelines,
     );
 
     if (!hasGuidelines || _activeGuidelines.isEmpty) {
       return null;
+    }
+
+    // 🔹 新增：如果设置了最大参考线数量，过滤掉多余的参考线
+    if (maxGuidelines != null && _activeGuidelines.length > maxGuidelines) {
+      // 按距离排序参考线，保留最近的几条
+      final sortedGuidelines = _activeGuidelines
+        .where((g) => g.distanceToTarget != null)
+        .toList()
+        ..sort((a, b) => 
+            (a.distanceToTarget ?? double.infinity)
+            .compareTo(b.distanceToTarget ?? double.infinity));
+      
+      // 保留最近的几条参考线
+      _activeGuidelines.clear();
+      _activeGuidelines.addAll(sortedGuidelines.take(maxGuidelines));
+      
+      EditPageLogger.editPageDebug('限制参考线数量', data: {
+        'original': sortedGuidelines.length,
+        'limited': _activeGuidelines.length,
+        'maxGuidelines': maxGuidelines,
+        'operation': 'limit_guidelines',
+      });
     }
 
     // 计算对齐后的位置
@@ -465,6 +489,7 @@ class GuidelineManager {
             'isDynamicSource': isDynamicSource,
             'alignToStatic': alignToStatic,
             'forceUpdate': forceUpdate,
+            'maxGuidelines': maxGuidelines,
             'operation': 'detect_alignment',
           },
         );
@@ -489,6 +514,7 @@ class GuidelineManager {
     bool isDynamicSource = false,
     bool alignToStatic = false,
     bool forceUpdate = false,
+    int? maxGuidelines,
   }) {
     // 如果未启用参考线，直接返回
     if (!_enabled) {

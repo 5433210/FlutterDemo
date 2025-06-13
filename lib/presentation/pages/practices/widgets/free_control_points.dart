@@ -262,14 +262,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       return;
     }
 
-    // 🔹 移除节流机制，确保每次调用都处理
-    // final now = DateTime.now();
-    // if (_lastGuidelineUpdate != null &&
-    //     now.difference(_lastGuidelineUpdate!) < _guidelineThrottleDuration) {
-    //   return;
-    // }
-    // _lastGuidelineUpdate = now;
-
     try {
       // 确保GuidelineManager已启用
       if (!GuidelineManager.instance.enabled) {
@@ -286,6 +278,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         rotation: currentProperties['rotation'],
         isDynamicSource: true, // 🔹 标记为动态参考线源
         forceUpdate: true,     // 🔹 强制刷新，忽略缓存
+        maxGuidelines: 3,      // 🔹 新增：限制参考线数量，只保留最近的几条
       );
 
       if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
@@ -308,9 +301,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           final bool shouldHighlight = (g.distanceToTarget ?? double.infinity) <= _highlightThreshold;
           return g.copyWith(
             isHighlighted: shouldHighlight,
-            lineWeight: shouldHighlight ? 2.5 : 1.5, // 高亮参考线加粗
+            lineWeight: shouldHighlight ? 3.0 : 2.0, // 增加线宽，使参考线更明显
             color: shouldHighlight 
-                ? const Color(0xFF00A2FF) // 高亮蓝色
+                ? const Color(0xFF2196F3) // 高亮蓝色
                 : const Color(0xFF4CAF50), // 普通绿色
           );
         }).toList();
@@ -527,17 +520,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _updateControlPointWithConstraints(index, details.delta);
               });
 
-              // widget.onControlPointUpdate?.call(
-              //   index,
-              //   details.localPosition,
-              // );
-              // 🔧 关键：每次移动强制刷新参考线
-              _pushStateToCanvasAndPreview();
-              
-              // 🔹 新增：强制立即刷新而不是等待下一帧
-              if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
-                widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
-              }
+              // 强制刷新流程
+              _refreshGuidelinesImmediately();
             },
             onPanEnd: (details) {
               EditPageLogger.canvasDebug('控制点结束拖拽', data: {
@@ -644,17 +628,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               _translateAllControlPoints(details.delta);
             });
 
-            // widget.onControlPointUpdate?.call(
-            //   -1, // 标记为平移
-            //   details.delta,
-            // );
-            // 🔧 关键：将控制点状态推送给DragStateManager
-            _pushStateToCanvasAndPreview();
-            
-            // 🔹 新增：强制立即刷新而不是等待下一帧
-            if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
-              widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
-            }
+            // 强制刷新流程
+            _refreshGuidelinesImmediately();
           },
           onPanEnd: (details) {
             EditPageLogger.canvasDebug('控制点主导：平移结束');
@@ -1324,6 +1299,93 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 🔧 修复：更新初始角度，避免累积误差
     _initialRotationAngle = newAngle; // 重新计算所有控制点的位置
     _updateAllControlPointsFromRotation();
+  }
+
+  // 添加一个强制刷新参考线的方法
+  void _refreshGuidelinesImmediately() {
+    // 获取最新状态
+    final currentState = getCurrentElementProperties();
+    
+    // 清除现有参考线
+    _activeGuidelines = [];
+    
+    // 强制生成新参考线，使用更简单的检查条件
+    try {
+      if (widget.alignmentMode == AlignmentMode.guideline && 
+          GuidelineManager.instance.enabled) {
+        
+        // 直接从元素属性重新生成参考线
+        final result = GuidelineManager.instance.detectAlignment(
+          elementId: widget.elementId,
+          currentPosition: Offset(currentState['x']!, currentState['y']!),
+          elementSize: Size(currentState['width']!, currentState['height']!),
+          rotation: currentState['rotation'],
+          isDynamicSource: true,
+          forceUpdate: true,
+        );
+        
+        // 处理生成的参考线
+        if (result != null && result['hasAlignment'] == true) {
+          final guidelines = result['guidelines'] as List<Guideline>;
+          
+          // 只保留最近的几条参考线（手动处理）
+          List<Guideline> filteredGuidelines = guidelines;
+          const maxGuidelinesCount = 2;
+          
+          if (guidelines.length > maxGuidelinesCount) {
+            // 按距离排序并只保留最近的几条
+            filteredGuidelines = guidelines
+                .where((g) => g.distanceToTarget != null)
+                .toList()
+                ..sort((a, b) => (a.distanceToTarget ?? double.infinity)
+                    .compareTo(b.distanceToTarget ?? double.infinity));
+                
+            filteredGuidelines = filteredGuidelines.take(maxGuidelinesCount).toList();
+          }
+          
+          // 处理参考线高亮
+          _activeGuidelines = filteredGuidelines.map((g) {
+            final distance = g.distanceToTarget ?? double.infinity;
+            final isHighlight = distance <= _highlightThreshold;
+            
+            return g.copyWith(
+              isHighlighted: isHighlight,
+              lineWeight: isHighlight ? 3.0 : 2.0,
+              color: isHighlight 
+                  ? const Color(0xFF2196F3) // 亮蓝色
+                  : const Color(0xFF4CAF50), // 绿色
+            );
+          }).toList();
+          
+          // 强制通知外部更新参考线
+          if (widget.onGuidelinesUpdated != null) {
+            EditPageLogger.editPageDebug('更新参考线UI', data: {
+              'guidelines': _activeGuidelines.length,
+              'type': _activeGuidelines.map((g) => g.type.toString()).toList(),
+              'distances': _activeGuidelines.map((g) => g.distanceToTarget).toList(),
+            });
+            
+            widget.onGuidelinesUpdated!(_activeGuidelines);
+          }
+        } else {
+          // 没有找到对齐点，清除参考线
+          if (_activeGuidelines.isNotEmpty) {
+            _activeGuidelines = [];
+            widget.onGuidelinesUpdated?.call([]);
+          }
+        }
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('强制刷新参考线失败', data: {
+        'error': e.toString(),
+        'elementId': widget.elementId,
+      });
+    }
+    
+    // 推送元素状态更新到预览层
+    if (widget.onControlPointDragEndWithState != null) {
+      widget.onControlPointDragEndWithState!(-2, currentState);
+    }
   }
 }
 
