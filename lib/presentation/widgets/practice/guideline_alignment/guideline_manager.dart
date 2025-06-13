@@ -556,7 +556,6 @@ class GuidelineManager {
       'hasAlignment': true,
     };
   }
-
   /// 🔹 新增：生成仅用于显示的动态参考线（不会强制对齐）
   List<Guideline> generateDynamicGuidelines({
     required String elementId,
@@ -565,37 +564,133 @@ class GuidelineManager {
     double rotation = 0,
   }) {
     // 如果未启用，返回空列表
-    if (!_enabled) {
+    if (!_enabled || _isDragging != true) {
       return [];
     }
 
-    // 临时参考线列表，不会保存到管理器中
+    // 生成动态参考线，仅包含与其他元素和页面的对齐线
     final dynamicGuidelines = <Guideline>[];
 
-    // 保存旧状态
-    final oldGuidelines = List<Guideline>.from(_activeGuidelines);
-
     try {
-      // 临时清空当前参考线，为生成新参考线做准备
-      _activeGuidelines.clear();
+      // 计算当前拖拽元素的关键点
+      final elementBounds = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+      final elementCenterX = position.dx + size.width / 2;
+      final elementCenterY = position.dy + size.height / 2;
 
-      // 复用生成逻辑
-      generateGuidelines(
-        elementId: elementId,
-        draftPosition: position,
-        draftSize: size,
-        rotation: rotation,
-        isDynamicSource: true,
-        forceUpdate: true,
-      );
+      // 与其他静态元素对齐
+      for (final element in _elements) {
+        final otherElementId = element['id'] as String;
+        
+        // 跳过自身和隐藏元素
+        if (otherElementId == elementId || element['isHidden'] == true) {
+          continue;
+        }
 
-      // 将生成的参考线标记为动态
-      dynamicGuidelines
-          .addAll(_activeGuidelines.map((g) => _markGuidelineAsDynamic(g)));
-    } finally {
-      // 恢复原始状态
-      _activeGuidelines.clear();
-      _activeGuidelines.addAll(oldGuidelines);
+        final otherBounds = Rect.fromLTWH(
+          (element['x'] as num).toDouble(),
+          (element['y'] as num).toDouble(),
+          (element['width'] as num).toDouble(),
+          (element['height'] as num).toDouble(),
+        );
+
+        final otherCenterX = otherBounds.left + otherBounds.width / 2;
+        final otherCenterY = otherBounds.top + otherBounds.height / 2;
+
+        // 水平对齐（影响Y坐标）
+        // 顶边对齐
+        if ((elementBounds.top - otherBounds.top).abs() <= _snapThreshold * 3) {
+          dynamicGuidelines.add(_markGuidelineAsDynamic(
+            Guideline(
+              id: 'h_top_${otherElementId}',
+              type: GuidelineType.horizontalTopEdge,
+              position: otherBounds.top,
+              direction: AlignmentDirection.horizontal,
+              sourceElementId: otherElementId,
+            )
+          ));
+        }
+
+        // 水平中心对齐
+        if ((elementCenterY - otherCenterY).abs() <= _snapThreshold * 3) {
+          dynamicGuidelines.add(_markGuidelineAsDynamic(
+            Guideline(
+              id: 'h_center_${otherElementId}',
+              type: GuidelineType.horizontalCenterLine,
+              position: otherCenterY,
+              direction: AlignmentDirection.horizontal,
+              sourceElementId: otherElementId,
+            )
+          ));
+        }
+
+        // 垂直对齐（影响X坐标）
+        // 左边对齐
+        if ((elementBounds.left - otherBounds.left).abs() <= _snapThreshold * 3) {
+          dynamicGuidelines.add(_markGuidelineAsDynamic(
+            Guideline(
+              id: 'v_left_${otherElementId}',
+              type: GuidelineType.verticalLeftEdge,
+              position: otherBounds.left,
+              direction: AlignmentDirection.vertical,
+              sourceElementId: otherElementId,
+            )
+          ));
+        }
+
+        // 垂直中心对齐
+        if ((elementCenterX - otherCenterX).abs() <= _snapThreshold * 3) {
+          dynamicGuidelines.add(_markGuidelineAsDynamic(
+            Guideline(
+              id: 'v_center_${otherElementId}',
+              type: GuidelineType.verticalCenterLine,
+              position: otherCenterX,
+              direction: AlignmentDirection.vertical,
+              sourceElementId: otherElementId,
+            )
+          ));
+        }
+      }
+
+      // 与页面边界对齐
+      final pageCenterX = _pageSize.width / 2;
+      final pageCenterY = _pageSize.height / 2;
+      
+      // 页面水平中心对齐
+      if ((elementCenterY - pageCenterY).abs() <= _snapThreshold * 3) {
+        dynamicGuidelines.add(_markGuidelineAsDynamic(
+          Guideline(
+            id: 'page_h_center',
+            type: GuidelineType.horizontalCenterLine,
+            position: pageCenterY,
+            direction: AlignmentDirection.horizontal,
+          )
+        ));
+      }
+      
+      // 页面垂直中心对齐
+      if ((elementCenterX - pageCenterX).abs() <= _snapThreshold * 3) {
+        dynamicGuidelines.add(_markGuidelineAsDynamic(
+          Guideline(
+            id: 'page_v_center',
+            type: GuidelineType.verticalCenterLine,
+            position: pageCenterX,
+            direction: AlignmentDirection.vertical,
+          )
+        ));
+      }
+
+      EditPageLogger.editPageDebug('生成动态参考线', data: {
+        'elementId': elementId,
+        'position': '${position.dx}, ${position.dy}',
+        'dynamicGuidelinesCount': dynamicGuidelines.length,
+        'isDragging': _isDragging,
+      });
+
+    } catch (e) {
+      EditPageLogger.editPageDebug('动态参考线生成异常', data: {
+        'error': e.toString(),
+        'elementId': elementId,
+      });
     }
 
     return dynamicGuidelines;
