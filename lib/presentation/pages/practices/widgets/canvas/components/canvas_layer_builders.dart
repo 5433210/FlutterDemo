@@ -298,7 +298,8 @@ mixin CanvasLayerBuilders {
                       onControlPointUpdate: handleControlPointUpdate,
                       onControlPointDragEnd: handleControlPointDragEnd,
                       onControlPointDragStart: handleControlPointDragStart,
-                      onControlPointDragEndWithState: handleControlPointDragEndWithState,
+                      onControlPointDragEndWithState:
+                          handleControlPointDragEndWithState,
                       alignmentMode: controller.state.alignmentMode,
                       onGuidelinesUpdated: (guidelines) {
                         // 更新控制器中的活动参考线
@@ -380,23 +381,25 @@ mixin CanvasLayerBuilders {
       'pageSize': '${pageSize.width}x${pageSize.height}',
       'operation': 'build_guideline_layer',
       'timestamp': DateTime.now().millisecondsSinceEpoch,
-    });    // 🔧 使用 ListenableBuilder 确保参考线层能够实时响应状态变化
+    }); // 🔧 使用 ListenableBuilder 确保参考线层能够实时响应状态变化
     return ListenableBuilder(
       listenable: controller,
       builder: (context, child) {
         final currentActiveGuidelines = controller.state.activeGuidelines;
-        
+
         // 🔧 修复：正确检测动态参考线（检查 id 而不是 type.name）
-        final isDynamic = currentActiveGuidelines.any((g) => g.id.startsWith('dynamic_'));
-        
+        final isDynamic =
+            currentActiveGuidelines.any((g) => g.id.startsWith('dynamic_'));
+
         EditPageLogger.editPageDebug('参考线层实时更新', data: {
           'guidelinesCount': currentActiveGuidelines.length,
-          'guidelineTypes': currentActiveGuidelines.map((g) => g.type.name).toList(),
+          'guidelineTypes':
+              currentActiveGuidelines.map((g) => g.type.name).toList(),
           'guidelineIds': currentActiveGuidelines.map((g) => g.id).toList(),
           'isDynamic': isDynamic,
           'operation': 'guideline_layer_real_time_update',
         });
-        
+
         return RepaintBoundary(
           child: GuidelineLayer(
             guidelines: currentActiveGuidelines,

@@ -332,7 +332,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
               // 🔹 初始化动态参考线显示
               _initializeDynamicGuidelines();
-            },            onPanUpdate: (details) {
+            },
+            onPanUpdate: (details) {
               setState(() {
                 // 先更新控制点位置
                 _updateControlPointWithConstraints(index, details.delta);
@@ -448,7 +449,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
-          },          onPanUpdate: (details) {
+          },
+          onPanUpdate: (details) {
             setState(() {
               _translateAllControlPoints(details.delta);
             });
@@ -552,9 +554,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         position: currentPos,
         size: currentSize,
         rotation: rotation,
-      );      // 🔧 优化：立即更新本地状态并通知外部，确保参考线能够实时跟随移动
+      ); // 🔧 优化：立即更新本地状态并通知外部，确保参考线能够实时跟随移动
       _activeGuidelines = dynamicGuidelines;
-      
+
       // 🔧 关键修复：无论是否有参考线都要通知外部，确保清除和显示都能及时生效
       if (widget.onGuidelinesUpdated != null) {
         widget.onGuidelinesUpdated!(dynamicGuidelines);
