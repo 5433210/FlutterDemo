@@ -766,6 +766,7 @@ mixin CanvasControlPointHandlers {
     if (isReadyForDrag != null) _isReadyForDrag = isReadyForDrag;
     // dragStart 和 elementStartPosition 可以被子类使用
   }
+
   /// 🚀 新增：统一处理参考线生成的方法
   void _generateRealTimeGuidelines(
       String elementId, Map<String, double> currentProperties) {
@@ -813,7 +814,8 @@ mixin CanvasControlPointHandlers {
       if (!GuidelineManager.instance.enabled) {
         EditPageLogger.editPageDebug('GuidelineManager未启用，跳过实时参考线生成');
         return;
-      }      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateDynamicGuidelines',
+      }
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateDynamicGuidelines',
           data: {
             'elementId': elementId,
             'position':
@@ -836,7 +838,7 @@ mixin CanvasControlPointHandlers {
             'hasGuidelines': dynamicGuidelines.isNotEmpty,
             'guidelinesCount': dynamicGuidelines.length,
           });
-      
+
       if (dynamicGuidelines.isNotEmpty) {
         // 通知控制器更新参考线渲染
         controller.updateActiveGuidelines(dynamicGuidelines);

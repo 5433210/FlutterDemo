@@ -334,13 +334,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               _initializeDynamicGuidelines();
             },
             onPanUpdate: (details) {
-              // 根据控制点类型应用约束移动
-              setState(() {
-                _updateControlPointWithConstraints(index, details.delta);
-              });
+              // 先更新控制点位置
+              _updateControlPointWithConstraints(index, details.delta);
 
-              // 强制立即刷新参考线，确保每次移动都更新
+              // 立即刷新参考线
               _refreshGuidelinesImmediately();
+
+              // 最后调用setState触发UI重绘
+              setState(() {});
             },
             onPanEnd: (details) {
               EditPageLogger.canvasDebug('控制点结束拖拽', data: {
@@ -852,6 +853,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       _controlPointPositions[i] = rotated;
     }
   }
+
   // 添加一个强制刷新参考线的方法
   void _refreshGuidelinesImmediately() {
     // 获取最新状态
@@ -871,7 +873,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         final rotation = currentState['rotation']!;
 
         EditPageLogger.editPageDebug('🔧 FreeControlPoints开始刷新动态参考线', data: {
-          'elementId': widget.elementId,
+          'elementId11': widget.elementId,
           'currentPos': '${currentPos.dx}, ${currentPos.dy}',
           'currentSize': '${currentSize.width} x ${currentSize.height}',
           'rotation': rotation,
@@ -896,12 +898,15 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           if (widget.onGuidelinesUpdated != null) {
             widget.onGuidelinesUpdated!(dynamicGuidelines);
 
-            EditPageLogger.editPageDebug('🔧 FreeControlPoints成功刷新动态参考线UI', data: {
+            EditPageLogger
+                .editPageDebug('🔧 FreeControlPoints成功刷新动态参考线UI', data: {
               'guidelinesCount': dynamicGuidelines.length,
               'elementId': widget.elementId,
               'isDynamicOnly': true,
               'elementPosition': '(${currentPos.dx}, ${currentPos.dy})',
-              'guidelinePositions': dynamicGuidelines.map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}').toList(),
+              'guidelinePositions': dynamicGuidelines
+                  .map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}')
+                  .toList(),
             });
           }
         } else {
@@ -916,7 +921,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       EditPageLogger.editPageDebug('强制刷新参考线失败', data: {
         'error': e.toString(),
         'elementId': widget.elementId,
-      });    }
+      });
+    }
 
     // 推送元素状态更新到预览层（但CanvasControlPointHandlers不会覆盖参考线）
     if (widget.onControlPointDragEndWithState != null) {

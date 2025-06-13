@@ -555,7 +555,9 @@ class GuidelineManager {
       'guidelines': List<Guideline>.from(_activeGuidelines),
       'hasAlignment': true,
     };
-  }  /// 🔹 新增：生成仅用于显示的动态参考线（显示移动元素自身的边界线）
+  }
+
+  /// 🔹 新增：生成仅用于显示的动态参考线（显示移动元素自身的边界线）
   List<Guideline> generateDynamicGuidelines({
     required String elementId,
     required Offset position,
@@ -572,77 +574,66 @@ class GuidelineManager {
 
     try {
       // 计算当前移动元素的关键位置
-      final elementBounds = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+      final elementBounds =
+          Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
       final elementCenterX = position.dx + size.width / 2;
       final elementCenterY = position.dy + size.height / 2;
 
       // 生成水平参考线（显示元素的Y坐标相关边界）
       // 上边线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_top_${elementId}',
-          type: GuidelineType.horizontalTopEdge,
-          position: elementBounds.top,
-          direction: AlignmentDirection.horizontal,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_top_$elementId',
+        type: GuidelineType.horizontalTopEdge,
+        position: elementBounds.top,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+      )));
 
       // 水平中心线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_h_center_${elementId}',
-          type: GuidelineType.horizontalCenterLine,
-          position: elementCenterY,
-          direction: AlignmentDirection.horizontal,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_h_center_$elementId',
+        type: GuidelineType.horizontalCenterLine,
+        position: elementCenterY,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+      )));
 
       // 下边线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_bottom_${elementId}',
-          type: GuidelineType.horizontalBottomEdge,
-          position: elementBounds.bottom,
-          direction: AlignmentDirection.horizontal,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_bottom_$elementId',
+        type: GuidelineType.horizontalBottomEdge,
+        position: elementBounds.bottom,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+      )));
 
       // 生成垂直参考线（显示元素的X坐标相关边界）
       // 左边线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_left_${elementId}',
-          type: GuidelineType.verticalLeftEdge,
-          position: elementBounds.left,
-          direction: AlignmentDirection.vertical,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_left_$elementId',
+        type: GuidelineType.verticalLeftEdge,
+        position: elementBounds.left,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+      )));
 
       // 垂直中心线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_v_center_${elementId}',
-          type: GuidelineType.verticalCenterLine,
-          position: elementCenterX,
-          direction: AlignmentDirection.vertical,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_v_center_$elementId',
+        type: GuidelineType.verticalCenterLine,
+        position: elementCenterX,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+      )));
 
       // 右边线
-      dynamicGuidelines.add(_markGuidelineAsDynamic(
-        Guideline(
-          id: 'self_right_${elementId}',
-          type: GuidelineType.verticalRightEdge,
-          position: elementBounds.right,
-          direction: AlignmentDirection.vertical,
-          sourceElementId: elementId,
-        )
-      ));
+      dynamicGuidelines.add(_markGuidelineAsDynamic(Guideline(
+        id: 'self_right_$elementId',
+        type: GuidelineType.verticalRightEdge,
+        position: elementBounds.right,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+      )));
 
       EditPageLogger.editPageDebug('生成FreeControlPoints动态参考线', data: {
         'elementId': elementId,
@@ -652,9 +643,10 @@ class GuidelineManager {
         'centerY': elementCenterY,
         'dynamicGuidelinesCount': dynamicGuidelines.length,
         'isDragging': _isDragging,
-        'guidelines': dynamicGuidelines.map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}').toList(),
+        'guidelines': dynamicGuidelines
+            .map((g) => '${g.type.name}:${g.position.toStringAsFixed(1)}')
+            .toList(),
       });
-
     } catch (e) {
       EditPageLogger.editPageDebug('FreeControlPoints动态参考线生成异常', data: {
         'error': e.toString(),
