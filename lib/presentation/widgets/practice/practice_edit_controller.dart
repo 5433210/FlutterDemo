@@ -368,6 +368,7 @@ class PracticeEditController extends ChangeNotifier
       );
 
       // 设置参考线输出列表同步
+      // 🔧 修复：直接传入state中的可修改列表，而不是getter返回的不可修改列表
       GuidelineManager.instance
           .setActiveGuidelinesOutput(state.activeGuidelines);
 

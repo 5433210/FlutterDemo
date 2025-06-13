@@ -13,7 +13,6 @@ import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
 import '../helpers/element_utils.dart';
 import 'canvas/components/canvas_control_point_handlers.dart';
 import 'canvas/components/canvas_element_creators.dart';
-import 'canvas/components/canvas_gesture_handlers.dart';
 import 'canvas/components/canvas_layer_builders.dart';
 import 'canvas/components/canvas_ui_components.dart';
 import 'canvas/components/canvas_view_controllers.dart';
@@ -65,8 +64,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         CanvasElementCreators,
         CanvasViewControllers,
         CanvasLayerBuilders,
-        CanvasControlPointHandlers,
-        CanvasGestureHandlers {
+        CanvasControlPointHandlers {
   // 🔍[TRACKING] 静态重建计数器
   static int _buildCount = 0;
 
@@ -95,11 +93,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   bool _isDragging = false;
   bool _isDisposed = false; // 防止PostFrameCallback在dispose后执行
 
-  // 拖拽相关状态
-  Offset _dragStart = Offset.zero;
-
-  Offset _elementStartPosition = Offset.zero;
-
   // 拖拽准备状态：使用普通变量避免setState时序问题
   bool _isReadyForDrag = false;
 
@@ -123,17 +116,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   PracticeEditController get controller => widget.controller;
-  @override
-  Offset get dragStart => _dragStart;
 
   @override
   DragStateManager get dragStateManager => _dragStateManager;
-
-  @override
-  Offset get elementStartPosition => _elementStartPosition;
-
-  @override
-  SmartCanvasGestureHandler get gestureHandler => _gestureHandler;
 
   @override
   bool get isDisposed => _isDisposed;
@@ -151,11 +136,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   @override
   TransformationController get transformationController =>
       widget.transformationController;
-
-  @override
-  void applyGridSnapToSelectedElements() {
-    _applyGridSnapToSelectedElements();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -390,6 +370,49 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void resetCanvasPosition() {
     // 使用 CanvasViewControllers mixin 的方法
     super.resetCanvasPosition();
+  }
+
+  /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
+  bool shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
+    AppLogger.debug(
+      '检查是否需要处理特殊手势',
+      tag: 'Canvas',
+      data: {
+        'isPreview': controller.state.isPreviewMode,
+        'currentTool': controller.state.currentTool,
+        'selectedElementsCount': controller.state.selectedElementIds.length,
+        'isDragging': isDragging,
+        'dragManagerDragging': dragStateManager.isDragging,
+      },
+    );
+
+    // 如果在预览模式，不处理任何手势
+    if (controller.state.isPreviewMode) {
+      AppLogger.debug('预览模式，不处理手势', tag: 'Canvas');
+      return false;
+    }
+
+    // 如果在select模式下，需要处理选择框
+    if (controller.state.currentTool == 'select') {
+      AppLogger.debug('select模式，需要处理选择框', tag: 'Canvas');
+      return true;
+    }
+
+    // 如果正在进行拖拽操作，需要处理
+    if (isDragging || dragStateManager.isDragging) {
+      AppLogger.debug('正在拖拽，需要处理', tag: 'Canvas');
+      return true;
+    }
+
+    // 只有在有选中元素时才可能需要处理元素拖拽
+    if (controller.state.selectedElementIds.isNotEmpty) {
+      AppLogger.debug('有选中元素，可能需要处理拖拽', tag: 'Canvas');
+      return true;
+    }
+
+    // 其他情况让InteractiveViewer完全接管
+    AppLogger.debug('无特殊手势需求，让InteractiveViewer处理', tag: 'Canvas');
+    return false;
   }
 
   /// 切换性能监控覆盖层显示
@@ -1031,17 +1054,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       );
 
       // 注册参考线层（基础模式也需要支持参考线）
-      _layerRenderManager.registerLayer(
-        type: RenderLayerType.guideline,
-        config: const LayerConfig(
-          type: RenderLayerType.guideline,
-          priority: LayerPriority.medium,
-          enableCaching: false, // 禁用缓存避免潜在问题
-          useRepaintBoundary: true,
-        ),
-        builder: (config) =>
-            _buildLayerWidget(RenderLayerType.guideline, config),
-      );
+      // _layerRenderManager.registerLayer(
+      //   type: RenderLayerType.guideline,
+      //   config: const LayerConfig(
+      //     type: RenderLayerType.guideline,
+      //     priority: LayerPriority.medium,
+      //     enableCaching: false, // 禁用缓存避免潜在问题
+      //     useRepaintBoundary: true,
+      //   ),
+      //   builder: (config) =>
+      //       _buildLayerWidget(RenderLayerType.guideline, config),
+      // );
 
       EditPageLogger.canvasDebug('画布已切换到基础模式');
     } catch (e) {
@@ -1149,8 +1172,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   ) async {
     // 🚀 优化：避免Canvas整体重建，只更新必要的状态
     _isDragging = isDragging;
-    _dragStart = dragStart;
-    _elementStartPosition = elementPosition;
 
     EditPageLogger.canvasDebug(
       '拖拽开始 - 避免Canvas整体重建',
@@ -1344,7 +1365,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       ),
       builder: (config) =>
           _buildLayerWidget(RenderLayerType.dragPreview, config),
-    ); // Register guideline layer (参考线层)
+    );
+    // Register guideline layer (参考线层)
     _layerRenderManager.registerLayer(
       type: RenderLayerType.guideline,
       config: const LayerConfig(

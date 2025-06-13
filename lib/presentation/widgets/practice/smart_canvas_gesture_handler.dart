@@ -576,6 +576,54 @@ class SmartCanvasGestureHandler implements GestureContext {
     }
   }
 
+  /// 🚀 新增：在鼠标释放时应用参考线对齐
+  Offset? _applyGuidelineAlignmentOnRelease(
+      String elementId, Offset currentOffset) {
+    final element = controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return null;
+
+    final currentPosition = Offset(
+      (element['x'] as num).toDouble() + currentOffset.dx,
+      (element['y'] as num).toDouble() + currentOffset.dy,
+    );
+
+    final elementSize = Size(
+      (element['width'] as num).toDouble(),
+      (element['height'] as num).toDouble(),
+    );
+
+    // 使用新的最佳对齐计算方法
+    final alignmentResult = GuidelineManager.instance.calculateBestAlignment(
+      elementId: elementId,
+      currentPosition: currentPosition,
+      elementSize: elementSize,
+    );
+
+    if (alignmentResult != null) {
+      // 计算对齐后的偏移
+      final alignedPosition = alignmentResult['position'] as Offset;
+      final alignedX = alignedPosition.dx - (element['x'] as num).toDouble();
+      final alignedY = alignedPosition.dy - (element['y'] as num).toDouble();
+      final alignedOffset = Offset(alignedX, alignedY);
+
+      EditPageLogger.canvasDebug('参考线对齐应用', data: {
+        'elementId': elementId,
+        'currentOffset': currentOffset,
+        'alignedOffset': alignedOffset,
+        'alignmentType': alignmentResult['type'],
+        'distance': alignmentResult['distance'],
+      });
+
+      return alignedOffset;
+    }
+
+    return null;
+  }
+
   double _calculateAngle(Offset a, Offset b) {
     return atan2(b.dy - a.dy, b.dx - a.dx);
   }
@@ -645,8 +693,23 @@ class SmartCanvasGestureHandler implements GestureContext {
     final Map<String, Map<String, dynamic>> finalUpdates = {};
 
     // 从DragStateManager获取最终拖拽偏移
-    final finalOffset = dragStateManager.currentDragOffset;
+    var finalOffset = dragStateManager.currentDragOffset;
     EditPageLogger.canvasDebug('最终拖拽偏移计算', data: {'offset': '$finalOffset'});
+
+    // 🚀 新增：在鼠标释放时应用参考线对齐
+    if (controller.state.alignmentMode == AlignmentMode.guideline &&
+        controller.state.selectedElementIds.length == 1) {
+      final elementId = controller.state.selectedElementIds.first;
+      final alignedOffset =
+          _applyGuidelineAlignmentOnRelease(elementId, finalOffset);
+      if (alignedOffset != null) {
+        finalOffset = alignedOffset;
+        EditPageLogger.canvasDebug('应用参考线对齐', data: {
+          'originalOffset': '$finalOffset',
+          'alignedOffset': '$alignedOffset',
+        });
+      }
+    }
 
     for (final elementId in controller.state.selectedElementIds) {
       final startPosition = _elementStartPositions[elementId];
@@ -708,6 +771,9 @@ class SmartCanvasGestureHandler implements GestureContext {
       EditPageLogger.canvasDebug('元素位置更新完成');
     }
 
+    // 🚀 拖拽结束后清空参考线
+    controller.clearActiveGuidelines();
+
     // 结束拖拽状态
     dragStateManager.endDrag();
     onDragEnd();
@@ -766,6 +832,41 @@ class SmartCanvasGestureHandler implements GestureContext {
     onDragUpdate();
   }
 
+  /// 🚀 新增：生成实时参考线用于调试显示
+  void _generateRealTimeGuidelines(String elementId, Offset delta) {
+    final element = controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) return;
+
+    final draggedPosition = Offset(
+      (element['x'] as num).toDouble() + delta.dx,
+      (element['y'] as num).toDouble() + delta.dy,
+    );
+
+    final draggedSize = Size(
+      (element['width'] as num).toDouble(),
+      (element['height'] as num).toDouble(),
+    );
+
+    // 生成实时参考线用于调试显示
+    final hasGuidelines = GuidelineManager.instance.generateRealTimeGuidelines(
+      draggedElementId: elementId,
+      draggedPosition: draggedPosition,
+      draggedSize: draggedSize,
+    );
+
+    EditPageLogger.canvasDebug('生成实时参考线', data: {
+      'elementId': elementId,
+      'draggedPosition': '$draggedPosition',
+      'draggedSize': '$draggedSize',
+      'hasGuidelines': hasGuidelines,
+      'guidelinesCount': controller.state.activeGuidelines.length,
+    });
+  }
+
   void _handleElementDragUpdate(Offset currentPosition) {
     try {
       EditPageLogger.canvasDebug('元素拖拽更新', data: {
@@ -776,15 +877,13 @@ class SmartCanvasGestureHandler implements GestureContext {
       final dx = currentPosition.dx - _dragStart.dx;
       final dy = currentPosition.dy - _dragStart.dy;
 
-      var finalOffset = Offset(dx, dy); // 🔧 新增：参考线对齐检测
+      var finalOffset = Offset(dx, dy);
+
+      // 🚀 新增：实时生成参考线用于调试显示（不进行对齐）
       if (controller.state.alignmentMode == AlignmentMode.guideline &&
           controller.state.selectedElementIds.length == 1) {
         final elementId = controller.state.selectedElementIds.first;
-        final alignedOffset =
-            _applyGuidelineAlignment(elementId, Offset(dx, dy));
-        if (alignedOffset != null) {
-          finalOffset = alignedOffset;
-        }
+        _generateRealTimeGuidelines(elementId, Offset(dx, dy));
       }
 
       // 获取缩放因子并调整拖拽偏移（不影响参考线检测）
@@ -795,6 +894,7 @@ class SmartCanvasGestureHandler implements GestureContext {
         'finalOffset': finalOffset,
         'scaleFactor': scaleFactor,
         'alignmentMode': controller.state.alignmentMode.name,
+        'guidelinesDisplayed': controller.state.activeGuidelines.length,
       });
 
       // 更新拖拽状态

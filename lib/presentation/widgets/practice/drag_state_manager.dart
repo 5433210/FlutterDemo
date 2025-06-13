@@ -37,11 +37,12 @@ class DragConfig {
 /// 实现拖拽过程中的批量位置更新和性能优化
 class DragStateManager extends ChangeNotifier {
   static const Duration _batchUpdateDelay = Duration(milliseconds: 16); // 60FPS
-  
+
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 16); // 60FPS节流
   // 🚀 性能优化：节流通知机制
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60FPS节流
-  
+
   // 拖拽状态相关
   bool _isDragging = false;
   bool _isDragPreviewActive = false;
@@ -61,7 +62,7 @@ class DragStateManager extends ChangeNotifier {
   // 🔧 新增：完整的元素预览属性（支持resize和rotate）
   final Map<String, Map<String, dynamic>> _previewProperties =
       <String, Map<String, dynamic>>{};
-      
+
   // 🔧 新增：保存原始起始属性（用于正确计算预览属性）
   final Map<String, Map<String, dynamic>> _elementStartProperties =
       <String, Map<String, dynamic>>{};
@@ -150,11 +151,12 @@ class DragStateManager extends ChangeNotifier {
     try {
       // 执行批量更新
       if (_onBatchUpdate != null && _pendingUpdates.isNotEmpty) {
-        final batchUpdates = Map<String, Map<String, dynamic>>.from(_pendingUpdates);
+        final batchUpdates =
+            Map<String, Map<String, dynamic>>.from(_pendingUpdates);
         _pendingUpdates.clear();
 
-        EditPageLogger.canvasDebug('批量更新元素位置', 
-          data: {'updateCount': batchUpdates.length});
+        EditPageLogger.canvasDebug('批量更新元素位置',
+            data: {'updateCount': batchUpdates.length});
 
         // 统计批量更新次数
         _batchUpdateCount++;
@@ -218,8 +220,8 @@ class DragStateManager extends ChangeNotifier {
 
       // 检查是否有性能问题
       if (avgFps < 55) {
-        EditPageLogger.performanceWarning('拖拽帧率低于理想值', 
-          data: {'currentFps': avgFps, 'targetFps': 60});
+        EditPageLogger.performanceWarning('拖拽帧率低于理想值',
+            data: {'currentFps': avgFps, 'targetFps': 60});
       }
     }
 
@@ -239,7 +241,7 @@ class DragStateManager extends ChangeNotifier {
         'batchUpdateCount': _batchUpdateCount,
       },
     );
-    
+
     // 立即通知，不等待节流
     notifyListeners();
   }
@@ -349,7 +351,7 @@ class DragStateManager extends ChangeNotifier {
     Map<String, Map<String, dynamic>>? elementStartProperties, // 🔧 新增：初始元素属性
   }) {
     final isSingleSelection = elementIds.length == 1;
-    
+
     EditPageLogger.canvasDebug('DragStateManager开始拖拽', data: {
       'elementIds': elementIds.toList(),
       'startPosition': startPosition.toString(),
@@ -378,7 +380,7 @@ class DragStateManager extends ChangeNotifier {
       final startPos = elementStartPositions[elementId];
       if (startPos != null) {
         _previewPositions[elementId] = startPos;
-        
+
         // 🔧 强化单选场景：确保单选时预览位置正确设置
         if (isSingleSelection) {
           EditPageLogger.canvasDebug('设置单选元素预览位置', data: {
@@ -402,7 +404,7 @@ class DragStateManager extends ChangeNotifier {
     if (elementStartProperties != null) {
       _elementStartProperties.addAll(elementStartProperties);
       _previewProperties.addAll(elementStartProperties);
-      
+
       // 🔧 强化单选场景：确保单选时属性正确设置
       if (isSingleSelection && elementStartProperties.isNotEmpty) {
         final elementId = elementIds.first;
@@ -428,10 +430,10 @@ class DragStateManager extends ChangeNotifier {
     _updateTimes.clear();
     _frameRates.clear();
 
-         EditPageLogger.canvasDebug('通知监听器拖拽开始');
-    
+    EditPageLogger.canvasDebug('通知监听器拖拽开始');
+
     // 通知监听器
-    notifyListeners();
+    // notifyListeners();
 
     EditPageLogger.canvasDebug('DragStateManager.startDrag完成', data: {
       'success': true,
@@ -467,7 +469,7 @@ class DragStateManager extends ChangeNotifier {
 
     // 更新预览位置
     _updatePreviewPositions();
-    
+
     // 🔧 修复多选L形指示器：同时更新预览属性
     _updatePreviewProperties();
 
@@ -478,7 +480,8 @@ class DragStateManager extends ChangeNotifier {
     _throttledNotifyListeners(
       operation: 'update_drag_offset',
       data: {
-        'offset': '${newOffset.dx.toStringAsFixed(1)},${newOffset.dy.toStringAsFixed(1)}',
+        'offset':
+            '${newOffset.dx.toStringAsFixed(1)},${newOffset.dy.toStringAsFixed(1)}',
         'updateCount': _updateCount,
       },
     );
@@ -497,7 +500,11 @@ class DragStateManager extends ChangeNotifier {
   /// 🔧 新增：更新元素的完整预览属性（支持resize和rotate）
   void updateElementPreviewProperties(
       String elementId, Map<String, dynamic> properties) {
-    if (!_isDragging || !_draggingElementIds.contains(elementId)) return;
+    if (!_isDragging || !_draggingElementIds.contains(elementId)) {
+      EditPageLogger.canvasDebug('更新元素预览属性失败，不在拖拽中',
+          data: {'elementId': elementId, 'properties': properties});
+      return;
+    }
 
     final now = DateTime.now();
 
@@ -540,10 +547,8 @@ class DragStateManager extends ChangeNotifier {
       },
     );
 
-    EditPageLogger.canvasDebug('更新元素预览属性', data: {
-      'elementId': elementId,
-      'properties': properties
-    });
+    EditPageLogger.canvasDebug('更新元素预览属性',
+        data: {'elementId': elementId, 'properties': properties});
   }
 
   /// 🔧 新增：仅更新性能监控统计，不触发通知（用于Live阶段）
@@ -611,8 +616,8 @@ class DragStateManager extends ChangeNotifier {
       final batchData = Map<String, Map<String, dynamic>>.from(_pendingUpdates);
       _pendingUpdates.clear();
 
-      EditPageLogger.canvasDebug('批量更新元素位置', 
-        data: {'updateCount': batchData.length});
+      EditPageLogger.canvasDebug('批量更新元素位置',
+          data: {'updateCount': batchData.length});
 
       // 统计批量更新次数
       _batchUpdateCount++;
@@ -641,12 +646,39 @@ class DragStateManager extends ChangeNotifier {
     _batchUpdateTimer = Timer(_batchUpdateDelay, _processBatchUpdate);
   }
 
+  /// 🚀 节流通知方法 - 避免拖拽操作过于频繁地触发UI更新
+  void _throttledNotifyListeners({
+    required String operation,
+    Map<String, dynamic>? data,
+  }) {
+    final now = DateTime.now();
+    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
+      _lastNotificationTime = now;
+
+      EditPageLogger.performanceInfo(
+        '拖拽状态通知',
+        data: {
+          'operation': operation,
+          'isDragging': _isDragging,
+          'draggingElementCount': _draggingElementIds.length,
+          'currentOffset':
+              '${_currentDragOffset.dx.toStringAsFixed(1)},${_currentDragOffset.dy.toStringAsFixed(1)}',
+          'pendingUpdates': _pendingUpdates.length,
+          'optimization': 'throttled_drag_notification',
+          ...?data,
+        },
+      );
+
+      notifyListeners();
+    }
+  }
+
   /// 更新预览位置
   void _updatePreviewPositions() {
     // 调试预览位置计算
     if (DragConfig.debugMode) {
-      EditPageLogger.canvasDebug('更新预览位置', 
-        data: {'currentDragOffset': _currentDragOffset.toString()});
+      EditPageLogger.canvasDebug('更新预览位置',
+          data: {'currentDragOffset': _currentDragOffset.toString()});
     }
 
     for (final elementId in _draggingElementIds) {
@@ -663,10 +695,9 @@ class DragStateManager extends ChangeNotifier {
             'newPreviewPos': newPreviewPos.toString()
           });
         }
-              } else if (DragConfig.debugMode) {
-         EditPageLogger.canvasDebug('元素缺少起始位置', 
-           data: {'elementId': elementId});
-        }
+      } else if (DragConfig.debugMode) {
+        EditPageLogger.canvasDebug('元素缺少起始位置', data: {'elementId': elementId});
+      }
     }
   }
 
@@ -675,44 +706,18 @@ class DragStateManager extends ChangeNotifier {
     for (final elementId in _draggingElementIds) {
       final startPos = _elementStartPositions[elementId];
       final originalProperties = _elementStartProperties[elementId]; // 使用原始起始属性
-      
+
       if (startPos != null && originalProperties != null) {
         // 计算新位置
         final newPos = startPos + _currentDragOffset;
-        
+
         // 基于原始属性创建新的预览属性，更新位置信息
         final updatedProperties = Map<String, dynamic>.from(originalProperties);
         updatedProperties['x'] = newPos.dx;
         updatedProperties['y'] = newPos.dy;
-        
+
         _previewProperties[elementId] = updatedProperties;
       }
-    }
-  }
-
-  /// 🚀 节流通知方法 - 避免拖拽操作过于频繁地触发UI更新
-  void _throttledNotifyListeners({
-    required String operation,
-    Map<String, dynamic>? data,
-  }) {
-    final now = DateTime.now();
-    if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
-      _lastNotificationTime = now;
-      
-      EditPageLogger.performanceInfo(
-        '拖拽状态通知',
-        data: {
-          'operation': operation,
-          'isDragging': _isDragging,
-          'draggingElementCount': _draggingElementIds.length,
-          'currentOffset': '${_currentDragOffset.dx.toStringAsFixed(1)},${_currentDragOffset.dy.toStringAsFixed(1)}',
-          'pendingUpdates': _pendingUpdates.length,
-          'optimization': 'throttled_drag_notification',
-          ...?data,
-        },
-      );
-      
-      notifyListeners();
     }
   }
 }

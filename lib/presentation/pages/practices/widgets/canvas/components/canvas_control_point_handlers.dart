@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../widgets/practice/drag_state_manager.dart';
+import '../../../../../widgets/practice/guideline_alignment/guideline_manager.dart';
+import '../../../../../widgets/practice/guideline_alignment/guideline_types.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../utils/practice_edit_utils.dart';
 import '../../content_render_controller.dart';
@@ -297,6 +299,8 @@ mixin CanvasControlPointHandlers {
     }
 
     try {
+      //为了避免元素偶尔出现的拖动过程跳出拖动状态的情况（具体原因未知），强制做一次重复的选中元素
+      controller.selectElements([elementId]);
       // Phase 3: Commit - 结束拖拽状态管理器并提交最终更改
       dragStateManager.endDrag(shouldCommitChanges: true);
 
@@ -396,6 +400,7 @@ mixin CanvasControlPointHandlers {
       EditPageLogger.editPageError(
         '控制点拖拽Commit阶段错误',
         error: e,
+        stackTrace: stackTrace,
         data: {
           'elementId': elementId,
           'controlPointIndex': controlPointIndex,
@@ -710,6 +715,9 @@ mixin CanvasControlPointHandlers {
         ? applyGridSnapToProperties(liveState)
         : liveState;
 
+    // 🚀 新增：统一处理预览层和参考线层的实时更新
+    _generateRealTimeGuidelines(elementId, snappedLiveState);
+
     // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
     if (originalElement['type'] == 'group') {
       _handleGroupElementLiveUpdate(originalElement, snappedLiveState);
@@ -757,6 +765,96 @@ mixin CanvasControlPointHandlers {
       _originalElementProperties = originalElementProperties;
     if (isReadyForDrag != null) _isReadyForDrag = isReadyForDrag;
     // dragStart 和 elementStartPosition 可以被子类使用
+  }
+
+  /// 🚀 新增：统一处理参考线生成的方法
+  void _generateRealTimeGuidelines(
+      String elementId, Map<String, double> currentProperties) {
+    EditPageLogger.editPageDebug(
+        '🔍 [DEBUG] _generateRealTimeGuidelines 被调用 (来自 handleControlPointLiveUpdate)',
+        data: {
+          'elementId': elementId,
+          'alignmentMode': controller.state.alignmentMode.toString(),
+          'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+        });
+
+    // 只在参考线对齐模式下生成参考线
+    if (controller.state.alignmentMode != AlignmentMode.guideline) {
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过实时参考线生成', data: {
+        'reason': 'wrong_alignment_mode',
+        'alignmentMode': controller.state.alignmentMode.toString(),
+      });
+      return;
+    }
+
+    try {
+      // 🔧 关键：确保参考线管理器有最新的元素数据
+      // controller.updateGuidelineManagerElements();
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] GuidelineManager状态检查', data: {
+        'enabled': GuidelineManager.instance.enabled,
+        'elementsCount': GuidelineManager.instance.elementCount,
+        'activeGuidelinesCount':
+            GuidelineManager.instance.activeGuidelines.length,
+      });
+
+      // 确保GuidelineManager已启用
+      if (!GuidelineManager.instance.enabled) {
+        EditPageLogger.editPageDebug('GuidelineManager未启用，跳过实时参考线生成');
+        return;
+      }
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateRealTimeGuidelines',
+          data: {
+            'elementId': elementId,
+            'position':
+                '(${currentProperties['x']}, ${currentProperties['y']})',
+            'size':
+                '${currentProperties['width']}x${currentProperties['height']}',
+          });
+
+      // 🚀 新增：使用实时参考线生成方法（显示所有元素的参考线）
+      final hasGuidelines =
+          GuidelineManager.instance.generateRealTimeGuidelines(
+        draggedElementId: elementId,
+        draggedPosition:
+            Offset(currentProperties['x']!, currentProperties['y']!),
+        draggedSize:
+            Size(currentProperties['width']!, currentProperties['height']!),
+      );
+
+      EditPageLogger.editPageDebug('🔍 [DEBUG] generateRealTimeGuidelines 结果',
+          data: {
+            'hasGuidelines': hasGuidelines,
+          });
+      if (hasGuidelines) {
+        // 获取生成的参考线 - 🔧 修复：创建可修改的副本，避免不可修改列表错误
+        final guidelines =
+            List<Guideline>.from(GuidelineManager.instance.activeGuidelines);
+
+        // 通知控制器更新参考线渲染
+        // controller.updateActiveGuidelines(guidelines);
+
+        EditPageLogger.editPageDebug('CanvasControlPointHandlers生成实时参考线',
+            data: {
+              'elementId': elementId,
+              'guidelinesCount': guidelines.length,
+              'position':
+                  '(${currentProperties['x']}, ${currentProperties['y']})',
+              'size':
+                  '${currentProperties['width']}x${currentProperties['height']}',
+              'mode': 'real_time_display_only',
+            });
+      } else {
+        // 没有参考线，清除现有的
+        controller.updateActiveGuidelines([]);
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('实时参考线生成失败', data: {
+        'error': e.toString(),
+        'elementId': elementId,
+      });
+    }
   }
 
   /// 🚀 新增：处理组合元素的Live阶段更新
@@ -1010,7 +1108,7 @@ mixin CanvasControlPointHandlers {
       });
     } catch (e, stackTrace) {
       EditPageLogger.editPageError('组合元素变换错误',
-          error: e, data: {'groupId': groupId});
+          error: e, stackTrace: stackTrace, data: {'groupId': groupId});
     }
   }
 

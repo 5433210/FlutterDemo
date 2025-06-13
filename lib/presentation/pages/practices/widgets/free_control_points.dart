@@ -67,10 +67,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   // 旋转相关状态
   Offset? _rotationCenter;
   double? _initialRotationAngle;
-
   // 🔧 新增：参考线对齐相关状态
   List<Guideline> _activeGuidelines = [];
-  String? _dragStartElementId;
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -251,59 +249,73 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _initializeControlPointPositions();
   }
 
-  /// 🔧 新增：应用参考线对齐
-  Offset _applyGuidelineAlignment(Offset delta, String elementId) {
+  /// 🔧 新增：对齐到最近的参考线（仅在鼠标释放时调用）
+  Map<String, double> _alignToClosestGuidelines(
+      Map<String, double> currentProperties) {
+    EditPageLogger.editPageDebug('🔍 [DEBUG] _alignToClosestGuidelines 被调用',
+        data: {
+          'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
+          'elementId': widget.elementId,
+          'position': '(${currentProperties['x']}, ${currentProperties['y']})',
+        });
+
+    // 只在参考线对齐模式下进行对齐
     if (widget.alignmentMode != AlignmentMode.guideline) {
-      EditPageLogger.canvasDebug('FreeControlPoints参考线对齐跳过', data: {
-        'reason': '对齐模式不是guideline',
-        'currentMode': widget.alignmentMode?.name ?? 'null',
-        'elementId': elementId,
+      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过参考线对齐', data: {
+        'reason': 'wrong_alignment_mode',
+        'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
       });
-      return delta;
+      return currentProperties;
     }
 
     try {
-      // 🔧 临时修复：确保GuidelineManager已经初始化
-      _ensureGuidelineManagerInitialized();
+      // 确保GuidelineManager已启用
+      if (!GuidelineManager.instance.enabled) {
+        EditPageLogger.editPageDebug('GuidelineManager未启用，跳过参考线对齐');
+        return currentProperties;
+      }
 
-      // 应用delta得到新位置
-      final newBounds = Rect.fromLTWH(
-          _currentX + delta.dx,
-          _currentY + delta.dy,
-          _currentWidth,
-          _currentHeight); // 调用GuidelineManager进行对齐检测
+      // 使用detectAlignment方法进行对齐检测
       final alignmentResult = GuidelineManager.instance.detectAlignment(
-        elementId: elementId,
-        currentPosition: newBounds.topLeft,
-        elementSize: newBounds.size,
+        elementId: widget.elementId,
+        currentPosition:
+            Offset(currentProperties['x']!, currentProperties['y']!),
+        elementSize:
+            Size(currentProperties['width']!, currentProperties['height']!),
+        rotation: currentProperties['rotation'],
       );
+
       if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
         // 获取对齐后的位置
-        final alignedPosition =
-            alignmentResult['position'] as Offset? ?? newBounds.topLeft;
-        final alignedX = alignedPosition.dx;
-        final alignedY = alignedPosition.dy;
-        final guidelines = alignmentResult['guidelines'] as List<Guideline>? ??
-            []; // 更新活动参考线 (确保创建新的可修改列表)
-        setState(() {
-          _activeGuidelines = List<Guideline>.from(guidelines);
-        });
+        final alignedPosition = alignmentResult['position'] as Offset?;
+        final guidelines =
+            alignmentResult['guidelines'] as List<Guideline>? ?? [];
 
-        // 通知外部更新参考线
-        widget.onGuidelinesUpdated?.call(guidelines);
+        if (alignedPosition != null) {
+          // 更新活动参考线
+          setState(() {
+            _activeGuidelines = List<Guideline>.from(guidelines);
+          });
 
-        EditPageLogger.canvasDebug('FreeControlPoints参考线对齐生效', data: {
-          'elementId': elementId,
-          'originalDelta': '$delta',
-          'alignedPosition': '($alignedX, $alignedY)',
-          'guidelinesCount': guidelines.length,
-        });
+          // 通知外部更新参考线
+          widget.onGuidelinesUpdated?.call(guidelines);
 
-        // 返回对齐后的delta
-        return Offset(
-          alignedX - _currentX,
-          alignedY - _currentY,
-        );
+          EditPageLogger.editPageDebug('FreeControlPoints参考线对齐成功', data: {
+            'elementId': widget.elementId,
+            'originalPosition':
+                '(${currentProperties['x']}, ${currentProperties['y']})',
+            'alignedPosition': '(${alignedPosition.dx}, ${alignedPosition.dy})',
+            'guidelinesCount': guidelines.length,
+            'mode': 'mouse_release_alignment',
+          });
+
+          // 返回对齐后的属性
+          return {
+            ...currentProperties,
+            'x': alignedPosition.dx,
+            'y': alignedPosition.dy,
+          };
+        }
       } else {
         // 没有对齐，清除参考线
         if (_activeGuidelines.isNotEmpty) {
@@ -314,16 +326,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         }
       }
     } catch (e) {
-      EditPageLogger.canvasDebug('参考线对齐计算失败', data: {
+      EditPageLogger.editPageDebug('参考线对齐计算失败', data: {
         'error': e.toString(),
-        'elementId': elementId,
-        'delta': '$delta',
-        'stackTrace': StackTrace.current.toString(),
-        'guidelineManagerEnabled': GuidelineManager.instance.enabled,
+        'elementId': widget.elementId,
       });
     }
 
-    return delta;
+    return currentProperties;
   }
 
   /// 构建测试控制点 - 独立移动，不更新元素
@@ -385,6 +394,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _updateControlPointWithConstraints(index, details.delta);
               });
 
+              // widget.onControlPointUpdate?.call(
+              //   index,
+              //   details.localPosition,
+              // );
               // 🔧 关键：将控制点状态推送给DragStateManager
               _pushStateToCanvasAndPreview();
             },
@@ -394,9 +407,23 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 'controlPointName': controlPointName,
               });
 
-              // 🔧 修复时序：先传递最终计算的状态，再触发Commit阶段
+              // 🔧 新增：在鼠标释放时进行参考线对齐
+              var finalProperties = getCurrentElementProperties();
+              finalProperties = _alignToClosestGuidelines(finalProperties);
+
+              // 🔧 如果对齐后位置有变化，需要更新控制点位置
+              if (finalProperties['x'] != _currentX ||
+                  finalProperties['y'] != _currentY) {
+                setState(() {
+                  _currentX = finalProperties['x']!;
+                  _currentY = finalProperties['y']!;
+                  _recalculateControlPointPositions();
+                });
+              }
+
+              // 🔧 修复时序：先传递最终计算的状态（已对齐），再触发Commit阶段
               widget.onControlPointDragEndWithState
-                  ?.call(index, getCurrentElementProperties());
+                  ?.call(index, finalProperties);
 
               // 然后触发拖拽结束回调（触发Commit阶段）
               widget.onControlPointDragEnd?.call(index);
@@ -468,9 +495,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           onPanStart: (details) {
             EditPageLogger.canvasDebug('控制点主导：开始平移操作');
 
-            // 🔧 新增：记录拖拽开始的元素ID
-            _dragStartElementId = widget.elementId;
-
             // 清除之前的参考线
             _clearGuidelines();
 
@@ -478,30 +502,36 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
           },
           onPanUpdate: (details) {
-            // 🔧 新增：应用参考线对齐
-            var finalDelta = details.delta;
-            if (_dragStartElementId != null) {
-              finalDelta =
-                  _applyGuidelineAlignment(details.delta, _dragStartElementId!);
-            }
-
             setState(() {
-              _translateAllControlPoints(finalDelta);
+              _translateAllControlPoints(details.delta);
             });
 
+            // widget.onControlPointUpdate?.call(
+            //   -1, // 标记为平移
+            //   details.delta,
+            // );
             // 🔧 关键：将控制点状态推送给DragStateManager
             _pushStateToCanvasAndPreview();
           },
           onPanEnd: (details) {
             EditPageLogger.canvasDebug('控制点主导：平移结束');
 
-            // 🔧 新增：清除参考线和拖拽状态
-            _clearGuidelines();
-            _dragStartElementId = null;
+            // 🔧 新增：在鼠标释放时进行参考线对齐
+            var finalProperties = getCurrentElementProperties();
+            finalProperties = _alignToClosestGuidelines(finalProperties);
 
-            // 🔧 传递最终状态
-            widget.onControlPointDragEndWithState
-                ?.call(-1, getCurrentElementProperties());
+            // 🔧 如果对齐后位置有变化，需要更新控制点位置
+            if (finalProperties['x'] != _currentX ||
+                finalProperties['y'] != _currentY) {
+              setState(() {
+                _currentX = finalProperties['x']!;
+                _currentY = finalProperties['y']!;
+                _recalculateControlPointPositions();
+              });
+            } // Clear drag state - no specific field needed anymore
+
+            // 🔧 传递最终状态（已对齐）
+            widget.onControlPointDragEndWithState?.call(-1, finalProperties);
 
             // 触发Commit阶段
             widget.onControlPointDragEnd?.call(-1);
@@ -541,154 +571,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void _clearGuidelines() {
     if (_activeGuidelines.isNotEmpty) {
       setState(() {
-        _activeGuidelines.clear();
+        _activeGuidelines =
+            <Guideline>[]; // Create new empty list instead of clearing
       });
       widget.onGuidelinesUpdated?.call([]);
-    }
-  }
-
-  /// 🔧 临时修复：确保GuidelineManager已经初始化
-  void _ensureGuidelineManagerInitialized() {
-    // 检查GuidelineManager是否已启用，如果没有则进行基本初始化
-    if (!GuidelineManager.instance.enabled) {
-      EditPageLogger.canvasDebug('FreeControlPoints临时初始化GuidelineManager',
-          data: {
-            'reason': 'GuidelineManager未启用',
-            'elementId': widget.elementId,
-          });
-
-      // 创建一个最小的元素列表用于测试
-      final testElements = [
-        {
-          'id': 'test_element_1',
-          'x': 100.0,
-          'y': 100.0,
-          'width': 50.0,
-          'height': 30.0,
-          'layerId': 'layer1',
-          'isHidden': false,
-        },
-        {
-          'id': 'test_element_2',
-          'x': 200.0,
-          'y': 100.0,
-          'width': 50.0,
-          'height': 30.0,
-          'layerId': 'layer1',
-          'isHidden': false,
-        },
-      ];
-
-      GuidelineManager.instance.initialize(
-        elements: testElements,
-        pageSize: const Size(800, 600),
-        enabled: true,
-        snapThreshold: 5.0,
-      );
-
-      EditPageLogger.canvasDebug('FreeControlPoints完成临时初始化', data: {
-        'elementsCount': testElements.length,
-        'enabled': GuidelineManager.instance.enabled,
-      });
-    }
-  }
-
-  /// 🔧 新增：生成参考线对齐
-  void _generateGuidelines(Map<String, double> currentProperties) {
-    EditPageLogger.editPageDebug('🔍 [DEBUG] _generateGuidelines 被调用', data: {
-      'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
-      'onGuidelinesUpdated':
-          widget.onGuidelinesUpdated != null ? 'exists' : 'null',
-      'elementId': widget.elementId,
-      'position': '(${currentProperties['x']}, ${currentProperties['y']})',
-    });
-
-    // 只在参考线对齐模式下生成参考线
-    if (widget.alignmentMode != AlignmentMode.guideline ||
-        widget.onGuidelinesUpdated == null) {
-      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过参考线生成', data: {
-        'reason': widget.alignmentMode != AlignmentMode.guideline
-            ? 'wrong_alignment_mode'
-            : 'no_callback',
-        'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
-      });
-      return;
-    }
-
-    try {
-      // 🔧 关键：确保参考线管理器有最新的元素数据
-      if (widget.updateGuidelineManagerElements != null) {
-        EditPageLogger.editPageDebug('🔍 [DEBUG] 更新参考线管理器元素数据');
-        widget.updateGuidelineManagerElements!();
-      }
-
-      EditPageLogger.editPageDebug('🔍 [DEBUG] GuidelineManager状态检查', data: {
-        'enabled': GuidelineManager.instance.enabled,
-        'elementsCount': GuidelineManager.instance.elementCount,
-        'activeGuidelinesCount':
-            GuidelineManager.instance.activeGuidelines.length,
-      });
-
-      // 确保GuidelineManager已启用
-      if (!GuidelineManager.instance.enabled) {
-        EditPageLogger.editPageDebug('GuidelineManager未启用，跳过参考线生成');
-        return;
-      }
-
-      EditPageLogger.editPageDebug('🔍 [DEBUG] 准备调用 generateGuidelines', data: {
-        'elementId': widget.elementId,
-        'position': '(${currentProperties['x']}, ${currentProperties['y']})',
-        'size': '${currentProperties['width']}x${currentProperties['height']}',
-        'rotation': currentProperties['rotation'],
-      });
-
-      // 生成参考线
-      final hasGuidelines = GuidelineManager.instance.generateGuidelines(
-        elementId: widget.elementId,
-        draftPosition: Offset(currentProperties['x']!, currentProperties['y']!),
-        draftSize:
-            Size(currentProperties['width']!, currentProperties['height']!),
-        rotation: currentProperties['rotation'],
-      );
-
-      EditPageLogger.editPageDebug('🔍 [DEBUG] generateGuidelines 结果', data: {
-        'hasGuidelines': hasGuidelines,
-      });
-
-      if (hasGuidelines) {
-        // 获取生成的参考线
-        final guidelines = GuidelineManager.instance.activeGuidelines;
-
-        // 更新本地状态
-        setState(() {
-          _activeGuidelines.clear();
-          _activeGuidelines.addAll(guidelines);
-        });
-
-        // 通知外部更新参考线渲染
-        widget.onGuidelinesUpdated!(guidelines);
-
-        EditPageLogger.editPageDebug('FreeControlPoints生成参考线', data: {
-          'elementId': widget.elementId,
-          'guidelinesCount': guidelines.length,
-          'position': '(${currentProperties['x']}, ${currentProperties['y']})',
-          'size':
-              '${currentProperties['width']}x${currentProperties['height']}',
-        });
-      } else {
-        // 没有参考线，清除现有的
-        if (_activeGuidelines.isNotEmpty) {
-          setState(() {
-            _activeGuidelines.clear();
-          });
-          widget.onGuidelinesUpdated!([]);
-        }
-      }
-    } catch (e) {
-      EditPageLogger.editPageDebug('参考线生成失败', data: {
-        'error': e.toString(),
-        'elementId': widget.elementId,
-      });
     }
   }
 
@@ -821,9 +707,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   }
 
   /// 🔧 控制点主导架构：将控制点状态实时推送给Canvas和DragPreviewLayer
-  /// 🔧 控制点主导架构：将控制点状态实时推送给Canvas和DragPreviewLayer
   void _pushStateToCanvasAndPreview() {
-    EditPageLogger.editPageDebug('🔍 [DEBUG] _pushStateToCanvasAndPreview 被调用');
+    EditPageLogger.editPageDebug('🔍 [DEBUG] _pushStateToCanvasAndPreview 被调用',
+        data: {
+          'elementId': widget.elementId,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
 
     // 构建当前元素的完整状态
     final currentState = getCurrentElementProperties();
@@ -839,13 +728,18 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 🔧 关键：通过onControlPointDragEndWithState实时推送状态
     // 这样DragPreviewLayer就能实时跟随控制点的变化
     if (widget.onControlPointDragEndWithState != null) {
+      EditPageLogger.editPageDebug(
+          '🔍 [DEBUG] 调用 onControlPointDragEndWithState 回调');
       // 注意：这里我们在Live阶段调用，让预览层实时更新
       // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
       widget.onControlPointDragEndWithState!(-2, currentState);
-    }
-
-    // 🔧 新增：生成参考线对齐
-    _generateGuidelines(currentState);
+      EditPageLogger.editPageDebug(
+          '🔍 [DEBUG] onControlPointDragEndWithState 回调完成');
+    } else {
+      EditPageLogger.editPageDebug(
+          '🔍 [DEBUG] onControlPointDragEndWithState 回调为 null');
+    } // 🔧 优化：参考线生成现在通过统一的 onControlPointDragEndWithState 回调处理
+    // 移除了重复的 _generateRealTimeGuidelines 调用，避免双重处理
   }
 
   /// 重新计算控制点位置

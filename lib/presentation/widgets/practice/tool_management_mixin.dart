@@ -241,7 +241,8 @@ mixin ToolManagementMixin on ChangeNotifier
   /// 更新活动参考线
   void updateActiveGuidelines(List<Guideline> guidelines) {
     checkDisposed();
-    state.activeGuidelines = guidelines;
+    // 🔧 创建可修改的副本以避免"不可修改列表"错误
+    state.activeGuidelines = List<Guideline>.from(guidelines);
     state.isGuidelinePreviewActive = guidelines.isNotEmpty;
 
     EditPageLogger.controllerDebug('更新活动参考线', data: {

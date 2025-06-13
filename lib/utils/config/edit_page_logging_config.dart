@@ -54,10 +54,10 @@ class EditPageLoggingConfig {
     editPageMinLevel = LogLevel.debug;
     enableControllerLogging = true;
     controllerMinLevel = LogLevel.debug;
-    enablePerformanceLogging = true;
+    enablePerformanceLogging = false;
     performanceMinLevel = LogLevel.info;
     // 高频日志保持关闭
-    enableCanvasLogging = false;
+    enableCanvasLogging = true;
     enablePropertyPanelLogging = false;
     enableRendererLogging = false;
   }

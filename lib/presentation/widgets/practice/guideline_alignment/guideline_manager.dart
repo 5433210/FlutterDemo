@@ -20,7 +20,7 @@ class GuidelineManager {
   final List<Map<String, dynamic>> _elements = [];
 
   /// 当前活动的参考线
-  final List<Guideline> _activeGuidelines = [];
+  final List<Guideline> _activeGuidelines = <Guideline>[];
 
   /// 页面尺寸
   Size _pageSize = Size.zero;
@@ -38,7 +38,21 @@ class GuidelineManager {
   GuidelineManager._();
 
   /// 获取活动参考线列表
-  List<Guideline> get activeGuidelines => List.unmodifiable(_activeGuidelines);
+  List<Guideline> get activeGuidelines {
+    EditPageLogger.editPageDebug(
+      '🔍 [TRACE] activeGuidelines getter调用',
+      data: {
+        'listType': _activeGuidelines.runtimeType.toString(),
+        'listLength': _activeGuidelines.length,
+        'isUnmodifiable':
+            _activeGuidelines.runtimeType.toString().contains('Unmodifiable'),
+        'stackTrace':
+            StackTrace.current.toString().split('\n').take(5).join('; '),
+        'operation': 'getter_access_trace',
+      },
+    );
+    return List.unmodifiable(_activeGuidelines);
+  }
 
   /// 获取当前管理的元素数量
   int get elementCount => _elements.length;
@@ -196,6 +210,86 @@ class GuidelineManager {
     };
   }
 
+  /// 🚀 新增：计算最佳对齐位置（在鼠标释放时使用）
+  Map<String, dynamic>? calculateBestAlignment({
+    required String elementId,
+    required Offset currentPosition,
+    required Size elementSize,
+  }) {
+    // 如果未启用参考线，直接返回null
+    if (!_enabled) {
+      return null;
+    }
+
+    EditPageLogger.editPageDebug(
+      '🚀 开始计算最佳对齐',
+      data: {
+        'elementId': elementId,
+        'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+        'elementSize': '${elementSize.width}x${elementSize.height}',
+        'operation': 'calculate_best_alignment',
+      },
+    );
+
+    // 生成被拖拽元素的参考线
+    final draggedBounds = Rect.fromLTWH(
+      currentPosition.dx,
+      currentPosition.dy,
+      elementSize.width,
+      elementSize.height,
+    );
+
+    final draggedGuidelines =
+        _generateElementGuidelines(elementId, draggedBounds);
+
+    // 收集所有其他元素和页面的参考线
+    final allOtherGuidelines = <Guideline>[];
+
+    // 添加页面参考线
+    allOtherGuidelines.addAll(_generatePageGuidelinesOnly());
+
+    // 添加其他元素的参考线
+    for (final element in _elements) {
+      final otherElementId = element['id'] as String;
+
+      // 跳过自身和不可见元素
+      if (otherElementId == elementId || element['isHidden'] == true) {
+        continue;
+      }
+
+      final elementBounds = Rect.fromLTWH(
+        (element['x'] as num).toDouble(),
+        (element['y'] as num).toDouble(),
+        (element['width'] as num).toDouble(),
+        (element['height'] as num).toDouble(),
+      );
+
+      allOtherGuidelines
+          .addAll(_generateElementGuidelines(otherElementId, elementBounds));
+    }
+
+    // 找到最佳对齐
+    final bestAlignment = _findClosestAlignment(
+        draggedGuidelines, allOtherGuidelines, currentPosition, elementSize);
+
+    if (bestAlignment != null) {
+      EditPageLogger.editPageDebug(
+        '🚀 找到最佳对齐',
+        data: {
+          'originalPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+          'alignedPosition':
+              '${bestAlignment['position'].dx}, ${bestAlignment['position'].dy}',
+          'alignmentType': bestAlignment['type'],
+          'distance': bestAlignment['distance'],
+          'sourceGuideline': bestAlignment['sourceGuideline'].id,
+          'targetGuideline': bestAlignment['targetGuideline'].id,
+        },
+      );
+    }
+
+    return bestAlignment;
+  }
+
   /// 清理过期的缓存项
   void cleanupCache() {
     _cacheManager.cleanupExpiredEntries();
@@ -209,7 +303,8 @@ class GuidelineManager {
   /// 清空所有参考线
   void clearGuidelines() {
     if (_activeGuidelines.isNotEmpty) {
-      _activeGuidelines.clear();
+      // 使用安全的方式清空列表，避免不可修改列表错误
+      _activeGuidelines.removeRange(0, _activeGuidelines.length);
 
       EditPageLogger.editPageDebug(
         '清空参考线',
@@ -450,7 +545,8 @@ class GuidelineManager {
 
     if (cachedGuidelines != null) {
       // 使用缓存的参考线
-      _activeGuidelines.clear();
+      // 使用安全的方式清空列表，避免不可修改列表错误
+      _activeGuidelines.removeRange(0, _activeGuidelines.length);
       _activeGuidelines.addAll(cachedGuidelines);
 
       // 同步到输出列表
@@ -526,6 +622,60 @@ class GuidelineManager {
             _activeGuidelines.where((g) => g.sourceElementId != 'page').length,
         'nearbyElementsCount': nearbyElementIds.length,
         'operation': 'guidelines_generation_complete',
+      },
+    );
+
+    // 同步到输出列表
+    if (_syncGuidelinesToOutput != null) {
+      _syncGuidelinesToOutput!(_activeGuidelines);
+    }
+
+    return _activeGuidelines.isNotEmpty;
+  }
+
+  /// 🚀 新增：生成所有元素的实时参考线（用于调试显示）
+  bool generateRealTimeGuidelines({
+    required String draggedElementId,
+    required Offset draggedPosition,
+    required Size draggedSize,
+  }) {
+    // 如果未启用参考线，直接返回
+    if (!_enabled) {
+      return false;
+    }
+
+    // 清空旧的参考线
+    clearGuidelines();
+
+    EditPageLogger.editPageDebug(
+      '🚀 生成实时调试参考线',
+      data: {
+        'draggedElementId': draggedElementId,
+        'draggedPosition': '${draggedPosition.dx}, ${draggedPosition.dy}',
+        'draggedSize': '${draggedSize.width}x${draggedSize.height}',
+        'totalElements': _elements.length,
+        'operation': 'generate_realtime_guidelines',
+      },
+    );
+
+    // 为所有元素（包括被拖拽元素）生成参考线
+    _generateAllElementsGuidelines(
+        draggedElementId, draggedPosition, draggedSize);
+
+    // 生成页面边缘参考线
+    _generatePageGuidelinesForAllElements();
+
+    EditPageLogger.editPageDebug(
+      '🚀 实时参考线生成完成',
+      data: {
+        'totalGuidelines': _activeGuidelines.length,
+        'horizontalGuidelines': _activeGuidelines
+            .where((g) => g.direction == AlignmentDirection.horizontal)
+            .length,
+        'verticalGuidelines': _activeGuidelines
+            .where((g) => g.direction == AlignmentDirection.vertical)
+            .length,
+        'operation': 'realtime_guidelines_complete',
       },
     );
 
@@ -630,18 +780,74 @@ class GuidelineManager {
 
   /// 设置活动参考线输出列表
   void setActiveGuidelinesOutput(List<Guideline> outputList) {
-    // 将内部的_activeGuidelines与外部列表同步
-    _syncGuidelinesToOutput = (guidelines) {
-      outputList.clear();
-      outputList.addAll(guidelines);
+    EditPageLogger.editPageDebug(
+      '设置参考线输出列表',
+      data: {
+        'outputListType': outputList.runtimeType.toString(),
+        'outputListLength': outputList.length,
+        'isUnmodifiable':
+            outputList.runtimeType.toString().contains('Unmodifiable'),
+        'operation': 'set_active_guidelines_output',
+      },
+    );
 
-      EditPageLogger.editPageDebug(
-        '参考线输出同步更新',
+    // 🔧 修复：检查是否是不可修改列表，如果是，则不设置同步回调
+    if (outputList.runtimeType.toString().contains('Unmodifiable')) {
+      EditPageLogger.editPageWarning(
+        '无法设置同步回调：传入的是不可修改列表',
         data: {
-          'guidelinesCount': guidelines.length,
-          'operation': 'sync_guidelines_to_output',
+          'outputListType': outputList.runtimeType.toString(),
+          'solution': '需要传入可修改的列表，而不是通过activeGuidelines getter获取的不可修改列表',
         },
       );
+
+      // 不设置同步回调，因为无法修改不可修改列表
+      _syncGuidelinesToOutput = null;
+      return;
+    }
+
+    // 将内部的_activeGuidelines与外部列表同步
+    _syncGuidelinesToOutput = (guidelines) {
+      try {
+        EditPageLogger.editPageDebug(
+          '开始同步参考线到输出',
+          data: {
+            'outputListType': outputList.runtimeType.toString(),
+            'outputListLength': outputList.length,
+            'guidelinesCount': guidelines.length,
+            'isUnmodifiable':
+                outputList.runtimeType.toString().contains('Unmodifiable'),
+            'operation': 'sync_guidelines_before_clear',
+          },
+        );
+
+        outputList.clear();
+        outputList.addAll(guidelines);
+
+        EditPageLogger.editPageDebug(
+          '参考线输出同步更新完成',
+          data: {
+            'guidelinesCount': guidelines.length,
+            'operation': 'sync_guidelines_to_output',
+          },
+        );
+      } catch (e, stackTrace) {
+        // 🔧 修复：如果同步失败（如不可修改列表错误），记录但不中断程序
+        EditPageLogger.editPageError(
+          '参考线输出同步失败，跳过同步',
+          error: e,
+          stackTrace: stackTrace,
+          data: {
+            'outputListType': outputList.runtimeType.toString(),
+            'outputListLength': outputList.length,
+            'guidelinesCount': guidelines.length,
+            'operation': 'sync_guidelines_error_handled',
+            'errorType': e.runtimeType.toString(),
+          },
+        );
+
+        // 不抛出异常，继续执行
+      }
     };
 
     // 立即同步当前参考线
@@ -697,6 +903,124 @@ class GuidelineManager {
     }
 
     return true;
+  }
+
+  /// 🚀 新增：找到最近的对齐参考线
+  Map<String, dynamic>? _findClosestAlignment(
+    List<Guideline> draggedGuidelines,
+    List<Guideline> targetGuidelines,
+    Offset currentPosition,
+    Size elementSize,
+  ) {
+    double minDistance = double.infinity;
+    Map<String, dynamic>? bestAlignment;
+
+    // 检查每个被拖拽元素的参考线与目标参考线的距离
+    for (final draggedGuideline in draggedGuidelines) {
+      for (final targetGuideline in targetGuidelines) {
+        // 只比较相同方向的参考线
+        if (draggedGuideline.direction != targetGuideline.direction) {
+          continue;
+        }
+
+        final distance =
+            (draggedGuideline.position - targetGuideline.position).abs();
+
+        // 只考虑在阈值范围内的对齐
+        if (distance <= _snapThreshold && distance < minDistance) {
+          minDistance = distance;
+
+          // 计算对齐后的位置
+          Offset alignedPosition = currentPosition;
+
+          if (draggedGuideline.direction == AlignmentDirection.horizontal) {
+            // 水平对齐，调整Y坐标
+            double newY = currentPosition.dy;
+
+            switch (draggedGuideline.type) {
+              case GuidelineType.horizontalTopEdge:
+                newY = targetGuideline.position;
+                break;
+              case GuidelineType.horizontalCenterLine:
+                newY = targetGuideline.position - elementSize.height / 2;
+                break;
+              case GuidelineType.horizontalBottomEdge:
+                newY = targetGuideline.position - elementSize.height;
+                break;
+              default:
+                continue;
+            }
+
+            alignedPosition = Offset(currentPosition.dx, newY);
+          } else {
+            // 垂直对齐，调整X坐标
+            double newX = currentPosition.dx;
+
+            switch (draggedGuideline.type) {
+              case GuidelineType.verticalLeftEdge:
+                newX = targetGuideline.position;
+                break;
+              case GuidelineType.verticalCenterLine:
+                newX = targetGuideline.position - elementSize.width / 2;
+                break;
+              case GuidelineType.verticalRightEdge:
+                newX = targetGuideline.position - elementSize.width;
+                break;
+              default:
+                continue;
+            }
+
+            alignedPosition = Offset(newX, currentPosition.dy);
+          }
+
+          bestAlignment = {
+            'position': alignedPosition,
+            'distance': distance,
+            'type':
+                '${draggedGuideline.type.name}_to_${targetGuideline.type.name}',
+            'sourceGuideline': draggedGuideline,
+            'targetGuideline': targetGuideline,
+          };
+        }
+      }
+    }
+
+    return bestAlignment;
+  }
+
+  /// 🚀 新增：为所有元素生成参考线（包括被拖拽元素的当前位置）
+  void _generateAllElementsGuidelines(
+      String draggedElementId, Offset draggedPosition, Size draggedSize) {
+    // 为被拖拽元素在当前位置生成参考线
+    _generateGuidelinesForElement(
+      elementId: draggedElementId,
+      bounds: Rect.fromLTWH(draggedPosition.dx, draggedPosition.dy,
+          draggedSize.width, draggedSize.height),
+      isDragged: true,
+    );
+
+    // 为所有其他元素生成参考线
+    for (final element in _elements) {
+      final elementId = element['id'] as String;
+
+      // 跳过被拖拽的元素（已经在上面处理了）和不可见元素
+      if (elementId == draggedElementId || element['isHidden'] == true) {
+        continue;
+      }
+
+      final elementBounds = Rect.fromLTWH(
+        (element['x'] as num).toDouble(),
+        (element['y'] as num).toDouble(),
+        (element['width'] as num).toDouble(),
+        (element['height'] as num).toDouble(),
+      );
+
+      _generateGuidelinesForElement(
+        elementId: elementId,
+        bounds: elementBounds,
+        isDragged: false,
+      );
+    }
   }
 
   /// 生成与其他元素的对齐参考线（优化版本）
@@ -867,6 +1191,144 @@ class GuidelineManager {
     }
   }
 
+  /// 🚀 新增：为元素生成参考线列表（不添加到活动列表）
+  List<Guideline> _generateElementGuidelines(String elementId, Rect bounds) {
+    return [
+      // 水平参考线
+      Guideline(
+        id: '${elementId}_top_edge',
+        type: GuidelineType.horizontalTopEdge,
+        position: bounds.top,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      Guideline(
+        id: '${elementId}_center_h',
+        type: GuidelineType.horizontalCenterLine,
+        position: bounds.center.dy,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      Guideline(
+        id: '${elementId}_bottom_edge',
+        type: GuidelineType.horizontalBottomEdge,
+        position: bounds.bottom,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      // 垂直参考线
+      Guideline(
+        id: '${elementId}_left_edge',
+        type: GuidelineType.verticalLeftEdge,
+        position: bounds.left,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      Guideline(
+        id: '${elementId}_center_v',
+        type: GuidelineType.verticalCenterLine,
+        position: bounds.center.dx,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      Guideline(
+        id: '${elementId}_right_edge',
+        type: GuidelineType.verticalRightEdge,
+        position: bounds.right,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+    ];
+  }
+
+  /// 🚀 新增：为单个元素生成所有类型的参考线
+  void _generateGuidelinesForElement({
+    required String elementId,
+    required Rect bounds,
+    bool isDragged = false,
+  }) {
+    final prefix = isDragged ? 'dragged_' : 'element_';
+
+    // 生成水平参考线
+    _activeGuidelines.addAll([
+      // 上边缘
+      Guideline(
+        id: '$prefix${elementId}_top_edge',
+        type: GuidelineType.horizontalTopEdge,
+        position: bounds.top,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      // 水平中心线
+      Guideline(
+        id: '$prefix${elementId}_center_h',
+        type: GuidelineType.horizontalCenterLine,
+        position: bounds.center.dy,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      // 下边缘
+      Guideline(
+        id: '$prefix${elementId}_bottom_edge',
+        type: GuidelineType.horizontalBottomEdge,
+        position: bounds.bottom,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+    ]);
+
+    // 生成垂直参考线
+    _activeGuidelines.addAll([
+      // 左边缘
+      Guideline(
+        id: '$prefix${elementId}_left_edge',
+        type: GuidelineType.verticalLeftEdge,
+        position: bounds.left,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      // 垂直中心线
+      Guideline(
+        id: '$prefix${elementId}_center_v',
+        type: GuidelineType.verticalCenterLine,
+        position: bounds.center.dx,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+      // 右边缘
+      Guideline(
+        id: '$prefix${elementId}_right_edge',
+        type: GuidelineType.verticalRightEdge,
+        position: bounds.right,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: elementId,
+        sourceElementBounds: bounds,
+      ),
+    ]);
+
+    EditPageLogger.editPageDebug(
+      '🚀 为元素生成完整参考线',
+      data: {
+        'elementId': elementId,
+        'isDragged': isDragged,
+        'bounds':
+            '${bounds.left},${bounds.top},${bounds.width},${bounds.height}',
+        'guidelinesAdded': 6, // 每个元素6条参考线
+      },
+    );
+  }
+
   /// 生成页面边缘参考线
   void _generatePageGuidelines(Rect targetBounds) {
     final pageCenter = Offset(_pageSize.width / 2, _pageSize.height / 2);
@@ -982,5 +1444,132 @@ class GuidelineManager {
         ),
       );
     }
+  }
+
+  /// 🚀 新增：生成页面边缘参考线（用于显示所有页面参考线）
+  void _generatePageGuidelinesForAllElements() {
+    final pageCenter = Offset(_pageSize.width / 2, _pageSize.height / 2);
+    final pageBounds = Rect.fromLTWH(0, 0, _pageSize.width, _pageSize.height);
+
+    // 添加页面的所有参考线
+    _activeGuidelines.addAll([
+      // 水平参考线
+      Guideline(
+        id: 'page_top_edge',
+        type: GuidelineType.horizontalTopEdge,
+        position: 0,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_center_horizontal',
+        type: GuidelineType.horizontalCenterLine,
+        position: pageCenter.dy,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_bottom_edge',
+        type: GuidelineType.horizontalBottomEdge,
+        position: _pageSize.height,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      // 垂直参考线
+      Guideline(
+        id: 'page_left_edge',
+        type: GuidelineType.verticalLeftEdge,
+        position: 0,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_center_vertical',
+        type: GuidelineType.verticalCenterLine,
+        position: pageCenter.dx,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_right_edge',
+        type: GuidelineType.verticalRightEdge,
+        position: _pageSize.width,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+    ]);
+
+    EditPageLogger.editPageDebug(
+      '🚀 生成页面参考线',
+      data: {
+        'pageSize': '${_pageSize.width}x${_pageSize.height}',
+        'pageGuidelinesAdded': 6,
+      },
+    );
+  }
+
+  /// 🚀 新增：仅生成页面参考线
+  List<Guideline> _generatePageGuidelinesOnly() {
+    final pageCenter = Offset(_pageSize.width / 2, _pageSize.height / 2);
+    final pageBounds = Rect.fromLTWH(0, 0, _pageSize.width, _pageSize.height);
+
+    return [
+      // 水平参考线
+      Guideline(
+        id: 'page_top_edge',
+        type: GuidelineType.horizontalTopEdge,
+        position: 0,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_center_horizontal',
+        type: GuidelineType.horizontalCenterLine,
+        position: pageCenter.dy,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_bottom_edge',
+        type: GuidelineType.horizontalBottomEdge,
+        position: _pageSize.height,
+        direction: AlignmentDirection.horizontal,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      // 垂直参考线
+      Guideline(
+        id: 'page_left_edge',
+        type: GuidelineType.verticalLeftEdge,
+        position: 0,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_center_vertical',
+        type: GuidelineType.verticalCenterLine,
+        position: pageCenter.dx,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+      Guideline(
+        id: 'page_right_edge',
+        type: GuidelineType.verticalRightEdge,
+        position: _pageSize.width,
+        direction: AlignmentDirection.vertical,
+        sourceElementId: 'page',
+        sourceElementBounds: pageBounds,
+      ),
+    ];
   }
 }

@@ -112,7 +112,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                       final previewProperties = widget.dragStateManager
                           .getElementPreviewProperties(elementId);
 
-                      Widget elementPreview;
+                      Widget elementPreview = const SizedBox.shrink();
 
                       if (previewProperties != null) {
                         // 使用完整的预览属性构建元素
@@ -129,81 +129,82 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                         }
                         elementPreview = _buildFullPropertyPreview(
                             elementId, previewProperties);
-                      } else {
-                        // 回退到传统的位置偏移方式
-                        final previewPosition = widget.dragStateManager
-                            .getElementPreviewPosition(elementId);
-
-                        if (previewPosition == null) {
-                          // 🔧 强化单选场景：如果没有预览位置，尝试查找元素
-                          if (isSingleSelection) {
-                            EditPageLogger.canvasError('🔧🔧🔧 单选元素无预览位置',
-                                data: {
-                                  'elementId': elementId,
-                                  'reason': '尝试查找原始元素位置',
-                                  'fix': 'single_selection_fallback_position',
-                                });
-                          } else {
-                            EditPageLogger.canvasDebug('元素预览位置为空',
-                                data: {'elementId': elementId});
-                          }
-                          return const SizedBox.shrink();
-                        }
-
-                        // 找到对应的元素数据
-                        final element = widget.elements.firstWhere(
-                          (e) => e['id'] == elementId,
-                          orElse: () => <String, dynamic>{},
-                        );
-
-                        if (element.isEmpty) {
-                          // 🔧 强化单选场景：元素数据缺失时的处理
-                          if (isSingleSelection) {
-                            EditPageLogger.canvasError('🔧🔧🔧 单选元素数据缺失',
-                                data: {
-                                  'elementId': elementId,
-                                  'reason': '无法找到元素数据',
-                                  'fix': 'single_selection_missing_data',
-                                });
-                          } else {
-                            EditPageLogger.canvasDebug('未找到元素数据',
-                                data: {'elementId': elementId});
-                          }
-                          return const SizedBox.shrink();
-                        }
-
-                        // 如果提供了自定义构建器，使用它构建预览
-                        if (widget.elementBuilder != null) {
-                          if (isSingleSelection) {
-                            EditPageLogger.canvasError('🔧🔧🔧 单选使用自定义构建器',
-                                data: {
-                                  'elementId': elementId,
-                                  'fix': 'single_selection_custom_builder',
-                                });
-                          } else {
-                            EditPageLogger.canvasDebug('使用自定义构建器预览元素',
-                                data: {'elementId': elementId});
-                          }
-                          elementPreview = widget.elementBuilder!(
-                              elementId, previewPosition, element);
-                        } else {
-                          // 否则使用默认预览样式
-                          if (isSingleSelection) {
-                            EditPageLogger.canvasError('🔧🔧🔧 单选使用默认预览样式',
-                                data: {
-                                  'elementId': elementId,
-                                  'previewPosition':
-                                      '${previewPosition.dx},${previewPosition.dy}',
-                                  'fix': 'single_selection_default_preview',
-                                });
-                          } else {
-                            EditPageLogger.canvasDebug('使用默认样式预览元素',
-                                data: {'elementId': elementId});
-                          }
-                          elementPreview = _buildDefaultPreview(
-                              elementId, previewPosition, element);
-                        }
                       }
+                      // else {
+                      //   // 回退到传统的位置偏移方式
+                      //   final previewPosition = widget.dragStateManager
+                      //       .getElementPreviewPosition(elementId);
+
+                      //   if (previewPosition == null) {
+                      //     // 🔧 强化单选场景：如果没有预览位置，尝试查找元素
+                      //     if (isSingleSelection) {
+                      //       EditPageLogger.canvasError('🔧🔧🔧 单选元素无预览位置',
+                      //           data: {
+                      //             'elementId': elementId,
+                      //             'reason': '尝试查找原始元素位置',
+                      //             'fix': 'single_selection_fallback_position',
+                      //           });
+                      //     } else {
+                      //       EditPageLogger.canvasDebug('元素预览位置为空',
+                      //           data: {'elementId': elementId});
+                      //     }
+                      //     return const SizedBox.shrink();
+                      //   }
+
+                      //   // 找到对应的元素数据
+                      //   final element = widget.elements.firstWhere(
+                      //     (e) => e['id'] == elementId,
+                      //     orElse: () => <String, dynamic>{},
+                      //   );
+
+                      //   if (element.isEmpty) {
+                      //     // 🔧 强化单选场景：元素数据缺失时的处理
+                      //     if (isSingleSelection) {
+                      //       EditPageLogger.canvasError('🔧🔧🔧 单选元素数据缺失',
+                      //           data: {
+                      //             'elementId': elementId,
+                      //             'reason': '无法找到元素数据',
+                      //             'fix': 'single_selection_missing_data',
+                      //           });
+                      //     } else {
+                      //       EditPageLogger.canvasDebug('未找到元素数据',
+                      //           data: {'elementId': elementId});
+                      //     }
+                      //     return const SizedBox.shrink();
+                      //   }
+
+                      //   // 如果提供了自定义构建器，使用它构建预览
+                      //   if (widget.elementBuilder != null) {
+                      //     if (isSingleSelection) {
+                      //       EditPageLogger.canvasError('🔧🔧🔧 单选使用自定义构建器',
+                      //           data: {
+                      //             'elementId': elementId,
+                      //             'fix': 'single_selection_custom_builder',
+                      //           });
+                      //     } else {
+                      //       EditPageLogger.canvasDebug('使用自定义构建器预览元素',
+                      //           data: {'elementId': elementId});
+                      //     }
+                      //     elementPreview = widget.elementBuilder!(
+                      //         elementId, previewPosition, element);
+                      //   } else {
+                      //     // 否则使用默认预览样式
+                      //     if (isSingleSelection) {
+                      //       EditPageLogger.canvasError('🔧🔧🔧 单选使用默认预览样式',
+                      //           data: {
+                      //             'elementId': elementId,
+                      //             'previewPosition':
+                      //                 '${previewPosition.dx},${previewPosition.dy}',
+                      //             'fix': 'single_selection_default_preview',
+                      //           });
+                      //     } else {
+                      //       EditPageLogger.canvasDebug('使用默认样式预览元素',
+                      //           data: {'elementId': elementId});
+                      //     }
+                      //     elementPreview = _buildDefaultPreview(
+                      //         elementId, previewPosition, element);
+                      //   }
+                      // }
 
                       return elementPreview;
                     },
