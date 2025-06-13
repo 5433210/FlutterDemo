@@ -417,6 +417,7 @@ class GuidelineManager {
     double? rotation,
     bool isDynamicSource = false,
     bool alignToStatic = false,
+    bool forceUpdate = false,
   }) {
     // 如果未启用参考线，直接返回null
     if (!_enabled) {
@@ -431,6 +432,7 @@ class GuidelineManager {
       rotation: rotation,
       isDynamicSource: isDynamicSource,
       alignToStatic: alignToStatic,
+      forceUpdate: forceUpdate,
     );
 
     if (!hasGuidelines || _activeGuidelines.isEmpty) {
@@ -462,6 +464,7 @@ class GuidelineManager {
             'activeGuidelines': _activeGuidelines.length,
             'isDynamicSource': isDynamicSource,
             'alignToStatic': alignToStatic,
+            'forceUpdate': forceUpdate,
             'operation': 'detect_alignment',
           },
         );
@@ -485,182 +488,253 @@ class GuidelineManager {
     double? rotation,
     bool isDynamicSource = false,
     bool alignToStatic = false,
+    bool forceUpdate = false,
   }) {
     // 如果未启用参考线，直接返回
     if (!_enabled) {
       return false;
     }
 
-    // 🔧 调试：输出空间索引状态
-    final spatialIndexInfo = _spatialIndex.getDebugInfo();
-    EditPageLogger.editPageDebug(
-      '🔧 空间索引状态检查',
-      data: {
-        'spatialIndexInfo': spatialIndexInfo,
-        'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
-        'targetSize': '${draftSize.width}x${draftSize.height}',
-        'isDynamicSource': isDynamicSource,
-        'alignToStatic': alignToStatic,
-        'operation': 'spatial_index_debug',
-      },
-    );
+    // 🔹 新增：当是动态源时，临时保存原始元素信息并替换为当前位置
+    Map<String, dynamic>? originalElement;
+    int elementIndex = -1;
+    
+    if (isDynamicSource) {
+      // 查找元素索引
+      elementIndex = _elements.indexWhere((e) => e['id'] == elementId);
+      if (elementIndex >= 0) {
+        // 保存原始信息
+        originalElement = Map<String, dynamic>.from(_elements[elementIndex]);
+        
+        // 临时更新元素位置为当前拖拽位置
+        _elements[elementIndex] = {
+          ..._elements[elementIndex],
+          'x': draftPosition.dx,
+          'y': draftPosition.dy,
+          'width': draftSize.width,
+          'height': draftSize.height,
+          'isDynamicSource': true,  // 标记为动态源
+        };
+        
+        // 如果提供了旋转角度，也更新它
+        if (rotation != null) {
+          _elements[elementIndex]['rotation'] = rotation;
+        }
+        
+        EditPageLogger.editPageDebug(
+          '🔹 临时更新动态参考线源位置',
+          data: {
+            'elementId': elementId,
+            'originalPosition': '${originalElement!['x']}, ${originalElement!['y']}',
+            'updatedPosition': '${draftPosition.dx}, ${draftPosition.dy}',
+            'operation': 'update_dynamic_source',
+          },
+        );
+      }
+    }
 
-    // 🔧 使用更大的搜索半径进行查询
-    final searchRadius =
-        math.max(200.0, math.max(draftSize.width, draftSize.height) * 2);
-    var nearbyElementIds = _spatialIndex.findNearestElements(
-      draftPosition,
-      maxDistance: searchRadius,
-      maxResults: 20,
-    );
-
-    // 🔧 如果空间索引查询失败，使用强制搜索
-    if (nearbyElementIds.isEmpty && spatialIndexInfo['totalElements'] > 0) {
+    try {
+      // 🔧 调试：输出空间索引状态
+      final spatialIndexInfo = _spatialIndex.getDebugInfo();
       EditPageLogger.editPageDebug(
-        '🔧 空间索引查询失败，使用强制搜索',
+        '🔧 空间索引状态检查',
         data: {
-          'reason': '空间索引返回空结果',
-          'totalElements': spatialIndexInfo['totalElements'],
-          'searchRadius': searchRadius,
+          'spatialIndexInfo': spatialIndexInfo,
+          'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
+          'targetSize': '${draftSize.width}x${draftSize.height}',
+          'isDynamicSource': isDynamicSource,
+          'alignToStatic': alignToStatic,
+          'forceUpdate': forceUpdate,
+          'operation': 'spatial_index_debug',
         },
       );
 
-      nearbyElementIds = _spatialIndex.findAllElementsWithinDistance(
+      // 🔧 使用更大的搜索半径进行查询
+      final searchRadius =
+          math.max(200.0, math.max(draftSize.width, draftSize.height) * 2);
+      var nearbyElementIds = _spatialIndex.findNearestElements(
         draftPosition,
         maxDistance: searchRadius,
         maxResults: 20,
       );
-    }
 
-    EditPageLogger.editPageDebug(
-      '🔧 空间索引查询结果',
-      data: {
-        'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
-        'searchRadius': searchRadius,
-        'nearbyElementIds': nearbyElementIds,
-        'totalElementsInIndex': spatialIndexInfo['totalElements'],
-        'operation': 'spatial_index_query_result',
-      },
-    );
+      // 🔧 如果空间索引查询失败，使用强制搜索
+      if (nearbyElementIds.isEmpty && spatialIndexInfo['totalElements'] > 0) {
+        EditPageLogger.editPageDebug(
+          '🔧 空间索引查询失败，使用强制搜索',
+          data: {
+            'reason': '空间索引返回空结果',
+            'totalElements': spatialIndexInfo['totalElements'],
+            'searchRadius': searchRadius,
+          },
+        );
 
-    // 检查缓存
-    final cachedGuidelines = _cacheManager.getCachedGuidelines(
-      elementId: elementId,
-      x: draftPosition.dx,
-      y: draftPosition.dy,
-      width: draftSize.width,
-      height: draftSize.height,
-      targetElementIds: nearbyElementIds,
-    );
+        nearbyElementIds = _spatialIndex.findAllElementsWithinDistance(
+          draftPosition,
+          maxDistance: searchRadius,
+          maxResults: 20,
+        );
+      }
 
-    if (cachedGuidelines != null) {
-      // 使用缓存的参考线
-      // 使用安全的方式清空列表，避免不可修改列表错误
-      _activeGuidelines.removeRange(0, _activeGuidelines.length);
-      _activeGuidelines.addAll(cachedGuidelines);
+      EditPageLogger.editPageDebug(
+        '🔧 空间索引查询结果',
+        data: {
+          'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
+          'searchRadius': searchRadius,
+          'nearbyElementIds': nearbyElementIds,
+          'totalElementsInIndex': spatialIndexInfo['totalElements'],
+          'operation': 'spatial_index_query_result',
+        },
+      );
+
+      // 🔧 修改：只有在不强制更新时才检查缓存
+      if (!forceUpdate) {
+        // 检查缓存
+        final cachedGuidelines = _cacheManager.getCachedGuidelines(
+          elementId: elementId,
+          x: draftPosition.dx,
+          y: draftPosition.dy,
+          width: draftSize.width,
+          height: draftSize.height,
+          targetElementIds: nearbyElementIds,
+        );
+
+        if (cachedGuidelines != null) {
+          // 使用缓存的参考线
+          // 使用安全的方式清空列表，避免不可修改列表错误
+          _activeGuidelines.removeRange(0, _activeGuidelines.length);
+          _activeGuidelines.addAll(cachedGuidelines);
+
+          // 同步到输出列表
+          if (_syncGuidelinesToOutput != null) {
+            _syncGuidelinesToOutput!(_activeGuidelines);
+          }
+
+          EditPageLogger.editPageDebug(
+            '🔧 使用缓存的参考线',
+            data: {
+              'cachedGuidelinesCount': cachedGuidelines.length,
+              'operation': 'use_cached_guidelines',
+            },
+          );
+
+          return _activeGuidelines.isNotEmpty;
+        }
+      } else {
+        // 🔹 强制更新时输出日志
+        EditPageLogger.editPageDebug(
+          '🔧 强制重新生成参考线，跳过缓存',
+          data: {
+            'elementId': elementId,
+            'position': '${draftPosition.dx}, ${draftPosition.dy}',
+            'operation': 'force_update_guidelines',
+          },
+        );
+      }
+
+      // 清空旧的参考线
+      clearGuidelines();
+
+      // 创建目标元素边界
+      final targetBounds = Rect.fromLTWH(
+        draftPosition.dx,
+        draftPosition.dy,
+        draftSize.width,
+        draftSize.height,
+      );
+
+      // 生成页面边缘参考线
+      _generatePageGuidelines(targetBounds);
+
+      // 🔧 确保有附近元素时才生成对齐参考线
+      if (nearbyElementIds.isNotEmpty) {
+        _generateElementAlignmentGuidelinesOptimized(
+          elementId: elementId,
+          targetBounds: targetBounds,
+          nearbyElementIds: nearbyElementIds,
+          isDynamicSource: isDynamicSource,
+          alignToStatic: alignToStatic,
+        );
+      } else {
+        EditPageLogger.editPageDebug(
+          '🔧 跳过元素对齐参考线生成',
+          data: {
+            'reason': '未找到附近元素',
+            'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
+            'searchRadius': searchRadius,
+            'totalElements': spatialIndexInfo['totalElements'],
+          },
+        );
+      }
+
+      // 🔹 动态计算参考线与目标的距离，更新distanceToTarget属性
+      if (_activeGuidelines.isNotEmpty) {
+        final updatedGuidelines = _activeGuidelines.map((guideline) {
+          double distance = guideline.distanceTo(targetBounds);
+          return guideline.copyWith(
+            distanceToTarget: distance,
+            // 只有在距离小于阈值时才允许吸附
+            canSnap: distance <= _snapThreshold,
+          );
+        }).toList();
+        
+        // 更新活动参考线
+        _activeGuidelines.clear();
+        _activeGuidelines.addAll(updatedGuidelines);
+      }
+
+      // 🔹 只在非强制更新模式下缓存结果
+      if (_activeGuidelines.isNotEmpty && !forceUpdate) {
+        _cacheManager.cacheGuidelines(
+          elementId: elementId,
+          x: draftPosition.dx,
+          y: draftPosition.dy,
+          width: draftSize.width,
+          height: draftSize.height,
+          targetElementIds: nearbyElementIds,
+          guidelines: _activeGuidelines,
+        );
+      }
+
+      EditPageLogger.editPageDebug(
+        '🔧 参考线生成完成',
+        data: {
+          'hasGuidelines': _activeGuidelines.isNotEmpty,
+          'guidelinesCount': _activeGuidelines.length,
+          'pageGuidelines':
+              _activeGuidelines.where((g) => g.sourceElementId == 'page').length,
+          'elementGuidelines':
+              _activeGuidelines.where((g) => g.sourceElementId != 'page').length,
+          'nearbyElementsCount': nearbyElementIds.length,
+          'isDynamicSource': isDynamicSource,
+          'alignToStatic': alignToStatic,
+          'forceUpdate': forceUpdate,
+          'operation': 'guidelines_generation_complete',
+        },
+      );
 
       // 同步到输出列表
       if (_syncGuidelinesToOutput != null) {
         _syncGuidelinesToOutput!(_activeGuidelines);
       }
 
-      EditPageLogger.editPageDebug(
-        '🔧 使用缓存的参考线',
-        data: {
-          'cachedGuidelinesCount': cachedGuidelines.length,
-          'operation': 'use_cached_guidelines',
-        },
-      );
-
       return _activeGuidelines.isNotEmpty;
-    }
-
-    // 清空旧的参考线
-    clearGuidelines();
-
-    // 创建目标元素边界
-    final targetBounds = Rect.fromLTWH(
-      draftPosition.dx,
-      draftPosition.dy,
-      draftSize.width,
-      draftSize.height,
-    );
-
-    // 生成页面边缘参考线
-    _generatePageGuidelines(targetBounds);
-
-    // 🔧 确保有附近元素时才生成对齐参考线
-    if (nearbyElementIds.isNotEmpty) {
-      _generateElementAlignmentGuidelinesOptimized(
-        elementId: elementId,
-        targetBounds: targetBounds,
-        nearbyElementIds: nearbyElementIds,
-        isDynamicSource: isDynamicSource,
-        alignToStatic: alignToStatic,
-      );
-    } else {
-      EditPageLogger.editPageDebug(
-        '🔧 跳过元素对齐参考线生成',
-        data: {
-          'reason': '未找到附近元素',
-          'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
-          'searchRadius': searchRadius,
-          'totalElements': spatialIndexInfo['totalElements'],
-        },
-      );
-    }
-
-    // 🔹 动态计算参考线与目标的距离，更新distanceToTarget属性
-    if (_activeGuidelines.isNotEmpty) {
-      final updatedGuidelines = _activeGuidelines.map((guideline) {
-        double distance = guideline.distanceTo(targetBounds);
-        return guideline.copyWith(
-          distanceToTarget: distance,
-          // 只有在距离小于阈值时才允许吸附
-          canSnap: distance <= _snapThreshold,
-        );
-      }).toList();
       
-      // 更新活动参考线
-      _activeGuidelines.clear();
-      _activeGuidelines.addAll(updatedGuidelines);
+    } finally {
+      // 🔹 恢复原始元素信息
+      if (isDynamicSource && originalElement != null && elementIndex >= 0) {
+        _elements[elementIndex] = originalElement;
+        
+        EditPageLogger.editPageDebug(
+          '🔹 恢复动态参考线源原始位置',
+          data: {
+            'elementId': elementId,
+            'restoredPosition': '${originalElement['x']}, ${originalElement['y']}',
+            'operation': 'restore_dynamic_source',
+          },
+        );
+      }
     }
-
-    // 缓存生成的参考线
-    if (_activeGuidelines.isNotEmpty) {
-      _cacheManager.cacheGuidelines(
-        elementId: elementId,
-        x: draftPosition.dx,
-        y: draftPosition.dy,
-        width: draftSize.width,
-        height: draftSize.height,
-        targetElementIds: nearbyElementIds,
-        guidelines: _activeGuidelines,
-      );
-    }
-
-    EditPageLogger.editPageDebug(
-      '🔧 参考线生成完成',
-      data: {
-        'hasGuidelines': _activeGuidelines.isNotEmpty,
-        'guidelinesCount': _activeGuidelines.length,
-        'pageGuidelines':
-            _activeGuidelines.where((g) => g.sourceElementId == 'page').length,
-        'elementGuidelines':
-            _activeGuidelines.where((g) => g.sourceElementId != 'page').length,
-        'nearbyElementsCount': nearbyElementIds.length,
-        'isDynamicSource': isDynamicSource,
-        'alignToStatic': alignToStatic,
-        'operation': 'guidelines_generation_complete',
-      },
-    );
-
-    // 同步到输出列表
-    if (_syncGuidelinesToOutput != null) {
-      _syncGuidelinesToOutput!(_activeGuidelines);
-    }
-
-    return _activeGuidelines.isNotEmpty;
   }
 
   /// 🚀 新增：生成所有元素的实时参考线（用于调试显示）
