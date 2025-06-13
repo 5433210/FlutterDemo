@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
 import 'custom_operation.dart';
-import 'guideline_alignment/guideline_manager.dart';
+import 'guideline_alignment/guideline_manager.dart' hide EditPageLogger;
 import 'guideline_alignment/guideline_types.dart';
 import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
@@ -1131,7 +1131,13 @@ mixin ElementOperationsMixin on ChangeNotifier
       alignedProperties['y'] = alignedPosition.dy;
       return alignedProperties;
     } else {
-      clearActiveGuidelines();
+      // 🔧 修复：拖拽过程中不清空参考线，让用户能看到所有可能的对齐目标
+      // 参考线只在拖拽结束时清空，而不是在每次对齐检查失败时清空
+      EditPageLogger.controllerDebug('拖拽参考线对齐未生效，保持现有参考线显示', data: {
+        'elementId': elementId,
+        'currentPosition': '$currentX, $currentY',
+        'reason': 'no_alignment_found_but_preserving_guidelines_during_drag',
+      });
       return null;
     }
   }

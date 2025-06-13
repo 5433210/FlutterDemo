@@ -545,6 +545,29 @@ class SmartCanvasGestureHandler implements GestureContext {
       (element['height'] as num).toDouble(),
     );
 
+    // 🔧 修复：在拖拽过程中只生成参考线用于显示，不强制对齐
+    // 先生成参考线用于视觉反馈
+    final hasGuidelines = GuidelineManager.instance.generateGuidelines(
+      elementId: elementId,
+      draftPosition: currentBounds.topLeft,
+      draftSize: currentBounds.size,
+    );
+
+    if (hasGuidelines) {
+      // 更新活动参考线用于渲染
+      controller
+          .updateActiveGuidelines(GuidelineManager.instance.activeGuidelines);
+
+      EditPageLogger.canvasDebug('参考线生成完成，显示参考线但不强制对齐', data: {
+        'elementId': elementId,
+        'delta': delta,
+        'guidelinesCount': GuidelineManager.instance.activeGuidelines.length,
+        'reason': 'guidelines_displayed_for_visual_feedback_only',
+      });
+    }
+
+    // 🔧 修复：在拖拽过程中不执行强制对齐，让用户可以自由拖拽
+    // 只有在非常接近参考线时（距离小于2像素）才进行轻微的吸附
     final alignmentResult = GuidelineManager.instance.detectAlignment(
       elementId: elementId,
       currentPosition: currentBounds.topLeft,
@@ -552,26 +575,40 @@ class SmartCanvasGestureHandler implements GestureContext {
     );
 
     if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
-      // 计算对齐后的偏移
       final alignedPosition = alignmentResult['position'] as Offset;
       final alignedX = alignedPosition.dx - (element['x'] as num).toDouble();
       final alignedY = alignedPosition.dy - (element['y'] as num).toDouble();
       final alignedOffset = Offset(alignedX, alignedY);
 
-      // 更新活动参考线用于渲染
-      final guidelines = alignmentResult['guidelines'] as List<Guideline>;
-      controller.updateActiveGuidelines(guidelines);
+      // 计算对齐距离
+      final alignmentDistance = (delta - alignedOffset).distance;
 
-      EditPageLogger.canvasDebug('参考线对齐生效', data: {
-        'elementId': elementId,
-        'originalOffset': delta,
-        'alignedOffset': alignedOffset,
-        'guidelinesCount': guidelines.length,
-      });
-
-      return alignedOffset;
+      // 🔧 修复：只有在距离非常小时（2像素内）才进行吸附对齐
+      if (alignmentDistance <= 2.0) {
+        EditPageLogger.canvasDebug('参考线吸附对齐生效', data: {
+          'elementId': elementId,
+          'originalOffset': delta,
+          'alignedOffset': alignedOffset,
+          'alignmentDistance': alignmentDistance,
+          'threshold': 2.0,
+        });
+        return alignedOffset;
+      } else {
+        EditPageLogger.canvasDebug('参考线距离太远，不执行吸附对齐', data: {
+          'elementId': elementId,
+          'delta': delta,
+          'alignmentDistance': alignmentDistance,
+          'threshold': 2.0,
+          'reason': 'distance_too_large_for_snap_alignment',
+        });
+        return null;
+      }
     } else {
-      controller.clearActiveGuidelines();
+      EditPageLogger.canvasDebug('无参考线对齐，保持自由拖拽', data: {
+        'elementId': elementId,
+        'delta': delta,
+        'reason': 'no_alignment_detected_free_drag',
+      });
       return null;
     }
   }

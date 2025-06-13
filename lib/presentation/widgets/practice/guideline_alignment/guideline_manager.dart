@@ -415,6 +415,8 @@ class GuidelineManager {
     required Offset currentPosition,
     required Size elementSize,
     double? rotation,
+    bool isDynamicSource = false,
+    bool alignToStatic = false,
   }) {
     // 如果未启用参考线，直接返回null
     if (!_enabled) {
@@ -427,6 +429,8 @@ class GuidelineManager {
       draftPosition: currentPosition,
       draftSize: elementSize,
       rotation: rotation,
+      isDynamicSource: isDynamicSource,
+      alignToStatic: alignToStatic,
     );
 
     if (!hasGuidelines || _activeGuidelines.isEmpty) {
@@ -456,6 +460,8 @@ class GuidelineManager {
                 '(${currentPosition.dx}, ${currentPosition.dy})',
             'alignedPosition': '(${newPosition.dx}, ${newPosition.dy})',
             'activeGuidelines': _activeGuidelines.length,
+            'isDynamicSource': isDynamicSource,
+            'alignToStatic': alignToStatic,
             'operation': 'detect_alignment',
           },
         );
@@ -477,6 +483,8 @@ class GuidelineManager {
     required Offset draftPosition,
     required Size draftSize,
     double? rotation,
+    bool isDynamicSource = false,
+    bool alignToStatic = false,
   }) {
     // 如果未启用参考线，直接返回
     if (!_enabled) {
@@ -491,6 +499,8 @@ class GuidelineManager {
         'spatialIndexInfo': spatialIndexInfo,
         'targetPosition': '${draftPosition.dx}, ${draftPosition.dy}',
         'targetSize': '${draftSize.width}x${draftSize.height}',
+        'isDynamicSource': isDynamicSource,
+        'alignToStatic': alignToStatic,
         'operation': 'spatial_index_debug',
       },
     );
@@ -585,6 +595,8 @@ class GuidelineManager {
         elementId: elementId,
         targetBounds: targetBounds,
         nearbyElementIds: nearbyElementIds,
+        isDynamicSource: isDynamicSource,
+        alignToStatic: alignToStatic,
       );
     } else {
       EditPageLogger.editPageDebug(
@@ -596,6 +608,22 @@ class GuidelineManager {
           'totalElements': spatialIndexInfo['totalElements'],
         },
       );
+    }
+
+    // 🔹 动态计算参考线与目标的距离，更新distanceToTarget属性
+    if (_activeGuidelines.isNotEmpty) {
+      final updatedGuidelines = _activeGuidelines.map((guideline) {
+        double distance = guideline.distanceTo(targetBounds);
+        return guideline.copyWith(
+          distanceToTarget: distance,
+          // 只有在距离小于阈值时才允许吸附
+          canSnap: distance <= _snapThreshold,
+        );
+      }).toList();
+      
+      // 更新活动参考线
+      _activeGuidelines.clear();
+      _activeGuidelines.addAll(updatedGuidelines);
     }
 
     // 缓存生成的参考线
@@ -621,6 +649,8 @@ class GuidelineManager {
         'elementGuidelines':
             _activeGuidelines.where((g) => g.sourceElementId != 'page').length,
         'nearbyElementsCount': nearbyElementIds.length,
+        'isDynamicSource': isDynamicSource,
+        'alignToStatic': alignToStatic,
         'operation': 'guidelines_generation_complete',
       },
     );
@@ -1023,171 +1053,113 @@ class GuidelineManager {
     }
   }
 
-  /// 生成与其他元素的对齐参考线（优化版本）
+  /// 优化版元素对齐参考线生成
   void _generateElementAlignmentGuidelinesOptimized({
     required String elementId,
     required Rect targetBounds,
     required List<String> nearbyElementIds,
+    bool isDynamicSource = false, // 🔹 新增：标记是否为动态参考线源
+    bool alignToStatic = false,   // 🔹 新增：是否只对齐到静态参考线
   }) {
     // 🔧 修复：移除图层限制逻辑，允许跨图层参考线对齐
-    // 这样可以在任何可见元素之间生成参考线，不限制在同一图层
+    if (nearbyElementIds.isEmpty) {
+      EditPageLogger.editPageDebug('无附近元素，跳过参考线生成');
+      return;
+    }
 
     EditPageLogger.editPageDebug(
-      '🔧 生成元素对齐参考线',
+      '🔧 开始生成元素对齐参考线',
       data: {
-        'targetElementId': elementId,
-        'targetBounds':
-            '${targetBounds.left},${targetBounds.top},${targetBounds.width},${targetBounds.height}',
-        'nearbyElementIds': nearbyElementIds,
-        'totalElements': _elements.length,
-        'snapThreshold': _snapThreshold,
-        'operation': 'generate_element_guidelines',
+        'elementId': elementId,
+        'targetBounds': '(${targetBounds.left}, ${targetBounds.top}, ${targetBounds.right}, ${targetBounds.bottom})',
+        'nearbyElementCount': nearbyElementIds.length,
+        'isDynamicSource': isDynamicSource,
+        'alignToStatic': alignToStatic,
+        'operation': 'generate_element_alignment_guidelines',
       },
     );
 
-    // 只处理附近的元素以提高性能
-    for (final element in _elements) {
-      final currentElementId = element['id'] as String;
+    // 🔹 新增逻辑：为动态参考线源添加特殊标记
+    final sourceTag = isDynamicSource ? 'dynamic_source' : 'static';
 
-      // 跳过自身和不可见元素
-      if (currentElementId == elementId || element['isHidden'] == true) {
+    // 目标元素的关键点
+    final targetPoints = {
+      'topEdge': targetBounds.top,
+      'bottomEdge': targetBounds.bottom,
+      'leftEdge': targetBounds.left,
+      'rightEdge': targetBounds.right,
+      'centerX': targetBounds.center.dx,
+      'centerY': targetBounds.center.dy,
+    };
+
+    for (final otherElementId in nearbyElementIds) {
+      // 跳过自身
+      if (otherElementId == elementId) {
         continue;
       }
 
-      // 检查是否在附近元素列表中
-      if (!nearbyElementIds.contains(currentElementId)) {
-        continue;
-      } // 🔧 修复：允许跨图层参考线对齐
-      // 注释掉图层限制，允许所有可见元素作为参考线候选
-      // if (targetLayerId != null) {
-      //   final elementLayerId = element['layerId'] as String?;
-      //   if (targetLayerId != elementLayerId) {
-      //     continue;
-      //   }
-      // }      // 计算元素边界
-      final elementBounds = Rect.fromLTWH(
-        (element['x'] as num).toDouble(),
-        (element['y'] as num).toDouble(),
-        (element['width'] as num).toDouble(),
-        (element['height'] as num).toDouble(),
+      // 🔹 新增逻辑：如果需要只对齐到静态参考线，则检查源元素类型
+      final otherElement = _elements.firstWhere(
+        (element) => element['id'] == otherElementId,
+        orElse: () => <String, dynamic>{},
       );
 
-      EditPageLogger.editPageDebug(
-        '🔧 检查元素对齐',
-        data: {
-          'currentElementId': currentElementId,
-          'elementBounds':
-              '${elementBounds.left},${elementBounds.top},${elementBounds.width},${elementBounds.height}',
-          'targetBounds':
-              '${targetBounds.left},${targetBounds.top},${targetBounds.width},${targetBounds.height}',
-          'topEdgeDistance': (targetBounds.top - elementBounds.top).abs(),
-          'centerHorizontalDistance':
-              (targetBounds.center.dy - elementBounds.center.dy).abs(),
-          'centerVerticalDistance':
-              (targetBounds.center.dx - elementBounds.center.dx).abs(),
-          'leftEdgeDistance': (targetBounds.left - elementBounds.left).abs(),
-          'rightEdgeDistance': (targetBounds.right - elementBounds.right).abs(),
-          'bottomEdgeDistance':
-              (targetBounds.bottom - elementBounds.bottom).abs(),
-          'snapThreshold': _snapThreshold,
-          'operation': 'check_element_alignment',
-        },
-      ); // 检查顶边对齐
-      if ((targetBounds.top - elementBounds.top).abs() <= _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成顶边对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_top_edge',
-            type: GuidelineType.horizontalTopEdge,
-            position: elementBounds.top,
-            direction: AlignmentDirection.horizontal,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
+      if (otherElement.isEmpty) {
+        continue;
       }
 
-      // 检查水平中心线对齐
-      if ((targetBounds.center.dy - elementBounds.center.dy).abs() <=
-          _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成水平中心线对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_center_h',
-            type: GuidelineType.horizontalCenterLine,
-            position: elementBounds.center.dy,
-            direction: AlignmentDirection.horizontal,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
+      // 跳过隐藏元素
+      if (otherElement['isHidden'] == true) {
+        continue;
       }
 
-      // 检查垂直中心线对齐
-      if ((targetBounds.center.dx - elementBounds.center.dx).abs() <=
-          _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成垂直中心线对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_center_v',
-            type: GuidelineType.verticalCenterLine,
-            position: elementBounds.center.dx,
-            direction: AlignmentDirection.vertical,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
+      // 🔹 检查是否为动态源，如果是动态源并且只对齐到静态参考线，则跳过其他动态源
+      final isOtherDynamic = otherElement['isDynamicSource'] == true;
+      if (alignToStatic && isOtherDynamic) {
+        EditPageLogger.editPageDebug('跳过其他动态参考线源', data: {
+          'sourceElementId': elementId,
+          'skippedElementId': otherElementId,
+          'reason': 'only_align_to_static',
+        });
+        continue;
       }
 
-      // 检查左边对齐
-      if ((targetBounds.left - elementBounds.left).abs() <= _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成左边对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_left_edge',
-            type: GuidelineType.verticalLeftEdge,
-            position: elementBounds.left,
-            direction: AlignmentDirection.vertical,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
-      }
+      final otherBounds = Rect.fromLTWH(
+        (otherElement['x'] as num).toDouble(),
+        (otherElement['y'] as num).toDouble(),
+        (otherElement['width'] as num).toDouble(),
+        (otherElement['height'] as num).toDouble(),
+      );
 
-      // 检查右边对齐
-      if ((targetBounds.right - elementBounds.right).abs() <= _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成右边对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_right_edge',
-            type: GuidelineType.verticalRightEdge,
-            position: elementBounds.right,
-            direction: AlignmentDirection.vertical,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
-      } // 检查底边对齐
-      if ((targetBounds.bottom - elementBounds.bottom).abs() <=
-          _snapThreshold) {
-        EditPageLogger.editPageDebug('🔧 生成底边对齐参考线',
-            data: {'elementId': currentElementId});
-        _activeGuidelines.add(
-          Guideline(
-            id: 'element_${element['id']}_bottom_edge',
-            type: GuidelineType.horizontalBottomEdge,
-            position: elementBounds.bottom,
-            direction: AlignmentDirection.horizontal,
-            sourceElementId: element['id'] as String,
-            sourceElementBounds: elementBounds,
-          ),
-        );
-      }
+      // 其他元素的关键点
+      final otherPoints = {
+        'topEdge': otherBounds.top,
+        'bottomEdge': otherBounds.bottom,
+        'leftEdge': otherBounds.left,
+        'rightEdge': otherBounds.right,
+        'centerX': otherBounds.center.dx,
+        'centerY': otherBounds.center.dy,
+      };
+
+      // 检查水平对齐（影响Y坐标）- 分为中心线和边缘对齐
+      _checkHorizontalAlignment(
+        targetPoints: targetPoints,
+        otherPoints: otherPoints,
+        otherElementId: otherElementId,
+        otherBounds: otherBounds,
+        sourceTag: sourceTag,      // 🔹 传递源标记
+        isOtherStatic: !isOtherDynamic, // 🔹 标记是否为静态源
+      );
+
+      // 检查垂直对齐（影响X坐标）- 分为中心线和边缘对齐
+      _checkVerticalAlignment(
+        targetPoints: targetPoints,
+        otherPoints: otherPoints,
+        otherElementId: otherElementId,
+        otherBounds: otherBounds,
+        sourceTag: sourceTag,      // 🔹 传递源标记
+        isOtherStatic: !isOtherDynamic, // 🔹 标记是否为静态源
+      );
     }
   }
 
@@ -1571,5 +1543,169 @@ class GuidelineManager {
         sourceElementBounds: pageBounds,
       ),
     ];
+  }
+
+  /// 检查水平方向对齐（影响Y坐标）
+  void _checkHorizontalAlignment({
+    required Map<String, double> targetPoints,
+    required Map<String, double> otherPoints,
+    required String otherElementId,
+    required Rect otherBounds,
+    required String sourceTag,
+    required bool isOtherStatic,
+  }) {
+    // 顶边对齐
+    double topEdgeDistance = (targetPoints['topEdge']! - otherPoints['topEdge']!).abs();
+    if (topEdgeDistance <= _snapThreshold * 2) {  // 使用更大范围来显示参考线
+      EditPageLogger.editPageDebug('检测到顶边对齐', data: {
+        'distance': topEdgeDistance,
+        'position': otherPoints['topEdge'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'h_top_${otherElementId}_$sourceTag',
+          type: GuidelineType.horizontalTopEdge,
+          position: otherPoints['topEdge']!,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: topEdgeDistance <= _snapThreshold,
+          distanceToTarget: topEdgeDistance,
+          canSnap: isOtherStatic && topEdgeDistance <= _snapThreshold,
+        ),
+      );
+    }
+
+    // 水平中心线对齐
+    double centerYDistance = (targetPoints['centerY']! - otherPoints['centerY']!).abs();
+    if (centerYDistance <= _snapThreshold * 2) {
+      EditPageLogger.editPageDebug('检测到水平中心线对齐', data: {
+        'distance': centerYDistance,
+        'position': otherPoints['centerY'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'h_center_${otherElementId}_$sourceTag',
+          type: GuidelineType.horizontalCenterLine,
+          position: otherPoints['centerY']!,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: centerYDistance <= _snapThreshold,
+          distanceToTarget: centerYDistance,
+          canSnap: isOtherStatic && centerYDistance <= _snapThreshold,
+        ),
+      );
+    }
+
+    // 底边对齐
+    double bottomEdgeDistance = (targetPoints['bottomEdge']! - otherPoints['bottomEdge']!).abs();
+    if (bottomEdgeDistance <= _snapThreshold * 2) {
+      EditPageLogger.editPageDebug('检测到底边对齐', data: {
+        'distance': bottomEdgeDistance,
+        'position': otherPoints['bottomEdge'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'h_bottom_${otherElementId}_$sourceTag',
+          type: GuidelineType.horizontalBottomEdge,
+          position: otherPoints['bottomEdge']!,
+          direction: AlignmentDirection.horizontal,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: bottomEdgeDistance <= _snapThreshold,
+          distanceToTarget: bottomEdgeDistance,
+          canSnap: isOtherStatic && bottomEdgeDistance <= _snapThreshold,
+        ),
+      );
+    }
+  }
+
+  /// 检查垂直方向对齐（影响X坐标）
+  void _checkVerticalAlignment({
+    required Map<String, double> targetPoints,
+    required Map<String, double> otherPoints,
+    required String otherElementId,
+    required Rect otherBounds,
+    required String sourceTag,
+    required bool isOtherStatic,
+  }) {
+    // 左边对齐
+    double leftEdgeDistance = (targetPoints['leftEdge']! - otherPoints['leftEdge']!).abs();
+    if (leftEdgeDistance <= _snapThreshold * 2) {
+      EditPageLogger.editPageDebug('检测到左边对齐', data: {
+        'distance': leftEdgeDistance,
+        'position': otherPoints['leftEdge'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'v_left_${otherElementId}_$sourceTag',
+          type: GuidelineType.verticalLeftEdge,
+          position: otherPoints['leftEdge']!,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: leftEdgeDistance <= _snapThreshold,
+          distanceToTarget: leftEdgeDistance,
+          canSnap: isOtherStatic && leftEdgeDistance <= _snapThreshold,
+        ),
+      );
+    }
+
+    // 垂直中心线对齐
+    double centerXDistance = (targetPoints['centerX']! - otherPoints['centerX']!).abs();
+    if (centerXDistance <= _snapThreshold * 2) {
+      EditPageLogger.editPageDebug('检测到垂直中心线对齐', data: {
+        'distance': centerXDistance,
+        'position': otherPoints['centerX'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'v_center_${otherElementId}_$sourceTag',
+          type: GuidelineType.verticalCenterLine,
+          position: otherPoints['centerX']!,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: centerXDistance <= _snapThreshold,
+          distanceToTarget: centerXDistance,
+          canSnap: isOtherStatic && centerXDistance <= _snapThreshold,
+        ),
+      );
+    }
+
+    // 右边对齐
+    double rightEdgeDistance = (targetPoints['rightEdge']! - otherPoints['rightEdge']!).abs();
+    if (rightEdgeDistance <= _snapThreshold * 2) {
+      EditPageLogger.editPageDebug('检测到右边对齐', data: {
+        'distance': rightEdgeDistance,
+        'position': otherPoints['rightEdge'],
+        'otherElementId': otherElementId,
+      });
+
+      _activeGuidelines.add(
+        Guideline(
+          id: 'v_right_${otherElementId}_$sourceTag',
+          type: GuidelineType.verticalRightEdge,
+          position: otherPoints['rightEdge']!,
+          direction: AlignmentDirection.vertical,
+          sourceElementId: otherElementId,
+          sourceElementBounds: otherBounds,
+          isHighlighted: rightEdgeDistance <= _snapThreshold,
+          distanceToTarget: rightEdgeDistance,
+          canSnap: isOtherStatic && rightEdgeDistance <= _snapThreshold,
+        ),
+      );
+    }
   }
 }

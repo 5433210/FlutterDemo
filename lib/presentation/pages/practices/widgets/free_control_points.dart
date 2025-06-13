@@ -55,6 +55,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   static String? _lastUpdateLog;
   static DateTime? _lastUpdateTime;
 
+  static const Duration _guidelineThrottleDuration = Duration(milliseconds: 50);
+  static const _snapThreshold = 5.0; // 吸附阈值：5像素内才会吸附
+  static const _highlightThreshold = 10.0; // 高亮阈值：10像素内显示高亮
   // 独立的控制点位置状态，不依赖元素位置
   final Map<int, Offset> _controlPointPositions = {};
   bool _isInitialized = false;
@@ -66,9 +69,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   double _currentRotation = 0.0;
   // 旋转相关状态
   Offset? _rotationCenter;
-  double? _initialRotationAngle;
-  // 🔧 新增：参考线对齐相关状态
+  double? _initialRotationAngle; // 🔧 新增：参考线对齐相关状态
+
   List<Guideline> _activeGuidelines = [];
+  // 🔧 新增：节流相关状态，避免过于频繁的参考线计算
+  DateTime? _lastGuidelineUpdate;
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -249,7 +255,101 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _initializeControlPointPositions();
   }
 
-  /// 🔧 新增：对齐到最近的参考线（仅在鼠标释放时调用）
+  /// 🔧 新增：在拖拽过程中生成参考线用于显示，但不强制对齐
+  void _generateDragGuidelines(Map<String, double> currentProperties) {
+    // 只在参考线对齐模式下生成参考线
+    if (widget.alignmentMode != AlignmentMode.guideline) {
+      return;
+    }
+
+    // 🔧 新增：节流机制，避免过于频繁的参考线计算
+    final now = DateTime.now();
+    if (_lastGuidelineUpdate != null &&
+        now.difference(_lastGuidelineUpdate!) < _guidelineThrottleDuration) {
+      return;
+    }
+    _lastGuidelineUpdate = now;
+
+    try {
+      // 确保GuidelineManager已启用
+      if (!GuidelineManager.instance.enabled) {
+        return;
+      }
+
+      // 🔧 关键修复：使用detectAlignment方法但只用于预览，不应用对齐
+      final alignmentResult = GuidelineManager.instance.detectAlignment(
+        elementId: widget.elementId,
+        currentPosition:
+            Offset(currentProperties['x']!, currentProperties['y']!),
+        elementSize:
+            Size(currentProperties['width']!, currentProperties['height']!),
+        rotation: currentProperties['rotation'],
+        isDynamicSource: true, // 🔹 新增：标记为动态参考线源
+      );
+
+      if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
+        final guidelines =
+            alignmentResult['guidelines'] as List<Guideline>? ?? [];
+        
+        // 获取对齐后的位置和最接近的参考线距离
+        final alignedPosition = alignmentResult['position'] as Offset?;
+        final currentPos = Offset(currentProperties['x']!, currentProperties['y']!);
+        double minDistance = double.infinity;
+        
+        if (alignedPosition != null) {
+          minDistance = (alignedPosition - currentPos).distance;
+        }
+
+        // 🔧 修复：避免在拖拽过程中频繁触发setState，只在参考线有实际变化时才更新
+        final shouldUpdate = guidelines.length != _activeGuidelines.length ||
+            !_guidelinesEqual(guidelines, _activeGuidelines);
+
+        if (shouldUpdate && guidelines.isNotEmpty) {
+          // 处理参考线高亮状态 - 根据距离设置高亮
+          final processedGuidelines = guidelines.map((g) {
+            // 仅当距离小于高亮阈值时才高亮显示
+            final bool shouldHighlight = (g.distanceToTarget ?? double.infinity) <= _highlightThreshold;
+            return g.copyWith(
+              isHighlighted: shouldHighlight,
+              lineWeight: shouldHighlight ? 2.5 : 1.5, // 高亮参考线加粗
+              color: shouldHighlight 
+                  ? const Color(0xFF00A2FF) // 高亮蓝色
+                  : const Color(0xFF4CAF50), // 普通绿色
+            );
+          }).toList();
+          
+          // 更新本地状态
+          _activeGuidelines = List<Guideline>.from(processedGuidelines);
+
+          // 🔧 关键：通知外部显示参考线，但明确这是预览模式
+          if (widget.onGuidelinesUpdated != null) {
+            widget.onGuidelinesUpdated!(processedGuidelines);
+          }
+
+          EditPageLogger.editPageDebug('拖拽过程中显示参考线', data: {
+            'elementId': widget.elementId,
+            'guidelinesCount': guidelines.length,
+            'minDistance': minDistance,
+            'isHighlighted': minDistance <= _highlightThreshold,
+            'mode': 'drag_preview_only',
+          });
+        }
+      } else {
+        // 没有对齐，清除参考线
+        if (_activeGuidelines.isNotEmpty) {
+          _activeGuidelines = [];
+          widget.onGuidelinesUpdated?.call([]);
+        }
+      }
+    } catch (e) {
+      EditPageLogger.editPageDebug('拖拽参考线生成失败', data: {
+        'error': e.toString(),
+        'elementId': widget.elementId,
+      });
+    }
+  }
+
+  /// 🔧 新增：对齐到最近的参考线（仅在鼠标释放时调用，只在距离很近时才对齐）
   Map<String, double> _alignToClosestGuidelines(
       Map<String, double> currentProperties) {
     EditPageLogger.editPageDebug('🔍 [DEBUG] _alignToClosestGuidelines 被调用',
@@ -283,38 +383,74 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         elementSize:
             Size(currentProperties['width']!, currentProperties['height']!),
         rotation: currentProperties['rotation'],
+        isDynamicSource: true, // 🔹 新增：标记为动态参考线源
+        alignToStatic: true,  // 🔹 新增：仅对齐到静态参考线
       );
 
       if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
         // 获取对齐后的位置
         final alignedPosition = alignmentResult['position'] as Offset?;
-        final guidelines =
+        var guidelines =
             alignmentResult['guidelines'] as List<Guideline>? ?? [];
 
         if (alignedPosition != null) {
-          // 更新活动参考线
-          setState(() {
-            _activeGuidelines = List<Guideline>.from(guidelines);
-          });
+          // 🔧 新增：只在距离很近时才进行对齐（阈值内）
+          final currentPos =
+              Offset(currentProperties['x']!, currentProperties['y']!);
+          final distance = (alignedPosition - currentPos).distance;
 
-          // 通知外部更新参考线
-          widget.onGuidelinesUpdated?.call(guidelines);
+          if (distance <= _snapThreshold) {
+            // 处理参考线，将对齐的参考线设为高亮
+            guidelines = guidelines.map((g) {
+              // 标记高亮状态，调整线宽和颜色
+              return g.copyWith(
+                isHighlighted: true,  
+                lineWeight: 3.0,      // 吸附成功时线更粗
+                color: const Color(0xFF2196F3),  // 吸附时使用蓝色
+              );
+            }).toList();
+            
+            // 更新活动参考线
+            setState(() {
+              _activeGuidelines = List<Guideline>.from(guidelines);
+            });
 
-          EditPageLogger.editPageDebug('FreeControlPoints参考线对齐成功', data: {
-            'elementId': widget.elementId,
-            'originalPosition':
-                '(${currentProperties['x']}, ${currentProperties['y']})',
-            'alignedPosition': '(${alignedPosition.dx}, ${alignedPosition.dy})',
-            'guidelinesCount': guidelines.length,
-            'mode': 'mouse_release_alignment',
-          });
+            // 通知外部更新参考线
+            widget.onGuidelinesUpdated?.call(guidelines);
 
-          // 返回对齐后的属性
-          return {
-            ...currentProperties,
-            'x': alignedPosition.dx,
-            'y': alignedPosition.dy,
-          };
+            EditPageLogger.editPageDebug('FreeControlPoints参考线对齐成功', data: {
+              'elementId': widget.elementId,
+              'originalPosition':
+                  '(${currentProperties['x']}, ${currentProperties['y']})',
+              'alignedPosition':
+                  '(${alignedPosition.dx}, ${alignedPosition.dy})',
+              'distance': distance,
+              'threshold': _snapThreshold,
+              'guidelinesCount': guidelines.length,
+              'mode': 'mouse_release_alignment',
+            });
+
+            // 返回对齐后的属性
+            return {
+              ...currentProperties,
+              'x': alignedPosition.dx,
+              'y': alignedPosition.dy,
+            };
+          } else {
+            // 距离太远，不对齐但显示参考线
+            setState(() {
+              _activeGuidelines = List<Guideline>.from(guidelines);
+            });
+            widget.onGuidelinesUpdated?.call(guidelines);
+
+            EditPageLogger.editPageDebug('距离太远，不进行对齐', data: {
+              'elementId': widget.elementId,
+              'distance': distance,
+              'threshold': _snapThreshold,
+            });
+
+            return currentProperties;
+          }
         }
       } else {
         // 没有对齐，清除参考线
@@ -628,6 +764,17 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
   }
 
+  /// 比较两个参考线列表是否相等
+  bool _guidelinesEqual(List<Guideline> a, List<Guideline> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].position != b[i].position || a[i].type != b[i].type) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// 初始化控制点位置 - 基于元素的初始位置和大小
   void _initializeControlPointPositions() {
     // 从widget获取初始状态，后续独立管理
@@ -725,20 +872,28 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       'height': currentState['height'],
     });
 
-    // 🔧 关键：通过onControlPointDragEndWithState实时推送状态
+    // 🔧 修复：在拖拽过程中生成和显示参考线，但不强制对齐
+    // 添加防抖动机制，避免过于频繁的参考线计算
+    _generateDragGuidelines(currentState);
+
+    // 🔧 关键修复：通过onControlPointDragEndWithState实时推送状态
     // 这样DragPreviewLayer就能实时跟随控制点的变化
+    // 但是我们需要确保这不会导致元素位置被强制更新
     if (widget.onControlPointDragEndWithState != null) {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] 调用 onControlPointDragEndWithState 回调');
       // 注意：这里我们在Live阶段调用，让预览层实时更新
       // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
+      // 🔧 修复：确保这个回调不会导致元素被强制对齐
       widget.onControlPointDragEndWithState!(-2, currentState);
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调完成');
     } else {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调为 null');
-    } // 🔧 优化：参考线生成现在通过统一的 onControlPointDragEndWithState 回调处理
+    }
+
+    // 🔧 优化：参考线生成现在通过统一的 onControlPointDragEndWithState 回调处理
     // 移除了重复的 _generateRealTimeGuidelines 调用，避免双重处理
   }
 

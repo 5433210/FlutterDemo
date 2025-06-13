@@ -833,7 +833,7 @@ mixin CanvasControlPointHandlers {
             List<Guideline>.from(GuidelineManager.instance.activeGuidelines);
 
         // 通知控制器更新参考线渲染
-        // controller.updateActiveGuidelines(guidelines);
+        controller.updateActiveGuidelines(guidelines);
 
         EditPageLogger.editPageDebug('CanvasControlPointHandlers生成实时参考线',
             data: {
@@ -1130,8 +1130,8 @@ mixin CanvasControlPointHandlers {
     // 实时更新DragStateManager，让DragPreviewLayer跟随控制点
     if (dragStateManager.isDragging &&
         dragStateManager.isElementDragging(elementId)) {
-      dragStateManager.updateElementPreviewProperties(
-          elementId, livePreviewProperties);
+      // dragStateManager.updateElementPreviewProperties(
+      //     elementId, livePreviewProperties);
     }
   }
 
