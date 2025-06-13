@@ -262,14 +262,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       return;
     }
 
-    // 🔧 新增：节流机制，避免过于频繁的参考线计算
-    // 修改为更积极的节流策略，确保实时反馈
-    final now = DateTime.now();
-    if (_lastGuidelineUpdate != null &&
-        now.difference(_lastGuidelineUpdate!) < _guidelineThrottleDuration) {
-      return;
-    }
-    _lastGuidelineUpdate = now;
+    // 🔹 移除节流机制，确保每次调用都处理
+    // final now = DateTime.now();
+    // if (_lastGuidelineUpdate != null &&
+    //     now.difference(_lastGuidelineUpdate!) < _guidelineThrottleDuration) {
+    //   return;
+    // }
+    // _lastGuidelineUpdate = now;
 
     try {
       // 确保GuidelineManager已启用
@@ -286,7 +285,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             Size(currentProperties['width']!, currentProperties['height']!),
         rotation: currentProperties['rotation'],
         isDynamicSource: true, // 🔹 标记为动态参考线源
-        forceUpdate: true,     // 🔹 新增：强制刷新，忽略缓存
+        forceUpdate: true,     // 🔹 强制刷新，忽略缓存
       );
 
       if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
@@ -302,7 +301,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           minDistance = (alignedPosition - currentPos).distance;
         }
 
-        // 🔹 修改：总是更新参考线，确保实时反馈
+        // 🔹 修改：始终更新参考线，确保实时反馈
         // 处理参考线高亮状态 - 根据距离设置高亮
         final processedGuidelines = guidelines.map((g) {
           // 仅当距离小于高亮阈值时才高亮显示
@@ -316,10 +315,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           );
         }).toList();
         
-        // 更新本地状态
+        // 强制更新本地状态，不检查是否有变化
         _activeGuidelines = List<Guideline>.from(processedGuidelines);
 
-        // �� 关键：通知外部显示参考线，确保每次都更新UI
+        // 🔹 关键：通知外部显示参考线，确保每次都更新UI
         if (widget.onGuidelinesUpdated != null) {
           widget.onGuidelinesUpdated!(processedGuidelines);
         }
@@ -532,8 +531,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               //   index,
               //   details.localPosition,
               // );
-              // 🔧 关键：将控制点状态推送给DragStateManager
+              // 🔧 关键：每次移动强制刷新参考线
               _pushStateToCanvasAndPreview();
+              
+              // 🔹 新增：强制立即刷新而不是等待下一帧
+              if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
+                widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
+              }
             },
             onPanEnd: (details) {
               EditPageLogger.canvasDebug('控制点结束拖拽', data: {
@@ -646,6 +650,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             // );
             // 🔧 关键：将控制点状态推送给DragStateManager
             _pushStateToCanvasAndPreview();
+            
+            // 🔹 新增：强制立即刷新而不是等待下一帧
+            if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
+              widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
+            }
           },
           onPanEnd: (details) {
             EditPageLogger.canvasDebug('控制点主导：平移结束');
@@ -868,33 +877,45 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       'y': currentState['y'],
       'width': currentState['width'],
       'height': currentState['height'],
+      'renderTime': DateTime.now().millisecondsSinceEpoch,
     });
 
-    // 🔹 修复：每次移动都强制重新生成参考线，确保实时视觉反馈
-    // 先清除旧参考线，避免累积
-    if (_activeGuidelines.isNotEmpty) {
-      _activeGuidelines = [];
-      widget.onGuidelinesUpdated?.call([]);
-    }
+    // 🔹 修改：先清除旧参考线，确保实时视觉反馈
+    // 强制每帧清除并重新生成参考线
+    _activeGuidelines = [];
+    widget.onGuidelinesUpdated?.call([]);
     
-    // 每帧都重新生成参考线，提高响应速度
+    // 🔹 直接生成新参考线，不考虑之前的状态
     _generateDragGuidelines(currentState);
 
-    // 🔧 关键修复：通过onControlPointDragEndWithState实时推送状态
-    // 这样DragPreviewLayer就能实时跟随控制点的变化
-    // 但是我们需要确保这不会导致元素位置被强制更新
+    // 🔧 关键：将当前状态推送给Canvas和DragPreviewLayer
     if (widget.onControlPointDragEndWithState != null) {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] 调用 onControlPointDragEndWithState 回调');
-      // 注意：这里我们在Live阶段调用，让预览层实时更新
-      // 但使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
-      // 🔧 修复：确保这个回调不会导致元素被强制对齐
+      
+      // 注意：使用特殊的controlPointIndex (-2) 表示这是Live阶段的更新
       widget.onControlPointDragEndWithState!(-2, currentState);
+      
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调完成');
     } else {
       EditPageLogger.editPageDebug(
           '🔍 [DEBUG] onControlPointDragEndWithState 回调为 null');
+    }
+    
+    // 🔹 新增：立即手动触发UI更新，确保参考线立即可见
+    if (_activeGuidelines.isNotEmpty) {
+      EditPageLogger.editPageDebug('🔍 强制刷新参考线UI', data: {
+        'guidelinesCount': _activeGuidelines.length,
+        'atTime': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      // 强制刷新UI以显示最新参考线
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.onGuidelinesUpdated != null && _activeGuidelines.isNotEmpty) {
+          widget.onGuidelinesUpdated!(List<Guideline>.from(_activeGuidelines));
+        }
+      });
     }
   }
 
