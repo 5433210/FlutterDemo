@@ -51,17 +51,18 @@ class _GuidelinePainter extends CustomPainter {
       return;
     }
 
-    final paint = Paint()
+    // 默认画笔
+    final defaultPaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
-    final dashPaint = Paint()
+    final defaultDashPaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
-    final labelStyle = TextStyle(
+    final defaultLabelStyle = TextStyle(
       color: color,
       fontSize: 10,
       fontWeight: FontWeight.w500,
@@ -73,17 +74,50 @@ class _GuidelinePainter extends CustomPainter {
 
     // 绘制所有参考线
     for (final guideline in guidelines) {
+      // 使用参考线自己的颜色和线宽（如果已定义）
+      final useGuidelineColor = guideline.color != const Color(0xFF4CAF50); // 如果不是默认绿色，则使用自定义颜色
+      final guidelinePaint = Paint()
+        ..color = useGuidelineColor ? guideline.color : color
+        ..strokeWidth = useGuidelineColor ? guideline.lineWeight : strokeWidth
+        ..style = PaintingStyle.stroke;
+      
+      final guidelineDashPaint = Paint()
+        ..color = useGuidelineColor ? guideline.color : color
+        ..strokeWidth = useGuidelineColor ? guideline.lineWeight : strokeWidth
+        ..style = PaintingStyle.stroke;
+      
+      final guidelineLabelStyle = TextStyle(
+        color: useGuidelineColor ? guideline.color : color,
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+      );
+      
       // 根据方向处理
       if (guideline.direction == AlignmentDirection.horizontal) {
-        _drawHorizontalGuideline(canvas, size, guideline, dashLine ? dashPaint : paint, labelStyle, labelBackground);
+        _drawHorizontalGuideline(
+          canvas, 
+          size, 
+          guideline, 
+          dashLine ? guidelineDashPaint : guidelinePaint, 
+          guidelineLabelStyle, 
+          labelBackground
+        );
       } else if (guideline.direction == AlignmentDirection.vertical) {
-        _drawVerticalGuideline(canvas, size, guideline, dashLine ? dashPaint : paint, labelStyle, labelBackground);
+        _drawVerticalGuideline(
+          canvas, 
+          size, 
+          guideline, 
+          dashLine ? guidelineDashPaint : guidelinePaint, 
+          guidelineLabelStyle, 
+          labelBackground
+        );
       }
       
-      // 处理中心线特殊样式
-      if (guideline.type == GuidelineType.horizontalCenterLine || 
-          guideline.type == GuidelineType.verticalCenterLine) {
-        _drawCenterlineHighlight(canvas, size, guideline, paint, labelStyle, labelBackground);
+      // 禁用特殊中心线样式，全部使用参考线自己的颜色
+      // 仅为动态参考线，取消中心线特殊高亮效果
+      if (false && (guideline.type == GuidelineType.horizontalCenterLine || 
+          guideline.type == GuidelineType.verticalCenterLine)) {
+        _drawCenterlineHighlight(canvas, size, guideline, guidelinePaint, guidelineLabelStyle, labelBackground);
       }
     }
   }
