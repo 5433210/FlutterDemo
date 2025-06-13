@@ -716,15 +716,25 @@ mixin CanvasControlPointHandlers {
         : liveState;
 
     // 🚀 新增：统一处理预览层和参考线层的实时更新
-    _generateRealTimeGuidelines(elementId, snappedLiveState);
-
-    // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
+    _generateRealTimeGuidelines(elementId, snappedLiveState);    // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
     if (originalElement['type'] == 'group') {
       _handleGroupElementLiveUpdate(originalElement, snappedLiveState);
     } else {
-      // 普通元素的Live更新
-      _handleSingleElementLiveUpdate(
-          elementId, originalElement, snappedLiveState);
+      // 🔧 修复：在参考线模式下，FreeControlPoints完全接管，跳过DragPreviewLayer更新
+      if (controller.state.alignmentMode == AlignmentMode.guideline) {
+        EditPageLogger.canvasDebug(
+          '跳过DragPreviewLayer更新 - FreeControlPoints完全接管',
+          data: {
+            'elementId': elementId,
+            'alignmentMode': 'guideline',
+            'reason': 'free_control_points_takes_over',
+          },
+        );
+      } else {
+        // 普通模式下的Live更新
+        _handleSingleElementLiveUpdate(
+            elementId, originalElement, snappedLiveState);
+      }
     }
   }
 
