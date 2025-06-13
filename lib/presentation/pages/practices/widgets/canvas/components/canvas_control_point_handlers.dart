@@ -1118,24 +1118,17 @@ mixin CanvasControlPointHandlers {
           error: e, stackTrace: stackTrace, data: {'groupId': groupId});
     }
   }
-
   /// 🚀 新增：处理单个元素的Live阶段更新
   void _handleSingleElementLiveUpdate(
       String elementId,
       Map<String, dynamic> originalElement,
       Map<String, double> snappedLiveState) {
-    // 构建Live阶段的预览属性（使用吸附后的状态）
-    final livePreviewProperties = Map<String, dynamic>.from(originalElement);
-    livePreviewProperties.addAll({
-      'x': snappedLiveState['x'] ?? originalElement['x'],
-      'y': snappedLiveState['y'] ?? originalElement['y'],
-      'width': snappedLiveState['width'] ?? originalElement['width'],
-      'height': snappedLiveState['height'] ?? originalElement['height'],
-      'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
-    });    // 🔧 修复：在参考线模式下，使用FreeControlPoints提供的权威位置数据
+    
+    // 🔧 修复：在参考线模式下，使用FreeControlPoints提供的权威位置数据
     // 而不是重新计算，避免冲突但保持DragPreviewLayer同步
     Map<String, dynamic> finalPreviewProperties;
-      if (_isControlPointDominated(elementId)) {
+    
+    if (_isControlPointDominated(elementId)) {
       // 在参考线模式下，直接使用传入的位置状态作为权威数据
       // 这确保FreeControlPoints和DragPreviewLayer显示一致
       finalPreviewProperties = Map<String, dynamic>.from(originalElement);
@@ -1156,8 +1149,15 @@ mixin CanvasControlPointHandlers {
         },
       );
     } else {
-      // 非参考线模式，使用计算后的位置数据
-      finalPreviewProperties = livePreviewProperties;
+      // 非参考线模式，使用重新计算的位置数据（包含网格吸附等）
+      finalPreviewProperties = Map<String, dynamic>.from(originalElement);
+      finalPreviewProperties.addAll({
+        'x': snappedLiveState['x'] ?? originalElement['x'],
+        'y': snappedLiveState['y'] ?? originalElement['y'],
+        'width': snappedLiveState['width'] ?? originalElement['width'],
+        'height': snappedLiveState['height'] ?? originalElement['height'],
+        'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
+      });
       
       EditPageLogger.canvasDebug(
         '使用计算后的位置数据',
