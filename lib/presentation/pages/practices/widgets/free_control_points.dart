@@ -348,116 +348,15 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           'elementId': widget.elementId,
           'position': '(${currentProperties['x']}, ${currentProperties['y']})',
         });
-
-    // 只在参考线对齐模式下进行对齐
-    if (widget.alignmentMode != AlignmentMode.guideline) {
-      EditPageLogger.editPageDebug('🔍 [DEBUG] 跳过参考线对齐', data: {
-        'reason': 'wrong_alignment_mode',
-        'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
-      });
-      return currentProperties;
+        
+    // 🔹 修改：禁用拖拽结束时的参考线对齐，只返回原始属性
+    // 清除所有参考线
+    if (_activeGuidelines.isNotEmpty) {
+      _activeGuidelines = <Guideline>[];
+      widget.onGuidelinesUpdated?.call([]);
     }
-
-    try {
-      // 确保GuidelineManager已启用
-      if (!GuidelineManager.instance.enabled) {
-        EditPageLogger.editPageDebug('GuidelineManager未启用，跳过参考线对齐');
-        return currentProperties;
-      }
-
-      // 使用detectAlignment方法进行对齐检测
-      final alignmentResult = GuidelineManager.instance.detectAlignment(
-        elementId: widget.elementId,
-        currentPosition:
-            Offset(currentProperties['x']!, currentProperties['y']!),
-        elementSize:
-            Size(currentProperties['width']!, currentProperties['height']!),
-        rotation: currentProperties['rotation'],
-        isDynamicSource: true, // 🔹 新增：标记为动态参考线源
-        alignToStatic: true,  // 🔹 新增：仅对齐到静态参考线
-      );
-
-      if (alignmentResult != null && alignmentResult['hasAlignment'] == true) {
-        // 获取对齐后的位置
-        final alignedPosition = alignmentResult['position'] as Offset?;
-        var guidelines =
-            alignmentResult['guidelines'] as List<Guideline>? ?? [];
-
-        if (alignedPosition != null) {
-          // 🔧 新增：只在距离很近时才进行对齐（阈值内）
-          final currentPos =
-              Offset(currentProperties['x']!, currentProperties['y']!);
-          final distance = (alignedPosition - currentPos).distance;
-
-          if (distance <= _snapThreshold) {
-            // 处理参考线，将对齐的参考线设为高亮
-            guidelines = guidelines.map((g) {
-              // 标记高亮状态，调整线宽和颜色
-              return g.copyWith(
-                isHighlighted: true,  
-                lineWeight: 3.0,      // 吸附成功时线更粗
-                color: const Color(0xFF2196F3),  // 吸附时使用蓝色
-              );
-            }).toList();
-            
-            // 更新活动参考线
-            setState(() {
-              _activeGuidelines = List<Guideline>.from(guidelines);
-            });
-
-            // 通知外部更新参考线
-            widget.onGuidelinesUpdated?.call(guidelines);
-
-            EditPageLogger.editPageDebug('FreeControlPoints参考线对齐成功', data: {
-              'elementId': widget.elementId,
-              'originalPosition':
-                  '(${currentProperties['x']}, ${currentProperties['y']})',
-              'alignedPosition':
-                  '(${alignedPosition.dx}, ${alignedPosition.dy})',
-              'distance': distance,
-              'threshold': _snapThreshold,
-              'guidelinesCount': guidelines.length,
-              'mode': 'mouse_release_alignment',
-            });
-
-            // 返回对齐后的属性
-            return {
-              ...currentProperties,
-              'x': alignedPosition.dx,
-              'y': alignedPosition.dy,
-            };
-          } else {
-            // 距离太远，不对齐但显示参考线
-            setState(() {
-              _activeGuidelines = List<Guideline>.from(guidelines);
-            });
-            widget.onGuidelinesUpdated?.call(guidelines);
-
-            EditPageLogger.editPageDebug('距离太远，不进行对齐', data: {
-              'elementId': widget.elementId,
-              'distance': distance,
-              'threshold': _snapThreshold,
-            });
-
-            return currentProperties;
-          }
-        }
-      } else {
-        // 没有对齐，清除参考线
-        if (_activeGuidelines.isNotEmpty) {
-          setState(() {
-            _activeGuidelines = <Guideline>[];
-          });
-          widget.onGuidelinesUpdated?.call([]);
-        }
-      }
-    } catch (e) {
-      EditPageLogger.editPageDebug('参考线对齐计算失败', data: {
-        'error': e.toString(),
-        'elementId': widget.elementId,
-      });
-    }
-
+    
+    // 直接返回未修改的属性
     return currentProperties;
   }
 
@@ -511,6 +410,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _initializeRotationState();
               }
 
+              // 🔹 新增：初始化动态参考线显示
+              _initializeDynamicGuidelines();
+
               // 触发拖拽开始回调
               widget.onControlPointDragStart?.call(index);
             },
@@ -520,7 +422,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _updateControlPointWithConstraints(index, details.delta);
               });
 
-              // 强制刷新流程
+              // 强制立即刷新参考线，确保每次移动都更新
               _refreshGuidelinesImmediately();
             },
             onPanEnd: (details) {
@@ -528,6 +430,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 'index': index,
                 'controlPointName': controlPointName,
               });
+
+              // 🔧 新增：拖拽结束时强制清除所有参考线
+              _clearGuidelines();
 
               // 🔧 新增：在鼠标释放时进行参考线对齐
               var finalProperties = getCurrentElementProperties();
@@ -620,6 +525,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             // 清除之前的参考线
             _clearGuidelines();
 
+            // 🔹 新增：初始化动态参考线显示
+            _initializeDynamicGuidelines();
+
             // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
             widget.onControlPointDragStart?.call(-1); // -1表示平移操作
           },
@@ -628,11 +536,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               _translateAllControlPoints(details.delta);
             });
 
-            // 强制刷新流程
+            // 强制立即刷新参考线，确保每次移动都更新
             _refreshGuidelinesImmediately();
           },
           onPanEnd: (details) {
             EditPageLogger.canvasDebug('控制点主导：平移结束');
+
+            // 🔹 新增：拖拽结束时强制清除所有参考线
+            _clearGuidelines();
 
             // 🔧 新增：在鼠标释放时进行参考线对齐
             var finalProperties = getCurrentElementProperties();
@@ -646,7 +557,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 _currentY = finalProperties['y']!;
                 _recalculateControlPointPositions();
               });
-            } // Clear drag state - no specific field needed anymore
+            }
 
             // 🔧 传递最终状态（已对齐）
             widget.onControlPointDragEndWithState?.call(-1, finalProperties);
@@ -1309,7 +1220,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 清除现有参考线
     _activeGuidelines = [];
     
-    // 强制生成新参考线，使用更简单的检查条件
+    // 强制生成新参考线
     try {
       if (widget.alignmentMode == AlignmentMode.guideline && 
           GuidelineManager.instance.enabled) {
@@ -1321,51 +1232,28 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           elementSize: Size(currentState['width']!, currentState['height']!),
           rotation: currentState['rotation'],
           isDynamicSource: true,
-          forceUpdate: true,
+          forceUpdate: true,     // 强制更新，跳过缓存
+          showDynamicOnly: true, // 只显示动态参考线
         );
         
         // 处理生成的参考线
         if (result != null && result['hasAlignment'] == true) {
-          final guidelines = result['guidelines'] as List<Guideline>;
+          final guidelines = result['guidelines'] as List<Guideline>? ?? [];
           
-          // 只保留最近的几条参考线（手动处理）
-          List<Guideline> filteredGuidelines = guidelines;
-          const maxGuidelinesCount = 2;
+          // 直接使用生成的参考线，不修改属性
+          _activeGuidelines = List<Guideline>.from(guidelines);
           
-          if (guidelines.length > maxGuidelinesCount) {
-            // 按距离排序并只保留最近的几条
-            filteredGuidelines = guidelines
-                .where((g) => g.distanceToTarget != null)
-                .toList()
-                ..sort((a, b) => (a.distanceToTarget ?? double.infinity)
-                    .compareTo(b.distanceToTarget ?? double.infinity));
-                
-            filteredGuidelines = filteredGuidelines.take(maxGuidelinesCount).toList();
-          }
-          
-          // 处理参考线高亮
-          _activeGuidelines = filteredGuidelines.map((g) {
-            final distance = g.distanceToTarget ?? double.infinity;
-            final isHighlight = distance <= _highlightThreshold;
-            
-            return g.copyWith(
-              isHighlighted: isHighlight,
-              lineWeight: isHighlight ? 3.0 : 2.0,
-              color: isHighlight 
-                  ? const Color(0xFF2196F3) // 亮蓝色
-                  : const Color(0xFF4CAF50), // 绿色
-            );
-          }).toList();
+          // 强制更新参考线颜色
+          _updateGuidelineColors();
           
           // 强制通知外部更新参考线
           if (widget.onGuidelinesUpdated != null) {
-            EditPageLogger.editPageDebug('更新参考线UI', data: {
-              'guidelines': _activeGuidelines.length,
-              'type': _activeGuidelines.map((g) => g.type.toString()).toList(),
-              'distances': _activeGuidelines.map((g) => g.distanceToTarget).toList(),
+            EditPageLogger.editPageDebug('刷新参考线UI', data: {
+              'guidelinesCount': _activeGuidelines.length,
+              'elementId': widget.elementId,
+              'isDynamicOnly': true,
+              'elementPosition': '(${currentState['x']}, ${currentState['y']})',
             });
-            
-            widget.onGuidelinesUpdated!(_activeGuidelines);
           }
         } else {
           // 没有找到对齐点，清除参考线
@@ -1385,6 +1273,57 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 推送元素状态更新到预览层
     if (widget.onControlPointDragEndWithState != null) {
       widget.onControlPointDragEndWithState!(-2, currentState);
+    }
+  }
+
+  /// 🔹 新增：初始化动态参考线显示
+  void _initializeDynamicGuidelines() {
+    // 确保清空之前的任何参考线
+    _clearGuidelines();
+    
+    // 只在参考线对齐模式下处理
+    if (widget.alignmentMode != AlignmentMode.guideline) {
+      return;
+    }
+    
+    // 强制立即刷新参考线，确保初始状态正确
+    _refreshGuidelinesImmediately();
+    
+    // 强制更新参考线颜色
+    _updateGuidelineColors();
+    
+    EditPageLogger.editPageDebug('初始化动态参考线', data: {
+      'elementId': widget.elementId,
+      'guidelinesCount': _activeGuidelines.length,
+      'operation': 'init_dynamic_guidelines',
+    });
+  }
+
+  /// 🔹 重置参考线颜色并传递到外部更新
+  void _updateGuidelineColors() {
+    // 定义固定的灰色
+    const guidelineColor = Color(0xFFA0A0A0);
+    
+    if (_activeGuidelines.isNotEmpty) {
+      // 重设参考线颜色
+      final updatedGuidelines = _activeGuidelines.map((guideline) {
+        return guideline.copyWith(
+          color: guidelineColor, // 强制使用灰色
+          isHighlighted: false,   // 禁用高亮
+          lineWeight: 1.5,        // 使用统一线宽
+        );
+      }).toList();
+      
+      _activeGuidelines = updatedGuidelines;
+      
+      // 通知外部更新参考线
+      if (widget.onGuidelinesUpdated != null) {
+        EditPageLogger.editPageDebug('强制更新参考线颜色为灰色', data: {
+          'guidelineCount': _activeGuidelines.length,
+          'color': 'gray (0xFFA0A0A0)',
+        });
+        widget.onGuidelinesUpdated!(_activeGuidelines);
+      }
     }
   }
 }
