@@ -25,11 +25,14 @@ class GuidelineLayer extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // 检查是否存在动态参考线
+    final hasDynamicGuidelines = guidelines.any((g) => g.id.startsWith('dynamic_'));
+    
     final painter = GuidelineRenderer.createGuidelinePainter(
       guidelines: guidelines,
-      color: Colors.orange,
-      strokeWidth: 1.0,
-      showLabels: true,
+      color: hasDynamicGuidelines ? const Color(0xFFA0A0A0) : Colors.orange, // 如果是动态参考线，默认使用灰色
+      strokeWidth: hasDynamicGuidelines ? 1.5 : 1.0,
+      showLabels: !hasDynamicGuidelines, // 动态参考线不显示标签
       viewportBounds: viewportBounds,
     );
 
@@ -37,6 +40,8 @@ class GuidelineLayer extends StatelessWidget {
       '渲染参考线层',
       data: {
         'guidelinesCount': guidelines.length,
+        'hasDynamicGuidelines': hasDynamicGuidelines,
+        'guidelinesColors': guidelines.map((g) => g.color.value.toRadixString(16)).toList(),
         'scale': scale,
         'canvasSize': '${canvasSize.width.toStringAsFixed(0)}x${canvasSize.height.toStringAsFixed(0)}',
         'viewportBounds': viewportBounds != null 
