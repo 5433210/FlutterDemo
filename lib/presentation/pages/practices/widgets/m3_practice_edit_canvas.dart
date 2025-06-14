@@ -61,9 +61,12 @@ class OptimizedCanvasListener extends StatefulWidget {
 
 class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     with
-        CanvasElementCreators,
-        CanvasViewControllers,
+        // 先放置与界面显示、创建相关的mixin
         CanvasLayerBuilders,
+        CanvasElementCreators,
+        // 然后放置与视图控制相关的mixin
+        CanvasViewControllers,
+        // 最后放置与交互控制相关的mixin
         CanvasControlPointHandlers {
   // 🔍[TRACKING] 静态重建计数器
   static int _buildCount = 0;
@@ -95,9 +98,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   // 拖拽准备状态：使用普通变量避免setState时序问题
   bool _isReadyForDrag = false;
-
   // Canvas gesture handler
   late SmartCanvasGestureHandler _gestureHandler;
+
+  // 🔧 保存UI监听器回调引用，用于正确注销
+  VoidCallback? _canvasUIListener;
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
       ValueNotifier(SelectionBoxState());
@@ -204,86 +209,81 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       debugPrint('Canvas dispose logging failed: $e');
     }
 
-    // 🔧 CRITICAL FIX: 先处理自己的资源，最后调用super.dispose()
-
-    // 使用安全的资源释放方式
     try {
-      _gestureHandler.dispose();
-      debugPrint('Canvas dispose: gesture handler disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose gesture handler: $e');
+      // 使用安全的资源释放方式
+      try {
+        _gestureHandler.dispose();
+        debugPrint('Canvas dispose: gesture handler disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose gesture handler: $e');
+      }
+
+      try {
+        _contentRenderController.dispose();
+        debugPrint('Canvas dispose: content render controller disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose content render controller: $e');
+      }
+
+      try {
+        _dragStateManager.dispose();
+        debugPrint('Canvas dispose: drag state manager disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose drag state manager: $e');
+      }
+
+      try {
+        _selectionBoxNotifier.dispose();
+        debugPrint('Canvas dispose: selection box notifier disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose selection box notifier: $e');
+      }
+
+      try {
+        _structureListener.dispose();
+        debugPrint('Canvas dispose: structure listener disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose structure listener: $e');
+      }
+
+      try {
+        _stateDispatcher.dispose();
+        debugPrint('Canvas dispose: state dispatcher disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose state dispatcher: $e');
+      }
+
+      try {
+        _dragOperationManager.dispose();
+        debugPrint('Canvas dispose: drag operation manager disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose drag operation manager: $e');
+      }
+
+      try {
+        _layerRenderManager.dispose();
+        debugPrint('Canvas dispose: layer render manager disposed');
+      } catch (e) {
+        debugPrint('Failed to dispose layer render manager: $e');
+      }
+
+      // 注销智能状态分发器监听器
+      try {
+        _unregisterFromIntelligentDispatcher();
+        debugPrint('Canvas dispose: intelligent dispatcher unregistered');
+      } catch (e) {
+        debugPrint('Failed to unregister from intelligent dispatcher: $e');
+      }
+      
+      // 注意：不要 dispose 单例的 PerformanceMonitor
+      debugPrint('Canvas dispose: PerformanceMonitor reference removed (singleton not disposed)');
+
+    } finally {
+      // 🔧 CRITICAL FIX: 在finally块中调用super.dispose()确保一定会被执行
+      debugPrint('Canvas dispose: About to call super.dispose()');
+      super.dispose();
+      debugPrint('Canvas dispose: super.dispose() called successfully');
     }
-
-    try {
-      _contentRenderController.dispose();
-      debugPrint('Canvas dispose: content render controller disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose content render controller: $e');
-    }
-
-    try {
-      _dragStateManager.dispose();
-      debugPrint('Canvas dispose: drag state manager disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose drag state manager: $e');
-    }
-
-    try {
-      _selectionBoxNotifier.dispose();
-      debugPrint('Canvas dispose: selection box notifier disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose selection box notifier: $e');
-    }
-
-    try {
-      _structureListener.dispose();
-      debugPrint('Canvas dispose: structure listener disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose structure listener: $e');
-    }
-
-    try {
-      _stateDispatcher.dispose();
-      debugPrint('Canvas dispose: state dispatcher disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose state dispatcher: $e');
-    }
-
-    try {
-      _dragOperationManager.dispose();
-      debugPrint('Canvas dispose: drag operation manager disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose drag operation manager: $e');
-    }
-
-    try {
-      _layerRenderManager.dispose();
-      debugPrint('Canvas dispose: layer render manager disposed');
-    } catch (e) {
-      debugPrint('Failed to dispose layer render manager: $e');
-    }
-
-    // 🔧 CRITICAL FIX: 注销智能状态分发器监听器
-    try {
-      _unregisterFromIntelligentDispatcher();
-      debugPrint('Canvas dispose: intelligent dispatcher unregistered');
-    } catch (e) {
-      debugPrint('Failed to unregister from intelligent dispatcher: $e');
-    }
-
-    // 注意：不要 dispose 单例的 PerformanceMonitor
-    try {
-      debugPrint(
-          'Canvas dispose: PerformanceMonitor reference removed (singleton not disposed)');
-    } catch (e) {
-      debugPrint('Failed to remove performance monitor reference: $e');
-    }
-
-    debugPrint('Canvas dispose: About to call super.dispose()');
-
-    // 🔧 CRITICAL FIX: 确保调用super.dispose()，但用更安全的方式
-    super.dispose();
-    debugPrint('Canvas dispose: super.dispose() called successfully');
   }
 
   @override
@@ -427,8 +427,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       );
     });
   }
-
-  @override
   void triggerSetState() {
     // 🚀 优化：避免Canvas整体重建，使用分层架构
     EditPageLogger.canvasDebug(
@@ -883,8 +881,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           ),
                         ],
                       ),
-                    ),
-                  // Reset position button
+                    ),                  // Reset position button
                   Tooltip(
                     message:
                         AppLocalizations.of(context).canvasResetViewTooltip,
@@ -999,15 +996,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'reason': 'post_frame_registration_check',
             'timing': 'after_widget_build',
           },
-        );
-
-        // 重新尝试注册
-        intelligentDispatcher.registerUIListener('canvas', () {
+        );        // 重新尝试注册（如果还没有创建监听器则创建）
+        _canvasUIListener ??= () {
           if (mounted && !_isDisposed) {
             setState(() {});
-            EditPageLogger.canvasDebug('Canvas UI监听器触发重建(PostFrame)');
+            EditPageLogger.canvasDebug('Canvas UI监听器触发重建');
           }
-        });
+        };
+        intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
 
         // 验证注册成功
         final finalCheck =
@@ -1477,11 +1473,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         intelligentDispatcher.registerLayerListener('content', () {
           // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
           _handleIntelligentDispatcherContentUpdate();
-        });
-
-        // 🚀 CRITICAL FIX: 注册Canvas作为UI组件监听器，以接收参考线更新通知
+        });        // 🚀 CRITICAL FIX: 注册Canvas作为UI组件监听器，以接收参考线更新通知
         // 这解决了参考线UI显示问题: "UI组件没有注册监听器" (component: canvas)
-        intelligentDispatcher.registerUIListener('canvas', () {
+        _canvasUIListener ??= () {
           if (mounted && !_isDisposed) {
             // 重建Canvas以显示参考线更新
             setState(() {
@@ -1496,24 +1490,24 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
               },
             );
           }
-        });
+        };
+        intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
 
         // 🔍 验证注册是否成功 - 添加重试机制
         bool isRegistered = false;
         for (int attempt = 0; attempt < 3; attempt++) {
           isRegistered = intelligentDispatcher.hasUIComponentListener('canvas');
-          if (isRegistered) break;
-
-          // 如果注册失败，稍等一下再试
+          if (isRegistered) break;          // 如果注册失败，稍等一下再试
           if (attempt < 2) {
             Future.delayed(const Duration(milliseconds: 10), () {
               if (!_isDisposed) {
-                intelligentDispatcher.registerUIListener('canvas', () {
+                _canvasUIListener ??= () {
                   if (mounted && !_isDisposed) {
                     setState(() {});
                     EditPageLogger.canvasDebug('Canvas UI监听器触发重建(重试)');
                   }
-                });
+                };
+                intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
               }
             });
           }
@@ -1717,17 +1711,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // ✅ 新方法：注销智能状态分发器监听器
   void _unregisterFromIntelligentDispatcher() {
     try {
-      final intelligentDispatcher = widget.controller.intelligentDispatcher;
-      if (intelligentDispatcher != null) {
+      final intelligentDispatcher = widget.controller.intelligentDispatcher;      if (intelligentDispatcher != null) {
         // 🚀 修复：注销Canvas UI监听器以修复参考线功能
         // 在dispose过程中使用debugPrint而不是EditPageLogger
-        debugPrint('Canvas组件注销智能状态分发器监听器'); // 注销UI监听器（参考线更新等）
-        intelligentDispatcher.removeUIListener('canvas');
+        debugPrint('Canvas组件注销智能状态分发器监听器'); 
+        
+        // 注销UI监听器（参考线更新等）
+        if (_canvasUIListener != null) {
+          intelligentDispatcher.removeUIListener('canvas', _canvasUIListener!);
+          _canvasUIListener = null;
+        }
 
         // 注销层级监听器（内容变化等）
         // Note: 目前的 IntelligentStateDispatcher 实现可能不支持具体的监听器移除
         // 但至少尝试调用以保持代码的完整性
-        // intelligentDispatcher.unregisterLayerListener('content');
+        // intelligentDispatcher.removeLayerListener('content', () {});  // 需要提供回调函数
       }
     } catch (e) {
       // 在dispose过程中使用debugPrint而不是EditPageLogger

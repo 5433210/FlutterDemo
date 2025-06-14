@@ -92,6 +92,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   // every time didChangeDependencies is called (e.g., on viewport size changes)
   bool _practiceLoaded = false;
 
+  // 保存UI监听器回调引用，用于正确注销
+  VoidCallback? _propertyPanelListener;
+
   @override
   Widget build(BuildContext context) {
     // Remove unused l10n variable
@@ -2438,8 +2441,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _registerPropertyPanelToIntelligentDispatcher() {
     final intelligentDispatcher = _controller.intelligentDispatcher;
     if (intelligentDispatcher != null) {
-      // 注册属性面板作为UI组件监听器
-      intelligentDispatcher.registerUIListener('property_panel', () {
+      // 创建并保存回调引用
+      _propertyPanelListener = () {
         EditPageLogger.editPageDebug(
           '智能状态分发器触发属性面板更新',
           data: {
@@ -2453,7 +2456,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             // 重建属性面板
           });
         }
-      });
+      };
+      
+      // 注册属性面板作为UI组件监听器
+      intelligentDispatcher.registerUIListener('property_panel', _propertyPanelListener!);
 
       EditPageLogger.editPageInfo(
         '属性面板已注册到智能状态分发器',
@@ -3000,15 +3006,28 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   /// ✅ 注销属性面板的智能状态监听器
   void _unregisterPropertyPanelFromIntelligentDispatcher() {
     final intelligentDispatcher = _controller.intelligentDispatcher;
-    if (intelligentDispatcher != null) {
-      intelligentDispatcher.unregisterUIListener('property_panel');
-
-      EditPageLogger.editPageDebug(
-        '属性面板已从智能状态分发器注销',
-        data: {
-          'operation': 'cleanup_property_panel_listeners',
-        },
-      );
+    if (intelligentDispatcher != null && _propertyPanelListener != null) {
+      try {
+        // 使用正确的方法名及已保存的回调引用
+        intelligentDispatcher.removeUIListener('property_panel', _propertyPanelListener!);
+        _propertyPanelListener = null;
+        
+        EditPageLogger.editPageDebug(
+          '属性面板已从智能状态分发器注销',
+          data: {
+            'operation': 'cleanup_property_panel_listeners',
+          },
+        );
+      } catch (e) {
+        // 添加错误处理，防止应用崩溃
+        EditPageLogger.editPageError(
+          '属性面板注销失败',
+          error: e,
+          data: {
+            'operation': 'cleanup_property_panel_listeners_failed',
+          },
+        );
+      }
     }
   }
 }

@@ -50,18 +50,20 @@ class CustomOperation implements UndoableOperation {
 /// 字帖编辑控制器
 class PracticeEditController extends ChangeNotifier
     with
+        // 不含dispose的mixin放前面
         ElementManagementMixin,
         ElementOperationsMixin,
         LayerManagementMixin,
         PageManagementMixin,
-        UndoRedoMixin,
         ToolManagementMixin,
         PracticePersistenceMixin,
-        BatchUpdateMixin,
+        UndoRedoMixin,
         UIStateMixin,
-        ThrottledNotificationMixin,
+        // 包含dispose的mixin放后面，确保super.dispose()调用链正确
+        BatchUpdateMixin,
+        IntelligentNotificationMixin,
         DragOptimizedNotificationMixin,
-        IntelligentNotificationMixin {
+        ThrottledNotificationMixin {
   // 状态
   final PracticeEditState _state = PracticeEditState();
 
@@ -203,18 +205,81 @@ class PracticeEditController extends ChangeNotifier
   /// 释放资源
   @override
   void dispose() {
-    // 清理批量更新相关资源
-    disposeBatchUpdate();
+    EditPageLogger.controllerInfo(
+      'PracticeEditController开始销毁',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
+    try {
+      // 先释放智能分发器资源
+      if (_intelligentDispatcher != null) {
+        EditPageLogger.controllerDebug('销毁智能分发器');
+        _intelligentDispatcher.dispose();
+      }
+    } catch (e) {
+      EditPageLogger.controllerError(
+        '智能分发器销毁失败',
+        error: e,
+      );
+    }
+
+    try {
+      // 清理批量更新相关资源
+      EditPageLogger.controllerDebug('销毁批量更新资源');
+      disposeBatchUpdate();
+    } catch (e) {
+      EditPageLogger.controllerError(
+        '批量更新资源销毁失败',
+        error: e,
+      );
+    }
+
+    try {
+      // 释放撤销重做管理器资源
+      if (_undoRedoManager != null) {
+        EditPageLogger.controllerDebug('销毁撤销重做管理器');
+        _undoRedoManager.clearHistory();
+      }
+    } catch (e) {
+      EditPageLogger.controllerError(
+        '撤销重做管理器资源销毁失败',
+        error: e,
+      );
+    }
 
     // 清除所有引用
     _canvasKey = null;
     _pageKeys.clear();
     _previewModeCallback = null;
+    _editCanvas = null;
 
     // 标记为已销毁
     _state.isDisposed = true;
 
-    super.dispose();
+    EditPageLogger.controllerInfo(
+      'PracticeEditController: 即将调用super.dispose()',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+    
+    // 确保调用完整的dispose链
+    try {
+      super.dispose();
+      EditPageLogger.controllerInfo(
+        'PracticeEditController: super.dispose()调用完成',
+        data: {
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      EditPageLogger.controllerError(
+        'PracticeEditController: super.dispose()调用失败',
+        error: e,
+      );
+    }
   }
 
   // deleteAllLayers method removed - now using LayerManagementMixin
