@@ -47,13 +47,20 @@ class GuidelineManager {
 
   /// 私有构造函数
   GuidelineManager._();
-
-  /// 获取所有活动参考线列表（动态+静态+高亮）
+  /// 获取所有活动参考线列表
+  /// 🔧 修改：拖拽过程中只显示高亮参考线，其余参考线不显示
   List<Guideline> get activeGuidelines {
     final allGuidelines = <Guideline>[];
-    allGuidelines.addAll(_dynamicGuidelines);
-    allGuidelines.addAll(_staticGuidelines);
-    allGuidelines.addAll(_highlightedGuidelines);
+    
+    if (_isDragging) {
+      // 拖拽过程中：只显示高亮参考线
+      allGuidelines.addAll(_highlightedGuidelines);
+    } else {
+      // 非拖拽状态：显示所有参考线（保持原有逻辑）
+      allGuidelines.addAll(_dynamicGuidelines);
+      allGuidelines.addAll(_staticGuidelines);
+      allGuidelines.addAll(_highlightedGuidelines);
+    }
     
     EditPageLogger.editPageDebug(
       '🔍 [TRACE] activeGuidelines getter调用',
@@ -63,6 +70,7 @@ class GuidelineManager {
         'highlightedCount': _highlightedGuidelines.length,
         'totalCount': allGuidelines.length,
         'isDragging': _isDragging,
+        'onlyHighlighted': _isDragging,
         'operation': 'getter_access_trace',
       },
     );
