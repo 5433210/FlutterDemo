@@ -153,6 +153,8 @@ class GuidelineManager {
     required Size elementSize,
     bool clearFirst = true,
     bool regenerateStatic = true, // 🔧 新增：控制是否重新生成静态参考线
+    String operationType = 'translate', // 🔧 新增：操作类型
+    String? resizeDirection, // 🔧 新增：Resize方向
   }) {
     if (!_enabled) return;
 
@@ -175,8 +177,11 @@ class GuidelineManager {
       _generateStaticGuidelines(elementId);
     }
 
-    // 3. 计算高亮参考线（距离动态参考线最近的静态参考线）
-    _calculateHighlightedGuidelines();
+    // 3. 计算高亮参考线（根据操作类型和拖拽方向）
+    _calculateHighlightedGuidelines(
+      operationType: operationType,
+      resizeDirection: resizeDirection,
+    );
 
     // 4. 同步到输出
     _syncToOutput();
@@ -188,6 +193,8 @@ class GuidelineManager {
         'position': '${draftPosition.dx}, ${draftPosition.dy}',
         'size': '${elementSize.width}x${elementSize.height}',
         'regenerateStatic': regenerateStatic,
+        'operationType': operationType,
+        'resizeDirection': resizeDirection,
         'dynamicCount': _dynamicGuidelines.length,
         'staticCount': _staticGuidelines.length,
         'highlightedCount': _highlightedGuidelines.length,
@@ -197,6 +204,7 @@ class GuidelineManager {
   /// 支持两种操作类型：
   /// - 平移操作：动态参考线所在的边或中线移动到高亮参考线位置，使元素整体平移
   /// - Resize操作：动态参考线所在边移动到高亮参考线位置，使元素大小变化
+  /// 🔧 改进：支持多条高亮参考线（角点拖拽时）
   Map<String, dynamic> performAlignment({
     required String elementId,
     required Offset currentPosition,
@@ -218,156 +226,39 @@ class GuidelineManager {
       };
     }
 
-    // 🔧 只处理第一个（也是唯一的）高亮参考线
-    final highlightedGuideline = _highlightedGuidelines.first;
-    
     double alignedX = currentPosition.dx;
     double alignedY = currentPosition.dy;
     double alignedWidth = elementSize.width;
     double alignedHeight = elementSize.height;
-    Map<String, dynamic>? alignmentDetail;
+    List<Map<String, dynamic>> alignmentDetails = [];
 
-    if (highlightedGuideline.direction == AlignmentDirection.horizontal) {
-      // 水平参考线处理
-      if (operationType == 'translate') {
-        // 🔧 平移操作：动态参考线所在的边或中线移动到高亮参考线位置
-        double targetY = _calculateAlignedY(highlightedGuideline, elementSize);
-        double distance = (currentPosition.dy - targetY).abs();
-        
-        if (distance <= _snapThreshold) {
-          alignedY = targetY;
-          alignmentDetail = {
-            'type': 'translate',
-            'direction': 'horizontal',
-            'guideline': highlightedGuideline.id,
-            'guidelineType': highlightedGuideline.type.toString(),
-            'originalY': currentPosition.dy,
-            'alignedY': alignedY,
-            'distance': distance,
-          };
-        }
-      } else if (operationType == 'resize') {
-        // 🔧 Resize操作：动态参考线所在边移动到高亮参考线位置
-        if (resizeDirection == 'top') {
-          // 上边界对齐
-          double targetY = highlightedGuideline.position;
-          double distance = (currentPosition.dy - targetY).abs();
-          
-          if (distance <= _snapThreshold) {
-            double deltaY = targetY - currentPosition.dy;
-            alignedY = targetY;
-            alignedHeight = elementSize.height - deltaY;
-            
-            // 确保高度不为负数
-            if (alignedHeight > 20) {
-              alignmentDetail = {
-                'type': 'resize',
-                'direction': 'horizontal',
-                'edge': 'top',
-                'guideline': highlightedGuideline.id,
-                'guidelineType': highlightedGuideline.type.toString(),
-                'originalY': currentPosition.dy,
-                'alignedY': alignedY,
-                'originalHeight': elementSize.height,
-                'alignedHeight': alignedHeight,
-                'distance': distance,
-              };
-            }
+    // 🔧 处理多条高亮参考线
+    for (final highlightedGuideline in _highlightedGuidelines) {
+      Map<String, dynamic>? alignmentDetail = _processSingleGuideline(
+        highlightedGuideline,
+        currentPosition,
+        elementSize,
+        operationType,
+        resizeDirection,
+      );
+
+      if (alignmentDetail != null) {
+        alignmentDetails.add(alignmentDetail);
+
+        // 应用对齐结果
+        if (highlightedGuideline.direction == AlignmentDirection.horizontal) {
+          if (alignmentDetail.containsKey('alignedY')) {
+            alignedY = alignmentDetail['alignedY'];
           }
-        } else if (resizeDirection == 'bottom') {
-          // 下边界对齐
-          double targetY = highlightedGuideline.position;
-          double currentBottom = currentPosition.dy + elementSize.height;
-          double distance = (currentBottom - targetY).abs();
-          
-          if (distance <= _snapThreshold) {
-            alignedHeight = targetY - currentPosition.dy;
-            
-            // 确保高度不为负数
-            if (alignedHeight > 20) {
-              alignmentDetail = {
-                'type': 'resize',
-                'direction': 'horizontal',
-                'edge': 'bottom',
-                'guideline': highlightedGuideline.id,
-                'guidelineType': highlightedGuideline.type.toString(),
-                'originalHeight': elementSize.height,
-                'alignedHeight': alignedHeight,
-                'distance': distance,
-              };
-            }
+          if (alignmentDetail.containsKey('alignedHeight')) {
+            alignedHeight = alignmentDetail['alignedHeight'];
           }
-        }
-      }
-    } else {
-      // 垂直参考线处理
-      if (operationType == 'translate') {
-        // 🔧 平移操作：动态参考线所在的边或中线移动到高亮参考线位置
-        double targetX = _calculateAlignedX(highlightedGuideline, elementSize);
-        double distance = (currentPosition.dx - targetX).abs();
-        
-        if (distance <= _snapThreshold) {
-          alignedX = targetX;
-          alignmentDetail = {
-            'type': 'translate',
-            'direction': 'vertical',
-            'guideline': highlightedGuideline.id,
-            'guidelineType': highlightedGuideline.type.toString(),
-            'originalX': currentPosition.dx,
-            'alignedX': alignedX,
-            'distance': distance,
-          };
-        }
-      } else if (operationType == 'resize') {
-        // 🔧 Resize操作：动态参考线所在边移动到高亮参考线位置
-        if (resizeDirection == 'left') {
-          // 左边界对齐
-          double targetX = highlightedGuideline.position;
-          double distance = (currentPosition.dx - targetX).abs();
-          
-          if (distance <= _snapThreshold) {
-            double deltaX = targetX - currentPosition.dx;
-            alignedX = targetX;
-            alignedWidth = elementSize.width - deltaX;
-            
-            // 确保宽度不为负数
-            if (alignedWidth > 20) {
-              alignmentDetail = {
-                'type': 'resize',
-                'direction': 'vertical',
-                'edge': 'left',
-                'guideline': highlightedGuideline.id,
-                'guidelineType': highlightedGuideline.type.toString(),
-                'originalX': currentPosition.dx,
-                'alignedX': alignedX,
-                'originalWidth': elementSize.width,
-                'alignedWidth': alignedWidth,
-                'distance': distance,
-              };
-            }
+        } else {
+          if (alignmentDetail.containsKey('alignedX')) {
+            alignedX = alignmentDetail['alignedX'];
           }
-        } else if (resizeDirection == 'right') {
-          // 右边界对齐
-          double targetX = highlightedGuideline.position;
-          double currentRight = currentPosition.dx + elementSize.width;
-          double distance = (currentRight - targetX).abs();
-          
-          if (distance <= _snapThreshold) {
-            alignedWidth = targetX - currentPosition.dx;
-            
-            // 确保宽度不为负数
-            if (alignedWidth > 20) {
-              alignmentDetail = {
-                'type': 'resize',
-                'direction': 'vertical',
-                'edge': 'right',
-                'guideline': highlightedGuideline.id,
-                'guidelineType': highlightedGuideline.type.toString(),
-                'originalWidth': elementSize.width,
-                'alignedWidth': alignedWidth,
-                'distance': distance,
-              };
-            }
+          if (alignmentDetail.containsKey('alignedWidth')) {
+            alignedWidth = alignmentDetail['alignedWidth'];
           }
         }
       }
@@ -375,10 +266,10 @@ class GuidelineManager {
 
     final alignedPosition = Offset(alignedX, alignedY);
     final alignedSize = Size(alignedWidth, alignedHeight);
-    final hasAlignment = alignmentDetail != null;
+    final hasAlignment = alignmentDetails.isNotEmpty;
 
     EditPageLogger.editPageDebug(
-      '🎯 执行对齐吸附',
+      '🎯 执行对齐吸附（多参考线支持）',
       data: {
         'elementId': elementId,
         'operationType': operationType,
@@ -388,13 +279,9 @@ class GuidelineManager {
         'originalSize': '${elementSize.width}x${elementSize.height}',
         'alignedSize': '${alignedWidth}x${alignedHeight}',
         'hasAlignment': hasAlignment,
-        'alignmentDetail': alignmentDetail,
-        'highlightedGuideline': {
-          'id': highlightedGuideline.id,
-          'type': highlightedGuideline.type.toString(),
-          'direction': highlightedGuideline.direction.toString(),
-          'position': highlightedGuideline.position,
-        },
+        'highlightedGuidelinesCount': _highlightedGuidelines.length,
+        'alignmentDetailsCount': alignmentDetails.length,
+        'alignmentDetails': alignmentDetails,
       },
     );
 
@@ -403,12 +290,242 @@ class GuidelineManager {
       'size': alignedSize,
       'hasAlignment': hasAlignment,
       'alignmentInfo': {
-        'detail': alignmentDetail,
-        'highlightedGuideline': highlightedGuideline.id,
+        'details': alignmentDetails,
+        'highlightedGuidelines': _highlightedGuidelines.map((g) => g.id).toList(),
         'operationType': operationType,
         'resizeDirection': resizeDirection,
       },
     };
+  }
+  /// 处理单个高亮参考线的对齐
+  Map<String, dynamic>? _processSingleGuideline(
+    Guideline highlightedGuideline,
+    Offset currentPosition,
+    Size elementSize,
+    String operationType,
+    String? resizeDirection,
+  ) {
+    if (highlightedGuideline.direction == AlignmentDirection.horizontal) {
+      return _processHorizontalGuideline(
+        highlightedGuideline,
+        currentPosition,
+        elementSize,
+        operationType,
+        resizeDirection,
+      );
+    } else {
+      return _processVerticalGuideline(
+        highlightedGuideline,
+        currentPosition,
+        elementSize,
+        operationType,
+        resizeDirection,
+      );
+    }
+  }
+
+  /// 处理水平方向的参考线对齐
+  Map<String, dynamic>? _processHorizontalGuideline(
+    Guideline highlightedGuideline,
+    Offset currentPosition,
+    Size elementSize,
+    String operationType,
+    String? resizeDirection,
+  ) {
+    if (operationType == 'translate') {
+      // 平移操作：找到与高亮参考线距离最近的动态参考线，然后对齐
+      Guideline? closestDynamicGuideline;
+      double minDistance = double.infinity;
+      
+      for (final dynamicGuideline in _dynamicGuidelines) {
+        if (dynamicGuideline.direction == highlightedGuideline.direction) {
+          final distance = (dynamicGuideline.position - highlightedGuideline.position).abs();
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestDynamicGuideline = dynamicGuideline;
+          }
+        }
+      }
+      
+      if (closestDynamicGuideline != null) {
+        double targetY = _calculateAlignedYFromDynamicGuideline(
+          closestDynamicGuideline, 
+          highlightedGuideline.position, 
+          elementSize
+        );
+        
+        return {
+          'type': 'translate',
+          'direction': 'horizontal',
+          'guideline': highlightedGuideline.id,
+          'dynamicGuideline': closestDynamicGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'dynamicGuidelineType': closestDynamicGuideline.type.toString(),
+          'originalY': currentPosition.dy,
+          'alignedY': targetY,
+          'distance': minDistance,
+        };
+      }
+    } else if (operationType == 'resize' && resizeDirection != null) {
+      return _processHorizontalResize(
+        highlightedGuideline,
+        currentPosition,
+        elementSize,
+        resizeDirection,
+      );
+    }
+
+    return null;
+  }
+
+  /// 处理垂直方向的参考线对齐
+  Map<String, dynamic>? _processVerticalGuideline(
+    Guideline highlightedGuideline,
+    Offset currentPosition,
+    Size elementSize,
+    String operationType,
+    String? resizeDirection,
+  ) {
+    if (operationType == 'translate') {
+      // 平移操作：找到与高亮参考线距离最近的动态参考线，然后对齐
+      Guideline? closestDynamicGuideline;
+      double minDistance = double.infinity;
+      
+      for (final dynamicGuideline in _dynamicGuidelines) {
+        if (dynamicGuideline.direction == highlightedGuideline.direction) {
+          final distance = (dynamicGuideline.position - highlightedGuideline.position).abs();
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestDynamicGuideline = dynamicGuideline;
+          }
+        }
+      }
+      
+      if (closestDynamicGuideline != null) {
+        double targetX = _calculateAlignedXFromDynamicGuideline(
+          closestDynamicGuideline, 
+          highlightedGuideline.position, 
+          elementSize
+        );
+        
+        return {
+          'type': 'translate',
+          'direction': 'vertical',
+          'guideline': highlightedGuideline.id,
+          'dynamicGuideline': closestDynamicGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'dynamicGuidelineType': closestDynamicGuideline.type.toString(),
+          'originalX': currentPosition.dx,
+          'alignedX': targetX,
+          'distance': minDistance,
+        };
+      }
+    } else if (operationType == 'resize' && resizeDirection != null) {
+      return _processVerticalResize(
+        highlightedGuideline,
+        currentPosition,
+        elementSize,
+        resizeDirection,
+      );
+    }
+
+    return null;
+  }
+
+  /// 处理水平方向的Resize对齐
+  Map<String, dynamic>? _processHorizontalResize(
+    Guideline highlightedGuideline,
+    Offset currentPosition,
+    Size elementSize,
+    String resizeDirection,
+  ) {
+    double targetY = highlightedGuideline.position;
+    
+    if (resizeDirection.contains('top')) {
+      // 上边界对齐
+      double deltaY = targetY - currentPosition.dy;
+      double newHeight = elementSize.height - deltaY;
+      
+      if (newHeight > 20) {
+        return {
+          'type': 'resize',
+          'direction': 'horizontal',
+          'edge': 'top',
+          'guideline': highlightedGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'originalY': currentPosition.dy,
+          'alignedY': targetY,
+          'originalHeight': elementSize.height,
+          'alignedHeight': newHeight,
+          'distance': (currentPosition.dy - targetY).abs(),
+        };
+      }    } else if (resizeDirection.contains('bottom')) {
+      // 下边界对齐
+      double newHeight = targetY - currentPosition.dy;
+      
+      if (newHeight > 20) {
+        return {
+          'type': 'resize',
+          'direction': 'horizontal',
+          'edge': 'bottom',
+          'guideline': highlightedGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'originalHeight': elementSize.height,
+          'alignedHeight': newHeight,
+          'distance': ((currentPosition.dy + elementSize.height) - targetY).abs(),
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /// 处理垂直方向的Resize对齐
+  Map<String, dynamic>? _processVerticalResize(
+    Guideline highlightedGuideline,
+    Offset currentPosition,
+    Size elementSize,
+    String resizeDirection,
+  ) {
+    double targetX = highlightedGuideline.position;
+      if (resizeDirection.contains('left')) {
+      // 左边界对齐
+      double deltaX = targetX - currentPosition.dx;
+      double newWidth = elementSize.width - deltaX;
+      
+      if (newWidth > 20) {
+        return {
+          'type': 'resize',
+          'direction': 'vertical',
+          'edge': 'left',
+          'guideline': highlightedGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'originalX': currentPosition.dx,
+          'alignedX': targetX,
+          'originalWidth': elementSize.width,
+          'alignedWidth': newWidth,
+          'distance': (currentPosition.dx - targetX).abs(),
+        };
+      }
+    } else if (resizeDirection.contains('right')) {
+      // 右边界对齐
+      double newWidth = targetX - currentPosition.dx;
+      
+      if (newWidth > 20) {
+        return {
+          'type': 'resize',
+          'direction': 'vertical',
+          'edge': 'right',
+          'guideline': highlightedGuideline.id,
+          'guidelineType': highlightedGuideline.type.toString(),
+          'originalWidth': elementSize.width,
+          'alignedWidth': newWidth,
+          'distance': ((currentPosition.dx + elementSize.width) - targetX).abs(),
+        };
+      }
+    }
+
+    return null;
   }
 
   /// 检测对齐（兼容旧接口）
@@ -533,82 +650,249 @@ class GuidelineManager {
         }
       },
     );
-  }
-  /// 计算高亮参考线（距离动态参考线最近的静态参考线）
-  /// 🔧 修改：只能有一个高亮参考线，按最近原则决定
-  void _calculateHighlightedGuidelines() {
+  }  /// 计算高亮参考线
+  /// 🔧 简化逻辑：最多一条横向、一条纵向高亮参考线
+  void _calculateHighlightedGuidelines({
+    String operationType = 'translate',
+    String? resizeDirection,
+  }) {
     _highlightedGuidelines.clear();
 
     if (_dynamicGuidelines.isEmpty || _staticGuidelines.isEmpty) {
       return;
     }
 
-    Guideline? closestStatic;
-    double minDistance = double.infinity;
+    // 分别计算横向和纵向的高亮参考线
+    final horizontalHighlighted = _findBestHorizontalGuideline(operationType, resizeDirection);
+    final verticalHighlighted = _findBestVerticalGuideline(operationType, resizeDirection);
 
-    // 🔧 新逻辑：在所有动态参考线和静态参考线的组合中，找到全局最近的一对
-    for (final dynamicGuideline in _dynamicGuidelines) {
-      for (final staticGuideline in _staticGuidelines) {
-        // 只比较相同方向的参考线
-        if (dynamicGuideline.direction != staticGuideline.direction) {
-          continue;
-        }
-
-        final distance = (dynamicGuideline.position - staticGuideline.position).abs();
-        
-        // 在显示阈值内且距离最近
-        if (distance <= _displayThreshold && distance < minDistance) {
-          minDistance = distance;
-          closestStatic = staticGuideline;
-        }
-      }
+    // 添加找到的高亮参考线
+    if (horizontalHighlighted != null) {
+      _highlightedGuidelines.add(_markGuidelineAsHighlighted(horizontalHighlighted));
     }
-
-    // 🔧 只添加一个最近的高亮参考线
-    if (closestStatic != null) {
-      _highlightedGuidelines.add(_markGuidelineAsHighlighted(closestStatic));
+    if (verticalHighlighted != null) {
+      _highlightedGuidelines.add(_markGuidelineAsHighlighted(verticalHighlighted));
     }
 
     EditPageLogger.editPageDebug(
-      '✨ 计算高亮参考线（单一最近原则）',
+      '✨ 计算高亮参考线（简化逻辑）',
       data: {
+        'operationType': operationType,
+        'resizeDirection': resizeDirection,
         'dynamicCount': _dynamicGuidelines.length,
         'staticCount': _staticGuidelines.length,
         'highlightedCount': _highlightedGuidelines.length,
         'displayThreshold': _displayThreshold,
-        'minDistance': minDistance.isFinite ? minDistance.toStringAsFixed(2) : 'N/A',
-        'highlightedGuidelineType': closestStatic?.type.toString() ?? 'none',
+        'horizontalFound': horizontalHighlighted != null,
+        'verticalFound': verticalHighlighted != null,
+        'horizontalType': horizontalHighlighted?.type.toString(),
+        'verticalType': verticalHighlighted?.type.toString(),
       },
     );
   }
 
-  /// 计算对齐后的Y坐标
-  double _calculateAlignedY(Guideline guideline, Size elementSize) {
-    switch (guideline.type) {
-      case GuidelineType.horizontalCenterLine:
-        return guideline.position - elementSize.height / 2;
-      case GuidelineType.horizontalTopEdge:
-        return guideline.position;
-      case GuidelineType.horizontalBottomEdge:
-        return guideline.position - elementSize.height;
+  /// 找到最佳的横向高亮参考线
+  Guideline? _findBestHorizontalGuideline(String operationType, String? resizeDirection) {
+    // 获取参与检测的水平动态参考线
+    final candidateDynamicGuidelines = _getCandidateHorizontalDynamicGuidelines(operationType, resizeDirection);
+    
+    if (candidateDynamicGuidelines.isEmpty) {
+      return null;
+    }
+
+    // 获取所有水平静态参考线
+    final horizontalStaticGuidelines = _staticGuidelines
+        .where((g) => g.direction == AlignmentDirection.horizontal)
+        .toList();
+
+    if (horizontalStaticGuidelines.isEmpty) {
+      return null;
+    }
+
+    // 找到距离最近且在阈值内的匹配
+    Guideline? bestStatic;
+    double minDistance = double.infinity;
+
+    for (final dynamicGuideline in candidateDynamicGuidelines) {
+      for (final staticGuideline in horizontalStaticGuidelines) {
+        final distance = (dynamicGuideline.position - staticGuideline.position).abs();
+        if (distance <= _displayThreshold && distance < minDistance) {
+          minDistance = distance;
+          bestStatic = staticGuideline;
+        }
+      }
+    }
+
+    return bestStatic;
+  }
+
+  /// 找到最佳的纵向高亮参考线
+  Guideline? _findBestVerticalGuideline(String operationType, String? resizeDirection) {
+    // 获取参与检测的垂直动态参考线
+    final candidateDynamicGuidelines = _getCandidateVerticalDynamicGuidelines(operationType, resizeDirection);
+    
+    if (candidateDynamicGuidelines.isEmpty) {
+      return null;
+    }
+
+    // 获取所有垂直静态参考线
+    final verticalStaticGuidelines = _staticGuidelines
+        .where((g) => g.direction == AlignmentDirection.vertical)
+        .toList();
+
+    if (verticalStaticGuidelines.isEmpty) {
+      return null;
+    }
+
+    // 找到距离最近且在阈值内的匹配
+    Guideline? bestStatic;
+    double minDistance = double.infinity;
+
+    for (final dynamicGuideline in candidateDynamicGuidelines) {
+      for (final staticGuideline in verticalStaticGuidelines) {
+        final distance = (dynamicGuideline.position - staticGuideline.position).abs();
+        if (distance <= _displayThreshold && distance < minDistance) {
+          minDistance = distance;
+          bestStatic = staticGuideline;
+        }
+      }
+    }
+
+    return bestStatic;
+  }
+
+  /// 获取参与检测的水平动态参考线
+  List<Guideline> _getCandidateHorizontalDynamicGuidelines(String operationType, String? resizeDirection) {
+    final horizontalDynamicGuidelines = _dynamicGuidelines
+        .where((g) => g.direction == AlignmentDirection.horizontal)
+        .toList();
+
+    if (operationType == 'translate') {
+      // 平移模式：所有水平动态参考线都参与
+      return horizontalDynamicGuidelines;
+    }
+
+    if (operationType == 'resize' && resizeDirection != null) {
+      // Resize模式：根据控制点类型筛选
+      return _filterHorizontalGuidelinesForResize(horizontalDynamicGuidelines, resizeDirection);
+    }
+
+    return horizontalDynamicGuidelines;
+  }
+
+  /// 获取参与检测的垂直动态参考线
+  List<Guideline> _getCandidateVerticalDynamicGuidelines(String operationType, String? resizeDirection) {
+    final verticalDynamicGuidelines = _dynamicGuidelines
+        .where((g) => g.direction == AlignmentDirection.vertical)
+        .toList();
+
+    if (operationType == 'translate') {
+      // 平移模式：所有垂直动态参考线都参与
+      return verticalDynamicGuidelines;
+    }
+
+    if (operationType == 'resize' && resizeDirection != null) {
+      // Resize模式：根据控制点类型筛选
+      return _filterVerticalGuidelinesForResize(verticalDynamicGuidelines, resizeDirection);
+    }
+
+    return verticalDynamicGuidelines;
+  }
+
+  /// 为Resize操作筛选水平动态参考线
+  List<Guideline> _filterHorizontalGuidelinesForResize(
+    List<Guideline> horizontalGuidelines, 
+    String resizeDirection
+  ) {
+    switch (resizeDirection) {
+      case 'top':
+      case 'top-left':
+      case 'top-right':
+        // 拖拽顶部相关：只考虑上边缘参考线
+        return horizontalGuidelines
+            .where((g) => g.type == GuidelineType.horizontalTopEdge)
+            .toList();
+      case 'bottom':
+      case 'bottom-left':
+      case 'bottom-right':
+        // 拖拽底部相关：只考虑下边缘参考线
+        return horizontalGuidelines
+            .where((g) => g.type == GuidelineType.horizontalBottomEdge)
+            .toList();
       default:
-        return guideline.position;
+        // 左右边控制点：不涉及水平参考线
+        return [];
     }
   }
 
-  /// 计算对齐后的X坐标
-  double _calculateAlignedX(Guideline guideline, Size elementSize) {
-    switch (guideline.type) {
-      case GuidelineType.verticalCenterLine:
-        return guideline.position - elementSize.width / 2;
-      case GuidelineType.verticalLeftEdge:
-        return guideline.position;
-      case GuidelineType.verticalRightEdge:
-        return guideline.position - elementSize.width;
+  /// 为Resize操作筛选垂直动态参考线
+  List<Guideline> _filterVerticalGuidelinesForResize(
+    List<Guideline> verticalGuidelines, 
+    String resizeDirection
+  ) {
+    switch (resizeDirection) {
+      case 'left':
+      case 'top-left':
+      case 'bottom-left':
+        // 拖拽左侧相关：只考虑左边缘参考线
+        return verticalGuidelines
+            .where((g) => g.type == GuidelineType.verticalLeftEdge)
+            .toList();
+      case 'right':
+      case 'top-right':
+      case 'bottom-right':
+        // 拖拽右侧相关：只考虑右边缘参考线
+        return verticalGuidelines
+            .where((g) => g.type == GuidelineType.verticalRightEdge)
+            .toList();
       default:
-        return guideline.position;
+        // 上下边控制点：不涉及垂直参考线
+        return [];
     }
   }
+
+  /// 根据动态参考线类型计算对齐后的Y坐标
+  double _calculateAlignedYFromDynamicGuideline(
+    Guideline dynamicGuideline, 
+    double targetPosition, 
+    Size elementSize
+  ) {
+    switch (dynamicGuideline.type) {
+      case GuidelineType.horizontalCenterLine:
+        // 如果动态参考线是中心线，则元素中心对齐到目标位置
+        return targetPosition - elementSize.height / 2;
+      case GuidelineType.horizontalTopEdge:
+        // 如果动态参考线是上边缘，则元素上边缘对齐到目标位置
+        return targetPosition;
+      case GuidelineType.horizontalBottomEdge:
+        // 如果动态参考线是下边缘，则元素下边缘对齐到目标位置
+        return targetPosition - elementSize.height;
+      default:
+        return targetPosition;
+    }
+  }
+
+  /// 根据动态参考线类型计算对齐后的X坐标
+  double _calculateAlignedXFromDynamicGuideline(
+    Guideline dynamicGuideline, 
+    double targetPosition, 
+    Size elementSize
+  ) {
+    switch (dynamicGuideline.type) {
+      case GuidelineType.verticalCenterLine:
+        // 如果动态参考线是中心线，则元素中心对齐到目标位置
+        return targetPosition - elementSize.width / 2;
+      case GuidelineType.verticalLeftEdge:
+        // 如果动态参考线是左边缘，则元素左边缘对齐到目标位置
+        return targetPosition;
+      case GuidelineType.verticalRightEdge:
+        // 如果动态参考线是右边缘，则元素右边缘对齐到目标位置
+        return targetPosition - elementSize.width;
+      default:
+        return targetPosition;
+    }
+  }
+
 
   /// 清空所有参考线
   void clearGuidelines() {
