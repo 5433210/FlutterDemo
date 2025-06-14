@@ -716,7 +716,8 @@ mixin CanvasControlPointHandlers {
         : liveState;
 
     // 🚀 新增：统一处理预览层和参考线层的实时更新
-    _generateRealTimeGuidelines(elementId, snappedLiveState);    // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
+    _generateRealTimeGuidelines(
+        elementId, snappedLiveState); // 🚀 新增：对组合元素进行Live阶段的子元素预览更新
     if (originalElement['type'] == 'group') {
       _handleGroupElementLiveUpdate(originalElement, snappedLiveState);
     } else {
@@ -1128,16 +1129,16 @@ mixin CanvasControlPointHandlers {
           error: e, stackTrace: stackTrace, data: {'groupId': groupId});
     }
   }
+
   /// 🚀 新增：处理单个元素的Live阶段更新
   void _handleSingleElementLiveUpdate(
       String elementId,
       Map<String, dynamic> originalElement,
       Map<String, double> snappedLiveState) {
-    
     // 🔧 修复：在参考线模式下，使用FreeControlPoints提供的权威位置数据
     // 而不是重新计算，避免冲突但保持DragPreviewLayer同步
     Map<String, dynamic> finalPreviewProperties;
-    
+
     if (_isControlPointDominated(elementId)) {
       // 在参考线模式下，直接使用传入的位置状态作为权威数据
       // 这确保FreeControlPoints和DragPreviewLayer显示一致
@@ -1149,7 +1150,7 @@ mixin CanvasControlPointHandlers {
         'height': snappedLiveState['height'] ?? originalElement['height'],
         'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
       });
-      
+
       EditPageLogger.canvasDebug(
         '使用FreeControlPoints权威位置数据',
         data: {
@@ -1168,7 +1169,7 @@ mixin CanvasControlPointHandlers {
         'height': snappedLiveState['height'] ?? originalElement['height'],
         'rotation': snappedLiveState['rotation'] ?? originalElement['rotation'],
       });
-      
+
       EditPageLogger.canvasDebug(
         '使用计算后的位置数据',
         data: {
@@ -1184,7 +1185,7 @@ mixin CanvasControlPointHandlers {
         dragStateManager.isElementDragging(elementId)) {
       dragStateManager.updateElementPreviewProperties(
           elementId, finalPreviewProperties);
-      
+
       EditPageLogger.canvasDebug(
         'DragStateManager同步预览属性',
         data: {
