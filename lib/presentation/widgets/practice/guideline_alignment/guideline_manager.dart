@@ -698,11 +698,10 @@ class GuidelineManager {
     
     if (candidateDynamicGuidelines.isEmpty) {
       return null;
-    }
-
-    // 获取所有水平静态参考线
+    }    // 获取所有水平静态参考线，排除被拖拽元素自身的参考线
     final horizontalStaticGuidelines = _staticGuidelines
-        .where((g) => g.direction == AlignmentDirection.horizontal)
+        .where((g) => g.direction == AlignmentDirection.horizontal && 
+                     g.sourceElementId != _draggingElementId)
         .toList();
 
     if (horizontalStaticGuidelines.isEmpty) {
@@ -733,11 +732,10 @@ class GuidelineManager {
     
     if (candidateDynamicGuidelines.isEmpty) {
       return null;
-    }
-
-    // 获取所有垂直静态参考线
+    }    // 获取所有垂直静态参考线，排除被拖拽元素自身的参考线
     final verticalStaticGuidelines = _staticGuidelines
-        .where((g) => g.direction == AlignmentDirection.vertical)
+        .where((g) => g.direction == AlignmentDirection.vertical && 
+                     g.sourceElementId != _draggingElementId)
         .toList();
 
     if (verticalStaticGuidelines.isEmpty) {
