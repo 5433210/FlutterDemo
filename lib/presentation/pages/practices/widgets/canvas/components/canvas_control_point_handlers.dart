@@ -833,16 +833,15 @@ mixin CanvasControlPointHandlers {
                 '(${currentProperties['x']}, ${currentProperties['y']})',
             'size':
                 '${currentProperties['width']}x${currentProperties['height']}',
-          });
-
-      // 🚀 修改：使用动态参考线生成方法（只显示动态参考线）
-      final dynamicGuidelines =
-          GuidelineManager.instance.generateDynamicGuidelines(
+          });      // 🚀 修改：使用实时参考线生成方法
+      GuidelineManager.instance.updateGuidelinesLive(
         elementId: elementId,
-        position: Offset(currentProperties['x']!, currentProperties['y']!),
-        size: Size(currentProperties['width']!, currentProperties['height']!),
-        rotation: currentProperties['rotation'] ?? 0,
+        draftPosition: Offset(currentProperties['x']!, currentProperties['y']!),
+        elementSize: Size(currentProperties['width']!, currentProperties['height']!),
       );
+
+      // 获取生成的参考线
+      final dynamicGuidelines = GuidelineManager.instance.activeGuidelines;
 
       EditPageLogger.editPageDebug('🔍 [DEBUG] generateDynamicGuidelines 结果',
           data: {

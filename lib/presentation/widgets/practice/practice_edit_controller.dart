@@ -368,9 +368,14 @@ class PracticeEditController extends ChangeNotifier
       );
 
       // 设置参考线输出列表同步
-      // 🔧 修复：直接传入state中的可修改列表，而不是getter返回的不可修改列表
+      // 🔧 修复：传入回调函数来同步参考线到state
       GuidelineManager.instance
-          .setActiveGuidelinesOutput(state.activeGuidelines);
+          .setActiveGuidelinesOutput((guidelines) {
+        // 更新state中的参考线列表
+        _state.activeGuidelines.clear();
+        _state.activeGuidelines.addAll(guidelines);
+        notifyListeners(); // 通知UI更新
+      });
 
       EditPageLogger.controllerDebug('参考线管理器元素数据更新完成', data: {
         'elementsCount': elements.length,

@@ -92,7 +92,12 @@ mixin ToolManagementMixin on ChangeNotifier
 
       // 设置参考线输出列表同步
       GuidelineManager.instance
-          .setActiveGuidelinesOutput(state.activeGuidelines);
+          .setActiveGuidelinesOutput((guidelines) {
+        // 更新state中的参考线列表
+        state.activeGuidelines.clear();
+        state.activeGuidelines.addAll(guidelines);
+        notifyListeners(); // 通知UI更新
+      });
 
       EditPageLogger.controllerDebug('参考线管理器初始化完成', data: {
         'elementsCount': elements.length,

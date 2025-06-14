@@ -220,14 +220,12 @@ void main() {
           elements: elements,
           pageSize: const Size(800, 600),
           enabled: true,
-        );
-
-        final nearbyElements = manager.getNearbyElements(
+        );        final nearbyElements = manager.getNearbyElements(
           const Offset(20, 20),
-          radius: 50.0,
+          const Size(30, 20),
         );
 
-        expect(nearbyElements, isA<List<String>>());
+        expect(nearbyElements, isA<List<Map<String, dynamic>>>());
       });
 
       test('should handle cache cleanup', () {

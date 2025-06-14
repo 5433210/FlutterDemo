@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:charasgem/presentation/widgets/practice/guideline_alignment/guideline_cache_manager.dart';
 import 'package:charasgem/presentation/widgets/practice/guideline_alignment/guideline_manager.dart';
 import 'package:charasgem/presentation/widgets/practice/guideline_alignment/guideline_types.dart';
 
@@ -35,22 +34,19 @@ void main() {
       );
 
       expect(alignment, isA<Map<String, dynamic>?>());
-      print('✅ 对齐检测正常');
-
-      // 3. 测试参考线生成
-      final hasGuidelines = manager.generateGuidelines(
+      print('✅ 对齐检测正常');      // 3. 测试参考线生成
+      final hasGuidelines = manager.generateRealTimeGuidelines(
         elementId: 'drag',
-        draftPosition: const Offset(105.0, 105.0),
-        draftSize: const Size(30.0, 20.0),
+        currentPosition: const Offset(105.0, 105.0),
+        elementSize: const Size(30.0, 20.0),
       );
 
       expect(hasGuidelines, isA<bool>());
-      print('✅ 参考线生成正常: $hasGuidelines');
-
-      // 4. 测试对齐位置计算
+      print('✅ 参考线生成正常: $hasGuidelines');      // 4. 测试对齐位置计算
       final alignedPosition = manager.calculateAlignedPosition(
-        originalPosition: const Offset(105.0, 105.0),
-        size: const Size(30.0, 20.0),
+        elementId: 'drag',
+        currentPosition: const Offset(105.0, 105.0),
+        elementSize: const Size(30.0, 20.0),
       );
 
       expect(alignedPosition, isNotNull);
@@ -58,21 +54,21 @@ void main() {
 
       // 5. 测试性能优化功能
       final cacheStats = manager.getCacheStats();
-      expect(cacheStats, isA<GuidelineCacheStats>());
-      print('✅ 缓存统计获取正常: ${cacheStats.cacheSize} 个缓存项');
+      expect(cacheStats, isA<Map<String, dynamic>>());
+      print('✅ 缓存统计获取正常: ${cacheStats['cacheSize']} 个缓存项');
 
       // 6. 测试空间索引
       final nearbyElements = manager.getNearbyElements(
         const Offset(110, 110),
-        radius: 50.0,
+        const Size(30.0, 20.0),
       );
-      expect(nearbyElements, isA<List<String>>());
+      expect(nearbyElements, isA<List<Map<String, dynamic>>>());
       print('✅ 空间索引查询正常: 找到 ${nearbyElements.length} 个附近元素');
 
       // 7. 测试缓存功能
       manager.clearCache();
       final statsAfterClear = manager.getCacheStats();
-      expect(statsAfterClear.cacheSize, equals(0));
+      expect(statsAfterClear['cacheSize'], equals(0));
       print('✅ 缓存清理功能正常');
 
       print('🎉 参考线功能完整集成测试通过！');
@@ -136,14 +132,12 @@ void main() {
         {'x': 200.0, 'y': 100.0, 'expected': 'center-to-edge vertical'},
         // 边线对边线 - 水平边缘对齐
         {'x': 100.0, 'y': 200.0, 'expected': 'edge-to-edge horizontal'},
-      ];
-
-      for (final testCase in testCases) {
-        final hasGuidelines = manager.generateGuidelines(
+      ];      for (final testCase in testCases) {
+        final hasGuidelines = manager.generateRealTimeGuidelines(
           elementId: 'drag',
-          draftPosition:
+          currentPosition:
               Offset(testCase['x'] as double, testCase['y'] as double),
-          draftSize: const Size(50.0, 40.0),
+          elementSize: const Size(50.0, 40.0),
         );
         // 应该能够生成相应的参考线
         expect(hasGuidelines, isA<bool>());

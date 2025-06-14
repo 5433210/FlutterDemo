@@ -543,28 +543,24 @@ class SmartCanvasGestureHandler implements GestureContext {
       (element['y'] as num).toDouble() + delta.dy,
       (element['width'] as num).toDouble(),
       (element['height'] as num).toDouble(),
-    );
-
-    // 🔧 修复：在拖拽过程中只生成参考线用于显示，不强制对齐
+    );    // 🔧 修复：在拖拽过程中只生成参考线用于显示，不强制对齐
     // 先生成参考线用于视觉反馈
-    final hasGuidelines = GuidelineManager.instance.generateGuidelines(
+    GuidelineManager.instance.updateGuidelinesLive(
       elementId: elementId,
       draftPosition: currentBounds.topLeft,
-      draftSize: currentBounds.size,
+      elementSize: currentBounds.size,
     );
 
-    if (hasGuidelines) {
-      // 更新活动参考线用于渲染
-      controller
-          .updateActiveGuidelines(GuidelineManager.instance.activeGuidelines);
+    // 更新活动参考线用于渲染
+    controller
+        .updateActiveGuidelines(GuidelineManager.instance.activeGuidelines);
 
-      EditPageLogger.canvasDebug('参考线生成完成，显示参考线但不强制对齐', data: {
-        'elementId': elementId,
-        'delta': delta,
-        'guidelinesCount': GuidelineManager.instance.activeGuidelines.length,
-        'reason': 'guidelines_displayed_for_visual_feedback_only',
-      });
-    }
+    EditPageLogger.canvasDebug('参考线生成完成，显示参考线但不强制对齐', data: {
+      'elementId': elementId,
+      'delta': delta,
+      'guidelinesCount': GuidelineManager.instance.activeGuidelines.length,
+      'reason': 'guidelines_displayed_for_visual_feedback_only',
+    });
 
     // 🔧 修复：在拖拽过程中不执行强制对齐，让用户可以自由拖拽
     // 只有在非常接近参考线时（距离小于2像素）才进行轻微的吸附
@@ -886,13 +882,11 @@ class SmartCanvasGestureHandler implements GestureContext {
     final draggedSize = Size(
       (element['width'] as num).toDouble(),
       (element['height'] as num).toDouble(),
-    );
-
-    // 生成实时参考线用于调试显示
+    );    // 生成实时参考线用于调试显示
     final hasGuidelines = GuidelineManager.instance.generateRealTimeGuidelines(
-      draggedElementId: elementId,
-      draggedPosition: draggedPosition,
-      draggedSize: draggedSize,
+      elementId: elementId,
+      currentPosition: draggedPosition,
+      elementSize: draggedSize,
     );
 
     EditPageLogger.canvasDebug('生成实时参考线', data: {

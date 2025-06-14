@@ -111,12 +111,11 @@ void main() {
         elements: elements,
         pageSize: const Size(800, 600),
         enabled: true,
-        snapThreshold: 5.0,
-      ); // 生成参考线 - 使用接近页面中心的位置
-      final hasGuidelines = manager.generateGuidelines(
+        snapThreshold: 5.0,      ); // 生成参考线 - 使用接近页面中心的位置
+      final hasGuidelines = manager.generateRealTimeGuidelines(
         elementId: 'element1',
-        draftPosition: const Offset(375, 285), // 接近页面中心 (400, 300)
-        draftSize: const Size(50, 30),
+        currentPosition: const Offset(375, 285), // 接近页面中心 (400, 300)
+        elementSize: const Size(50, 30),
       );
 
       expect(hasGuidelines, true);
