@@ -162,7 +162,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.onSelectAll != null)
             IconButton(
               icon: const Icon(Icons.select_all),
-              tooltip: l10n.filterSelectAll,
+              tooltip: l10n.selectAll,
               onPressed: widget.onSelectAll,
             ),
 
@@ -186,7 +186,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onAssignCategoryBatch != null)
             IconButton(
               icon: const Icon(Icons.category),
-              tooltip: l10n.categoryManagement,
+              tooltip: l10n.setCategory,
               onPressed: widget.onAssignCategoryBatch,
             ),
 
@@ -194,7 +194,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onCopySelected != null)
             IconButton(
               icon: const Icon(Icons.copy),
-              tooltip: l10n.practiceEditCopy,
+              tooltip: l10n.copySelected,
               onPressed: widget.onCopySelected,
             ),
 
@@ -202,7 +202,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onCutSelected != null)
             IconButton(
               icon: const Icon(Icons.cut),
-              tooltip: l10n.practiceEditDelete,
+              tooltip: l10n.cutSelected,
               onPressed: widget.onCutSelected,
             ),
 
@@ -217,7 +217,7 @@ class _M3LibraryManagementNavigationBarState
         if (!widget.isBatchMode && widget.onDeleteAll != null)
           IconButton(
             icon: const Icon(Icons.delete_sweep),
-            tooltip: l10n.practiceEditDelete,
+            tooltip: l10n.deleteAllItems,
             onPressed: widget.onDeleteAll,
           ),
 
