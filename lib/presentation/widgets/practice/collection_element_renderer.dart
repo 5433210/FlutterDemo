@@ -59,8 +59,8 @@ class CollectionElementRenderer {
     bool enableSoftLineBreak = false, // 纹理相关属性
     bool hasCharacterTexture = false,
     Map<String, dynamic>? characterTextureData,
-    String textureFillMode = 'repeat',
-    String textureFitMode = 'scaleToFill', // 新增适应模式参数
+    String textureFillMode = 'stretch',
+    String textureFitMode = 'fill', // 新增适应模式参数
     double textureOpacity = 1.0,
     double textureWidth = 0, // 纹理宽度
     double textureHeight = 0, // 纹理高度

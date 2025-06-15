@@ -71,14 +71,14 @@ class TextureConfig {
   /// * enabled - 是否启用纹理
   /// * data - 纹理数据，包含path等信息
   /// * fillMode - 填充模式：'repeat', 'cover', 'stretch', 'contain'
-  /// * fitMode - 适应模式：'scaleToFit', 'scaleToFill', 'scaleToCover'
+  /// * fitMode - 适应模式：'scaleToFit', 'fill', 'scaleToCover'
   /// * opacity - 不透明度：0.0 ~ 1.0
   /// * textureWidth/textureHeight - 纹理尺寸（像素值）
   const TextureConfig({
     this.enabled = false,
     this.data,
-    this.fillMode = 'repeat',
-    this.fitMode = 'scaleToFill',
+    this.fillMode = 'stretch',
+    this.fitMode = 'fill',
     this.opacity = 1.0,
     this.textureWidth = 100.0,
     this.textureHeight = 100.0,

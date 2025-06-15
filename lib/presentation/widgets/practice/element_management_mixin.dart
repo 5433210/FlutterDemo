@@ -33,14 +33,17 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': '集字元素',
       'content': {
         'characters': characters,
-        'fontSize': 24.0,
+        'fontSize': 200.0,
         'fontColor': '#000000',
         'backgroundColor': '#FFFFFF',
         'direction': 'horizontal',
         'charSpacing': 10.0,
         'lineSpacing': 10.0,
+        'padding': 0.0,
         'gridLines': false,
         'showBackground': true,
+        'textureFillMode': 'stretch',
+        'textureFitMode': 'fill',
       },
     };
 
@@ -76,12 +79,15 @@ mixin ElementManagementMixin on ChangeNotifier
         'characters': characters,
         'fontSize': isFromCharacterManagement ? 200.0 : 24.0,
         'fontColor': '#000000',
-        'backgroundColor': '#FFFFFF',
+        'backgroundColor': 'transparent',
         'direction': 'horizontal',
         'charSpacing': 10.0,
         'lineSpacing': 10.0,
+        'padding': 0.0,
         'gridLines': false,
         'showBackground': true,
+        'textureFillMode': 'stretch',
+        'textureFitMode': 'fill',
       },
     };
 
@@ -107,14 +113,17 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': '集字元素',
       'content': {
         'characters': '',
-        'fontSize': 24.0,
+        'fontSize': 200.0,
         'fontColor': '#000000',
-        'backgroundColor': '#FFFFFF',
+        'backgroundColor': 'transparent',
         'direction': 'horizontal',
         'charSpacing': 10.0,
         'lineSpacing': 10.0,
+        'padding': 0.0,
         'gridLines': false,
         'showBackground': true,
+        'textureFillMode': 'stretch',
+        'textureFitMode': 'fill',
       },
     };
 

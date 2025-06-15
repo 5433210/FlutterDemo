@@ -407,8 +407,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                         child: Slider(
                           value: widget.controller.state.gridSize,
                           min: 5.0,
-                          max: 50.0,
-                          divisions: 9,
+                          max: 500.0,
+                          divisions: 99,
                           label: widget.controller.state.gridSize
                               .toStringAsFixed(0),
                           activeColor: colorScheme.primary,

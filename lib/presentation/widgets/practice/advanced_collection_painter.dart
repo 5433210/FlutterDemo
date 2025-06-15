@@ -214,7 +214,7 @@ class AdvancedCollectionPainter extends CustomPainter {
         final scale = math.max(scaleX, scaleY);
         return Size(srcSize.width * scale, srcSize.height * scale);
 
-      case 'scaleToFill':
+      case 'fill':
       default:
         // 缩放填充：直接使用目标尺寸
         return targetTextureSize;

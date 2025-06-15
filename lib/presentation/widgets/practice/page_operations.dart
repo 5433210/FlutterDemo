@@ -125,7 +125,7 @@ class PageOperations {
       'elements': [],
       'settings': {
         'showGrid': true,
-        'gridSize': 10,
+        'gridSize': 50,
         'snapToGrid': true,
         'snapToElements': true,
       },

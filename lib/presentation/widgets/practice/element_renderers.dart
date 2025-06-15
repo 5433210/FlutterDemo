@@ -52,7 +52,7 @@ class ElementRenderers {
         : null;
     final textureApplicationRange =
         content['textureApplicationRange'] as String? ?? 'character';
-    final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
+    final textureFillMode = content['textureFillMode'] as String? ?? 'stretch';
     final textureOpacity =
         (content['textureOpacity'] as num?)?.toDouble() ?? 1.0;
     final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;

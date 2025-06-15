@@ -28,7 +28,7 @@ mixin PageManagementMixin on ChangeNotifier implements IntelligentNotificationMi
       'elements': <Map<String, dynamic>>[],
       'gridSettings': {
         'enabled': false,
-        'spacing': 20.0,
+        'spacing': 50.0,
         'color': '#E0E0E0',
         'opacity': 0.5,
       },

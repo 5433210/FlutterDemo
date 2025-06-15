@@ -86,10 +86,10 @@ class _M3BackgroundTexturePanelState
     // Get texture properties - only background mode is used now
     final textureFillMode = _localTextureFillMode ??
         content['textureFillMode'] as String? ??
-        'repeat'; // Default to repeat as specified
+        'stretch'; // Default to stretch as specified
 
     final textureFitMode = content['textureFitMode'] as String? ??
-        'scaleToFill'; // Default to scaleToFill as specified
+        'fill'; // Default to fill as specified
     final textureOpacity = _getLatestTextureOpacity(content);
 
     // Get texture size properties (actual pixel values)
@@ -208,6 +208,10 @@ class _M3BackgroundTexturePanelState
           value: textureFillMode,
           isExpanded: true,
           items: [
+            const DropdownMenuItem(
+              value: 'stretch',
+              child: Text('Stretch'), // Use English fallback for stretch
+            ),
             DropdownMenuItem(
               value: 'repeat',
               child: Text(l10n.textureFillModeRepeat),
@@ -215,10 +219,6 @@ class _M3BackgroundTexturePanelState
             DropdownMenuItem(
               value: 'cover',
               child: Text(l10n.textureFillModeCover),
-            ),
-            const DropdownMenuItem(
-              value: 'stretch',
-              child: Text('Stretch'), // Use English fallback for stretch
             ),
             DropdownMenuItem(
               value: 'contain',
@@ -294,7 +294,7 @@ class _M3BackgroundTexturePanelState
         ),
         const SizedBox(height: 16.0),
 
-        // 5. Texture Fit Mode Settings (scaleToFit, scaleToFill, scaleToCover)
+        // 5. Texture Fit Mode Settings (scaleToFit, fill, scaleToCover)
         M3PanelStyles.buildSectionTitle(
             context, l10n.imagePropertyPanelFitMode),
         DropdownButton<String>(
@@ -302,14 +302,13 @@ class _M3BackgroundTexturePanelState
           isExpanded: true,
           items: [
             DropdownMenuItem(
+              value: 'fill',
+              child: Text(l10n.imagePropertyPanelFitFill),
+            ),
+            DropdownMenuItem(
               value: 'scaleToFit',
               child: Text(l10n
                   .imagePropertyPanelFitContain), // Use contain as closest equivalent to scaleToFit
-            ),
-            DropdownMenuItem(
-              value: 'scaleToFill',
-              child: Text(
-                  l10n.imagePropertyPanelFitFill), // Use fill for scaleToFill
             ),
             DropdownMenuItem(
               value: 'scaleToCover',
@@ -904,9 +903,9 @@ class _M3BackgroundTexturePanelState
       } // 添加纹理数据和相关属性
       newContent['backgroundTexture'] = textureData;
       newContent['textureFillMode'] =
-          elementContent['textureFillMode'] ?? 'repeat';
+          elementContent['textureFillMode'] ?? 'stretch';
       newContent['textureFitMode'] =
-          elementContent['textureFitMode'] ?? 'scaleToFill';
+          elementContent['textureFitMode'] ?? 'fill';
       newContent['textureOpacity'] = elementContent['textureOpacity'] ?? 1.0;
       newContent['textureWidth'] = selectedTexture.width;
       newContent['textureHeight'] = selectedTexture.height;

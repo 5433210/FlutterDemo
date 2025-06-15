@@ -13,6 +13,7 @@ import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../dialogs/practice_save_dialog.dart';
 import '../../providers/persistent_panel_provider.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
@@ -1581,10 +1582,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             'characters': character.character as String? ?? '集',
             'fontSize': 200.0, // 更大的字体以便于查看
             'fontColor': '#000000',
-            'backgroundColor': '#FFFFFF',
+            'backgroundColor': 'transparent',
             'writingMode': 'horizontal-l',
-            'letterSpacing': 5.0,
-            'lineSpacing': 10.0, 'padding': 10.0,
+            'letterSpacing': 10.0,
+            'lineSpacing': 10.0,
+            'padding': 0.0,
             'textAlign': 'center',
             'verticalAlign': 'middle',
             'enableSoftLineBreak': false,
@@ -2500,43 +2502,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     // Save ScaffoldMessenger reference to avoid using context after async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // Use StatefulBuilder to create dialog, ensuring controller is managed within dialog lifecycle
+    // 使用PracticeSaveDialog获取标题
     final title = await showDialog<String>(
       context: context,
-      barrierDismissible: true, // Allow clicking outside to close dialog
-      builder: (context) {
-        // Create controller inside dialog to ensure its lifecycle matches the dialog
-        final TextEditingController textController = TextEditingController();
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(l10n.practiceEditSavePractice),
-              content: TextField(
-                controller: textController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: l10n.practiceEditPracticeTitle,
-                  hintText: l10n.practiceEditEnterTitle,
-                ),
-                onSubmitted: (value) => Navigator.of(context).pop(value),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n.cancel),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(textController.text);
-                  },
-                  child: Text(l10n.save),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => PracticeSaveDialog(
+        initialTitle: _controller.practiceTitle,
+        isSaveAs: true,
+        checkTitleExists: _controller.checkTitleExists,
+      ),
     );
 
     if (title == null || title.isEmpty) return;
@@ -2547,26 +2520,27 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       tag: 'PracticeEdit',
       data: {'title': title},
     );
-    final result = await _controller.saveAsNewPractice(title);
+    
+    try {
+      final result = await _controller.saveAsNewPractice(title);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (result == true) {
-      AppLogger.info(
-        '新字帖保存成功',
-        tag: 'PracticeEdit',
-        data: {'title': title},
-      );
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditPracticeLoaded(title))),
-      );
-    } else if (result == 'title_exists') {
-      // Title already exists, ask whether to overwrite
-      final shouldOverwrite = await showDialog<bool>(
-        context: context,
-        barrierDismissible: true, // Allow clicking outside to close dialog
-        builder: (context) {
-          return AlertDialog(
+      // 根据返回值类型进行不同处理
+      if (result == true) {
+        AppLogger.info(
+          '新字帖保存成功',
+          tag: 'PracticeEdit',
+          data: {'title': title},
+        );
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(l10n.practiceEditPracticeLoaded(title))),
+        );
+      } else if (result is String && result == 'title_exists') {
+        // Title already exists, ask whether to overwrite
+        final shouldOverwrite = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
             title: Text(l10n.practiceEditTitleExists),
             content: Text(l10n.practiceEditTitleExistsMessage),
             actions: [
@@ -2579,32 +2553,45 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                 child: Text(l10n.practiceEditOverwrite),
               ),
             ],
-          );
-        },
-      );
-
-      if (!mounted) return;
-
-      if (shouldOverwrite == true) {
-        final saveResult =
-            await _controller.saveAsNewPractice(title, forceOverwrite: true);
+          ),
+        );
 
         if (!mounted) return;
 
-        if (saveResult == true) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditPracticeLoaded(title))),
-          );
-        } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditSaveFailed)),
-          );
+        if (shouldOverwrite == true) {
+          final saveResult = await _controller.saveAsNewPractice(title, forceOverwrite: true);
+
+          if (!mounted) return;
+
+          if (saveResult == true) {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(content: Text(l10n.practiceEditPracticeLoaded(title))),
+            );
+          } else {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+            );
+          }
         }
+      } else {
+        // 处理其他失败情况
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+        );
       }
-    } else {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+    } catch (e) {
+      // 处理异常情况
+      AppLogger.error(
+        '保存字帖时发生异常',
+        tag: 'PracticeEdit',
+        error: e,
       );
+      
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -2622,39 +2609,41 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     }
 
     // Save ScaffoldMessenger reference to avoid using context after async operation
-    final scaffoldMessenger = ScaffoldMessenger.of(
-        context); // If never saved before, show dialog to enter title
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // 如果从未保存过，显示保存对话框让用户输入标题
     if (!_controller.isSaved) {
       await _saveAsNewPractice();
-      return true; // Consider save attempt successful even if canceled
+      return true; // 认为保存尝试成功，即使被取消
     }
 
-    // Save practice
-    AppLogger.info(
-      '开始保存字帖',
-      tag: 'PracticeEdit',
-      data: {'practiceId': _controller.practiceId},
-    );
-    final result = await _controller.savePractice();
-
-    if (!mounted) return false;
-    if (result == true) {
+    try {
+      // Save practice
       AppLogger.info(
-        '字帖保存成功',
+        '开始保存字帖',
         tag: 'PracticeEdit',
         data: {'practiceId': _controller.practiceId},
       );
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
-      );
-      return true;
-    } else if (result == 'title_exists') {
-      // Title already exists, ask whether to overwrite
-      final shouldOverwrite = await showDialog<bool>(
-        context: context,
-        barrierDismissible: true, // Allow clicking outside to close dialog
-        builder: (context) {
-          return AlertDialog(
+      final result = await _controller.savePractice();
+
+      if (!mounted) return false;
+      
+      // 根据返回值类型进行不同处理
+      if (result == true) {
+        AppLogger.info(
+          '字帖保存成功',
+          tag: 'PracticeEdit',
+          data: {'practiceId': _controller.practiceId},
+        );
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
+        );
+        return true;
+      } else if (result is String && result == 'title_exists') {
+        // 标题已存在，询问是否覆盖
+        final shouldOverwrite = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
             title: Text(l10n.practiceEditTitleExists),
             content: Text(l10n.practiceEditTitleExistsMessage),
             actions: [
@@ -2667,33 +2656,49 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                 child: Text(l10n.practiceEditOverwrite),
               ),
             ],
-          );
-        },
-      );
-
-      if (!mounted) return false;
-      if (shouldOverwrite == true) {
-        final saveResult = await _controller.savePractice(forceOverwrite: true);
+          ),
+        );
 
         if (!mounted) return false;
+        
+        if (shouldOverwrite == true) {
+          final saveResult = await _controller.savePractice(forceOverwrite: true);
 
-        if (saveResult == true) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
-          );
-          return true;
-        } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditSaveFailed)),
-          );
-          return false;
+          if (!mounted) return false;
+
+          if (saveResult == true) {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
+            );
+            return true;
+          } else {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+            );
+            return false;
+          }
         }
+        return false;
+      } else {
+        // 处理其他失败情况
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+        );
+        return false;
       }
-      return false;
-    } else {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+    } catch (e) {
+      // 处理异常情况
+      AppLogger.error(
+        '保存字帖时发生异常',
+        tag: 'PracticeEdit',
+        error: e,
       );
+      
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+        );
+      }
       return false;
     }
   }

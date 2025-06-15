@@ -110,7 +110,9 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
   Future<void> _handleSave() async {
     if (await _validateTitle()) {
       if (mounted) {
-        Navigator.of(context).pop(_titleController.text.trim());
+        // 返回标题字符串，而不是直接弹出对话框
+        final title = _titleController.text.trim();
+        Navigator.of(context).pop(title);
       }
     }
   }

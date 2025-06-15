@@ -34,7 +34,7 @@ class PracticeEditState {
   AlignmentMode alignmentMode = AlignmentMode.none; // 新的对齐模式
   double snapThreshold = 5.0; // 参考线对齐阈值
 
-  double gridSize = 10.0; // 🔧 更密集的网格，更适合精确设计
+  double gridSize = 50.0; // 默认网格大小50像素
 
   // 参考线相关状态
   List<Guideline> activeGuidelines = [];

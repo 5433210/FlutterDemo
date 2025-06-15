@@ -1,9 +1,14 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../helpers/element_utils.dart';
+import 'canvas_layer_builders.dart';
 
 /// 画布视图控制器 mixin
 /// 负责处理画布视图相关的逻辑，如缩放、重置、坐标转换等
@@ -141,49 +146,133 @@ mixin CanvasViewControllers {
 
   /// 将屏幕坐标转换为画布坐标
   Offset screenToCanvas(Offset screenPoint) {
-    final Matrix4 matrix = transformationController.value;
-    final Matrix4 invertedMatrix = Matrix4.inverted(matrix);
-    final Vector3 transformed = invertedMatrix.transform3(Vector3(
-      screenPoint.dx,
-      screenPoint.dy,
-      0,
-    ));
+    try {
+      final Matrix4 matrix = transformationController.value;
+      
+      // 检查矩阵是否有效
+      if (!_isValidMatrix(matrix)) {
+        EditPageLogger.editPageError(
+          '无效的变换矩阵',
+          data: {
+            'matrix': matrix.toString(),
+            'determinant': matrix.determinant(),
+          },
+        );
+        return screenPoint; // 返回原始点作为回退
+      }
+      
+      Matrix4 invertedMatrix;
+      try {
+        invertedMatrix = Matrix4.inverted(matrix);
+      } catch (e) {
+        // 如果矩阵不可逆，使用恒等矩阵作为回退
+        EditPageLogger.editPageError(
+          '矩阵不可逆',
+          error: e,
+          data: {
+            'matrix': matrix.toString(),
+            'determinant': matrix.determinant(),
+          },
+        );
+        
+        // 重置变换控制器
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            transformationController.value = Matrix4.identity();
+          }
+        });
+        
+        return screenPoint; // 返回原始点作为回退
+      }
+      
+      final Vector3 transformed = invertedMatrix.transform3(Vector3(
+        screenPoint.dx,
+        screenPoint.dy,
+        0,
+      ));
+      
+      final canvasPoint = Offset(transformed.x, transformed.y);
+      
+      AppLogger.debug(
+        '坐标转换：屏幕到画布',
+        tag: 'Canvas',
+        data: {
+          'screenPoint': '$screenPoint',
+          'canvasPoint': '$canvasPoint',
+        },
+      );
+      
+      return canvasPoint;
+    } catch (e) {
+      EditPageLogger.editPageError(
+        '屏幕到画布坐标转换失败',
+        error: e,
+      );
+      return screenPoint; // 返回原始点作为回退
+    }
+  }
+  
+  /// 检查矩阵是否有效
+  bool _isValidMatrix(Matrix4 matrix) {
+    // 检查矩阵中是否有NaN或Infinity值
+    for (int i = 0; i < 16; i++) {
+      final value = matrix.storage[i];
+      if (value.isNaN || value.isInfinite) {
+        return false;
+      }
+    }
     
-    final canvasPoint = Offset(transformed.x, transformed.y);
+    // 检查行列式是否接近0（不可逆）
+    final determinant = matrix.determinant();
+    if (determinant.abs() < 1e-10) {
+      return false;
+    }
     
-    AppLogger.debug(
-      '坐标转换：屏幕到画布',
-      tag: 'Canvas',
-      data: {
-        'screenPoint': '$screenPoint',
-        'canvasPoint': '$canvasPoint',
-      },
-    );
-    
-    return canvasPoint;
+    return true;
   }
 
   /// 将画布坐标转换为屏幕坐标
   Offset canvasToScreen(Offset canvasPoint) {
-    final Matrix4 matrix = transformationController.value;
-    final Vector3 transformed = matrix.transform3(Vector3(
-      canvasPoint.dx,
-      canvasPoint.dy,
-      0,
-    ));
-    
-    final screenPoint = Offset(transformed.x, transformed.y);
-    
-    AppLogger.debug(
-      '坐标转换：画布到屏幕',
-      tag: 'Canvas',
-      data: {
-        'canvasPoint': '$canvasPoint',
-        'screenPoint': '$screenPoint',
-      },
-    );
-    
-    return screenPoint;
+    try {
+      final Matrix4 matrix = transformationController.value;
+      
+      // 检查矩阵是否有效
+      if (!_isValidMatrix(matrix)) {
+        EditPageLogger.editPageError(
+          '无效的变换矩阵',
+          data: {
+            'matrix': matrix.toString(),
+            'determinant': matrix.determinant(),
+          },
+        );
+        return canvasPoint; // 返回原始点作为回退
+      }
+      
+      final Vector3 transformed = matrix.transform3(Vector3(
+        canvasPoint.dx,
+        canvasPoint.dy,
+        0,
+      ));
+      
+      final screenPoint = Offset(transformed.x, transformed.y);
+      
+      AppLogger.debug(
+        '坐标转换：画布到屏幕',
+        tag: 'Canvas',
+        data: {
+          'canvasPoint': '$canvasPoint',
+          'screenPoint': '$screenPoint',
+        },
+      );
+      
+      return screenPoint;
+    } catch (e) {
+      EditPageLogger.editPageError(
+        '画布到屏幕坐标转换失败',
+        error: e,
+      );
+      return canvasPoint; // 返回原始点作为回退
+    }
   }
 
   /// 获取当前缩放级别

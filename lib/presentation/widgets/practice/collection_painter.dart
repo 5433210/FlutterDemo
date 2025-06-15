@@ -284,7 +284,7 @@ class CollectionPainter extends CustomPainter {
       finalWidth = scaledWidth * scale;
       finalHeight = scaledHeight * scale;
     }
-    // scaleToFill uses the calculated size as-is
+    // fill uses the calculated size as-is
 
     final srcRect =
         Rect.fromLTRB(0, 0, image.width.toDouble(), image.height.toDouble());
