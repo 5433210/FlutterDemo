@@ -195,8 +195,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // 🔧 CRITICAL FIX: 立即设置dispose标志，防止PostFrameCallback在dispose后执行
     _isDisposed = true;
 
-    debugPrint('🔍 Canvas dispose: Starting disposal process...');
-
     try {
       EditPageLogger.editPageDebug(
         '销毁Canvas组件',
@@ -206,83 +204,195 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         },
       );
     } catch (e) {
-      debugPrint('Canvas dispose logging failed: $e');
+      EditPageLogger.editPageError(
+        'Canvas dispose初始日志失败',
+        error: e,
+        data: {'operation': 'canvas_dispose_logging'},
+      );
     }
 
     try {
       // 使用安全的资源释放方式
       try {
         _gestureHandler.dispose();
-        debugPrint('Canvas dispose: gesture handler disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：手势处理器',
+          data: {
+            'component': 'gesture_handler',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose gesture handler: $e');
+        EditPageLogger.editPageError(
+          '手势处理器释放失败',
+          error: e,
+          data: {'component': 'gesture_handler'},
+        );
       }
 
       try {
         _contentRenderController.dispose();
-        debugPrint('Canvas dispose: content render controller disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：内容渲染控制器',
+          data: {
+            'component': 'content_render_controller',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose content render controller: $e');
+        EditPageLogger.editPageError(
+          '内容渲染控制器释放失败',
+          error: e,
+          data: {'component': 'content_render_controller'},
+        );
       }
 
       try {
         _dragStateManager.dispose();
-        debugPrint('Canvas dispose: drag state manager disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：拖拽状态管理器',
+          data: {
+            'component': 'drag_state_manager',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose drag state manager: $e');
+        EditPageLogger.editPageError(
+          '拖拽状态管理器释放失败',
+          error: e,
+          data: {'component': 'drag_state_manager'},
+        );
       }
 
       try {
         _selectionBoxNotifier.dispose();
-        debugPrint('Canvas dispose: selection box notifier disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：选择框通知器',
+          data: {
+            'component': 'selection_box_notifier',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose selection box notifier: $e');
+        EditPageLogger.editPageError(
+          '选择框通知器释放失败',
+          error: e,
+          data: {'component': 'selection_box_notifier'},
+        );
       }
 
       try {
         _structureListener.dispose();
-        debugPrint('Canvas dispose: structure listener disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：结构监听器',
+          data: {
+            'component': 'structure_listener',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose structure listener: $e');
+        EditPageLogger.editPageError(
+          '结构监听器释放失败',
+          error: e,
+          data: {'component': 'structure_listener'},
+        );
       }
 
       try {
         _stateDispatcher.dispose();
-        debugPrint('Canvas dispose: state dispatcher disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：状态分发器',
+          data: {
+            'component': 'state_dispatcher',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose state dispatcher: $e');
+        EditPageLogger.editPageError(
+          '状态分发器释放失败',
+          error: e,
+          data: {'component': 'state_dispatcher'},
+        );
       }
 
       try {
         _dragOperationManager.dispose();
-        debugPrint('Canvas dispose: drag operation manager disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：拖拽操作管理器',
+          data: {
+            'component': 'drag_operation_manager',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose drag operation manager: $e');
+        EditPageLogger.editPageError(
+          '拖拽操作管理器释放失败',
+          error: e,
+          data: {'component': 'drag_operation_manager'},
+        );
       }
 
       try {
         _layerRenderManager.dispose();
-        debugPrint('Canvas dispose: layer render manager disposed');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：图层渲染管理器',
+          data: {
+            'component': 'layer_render_manager',
+            'operation': 'dispose',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to dispose layer render manager: $e');
+        EditPageLogger.editPageError(
+          '图层渲染管理器释放失败',
+          error: e,
+          data: {'component': 'layer_render_manager'},
+        );
       }
 
       // 注销智能状态分发器监听器
       try {
         _unregisterFromIntelligentDispatcher();
-        debugPrint('Canvas dispose: intelligent dispatcher unregistered');
+        EditPageLogger.editPageDebug(
+          'Canvas组件资源释放：智能分发器监听器注销',
+          data: {
+            'component': 'intelligent_dispatcher',
+            'operation': 'unregister',
+          },
+        );
       } catch (e) {
-        debugPrint('Failed to unregister from intelligent dispatcher: $e');
+        EditPageLogger.editPageError(
+          '智能分发器监听器注销失败',
+          error: e,
+          data: {'component': 'intelligent_dispatcher'},
+        );
       }
       
       // 注意：不要 dispose 单例的 PerformanceMonitor
-      debugPrint('Canvas dispose: PerformanceMonitor reference removed (singleton not disposed)');
+      EditPageLogger.editPageDebug(
+        'Canvas组件资源释放：性能监控器引用移除（单例不释放）',
+        data: {
+          'component': 'performance_monitor',
+          'operation': 'reference_removed',
+        },
+      );
 
     } finally {
       // 🔧 CRITICAL FIX: 在finally块中调用super.dispose()确保一定会被执行
-      debugPrint('Canvas dispose: About to call super.dispose()');
+      EditPageLogger.editPageDebug(
+        'Canvas组件即将调用super.dispose()',
+        data: {
+          'operation': 'super_dispose',
+          'stage': 'before',
+        },
+      );
       super.dispose();
-      debugPrint('Canvas dispose: super.dispose() called successfully');
+      EditPageLogger.editPageDebug(
+        'Canvas组件super.dispose()调用成功',
+        data: {
+          'operation': 'super_dispose',
+          'stage': 'completed',
+        },
+      );
     }
   }
 
@@ -292,9 +402,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // 🔧 窗口大小变化处理已移至页面级别
 
-    AppLogger.info(
+    EditPageLogger.editPageInfo(
       '画布组件初始化开始',
-      tag: 'Canvas',
+      data: {
+        'timestamp': DateTime.now().toIso8601String(),
+        'operation': 'canvas_init',
+      },
     );
 
     try {
@@ -310,16 +423,23 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       // 阶段4: 初始化UI和手势处理
       _initializeUIComponents();
 
-      AppLogger.info(
+      EditPageLogger.editPageInfo(
         '画布分层和元素级混合优化策略组件初始化完成',
-        tag: 'Canvas',
+        data: {
+          'timestamp': DateTime.now().toIso8601String(),
+          'operation': 'canvas_init_complete',
+          'components': ['core', 'optimization', 'connections', 'ui'],
+        },
       );
     } catch (e, stackTrace) {
-      AppLogger.error(
+      EditPageLogger.editPageError(
         '画布初始化失败',
-        tag: 'Canvas',
         error: e,
         stackTrace: stackTrace,
+        data: {
+          'operation': 'canvas_init_failed',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
       );
       // 回退到基础模式
       _fallbackToBasicMode();
@@ -352,14 +472,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Apply the rotation delta
     final newRotation = rotation + rotationDelta;
 
-    AppLogger.debug(
+    EditPageLogger.canvasDebug(
       '旋转元素',
-      tag: 'Canvas',
       data: {
         'elementId': elementId,
         'delta': '$delta',
         'rotationDelta': rotationDelta,
         'newRotation': newRotation,
+        'operation': 'element_rotation',
+        'timestamp': DateTime.now().toIso8601String(),
       },
     ); // Update rotation
     widget.controller
@@ -374,44 +495,82 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
   bool shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
-    AppLogger.debug(
+    EditPageLogger.canvasDebug(
       '检查是否需要处理特殊手势',
-      tag: 'Canvas',
       data: {
         'isPreview': controller.state.isPreviewMode,
         'currentTool': controller.state.currentTool,
         'selectedElementsCount': controller.state.selectedElementIds.length,
         'isDragging': isDragging,
         'dragManagerDragging': dragStateManager.isDragging,
+        'operation': 'gesture_check',
       },
     );
 
     // 如果在预览模式，不处理任何手势
     if (controller.state.isPreviewMode) {
-      AppLogger.debug('预览模式，不处理手势', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        '预览模式，不处理手势',
+        data: {
+          'operation': 'gesture_handling_decision',
+          'reason': 'preview_mode',
+          'result': false,
+        },
+      );
       return false;
     }
 
     // 如果在select模式下，需要处理选择框
     if (controller.state.currentTool == 'select') {
-      AppLogger.debug('select模式，需要处理选择框', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        'select模式，需要处理选择框',
+        data: {
+          'operation': 'gesture_handling_decision',
+          'reason': 'select_mode',
+          'result': true,
+        },
+      );
       return true;
     }
 
     // 如果正在进行拖拽操作，需要处理
     if (isDragging || dragStateManager.isDragging) {
-      AppLogger.debug('正在拖拽，需要处理', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        '正在拖拽，需要处理',
+        data: {
+          'operation': 'gesture_handling_decision',
+          'reason': 'drag_in_progress',
+          'isDragging': isDragging,
+          'dragManagerDragging': dragStateManager.isDragging,
+          'result': true,
+        },
+      );
       return true;
     }
 
     // 只有在有选中元素时才可能需要处理元素拖拽
     if (controller.state.selectedElementIds.isNotEmpty) {
-      AppLogger.debug('有选中元素，可能需要处理拖拽', tag: 'Canvas');
+      EditPageLogger.canvasDebug(
+        '有选中元素，可能需要处理拖拽',
+        data: {
+          'operation': 'gesture_handling_decision',
+          'reason': 'elements_selected',
+          'selectedCount': controller.state.selectedElementIds.length,
+          'result': true,
+        },
+      );
       return true;
     }
 
     // 其他情况让InteractiveViewer完全接管
-    AppLogger.debug('无特殊手势需求，让InteractiveViewer处理', tag: 'Canvas');
+    EditPageLogger.canvasDebug(
+      '无特殊手势需求，让InteractiveViewer处理',
+      data: {
+        'operation': 'gesture_handling_decision',
+        'reason': 'no_special_conditions',
+        'result': false,
+      },
+    );
     return false;
   }
 
@@ -420,10 +579,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void togglePerformanceOverlay() {
     setState(() {
       DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
-      AppLogger.debug(
+      EditPageLogger.canvasDebug(
         '切换性能覆盖层显示',
-        tag: 'Canvas',
-        data: {'enabled': DragConfig.showPerformanceOverlay},
+        data: {
+          'operation': 'toggle_performance_overlay',
+          'enabled': DragConfig.showPerformanceOverlay,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
       );
     });
   }
@@ -1412,8 +1574,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // Set the state dispatcher in the controller for layered state management
     widget.controller.setStateDispatcher(_stateDispatcher);
-    print(
-        '🏗️ Canvas: StateChangeDispatcher initialized and connected to controller');
+    EditPageLogger.canvasDebug(
+      '状态分发器初始化并连接到控制器',
+      data: {
+        'operation': 'state_dispatcher_initialization',
+        'component': 'StateChangeDispatcher',
+      },
+    );
 
     // Initialize drag operation manager for 3-phase drag system
     _dragOperationManager = DragOperationManager(
@@ -1572,8 +1739,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // 将拖拽状态管理器与内容渲染控制器关联
     _contentRenderController.setDragStateManager(_dragStateManager);
-    print(
-        '🏗️ Canvas: Connected DragStateManager with ContentRenderController');
+    EditPageLogger.canvasDebug('拖拽状态管理器与内容渲染控制器连接完成');
 
     // 🔧 修复：让Canvas监听DragStateManager变化，确保控制点能跟随元素移动
     _dragStateManager.addListener(_onDragStateManagerChanged);
@@ -1711,10 +1877,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // ✅ 新方法：注销智能状态分发器监听器
   void _unregisterFromIntelligentDispatcher() {
     try {
-      final intelligentDispatcher = widget.controller.intelligentDispatcher;      if (intelligentDispatcher != null) {
+      final intelligentDispatcher = widget.controller.intelligentDispatcher;      
+      if (intelligentDispatcher != null) {
         // 🚀 修复：注销Canvas UI监听器以修复参考线功能
-        // 在dispose过程中使用debugPrint而不是EditPageLogger
-        debugPrint('Canvas组件注销智能状态分发器监听器'); 
+        EditPageLogger.editPageDebug(
+          'Canvas组件注销智能状态分发器监听器',
+          data: {
+            'operation': 'unregister_from_dispatcher',
+            'component': 'canvas',
+          },
+        );
         
         // 注销UI监听器（参考线更新等）
         if (_canvasUIListener != null) {
@@ -1728,8 +1900,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         // intelligentDispatcher.removeLayerListener('content', () {});  // 需要提供回调函数
       }
     } catch (e) {
-      // 在dispose过程中使用debugPrint而不是EditPageLogger
-      debugPrint('注销智能状态分发器监听器失败: $e');
+      EditPageLogger.editPageError(
+        '注销智能状态分发器监听器失败',
+        error: e,
+        data: {
+          'operation': 'unregister_from_dispatcher',
+          'component': 'canvas',
+        },
+      );
     }
   }
 
@@ -1747,7 +1925,14 @@ class _OptimizedCanvasListenerState extends State<OptimizedCanvasListener> {
     try {
       widget.controller.removeListener(_onControllerChanged);
     } catch (e) {
-      debugPrint('Failed to remove controller listener: $e');
+      EditPageLogger.editPageError(
+        '移除控制器监听器失败',
+        error: e,
+        data: {
+          'component': 'OptimizedCanvasListener',
+          'operation': 'remove_listener',
+        },
+      );
     }
     super.dispose();
   }
@@ -1763,7 +1948,14 @@ class _OptimizedCanvasListenerState extends State<OptimizedCanvasListener> {
       try {
         setState(() {});
       } catch (e) {
-        debugPrint('Failed to setState in OptimizedCanvasListener: $e');
+        EditPageLogger.editPageError(
+          'OptimizedCanvasListener setState失败',
+          error: e,
+          data: {
+            'component': 'OptimizedCanvasListener',
+            'operation': 'set_state',
+          },
+        );
       }
     }
   }
