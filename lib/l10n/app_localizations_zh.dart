@@ -3687,4 +3687,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workStatusArchived => '已归档';
+
+  @override
+  String get defaultWhiteColor => '出错时返回默认白色';
+
+  @override
+  String get errorDefaultColor => '出错时返回默认颜色';
+
+  @override
+  String editLabel(String label) {
+    return '编辑$label';
+  }
+
+  @override
+  String get pleaseEnterValidNumber => '请输入有效的数字';
+
+  @override
+  String valueTooSmall(String label, double min) {
+    return '$label不能小于$min';
+  }
+
+  @override
+  String valueTooLarge(String label, double max) {
+    return '$label不能大于$max';
+  }
+
+  @override
+  String get toolModePanTooltip => '拖拽工具 (Ctrl+V)';
+
+  @override
+  String get toolModeSelectTooltip => '框选工具 (Ctrl+B)';
 }

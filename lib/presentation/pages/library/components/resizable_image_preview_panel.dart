@@ -223,28 +223,29 @@ class _ResizableImagePreviewPanelState
               // Toggle background color button
               IconButton(
                 icon: const Icon(Icons.brightness_6, size: 20),
-                tooltip: AppLocalizations.of(context).toggleBackground,
+                tooltip: AppLocalizations.of(context).filterToggle,
                 onPressed: _toggleBackgroundColor,
               ),
 
               // Reset zoom button
               IconButton(
                 icon: const Icon(Icons.zoom_out_map, size: 20),
-                tooltip: AppLocalizations.of(context).resetZoom,
+                tooltip: AppLocalizations.of(context).canvasResetView,
                 onPressed: _resetZoom,
               ),
 
               // Full screen button
               IconButton(
                 icon: const Icon(Icons.fullscreen, size: 20),
-                tooltip: AppLocalizations.of(context).fullScreen,
+                tooltip:
+                    AppLocalizations.of(context).canvasResetView, // 临时使用相关键
                 onPressed: _openFullScreen,
               ),
 
               // Close button
               IconButton(
                 icon: const Icon(Icons.close, size: 20),
-                tooltip: AppLocalizations.of(context).close,
+                tooltip: AppLocalizations.of(context).windowButtonClose,
                 onPressed: widget.onClose,
               ),
             ],

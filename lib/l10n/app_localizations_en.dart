@@ -3687,4 +3687,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workStatusArchived => 'Archived';
+
+  @override
+  String get defaultWhiteColor => 'Return default white on error';
+
+  @override
+  String get errorDefaultColor => 'Return default color on error';
+
+  @override
+  String editLabel(String label) {
+    return 'Edit $label';
+  }
+
+  @override
+  String get pleaseEnterValidNumber => 'Please enter a valid number';
+
+  @override
+  String valueTooSmall(String label, double min) {
+    return '$label cannot be less than $min';
+  }
+
+  @override
+  String valueTooLarge(String label, double max) {
+    return '$label cannot be greater than $max';
+  }
+
+  @override
+  String get toolModePanTooltip => 'Pan Tool (Ctrl+V)';
+
+  @override
+  String get toolModeSelectTooltip => 'Select Tool (Ctrl+B)';
 }

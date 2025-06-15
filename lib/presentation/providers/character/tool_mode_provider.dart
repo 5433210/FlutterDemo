@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// 工具模式Provider
 final toolModeProvider = StateNotifierProvider<ToolModeNotifier, Tool>((ref) {
@@ -25,12 +26,13 @@ enum Tool {
     }
   }
 
-  String get tooltip {
+  String tooltip(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     switch (this) {
       case Tool.pan:
-        return '拖拽工具 (Ctrl+V)';
+        return l10n.toolModePanTooltip;
       case Tool.select:
-        return '框选工具 (Ctrl+B)';
+        return l10n.toolModeSelectTooltip;
     }
   }
 }

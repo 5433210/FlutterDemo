@@ -79,7 +79,7 @@ class EditableNumberField extends StatelessWidget {
         // 编辑按钮
         IconButton(
           icon: const Icon(Icons.edit),
-          tooltip: '编辑$label',
+          tooltip: AppLocalizations.of(context).editLabel(label),
           onPressed: () => _showEditDialog(context),
         ),
       ],
@@ -88,24 +88,26 @@ class EditableNumberField extends StatelessWidget {
 
   /// 应用新值
   void _applyValue(BuildContext context, String text, Function dispose) {
+    final l10n = AppLocalizations.of(context);
+
     // 尝试解析值
     final newValue = double.tryParse(text);
 
     // 验证值
     if (newValue == null) {
-      _showErrorSnackBar(context, '请输入有效的数字');
+      _showErrorSnackBar(context, l10n.pleaseEnterValidNumber);
       return;
     }
 
     // 检查最小值
     if (min != null && newValue < min!) {
-      _showErrorSnackBar(context, '$label不能小于${min!}');
+      _showErrorSnackBar(context, l10n.valueTooSmall(label, min!));
       return;
     }
 
     // 检查最大值
     if (max != null && newValue > max!) {
-      _showErrorSnackBar(context, '$label不能大于${max!}');
+      _showErrorSnackBar(context, l10n.valueTooLarge(label, max!));
       return;
     }
 

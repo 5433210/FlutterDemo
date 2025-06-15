@@ -7114,6 +7114,54 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'已归档'**
   String get workStatusArchived;
+
+  /// No description provided for @defaultWhiteColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'出错时返回默认白色'**
+  String get defaultWhiteColor;
+
+  /// No description provided for @errorDefaultColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'出错时返回默认颜色'**
+  String get errorDefaultColor;
+
+  /// 编辑标签文本
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑{label}'**
+  String editLabel(String label);
+
+  /// No description provided for @pleaseEnterValidNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的数字'**
+  String get pleaseEnterValidNumber;
+
+  /// 数值太小错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'{label}不能小于{min}'**
+  String valueTooSmall(String label, double min);
+
+  /// 数值太大错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'{label}不能大于{max}'**
+  String valueTooLarge(String label, double max);
+
+  /// No description provided for @toolModePanTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'拖拽工具 (Ctrl+V)'**
+  String get toolModePanTooltip;
+
+  /// No description provided for @toolModeSelectTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'框选工具 (Ctrl+B)'**
+  String get toolModeSelectTooltip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

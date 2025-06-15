@@ -74,7 +74,8 @@ class _DesktopDropWrapperState extends State<DesktopDropWrapper> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            AppLocalizations.of(context).dropToImportImages,
+                            AppLocalizations.of(context)
+                                .workImportDialogAddImages,
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                         ],

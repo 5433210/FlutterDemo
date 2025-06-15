@@ -1306,5 +1306,46 @@
   "deleteCurrentImage": "Delete current image",
   "workStatusDraft": "Draft",
   "workStatusPublished": "Published",
-  "workStatusArchived": "Archived"
+  "workStatusArchived": "Archived",
+  "defaultWhiteColor": "Return default white on error",  "errorDefaultColor": "Return default color on error",
+  "editLabel": "Edit {label}",
+  "@editLabel": {
+    "description": "Edit label text",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "Label name"
+      }
+    }
+  },
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "valueTooSmall": "{label} cannot be less than {min}",
+  "@valueTooSmall": {
+    "description": "Value too small error message",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "Field label"
+      },
+      "min": {
+        "type": "double",
+        "description": "Minimum value"
+      }
+    }
+  },
+  "valueTooLarge": "{label} cannot be greater than {max}",
+  "@valueTooLarge": {
+    "description": "Value too large error message",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "Field label"
+      },
+      "max": {
+        "type": "double",
+        "description": "Maximum value"
+      }
+    }  },
+  "toolModePanTooltip": "Pan Tool (Ctrl+V)",
+  "toolModeSelectTooltip": "Select Tool (Ctrl+B)"
 }

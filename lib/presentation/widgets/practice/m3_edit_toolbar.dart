@@ -110,7 +110,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   isSelected: currentTool == 'text',
                   onPressed: () {
                     EditPageLogger.editPageDebug(
-                      '工具栏：选择文本工具',
+                      'Toolbar: Select text tool',
                       data: {
                         'selectedTool': 'text',
                         'previousTool': currentTool,
@@ -131,7 +131,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   isSelected: currentTool == 'image',
                   onPressed: () {
                     EditPageLogger.editPageDebug(
-                      '工具栏：选择图片工具',
+                      'Toolbar: Select image tool',
                       data: {
                         'selectedTool': 'image',
                         'previousTool': currentTool,
@@ -152,7 +152,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   isSelected: currentTool == 'collection',
                   onPressed: () {
                     EditPageLogger.editPageDebug(
-                      '工具栏：选择集字工具',
+                      'Toolbar: Select collection tool',
                       data: {
                         'selectedTool': 'collection',
                         'previousTool': currentTool,
@@ -171,7 +171,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.practiceEditSelect} (Alt+S)',
                   onPressed: () {
                     EditPageLogger.editPageDebug(
-                      '工具栏：选择选择工具',
+                      'Toolbar: Select selection tool',
                       data: {
                         'selectedTool': 'select',
                         'previousTool': currentTool,
@@ -214,7 +214,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: hasSelection
                     ? () {
                         EditPageLogger.editPageDebug(
-                          '工具栏：复制操作',
+                          'Toolbar: Copy operation',
                           data: {
                             'selectedCount':
                                 controller.state.selectedElementIds.length,
@@ -233,7 +233,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: canPaste
                     ? () {
                         EditPageLogger.editPageDebug(
-                          '工具栏：粘贴操作',
+                          'Toolbar: Paste operation',
                           data: {
                             'canPaste': canPaste,
                             'operation': 'paste_action',
@@ -250,7 +250,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: hasSelection
                     ? () {
                         EditPageLogger.editPageDebug(
-                          '工具栏：删除操作',
+                          'Toolbar: Delete operation',
                           data: {
                             'selectedCount':
                                 controller.state.selectedElementIds.length,
@@ -371,7 +371,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         child: InkWell(
           onTap: () {
             EditPageLogger.editPageDebug(
-              '工具栏元素工具切换',
+              'Toolbar element tool switch',
               data: {
                 'toolName': toolName,
                 'isSelected': isSelected,

@@ -13,8 +13,6 @@ void main() {
     optimizer = SelfAdaptivePerformanceOptimizer(
       memoryManager: memoryManager,
       performanceMonitor: performanceMonitor,
-      detectedPerformanceLevel:
-          DevicePerformanceLevel.medium, // Explicitly set for tests
     );
   });
 

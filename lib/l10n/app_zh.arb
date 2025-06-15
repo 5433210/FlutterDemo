@@ -1305,5 +1305,46 @@
   "fullScreen": "全屏显示",  "close": "关闭",  "dropToImportImages": "释放鼠标以导入图片",  "deleteCurrentImage": "删除当前图片",
   "workStatusDraft": "草稿",
   "workStatusPublished": "已发布",
-  "workStatusArchived": "已归档"
+  "workStatusArchived": "已归档",
+  "defaultWhiteColor": "出错时返回默认白色",  "errorDefaultColor": "出错时返回默认颜色",
+  "editLabel": "编辑{label}",
+  "@editLabel": {
+    "description": "编辑标签文本",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "标签名称"
+      }
+    }
+  },
+  "pleaseEnterValidNumber": "请输入有效的数字",
+  "valueTooSmall": "{label}不能小于{min}",
+  "@valueTooSmall": {
+    "description": "数值太小错误消息",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "字段标签"
+      },
+      "min": {
+        "type": "double",
+        "description": "最小值"
+      }
+    }
+  },
+  "valueTooLarge": "{label}不能大于{max}",
+  "@valueTooLarge": {
+    "description": "数值太大错误消息",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "description": "字段标签"
+      },
+      "max": {
+        "type": "double",
+        "description": "最大值"
+      }
+    }  },
+  "toolModePanTooltip": "拖拽工具 (Ctrl+V)",
+  "toolModeSelectTooltip": "框选工具 (Ctrl+B)"
 }

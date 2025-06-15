@@ -138,7 +138,7 @@ class WorkImagesManagementView extends ConsumerWidget {
               toolbarActions: [
                 // 添加图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: l10n.addImages,
+                  message: l10n.workImportDialogAddImages,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: isProcessing ? null : () => notifier.addImages(),
@@ -150,7 +150,7 @@ class WorkImagesManagementView extends ConsumerWidget {
 
                 // 删除图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: l10n.deleteCurrentImage,
+                  message: l10n.workImportDialogDeleteImage,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: (isProcessing || state.images.isEmpty)
