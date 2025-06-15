@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 import '../image/cached_image.dart';
 
 /// 高级图片预览组件
@@ -82,7 +83,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
               color: _isDarkBackground ? Colors.black : Colors.white,
             ),
         child: widget.imagePaths.isEmpty
-            ? const Center(child: Text('没有图片'))
+            ? Center(child: Text(AppLocalizations.of(context).noImages))
             : _buildImageViewer(context),
       ),
     );
@@ -137,8 +138,9 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
     if (_currentIndex >= widget.imagePaths.length) {
       AppLogger.debug(
           '【AdvancedImagePreview】Current index out of bounds: $_currentIndex');
-      return const Center(
-        child: Text('图片索引错误', style: TextStyle(color: Colors.red)),
+      return Center(
+        child: Text(AppLocalizations.of(context).imageIndexError,
+            style: const TextStyle(color: Colors.red)),
       );
     }
 
@@ -150,12 +152,13 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
     if (!fileExists) {
       AppLogger.debug(
           '【AdvancedImagePreview】Image file does not exist: $currentPath');
-      return const Column(
+      return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.broken_image, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('图片文件不存在', style: TextStyle(color: Colors.white)),
+          const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(AppLocalizations.of(context).imageFileNotExists,
+              style: const TextStyle(color: Colors.white)),
         ],
       );
     }
@@ -173,12 +176,13 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
             stackTrace: stackTrace,
             data: {'path': currentPath},
           );
-          return const Column(
+          return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.broken_image, size: 64, color: Colors.red),
-              SizedBox(height: 16),
-              Text('图片加载失败', style: TextStyle(color: Colors.red)),
+              const Icon(Icons.broken_image, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.of(context).imageLoadFailed,
+                  style: const TextStyle(color: Colors.red)),
             ],
           );
         },

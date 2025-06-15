@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/practice/practice_element.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 基础属性面板
 class BasicPropertyPanel extends StatelessWidget {
@@ -12,9 +13,9 @@ class BasicPropertyPanel extends StatelessWidget {
     required this.element,
     required this.onElementChanged,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,14 +79,14 @@ class BasicPropertyPanel extends StatelessWidget {
         // 大小
         Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 100,
               child: Text(
-                '大小',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                l10n.elementSize,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            const Text('宽: '),
+            Text('${l10n.elementWidth}: '),
             SizedBox(
               width: 70,
               child: TextFormField(
@@ -106,7 +107,7 @@ class BasicPropertyPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text('高: '),
+            Text('${l10n.elementHeight}: '),
             SizedBox(
               width: 70,
               child: TextFormField(
@@ -197,11 +198,11 @@ class BasicPropertyPanel extends StatelessWidget {
         // 锁定
         Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 100,
               child: Text(
-                '锁定',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                l10n.elementLock,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             Checkbox(
@@ -212,7 +213,7 @@ class BasicPropertyPanel extends StatelessWidget {
                 }
               },
             ),
-            Text(element.isLocked ? '已锁定' : '未锁定'),
+            Text(element.isLocked ? l10n.elementLocked : l10n.elementUnlocked),
           ],
         ),
         const Divider(),

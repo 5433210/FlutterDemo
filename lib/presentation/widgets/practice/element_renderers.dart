@@ -4,9 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/monitoring/performance_monitor.dart';
 import '../../../application/providers/service_providers.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import '../image/cached_image.dart';
 import 'collection_element_renderer.dart';
 import 'text_renderer.dart';
@@ -14,16 +14,18 @@ import 'text_renderer.dart';
 /// 元素渲染器，负责渲染不同类型的元素，将不同类型的元素渲染委托给专门的渲染器处理
 class ElementRenderers {
   /// 构建集字元素
-  static Widget buildCollectionElement(Map<String, dynamic> element,
+  static Widget buildCollectionElement(
+      BuildContext context, Map<String, dynamic> element,
       {WidgetRef? ref, bool isPreviewMode = false}) {
     final startTime = DateTime.now();
-    
+
     // 🚀 记录性能监控
     if (ref != null) {
       final performanceMonitor = ref.read(performanceMonitorProvider);
-      performanceMonitor.recordOperation('collection_element_build_start', Duration.zero);
+      performanceMonitor.recordOperation(
+          'collection_element_build_start', Duration.zero);
     }
-    
+
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
@@ -46,7 +48,7 @@ class ElementRenderers {
         content['backgroundTexture'] != null &&
         content['backgroundTexture'] is Map<String, dynamic> &&
         (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty;
-    
+
     final backgroundTexture = hasBackgroundTexture
         ? content['backgroundTexture'] as Map<String, dynamic>
         : null;
@@ -62,10 +64,10 @@ class ElementRenderers {
     if (ref != null && characters.isNotEmpty) {
       final optimizedRenderer = ref.read(optimizedCollectionRendererProvider);
       final elementId = element['id'] as String? ?? 'unknown';
-      
+
       // 异步预加载字符图像
       optimizedRenderer.preloadCharacterImages(characters);
-      
+
       // 🚀 优化：使用无副作用的渲染完成回调
       optimizedRenderer.renderCollectionElement(
         elementId: elementId,
@@ -82,11 +84,13 @@ class ElementRenderers {
             '优化渲染器处理完成（无副作用）',
             data: {
               'elementId': elementId,
-              'characters': characters.length > 10 ? '${characters.substring(0, 10)}...' : characters,
+              'characters': characters.length > 10
+                  ? '${characters.substring(0, 10)}...'
+                  : characters,
               'optimization': 'optimized_renderer_complete_no_side_effect',
             },
           );
-          
+
           // 🚀 关键：不再触发任何可能导致Canvas重建的操作
           // 移除了可能导致setState或notifyListeners的逻辑
         },
@@ -124,12 +128,14 @@ class ElementRenderers {
                   'fillMode': textureFillMode,
                   'opacity': textureOpacity,
                   'range': textureApplicationRange,
-                  'constraints': '${constraints.maxWidth}x${constraints.maxHeight}',
+                  'constraints':
+                      '${constraints.maxWidth}x${constraints.maxHeight}',
                   'optimization': 'layout_build',
                 },
               );
 
               return CollectionElementRenderer.buildCollectionLayout(
+                context: context,
                 characters: characters,
                 writingMode: writingMode,
                 fontSize: fontSize,
@@ -155,14 +161,16 @@ class ElementRenderers {
             },
           ),
         ));
-    
+
     // 🚀 记录总体性能
     if (ref != null) {
       final duration = DateTime.now().difference(startTime);
       final performanceMonitor = ref.read(performanceMonitorProvider);
-      performanceMonitor.recordOperation('collection_element_build_complete', duration);
-      
-      if (duration.inMilliseconds > 16) { // 超过一帧时间
+      performanceMonitor.recordOperation(
+          'collection_element_build_complete', duration);
+
+      if (duration.inMilliseconds > 16) {
+        // 超过一帧时间
         EditPageLogger.performanceWarning(
           '集字元素构建耗时过长',
           data: {
@@ -174,12 +182,13 @@ class ElementRenderers {
         );
       }
     }
-    
+
     return result;
   }
 
   /// 构建组合元素
-  static Widget buildGroupElement(Map<String, dynamic> element,
+  static Widget buildGroupElement(
+      BuildContext context, Map<String, dynamic> element,
       {bool isSelected = false, WidgetRef? ref, bool isPreviewMode = false}) {
     final content = element['content'] as Map<String, dynamic>;
     final List<dynamic> children = content['children'] as List<dynamic>;
@@ -190,8 +199,8 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         color: Colors.grey.withAlpha(26), // 0.1 opacity (26/255)
-        child: const Center(
-          child: Text('空组合'),
+        child: Center(
+          child: Text(AppLocalizations.of(context).emptyGroup),
         ),
       );
     }
@@ -230,12 +239,12 @@ class ElementRenderers {
                     buildImageElement(child, isPreviewMode: isPreviewMode);
                 break;
               case 'collection':
-                childWidget = buildCollectionElement(child,
+                childWidget = buildCollectionElement(context, child,
                     ref: ref, isPreviewMode: isPreviewMode);
                 break;
               case 'group':
                 // 递归处理嵌套组合，并传递选中状态
-                childWidget = buildGroupElement(child,
+                childWidget = buildGroupElement(context, child,
                     isSelected: isSelected,
                     ref: ref,
                     isPreviewMode: isPreviewMode);
@@ -243,7 +252,9 @@ class ElementRenderers {
               default:
                 childWidget = Container(
                   color: Colors.grey.withAlpha(51), // 0.2 的不透明度
-                  child: Center(child: Text('未知元素类型: $type')),
+                  child: Center(
+                      child: Text(AppLocalizations.of(context)
+                          .unknownElementType(type))),
                 );
             }
 
@@ -604,9 +615,9 @@ class ElementRenderers {
           buffer.write(colorStr.substring(1));
         } else {
           EditPageLogger.rendererError(
-          '无效的颜色格式',
-          data: {'colorStr': colorStr},
-        );
+            '无效的颜色格式',
+            data: {'colorStr': colorStr},
+          );
           return Colors.black; // Invalid format
         }
       } else {

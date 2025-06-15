@@ -2,6 +2,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// A wrapper widget that enables system file drop capabilities for desktop platforms
 class DesktopDropWrapper extends StatefulWidget {
@@ -73,7 +74,7 @@ class _DesktopDropWrapperState extends State<DesktopDropWrapper> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            '释放鼠标以导入图片',
+                            AppLocalizations.of(context).dropToImportImages,
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                         ],

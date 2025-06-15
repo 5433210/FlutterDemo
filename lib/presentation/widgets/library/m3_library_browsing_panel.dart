@@ -574,15 +574,15 @@ class _M3LibraryBrowsingPanelState
       barrierDismissible: false,
       builder: (builderContext) {
         dialogBuilderContext = builderContext;
-        return const PopScope(
+        return PopScope(
           canPop: false,
           child: AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('正在导入图片，请稍候...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context).importingImages),
               ],
             ),
           ),
@@ -632,25 +632,23 @@ class _M3LibraryBrowsingPanelState
       closeDialog();
 
       // Refresh data
-      await _refreshData();
-
-      // Show success notification
+      await _refreshData(); // Show success notification
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('成功导入文件'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).importFileSuccess),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       // Close dialog in case of error
       closeDialog();
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('导入失败: $e'),
+            content: Text(
+                AppLocalizations.of(context).importFileFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -675,7 +673,8 @@ class _M3LibraryBrowsingPanelState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('刷新数据失败: $e'),
+            content: Text(
+                AppLocalizations.of(context).refreshDataFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );

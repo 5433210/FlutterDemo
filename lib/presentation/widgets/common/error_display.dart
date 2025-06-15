@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_sizes.dart';
 
@@ -38,7 +39,7 @@ class ErrorDisplay extends StatelessWidget {
               const SizedBox(height: AppSizes.l),
               ElevatedButton(
                 onPressed: onRetry,
-                child: const Text('重试'),
+                child: Text(AppLocalizations.of(context).retry),
               ),
             ],
           ],

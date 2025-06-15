@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 
 class EmptyState extends StatelessWidget {
@@ -35,7 +36,7 @@ class EmptyState extends StatelessWidget {
 
     // 根据类型设置默认图标和消息
     final IconData defaultIcon = _getDefaultIcon();
-    final String defaultMessage = _getDefaultMessage();
+    final String defaultMessage = _getDefaultMessage(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -84,20 +85,20 @@ class EmptyState extends StatelessWidget {
     }
   }
 
-  String _getDefaultMessage() {
+  String _getDefaultMessage(BuildContext context) {
     switch (type) {
       case EmptyStateType.noWorks:
-        return '没有作品\n点击添加按钮导入作品';
+        return AppLocalizations.of(context).emptyStateNoWorks;
       case EmptyStateType.noCharacters:
-        return '没有字形\n从作品中提取字形后可在此查看';
+        return AppLocalizations.of(context).emptyStateNoCharacters;
       case EmptyStateType.noPractices:
-        return '没有练习\n点击添加按钮创建新练习';
+        return AppLocalizations.of(context).emptyStateNoPractices;
       case EmptyStateType.noResults:
-        return '没有找到匹配的结果\n尝试更改搜索条件';
+        return AppLocalizations.of(context).emptyStateNoResults;
       case EmptyStateType.noSelection:
-        return '未选择任何项目\n点击项目以选择';
+        return AppLocalizations.of(context).emptyStateNoSelection;
       case EmptyStateType.error:
-        return '加载失败\n请稍后再试';
+        return AppLocalizations.of(context).emptyStateError;
       case EmptyStateType.custom:
         return '';
     }

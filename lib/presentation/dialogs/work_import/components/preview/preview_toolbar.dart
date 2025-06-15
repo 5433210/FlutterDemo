@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class PreviewToolbar extends StatelessWidget {
@@ -36,34 +37,34 @@ class PreviewToolbar extends StatelessWidget {
             // 添加图片
             _ToolbarIconButton(
               icon: Icons.add_photo_alternate_outlined,
-              tooltip: '添加图片',
+              tooltip: AppLocalizations.of(context).addImages,
               onPressed: onAddImages,
             ),
             const SizedBox(width: AppSizes.m),
             // 向左旋转
             _ToolbarIconButton(
               icon: Icons.rotate_left,
-              tooltip: '向左旋转',
+              tooltip: AppLocalizations.of(context).rotateLeft,
               onPressed: hasSelection ? onRotateLeft : null,
             ),
             // 向右旋转
             _ToolbarIconButton(
               icon: Icons.rotate_right,
-              tooltip: '向右旋转',
+              tooltip: AppLocalizations.of(context).rotateRight,
               onPressed: hasSelection ? onRotateRight : null,
             ),
             const Spacer(),
             // 删除选中
             _ToolbarIconButton(
               icon: Icons.delete_outline,
-              tooltip: '删除选中',
+              tooltip: AppLocalizations.of(context).deleteSelected,
               onPressed: hasSelection ? onDelete : null,
               isDestructive: true,
             ),
             // 全部删除
             _ToolbarIconButton(
               icon: Icons.delete_sweep_outlined,
-              tooltip: '全部删除',
+              tooltip: AppLocalizations.of(context).deleteAll,
               onPressed: hasImages ? onDeleteAll : null,
               isDestructive: true,
             ),

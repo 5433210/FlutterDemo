@@ -490,11 +490,11 @@ class _ExportDialogState extends State<ExportDialog> {
         const SizedBox(height: 8),
         // 自动检测选项
         CheckboxListTile(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.auto_fix_high),
-              SizedBox(width: 8),
-              Text('自动检测页面方向'),
+              const Icon(Icons.auto_fix_high),
+              const SizedBox(width: 8),
+              Text(AppLocalizations.of(context).autoDetectPageOrientation),
             ],
           ),
           value: _autoDetectOrientation,
@@ -593,7 +593,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '自动检测: ${_isLandscape ? l10n.exportDialogLandscape : l10n.exportDialogPortrait}',
+                      '${l10n.autoDetect}: ${_isLandscape ? l10n.exportDialogLandscape : l10n.exportDialogPortrait}',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blue.shade700,
@@ -758,31 +758,31 @@ class _ExportDialogState extends State<ExportDialog> {
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<PdfPageFormat>(
-            value: _pageFormat,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
-            items: pageFormatMap.entries.map((entry) {
-              final double widthCm = entry.value.width / PdfPageFormat.cm;
-              final double heightCm = entry.value.height / PdfPageFormat.cm;
-              return DropdownMenuItem<PdfPageFormat>(
-                value: entry.value,
-                child: Text(
-                  '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _pageFormat = value;
-                });
-                _generatePreview();
-              }
-            },
+          value: _pageFormat,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
+          items: pageFormatMap.entries.map((entry) {
+            final double widthCm = entry.value.width / PdfPageFormat.cm;
+            final double heightCm = entry.value.height / PdfPageFormat.cm;
+            return DropdownMenuItem<PdfPageFormat>(
+              value: entry.value,
+              child: Text(
+                '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})',
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _pageFormat = value;
+              });
+              _generatePreview();
+            }
+          },
+        ),
       ],
     );
   }
@@ -1189,7 +1189,7 @@ class _ExportDialogState extends State<ExportDialog> {
   Future<void> _initDefaultPath() async {
     try {
       debugPrint('ExportDialog: 开始初始化默认导出路径');
-      
+
       Directory? directory;
       try {
         directory = await getDownloadsDirectory();
@@ -1210,7 +1210,7 @@ class _ExportDialogState extends State<ExportDialog> {
           }
         }
       }
-      
+
       if (directory == null) {
         debugPrint('ExportDialog: 无法获取任何默认路径，用户需要手动选择');
         return;
@@ -1279,7 +1279,9 @@ class _ExportDialogState extends State<ExportDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择目录失败: $e')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)
+                  .selectDirectoryFailed(e.toString()))),
         );
       }
     }

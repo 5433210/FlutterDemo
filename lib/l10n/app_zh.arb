@@ -272,13 +272,12 @@
   "collectionPropertyPanelVisual": "视觉设置",
   "collectionPropertyPanelWorkSource": "作品来源",
   "commonProperties": "通用属性",
-  "confirm": "确认",
+  "confirm": "确定",
   "confirmDelete": "确认删除？",
   "confirmDeleteCategory": "确认删除分类",
   "contains": "包含",
   "contentSettings": "内容设置",
   "copyLayerName": "{name} (复制)",
-  "couldNotGetFilePath": "无法获取文件路径",
   "couldNotGetFilePath": "无法获取文件路径",
   "create": "创建",
   "createBackup": "创建备份",
@@ -328,7 +327,6 @@
   "empty": "空",
   "enterFileName": "输入文件名",
   "enterGroupEditMode": "进入组编辑模式",
-  "errorSelectingImage": "选择图片时出错：{error}",
   "errorSelectingImage": "选择图片时出错：{error}",
   "exitBatchMode": "退出批量模式",
   "export": "导出",
@@ -557,7 +555,6 @@
   "imagePropertyPanelTransformWarning": "这些变换会修改图像内容本身，而不仅仅是元素框架",
   "imagePropertyPanelVisual": "视觉设置",
   "imageUpdated": "图片已更新",
-  "imageUpdated": "图片已更新",
   "import": "导入",
   "importBackup": "导入备份",
   "importBackupDescription": "从外部位置导入备份",
@@ -578,7 +575,6 @@
   "layer1": "图层 1",
   "layerElements": "图层元素",
   "layerInfo": "图层信息",
-  "layerName": "图层名称",
   "layerName": "图层{index}",
   "layerOperations": "图层操作",
   "libraryCount": "图库数量",
@@ -679,6 +675,18 @@
   "practiceEditContentProperties": "内容属性",
   "practiceEditContentTools": "内容工具",
   "practiceEditCopy": "复制 (Ctrl+Shift+C)",
+  "toolbarSelectAll": "全选",
+  "toolbarDeselectAll": "取消选择",
+  "toolbarCopyFormat": "复制格式 (Alt+Q)",
+  "toolbarApplyFormatBrush": "应用格式刷 (Alt+W)",
+  "toolbarAlignmentAssist": "对齐辅助",
+  "toolbarAlignmentNone": "无辅助对齐 - 点击启用网格贴附",
+  "toolbarAlignmentGrid": "网格贴附模式 - 点击切换到参考线对齐",
+  "toolbarAlignmentGuideline": "参考线对齐模式 - 点击切换到无辅助",
+  "commonLoading": "加载中...",
+  "commonError": "发生错误",
+  "commonSuccess": "操作成功",
+  "commonNoImageSelected": "没有选择图片",
   "practiceEditDangerZone": "危险区域",
   "practiceEditDefaultLayer": "默认图层",
   "practiceEditDelete": "删除 (Ctrl+D)",
@@ -810,7 +818,6 @@
   "selected": "已选择",
   "selectedCount": "已选择{count}个",
   "selectExportLocation": "选择导出位置",
-  "selectImage": "选择图片",
   "selectImage": "选择图片",
   "selectImportFile": "选择备份文件",
   "selectTargetLayer": "选择目标图层",
@@ -981,9 +988,46 @@
   "workFormTitleRequired": "标题为必填项",
   "workFormTitleTooltip": "按Ctrl+T快速跳转到标题字段",
   "workFormTool": "工具",
-  "workFormToolHelp": "创作此作品使用的主要工具",
-  "workFormToolTooltip": "按Tab导航到下一个字段",
-  "workImportDialogAddImages": "添加图像",
+  "workFormToolHelp": "创作此作品使用的主要工具",  "workFormToolTooltip": "按Tab导航到下一个字段",  "workFormCreationDateError": "创作日期不能超过当前日期",
+  "workImageRestoring": "正在恢复图片数据...",
+  "workImageDeleteConfirmTitle": "确认删除",
+  "workImageDeleteConfirmContent": "确定要删除当前选中的图片吗？",
+  "workImageDeleting": "正在删除图片...",  "workImageDeleteFailed": "删除图片失败：{error}",
+  "@workImageDeleteFailed": {
+    "description": "删除图片失败的错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误详情"
+      }
+    }
+  },
+  "colorPickerTitle": "选择颜色",  "colorCode": "颜色代码",
+  "colorCodeHelp": "输入6位十六进制颜色代码 (例如: FF5500)",
+  "colorCodeInvalid": "无效的颜色代码",
+  "elementSize": "大小",
+  "elementWidth": "宽",
+  "elementHeight": "高",
+  "elementLock": "锁定",  "elementLocked": "已锁定",
+  "elementUnlocked": "未锁定",
+  "submitFailed": "提交失败：{error}",
+  "@submitFailed": {
+    "description": "提交失败的错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误详情"
+      }
+    }
+  },  "workImportDialogAddImages": "添加图像",
+  "workImportAdd": "添加",
+  "workImportAddImage": "添加图片", 
+  "workImportDelete": "删除",
+  "workImportDeleteImage": "删除图片",  "workImportImport": "导入",
+  "navigationBackToPrevious": "返回到之前的页面",
+  "navigationSelectPage": "您想返回到以下哪个页面？",
+  "navigationNoHistory": "无法返回",
+  "navigationNoHistoryMessage": "已经到达当前功能区的最开始页面。",
   "workImportDialogCancel": "取消",
   "workImportDialogDeleteImage": "删除图像",
   "workImportDialogDeleteImageConfirm": "确定要删除此图像吗？",
@@ -1006,5 +1050,260 @@
   "workToolBrush": "毛笔",
   "workToolHardPen": "硬笔",
   "workToolOther": "其他",
-  "yes": "是"
+  "yes": "是",
+  "retry": "重试",
+  "done": "完成",
+  "overwriteConfirm": "覆盖确认",
+  "overwriteMessage": "已存在标题为\"{title}\"的字帖，是否覆盖？",
+  "@overwriteMessage": {
+    "description": "字帖覆盖确认消息",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "字帖标题"
+      }
+    }
+  },
+  "addFromGalleryFailed": "从图库添加图片失败: {error}",
+  "@addFromGalleryFailed": {
+    "description": "从图库添加图片失败的错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误信息"
+      }    }
+  },  "selectCategoryToApply": "请选择要应用的分类:",
+  "titleCannotBeEmpty": "标题不能为空",
+  "titleAlreadyExists": "已存在相同标题的字帖，请使用其他标题",
+  "noPagesToExport": "没有可导出的页面",
+  "exportFailed": "导出失败: 参数不完整",
+  "exporting": "正在导出，请稍候...",
+  "pdfExportSuccess": "PDF导出成功: {path}",
+  "@pdfExportSuccess": {
+    "description": "PDF导出成功消息",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "description": "文件路径"
+      }
+    }
+  },
+  "pdfExportSuccessNoFile": "PDF导出成功，但无法找到文件: {path}",
+  "@pdfExportSuccessNoFile": {
+    "description": "PDF导出成功但文件不存在",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "description": "文件路径"
+      }
+    }
+  },  "pdfExportFailed": "PDF导出失败",
+  "imageExportSuccess": "导出{count}个图片成功",
+  "@imageExportSuccess": {
+    "description": "图片导出成功消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "图片数量"
+      }
+    }
+  },
+  "imageExportFailed": "图片导出失败",
+  "exportFailedWithError": "导出失败: {error}",
+  "@exportFailedWithError": {
+    "description": "导出失败错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误信息"
+      }
+    }
+  },
+  "noPagesToPrint": "没有可打印的页面",
+  "preparingPrint": "正在准备打印，请稍候...",
+  "cannotCapturePageImage": "无法捕获页面图像",
+  "printPreparationFailed": "打印准备失败: {error}",
+  "@printPreparationFailed": {
+    "description": "打印准备失败消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误信息"
+      }
+    }
+  },
+  "cannotSaveMissingController": "无法保存：缺少控制器",
+  "practiceSheetSaved": "字帖 \"{title}\" 已保存",
+  "@practiceSheetSaved": {
+    "description": "字帖保存成功消息",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "字帖标题"
+      }
+    }
+  },
+  "practiceSheetOverwritten": "字帖 \"{title}\" 已覆盖保存",
+  "@practiceSheetOverwritten": {
+    "description": "字帖覆盖保存成功消息",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "字帖标题"
+      }
+    }
+  },
+  "saveFailed": "保存失败，请稍后重试",
+  "saveFailedWithError": "保存失败：{error}",
+  "@saveFailedWithError": {
+    "description": "保存失败错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误信息"
+      }
+    }
+  },
+  "saveSuccess": "保存成功",
+  "confirmOverwrite": "确认覆盖",
+  "overwriteExistingPractice": "已存在名为\"{title}\"的字帖，是否覆盖？",
+  "@overwriteExistingPractice": {
+    "description": "覆盖现有字帖确认消息",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "字帖标题"
+      }
+    }
+  },  "openFolder": "打开文件夹",
+  "formatBrushActivated": "格式刷已激活，点击目标元素应用样式",
+  "elementCopiedToClipboardWithPreload": "元素已复制到剪贴板（已预加载图像）",
+  "elementCopiedToClipboard": "元素已复制到剪贴板",
+  "practiceSheetNotExists": "字帖不存在",  "loadPracticeSheetFailed": "加载字帖失败",
+  "categoryName": "分类名称",
+  "enterCategoryName": "请输入分类名称",
+  "parentCategory": "父分类（可选）",
+  "selectParentCategory": "选择父分类",
+  "noTopLevelCategory": "无（顶级分类）",  "categoryNameCannotBeEmpty": "分类名称不能为空",
+  "setCategoryForItems": "设置分类 ({count}个项目)",
+  "@setCategoryForItems": {
+    "description": "批量设置分类标题",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "选中项目数量"
+      }
+    }
+  },  "apply": "应用",
+  "confirmDeleteAllItems": "确认删除所有项目",
+  "confirmDeleteFilteredItems": "确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。",
+  "@confirmDeleteFilteredItems": {
+    "description": "确认删除筛选项目的消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "项目数量"
+      }
+    }
+  },
+  "importSuccessMessage": "成功导入 {count} 个文件",
+  "@importSuccessMessage": {
+    "description": "导入成功消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "文件数量"
+      }
+    }
+  },
+  "importFailedMessage": "导入失败: {error}",
+  "@importFailedMessage": {
+    "description": "导入失败消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "错误信息"
+      }
+    }
+  },
+  "folderImportComplete": "文件夹导入完成",
+  "removeFromCategory": "从分类中移除",
+  "confirmRemoveFromCategory": "确定要将选中的{count}个项目从当前分类中移除吗？",
+  "@confirmRemoveFromCategory": {
+    "description": "确认从分类中移除项目的消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "项目数量"
+      }
+    }
+  },  "remove": "移除",
+  "importingImages": "正在导入图片，请稍候...",
+  "characterDetailTitle": "字符详情",
+  "pinyin": "拼音",
+  "strokeCount": "笔画",
+  "sourceInfo": "出处信息",  "work": "作品",
+  "author": "作者",
+  "dynasty": "朝代",
+  "charactersSelected": "已选择 {count} 个字符",  "deselectAll": "取消选择",
+  "deleteConfirmation": "删除确认",
+  "deleteCharactersConfirm": "确定要删除这 {count} 个字符吗？此操作不可恢复。",
+  "noImages": "没有图片",  "imageIndexError": "图片索引错误",
+  "imageFileNotExists": "图片文件不存在",
+  "imageLoadFailed": "图片加载失败",  "color": "颜色",
+  "selectColor": "选择{type}",  "editField": "编辑{field}",  "inputFieldHint": "请输入{field}",
+  "selectColorTitle": "选择颜色",
+  "startDate": "开始日期",
+  "endDate": "结束日期",
+  "to": "至",  "beforeDate": "某个日期之前",
+  "afterDate": "某个日期之后",
+  "selectDate": "选择日期",
+  "inputNewTag": "输入新标签...",  "addTag": "添加标签",  "commonTags": "常用标签:",
+  "importFileSuccess": "成功导入文件",
+  "importFileFailed": "导入失败: {error}",
+  "refreshDataFailed": "刷新数据失败: {error}",
+  "inputChineseContent": "请输入汉字内容",
+  "widgetRefRequired": "需要WidgetRef才能创建CollectionPainter",
+  "emptyGroup": "空组合",
+  "unknownElementType": "未知元素类型: {type}",
+  "noDisplayableImages": "没有可显示的图片",
+  "autoDetectPageOrientation": "自动检测页面方向",
+  "autoDetect": "自动检测",
+  "selectDirectoryFailed": "选择目录失败: {error}",
+  "noTexture": "无纹理",
+  "dataIncomplete": "数据不完整",
+  "dataEmpty": "数据为空",
+  "renderFailed": "渲染失败",
+  "importImageFailed": "导入图片失败: {error}",
+  "openGalleryFailed": "打开图库失败: {error}",
+  "sourceHanSansFont": "思源黑体 (Source Han Sans)",
+  "sourceHanSerifFont": "思源宋体 (Source Han Serif)",
+  "emptyStateNoWorks": "没有作品\n点击添加按钮导入作品",
+  "emptyStateNoCharacters": "没有字形\n从作品中提取字形后可在此查看",
+  "emptyStateNoPractices": "没有练习\n点击添加按钮创建新练习",
+  "emptyStateNoResults": "没有找到匹配的结果\n尝试更改搜索条件",
+  "emptyStateNoSelection": "未选择任何项目\n点击项目以选择",
+  "emptyStateError": "加载失败\n请稍后再试",  "appRestartFailed": "应用重启失败，请手动重启应用",
+  "appRestarting": "正在重启应用",
+  "appRestartingMessage": "数据恢复成功，正在重启应用...",
+  "addImages": "添加图片",
+  "rotateLeft": "向左旋转",
+  "rotateRight": "向右旋转",
+  "deleteSelected": "删除选中",
+  "deleteAll": "全部删除",
+  "confirmDelete": "确认删除",
+  "confirmDeleteAll": "删除图片",  "confirmDeleteMessage": "确定要删除选中的图片吗？",
+  "confirmDeleteAllMessage": "这是最后一张图片，删除后将退出导入。确定要删除吗？",
+  "selectAll": "全选",
+  "deselectAll": "取消选择",
+  "removeFromCategory": "从当前分类移除",
+  "setCategory": "设置分类",
+  "copySelected": "复制选中项目",
+  "cutSelected": "剪切选中项目",  "deleteAllItems": "删除全部",
+  "toggleBackground": "切换背景",
+  "resetZoom": "重置缩放",
+  "fullScreen": "全屏显示",  "close": "关闭",  "dropToImportImages": "释放鼠标以导入图片",  "deleteCurrentImage": "删除当前图片",
+  "workStatusDraft": "草稿",
+  "workStatusPublished": "已发布",
+  "workStatusArchived": "已归档"
 }

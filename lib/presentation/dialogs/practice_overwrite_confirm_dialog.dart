@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// 字帖覆盖确认对话框
 /// 当用户尝试保存的标题已存在时，用于确认是否覆盖
 class PracticeOverwriteConfirmDialog extends StatelessWidget {
@@ -13,6 +15,7 @@ class PracticeOverwriteConfirmDialog extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return KeyboardListener(
       focusNode: FocusNode(),
       autofocus: true,
@@ -26,16 +29,16 @@ class PracticeOverwriteConfirmDialog extends StatelessWidget {
         }
       },
       child: AlertDialog(
-        title: const Text('覆盖确认'),
-        content: Text('已存在标题为"$title"的字帖，是否覆盖？'),
+        title: Text(l10n.overwriteConfirm),
+        content: Text(l10n.overwriteMessage(title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('覆盖'),
+            child: Text(l10n.practiceEditOverwrite),
           ),
         ],
       ),

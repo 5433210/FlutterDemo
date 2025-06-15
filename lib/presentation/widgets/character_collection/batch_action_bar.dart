@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class BatchActionBar extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onExport;
@@ -13,10 +15,10 @@ class BatchActionBar extends StatelessWidget {
     required this.onDelete,
     required this.onCancel,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -36,18 +38,16 @@ class BatchActionBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '已选择 $selectedCount 个字符',
+            l10n.charactersSelected(selectedCount),
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
 
-          const Spacer(),
-
-          // 导出按钮
+          const Spacer(), // 导出按钮
           _BatchActionButton(
             icon: Icons.download,
-            label: '导出',
+            label: l10n.export,
             onPressed: onExport,
           ),
 
@@ -56,7 +56,7 @@ class BatchActionBar extends StatelessWidget {
           // 删除按钮
           _BatchActionButton(
             icon: Icons.delete,
-            label: '删除',
+            label: l10n.delete,
             color: Colors.red,
             onPressed: () {
               _showDeleteConfirmation(context);
@@ -71,7 +71,7 @@ class BatchActionBar extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
-            child: const Text('取消选择'),
+            child: Text(l10n.deselectAll),
           ),
         ],
       ),
@@ -79,15 +79,16 @@ class BatchActionBar extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除确认'),
-        content: Text('确定要删除这 $selectedCount 个字符吗？此操作不可恢复。'),
+        title: Text(l10n.deleteConfirmation),
+        content: Text(l10n.deleteCharactersConfirm(selectedCount)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -98,7 +99,7 @@ class BatchActionBar extends StatelessWidget {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('删除'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -1730,13 +1730,13 @@ abstract class AppLocalizations {
   /// No description provided for @confirm.
   ///
   /// In zh, this message translates to:
-  /// **'确认'**
+  /// **'确定'**
   String get confirm;
 
   /// No description provided for @confirmDelete.
   ///
   /// In zh, this message translates to:
-  /// **'确认删除？'**
+  /// **'确认删除'**
   String get confirmDelete;
 
   /// No description provided for @confirmDeleteCategory.
@@ -1814,7 +1814,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAll.
   ///
   /// In zh, this message translates to:
-  /// **'删除全部'**
+  /// **'全部删除'**
   String get deleteAll;
 
   /// No description provided for @deleteBackup.
@@ -4145,6 +4145,78 @@ abstract class AppLocalizations {
   /// **'复制 (Ctrl+Shift+C)'**
   String get practiceEditCopy;
 
+  /// No description provided for @toolbarSelectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get toolbarSelectAll;
+
+  /// No description provided for @toolbarDeselectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消选择'**
+  String get toolbarDeselectAll;
+
+  /// No description provided for @toolbarCopyFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制格式 (Alt+Q)'**
+  String get toolbarCopyFormat;
+
+  /// No description provided for @toolbarApplyFormatBrush.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用格式刷 (Alt+W)'**
+  String get toolbarApplyFormatBrush;
+
+  /// No description provided for @toolbarAlignmentAssist.
+  ///
+  /// In zh, this message translates to:
+  /// **'对齐辅助'**
+  String get toolbarAlignmentAssist;
+
+  /// No description provided for @toolbarAlignmentNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无辅助对齐 - 点击启用网格贴附'**
+  String get toolbarAlignmentNone;
+
+  /// No description provided for @toolbarAlignmentGrid.
+  ///
+  /// In zh, this message translates to:
+  /// **'网格贴附模式 - 点击切换到参考线对齐'**
+  String get toolbarAlignmentGrid;
+
+  /// No description provided for @toolbarAlignmentGuideline.
+  ///
+  /// In zh, this message translates to:
+  /// **'参考线对齐模式 - 点击切换到无辅助'**
+  String get toolbarAlignmentGuideline;
+
+  /// No description provided for @commonLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载中...'**
+  String get commonLoading;
+
+  /// No description provided for @commonError.
+  ///
+  /// In zh, this message translates to:
+  /// **'发生错误'**
+  String get commonError;
+
+  /// No description provided for @commonSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作成功'**
+  String get commonSuccess;
+
+  /// No description provided for @commonNoImageSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有选择图片'**
+  String get commonNoImageSelected;
+
   /// No description provided for @practiceEditDangerZone.
   ///
   /// In zh, this message translates to:
@@ -5963,11 +6035,167 @@ abstract class AppLocalizations {
   /// **'按Tab导航到下一个字段'**
   String get workFormToolTooltip;
 
+  /// No description provided for @workFormCreationDateError.
+  ///
+  /// In zh, this message translates to:
+  /// **'创作日期不能超过当前日期'**
+  String get workFormCreationDateError;
+
+  /// No description provided for @workImageRestoring.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在恢复图片数据...'**
+  String get workImageRestoring;
+
+  /// No description provided for @workImageDeleteConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除'**
+  String get workImageDeleteConfirmTitle;
+
+  /// No description provided for @workImageDeleteConfirmContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除当前选中的图片吗？'**
+  String get workImageDeleteConfirmContent;
+
+  /// No description provided for @workImageDeleting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在删除图片...'**
+  String get workImageDeleting;
+
+  /// 删除图片失败的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'删除图片失败：{error}'**
+  String workImageDeleteFailed(String error);
+
+  /// No description provided for @colorPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择颜色'**
+  String get colorPickerTitle;
+
+  /// No description provided for @colorCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'颜色代码'**
+  String get colorCode;
+
+  /// No description provided for @colorCodeHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入6位十六进制颜色代码 (例如: FF5500)'**
+  String get colorCodeHelp;
+
+  /// No description provided for @colorCodeInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效的颜色代码'**
+  String get colorCodeInvalid;
+
+  /// No description provided for @elementSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'大小'**
+  String get elementSize;
+
+  /// No description provided for @elementWidth.
+  ///
+  /// In zh, this message translates to:
+  /// **'宽'**
+  String get elementWidth;
+
+  /// No description provided for @elementHeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'高'**
+  String get elementHeight;
+
+  /// No description provided for @elementLock.
+  ///
+  /// In zh, this message translates to:
+  /// **'锁定'**
+  String get elementLock;
+
+  /// No description provided for @elementLocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已锁定'**
+  String get elementLocked;
+
+  /// No description provided for @elementUnlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'未锁定'**
+  String get elementUnlocked;
+
+  /// 提交失败的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'提交失败：{error}'**
+  String submitFailed(String error);
+
   /// No description provided for @workImportDialogAddImages.
   ///
   /// In zh, this message translates to:
   /// **'添加图像'**
   String get workImportDialogAddImages;
+
+  /// No description provided for @workImportAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加'**
+  String get workImportAdd;
+
+  /// No description provided for @workImportAddImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加图片'**
+  String get workImportAddImage;
+
+  /// No description provided for @workImportDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get workImportDelete;
+
+  /// No description provided for @workImportDeleteImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除图片'**
+  String get workImportDeleteImage;
+
+  /// No description provided for @workImportImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入'**
+  String get workImportImport;
+
+  /// No description provided for @navigationBackToPrevious.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回到之前的页面'**
+  String get navigationBackToPrevious;
+
+  /// No description provided for @navigationSelectPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'您想返回到以下哪个页面？'**
+  String get navigationSelectPage;
+
+  /// No description provided for @navigationNoHistory.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法返回'**
+  String get navigationNoHistory;
+
+  /// No description provided for @navigationNoHistoryMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'已经到达当前功能区的最开始页面。'**
+  String get navigationNoHistoryMessage;
 
   /// No description provided for @workImportDialogCancel.
   ///
@@ -6106,6 +6334,786 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'是'**
   String get yes;
+
+  /// No description provided for @retry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get retry;
+
+  /// No description provided for @done.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get done;
+
+  /// No description provided for @overwriteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖确认'**
+  String get overwriteConfirm;
+
+  /// 字帖覆盖确认消息
+  ///
+  /// In zh, this message translates to:
+  /// **'已存在标题为\"{title}\"的字帖，是否覆盖？'**
+  String overwriteMessage(String title);
+
+  /// 从图库添加图片失败的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'从图库添加图片失败: {error}'**
+  String addFromGalleryFailed(String error);
+
+  /// No description provided for @selectCategoryToApply.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择要应用的分类:'**
+  String get selectCategoryToApply;
+
+  /// No description provided for @titleCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'标题不能为空'**
+  String get titleCannotBeEmpty;
+
+  /// No description provided for @titleAlreadyExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'已存在相同标题的字帖，请使用其他标题'**
+  String get titleAlreadyExists;
+
+  /// No description provided for @noPagesToExport.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可导出的页面'**
+  String get noPagesToExport;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败: 参数不完整'**
+  String get exportFailed;
+
+  /// No description provided for @exporting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出，请稍候...'**
+  String get exporting;
+
+  /// PDF导出成功消息
+  ///
+  /// In zh, this message translates to:
+  /// **'PDF导出成功: {path}'**
+  String pdfExportSuccess(String path);
+
+  /// PDF导出成功但文件不存在
+  ///
+  /// In zh, this message translates to:
+  /// **'PDF导出成功，但无法找到文件: {path}'**
+  String pdfExportSuccessNoFile(String path);
+
+  /// No description provided for @pdfExportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'PDF导出失败'**
+  String get pdfExportFailed;
+
+  /// 图片导出成功消息
+  ///
+  /// In zh, this message translates to:
+  /// **'导出{count}个图片成功'**
+  String imageExportSuccess(int count);
+
+  /// No description provided for @imageExportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片导出失败'**
+  String get imageExportFailed;
+
+  /// 导出失败错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败: {error}'**
+  String exportFailedWithError(String error);
+
+  /// No description provided for @noPagesToPrint.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可打印的页面'**
+  String get noPagesToPrint;
+
+  /// No description provided for @preparingPrint.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在准备打印，请稍候...'**
+  String get preparingPrint;
+
+  /// No description provided for @cannotCapturePageImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法捕获页面图像'**
+  String get cannotCapturePageImage;
+
+  /// 打印准备失败消息
+  ///
+  /// In zh, this message translates to:
+  /// **'打印准备失败: {error}'**
+  String printPreparationFailed(String error);
+
+  /// No description provided for @cannotSaveMissingController.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法保存：缺少控制器'**
+  String get cannotSaveMissingController;
+
+  /// 字帖保存成功消息
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖 \"{title}\" 已保存'**
+  String practiceSheetSaved(String title);
+
+  /// 字帖覆盖保存成功消息
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖 \"{title}\" 已覆盖保存'**
+  String practiceSheetOverwritten(String title);
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存失败，请稍后重试'**
+  String get saveFailed;
+
+  /// 保存失败错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'保存失败：{error}'**
+  String saveFailedWithError(String error);
+
+  /// No description provided for @saveSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存成功'**
+  String get saveSuccess;
+
+  /// No description provided for @confirmOverwrite.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认覆盖'**
+  String get confirmOverwrite;
+
+  /// 覆盖现有字帖确认消息
+  ///
+  /// In zh, this message translates to:
+  /// **'已存在名为\"{title}\"的字帖，是否覆盖？'**
+  String overwriteExistingPractice(String title);
+
+  /// No description provided for @openFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开文件夹'**
+  String get openFolder;
+
+  /// No description provided for @formatBrushActivated.
+  ///
+  /// In zh, this message translates to:
+  /// **'格式刷已激活，点击目标元素应用样式'**
+  String get formatBrushActivated;
+
+  /// No description provided for @elementCopiedToClipboardWithPreload.
+  ///
+  /// In zh, this message translates to:
+  /// **'元素已复制到剪贴板（已预加载图像）'**
+  String get elementCopiedToClipboardWithPreload;
+
+  /// No description provided for @elementCopiedToClipboard.
+  ///
+  /// In zh, this message translates to:
+  /// **'元素已复制到剪贴板'**
+  String get elementCopiedToClipboard;
+
+  /// No description provided for @practiceSheetNotExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖不存在'**
+  String get practiceSheetNotExists;
+
+  /// No description provided for @loadPracticeSheetFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载字帖失败'**
+  String get loadPracticeSheetFailed;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称'**
+  String get categoryName;
+
+  /// No description provided for @enterCategoryName.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入分类名称'**
+  String get enterCategoryName;
+
+  /// No description provided for @parentCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'父分类（可选）'**
+  String get parentCategory;
+
+  /// No description provided for @selectParentCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择父分类'**
+  String get selectParentCategory;
+
+  /// No description provided for @noTopLevelCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'无（顶级分类）'**
+  String get noTopLevelCategory;
+
+  /// No description provided for @categoryNameCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称不能为空'**
+  String get categoryNameCannotBeEmpty;
+
+  /// 批量设置分类标题
+  ///
+  /// In zh, this message translates to:
+  /// **'设置分类 ({count}个项目)'**
+  String setCategoryForItems(int count);
+
+  /// No description provided for @apply.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get apply;
+
+  /// No description provided for @confirmDeleteAllItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除所有项目'**
+  String get confirmDeleteAllItems;
+
+  /// 确认删除筛选项目的消息
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。'**
+  String confirmDeleteFilteredItems(int count);
+
+  /// 导入成功消息
+  ///
+  /// In zh, this message translates to:
+  /// **'成功导入 {count} 个文件'**
+  String importSuccessMessage(int count);
+
+  /// 导入失败消息
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败: {error}'**
+  String importFailedMessage(String error);
+
+  /// No description provided for @folderImportComplete.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件夹导入完成'**
+  String get folderImportComplete;
+
+  /// No description provided for @removeFromCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'从当前分类移除'**
+  String get removeFromCategory;
+
+  /// 确认从分类中移除项目的消息
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要将选中的{count}个项目从当前分类中移除吗？'**
+  String confirmRemoveFromCategory(int count);
+
+  /// No description provided for @remove.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除'**
+  String get remove;
+
+  /// No description provided for @importingImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入图片，请稍候...'**
+  String get importingImages;
+
+  /// No description provided for @characterDetailTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'字符详情'**
+  String get characterDetailTitle;
+
+  /// No description provided for @pinyin.
+  ///
+  /// In zh, this message translates to:
+  /// **'拼音'**
+  String get pinyin;
+
+  /// No description provided for @strokeCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'笔画'**
+  String get strokeCount;
+
+  /// No description provided for @sourceInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'出处信息'**
+  String get sourceInfo;
+
+  /// No description provided for @work.
+  ///
+  /// In zh, this message translates to:
+  /// **'作品'**
+  String get work;
+
+  /// No description provided for @author.
+  ///
+  /// In zh, this message translates to:
+  /// **'作者'**
+  String get author;
+
+  /// No description provided for @dynasty.
+  ///
+  /// In zh, this message translates to:
+  /// **'朝代'**
+  String get dynasty;
+
+  /// No description provided for @charactersSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择 {count} 个字符'**
+  String charactersSelected(Object count);
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消选择'**
+  String get deselectAll;
+
+  /// No description provided for @deleteConfirmation.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除确认'**
+  String get deleteConfirmation;
+
+  /// No description provided for @deleteCharactersConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除这 {count} 个字符吗？此操作不可恢复。'**
+  String deleteCharactersConfirm(Object count);
+
+  /// No description provided for @noImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有图片'**
+  String get noImages;
+
+  /// No description provided for @imageIndexError.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片索引错误'**
+  String get imageIndexError;
+
+  /// No description provided for @imageFileNotExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片文件不存在'**
+  String get imageFileNotExists;
+
+  /// No description provided for @imageLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片加载失败'**
+  String get imageLoadFailed;
+
+  /// No description provided for @color.
+  ///
+  /// In zh, this message translates to:
+  /// **'颜色'**
+  String get color;
+
+  /// No description provided for @selectColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择{type}'**
+  String selectColor(Object type);
+
+  /// No description provided for @editField.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑{field}'**
+  String editField(Object field);
+
+  /// No description provided for @inputFieldHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入{field}'**
+  String inputFieldHint(Object field);
+
+  /// No description provided for @selectColorTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择颜色'**
+  String get selectColorTitle;
+
+  /// No description provided for @startDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始日期'**
+  String get startDate;
+
+  /// No description provided for @endDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'结束日期'**
+  String get endDate;
+
+  /// No description provided for @to.
+  ///
+  /// In zh, this message translates to:
+  /// **'至'**
+  String get to;
+
+  /// No description provided for @beforeDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'某个日期之前'**
+  String get beforeDate;
+
+  /// No description provided for @afterDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'某个日期之后'**
+  String get afterDate;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择日期'**
+  String get selectDate;
+
+  /// No description provided for @inputNewTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入新标签...'**
+  String get inputNewTag;
+
+  /// No description provided for @addTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加标签'**
+  String get addTag;
+
+  /// No description provided for @commonTags.
+  ///
+  /// In zh, this message translates to:
+  /// **'常用标签:'**
+  String get commonTags;
+
+  /// No description provided for @importFileSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功导入文件'**
+  String get importFileSuccess;
+
+  /// No description provided for @importFileFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败: {error}'**
+  String importFileFailed(Object error);
+
+  /// No description provided for @refreshDataFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新数据失败: {error}'**
+  String refreshDataFailed(Object error);
+
+  /// No description provided for @inputChineseContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入汉字内容'**
+  String get inputChineseContent;
+
+  /// No description provided for @widgetRefRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要WidgetRef才能创建CollectionPainter'**
+  String get widgetRefRequired;
+
+  /// No description provided for @emptyGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'空组合'**
+  String get emptyGroup;
+
+  /// No description provided for @unknownElementType.
+  ///
+  /// In zh, this message translates to:
+  /// **'未知元素类型: {type}'**
+  String unknownElementType(Object type);
+
+  /// No description provided for @noDisplayableImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可显示的图片'**
+  String get noDisplayableImages;
+
+  /// No description provided for @autoDetectPageOrientation.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动检测页面方向'**
+  String get autoDetectPageOrientation;
+
+  /// No description provided for @autoDetect.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动检测'**
+  String get autoDetect;
+
+  /// No description provided for @selectDirectoryFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择目录失败: {error}'**
+  String selectDirectoryFailed(Object error);
+
+  /// No description provided for @noTexture.
+  ///
+  /// In zh, this message translates to:
+  /// **'无纹理'**
+  String get noTexture;
+
+  /// No description provided for @dataIncomplete.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据不完整'**
+  String get dataIncomplete;
+
+  /// No description provided for @dataEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据为空'**
+  String get dataEmpty;
+
+  /// No description provided for @renderFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'渲染失败'**
+  String get renderFailed;
+
+  /// No description provided for @importImageFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入图片失败: {error}'**
+  String importImageFailed(Object error);
+
+  /// No description provided for @openGalleryFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开图库失败: {error}'**
+  String openGalleryFailed(Object error);
+
+  /// No description provided for @sourceHanSansFont.
+  ///
+  /// In zh, this message translates to:
+  /// **'思源黑体 (Source Han Sans)'**
+  String get sourceHanSansFont;
+
+  /// No description provided for @sourceHanSerifFont.
+  ///
+  /// In zh, this message translates to:
+  /// **'思源宋体 (Source Han Serif)'**
+  String get sourceHanSerifFont;
+
+  /// No description provided for @emptyStateNoWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有作品\n点击添加按钮导入作品'**
+  String get emptyStateNoWorks;
+
+  /// No description provided for @emptyStateNoCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有字形\n从作品中提取字形后可在此查看'**
+  String get emptyStateNoCharacters;
+
+  /// No description provided for @emptyStateNoPractices.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有练习\n点击添加按钮创建新练习'**
+  String get emptyStateNoPractices;
+
+  /// No description provided for @emptyStateNoResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有找到匹配的结果\n尝试更改搜索条件'**
+  String get emptyStateNoResults;
+
+  /// No description provided for @emptyStateNoSelection.
+  ///
+  /// In zh, this message translates to:
+  /// **'未选择任何项目\n点击项目以选择'**
+  String get emptyStateNoSelection;
+
+  /// No description provided for @emptyStateError.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载失败\n请稍后再试'**
+  String get emptyStateError;
+
+  /// No description provided for @appRestartFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用重启失败，请手动重启应用'**
+  String get appRestartFailed;
+
+  /// No description provided for @appRestarting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在重启应用'**
+  String get appRestarting;
+
+  /// No description provided for @appRestartingMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据恢复成功，正在重启应用...'**
+  String get appRestartingMessage;
+
+  /// No description provided for @addImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加图片'**
+  String get addImages;
+
+  /// No description provided for @rotateLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'向左旋转'**
+  String get rotateLeft;
+
+  /// No description provided for @rotateRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'向右旋转'**
+  String get rotateRight;
+
+  /// No description provided for @deleteSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除选中'**
+  String get deleteSelected;
+
+  /// No description provided for @confirmDeleteAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除图片'**
+  String get confirmDeleteAll;
+
+  /// No description provided for @confirmDeleteMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除选中的图片吗？'**
+  String get confirmDeleteMessage;
+
+  /// No description provided for @confirmDeleteAllMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'这是最后一张图片，删除后将退出导入。确定要删除吗？'**
+  String get confirmDeleteAllMessage;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get selectAll;
+
+  /// No description provided for @setCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置分类'**
+  String get setCategory;
+
+  /// No description provided for @copySelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制选中项目'**
+  String get copySelected;
+
+  /// No description provided for @cutSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'剪切选中项目'**
+  String get cutSelected;
+
+  /// No description provided for @deleteAllItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除全部'**
+  String get deleteAllItems;
+
+  /// No description provided for @toggleBackground.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换背景'**
+  String get toggleBackground;
+
+  /// No description provided for @resetZoom.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置缩放'**
+  String get resetZoom;
+
+  /// No description provided for @fullScreen.
+  ///
+  /// In zh, this message translates to:
+  /// **'全屏显示'**
+  String get fullScreen;
+
+  /// No description provided for @close.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭'**
+  String get close;
+
+  /// No description provided for @dropToImportImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'释放鼠标以导入图片'**
+  String get dropToImportImages;
+
+  /// No description provided for @deleteCurrentImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除当前图片'**
+  String get deleteCurrentImage;
+
+  /// No description provided for @workStatusDraft.
+  ///
+  /// In zh, this message translates to:
+  /// **'草稿'**
+  String get workStatusDraft;
+
+  /// No description provided for @workStatusPublished.
+  ///
+  /// In zh, this message translates to:
+  /// **'已发布'**
+  String get workStatusPublished;
+
+  /// No description provided for @workStatusArchived.
+  ///
+  /// In zh, this message translates to:
+  /// **'已归档'**
+  String get workStatusArchived;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

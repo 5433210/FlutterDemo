@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../dialogs/optimized_save_dialog.dart';
 import '../../dialogs/practice_save_dialog.dart';
 import '../../services/practice_list_refresh_service.dart';
@@ -33,7 +34,7 @@ class FileOperations {
     if (pages.isEmpty) {
       EditPageLogger.editPageError('没有可导出的页面');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有可导出的页面')),
+        SnackBar(content: Text(AppLocalizations.of(context).noPagesToExport)),
       );
       return;
     }
@@ -77,7 +78,7 @@ class FileOperations {
       debugPrint('错误: 导出对话框返回的结果缺少必要的键');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('导出失败: 参数不完整')),
+          SnackBar(content: Text(AppLocalizations.of(context).exportFailed)),
         );
       }
       return;
@@ -102,8 +103,8 @@ class FileOperations {
     ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
       scaffoldMessenger = ScaffoldMessenger.of(context);
-      _safeShowSnackBar(
-          scaffoldMessenger, const SnackBar(content: Text('正在导出，请稍候...')));
+      _safeShowSnackBar(scaffoldMessenger,
+          SnackBar(content: Text(AppLocalizations.of(context).exporting)));
     }
 
     try {
@@ -140,9 +141,10 @@ class FileOperations {
             _safeShowSnackBar(
               scaffoldMessenger,
               SnackBar(
-                content: Text('PDF导出成功: $pdfPath'),
+                content: Text(
+                    AppLocalizations.of(context).pdfExportSuccess(pdfPath)),
                 action: SnackBarAction(
-                  label: '打开文件夹',
+                  label: AppLocalizations.of(context).openFolder,
                   onPressed: () {
                     // 打开文件所在的文件夹
                     final directory = path.dirname(pdfPath);
@@ -154,13 +156,16 @@ class FileOperations {
           } else {
             _safeShowSnackBar(
               scaffoldMessenger,
-              SnackBar(content: Text('PDF导出成功，但无法找到文件: $pdfPath')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context)
+                      .pdfExportSuccessNoFile(pdfPath))),
             );
           }
         } else {
           _safeShowSnackBar(
             scaffoldMessenger,
-            const SnackBar(content: Text('PDF导出失败')),
+            SnackBar(
+                content: Text(AppLocalizations.of(context).pdfExportFailed)),
           );
         }
       } else {
@@ -198,9 +203,10 @@ class FileOperations {
           _safeShowSnackBar(
             scaffoldMessenger,
             SnackBar(
-              content: Text('导出${imagePaths.length}个图片成功'),
+              content: Text(AppLocalizations.of(context)
+                  .imageExportSuccess(imagePaths.length)),
               action: SnackBarAction(
-                label: '打开文件夹',
+                label: AppLocalizations.of(context).openFolder,
                 onPressed: () {
                   // 打开文件所在的文件夹
                   if (imagePaths.isNotEmpty) {
@@ -214,7 +220,8 @@ class FileOperations {
         } else {
           _safeShowSnackBar(
             scaffoldMessenger,
-            const SnackBar(content: Text('图片导出失败')),
+            SnackBar(
+                content: Text(AppLocalizations.of(context).imageExportFailed)),
           );
         }
       }
@@ -224,7 +231,9 @@ class FileOperations {
 
       _safeShowSnackBar(
         scaffoldMessenger,
-        SnackBar(content: Text('导出失败: $e')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)
+                .exportFailedWithError(e.toString()))),
       );
     } finally {
       debugPrint('=== 导出字帖过程结束 ===');
@@ -240,7 +249,7 @@ class FileOperations {
   ) async {
     if (pages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有可打印的页面')),
+        SnackBar(content: Text(AppLocalizations.of(context).noPagesToPrint)),
       );
       return;
     }
@@ -249,8 +258,8 @@ class FileOperations {
     ScaffoldMessengerState? scaffoldMessenger;
     if (context.mounted) {
       scaffoldMessenger = ScaffoldMessenger.of(context);
-      _safeShowSnackBar(
-          scaffoldMessenger, const SnackBar(content: Text('正在准备打印，请稍候...')));
+      _safeShowSnackBar(scaffoldMessenger,
+          SnackBar(content: Text(AppLocalizations.of(context).preparingPrint)));
     }
 
     try {
@@ -266,7 +275,9 @@ class FileOperations {
       if (pageImages.isEmpty) {
         _safeShowSnackBar(
           scaffoldMessenger,
-          const SnackBar(content: Text('无法捕获页面图像')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).cannotCapturePageImage)),
         );
         return;
       }
@@ -284,7 +295,9 @@ class FileOperations {
     } catch (e) {
       _safeShowSnackBar(
         scaffoldMessenger,
-        SnackBar(content: Text('打印准备失败: $e')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)
+                .printPreparationFailed(e.toString()))),
       );
     }
   }
@@ -295,7 +308,9 @@ class FileOperations {
       [PracticeEditController? controller]) async {
     if (controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法保存：缺少控制器')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context).cannotSaveMissingController)),
       );
       return;
     }
@@ -325,7 +340,9 @@ class FileOperations {
       [PracticeEditController? controller]) async {
     if (controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法保存：缺少控制器')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context).cannotSaveMissingController)),
       );
       return;
     }
@@ -390,7 +407,9 @@ class FileOperations {
             }
 
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context)
+                      .practiceSheetSaved(controller.practiceTitle!))),
             );
           } else if (result == 'title_exists') {
             // 如果标题已存在，询问是否覆盖
@@ -426,11 +445,14 @@ class FileOperations {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+                      content: Text(AppLocalizations.of(context)
+                          .practiceSheetOverwritten(
+                              controller.practiceTitle!))),
                 );
               } else if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('保存失败，请稍后重试')),
+                  SnackBar(
+                      content: Text(AppLocalizations.of(context).saveFailed)),
                 );
               }
             }
@@ -446,7 +468,7 @@ class FileOperations {
               },
             );
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('保存失败，请稍后重试')),
+              SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
             );
           }
         }
@@ -466,7 +488,9 @@ class FileOperations {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('保存失败：$error')),
+            SnackBar(
+                content: Text(AppLocalizations.of(context)
+                    .saveFailedWithError(error.toString()))),
           );
         }
       }
@@ -499,7 +523,9 @@ class FileOperations {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('字帖 "$title" 已保存')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).practiceSheetSaved(title))),
         );
       } else if (result == 'title_exists') {
         // 如果标题已存在，询问是否覆盖
@@ -519,18 +545,20 @@ class FileOperations {
             }
 
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context)
+                      .practiceSheetOverwritten(title))),
             );
           } else if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('保存失败，请稍后重试')),
+              SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
             );
           }
         }
       } else {
         // 如果保存失败，显示错误消息
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存失败，请稍后重试')),
+          SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
         );
       }
     }
@@ -590,7 +618,9 @@ class FileOperations {
       if (result != null) {
         if (result.success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result.message ?? '保存成功')),
+            SnackBar(
+                content: Text(result.message ??
+                    AppLocalizations.of(context).saveSuccess)),
           );
         } else if (result.error == 'title_exists') {
           // 处理标题冲突
@@ -607,7 +637,9 @@ class FileOperations {
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result.error ?? '保存失败')),
+            SnackBar(
+                content: Text(
+                    result.error ?? AppLocalizations.of(context).saveFailed)),
           );
         }
       }
@@ -624,7 +656,9 @@ class FileOperations {
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败：${e.toString()}')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)
+                  .saveFailedWithError(e.toString()))),
         );
       }
     }
@@ -636,16 +670,17 @@ class FileOperations {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认覆盖'),
-        content: Text('已存在名为"$title"的字帖，是否覆盖？'),
+        title: Text(AppLocalizations.of(context).confirmOverwrite),
+        content:
+            Text(AppLocalizations.of(context).overwriteExistingPractice(title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('覆盖'),
+            child: Text(AppLocalizations.of(context).practiceEditOverwrite),
           ),
         ],
       ),

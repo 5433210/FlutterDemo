@@ -909,11 +909,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'collection':
-        result = ElementRenderers.buildCollectionElement(elementCopy,
+        result = ElementRenderers.buildCollectionElement(context, elementCopy,
             ref: ref, isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'group':
-        result = ElementRenderers.buildGroupElement(elementCopy,
+        result = ElementRenderers.buildGroupElement(context, elementCopy,
             isSelected: widget.selectedElementIds?.contains(elementId) == true,
             ref: ref,
             isPreviewMode: widget.isPreviewMode == true);

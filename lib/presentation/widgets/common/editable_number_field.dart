@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// 可编辑数值字段
 /// 显示为只读文本框加编辑按钮，点击编辑按钮弹出对话框输入新值
 class EditableNumberField extends StatelessWidget {
@@ -180,7 +182,7 @@ class EditableNumberField extends StatelessWidget {
               }
             },
             child: AlertDialog(
-              title: Text('编辑$label'),
+              title: Text(AppLocalizations.of(context).editField(label)),
               content: SingleChildScrollView(
                 child: ValueListenableBuilder<bool>(
                   valueListenable: isDialogClosed,
@@ -210,7 +212,8 @@ class EditableNumberField extends StatelessWidget {
                           ],
                           decoration: InputDecoration(
                             labelText: label,
-                            hintText: '请输入$label',
+                            hintText: AppLocalizations.of(context)
+                                .inputFieldHint(label),
                             suffix: suffix != null ? Text(suffix!) : null,
                           ),
                           autofocus: true,
@@ -268,14 +271,14 @@ class EditableNumberField extends StatelessWidget {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('取消'),
+                  child: Text(AppLocalizations.of(context).cancel),
                   onPressed: () {
                     dispose();
                     Navigator.of(dialogContext).pop();
                   },
                 ),
                 TextButton(
-                  child: const Text('确定'),
+                  child: Text(AppLocalizations.of(context).confirm),
                   onPressed: () =>
                       _applyValue(dialogContext, controller.text, dispose),
                 ),

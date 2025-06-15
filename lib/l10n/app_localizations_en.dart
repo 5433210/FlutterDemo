@@ -2118,6 +2118,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditCopy => 'Copy (Ctrl+Shift+C)';
 
   @override
+  String get toolbarSelectAll => 'Select All';
+
+  @override
+  String get toolbarDeselectAll => 'Deselect All';
+
+  @override
+  String get toolbarCopyFormat => 'Copy Format (Alt+Q)';
+
+  @override
+  String get toolbarApplyFormatBrush => 'Apply Format Brush (Alt+W)';
+
+  @override
+  String get toolbarAlignmentAssist => 'Alignment Assistant';
+
+  @override
+  String get toolbarAlignmentNone => 'No alignment assist - Click to enable grid snap';
+
+  @override
+  String get toolbarAlignmentGrid => 'Grid snap mode - Click to switch to guideline alignment';
+
+  @override
+  String get toolbarAlignmentGuideline => 'Guideline alignment mode - Click to switch to no assist';
+
+  @override
+  String get commonLoading => 'Loading...';
+
+  @override
+  String get commonError => 'An error occurred';
+
+  @override
+  String get commonSuccess => 'Operation successful';
+
+  @override
+  String get commonNoImageSelected => 'No image selected';
+
+  @override
   String get practiceEditDangerZone => 'Danger Zone';
 
   @override
@@ -3053,7 +3089,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormToolTooltip => 'Press Tab to navigate to the next field';
 
   @override
+  String get workFormCreationDateError => 'Creation date cannot be later than current date';
+
+  @override
+  String get workImageRestoring => 'Restoring image data...';
+
+  @override
+  String get workImageDeleteConfirmTitle => 'Confirm Delete';
+
+  @override
+  String get workImageDeleteConfirmContent => 'Are you sure you want to delete the selected image?';
+
+  @override
+  String get workImageDeleting => 'Deleting image...';
+
+  @override
+  String workImageDeleteFailed(String error) {
+    return 'Failed to delete image: $error';
+  }
+
+  @override
+  String get colorPickerTitle => 'Select Color';
+
+  @override
+  String get colorCode => 'Color Code';
+
+  @override
+  String get colorCodeHelp => 'Enter 6-digit hexadecimal color code (e.g., FF5500)';
+
+  @override
+  String get colorCodeInvalid => 'Invalid color code';
+
+  @override
+  String get elementSize => 'Size';
+
+  @override
+  String get elementWidth => 'Width';
+
+  @override
+  String get elementHeight => 'Height';
+
+  @override
+  String get elementLock => 'Lock';
+
+  @override
+  String get elementLocked => 'Locked';
+
+  @override
+  String get elementUnlocked => 'Unlocked';
+
+  @override
+  String submitFailed(String error) {
+    return 'Submit failed: $error';
+  }
+
+  @override
   String get workImportDialogAddImages => 'Add Images';
+
+  @override
+  String get workImportAdd => 'Add';
+
+  @override
+  String get workImportAddImage => 'Add Image';
+
+  @override
+  String get workImportDelete => 'Delete';
+
+  @override
+  String get workImportDeleteImage => 'Delete Image';
+
+  @override
+  String get workImportImport => 'Import';
+
+  @override
+  String get navigationBackToPrevious => 'Return to Previous Page';
+
+  @override
+  String get navigationSelectPage => 'Which page would you like to return to?';
+
+  @override
+  String get navigationNoHistory => 'Cannot Go Back';
+
+  @override
+  String get navigationNoHistoryMessage => 'You have reached the beginning of the current section.';
 
   @override
   String get workImportDialogCancel => 'Cancel';
@@ -3125,4 +3243,448 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yes => 'Yes';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get overwriteConfirm => 'Overwrite Confirmation';
+
+  @override
+  String overwriteMessage(String title) {
+    return 'A copybook with title \"$title\" already exists. Do you want to overwrite it?';
+  }
+
+  @override
+  String addFromGalleryFailed(String error) {
+    return 'Failed to add image from gallery: $error';
+  }
+
+  @override
+  String get selectCategoryToApply => 'Please select a category to apply:';
+
+  @override
+  String get titleCannotBeEmpty => 'Title cannot be empty';
+
+  @override
+  String get titleAlreadyExists => 'A copybook with the same title already exists, please use a different title';
+
+  @override
+  String get noPagesToExport => 'No pages to export';
+
+  @override
+  String get exportFailed => 'Export failed: Incomplete parameters';
+
+  @override
+  String get exporting => 'Exporting, please wait...';
+
+  @override
+  String pdfExportSuccess(String path) {
+    return 'PDF export successful: $path';
+  }
+
+  @override
+  String pdfExportSuccessNoFile(String path) {
+    return 'PDF export successful, but file not found: $path';
+  }
+
+  @override
+  String get pdfExportFailed => 'PDF export failed';
+
+  @override
+  String imageExportSuccess(int count) {
+    return 'Successfully exported $count images';
+  }
+
+  @override
+  String get imageExportFailed => 'Image export failed';
+
+  @override
+  String exportFailedWithError(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get noPagesToPrint => 'No pages to print';
+
+  @override
+  String get preparingPrint => 'Preparing to print, please wait...';
+
+  @override
+  String get cannotCapturePageImage => 'Cannot capture page image';
+
+  @override
+  String printPreparationFailed(String error) {
+    return 'Print preparation failed: $error';
+  }
+
+  @override
+  String get cannotSaveMissingController => 'Cannot save: Missing controller';
+
+  @override
+  String practiceSheetSaved(String title) {
+    return 'Copybook \"$title\" saved';
+  }
+
+  @override
+  String practiceSheetOverwritten(String title) {
+    return 'Copybook \"$title\" overwritten and saved';
+  }
+
+  @override
+  String get saveFailed => 'Save failed, please try again later';
+
+  @override
+  String saveFailedWithError(String error) {
+    return 'Save failed: $error';
+  }
+
+  @override
+  String get saveSuccess => 'Save successful';
+
+  @override
+  String get confirmOverwrite => 'Confirm Overwrite';
+
+  @override
+  String overwriteExistingPractice(String title) {
+    return 'A copybook named \"$title\" already exists. Do you want to overwrite it?';
+  }
+
+  @override
+  String get openFolder => 'Open Folder';
+
+  @override
+  String get formatBrushActivated => 'Format brush activated, click target element to apply style';
+
+  @override
+  String get elementCopiedToClipboardWithPreload => 'Element copied to clipboard (images preloaded)';
+
+  @override
+  String get elementCopiedToClipboard => 'Element copied to clipboard';
+
+  @override
+  String get practiceSheetNotExists => 'Practice sheet does not exist';
+
+  @override
+  String get loadPracticeSheetFailed => 'Failed to load practice sheet';
+
+  @override
+  String get categoryName => 'Category Name';
+
+  @override
+  String get enterCategoryName => 'Please enter category name';
+
+  @override
+  String get parentCategory => 'Parent Category (Optional)';
+
+  @override
+  String get selectParentCategory => 'Select parent category';
+
+  @override
+  String get noTopLevelCategory => 'None (Top Level Category)';
+
+  @override
+  String get categoryNameCannotBeEmpty => 'Category name cannot be empty';
+
+  @override
+  String setCategoryForItems(int count) {
+    return 'Set Category ($count items)';
+  }
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get confirmDeleteAllItems => 'Confirm Delete All Items';
+
+  @override
+  String confirmDeleteFilteredItems(int count) {
+    return 'Are you sure you want to delete all $count items under the current filter? This action cannot be undone.';
+  }
+
+  @override
+  String importSuccessMessage(int count) {
+    return 'Successfully imported $count files';
+  }
+
+  @override
+  String importFailedMessage(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String get folderImportComplete => 'Folder import complete';
+
+  @override
+  String get removeFromCategory => 'Remove from Category';
+
+  @override
+  String confirmRemoveFromCategory(int count) {
+    return 'Are you sure you want to remove the selected $count items from the current category?';
+  }
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get importingImages => 'Importing images, please wait...';
+
+  @override
+  String get characterDetailTitle => 'Character Details';
+
+  @override
+  String get pinyin => 'Pinyin';
+
+  @override
+  String get strokeCount => 'Stroke Count';
+
+  @override
+  String get sourceInfo => 'Source Information';
+
+  @override
+  String get work => 'Work';
+
+  @override
+  String get author => 'Author';
+
+  @override
+  String get dynasty => 'Dynasty';
+
+  @override
+  String charactersSelected(Object count) {
+    return '$count characters selected';
+  }
+
+  @override
+  String get deselectAll => 'Deselect All';
+
+  @override
+  String get deleteConfirmation => 'Delete Confirmation';
+
+  @override
+  String deleteCharactersConfirm(Object count) {
+    return 'Are you sure you want to delete these $count characters? This action cannot be undone.';
+  }
+
+  @override
+  String get noImages => 'No Images';
+
+  @override
+  String get imageIndexError => 'Image Index Error';
+
+  @override
+  String get imageFileNotExists => 'Image File Not Exists';
+
+  @override
+  String get imageLoadFailed => 'Image Load Failed';
+
+  @override
+  String get color => 'Color';
+
+  @override
+  String selectColor(Object type) {
+    return 'Select $type';
+  }
+
+  @override
+  String editField(Object field) {
+    return 'Edit $field';
+  }
+
+  @override
+  String inputFieldHint(Object field) {
+    return 'Please input $field';
+  }
+
+  @override
+  String get selectColorTitle => 'Select Color';
+
+  @override
+  String get startDate => 'Start Date';
+
+  @override
+  String get endDate => 'End Date';
+
+  @override
+  String get to => 'To';
+
+  @override
+  String get beforeDate => 'Before Date';
+
+  @override
+  String get afterDate => 'After Date';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get inputNewTag => 'Input new tag...';
+
+  @override
+  String get addTag => 'Add Tag';
+
+  @override
+  String get commonTags => 'Common Tags:';
+
+  @override
+  String get importFileSuccess => 'Import file successfully';
+
+  @override
+  String importFileFailed(Object error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String refreshDataFailed(Object error) {
+    return 'Refresh data failed: $error';
+  }
+
+  @override
+  String get inputChineseContent => 'Please input Chinese content';
+
+  @override
+  String get widgetRefRequired => 'WidgetRef required to create CollectionPainter';
+
+  @override
+  String get emptyGroup => 'Empty Group';
+
+  @override
+  String unknownElementType(Object type) {
+    return 'Unknown element type: $type';
+  }
+
+  @override
+  String get noDisplayableImages => 'No displayable images';
+
+  @override
+  String get autoDetectPageOrientation => 'Auto-detect page orientation';
+
+  @override
+  String get autoDetect => 'Auto-detect';
+
+  @override
+  String selectDirectoryFailed(Object error) {
+    return 'Select directory failed: $error';
+  }
+
+  @override
+  String get noTexture => 'No texture';
+
+  @override
+  String get dataIncomplete => 'Data incomplete';
+
+  @override
+  String get dataEmpty => 'Data empty';
+
+  @override
+  String get renderFailed => 'Render failed';
+
+  @override
+  String importImageFailed(Object error) {
+    return 'Import image failed: $error';
+  }
+
+  @override
+  String openGalleryFailed(Object error) {
+    return 'Open gallery failed: $error';
+  }
+
+  @override
+  String get sourceHanSansFont => 'Source Han Sans';
+
+  @override
+  String get sourceHanSerifFont => 'Source Han Serif';
+
+  @override
+  String get emptyStateNoWorks => 'No works\nTap the add button to import works';
+
+  @override
+  String get emptyStateNoCharacters => 'No characters\nCharacters will appear here after extracting from works';
+
+  @override
+  String get emptyStateNoPractices => 'No practices\nTap the add button to create new practice';
+
+  @override
+  String get emptyStateNoResults => 'No matching results found\nTry changing search criteria';
+
+  @override
+  String get emptyStateNoSelection => 'No items selected\nTap items to select';
+
+  @override
+  String get emptyStateError => 'Loading failed\nPlease try again later';
+
+  @override
+  String get appRestartFailed => 'App restart failed, please restart manually';
+
+  @override
+  String get appRestarting => 'Restarting app';
+
+  @override
+  String get appRestartingMessage => 'Data recovery successful, restarting app...';
+
+  @override
+  String get addImages => 'Add images';
+
+  @override
+  String get rotateLeft => 'Rotate left';
+
+  @override
+  String get rotateRight => 'Rotate right';
+
+  @override
+  String get deleteSelected => 'Delete selected';
+
+  @override
+  String get confirmDeleteAll => 'Delete image';
+
+  @override
+  String get confirmDeleteMessage => 'Are you sure you want to delete the selected images?';
+
+  @override
+  String get confirmDeleteAllMessage => 'This is the last image. Deleting it will exit import. Are you sure you want to delete it?';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get setCategory => 'Set category';
+
+  @override
+  String get copySelected => 'Copy selected items';
+
+  @override
+  String get cutSelected => 'Cut selected items';
+
+  @override
+  String get deleteAllItems => 'Delete all';
+
+  @override
+  String get toggleBackground => 'Toggle background';
+
+  @override
+  String get resetZoom => 'Reset zoom';
+
+  @override
+  String get fullScreen => 'Full screen';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get dropToImportImages => 'Release to import images';
+
+  @override
+  String get deleteCurrentImage => 'Delete current image';
+
+  @override
+  String get workStatusDraft => 'Draft';
+
+  @override
+  String get workStatusPublished => 'Published';
+
+  @override
+  String get workStatusArchived => 'Archived';
 }

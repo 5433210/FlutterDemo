@@ -555,17 +555,16 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
         categories: _selectedCategories,
         isFavorite: _isFavorite,
         remarks: _remarksController.text.trim(),
-      );
-
-      // Save to database through provider
+      ); // Save to database through provider
       try {
         await ref
             .read(libraryManagementProvider.notifier)
             .updateItem(updatedItem);
 
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('保存成功')),
+            SnackBar(content: Text(l10n.saveSuccess)),
           );
           setState(() {
             _isEditing = false;
@@ -573,8 +572,9 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
         }
       } catch (e) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('保存失败: ${e.toString()}')),
+            SnackBar(content: Text(l10n.saveFailedWithError(e.toString()))),
           );
         }
       }

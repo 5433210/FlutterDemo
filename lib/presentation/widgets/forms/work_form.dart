@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../common/section_title.dart';
 import '../inputs/date_input_field.dart';
@@ -433,18 +434,19 @@ class _WorkFormState extends State<WorkForm> {
   Widget _buildAuthorField() {
     final theme = Theme.of(context);
     final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
+    final l10n = AppLocalizations.of(context);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+A',
-      tooltip: '按 Ctrl+A 快速跳转到作者输入框',
-      helpText: widget.showHelp ? '可选，作品的创作者' : null,
+      tooltip: l10n.workFormAuthorTooltip,
+      helpText: widget.showHelp ? l10n.workFormAuthorHelp : null,
       helpIcon: Icons.person_outline,
       child: TextFormField(
         focusNode: _authorFocus,
         controller: _authorController,
         decoration: InputDecoration(
-          labelText: '作者',
-          hintText: _isReadOnly ? null : '请输入作者名',
+          labelText: l10n.workFormAuthor,
+          hintText: _isReadOnly ? null : l10n.workFormAuthorHint,
           suffixText: _authorFocus.hasFocus && !_isReadOnly ? 'Ctrl+A' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_authorController.text.length}/50',
@@ -485,13 +487,14 @@ class _WorkFormState extends State<WorkForm> {
   }
 
   Widget _buildDateField() {
+    final l10n = AppLocalizations.of(context);
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: '按 Tab 键导航到下一个字段',
-      helpText: widget.showHelp ? '作品的完成日期' : null,
+      tooltip: l10n.workFormDateTooltip,
+      helpText: widget.showHelp ? l10n.workFormDateHelp : null,
       helpIcon: Icons.calendar_today_outlined,
       child: DateInputField(
-        label: '创作日期',
+        label: l10n.workFormCreationDate,
         value: widget.initialCreationDate,
         onChanged: _handleDateChange,
         textInputAction: TextInputAction.next,
@@ -530,18 +533,19 @@ class _WorkFormState extends State<WorkForm> {
   Widget _buildRemarkField() {
     final theme = Theme.of(context);
     final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
+    final l10n = AppLocalizations.of(context);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+R',
-      tooltip: '按 Ctrl+R 快速跳转到备注输入框',
-      helpText: widget.showHelp ? '可选，关于作品的其他说明' : null,
+      tooltip: l10n.workFormRemarkTooltip,
+      helpText: widget.showHelp ? l10n.workFormRemarkHelp : null,
       helpIcon: Icons.notes_outlined,
       child: TextFormField(
         focusNode: _remarkFocus,
         controller: _remarkController,
         decoration: InputDecoration(
-          labelText: '备注',
-          hintText: _isReadOnly ? null : '可选',
+          labelText: l10n.workFormRemark,
+          hintText: _isReadOnly ? null : l10n.workFormRemarkHint,
           suffixText: _remarkFocus.hasFocus && !_isReadOnly ? 'Ctrl+R' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_remarkController.text.length}/500',
@@ -568,14 +572,15 @@ class _WorkFormState extends State<WorkForm> {
 
   Widget _buildStyleField() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: '按 Tab 键导航到下一个字段',
-      helpText: widget.showHelp ? '作品的主要画风类型' : null,
+      tooltip: l10n.workFormDateTooltip,
+      helpText: widget.showHelp ? l10n.workFormStyleHelp : null,
       helpIcon: Icons.palette_outlined,
       child: DropdownField<String>(
-        label: '画风',
+        label: l10n.workFormStyle,
         value: widget.initialStyle?.value,
         items: WorkStyle.values
             .map((e) => DropdownMenuItem(
@@ -595,20 +600,21 @@ class _WorkFormState extends State<WorkForm> {
   Widget _buildTitleField() {
     final theme = Theme.of(context);
     final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
+    final l10n = AppLocalizations.of(context);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+T',
-      tooltip: '按 Ctrl+T 快速跳转到标题输入框',
-      helpText: widget.showHelp ? '作品的主要标题，将显示在作品列表中' : null,
+      tooltip: l10n.workFormTitleTooltip,
+      helpText: widget.showHelp ? l10n.workFormTitleHelp : null,
       helpIcon: Icons.info_outline,
       child: TextFormField(
         focusNode: _titleFocus,
         controller: _titleController,
         decoration: InputDecoration(
           labelText: widget.requiredFields.contains(WorkFormField.title)
-              ? '标题 *'
-              : '标题',
-          hintText: _isReadOnly ? null : '请输入标题',
+              ? '${l10n.workFormTitle} *'
+              : l10n.workFormTitle,
+          hintText: _isReadOnly ? null : l10n.workFormTitleHint,
           suffixText: _titleFocus.hasFocus && !_isReadOnly ? 'Ctrl+T' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_titleController.text.length}/100',
@@ -635,14 +641,15 @@ class _WorkFormState extends State<WorkForm> {
 
   Widget _buildToolField() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: '按 Tab 键导航到下一个字段',
-      helpText: widget.showHelp ? '创作本作品使用的主要工具' : null,
+      tooltip: l10n.workFormToolTooltip,
+      helpText: widget.showHelp ? l10n.workFormToolHelp : null,
       helpIcon: Icons.brush_outlined,
       child: DropdownField<String>(
-        label: '创作工具',
+        label: l10n.workFormTool,
         value: widget.initialTool?.value,
         items: WorkTool.values
             .map((e) => DropdownMenuItem(
@@ -663,9 +670,10 @@ class _WorkFormState extends State<WorkForm> {
     if (date != null) {
       if (date.isAfter(DateTime.now())) {
         // 日期不能超过当前日期
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('创作日期不能超过当前日期'),
+          SnackBar(
+            content: Text(l10n.workFormCreationDateError),
             behavior: SnackBarBehavior.floating,
           ),
         );

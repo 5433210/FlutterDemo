@@ -52,7 +52,7 @@ class _M3BackgroundTexturePanelState
 
     // 生成查询缓存键
     final queryKey = '${widget.element['id']}_${content.hashCode}';
-    
+
     // 🚀 性能优化：检查缓存避免重复日志输出
     if (_lastQueryKey != queryKey) {
       AppLogger.debug(
@@ -62,9 +62,9 @@ class _M3BackgroundTexturePanelState
           'elementType': widget.element['type'],
           'contentKeys': content.keys.toList(),
           'hasBackgroundTexture': content.containsKey('backgroundTexture'),
-          'backgroundTextureData': content.containsKey('backgroundTexture') 
-            ? content['backgroundTexture'] 
-            : null,
+          'backgroundTextureData': content.containsKey('backgroundTexture')
+              ? content['backgroundTexture']
+              : null,
           'operation': 'build_texture_panel',
         },
       );
@@ -360,13 +360,14 @@ class _M3BackgroundTexturePanelState
           'operation': 'texture_preview_empty',
         },
       );
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.texture_outlined, color: Colors.grey),
-            SizedBox(height: 4),
-            Text('无纹理', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            const Icon(Icons.texture_outlined, color: Colors.grey),
+            const SizedBox(height: 4),
+            Text(AppLocalizations.of(context).noTexture,
+                style: const TextStyle(fontSize: 10, color: Colors.grey)),
           ],
         ),
       );
@@ -395,13 +396,14 @@ class _M3BackgroundTexturePanelState
           'operation': 'incomplete_texture_data',
         },
       );
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.broken_image_outlined, color: Colors.orange),
-            SizedBox(height: 4),
-            Text('数据不完整', style: TextStyle(fontSize: 10, color: Colors.orange)),
+            const Icon(Icons.broken_image_outlined, color: Colors.orange),
+            const SizedBox(height: 4),
+            Text(AppLocalizations.of(context).dataIncomplete,
+                style: const TextStyle(fontSize: 10, color: Colors.orange)),
           ],
         ),
       );
@@ -473,14 +475,16 @@ class _M3BackgroundTexturePanelState
                     'operation': 'texture_load_error',
                   },
                 );
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red, size: 18),
-                      SizedBox(height: 4),
-                      Text('加载失败',
-                          style: TextStyle(fontSize: 10, color: Colors.red)),
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 18),
+                      const SizedBox(height: 4),
+                      Text(AppLocalizations.of(context).loadFailed,
+                          style:
+                              const TextStyle(fontSize: 10, color: Colors.red)),
                     ],
                   ),
                 );
@@ -495,20 +499,21 @@ class _M3BackgroundTexturePanelState
                     'operation': 'texture_data_empty',
                   },
                 );
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.image_not_supported,
+                      const Icon(Icons.image_not_supported,
                           color: Colors.orange, size: 18),
-                      SizedBox(height: 4),
-                      Text('数据为空',
-                          style: TextStyle(fontSize: 10, color: Colors.orange)),
+                      const SizedBox(height: 4),
+                      Text(AppLocalizations.of(context).dataEmpty,
+                          style: const TextStyle(
+                              fontSize: 10, color: Colors.orange)),
                     ],
                   ),
                 );
               }
-              
+
               AppLogger.info(
                 '纹理加载成功',
                 tag: 'texture_panel',
@@ -519,7 +524,7 @@ class _M3BackgroundTexturePanelState
                   'operation': 'texture_load_success',
                 },
               );
-              
+
               return Opacity(
                 opacity: textureOpacity.clamp(0.0, 1.0),
                 child: Image.memory(
@@ -538,16 +543,16 @@ class _M3BackgroundTexturePanelState
                         'operation': 'texture_render_error',
                       },
                     );
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_not_supported,
+                          const Icon(Icons.image_not_supported,
                               color: Colors.red, size: 18),
-                          SizedBox(height: 4),
-                          Text('渲染失败',
-                              style:
-                                  TextStyle(fontSize: 10, color: Colors.red)),
+                          const SizedBox(height: 4),
+                          Text(AppLocalizations.of(context).renderFailed,
+                              style: const TextStyle(
+                                  fontSize: 10, color: Colors.red)),
                         ],
                       ),
                     );
@@ -609,27 +614,27 @@ class _M3BackgroundTexturePanelState
   Map<String, dynamic>? _findTextureData(Map<String, dynamic> content) {
     // 生成缓存键
     final cacheKey = content.hashCode.toString();
-    
+
     // 检查缓存
     if (_textureQueryCache.containsKey(cacheKey)) {
       final cachedResult = _textureQueryCache[cacheKey];
-             if (cachedResult != null) {
-         AppLogger.info(
-           '使用纹理查询缓存',
-           tag: 'texture_panel',
-           data: {
-             'cacheKey': cacheKey,
-             'textureId': cachedResult['id'],
-             'optimization': 'texture_query_cache_hit',
-           },
-         );
-       }
+      if (cachedResult != null) {
+        AppLogger.info(
+          '使用纹理查询缓存',
+          tag: 'texture_panel',
+          data: {
+            'cacheKey': cacheKey,
+            'textureId': cachedResult['id'],
+            'optimization': 'texture_query_cache_hit',
+          },
+        );
+      }
       return cachedResult;
     }
 
     // 缓存未命中，执行查询
     Map<String, dynamic>? result;
-    
+
     // 检查参数是否有效 - 只在content级别查找backgroundTexture
     if (content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
@@ -662,7 +667,7 @@ class _M3BackgroundTexturePanelState
     }
 
     // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
-    if (result == null && 
+    if (result == null &&
         content.containsKey('content') &&
         content['content'] != null &&
         content['content'] is Map<String, dynamic>) {
@@ -678,7 +683,7 @@ class _M3BackgroundTexturePanelState
 
     // 缓存查询结果（包括null结果）
     _textureQueryCache[cacheKey] = result;
-    
+
     // 限制缓存大小，避免内存泄漏
     if (_textureQueryCache.length > 50) {
       final oldestKey = _textureQueryCache.keys.first;
@@ -694,7 +699,7 @@ class _M3BackgroundTexturePanelState
         },
       );
     }
-    
+
     return result;
   }
 
@@ -904,8 +909,7 @@ class _M3BackgroundTexturePanelState
       newContent['backgroundTexture'] = textureData;
       newContent['textureFillMode'] =
           elementContent['textureFillMode'] ?? 'stretch';
-      newContent['textureFitMode'] =
-          elementContent['textureFitMode'] ?? 'fill';
+      newContent['textureFitMode'] = elementContent['textureFitMode'] ?? 'fill';
       newContent['textureOpacity'] = elementContent['textureOpacity'] ?? 1.0;
       newContent['textureWidth'] = selectedTexture.width;
       newContent['textureHeight'] = selectedTexture.height;

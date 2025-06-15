@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/entities/library_item.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../providers/library/library_management_provider.dart';
 import '../../../providers/persistent_panel_provider.dart';
 import '../../../widgets/common/advanced_image_preview.dart';
@@ -222,28 +223,28 @@ class _ResizableImagePreviewPanelState
               // Toggle background color button
               IconButton(
                 icon: const Icon(Icons.brightness_6, size: 20),
-                tooltip: '切换背景',
+                tooltip: AppLocalizations.of(context).toggleBackground,
                 onPressed: _toggleBackgroundColor,
               ),
 
               // Reset zoom button
               IconButton(
                 icon: const Icon(Icons.zoom_out_map, size: 20),
-                tooltip: '重置缩放',
+                tooltip: AppLocalizations.of(context).resetZoom,
                 onPressed: _resetZoom,
               ),
 
               // Full screen button
               IconButton(
                 icon: const Icon(Icons.fullscreen, size: 20),
-                tooltip: '全屏显示',
+                tooltip: AppLocalizations.of(context).fullScreen,
                 onPressed: _openFullScreen,
               ),
 
               // Close button
               IconButton(
                 icon: const Icon(Icons.close, size: 20),
-                tooltip: '关闭',
+                tooltip: AppLocalizations.of(context).close,
                 onPressed: widget.onClose,
               ),
             ],

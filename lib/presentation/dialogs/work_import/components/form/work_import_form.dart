@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../viewmodels/states/work_import_state.dart';
 import '../../../../viewmodels/work_import_view_model.dart';
 import '../../../../widgets/forms/work_form.dart';
@@ -60,9 +61,10 @@ class _WorkImportFormState extends State<WorkImportForm> {
     if (date != null) {
       if (date.isAfter(DateTime.now())) {
         // 日期不能超过当前日期
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('创作日期不能超过当前日期'),
+          SnackBar(
+            content: Text(l10n.workFormCreationDateError),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -87,13 +89,14 @@ class _WorkImportFormState extends State<WorkImportForm> {
         Navigator.of(context).pop(true);
       } catch (e) {
         if (!mounted) return;
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('提交失败: ${e.toString()}'),
+            content: Text(l10n.submitFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
-              label: '重试',
+              label: l10n.retry,
               onPressed: _handleSubmit,
               textColor: Theme.of(context).colorScheme.onError,
             ),

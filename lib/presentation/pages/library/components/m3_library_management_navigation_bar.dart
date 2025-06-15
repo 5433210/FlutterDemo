@@ -162,7 +162,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.onSelectAll != null)
             IconButton(
               icon: const Icon(Icons.select_all),
-              tooltip: '全选',
+              tooltip: l10n.selectAll,
               onPressed: widget.onSelectAll,
             ),
 
@@ -170,7 +170,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.onCancelSelection != null && widget.selectedCount > 0)
             IconButton(
               icon: const Icon(Icons.deselect),
-              tooltip: '取消选择',
+              tooltip: l10n.deselectAll,
               onPressed: widget.onCancelSelection,
             ),
 
@@ -178,7 +178,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.onRemoveFromCategory != null && widget.selectedCount > 0)
             IconButton(
               icon: const Icon(Icons.category_outlined),
-              tooltip: '从当前分类移除',
+              tooltip: l10n.removeFromCategory,
               onPressed: widget.onRemoveFromCategory,
             ),
 
@@ -186,7 +186,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onAssignCategoryBatch != null)
             IconButton(
               icon: const Icon(Icons.category),
-              tooltip: '设置分类',
+              tooltip: l10n.setCategory,
               onPressed: widget.onAssignCategoryBatch,
             ),
 
@@ -194,7 +194,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onCopySelected != null)
             IconButton(
               icon: const Icon(Icons.copy),
-              tooltip: '复制选中项目',
+              tooltip: l10n.copySelected,
               onPressed: widget.onCopySelected,
             ),
 
@@ -202,7 +202,7 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0 && widget.onCutSelected != null)
             IconButton(
               icon: const Icon(Icons.cut),
-              tooltip: '剪切选中项目',
+              tooltip: l10n.cutSelected,
               onPressed: widget.onCutSelected,
             ),
 
@@ -213,13 +213,11 @@ class _M3LibraryManagementNavigationBarState
               tooltip: l10n.libraryManagementDeleteSelected,
               onPressed: widget.onDeleteSelected,
             ),
-        ],
-
-        // 删除全部按钮 - 在非批量模式下显示
+        ], // 删除全部按钮 - 在非批量模式下显示
         if (!widget.isBatchMode && widget.onDeleteAll != null)
           IconButton(
             icon: const Icon(Icons.delete_sweep),
-            tooltip: '删除全部',
+            tooltip: l10n.deleteAllItems,
             onPressed: widget.onDeleteAll,
           ),
 

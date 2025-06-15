@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../infrastructure/logging/logger.dart';
+import '../l10n/app_localizations.dart';
 
 /// 应用重启服务
 ///
@@ -18,15 +19,15 @@ class AppRestartService {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const PopScope(
+      builder: (context) => PopScope(
         canPop: false, // 防止用户通过返回键关闭对话框
         child: AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('正在重启应用...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.of(context).appRestartingMessage),
             ],
           ),
         ),

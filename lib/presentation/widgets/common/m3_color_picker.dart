@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// 统一的Material Design 3风格颜色选择器
 class M3ColorPicker extends StatefulWidget {
   /// 当前颜色
@@ -67,8 +69,9 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('选择颜色'),
+      title: Text(l10n.selectColorTitle),
       content: SizedBox(
         width: 320,
         height: 450,
@@ -82,11 +85,11 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_currentColor),
-          child: const Text('确定'),
+          child: Text(l10n.confirm),
         ),
       ],
     );
@@ -241,10 +244,12 @@ class _M3ColorPickerState extends State<M3ColorPicker>
           TextField(
             controller: _hexController,
             decoration: InputDecoration(
-              labelText: '颜色代码',
-              helperText: '输入6位十六进制颜色代码 (例如: FF5500)',
+              labelText: AppLocalizations.of(context).colorCode,
+              helperText: AppLocalizations.of(context).colorCodeHelp,
               prefixText: '#',
-              errorText: _isValidHex ? null : '无效的颜色代码',
+              errorText: _isValidHex
+                  ? null
+                  : AppLocalizations.of(context).colorCodeInvalid,
               border: const OutlineInputBorder(),
             ),
             inputFormatters: [

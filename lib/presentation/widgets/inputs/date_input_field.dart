@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// A custom date input field with consistent styling
 class DateInputField extends StatelessWidget {
   final String label;
@@ -52,7 +54,8 @@ class DateInputField extends StatelessWidget {
     return TextFormField(
       decoration: InputDecoration(
         labelText: label,
-        hintText: enabled ? '选择日期' : null,
+        hintText:
+            enabled ? AppLocalizations.of(context).workFormSelectDate : null,
         border: const OutlineInputBorder(),
         suffixIcon: enabled
             ? IconButton(

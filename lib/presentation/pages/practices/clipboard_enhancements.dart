@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 Future<bool> checkClipboardContent() async => false;
 
 /// Enhanced copy functionality for clipboard handling
@@ -13,11 +15,10 @@ void enhancedCopySelectedElement(BuildContext context) {
     debugPrint('复制的元素类型: ${clipboardElement['type']}');
 
     // Update clipboard state and paste button activation
-    updateClipboardState(true);
-
-    // Show a snackbar notification for successful copy
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+    updateClipboardState(
+        true); // Show a snackbar notification for successful copy
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).elementCopiedToClipboard)));
   } else {
     updateClipboardState(false);
   }

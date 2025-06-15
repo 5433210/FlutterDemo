@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 import '../image/cached_image.dart';
 
 class BaseImagePreview extends StatefulWidget {
@@ -58,7 +59,7 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
             borderRadius: BorderRadius.circular(4),
           ),
       child: widget.imagePaths.isEmpty
-          ? const Center(child: Text('没有图片'))
+          ? Center(child: Text(AppLocalizations.of(context).noImages))
           : _buildImageViewer(),
     );
   }
@@ -81,15 +82,14 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
   Widget _buildImageViewer() {
     final currentPath = widget.imagePaths[_currentIndex];
     final fileExists = _fileExistsCache[currentPath] ?? false;
-
     if (!fileExists) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.broken_image, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('图片文件不存在'),
+            const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).imageFileNotExists),
           ],
         ),
       );
@@ -158,13 +158,15 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
                   stackTrace: stackTrace,
                   data: {'path': currentPath},
                 );
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.broken_image, size: 64, color: Colors.red),
-                      SizedBox(height: 16),
-                      Text('图片加载失败', style: TextStyle(color: Colors.red)),
+                      const Icon(Icons.broken_image,
+                          size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(AppLocalizations.of(context).imageLoadFailed,
+                          style: const TextStyle(color: Colors.red)),
                     ],
                   ),
                 );

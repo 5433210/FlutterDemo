@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
 import '../../../../infrastructure/logging/logger.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../providers/work_image_editor_provider.dart';
 import '../../../widgets/works/enhanced_work_preview.dart';
@@ -15,9 +16,9 @@ class WorkImagesManagementView extends ConsumerWidget {
     super.key,
     required this.work,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(workImageEditorProvider);
     final notifier = ref.read(workImageEditorProvider.notifier);
     final isProcessing = state.isProcessing;
@@ -68,14 +69,13 @@ class WorkImagesManagementView extends ConsumerWidget {
           notifier.updateSelectedIndex(selectedIndex);
         }
       });
-
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('正在恢复图片数据...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).workImageRestoring),
           ],
         ),
       );
@@ -138,7 +138,7 @@ class WorkImagesManagementView extends ConsumerWidget {
               toolbarActions: [
                 // 添加图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: '添加图片',
+                  message: l10n.addImages,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: isProcessing ? null : () => notifier.addImages(),
@@ -150,7 +150,7 @@ class WorkImagesManagementView extends ConsumerWidget {
 
                 // 删除图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: '删除当前图片',
+                  message: l10n.deleteCurrentImage,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: (isProcessing || state.images.isEmpty)
@@ -290,24 +290,27 @@ class WorkImagesManagementView extends ConsumerWidget {
       final shouldDelete = await showDialog<bool>(
         context: context,
         barrierDismissible: false, // Prevent dismiss by tapping outside
-        builder: (context) => AlertDialog(
-          title: const Text('确认删除'),
-          content: const Text('确定要删除当前选中的图片吗？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
+        builder: (context) {
+          final l10n = AppLocalizations.of(context);
+          return AlertDialog(
+            title: Text(l10n.workImageDeleteConfirmTitle),
+            content: Text(l10n.workImageDeleteConfirmContent),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.cancel),
               ),
-              child: const Text('删除'),
-            ),
-          ],
-        ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                child: Text(l10n.delete),
+              ),
+            ],
+          );
+        },
       );
 
       AppLogger.debug('Delete confirmation result',
@@ -316,10 +319,11 @@ class WorkImagesManagementView extends ConsumerWidget {
       if (shouldDelete == true) {
         // Immediately update UI to show processing state
         if (context.mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('正在删除图片...'),
-              duration: Duration(seconds: 1),
+            SnackBar(
+              content: Text(l10n.workImageDeleting),
+              duration: const Duration(seconds: 1),
             ),
           );
         }
@@ -334,11 +338,11 @@ class WorkImagesManagementView extends ConsumerWidget {
     } catch (e, stack) {
       AppLogger.error('Error in delete operation',
           tag: 'WorkImagesManagementView', error: e, stackTrace: stack);
-
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('删除图片失败: ${e.toString()}'),
+            content: Text(l10n.workImageDeleteFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

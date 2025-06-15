@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../domain/models/work/work_image.dart';
 import '../../../../../infrastructure/logging/logger.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../providers/work_import_provider.dart';
 import '../../../../widgets/works/enhanced_work_preview.dart';
 import '../../../common/dialog_button_group.dart';
@@ -26,6 +27,7 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
   Widget build(BuildContext context) {
     final state = ref.watch(workImportProvider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     AppLogger.debug(
         'Building WorkImportPreview with ${state.images.length} images');
@@ -84,11 +86,11 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: FilledButton.tonalIcon(
-                        onPressed: handleAdd, // 处理中禁用
-                        icon: const Icon(Icons.add_photo_alternate),
+                        onPressed:
+                            handleAdd, // 处理中禁用                        icon: const Icon(Icons.add_photo_alternate),
                         label: isSmallWidth
-                            ? const Text('添加')
-                            : const Text('添加图片'),
+                            ? Text(l10n.workImportAdd)
+                            : Text(l10n.workImportAddImage),
                       ),
                     ),
                     Padding(
@@ -99,8 +101,8 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                           Icons.delete_outline,
                         ),
                         label: isSmallWidth
-                            ? const Text('删除')
-                            : const Text('删除图片'),
+                            ? Text(l10n.workImportDelete)
+                            : Text(l10n.workImportDeleteImage),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
                           side: BorderSide(
@@ -133,17 +135,17 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                 // 确认按钮点击处理
                 onConfirm: () async {
                   final success = await _handleConfirm();
-                  
+
                   // Check if widget is still in the tree before using context
                   if (!mounted) return;
-                  
+
                   if (success) {
                     if (context.mounted) {
                       Navigator.of(context).pop(true);
                     }
                   }
                 },
-                confirmText: '导入',
+                confirmText: l10n.workImportImport,
               ),
           ],
         );
@@ -165,10 +167,11 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
   Future<void> _handleDeleteSelected() async {
     final state = ref.read(workImportProvider);
     if (state.images.isEmpty) return;
-
     final isLastImage = state.images.length == 1;
-    String title = isLastImage ? '确认删除' : '删除图片';
-    String message = isLastImage ? '这是最后一张图片，删除后将退出导入。确定要删除吗？' : '确定要删除选中的图片吗？';
+    final l10n = AppLocalizations.of(context);
+    String title = isLastImage ? l10n.confirmDelete : l10n.confirmDeleteAll;
+    String message =
+        isLastImage ? l10n.confirmDeleteAllMessage : l10n.confirmDeleteMessage;
 
     final confirmed = await showConfirmDialog(
       context: context,

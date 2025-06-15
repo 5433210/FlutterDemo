@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class TagEditor extends StatefulWidget {
   final List<String> tags;
   final List<String> suggestedTags;
@@ -62,8 +64,8 @@ class _TagEditorState extends State<TagEditor> {
               child: TextField(
                 controller: _controller,
                 focusNode: _focusNode,
-                decoration: const InputDecoration(
-                  hintText: '输入新标签...',
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context).inputNewTag,
                   isDense: true,
                 ),
                 onSubmitted: _addTag,
@@ -72,16 +74,14 @@ class _TagEditorState extends State<TagEditor> {
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () => _addTag(_controller.text),
-              tooltip: '添加标签',
+              tooltip: AppLocalizations.of(context).addTag,
             ),
           ],
         ),
 
-        const SizedBox(height: 16),
-
-        // 常用标签建议
+        const SizedBox(height: 16), // 常用标签建议
         if (widget.suggestedTags.isNotEmpty) ...[
-          const Text('常用标签:'),
+          Text(AppLocalizations.of(context).commonTags),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

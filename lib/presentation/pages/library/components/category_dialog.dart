@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/entities/library_category.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../providers/library/library_management_provider.dart';
 
 /// 分类对话框
@@ -90,26 +91,24 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
             // 分类名称输入
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: '分类名称',
-                hintText: '请输入分类名称',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).categoryName,
+                hintText: AppLocalizations.of(context).enterCategoryName,
               ),
               autofocus: true,
             ),
 
-            const SizedBox(height: 16),
-
-            // 父分类选择
+            const SizedBox(height: 16), // 父分类选择
             DropdownButtonFormField<String?>(
-              decoration: const InputDecoration(
-                labelText: '父分类（可选）',
-                hintText: '选择父分类',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).parentCategory,
+                hintText: AppLocalizations.of(context).selectParentCategory,
               ),
               value: _selectedParentId,
               items: [
-                const DropdownMenuItem<String?>(
+                DropdownMenuItem<String?>(
                   value: null,
-                  child: Text('无（顶级分类）'),
+                  child: Text(AppLocalizations.of(context).noTopLevelCategory),
                 ),
                 ...availableParentCategories
                     .map((category) => DropdownMenuItem<String>(
@@ -129,14 +128,16 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
         TextButton(
           onPressed: () {
             final name = _nameController.text.trim();
             if (name.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('分类名称不能为空')),
+                SnackBar(
+                    content: Text(AppLocalizations.of(context)
+                        .categoryNameCannotBeEmpty)),
               );
               return;
             }
@@ -145,7 +146,7 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
             widget.onConfirm(name, _selectedParentId);
             Navigator.of(context).pop();
           },
-          child: const Text('确定'),
+          child: Text(AppLocalizations.of(context).confirm),
         ),
       ],
     );

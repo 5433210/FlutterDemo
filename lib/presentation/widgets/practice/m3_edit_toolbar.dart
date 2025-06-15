@@ -186,14 +186,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.done_all,
-                    tooltip: '全选',
+                    tooltip: l10n.toolbarSelectAll,
                     onPressed: onSelectAll,
                   ),
                 if (onDeselectAll != null)
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.deselect,
-                    tooltip: '取消选择',
+                    tooltip: l10n.toolbarDeselectAll,
                     onPressed: onDeselectAll,
                   ),
               ],
@@ -211,48 +211,56 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: Icons.copy,
                 tooltip: l10n.practiceEditCopy,
-                onPressed: hasSelection ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：复制操作',
-                    data: {
-                      'selectedCount': controller.state.selectedElementIds.length,
-                      'selectedIds': controller.state.selectedElementIds,
-                      'operation': 'copy_action',
-                    },
-                  );
-                  onCopy();
-                } : null,
+                onPressed: hasSelection
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：复制操作',
+                          data: {
+                            'selectedCount':
+                                controller.state.selectedElementIds.length,
+                            'selectedIds': controller.state.selectedElementIds,
+                            'operation': 'copy_action',
+                          },
+                        );
+                        onCopy();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.paste,
                 tooltip: l10n.practiceEditPaste,
-                onPressed: canPaste ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：粘贴操作',
-                    data: {
-                      'canPaste': canPaste,
-                      'operation': 'paste_action',
-                    },
-                  );
-                  onPaste();
-                } : null,
+                onPressed: canPaste
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：粘贴操作',
+                          data: {
+                            'canPaste': canPaste,
+                            'operation': 'paste_action',
+                          },
+                        );
+                        onPaste();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.delete,
                 tooltip: l10n.practiceEditDelete,
-                onPressed: hasSelection ? () {
-                  EditPageLogger.editPageDebug(
-                    '工具栏：删除操作',
-                    data: {
-                      'selectedCount': controller.state.selectedElementIds.length,
-                      'selectedIds': controller.state.selectedElementIds,
-                      'operation': 'delete_action',
-                    },
-                  );
-                  onDelete();
-                } : null,
+                onPressed: hasSelection
+                    ? () {
+                        EditPageLogger.editPageDebug(
+                          '工具栏：删除操作',
+                          data: {
+                            'selectedCount':
+                                controller.state.selectedElementIds.length,
+                            'selectedIds': controller.state.selectedElementIds,
+                            'operation': 'delete_action',
+                          },
+                        );
+                        onDelete();
+                      }
+                    : null,
               ),
               _buildToolbarButton(
                 context: context,
@@ -310,7 +318,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
 
           // 对齐辅助组
           _buildToolbarGroup(
-            title: '对齐辅助',
+            title: l10n.toolbarAlignmentAssist,
             children: [
               _buildToolbarButton(
                 context: context,
@@ -326,14 +334,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_paint,
-                  tooltip: '复制格式 (Alt+Q)',
+                  tooltip: l10n.toolbarCopyFormat,
                   onPressed: hasSelection ? onCopyFormatting : null,
                 ),
               if (onApplyFormatBrush != null)
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_color_fill,
-                  tooltip: '应用格式刷 (Alt+W)',
+                  tooltip: l10n.toolbarApplyFormatBrush,
                   onPressed: hasSelection ? onApplyFormatBrush : null,
                 ),
             ],
@@ -453,13 +461,12 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     // 计算图标颜色
-    final Color iconColor = customColor != null
-        ? customColor
-        : isActive
+    final Color iconColor = customColor ??
+        (isActive
             ? colorScheme.primary
             : onPressed == null
                 ? colorScheme.onSurface.withOpacity(0.3)
-                : colorScheme.onSurface;
+                : colorScheme.onSurface);
 
     return Tooltip(
       message: tooltip,
@@ -505,25 +512,26 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   /// 构建对齐模式按钮（三态切换）
   Widget _buildAlignmentModeButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+    final l10n = AppLocalizations.of(context);
+
     IconData icon;
     String tooltip;
     Color? buttonColor;
-    
+
     switch (alignmentMode) {
       case AlignmentMode.none:
         icon = Icons.crop_free; // 无辅助图标
-        tooltip = '无辅助对齐 - 点击启用网格贴附';
+        tooltip = l10n.toolbarAlignmentNone;
         buttonColor = colorScheme.onSurface.withOpacity(0.5);
         break;
       case AlignmentMode.gridSnap:
         icon = Icons.grid_view; // 网格贴附图标
-        tooltip = '网格贴附模式 - 点击切换到参考线对齐';
+        tooltip = l10n.toolbarAlignmentGrid;
         buttonColor = Colors.blue;
         break;
       case AlignmentMode.guideline:
         icon = Icons.horizontal_rule; // 参考线图标
-        tooltip = '参考线对齐模式 - 点击切换到无辅助';
+        tooltip = l10n.toolbarAlignmentGuideline;
         buttonColor = Colors.orange;
         break;
     }

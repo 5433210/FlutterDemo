@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/models/common/date_range_filter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_sizes.dart';
 
 class DateRangePicker extends StatefulWidget {
@@ -102,22 +103,23 @@ class _DateRangePickerState extends State<DateRangePicker> {
 
   Widget _buildDateHeader() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(AppSizes.m),
       child: Row(
         children: [
           _buildDateButton(
-            label: '开始日期',
+            label: l10n.startDate,
             date: _startDate,
             isSelected: _selectedDate == null || _isSelectingStart,
             onPressed: () => _handleModeChange(true),
           ),
           const SizedBox(width: AppSizes.m),
-          Text('至', style: theme.textTheme.bodyMedium),
+          Text(l10n.to, style: theme.textTheme.bodyMedium),
           const SizedBox(width: AppSizes.m),
           _buildDateButton(
-            label: '结束日期',
+            label: l10n.endDate,
             date: _endDate,
             isSelected: _selectedDate != null && !_isSelectingStart,
             onPressed: () => _handleModeChange(false),
@@ -128,14 +130,15 @@ class _DateRangePickerState extends State<DateRangePicker> {
   }
 
   Widget _buildDateTypeSection() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
           dense: true,
-          title: const Text('某个日期之前'),
+          title: Text(l10n.beforeDate),
           onTap: () => _showSingleDatePicker(
-            title: '选择日期',
+            title: l10n.selectDate,
             initialDate: _endDate,
             onDateSelected: (date) {
               setState(() {
@@ -151,9 +154,9 @@ class _DateRangePickerState extends State<DateRangePicker> {
         ),
         ListTile(
           dense: true,
-          title: const Text('某个日期之后'),
+          title: Text(l10n.afterDate),
           onTap: () => _showSingleDatePicker(
-            title: '选择日期',
+            title: l10n.selectDate,
             initialDate: _startDate,
             onDateSelected: (date) {
               setState(() {

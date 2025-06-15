@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../providers/library/library_management_provider.dart';
 
 /// 批量分类对话框
@@ -20,21 +21,20 @@ class CategoryBatchAssignDialog extends ConsumerStatefulWidget {
 class _CategoryBatchAssignDialogState
     extends ConsumerState<CategoryBatchAssignDialog> {
   final Set<String> _selectedCategoryIds = {};
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(libraryManagementProvider);
     final notifier = ref.read(libraryManagementProvider.notifier);
     final categories = state.categories;
-
     return AlertDialog(
-      title: Text('设置分类 (${widget.selectedItemIds.length}个项目)'),
+      title: Text(l10n.setCategoryForItems(widget.selectedItemIds.length)),
       content: SizedBox(
         width: 300,
         height: 400,
         child: Column(
           children: [
-            const Text('请选择要应用的分类:'),
+            Text(l10n.selectCategoryToApply),
             const SizedBox(height: 8),
             Expanded(
               child: ListView.builder(
@@ -65,14 +65,14 @@ class _CategoryBatchAssignDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
             _applyCategories(notifier);
           },
-          child: const Text('应用'),
+          child: Text(l10n.apply),
         ),
       ],
     );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// 通用颜色调色板控件
 /// 包含颜色显示、颜色代码输入和颜色选择功能
 class ColorPaletteWidget extends StatefulWidget {
@@ -11,8 +13,8 @@ class ColorPaletteWidget extends StatefulWidget {
   /// 颜色变化回调
   final ValueChanged<Color> onColorChanged;
 
-  /// 标签文本
-  final String labelText;
+  /// 标签文本（可选）
+  final String? labelText;
 
   /// 是否显示透明度滑块
   final bool enableAlpha;
@@ -28,7 +30,7 @@ class ColorPaletteWidget extends StatefulWidget {
     Key? key,
     required this.initialColor,
     required this.onColorChanged,
-    this.labelText = '颜色',
+    this.labelText,
     this.enableAlpha = false,
     this.showTextField = true,
     this.textEditingController,
@@ -50,12 +52,15 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final displayLabel = widget.labelText ?? l10n.color;
+
     return Row(
       children: [
         // 颜色标签
         Expanded(
           flex: 2,
-          child: Text(widget.labelText),
+          child: Text(displayLabel),
         ),
         // 颜色预览
         GestureDetector(
@@ -85,7 +90,7 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
                 borderRadius: BorderRadius.circular(4),
               ),
               prefixText: '#',
-              hintText: '颜色代码',
+              hintText: l10n.colorCode,
             ),
             style: const TextStyle(fontSize: 14),
             inputFormatters: [
@@ -216,11 +221,14 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
 
   /// 显示颜色选择器对话框
   void _showColorPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final displayLabel = widget.labelText ?? l10n.color;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('选择${widget.labelText}'),
+          title: Text(l10n.selectColor(displayLabel)),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: _currentColor,
@@ -244,13 +252,13 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('取消'),
+              child: Text(l10n.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('确定'),
+              child: Text(l10n.confirm),
               onPressed: () {
                 // Schedule the text update after the dialog is closed
                 WidgetsBinding.instance.addPostFrameCallback((_) {

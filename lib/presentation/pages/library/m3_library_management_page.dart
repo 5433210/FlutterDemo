@@ -186,8 +186,8 @@ class _M3LibraryManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除所有项目'),
-        content: Text('确定要删除当前筛选条件下的所有${state.items.length}个项目吗？此操作无法撤销。'),
+        title: Text(l10n.confirmDeleteAllItems),
+        content: Text(l10n.confirmDeleteFilteredItems(state.items.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -263,6 +263,7 @@ class _M3LibraryManagementPageState
 
   /// 处理导入文件
   Future<void> _handleImportFiles() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final importService = ref.read(libraryImportServiceProvider);
 
@@ -288,13 +289,11 @@ class _M3LibraryManagementPageState
           await ref
               .read(libraryManagementProvider.notifier)
               .loadCategoryItemCounts();
-        });
-
-        // 显示导入成功消息
+        }); // 显示导入成功消息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('成功导入 ${result.files.length} 个文件'),
+              content: Text(l10n.importSuccessMessage(result.files.length)),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -304,7 +303,7 @@ class _M3LibraryManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('导入失败: $e'),
+            content: Text(l10n.importFailedMessage(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -315,6 +314,7 @@ class _M3LibraryManagementPageState
 
   /// 处理导入文件夹
   Future<void> _handleImportFolder() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final importService = ref.read(libraryImportServiceProvider);
 
@@ -336,14 +336,12 @@ class _M3LibraryManagementPageState
           await ref
               .read(libraryManagementProvider.notifier)
               .loadCategoryItemCounts();
-        });
-
-        // 显示导入成功消息
+        }); // 显示导入成功消息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('文件夹导入完成'),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: Text(l10n.folderImportComplete),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -352,7 +350,7 @@ class _M3LibraryManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('导入失败: $e'),
+            content: Text(l10n.importFailedMessage(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -373,8 +371,9 @@ class _M3LibraryManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('从分类中移除'),
-        content: Text('确定要将选中的${state.selectedItems.length}个项目从当前分类中移除吗？'),
+        title: Text(l10n.removeFromCategory),
+        content:
+            Text(l10n.confirmRemoveFromCategory(state.selectedItems.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -389,7 +388,7 @@ class _M3LibraryManagementPageState
                     .removeSelectedItemsFromCategory(categoryId);
               }
             },
-            child: const Text('移除'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -423,6 +422,7 @@ class _M3LibraryManagementPageState
       BuildContext context, Future<void> Function() importFunction) async {
     if (!mounted) return;
 
+    final l10n = AppLocalizations.of(context);
     BuildContext? dialogBuilderContext;
 
     // 显示加载对话框
@@ -431,15 +431,15 @@ class _M3LibraryManagementPageState
       barrierDismissible: false,
       builder: (builderContext) {
         dialogBuilderContext = builderContext;
-        return const PopScope(
+        return PopScope(
           canPop: false,
           child: AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('正在导入图片，请稍候...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l10n.importingImages),
               ],
             ),
           ),

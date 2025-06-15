@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class DialogButtonGroup extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
@@ -7,19 +9,20 @@ class DialogButtonGroup extends StatelessWidget {
   final String confirmText;
   final bool isProcessing;
   final bool isConfirmEnabled;
-
   const DialogButtonGroup({
     super.key,
     required this.onCancel,
     required this.onConfirm,
-    this.cancelText = '取消',
-    this.confirmText = '确定',
+    String? cancelText,
+    String? confirmText,
     this.isProcessing = false,
     this.isConfirmEnabled = true,
-  });
+  })  : cancelText = cancelText ?? '',
+        confirmText = confirmText ?? '';
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -34,12 +37,12 @@ class DialogButtonGroup extends StatelessWidget {
           ),
         TextButton(
           onPressed: isProcessing ? null : onCancel,
-          child: Text(cancelText),
+          child: Text(cancelText.isEmpty ? l10n.cancel : cancelText),
         ),
         const SizedBox(width: 8),
         FilledButton(
           onPressed: (isProcessing || !isConfirmEnabled) ? null : onConfirm,
-          child: Text(confirmText),
+          child: Text(confirmText.isEmpty ? l10n.confirm : confirmText),
         ),
       ],
     );

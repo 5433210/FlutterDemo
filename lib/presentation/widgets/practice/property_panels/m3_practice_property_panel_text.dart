@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -153,7 +151,8 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 尺寸设置
-        M3PanelStyles.buildSectionTitle(context, '尺寸'),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelDimensions),
         Row(
           children: [
             Expanded(
@@ -458,20 +457,22 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 ),
                 value: fontFamily,
                 isExpanded: true,
-                items: const [
+                items: [
                   // System fonts
-                  DropdownMenuItem(
+                  const DropdownMenuItem(
                       value: 'sans-serif', child: Text('Sans Serif')),
-                  DropdownMenuItem(value: 'serif', child: Text('Serif')),
-                  DropdownMenuItem(
+                  const DropdownMenuItem(value: 'serif', child: Text('Serif')),
+                  const DropdownMenuItem(
                       value: 'monospace', child: Text('Monospace')),
                   // Chinese fonts (Free for Commercial Use)
                   DropdownMenuItem(
                       value: 'SourceHanSans',
-                      child: Text('思源黑体 (Source Han Sans)')),
+                      child:
+                          Text(AppLocalizations.of(context).sourceHanSansFont)),
                   DropdownMenuItem(
                       value: 'SourceHanSerif',
-                      child: Text('思源宋体 (Source Han Serif)')),
+                      child: Text(
+                          AppLocalizations.of(context).sourceHanSerifFont)),
                 ],
                 onChanged: (value) {
                   if (value != null) {

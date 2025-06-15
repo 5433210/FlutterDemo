@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 
 /// 通用错误视图
@@ -43,7 +44,7 @@ class ErrorView extends StatelessWidget {
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('重试'),
+            label: Text(AppLocalizations.of(context).retry),
           ),
         ],
       ],

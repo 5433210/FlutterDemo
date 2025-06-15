@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CharacterDetailView extends StatelessWidget {
   final String charId;
@@ -11,10 +12,10 @@ class CharacterDetailView extends StatelessWidget {
     this.showCloseButton = false,
     this.onClose,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       color: theme.scaffoldBackgroundColor,
@@ -28,13 +29,13 @@ class CharacterDetailView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '字符详情',
+                    l10n.characterDetailTitle,
                     style: theme.textTheme.titleLarge,
                   ),
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.edit),
-                    label: const Text('编辑'),
+                    label: Text(l10n.edit),
                   ),
                 ],
               ),
@@ -51,11 +52,12 @@ class CharacterDetailView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('基本信息', style: theme.textTheme.titleMedium),
+                        Text(l10n.basicInfo,
+                            style: theme.textTheme.titleMedium),
                         const SizedBox(height: 16),
                         _buildInfoRow('Unicode', 'U+4E00', theme),
-                        _buildInfoRow('拼音', 'yī', theme),
-                        _buildInfoRow('笔画', '1', theme),
+                        _buildInfoRow(l10n.pinyin, 'yī', theme),
+                        _buildInfoRow(l10n.strokeCount, '1', theme),
                       ],
                     ),
                   ),
@@ -67,11 +69,12 @@ class CharacterDetailView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('出处信息', style: theme.textTheme.titleMedium),
+                        Text(l10n.sourceInfo,
+                            style: theme.textTheme.titleMedium),
                         const SizedBox(height: 16),
-                        _buildInfoRow('作品', '兰亭集序', theme),
-                        _buildInfoRow('作者', '王羲之', theme),
-                        _buildInfoRow('朝代', '晋', theme),
+                        _buildInfoRow(l10n.work, '兰亭集序', theme),
+                        _buildInfoRow(l10n.author, '王羲之', theme),
+                        _buildInfoRow(l10n.dynasty, '晋', theme),
                       ],
                     ),
                   ),

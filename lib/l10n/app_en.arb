@@ -675,6 +675,18 @@
   "practiceEditContentProperties": "Content Properties",
   "practiceEditContentTools": "Content Tools",
   "practiceEditCopy": "Copy (Ctrl+Shift+C)",
+  "toolbarSelectAll": "Select All",
+  "toolbarDeselectAll": "Deselect All",
+  "toolbarCopyFormat": "Copy Format (Alt+Q)",
+  "toolbarApplyFormatBrush": "Apply Format Brush (Alt+W)",
+  "toolbarAlignmentAssist": "Alignment Assistant",
+  "toolbarAlignmentNone": "No alignment assist - Click to enable grid snap",
+  "toolbarAlignmentGrid": "Grid snap mode - Click to switch to guideline alignment",
+  "toolbarAlignmentGuideline": "Guideline alignment mode - Click to switch to no assist",
+  "commonLoading": "Loading...",
+  "commonError": "An error occurred",
+  "commonSuccess": "Operation successful",
+  "commonNoImageSelected": "No image selected",
   "practiceEditDangerZone": "Danger Zone",
   "practiceEditDefaultLayer": "Edit Default Layer",
   "practiceEditDelete": "Delete (Ctrl+D)",
@@ -976,9 +988,46 @@
   "workFormTitleRequired": "Title is required",
   "workFormTitleTooltip": "Press Ctrl+T to quickly jump to the title field",
   "workFormTool": "Tool",
-  "workFormToolHelp": "The main tool used to create this work",
-  "workFormToolTooltip": "Press Tab to navigate to the next field",
-  "workImportDialogAddImages": "Add Images",
+  "workFormToolHelp": "The main tool used to create this work",  "workFormToolTooltip": "Press Tab to navigate to the next field",  "workFormCreationDateError": "Creation date cannot be later than current date",
+  "workImageRestoring": "Restoring image data...",
+  "workImageDeleteConfirmTitle": "Confirm Delete",
+  "workImageDeleteConfirmContent": "Are you sure you want to delete the selected image?",
+  "workImageDeleting": "Deleting image...",  "workImageDeleteFailed": "Failed to delete image: {error}",
+  "@workImageDeleteFailed": {
+    "description": "Error message for image deletion failure",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error details"
+      }
+    }
+  },
+  "colorPickerTitle": "Select Color",  "colorCode": "Color Code",
+  "colorCodeHelp": "Enter 6-digit hexadecimal color code (e.g., FF5500)",
+  "colorCodeInvalid": "Invalid color code",
+  "elementSize": "Size",
+  "elementWidth": "Width",
+  "elementHeight": "Height",
+  "elementLock": "Lock",  "elementLocked": "Locked",
+  "elementUnlocked": "Unlocked",
+  "submitFailed": "Submit failed: {error}",
+  "@submitFailed": {
+    "description": "Error message for submission failure",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error details"
+      }
+    }
+  },  "workImportDialogAddImages": "Add Images",
+  "workImportAdd": "Add",
+  "workImportAddImage": "Add Image", 
+  "workImportDelete": "Delete",
+  "workImportDeleteImage": "Delete Image",  "workImportImport": "Import",
+  "navigationBackToPrevious": "Return to Previous Page",
+  "navigationSelectPage": "Which page would you like to return to?",
+  "navigationNoHistory": "Cannot Go Back",
+  "navigationNoHistoryMessage": "You have reached the beginning of the current section.",
   "workImportDialogCancel": "Cancel",
   "workImportDialogDeleteImage": "Delete Image",
   "workImportDialogDeleteImageConfirm": "Are you sure you want to delete this image?",
@@ -999,7 +1048,263 @@
   "workStyleRunning": "Running Script",
   "workStyleSeal": "Seal Script",
   "workToolBrush": "Brush",
-  "workToolHardPen": "Hard Pen",
-  "workToolOther": "Other",
-  "yes": "Yes"
+  "workToolHardPen": "Hard Pen",  "workToolOther": "Other",
+  "yes": "Yes",
+  "retry": "Retry",
+  "done": "Done",
+  "overwriteConfirm": "Overwrite Confirmation",
+  "overwriteMessage": "A copybook with title \"{title}\" already exists. Do you want to overwrite it?",
+  "@overwriteMessage": {
+    "description": "Copybook overwrite confirmation message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Copybook title"
+      }
+    }
+  },
+  "addFromGalleryFailed": "Failed to add image from gallery: {error}",
+  "@addFromGalleryFailed": {
+    "description": "Error message when adding image from gallery fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }    }
+  },  "selectCategoryToApply": "Please select a category to apply:",
+  "titleCannotBeEmpty": "Title cannot be empty",
+  "titleAlreadyExists": "A copybook with the same title already exists, please use a different title",
+  "noPagesToExport": "No pages to export",
+  "exportFailed": "Export failed: Incomplete parameters",
+  "exporting": "Exporting, please wait...",
+  "pdfExportSuccess": "PDF export successful: {path}",
+  "@pdfExportSuccess": {
+    "description": "PDF export success message",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "description": "File path"
+      }
+    }
+  },
+  "pdfExportSuccessNoFile": "PDF export successful, but file not found: {path}",
+  "@pdfExportSuccessNoFile": {
+    "description": "PDF export success but file doesn't exist",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "description": "File path"
+      }
+    }
+  },
+  "pdfExportFailed": "PDF export failed",
+  "imageExportSuccess": "Successfully exported {count} images",
+  "@imageExportSuccess": {
+    "description": "Image export success message",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of images"
+      }
+    }
+  },
+  "imageExportFailed": "Image export failed",
+  "exportFailedWithError": "Export failed: {error}",
+  "@exportFailedWithError": {
+    "description": "Export failed error message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "noPagesToPrint": "No pages to print",
+  "preparingPrint": "Preparing to print, please wait...",
+  "cannotCapturePageImage": "Cannot capture page image",
+  "printPreparationFailed": "Print preparation failed: {error}",
+  "@printPreparationFailed": {
+    "description": "Print preparation failed message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "cannotSaveMissingController": "Cannot save: Missing controller",
+  "practiceSheetSaved": "Copybook \"{title}\" saved",
+  "@practiceSheetSaved": {
+    "description": "Copybook save success message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Copybook title"
+      }
+    }
+  },
+  "practiceSheetOverwritten": "Copybook \"{title}\" overwritten and saved",
+  "@practiceSheetOverwritten": {
+    "description": "Copybook overwrite save success message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Copybook title"
+      }
+    }
+  },
+  "saveFailed": "Save failed, please try again later",
+  "saveFailedWithError": "Save failed: {error}",
+  "@saveFailedWithError": {
+    "description": "Save failed error message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "saveSuccess": "Save successful",
+  "confirmOverwrite": "Confirm Overwrite",
+  "overwriteExistingPractice": "A copybook named \"{title}\" already exists. Do you want to overwrite it?",
+  "@overwriteExistingPractice": {
+    "description": "Overwrite existing copybook confirmation message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "description": "Copybook title"
+      }
+    }
+  },  "openFolder": "Open Folder",
+  "formatBrushActivated": "Format brush activated, click target element to apply style",
+  "elementCopiedToClipboardWithPreload": "Element copied to clipboard (images preloaded)",
+  "elementCopiedToClipboard": "Element copied to clipboard",
+  "practiceSheetNotExists": "Practice sheet does not exist",  "loadPracticeSheetFailed": "Failed to load practice sheet",
+  "categoryName": "Category Name",
+  "enterCategoryName": "Please enter category name",
+  "parentCategory": "Parent Category (Optional)",
+  "selectParentCategory": "Select parent category",
+  "noTopLevelCategory": "None (Top Level Category)",  "categoryNameCannotBeEmpty": "Category name cannot be empty",
+  "setCategoryForItems": "Set Category ({count} items)",
+  "@setCategoryForItems": {
+    "description": "Batch category assignment title",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of selected items"
+      }
+    }
+  },  "apply": "Apply",
+  "confirmDeleteAllItems": "Confirm Delete All Items",
+  "confirmDeleteFilteredItems": "Are you sure you want to delete all {count} items under the current filter? This action cannot be undone.",
+  "@confirmDeleteFilteredItems": {
+    "description": "Confirmation message for deleting filtered items",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of items"
+      }
+    }
+  },
+  "importSuccessMessage": "Successfully imported {count} files",
+  "@importSuccessMessage": {
+    "description": "Import success message",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of files"
+      }
+    }
+  },
+  "importFailedMessage": "Import failed: {error}",
+  "@importFailedMessage": {
+    "description": "Import failed message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message"
+      }
+    }
+  },
+  "folderImportComplete": "Folder import complete",
+  "removeFromCategory": "Remove from Category",
+  "confirmRemoveFromCategory": "Are you sure you want to remove the selected {count} items from the current category?",
+  "@confirmRemoveFromCategory": {
+    "description": "Confirmation message for removing items from category",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of items"
+      }
+    }
+  },  "remove": "Remove",
+  "importingImages": "Importing images, please wait...",
+  "characterDetailTitle": "Character Details",
+  "pinyin": "Pinyin",
+  "strokeCount": "Stroke Count",
+  "sourceInfo": "Source Information",  "work": "Work",
+  "author": "Author",
+  "dynasty": "Dynasty",
+  "charactersSelected": "{count} characters selected",  "deselectAll": "Deselect All",
+  "deleteConfirmation": "Delete Confirmation",
+  "deleteCharactersConfirm": "Are you sure you want to delete these {count} characters? This action cannot be undone.",
+  "noImages": "No Images",  "imageIndexError": "Image Index Error",
+  "imageFileNotExists": "Image File Not Exists",
+  "imageLoadFailed": "Image Load Failed",  "color": "Color",
+  "selectColor": "Select {type}",  "editField": "Edit {field}",  "inputFieldHint": "Please input {field}",
+  "selectColorTitle": "Select Color",
+  "startDate": "Start Date",
+  "endDate": "End Date",
+  "to": "To",  "beforeDate": "Before Date",
+  "afterDate": "After Date",
+  "selectDate": "Select Date",
+  "inputNewTag": "Input new tag...",  "addTag": "Add Tag",  "commonTags": "Common Tags:",
+  "importFileSuccess": "Import file successfully",
+  "importFileFailed": "Import failed: {error}",
+  "refreshDataFailed": "Refresh data failed: {error}",
+  "inputChineseContent": "Please input Chinese content",
+  "widgetRefRequired": "WidgetRef required to create CollectionPainter",
+  "emptyGroup": "Empty Group",
+  "unknownElementType": "Unknown element type: {type}",
+  "noDisplayableImages": "No displayable images",
+  "autoDetectPageOrientation": "Auto-detect page orientation",
+  "autoDetect": "Auto-detect",
+  "selectDirectoryFailed": "Select directory failed: {error}",
+  "noTexture": "No texture",
+  "dataIncomplete": "Data incomplete",
+  "dataEmpty": "Data empty",
+  "renderFailed": "Render failed",
+  "importImageFailed": "Import image failed: {error}",
+  "openGalleryFailed": "Open gallery failed: {error}",
+  "sourceHanSansFont": "Source Han Sans",
+  "sourceHanSerifFont": "Source Han Serif",
+  "emptyStateNoWorks": "No works\nTap the add button to import works",
+  "emptyStateNoCharacters": "No characters\nCharacters will appear here after extracting from works",
+  "emptyStateNoPractices": "No practices\nTap the add button to create new practice",
+  "emptyStateNoResults": "No matching results found\nTry changing search criteria",
+  "emptyStateNoSelection": "No items selected\nTap items to select",
+  "emptyStateError": "Loading failed\nPlease try again later",  "appRestartFailed": "App restart failed, please restart manually",
+  "appRestarting": "Restarting app",
+  "appRestartingMessage": "Data recovery successful, restarting app...",
+  "addImages": "Add images",
+  "rotateLeft": "Rotate left",
+  "rotateRight": "Rotate right",
+  "deleteSelected": "Delete selected",
+  "confirmDeleteAll": "Delete image",
+  "confirmDeleteMessage": "Are you sure you want to delete the selected images?",
+  "confirmDeleteAllMessage": "This is the last image. Deleting it will exit import. Are you sure you want to delete it?",
+  "selectAll": "Select all",
+  "setCategory": "Set category",
+  "copySelected": "Copy selected items",
+  "cutSelected": "Cut selected items",
+  "deleteAllItems": "Delete all",
+  "toggleBackground": "Toggle background",
+  "resetZoom": "Reset zoom",
+  "fullScreen": "Full screen",
+  "close": "Close",
+  "dropToImportImages": "Release to import images",
+  "deleteCurrentImage": "Delete current image",
+  "workStatusDraft": "Draft",
+  "workStatusPublished": "Published",
+  "workStatusArchived": "Archived"
 }

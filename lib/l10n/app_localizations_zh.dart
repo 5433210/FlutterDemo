@@ -847,10 +847,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonProperties => '通用属性';
 
   @override
-  String get confirm => '确认';
+  String get confirm => '确定';
 
   @override
-  String get confirmDelete => '确认删除？';
+  String get confirmDelete => '确认删除';
 
   @override
   String get confirmDeleteCategory => '确认删除分类';
@@ -899,7 +899,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get delete => '删除';
 
   @override
-  String get deleteAll => '删除全部';
+  String get deleteAll => '全部删除';
 
   @override
   String get deleteBackup => '删除';
@@ -2118,6 +2118,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditCopy => '复制 (Ctrl+Shift+C)';
 
   @override
+  String get toolbarSelectAll => '全选';
+
+  @override
+  String get toolbarDeselectAll => '取消选择';
+
+  @override
+  String get toolbarCopyFormat => '复制格式 (Alt+Q)';
+
+  @override
+  String get toolbarApplyFormatBrush => '应用格式刷 (Alt+W)';
+
+  @override
+  String get toolbarAlignmentAssist => '对齐辅助';
+
+  @override
+  String get toolbarAlignmentNone => '无辅助对齐 - 点击启用网格贴附';
+
+  @override
+  String get toolbarAlignmentGrid => '网格贴附模式 - 点击切换到参考线对齐';
+
+  @override
+  String get toolbarAlignmentGuideline => '参考线对齐模式 - 点击切换到无辅助';
+
+  @override
+  String get commonLoading => '加载中...';
+
+  @override
+  String get commonError => '发生错误';
+
+  @override
+  String get commonSuccess => '操作成功';
+
+  @override
+  String get commonNoImageSelected => '没有选择图片';
+
+  @override
   String get practiceEditDangerZone => '危险区域';
 
   @override
@@ -3053,7 +3089,89 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workFormToolTooltip => '按Tab导航到下一个字段';
 
   @override
+  String get workFormCreationDateError => '创作日期不能超过当前日期';
+
+  @override
+  String get workImageRestoring => '正在恢复图片数据...';
+
+  @override
+  String get workImageDeleteConfirmTitle => '确认删除';
+
+  @override
+  String get workImageDeleteConfirmContent => '确定要删除当前选中的图片吗？';
+
+  @override
+  String get workImageDeleting => '正在删除图片...';
+
+  @override
+  String workImageDeleteFailed(String error) {
+    return '删除图片失败：$error';
+  }
+
+  @override
+  String get colorPickerTitle => '选择颜色';
+
+  @override
+  String get colorCode => '颜色代码';
+
+  @override
+  String get colorCodeHelp => '输入6位十六进制颜色代码 (例如: FF5500)';
+
+  @override
+  String get colorCodeInvalid => '无效的颜色代码';
+
+  @override
+  String get elementSize => '大小';
+
+  @override
+  String get elementWidth => '宽';
+
+  @override
+  String get elementHeight => '高';
+
+  @override
+  String get elementLock => '锁定';
+
+  @override
+  String get elementLocked => '已锁定';
+
+  @override
+  String get elementUnlocked => '未锁定';
+
+  @override
+  String submitFailed(String error) {
+    return '提交失败：$error';
+  }
+
+  @override
   String get workImportDialogAddImages => '添加图像';
+
+  @override
+  String get workImportAdd => '添加';
+
+  @override
+  String get workImportAddImage => '添加图片';
+
+  @override
+  String get workImportDelete => '删除';
+
+  @override
+  String get workImportDeleteImage => '删除图片';
+
+  @override
+  String get workImportImport => '导入';
+
+  @override
+  String get navigationBackToPrevious => '返回到之前的页面';
+
+  @override
+  String get navigationSelectPage => '您想返回到以下哪个页面？';
+
+  @override
+  String get navigationNoHistory => '无法返回';
+
+  @override
+  String get navigationNoHistoryMessage => '已经到达当前功能区的最开始页面。';
 
   @override
   String get workImportDialogCancel => '取消';
@@ -3125,4 +3243,448 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yes => '是';
+
+  @override
+  String get retry => '重试';
+
+  @override
+  String get done => '完成';
+
+  @override
+  String get overwriteConfirm => '覆盖确认';
+
+  @override
+  String overwriteMessage(String title) {
+    return '已存在标题为\"$title\"的字帖，是否覆盖？';
+  }
+
+  @override
+  String addFromGalleryFailed(String error) {
+    return '从图库添加图片失败: $error';
+  }
+
+  @override
+  String get selectCategoryToApply => '请选择要应用的分类:';
+
+  @override
+  String get titleCannotBeEmpty => '标题不能为空';
+
+  @override
+  String get titleAlreadyExists => '已存在相同标题的字帖，请使用其他标题';
+
+  @override
+  String get noPagesToExport => '没有可导出的页面';
+
+  @override
+  String get exportFailed => '导出失败: 参数不完整';
+
+  @override
+  String get exporting => '正在导出，请稍候...';
+
+  @override
+  String pdfExportSuccess(String path) {
+    return 'PDF导出成功: $path';
+  }
+
+  @override
+  String pdfExportSuccessNoFile(String path) {
+    return 'PDF导出成功，但无法找到文件: $path';
+  }
+
+  @override
+  String get pdfExportFailed => 'PDF导出失败';
+
+  @override
+  String imageExportSuccess(int count) {
+    return '导出$count个图片成功';
+  }
+
+  @override
+  String get imageExportFailed => '图片导出失败';
+
+  @override
+  String exportFailedWithError(String error) {
+    return '导出失败: $error';
+  }
+
+  @override
+  String get noPagesToPrint => '没有可打印的页面';
+
+  @override
+  String get preparingPrint => '正在准备打印，请稍候...';
+
+  @override
+  String get cannotCapturePageImage => '无法捕获页面图像';
+
+  @override
+  String printPreparationFailed(String error) {
+    return '打印准备失败: $error';
+  }
+
+  @override
+  String get cannotSaveMissingController => '无法保存：缺少控制器';
+
+  @override
+  String practiceSheetSaved(String title) {
+    return '字帖 \"$title\" 已保存';
+  }
+
+  @override
+  String practiceSheetOverwritten(String title) {
+    return '字帖 \"$title\" 已覆盖保存';
+  }
+
+  @override
+  String get saveFailed => '保存失败，请稍后重试';
+
+  @override
+  String saveFailedWithError(String error) {
+    return '保存失败：$error';
+  }
+
+  @override
+  String get saveSuccess => '保存成功';
+
+  @override
+  String get confirmOverwrite => '确认覆盖';
+
+  @override
+  String overwriteExistingPractice(String title) {
+    return '已存在名为\"$title\"的字帖，是否覆盖？';
+  }
+
+  @override
+  String get openFolder => '打开文件夹';
+
+  @override
+  String get formatBrushActivated => '格式刷已激活，点击目标元素应用样式';
+
+  @override
+  String get elementCopiedToClipboardWithPreload => '元素已复制到剪贴板（已预加载图像）';
+
+  @override
+  String get elementCopiedToClipboard => '元素已复制到剪贴板';
+
+  @override
+  String get practiceSheetNotExists => '字帖不存在';
+
+  @override
+  String get loadPracticeSheetFailed => '加载字帖失败';
+
+  @override
+  String get categoryName => '分类名称';
+
+  @override
+  String get enterCategoryName => '请输入分类名称';
+
+  @override
+  String get parentCategory => '父分类（可选）';
+
+  @override
+  String get selectParentCategory => '选择父分类';
+
+  @override
+  String get noTopLevelCategory => '无（顶级分类）';
+
+  @override
+  String get categoryNameCannotBeEmpty => '分类名称不能为空';
+
+  @override
+  String setCategoryForItems(int count) {
+    return '设置分类 ($count个项目)';
+  }
+
+  @override
+  String get apply => '应用';
+
+  @override
+  String get confirmDeleteAllItems => '确认删除所有项目';
+
+  @override
+  String confirmDeleteFilteredItems(int count) {
+    return '确定要删除当前筛选条件下的所有$count个项目吗？此操作无法撤销。';
+  }
+
+  @override
+  String importSuccessMessage(int count) {
+    return '成功导入 $count 个文件';
+  }
+
+  @override
+  String importFailedMessage(String error) {
+    return '导入失败: $error';
+  }
+
+  @override
+  String get folderImportComplete => '文件夹导入完成';
+
+  @override
+  String get removeFromCategory => '从当前分类移除';
+
+  @override
+  String confirmRemoveFromCategory(int count) {
+    return '确定要将选中的$count个项目从当前分类中移除吗？';
+  }
+
+  @override
+  String get remove => '移除';
+
+  @override
+  String get importingImages => '正在导入图片，请稍候...';
+
+  @override
+  String get characterDetailTitle => '字符详情';
+
+  @override
+  String get pinyin => '拼音';
+
+  @override
+  String get strokeCount => '笔画';
+
+  @override
+  String get sourceInfo => '出处信息';
+
+  @override
+  String get work => '作品';
+
+  @override
+  String get author => '作者';
+
+  @override
+  String get dynasty => '朝代';
+
+  @override
+  String charactersSelected(Object count) {
+    return '已选择 $count 个字符';
+  }
+
+  @override
+  String get deselectAll => '取消选择';
+
+  @override
+  String get deleteConfirmation => '删除确认';
+
+  @override
+  String deleteCharactersConfirm(Object count) {
+    return '确定要删除这 $count 个字符吗？此操作不可恢复。';
+  }
+
+  @override
+  String get noImages => '没有图片';
+
+  @override
+  String get imageIndexError => '图片索引错误';
+
+  @override
+  String get imageFileNotExists => '图片文件不存在';
+
+  @override
+  String get imageLoadFailed => '图片加载失败';
+
+  @override
+  String get color => '颜色';
+
+  @override
+  String selectColor(Object type) {
+    return '选择$type';
+  }
+
+  @override
+  String editField(Object field) {
+    return '编辑$field';
+  }
+
+  @override
+  String inputFieldHint(Object field) {
+    return '请输入$field';
+  }
+
+  @override
+  String get selectColorTitle => '选择颜色';
+
+  @override
+  String get startDate => '开始日期';
+
+  @override
+  String get endDate => '结束日期';
+
+  @override
+  String get to => '至';
+
+  @override
+  String get beforeDate => '某个日期之前';
+
+  @override
+  String get afterDate => '某个日期之后';
+
+  @override
+  String get selectDate => '选择日期';
+
+  @override
+  String get inputNewTag => '输入新标签...';
+
+  @override
+  String get addTag => '添加标签';
+
+  @override
+  String get commonTags => '常用标签:';
+
+  @override
+  String get importFileSuccess => '成功导入文件';
+
+  @override
+  String importFileFailed(Object error) {
+    return '导入失败: $error';
+  }
+
+  @override
+  String refreshDataFailed(Object error) {
+    return '刷新数据失败: $error';
+  }
+
+  @override
+  String get inputChineseContent => '请输入汉字内容';
+
+  @override
+  String get widgetRefRequired => '需要WidgetRef才能创建CollectionPainter';
+
+  @override
+  String get emptyGroup => '空组合';
+
+  @override
+  String unknownElementType(Object type) {
+    return '未知元素类型: $type';
+  }
+
+  @override
+  String get noDisplayableImages => '没有可显示的图片';
+
+  @override
+  String get autoDetectPageOrientation => '自动检测页面方向';
+
+  @override
+  String get autoDetect => '自动检测';
+
+  @override
+  String selectDirectoryFailed(Object error) {
+    return '选择目录失败: $error';
+  }
+
+  @override
+  String get noTexture => '无纹理';
+
+  @override
+  String get dataIncomplete => '数据不完整';
+
+  @override
+  String get dataEmpty => '数据为空';
+
+  @override
+  String get renderFailed => '渲染失败';
+
+  @override
+  String importImageFailed(Object error) {
+    return '导入图片失败: $error';
+  }
+
+  @override
+  String openGalleryFailed(Object error) {
+    return '打开图库失败: $error';
+  }
+
+  @override
+  String get sourceHanSansFont => '思源黑体 (Source Han Sans)';
+
+  @override
+  String get sourceHanSerifFont => '思源宋体 (Source Han Serif)';
+
+  @override
+  String get emptyStateNoWorks => '没有作品\n点击添加按钮导入作品';
+
+  @override
+  String get emptyStateNoCharacters => '没有字形\n从作品中提取字形后可在此查看';
+
+  @override
+  String get emptyStateNoPractices => '没有练习\n点击添加按钮创建新练习';
+
+  @override
+  String get emptyStateNoResults => '没有找到匹配的结果\n尝试更改搜索条件';
+
+  @override
+  String get emptyStateNoSelection => '未选择任何项目\n点击项目以选择';
+
+  @override
+  String get emptyStateError => '加载失败\n请稍后再试';
+
+  @override
+  String get appRestartFailed => '应用重启失败，请手动重启应用';
+
+  @override
+  String get appRestarting => '正在重启应用';
+
+  @override
+  String get appRestartingMessage => '数据恢复成功，正在重启应用...';
+
+  @override
+  String get addImages => '添加图片';
+
+  @override
+  String get rotateLeft => '向左旋转';
+
+  @override
+  String get rotateRight => '向右旋转';
+
+  @override
+  String get deleteSelected => '删除选中';
+
+  @override
+  String get confirmDeleteAll => '删除图片';
+
+  @override
+  String get confirmDeleteMessage => '确定要删除选中的图片吗？';
+
+  @override
+  String get confirmDeleteAllMessage => '这是最后一张图片，删除后将退出导入。确定要删除吗？';
+
+  @override
+  String get selectAll => '全选';
+
+  @override
+  String get setCategory => '设置分类';
+
+  @override
+  String get copySelected => '复制选中项目';
+
+  @override
+  String get cutSelected => '剪切选中项目';
+
+  @override
+  String get deleteAllItems => '删除全部';
+
+  @override
+  String get toggleBackground => '切换背景';
+
+  @override
+  String get resetZoom => '重置缩放';
+
+  @override
+  String get fullScreen => '全屏显示';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get dropToImportImages => '释放鼠标以导入图片';
+
+  @override
+  String get deleteCurrentImage => '删除当前图片';
+
+  @override
+  String get workStatusDraft => '草稿';
+
+  @override
+  String get workStatusPublished => '已发布';
+
+  @override
+  String get workStatusArchived => '已归档';
 }

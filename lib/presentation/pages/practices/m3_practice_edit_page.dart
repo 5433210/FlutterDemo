@@ -1229,14 +1229,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         element.containsKey('isFromCharacterManagement') &&
         element['isFromCharacterManagement'] == true) {
       _formatBrushStyles!['content_fontSize'] = 200.0;
-    }
-
-    // 激活格式刷
+    } // 激活格式刷
     setState(() {
       _isFormatBrushActive = true;
       // 显示提示信息
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('格式刷已激活，点击目标元素应用样式')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).formatBrushActivated)),
       );
     });
   }
@@ -1281,8 +1280,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           data: {'status': _clipboardHasContent ? '激活' : '禁用'},
         );
         if (_clipboardElement != null) {
-          scaffoldMessenger
-              .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板（已预加载图像）')));
+          scaffoldMessenger.showSnackBar(SnackBar(
+              content: Text(AppLocalizations.of(context)
+                  .elementCopiedToClipboardWithPreload)));
         }
       }
     } catch (e) {
@@ -1298,8 +1298,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           _clipboardHasContent = _clipboardElement != null;
         });
         if (_clipboardElement != null) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).elementCopiedToClipboard)));
         }
       }
     }
@@ -2112,7 +2113,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       if (practice == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('字帖不存在')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context).practiceSheetNotExists)),
         );
         return;
       }
@@ -2132,7 +2135,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('加载字帖失败')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context).loadPracticeSheetFailed)),
       );
     }
   }
@@ -2459,9 +2464,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           });
         }
       };
-      
+
       // 注册属性面板作为UI组件监听器
-      intelligentDispatcher.registerUIListener('property_panel', _propertyPanelListener!);
+      intelligentDispatcher.registerUIListener(
+          'property_panel', _propertyPanelListener!);
 
       EditPageLogger.editPageInfo(
         '属性面板已注册到智能状态分发器',
@@ -2520,7 +2526,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       tag: 'PracticeEdit',
       data: {'title': title},
     );
-    
+
     try {
       final result = await _controller.saveAsNewPractice(title);
 
@@ -2559,7 +2565,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         if (!mounted) return;
 
         if (shouldOverwrite == true) {
-          final saveResult = await _controller.saveAsNewPractice(title, forceOverwrite: true);
+          final saveResult =
+              await _controller.saveAsNewPractice(title, forceOverwrite: true);
 
           if (!mounted) return;
 
@@ -2586,10 +2593,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         tag: 'PracticeEdit',
         error: e,
       );
-      
+
       if (mounted) {
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+          SnackBar(
+              content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
         );
       }
     }
@@ -2627,7 +2635,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       final result = await _controller.savePractice();
 
       if (!mounted) return false;
-      
+
       // 根据返回值类型进行不同处理
       if (result == true) {
         AppLogger.info(
@@ -2660,9 +2668,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         );
 
         if (!mounted) return false;
-        
+
         if (shouldOverwrite == true) {
-          final saveResult = await _controller.savePractice(forceOverwrite: true);
+          final saveResult =
+              await _controller.savePractice(forceOverwrite: true);
 
           if (!mounted) return false;
 
@@ -2693,10 +2702,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         tag: 'PracticeEdit',
         error: e,
       );
-      
+
       if (mounted) {
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+          SnackBar(
+              content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
         );
       }
       return false;
@@ -3014,9 +3024,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     if (intelligentDispatcher != null && _propertyPanelListener != null) {
       try {
         // 使用正确的方法名及已保存的回调引用
-        intelligentDispatcher.removeUIListener('property_panel', _propertyPanelListener!);
+        intelligentDispatcher.removeUIListener(
+            'property_panel', _propertyPanelListener!);
         _propertyPanelListener = null;
-        
+
         EditPageLogger.editPageDebug(
           '属性面板已从智能状态分发器注销',
           data: {

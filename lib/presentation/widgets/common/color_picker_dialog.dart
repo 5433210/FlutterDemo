@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// 颜色选择器对话框
 class ColorPickerDialog extends StatefulWidget {
   final Color initialColor;
@@ -48,8 +50,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('选择颜色'),
+      title: Text(l10n.colorPickerTitle),
       content: SizedBox(
         width: 300,
         child: Column(
@@ -71,11 +74,11 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
             TextField(
               controller: _hexController,
               decoration: InputDecoration(
-                labelText: '颜色代码',
-                helperText: '输入6位十六进制颜色代码 (例如: FF5500)',
+                labelText: l10n.colorCode,
+                helperText: l10n.colorCodeHelp,
                 prefixText: '#',
                 border: const OutlineInputBorder(),
-                errorText: _isValidHex ? null : '无效的颜色代码',
+                errorText: _isValidHex ? null : l10n.colorCodeInvalid,
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
@@ -144,7 +147,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                         color: color,
                         border: Border.all(
                           color: color == Colors.white ? Colors.grey : color,
-                          width: _selectedColor.toARGB32() == color.toARGB32() ? 2 : 1,
+                          width: _selectedColor.toARGB32() == color.toARGB32()
+                              ? 2
+                              : 1,
                         ),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -165,7 +170,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isValidHex
@@ -174,7 +179,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   Navigator.of(context).pop();
                 }
               : null,
-          child: const Text('确定'),
+          child: Text(l10n.confirm),
         ),
       ],
     );

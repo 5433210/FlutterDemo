@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// 字帖标题编辑对话框
 class PracticeTitleEditDialog extends StatefulWidget {
   /// 初始标题
@@ -28,6 +30,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return KeyboardListener(
       focusNode: FocusNode(),
       autofocus: true,
@@ -41,7 +44,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         }
       },
       child: AlertDialog(
-        title: const Text('编辑标题'),
+        title: Text(l10n.practiceEditEditTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -49,8 +52,8 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
               controller: _titleController,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                labelText: '字帖标题',
-                hintText: '请输入字帖标题',
+                labelText: l10n.practiceEditPracticeTitle,
+                hintText: l10n.practiceEditEnterTitle,
                 errorText: _errorText,
                 border: const OutlineInputBorder(),
               ),
@@ -75,11 +78,11 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: _handleSave,
-            child: const Text('保存'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -118,12 +121,13 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
 
   /// 验证标题
   Future<bool> _validateTitle() async {
+    final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
 
     // 检查标题是否为空
     if (title.isEmpty) {
       setState(() {
-        _errorText = '标题不能为空';
+        _errorText = l10n.titleCannotBeEmpty;
       });
       return false;
     }
@@ -141,7 +145,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         // 如果标题已存在且非本身的标题，显示错误
         if (exists && title != widget.initialTitle) {
           setState(() {
-            _errorText = '已存在相同标题的字帖，请使用其他标题';
+            _errorText = l10n.titleAlreadyExists;
           });
           return false;
         }

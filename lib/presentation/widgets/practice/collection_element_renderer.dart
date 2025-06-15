@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import 'advanced_collection_painter.dart';
 import 'character_position.dart';
 // 引入所有已拆分的模块
@@ -43,6 +44,7 @@ class CollectionElementRenderer {
   /// * applicationMode - 纹理应用模式（背景或字符背景）
   /// * ref - Riverpod引用
   static Widget buildCollectionLayout({
+    required BuildContext context,
     required String characters,
     required String
         writingMode, // 'horizontal-l', 'vertical-r', 'horizontal-r', 'vertical-l'
@@ -73,8 +75,9 @@ class CollectionElementRenderer {
       EditPageLogger.editPageDebug('强制清除纹理缓存以确保立即更新');
     } // 兼容原有支持 - 无内容且无背景纹理时显示提示
     if (characters.isEmpty && !hasCharacterTexture) {
-      return const Center(
-          child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
+      return Center(
+          child: Text(AppLocalizations.of(context).inputChineseContent,
+              style: const TextStyle(color: Colors.grey)));
     }
 
     // 检查是否为空字符情况
@@ -206,7 +209,7 @@ class CollectionElementRenderer {
         EditPageLogger.editPageDebug(
           '集字渲染状态',
           data: {
-            'characters': isEmpty ? "空" : characters,
+            'characters': isEmpty ? '空' : characters,
             'hasTexture': hasCharacterTexture,
             'mode': 'background',
           },
@@ -221,8 +224,8 @@ class CollectionElementRenderer {
         final textureChangeKey = ValueKey(
             'texture_${hasEffectiveTexture}_${textureId}_${textureWidth}_${textureHeight}_${textureFillMode}_${textureFitMode}_${textureOpacity}_${DateTime.now().millisecondsSinceEpoch}');
 
-        EditPageLogger.rendererDebug('创建纹理变化键', 
-          data: {'textureChangeKey': textureChangeKey.value});
+        EditPageLogger.rendererDebug('创建纹理变化键',
+            data: {'textureChangeKey': textureChangeKey.value});
 
         // 创建纹理配置，使用新的配置结构（移除应用范围，只使用背景模式）
         final textureConfig = tc.TextureConfig(
@@ -238,9 +241,9 @@ class CollectionElementRenderer {
         // 根据情况决定使用基础绘制器还是增强版绘制器
         if (ref == null) {
           // 当没有ref时，返回一个错误提示组件
-          return const Center(
-            child: Text('需要WidgetRef才能创建CollectionPainter',
-                style: TextStyle(color: Colors.red)),
+          return Center(
+            child: Text(AppLocalizations.of(context).widgetRefRequired,
+                style: const TextStyle(color: Colors.red)),
           );
         }
 
@@ -303,16 +306,15 @@ class CollectionElementRenderer {
         // }
 
         // 汇报实际生效的参数值
-        EditPageLogger.rendererDebug('实际使用的集字渲染参数', 
-          data: {
-            'padding': padding,
-            'writingMode': writingMode,
-            'textAlign': textAlign,
-            'verticalAlign': verticalAlign,
-            'letterSpacing': letterSpacing,
-            'lineSpacing': lineSpacing,
-            'enableSoftLineBreak': enableSoftLineBreak
-          }); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
+        EditPageLogger.rendererDebug('实际使用的集字渲染参数', data: {
+          'padding': padding,
+          'writingMode': writingMode,
+          'textAlign': textAlign,
+          'verticalAlign': verticalAlign,
+          'letterSpacing': letterSpacing,
+          'lineSpacing': lineSpacing,
+          'enableSoftLineBreak': enableSoftLineBreak
+        }); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
         return SizedBox(
           key: textureChangeKey, // 使用纹理变化键确保纹理变化时widget重建
           width: constraints.maxWidth,

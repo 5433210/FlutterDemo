@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../logging/logger.dart';
 
 /// 应用重启工具类
@@ -92,14 +93,14 @@ class AppRestart {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        title: Text('正在重启应用'),
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context).appRestarting),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('数据恢复成功，正在重启应用...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context).appRestartingMessage),
           ],
         ),
       ),

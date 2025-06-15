@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/navigation/navigation_history_item.dart';
+import '../../l10n/app_localizations.dart';
 import '../providers/navigation/global_navigation_provider.dart';
 
 /// 处理跨区域返回导航
@@ -100,11 +101,12 @@ class CrossNavigationHelper {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return showDialog<int?>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('返回到之前的页面'),
+        title: Text(l10n.navigationBackToPrevious),
         titleTextStyle: theme.textTheme.titleLarge?.copyWith(
           color: colorScheme.onSurface,
         ),
@@ -115,7 +117,7 @@ class CrossNavigationHelper {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '您想返回到以下哪个页面？',
+              l10n.navigationSelectPage,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -163,7 +165,7 @@ class CrossNavigationHelper {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(null),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
         ],
       ),
@@ -172,15 +174,16 @@ class CrossNavigationHelper {
 
   /// 显示无历史记录对话框
   static Future<void> _showNoHistoryDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('无法返回'),
-        content: const Text('已经到达当前功能区的最开始页面。'),
+        title: Text(l10n.navigationNoHistory),
+        content: Text(l10n.navigationNoHistoryMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('确定'),
+            child: Text(l10n.confirm),
           ),
         ],
       ),

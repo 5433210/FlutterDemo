@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class ConfirmationDialog extends StatelessWidget {
   final String title;
   final String message;
-  final String confirmText;
-  final String cancelText;
+  final String? confirmText;
+  final String? cancelText;
   final bool isDestructive;
   final VoidCallback? onConfirm;
 
@@ -13,14 +15,15 @@ class ConfirmationDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.message,
-    this.confirmText = '确认',
-    this.cancelText = '取消',
+    this.confirmText,
+    this.cancelText,
     this.isDestructive = false,
     this.onConfirm,
   });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return KeyboardListener(
       focusNode: FocusNode(),
@@ -53,7 +56,7 @@ class ConfirmationDialog extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(cancelText),
+            child: Text(cancelText ?? l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -68,7 +71,7 @@ class ConfirmationDialog extends StatelessWidget {
                   ? theme.colorScheme.onError
                   : theme.colorScheme.onPrimary,
             ),
-            child: Text(confirmText),
+            child: Text(confirmText ?? l10n.confirm),
           ),
         ],
       ),

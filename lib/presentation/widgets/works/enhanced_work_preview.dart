@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../pages/works/components/thumbnail_strip.dart';
 import '../common/zoomable_image_view.dart';
 
@@ -68,7 +69,7 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
                           Icon(Icons.image_not_supported,
                               size: 48, color: theme.colorScheme.outline),
                           const SizedBox(height: 16),
-                          Text('没有可显示的图片',
+                          Text(AppLocalizations.of(context).noDisplayableImages,
                               style:
                                   TextStyle(color: theme.colorScheme.outline)),
                         ],

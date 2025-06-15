@@ -6,9 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/providers/service_providers.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../../infrastructure/logging/logger.dart';
-import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../../providers/library/library_management_provider.dart';
 import '../../../library/m3_library_picker_dialog.dart';
 import '../../practice_edit_controller.dart';
@@ -119,7 +118,8 @@ mixin ImageSelectionHandler {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('导入图片失败: $e'),
+                content: Text(AppLocalizations.of(context)
+                    .importImageFailed(e.toString())),
                 backgroundColor: Colors.red,
               ),
             );
@@ -140,7 +140,8 @@ mixin ImageSelectionHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('打开图库失败: $e'),
+            content: Text(
+                AppLocalizations.of(context).openGalleryFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -348,4 +349,4 @@ mixin ImageSelectionHandler {
       isImporting = false;
     }
   }
-} 
+}

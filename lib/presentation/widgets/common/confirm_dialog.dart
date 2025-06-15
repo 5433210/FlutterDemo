@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 
 /// 通用确认对话框
@@ -22,10 +23,10 @@ class ConfirmDialog extends StatelessWidget {
     this.cancelText,
     this.isDestructive = false,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(title),
@@ -43,7 +44,7 @@ class ConfirmDialog extends StatelessWidget {
             onCancel?.call();
             Navigator.of(context).pop(false);
           },
-          child: Text(cancelText ?? '取消'),
+          child: Text(cancelText ?? l10n.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -56,7 +57,7 @@ class ConfirmDialog extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onError,
                 )
               : null,
-          child: Text(confirmText ?? '确定'),
+          child: Text(confirmText ?? l10n.confirm),
         ),
       ],
     );

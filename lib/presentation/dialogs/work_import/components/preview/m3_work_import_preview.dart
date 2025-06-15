@@ -256,8 +256,9 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     } catch (e) {
       AppLogger.error('Failed to add images from gallery: $e');
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('从图库添加图片失败: $e')),
+        SnackBar(content: Text(l10n.addFromGalleryFailed(e.toString()))),
       );
     }
   }
