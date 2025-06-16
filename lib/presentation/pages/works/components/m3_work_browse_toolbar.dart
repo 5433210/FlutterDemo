@@ -51,15 +51,15 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
           // 左侧按钮组
           FilledButton.icon(
             icon: const Icon(Icons.add),
-            label: Text(l10n.workBrowseImport),
+            label: Text(l10n.import),
             onPressed: widget.onImport,
           ),
           const SizedBox(width: AppSizes.s),
           OutlinedButton.icon(
             icon: Icon(widget.batchMode ? Icons.close : Icons.checklist),
             label: Text(widget.batchMode
-                ? l10n.workBrowseBatchDone
-                : l10n.workBrowseBatchMode),
+                ? l10n.done
+                : l10n.batchMode),
             onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
           ),
 
@@ -67,14 +67,14 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
           if (widget.batchMode) ...[
             const SizedBox(width: AppSizes.m),
             Text(
-              l10n.workBrowseSelectedCount(widget.selectedCount),
+              l10n.selectedCount(widget.selectedCount),
               style: theme.textTheme.bodyMedium,
             ),
             Padding(
               padding: const EdgeInsets.only(left: AppSizes.s),
               child: FilledButton.tonalIcon(
                 icon: const Icon(Icons.delete),
-                label: Text(l10n.workBrowseDeleteConfirmTitle),
+                label: Text(l10n.confirmDelete),
                 onPressed:
                     widget.selectedCount > 0 ? _showDeleteConfirmation : null,
               ),
@@ -122,8 +122,8 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
               ? Icons.view_list
               : Icons.grid_view,
           tooltip: widget.viewMode == ViewMode.grid
-              ? l10n.workBrowseListView
-              : l10n.workBrowseGridView,
+              ? l10n.listView
+              : l10n.gridView,
           onPressed: () => widget.onViewModeChanged(
               widget.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid),
           isPrimary: true,
@@ -149,16 +149,16 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.workBrowseDeleteConfirmTitle),
+        title: Text(l10n.confirmDelete),
         content:
-            Text(l10n.workBrowseDeleteConfirmMessage(widget.selectedCount)),
+            Text(l10n.batchDeleteMessage(widget.selectedCount)),
         actions: [
           TextButton(
-            child: Text(l10n.workBrowseCancel),
+            child: Text(l10n.cancel),
             onPressed: () => Navigator.pop(context, false),
           ),
           FilledButton(
-            child: Text(l10n.workBrowseDelete),
+            child: Text(l10n.delete),
             onPressed: () => Navigator.pop(context, true),
           ),
         ],

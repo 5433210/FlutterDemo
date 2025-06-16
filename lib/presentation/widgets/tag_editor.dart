@@ -46,7 +46,7 @@ class _TagEditorState extends State<TagEditor> {
                   controller: _controller,
                   focusNode: _focusNode,
                   decoration: InputDecoration(
-                    hintText: l10n.tagEditorEnterTagHint,
+                    hintText: l10n.enterTagHint,
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
@@ -75,7 +75,7 @@ class _TagEditorState extends State<TagEditor> {
         // Current tags display - always shown
         if (_tags.isEmpty && widget.readOnly)
           Text(
-            l10n.tagEditorNoTags,
+            l10n.noTags,
             style: TextStyle(
               color: Theme.of(context).hintColor,
               fontStyle: FontStyle.italic,
@@ -103,7 +103,7 @@ class _TagEditorState extends State<TagEditor> {
         // Only show suggested tags when not in read-only mode and there are suggestions
         if (!widget.readOnly && widget.suggestedTags.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text(l10n.tagEditorSuggestedTags,
+          Text(l10n.suggestedTags,
               style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
 

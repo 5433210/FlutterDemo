@@ -52,7 +52,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l10n.colorPickerTitle),
+      title: Text(l10n.colorPicker),
       content: SizedBox(
         width: 300,
         child: Column(

@@ -25,13 +25,13 @@ class InitializationScreen extends ConsumerWidget {
           }
 
           return initState.when(
-            data: (_) => Text(l10n?.appName ?? 'Initialization Complete'),
+            data: (_) => Text(l10n?.appTitle ?? 'Initialization Complete'),
             loading: () => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(l10n?.characterEditInitializing ?? 'Initializing...'),
+                Text(l10n?.initializing ?? 'Initializing...'),
               ],
             ),
             error: (error, stack) => Text(

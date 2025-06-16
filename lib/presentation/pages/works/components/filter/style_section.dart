@@ -19,7 +19,7 @@ class StyleSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return WorkFilterSection(
-      title: l10n.filterStyleSection,
+      title: l10n.calligraphyStyle,
       child: _buildStyleChips(context),
     );
   }
@@ -48,12 +48,12 @@ class StyleSection extends StatelessWidget {
   
   String _getStyleLabel(WorkStyle style, AppLocalizations l10n) {
     return switch (style) {
-      WorkStyle.regular => l10n.filterStyleRegular,
-      WorkStyle.running => l10n.filterStyleRunning,
-      WorkStyle.cursive => l10n.filterStyleCursive,
-      WorkStyle.clerical => l10n.filterStyleClerical,
-      WorkStyle.seal => l10n.filterStyleSeal,
-      WorkStyle.other => l10n.filterStyleOther,
+      WorkStyle.regular => l10n.workStyleRegular,
+      WorkStyle.running => l10n.workStyleRunning,
+      WorkStyle.cursive => l10n.workStyleCursive,
+      WorkStyle.clerical => l10n.workStyleClerical,
+      WorkStyle.seal => l10n.workStyleSeal,
+      WorkStyle.other => l10n.workToolOther,
     };
   }
 }

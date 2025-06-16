@@ -401,6 +401,7 @@ practiceEditTitle: 字帖编辑
 # 以下是普通键
 deleteSelected: 删除所选
    practiceListDeleteSelected: 删除所选
+   characterManagementDeleteSelected: 删除所选
 
 # 以下是普通键
 practiceSheetSaved: 字帖 "{title}" 已保存
@@ -1327,8 +1328,24 @@ enterCategoryName: 请输入分类名称
    enterCategoryName: 请输入分类名称
 
 # 以下是普通键
-filterDatePresetAll: 全部时间
+allTime: 全部时间
    filterDatePresetAll: 全部时间
+
+# 以下是普通键
+last7Days: 最近7天
+   filterDatePresetLast7Days: 最近7天
+
+# 以下是普通键
+last90Days: 最近90天
+   filterDatePresetLast90Days: 最近90天
+
+# 以下是普通键
+today: 今天
+   filterDatePresetToday: 今天
+
+# 以下是普通键
+yesterday: 昨天
+   filterDatePresetYesterday: 昨天
 
 # 以下是普通键
 createTime: 创建时间
@@ -1357,6 +1374,10 @@ updateTime: 更新时间
 # 以下是普通键
 tagsAddHint: 输入标签名称并按回车
    filterTagsAddHint: 输入标签名称并按回车
+
+# 以下是普通键
+tagsHint: 输入标签...
+   tagsHint: 输入标签...
 
 # 以下是普通键
 gridSize: 网格大小
@@ -3009,7 +3030,7 @@ loading: 加载中...
    characterManagementLoading: 加载字符中...   
 
 # 以下是普通键
-new: 新建
+newItem: 新建
    practiceListNewPractice: 新建字帖
 
 # 以下是普通键
@@ -3491,7 +3512,6 @@ imagePropertyPanelReset: 重置
 imagePropertyPanelSaturation: 饱和度
    imagePropertyPanelSaturation: 饱和度
 
-# 以下是未使用的键 [UNUSED]
 inputFieldHint: 请输入{field}
    inputFieldHint: 请输入{field}
 
@@ -3846,7 +3866,7 @@ imageInvalid: 图像数据无效或已损坏
    characterCollectionImageInvalid: 图像数据无效或已损坏
 
 # 以下是普通键
-OriginalImageDesc: 未经处理的原始图像
+originalImageDesc: 未经处理的原始图像
    characterDetailFormatOriginalDesc: 未经处理的原始图像
 
 # 以下是普通键

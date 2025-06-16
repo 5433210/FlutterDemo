@@ -55,7 +55,7 @@ class DateInputField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText:
-            enabled ? AppLocalizations.of(context).workFormSelectDate : null,
+            enabled ? AppLocalizations.of(context).selectDate : null,
         border: const OutlineInputBorder(),
         suffixIcon: enabled
             ? IconButton(

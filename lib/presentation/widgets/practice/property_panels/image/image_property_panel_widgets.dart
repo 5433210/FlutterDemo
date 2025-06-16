@@ -315,7 +315,7 @@ class ImagePropertySelectionPanel extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        title: Text(l10n.imagePropertyPanelImageSelection),
+        title: Text(l10n.imageSelection),
         initiallyExpanded: true,
         children: [
           Padding(
@@ -327,7 +327,7 @@ class ImagePropertySelectionPanel extends StatelessWidget {
                 FilledButton.tonalIcon(
                   icon: const Icon(Icons.collections_bookmark),
                   onPressed: onSelectFromLibrary,
-                  label: Text(l10n.imagePropertyPanelSelectFromLibrary),
+                  label: Text(l10n.fromGallery),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     backgroundColor: colorScheme.primaryContainer,
@@ -338,7 +338,7 @@ class ImagePropertySelectionPanel extends StatelessWidget {
                 FilledButton.tonalIcon(
                   icon: const Icon(Icons.photo_library),
                   onPressed: onSelectFromLocal,
-                  label: Text(l10n.imagePropertyPanelSelectFromLocal),
+                  label: Text(l10n.fromLocal),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
@@ -377,7 +377,7 @@ class ImagePropertyFitModePanel extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        title: Text(l10n.imagePropertyPanelFitMode),
+        title: Text(l10n.fitMode),
         initiallyExpanded: true,
         children: [
           Padding(
@@ -398,22 +398,22 @@ class ImagePropertyFitModePanel extends StatelessWidget {
                       segments: [
                         ButtonSegment<String>(
                           value: 'contain',
-                          label: Text(l10n.imagePropertyPanelFitContain),
+                          label: Text(l10n.fitContain),
                           icon: const Icon(Icons.fit_screen),
                         ),
                         ButtonSegment<String>(
                           value: 'cover',
-                          label: Text(l10n.imagePropertyPanelFitCover),
+                          label: Text(l10n.fitCover),
                           icon: const Icon(Icons.crop),
                         ),
                         ButtonSegment<String>(
                           value: 'fill',
-                          label: Text(l10n.imagePropertyPanelFitFill),
+                          label: Text(l10n.fitFill),
                           icon: const Icon(Icons.aspect_ratio),
                         ),
                         ButtonSegment<String>(
                           value: 'none',
-                          label: Text(l10n.imagePropertyPanelFitOriginal),
+                          label: Text(l10n.original),
                           icon: const Icon(Icons.image),
                         ),
                       ],
@@ -482,7 +482,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        title: Text(l10n.imagePropertyPanelPreview),
+        title: Text(l10n.preview),
         initiallyExpanded: true,
         children: [
           Padding(
@@ -575,7 +575,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                   Icon(Icons.image_not_supported,
                       size: 48, color: colorScheme.outline),
                   const SizedBox(height: 12),
-                  Text(l10n.imagePropertyPanelNoImageSelected,
+                  Text(l10n.noImageSelected,
                       style: TextStyle(color: colorScheme.outline)),
                 ],
               ),
@@ -605,7 +605,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 const Icon(Icons.error_outline, color: Colors.red, size: 40),
                 const SizedBox(height: 8),
                 Text(
-                  l10n.imagePropertyPanelFileNotExist(filePath),
+                  l10n.fileNotExist(filePath),
                   style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
@@ -627,7 +627,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                       const Icon(Icons.error, color: Colors.red, size: 48),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.imagePropertyPanelLoadError(error
+                        l10n.imageLoadError(error
                             .toString()
                             .substring(
                                 0, math.min(error.toString().length, 50))),
@@ -670,7 +670,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
               const Icon(Icons.error_outline, color: Colors.red, size: 40),
               const SizedBox(height: 8),
               Text(
-                l10n.imagePropertyPanelProcessingPathError(e.toString()),
+                l10n.imageProcessingPathError(e.toString()),
                 style: const TextStyle(color: Colors.red),
                 textAlign: TextAlign.center,
               ),
@@ -749,7 +749,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                         color: Colors.red, size: 40),
                     const SizedBox(height: 8),
                     Text(
-                      l10n.imagePropertyPanelLoadError(error
+                      l10n.imageLoadError(error
                           .toString()
                           .substring(0, math.min(error.toString().length, 50))),
                       style: const TextStyle(color: Colors.red),
@@ -897,7 +897,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        title: Text(l10n.imagePropertyPanelImageTransform),
+        title: Text(l10n.imageTransform),
         initiallyExpanded: true,
         children: [
           Padding(
@@ -931,35 +931,35 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                 ),
 
                 // Crop settings
-                Text(l10n.imagePropertyPanelCropping,
+                Text(l10n.cropping,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8.0),
 
                 // Crop sliders
                 _buildCropSlider(
                   context: context,
-                  label: l10n.imagePropertyPanelCropTop,
+                  label: l10n.cropTop,
                   cropKey: 'cropTop',
                   value: cropTop,
                   max: maxCropHeight,
                 ),
                 _buildCropSlider(
                   context: context,
-                  label: l10n.imagePropertyPanelCropBottom,
+                  label: l10n.cropBottom,
                   cropKey: 'cropBottom',
                   value: cropBottom,
                   max: maxCropHeight,
                 ),
                 _buildCropSlider(
                   context: context,
-                  label: l10n.imagePropertyPanelCropLeft,
+                  label: l10n.cropLeft,
                   cropKey: 'cropLeft',
                   value: cropLeft,
                   max: maxCropWidth,
                 ),
                 _buildCropSlider(
                   context: context,
-                  label: l10n.imagePropertyPanelCropRight,
+                  label: l10n.cropRight,
                   cropKey: 'cropRight',
                   value: cropRight,
                   max: maxCropWidth,
@@ -968,7 +968,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                 const SizedBox(height: 16.0),
 
                 // Flip buttons
-                Text(l10n.imagePropertyPanelFlip,
+                Text(l10n.flip,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8.0),
 
@@ -984,14 +984,14 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                       spacing: 8,
                       children: [
                         FilterChip(
-                          label: Text(l10n.imagePropertyPanelFlipHorizontal),
+                          label: Text(l10n.flipHorizontal),
                           selected: flipHorizontal,
                           onSelected: (value) =>
                               onFlipChanged('isFlippedHorizontally', value),
                           avatar: const Icon(Icons.flip),
                         ),
                         FilterChip(
-                          label: Text(l10n.imagePropertyPanelFlipVertical),
+                          label: Text(l10n.flipVertical),
                           selected: flipVertical,
                           onSelected: (value) =>
                               onFlipChanged('isFlippedVertically', value),
@@ -1090,7 +1090,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                       child: FilledButton.icon(
                         icon: const Icon(Icons.check),
                         onPressed: onApplyTransform,
-                        label: Text(l10n.imagePropertyPanelApplyTransform),
+                        label: Text(l10n.applyTransform),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           backgroundColor: colorScheme.primary,
@@ -1102,7 +1102,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.refresh),
                         onPressed: onResetTransform,
-                        label: Text(l10n.imagePropertyPanelResetTransform),
+                        label: Text(l10n.resetTransform),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           foregroundColor: colorScheme.error,

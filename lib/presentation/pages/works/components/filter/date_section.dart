@@ -22,7 +22,7 @@ class DateSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.filterDateSection, style: Theme.of(context).textTheme.titleMedium),
+        Text(l10n.createTime, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSizes.s),
         DateRangeFilterSection(
           filter: DateRangeFilter(

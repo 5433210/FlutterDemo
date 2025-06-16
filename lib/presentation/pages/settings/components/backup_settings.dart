@@ -172,7 +172,7 @@ class BackupSettings extends ConsumerWidget {
         backupList.when(
           data: (backups) => _buildBackupList(context, ref, backups),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Text('${l10n.loadingError}: $error'),
+          error: (error, stack) => Text('${l10n.loadFailed}: $error'),
         ),
       ],
     );
@@ -400,7 +400,7 @@ class BackupSettings extends ConsumerWidget {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: AppSizes.p16),
-              Text(l10n.importingBackup),
+              Text(l10n.importing),
             ],
           ),
         ),
@@ -510,8 +510,8 @@ class BackupSettings extends ConsumerWidget {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n.deleteBackupConfirmTitle),
-            content: Text(l10n.deleteBackupConfirmMessage),
+            title: Text(l10n.deleteBackup),
+            content: Text(l10n.deleteMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),

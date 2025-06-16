@@ -92,17 +92,17 @@ class _CharacterInputValidator {
   static _ValidationResult validateCharacter(
       String? input, AppLocalizations l10n) {
     if (input == null || input.isEmpty) {
-      return _ValidationResult.failure(l10n.characterEditPleaseEnterCharacter);
+      return _ValidationResult.failure(l10n.inputCharacter);
     }
 
     if (input.length > 1) {
-      return _ValidationResult.failure(l10n.characterEditOnlyOneCharacter);
+      return _ValidationResult.failure(l10n.onlyOneCharacter);
     }
 
     // Validate if it's a Chinese character
     final RegExp hanziRegExp = RegExp(r'[\u4e00-\u9fa5]');
     if (!hanziRegExp.hasMatch(input)) {
-      return _ValidationResult.failure(l10n.characterEditValidChineseCharacter);
+      return _ValidationResult.failure(l10n.validChineseCharacter);
     }
 
     return _ValidationResult.success;
@@ -416,7 +416,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                           },
                     icon: const Icon(Icons.edit, size: 18),
                     label: Text(ShortcutTooltipBuilder.build(
-                      l10n.characterEditInputCharacter,
+                      l10n.inputCharacter,
                       EditorShortcuts.openInput,
                     )),
                   ),
@@ -467,7 +467,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               Icon(Icons.edit, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                l10n.characterEditInputCharacter,
+                l10n.inputCharacter,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -493,7 +493,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 24, color: colorScheme.onSurface),
             decoration: InputDecoration(
-              hintText: l10n.characterEditInputHint,
+              hintText: l10n.inputHint,
               counterText: '',
               border: const OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
@@ -552,7 +552,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 !snapshot.hasData ||
                 snapshot.data == null) {
               processedImageNotifier.setError(
-                  '${l10n.characterEditImageLoadError}: ${snapshot.error ?? l10n.characterEditUnknownError}');
+                  '${l10n.imageLoadError}: ${snapshot.error ?? l10n.unknownError}');
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -561,12 +561,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                         color: colorScheme.error, size: 48),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.characterEditImageLoadFailed,
+                      l10n.imageLoadError(l10n.imageFileNotExists),
                       style: TextStyle(color: colorScheme.error),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${snapshot.error ?? l10n.characterEditUnknownError}',
+                      '${snapshot.error ?? l10n.unknownError}',
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 12,
@@ -736,7 +736,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           ),
           const SizedBox(height: 16),
           Text(
-            l10n.characterEditLoadingImage,
+            l10n.loadingImage,
             style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
         ],
@@ -799,7 +799,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         if (snapshot.hasError) {
           AppLogger.error('CharacterEditPanel - Failed to get thumbnail path',
               error: snapshot.error);
-          return _buildErrorWidget(l10n.characterEditThumbnailLoadFailed);
+          return _buildErrorWidget(l10n.thumbnailLoadError);
         }
 
         if (!snapshot.hasData) {
@@ -818,7 +818,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               AppLogger.error(
                   'CharacterEditPanel - Failed to check if thumbnail file exists',
                   error: existsSnapshot.error);
-              return _buildErrorWidget(l10n.characterEditThumbnailCheckFailed);
+              return _buildErrorWidget(l10n.thumbnailCheckFailed);
             }
 
             if (!existsSnapshot.hasData) {
@@ -835,7 +835,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               AppLogger.error(
                   'CharacterEditPanel - Thumbnail file does not exist',
                   data: {'path': thumbnailPath});
-              return _buildErrorWidget(l10n.characterEditThumbnailNotFound);
+              return _buildErrorWidget(l10n.thumbnailNotFound);
             }
 
             return FutureBuilder<int>(
@@ -845,8 +845,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                   AppLogger.error(
                       'CharacterEditPanel - Failed to get thumbnail file size',
                       error: sizeSnapshot.error);
-                  return _buildErrorWidget(
-                      l10n.characterEditThumbnailSizeError);
+                  return _buildErrorWidget(l10n.getThumbnailSizeError);
                 }
 
                 if (!sizeSnapshot.hasData) {
@@ -863,7 +862,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                   AppLogger.error(
                       'CharacterEditPanel - Thumbnail file size is 0',
                       data: {'path': thumbnailPath});
-                  return _buildErrorWidget(l10n.characterEditThumbnailEmpty);
+                  return _buildErrorWidget(l10n.thumbnailEmpty);
                 }
 
                 final colorScheme = Theme.of(context).colorScheme;
@@ -891,8 +890,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                           error: error,
                           stackTrace: stackTrace,
                           data: {'path': thumbnailPath});
-                      return _buildErrorWidget(
-                          l10n.characterEditThumbnailLoadError);
+                      return _buildErrorWidget(l10n.thumbnailLoadError);
                     },
                   ),
                 );
@@ -922,7 +920,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               _buildToolbarButtonGroup([
                 _ToolbarButton(
                   icon: Icons.undo,
-                  tooltip: l10n.characterEditUndo,
+                  tooltip: l10n.undo,
                   onPressed: eraseState.canUndo
                       ? () => ref.read(erase.eraseStateProvider.notifier).undo()
                       : null,
@@ -930,7 +928,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ),
                 _ToolbarButton(
                   icon: Icons.redo,
-                  tooltip: l10n.characterEditRedo,
+                  tooltip: l10n.redo,
                   onPressed: eraseState.canRedo
                       ? () => ref.read(erase.eraseStateProvider.notifier).redo()
                       : null,
@@ -944,7 +942,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               _buildToolbarButtonGroup([
                 _ToolbarButton(
                   icon: Icons.invert_colors,
-                  tooltip: l10n.characterEditInvertMode,
+                  tooltip: l10n.invertMode,
                   onPressed: () {
                     ref.read(erase.eraseStateProvider.notifier).toggleReverse();
                   },
@@ -953,7 +951,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ),
                 _ToolbarButton(
                   icon: Icons.flip,
-                  tooltip: l10n.characterEditImageInvert,
+                  tooltip: l10n.imageInvert,
                   onPressed: () {
                     ref
                         .read(erase.eraseStateProvider.notifier)
@@ -964,7 +962,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ),
                 _ToolbarButton(
                   icon: Icons.border_all,
-                  tooltip: l10n.characterEditShowContour,
+                  tooltip: l10n.showContour,
                   onPressed: () {
                     ref.read(erase.eraseStateProvider.notifier).toggleContour();
                   },
@@ -989,7 +987,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 children: [
                   RepaintBoundary(
                     child: Tooltip(
-                      message: l10n.characterEditBrushSize,
+                      message: l10n.brushSize,
                       child: Icon(Icons.brush,
                           size: 16, color: colorScheme.onSurfaceVariant),
                     ),
@@ -1034,7 +1032,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 children: [
                   RepaintBoundary(
                     child: Tooltip(
-                      message: l10n.characterEditThreshold,
+                      message: l10n.threshold,
                       child: Icon(Icons.contrast,
                           size: 16, color: colorScheme.onSurfaceVariant),
                     ),
@@ -1081,7 +1079,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 children: [
                   RepaintBoundary(
                     child: Tooltip(
-                      message: l10n.characterEditNoiseReduction,
+                      message: l10n.noiseReduction,
                       child: Icon(Icons.blur_on,
                           size: 16, color: colorScheme.onSurfaceVariant),
                     ),
@@ -1270,14 +1268,14 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   }
 
   String _getSaveStatusText(double? progress, AppLocalizations l10n) {
-    if (progress == null) return l10n.characterEditPreparingSave;
+    if (progress == null) return l10n.preparingSave;
 
-    if (progress <= 0.2) return l10n.characterEditInitializing;
-    if (progress <= 0.4) return l10n.characterEditProcessingEraseData;
-    if (progress <= 0.6) return l10n.characterEditSavingToStorage;
-    if (progress <= 0.8) return l10n.characterEditProcessingImage;
-    if (progress < 1.0) return l10n.characterEditCompletingSave;
-    return l10n.characterEditSaveComplete;
+    if (progress <= 0.2) return l10n.initializing;
+    if (progress <= 0.4) return l10n.processingEraseData;
+    if (progress <= 0.6) return l10n.savingToStorage;
+    if (progress <= 0.8) return l10n.processingImage;
+    if (progress < 1.0) return l10n.completingSave;
+    return l10n.saveComplete;
   }
 
   // Get thumbnail path
@@ -1537,7 +1535,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Get current selection from selectedRegionProvider
       final selectedRegion = ref.read(selectedRegionProvider);
       if (selectedRegion == null) {
-        throw _SaveError(l10n.characterEditNoRegionSelected);
+        throw _SaveError(l10n.noRegionBoxed);
       }
 
       // Update region information, save erase path data
@@ -1597,7 +1595,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               saveNotifier.updateProgress(0.98);
             }),
             Future.delayed(const Duration(seconds: 30))
-                .then((_) => throw _SaveError(l10n.characterEditSaveTimeout)),
+                .then((_) => throw _SaveError(l10n.saveTimeout)),
           ]);
         } on _SaveError {
           AppLogger.error('Save timeout');
@@ -1743,12 +1741,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.characterEditCharacterUpdated),
+              content: Text(l10n.characterUpdated),
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
               width: 200,
               action: SnackBarAction(
-                label: l10n.characterEditUndo,
+                label: l10n.undo,
                 onPressed: () {
                   if (mounted) {
                     _characterController.text = selectedRegion.character;

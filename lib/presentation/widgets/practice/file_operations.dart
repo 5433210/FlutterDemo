@@ -78,7 +78,7 @@ class FileOperations {
       debugPrint('错误: 导出对话框返回的结果缺少必要的键');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).exportFailed)),
+          SnackBar(content: Text(AppLocalizations.of(context).exportFailure)),
         );
       }
       return;
@@ -157,8 +157,8 @@ class FileOperations {
             _safeShowSnackBar(
               scaffoldMessenger,
               SnackBar(
-                  content: Text(AppLocalizations.of(context)
-                      .pdfExportSuccessNoFile(pdfPath))),
+                  content: Text(
+                      AppLocalizations.of(context).pdfExportSuccess(pdfPath))),
             );
           }
         } else {
@@ -203,8 +203,7 @@ class FileOperations {
           _safeShowSnackBar(
             scaffoldMessenger,
             SnackBar(
-              content: Text(AppLocalizations.of(context)
-                  .imageExportSuccess(imagePaths.length)),
+              content: Text(AppLocalizations.of(context).exportSuccess),
               action: SnackBarAction(
                 label: AppLocalizations.of(context).openFolder,
                 onPressed: () {
@@ -232,8 +231,7 @@ class FileOperations {
       _safeShowSnackBar(
         scaffoldMessenger,
         SnackBar(
-            content: Text(AppLocalizations.of(context)
-                .exportFailedWithError(e.toString()))),
+            content: Text(AppLocalizations.of(context).error(e.toString()))),
       );
     } finally {
       debugPrint('=== 导出字帖过程结束 ===');
@@ -296,8 +294,7 @@ class FileOperations {
       _safeShowSnackBar(
         scaffoldMessenger,
         SnackBar(
-            content: Text(AppLocalizations.of(context)
-                .printPreparationFailed(e.toString()))),
+            content: Text(AppLocalizations.of(context).error(e.toString()))),
       );
     }
   }
@@ -446,7 +443,7 @@ class FileOperations {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text(AppLocalizations.of(context)
-                          .practiceSheetOverwritten(
+                          .overwriteExistingPractice(
                               controller.practiceTitle!))),
                 );
               } else if (context.mounted) {
@@ -547,7 +544,7 @@ class FileOperations {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content: Text(AppLocalizations.of(context)
-                      .practiceSheetOverwritten(title))),
+                      .overwriteExistingPractice(title))),
             );
           } else if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -680,7 +677,7 @@ class FileOperations {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context).practiceEditOverwrite),
+            child: Text(AppLocalizations.of(context).overwrite),
           ),
         ],
       ),

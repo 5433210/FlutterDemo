@@ -445,7 +445,7 @@ class _WorkFormState extends State<WorkForm> {
         focusNode: _authorFocus,
         controller: _authorController,
         decoration: InputDecoration(
-          labelText: l10n.workFormAuthor,
+          labelText: l10n.author,
           hintText: _isReadOnly ? null : l10n.workFormAuthorHint,
           suffixText: _authorFocus.hasFocus && !_isReadOnly ? 'Ctrl+A' : null,
           errorStyle: const TextStyle(height: 0),
@@ -490,11 +490,11 @@ class _WorkFormState extends State<WorkForm> {
     final l10n = AppLocalizations.of(context);
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormDateTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormDateHelp : null,
       helpIcon: Icons.calendar_today_outlined,
       child: DateInputField(
-        label: l10n.workFormCreationDate,
+        label: l10n.creationDate,
         value: widget.initialCreationDate,
         onChanged: _handleDateChange,
         textInputAction: TextInputAction.next,
@@ -544,8 +544,8 @@ class _WorkFormState extends State<WorkForm> {
         focusNode: _remarkFocus,
         controller: _remarkController,
         decoration: InputDecoration(
-          labelText: l10n.workFormRemark,
-          hintText: _isReadOnly ? null : l10n.workFormRemarkHint,
+          labelText: l10n.remarks,
+          hintText: _isReadOnly ? null : l10n.optional,
           suffixText: _remarkFocus.hasFocus && !_isReadOnly ? 'Ctrl+R' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_remarkController.text.length}/500',
@@ -576,11 +576,11 @@ class _WorkFormState extends State<WorkForm> {
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormDateTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormStyleHelp : null,
       helpIcon: Icons.palette_outlined,
       child: DropdownField<String>(
-        label: l10n.workFormStyle,
+        label: l10n.calligraphyStyle,
         value: widget.initialStyle?.value,
         items: WorkStyle.values
             .map((e) => DropdownMenuItem(
@@ -612,9 +612,9 @@ class _WorkFormState extends State<WorkForm> {
         controller: _titleController,
         decoration: InputDecoration(
           labelText: widget.requiredFields.contains(WorkFormField.title)
-              ? '${l10n.workFormTitle} *'
-              : l10n.workFormTitle,
-          hintText: _isReadOnly ? null : l10n.workFormTitleHint,
+              ? '${l10n.title} *'
+              : l10n.title,
+          hintText: _isReadOnly ? null : l10n.inputTitle,
           suffixText: _titleFocus.hasFocus && !_isReadOnly ? 'Ctrl+T' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_titleController.text.length}/100',
@@ -645,11 +645,11 @@ class _WorkFormState extends State<WorkForm> {
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormToolTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormToolHelp : null,
       helpIcon: Icons.brush_outlined,
       child: DropdownField<String>(
-        label: l10n.workFormTool,
+        label: l10n.writingTool,
         value: widget.initialTool?.value,
         items: WorkTool.values
             .map((e) => DropdownMenuItem(

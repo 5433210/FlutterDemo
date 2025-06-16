@@ -582,7 +582,7 @@ class _M3LibraryBrowsingPanelState
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(AppLocalizations.of(context).importingImages),
+                Text(AppLocalizations.of(context).importing),
               ],
             ),
           ),
@@ -648,7 +648,7 @@ class _M3LibraryBrowsingPanelState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                AppLocalizations.of(context).importFileFailed(e.toString())),
+                AppLocalizations.of(context).importFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

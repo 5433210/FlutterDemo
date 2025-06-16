@@ -266,7 +266,7 @@ class M3LibraryItem extends StatelessWidget {
                 Flexible(
                   flex: 2,
                   child: Text(
-                    '${l10n.filterSortFieldUpdateTime}:${DateFormatter.formatWithTime(item.fileUpdatedAt)}',
+                    '${l10n.updateTime}:${DateFormatter.formatWithTime(item.fileUpdatedAt)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

@@ -8,7 +8,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/undo_operations.dart';
-import '../../../widgets/practice/undo_redo_manager.dart';
 
 /// Utility methods for practice editing
 class PracticeEditUtils {
@@ -128,8 +127,7 @@ class PracticeEditUtils {
         // 显示通知
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)
-                .elementsCopied(selectedElements.length)),
+            content: Text(AppLocalizations.of(context).elementCopied),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -390,7 +388,7 @@ class PracticeEditUtils {
             }
 
             controller.state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             controller.intelligentNotify(
               changeType: 'element_paste',
@@ -404,7 +402,11 @@ class PracticeEditUtils {
               operation: 'paste_elements',
               affectedElements: elements.map((e) => e['id'] as String).toList(),
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
           }
         },
@@ -421,7 +423,7 @@ class PracticeEditUtils {
             controller.state.selectedElement = null;
 
             controller.state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             controller.intelligentNotify(
               changeType: 'element_paste_undo',
@@ -434,7 +436,11 @@ class PracticeEditUtils {
               operation: 'paste_elements_undo',
               affectedElements: ids,
               affectedLayers: ['content', 'interaction'],
-              affectedUIComponents: ['canvas', 'property_panel', 'element_list'],
+              affectedUIComponents: [
+                'canvas',
+                'property_panel',
+                'element_list'
+              ],
             );
           }
         },
@@ -640,7 +646,7 @@ class PracticeEditUtils {
             controller.state.selectedElement = e;
 
             controller.state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             controller.intelligentNotify(
               changeType: 'element_ungroup_add_group',
@@ -672,7 +678,7 @@ class PracticeEditUtils {
             }
 
             controller.state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             controller.intelligentNotify(
               changeType: 'element_ungroup_remove',
@@ -703,7 +709,7 @@ class PracticeEditUtils {
             controller.state.selectedElement = null; // 多选时不显示单个元素的属性
 
             controller.state.hasUnsavedChanges = true;
-            
+
             // 🚀 使用智能状态分发器替代直接的notifyListeners
             controller.intelligentNotify(
               changeType: 'element_ungroup_add_elements',
@@ -819,8 +825,7 @@ class PracticeEditUtils {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(AppLocalizations.of(context)
-                  .errorSelectingImage(e.toString()))),
+              content: Text(AppLocalizations.of(context).error(e.toString()))),
         );
       }
     }

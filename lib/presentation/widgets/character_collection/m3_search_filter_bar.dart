@@ -59,15 +59,15 @@ class M3SearchFilterBar extends StatelessWidget {
               segments: [
                 ButtonSegment<FilterType>(
                   value: FilterType.all,
-                  label: Text(l10n.characterCollectionFilterAll),
+                  label: Text(l10n.all),
                 ),
                 ButtonSegment<FilterType>(
                   value: FilterType.recent,
-                  label: Text(l10n.characterCollectionFilterRecent),
+                  label: Text(l10n.recent),
                 ),
                 ButtonSegment<FilterType>(
                   value: FilterType.favorite,
-                  label: Text(l10n.characterCollectionFilterFavorite),
+                  label: Text(l10n.favorite),
                 ),
               ],
               selected: {filterType},

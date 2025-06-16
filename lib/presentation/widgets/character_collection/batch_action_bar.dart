@@ -83,8 +83,8 @@ class BatchActionBar extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.deleteConfirmation),
-        content: Text(l10n.deleteCharactersConfirm(selectedCount)),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.batchDeleteMessage(selectedCount)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

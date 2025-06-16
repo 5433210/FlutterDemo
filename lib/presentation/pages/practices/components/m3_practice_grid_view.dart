@@ -61,7 +61,7 @@ class M3PracticeGridView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.practiceListLoading,
+              l10n.loading,
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
@@ -101,7 +101,7 @@ class M3PracticeGridView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.practiceListNoResults,
+              l10n.noResults,
               style: theme.textTheme.titleMedium,
             ),
           ],

@@ -32,7 +32,7 @@ class M3FilterStyleSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.filterStyleSection,
+          l10n.calligraphyStyle,
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
@@ -58,17 +58,17 @@ class M3FilterStyleSection extends StatelessWidget {
   String _getLocalizedStyleName(WorkStyle style, AppLocalizations l10n) {
     switch (style) {
       case WorkStyle.regular:
-        return l10n.filterStyleRegular;
+        return l10n.workStyleRegular;
       case WorkStyle.running:
-        return l10n.filterStyleRunning;
+        return l10n.workStyleRunning;
       case WorkStyle.cursive:
-        return l10n.filterStyleCursive;
+        return l10n.workStyleCursive;
       case WorkStyle.clerical:
-        return l10n.filterStyleClerical;
+        return l10n.workStyleClerical;
       case WorkStyle.seal:
-        return l10n.filterStyleSeal;
+        return l10n.workStyleSeal;
       case WorkStyle.other:
-        return l10n.filterStyleOther;
+        return l10n.workToolOther;
     }
   }
 }

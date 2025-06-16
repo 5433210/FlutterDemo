@@ -318,7 +318,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                             style: IconButton.styleFrom(
                               padding: EdgeInsets.zero,
                             ),
-                            tooltip: l10n.practiceEditDeleteLayer,
+                            tooltip: l10n.deleteLayer,
                           ),
                         ),
 
@@ -362,7 +362,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
             Icon(Icons.layers_clear, size: 48, color: colorScheme.outline),
             const SizedBox(height: 16),
             Text(
-              l10n.practiceEditNoLayers,
+              l10n.noLayers,
               style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
               textAlign: TextAlign.center,
             ),
@@ -428,7 +428,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
       child: Row(
         children: [
           Text(
-            l10n.practiceEditLayerPanel,
+            l10n.layer,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -449,7 +449,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
               widget.onAddLayer();
             },
             icon: const Icon(Icons.add, size: 18),
-            label: Text(l10n.practiceEditAddLayer),
+            label: Text(l10n.addLayer),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               textStyle: const TextStyle(fontSize: 14),
@@ -477,12 +477,12 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.practiceEditDeleteLayerConfirm),
+        title: Text(l10n.deleteLayerConfirmMessage),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.practiceEditDeleteLayerMessage),
+            Text(l10n.deleteLayerMessage),
             const SizedBox(height: 16),
             Text(
               'Layer: $layerName',

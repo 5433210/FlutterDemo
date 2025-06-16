@@ -79,7 +79,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                       children: [
                         Expanded(
                           child: Text(
-                            l10n.libraryManagementDetail,
+                            l10n.detail,
                             style: theme.textTheme.titleMedium,
                           ),
                         ),
@@ -112,19 +112,19 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                       children: [
                         // 基本信息
                         _buildSection(
-                          l10n.libraryManagementBasicInfo,
+                          l10n.basicInfo,
                           [
                             if (_isEditing)
                               TextField(
                                 controller: _nameController,
                                 decoration: InputDecoration(
-                                  labelText: l10n.libraryManagementName,
+                                  labelText: l10n.name,
                                   isDense: true,
                                 ),
                               )
                             else
                               _buildInfoRow(
-                                l10n.libraryManagementName,
+                                l10n.name,
                                 widget.item.fileName,
                                 selectable: true,
                               ),
@@ -134,11 +134,11 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                               _buildEditFavoriteRow(theme, l10n),
                             ] else ...[
                               _buildInfoRow(
-                                l10n.libraryManagementType,
+                                l10n.type,
                                 widget.item.type,
                               ),
                               _buildInfoRow(
-                                l10n.libraryManagementFavorite,
+                                l10n.favorite,
                                 widget.item.isFavorite ? l10n.yes : l10n.no,
                               ),
                             ],
@@ -149,7 +149,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
                         // 分类组
                         _buildSection(
-                          l10n.libraryManagementCategories,
+                          l10n.categories,
                           [
                             if (_isEditing)
                               Wrap(
@@ -214,7 +214,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
                         // 标签组
                         _buildSection(
-                          l10n.libraryManagementTags,
+                          l10n.tags,
                           [
                             if (_isEditing)
                               TextField(
@@ -252,22 +252,22 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
                         const SizedBox(height: AppSizes.spacing16), // 文件信息组
                         _buildSection(
-                          l10n.libraryManagementMetadata,
+                          l10n.metadata,
                           [
                             _buildInfoRow(
-                              l10n.libraryManagementFormat,
+                              l10n.format,
                               widget.item.format,
                             ),
                             _buildInfoRow(
-                              l10n.libraryManagementResolution,
+                              l10n.resolution,
                               '${widget.item.width}x${widget.item.height}',
                             ),
                             _buildInfoRow(
-                              l10n.libraryManagementFileSize,
+                              l10n.fileSize,
                               FileSizeFormatter.format(widget.item.fileSize),
                             ),
                             _buildInfoRow(
-                              l10n.libraryManagementPath,
+                              l10n.path,
                               widget.item.path,
                               selectable: true,
                             ),
@@ -278,15 +278,15 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
                         // 时间信息组
                         _buildSection(
-                          l10n.libraryManagementTimeInfo,
+                          l10n.timeInfo,
                           [
                             _buildInfoRow(
-                              l10n.libraryManagementCreatedAt,
+                              l10n.createdAt,
                               DateFormatter.formatWithTime(
                                   widget.item.fileCreatedAt),
                             ),
                             _buildInfoRow(
-                              l10n.libraryManagementUpdatedAt,
+                              l10n.updatedAt,
                               DateFormatter.formatWithTime(
                                   widget.item.fileUpdatedAt),
                             ),
@@ -297,13 +297,13 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
                         // 备注信息组
                         _buildSection(
-                          l10n.libraryManagementRemarks,
+                          l10n.remarks,
                           [
                             if (_isEditing)
                               TextField(
                                 controller: _remarksController,
                                 decoration: InputDecoration(
-                                  hintText: l10n.libraryManagementRemarksHint,
+                                  hintText: l10n.remarksHint,
                                   isDense: true,
                                 ),
                                 maxLines: 3,
@@ -311,7 +311,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                             else
                               SelectableText(
                                 widget.item.remarks.isEmpty
-                                    ? l10n.libraryManagementNoRemarks
+                                    ? l10n.noRemarks
                                     : widget.item.remarks,
                                 style: theme.textTheme.bodyMedium,
                               ),
@@ -370,7 +370,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
           Expanded(
             flex: 2,
             child: Text(
-              l10n.libraryManagementFavorite,
+              l10n.favorite,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -399,7 +399,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
           Expanded(
             flex: 2,
             child: Text(
-              l10n.libraryManagementType,
+              l10n.type,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

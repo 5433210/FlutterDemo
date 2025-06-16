@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/batch_update_options.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
@@ -366,7 +365,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           data: {'component': 'intelligent_dispatcher'},
         );
       }
-      
+
       // 注意：不要 dispose 单例的 PerformanceMonitor
       EditPageLogger.editPageDebug(
         'Canvas组件资源释放：性能监控器引用移除（单例不释放）',
@@ -375,7 +374,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           'operation': 'reference_removed',
         },
       );
-
     } finally {
       // 🔧 CRITICAL FIX: 在finally块中调用super.dispose()确保一定会被执行
       EditPageLogger.editPageDebug(
@@ -589,6 +587,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       );
     });
   }
+
   void triggerSetState() {
     // 🚀 优化：避免Canvas整体重建，使用分层架构
     EditPageLogger.canvasDebug(
@@ -1043,7 +1042,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           ),
                         ],
                       ),
-                    ),                  // Reset position button
+                    ), // Reset position button
                   Tooltip(
                     message:
                         AppLocalizations.of(context).canvasResetViewTooltip,
@@ -1069,7 +1068,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                 Flexible(
                                   child: Text(
                                     AppLocalizations.of(context)
-                                        .canvasResetView,
+                                        .canvasResetViewTooltip,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: colorScheme.onSurfaceVariant,
@@ -1158,7 +1157,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'reason': 'post_frame_registration_check',
             'timing': 'after_widget_build',
           },
-        );        // 重新尝试注册（如果还没有创建监听器则创建）
+        ); // 重新尝试注册（如果还没有创建监听器则创建）
         _canvasUIListener ??= () {
           if (mounted && !_isDisposed) {
             setState(() {});
@@ -1640,7 +1639,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         intelligentDispatcher.registerLayerListener('content', () {
           // 检查是否是元素顺序变化，如果是则通过StateChangeDispatcher处理
           _handleIntelligentDispatcherContentUpdate();
-        });        // 🚀 CRITICAL FIX: 注册Canvas作为UI组件监听器，以接收参考线更新通知
+        }); // 🚀 CRITICAL FIX: 注册Canvas作为UI组件监听器，以接收参考线更新通知
         // 这解决了参考线UI显示问题: "UI组件没有注册监听器" (component: canvas)
         _canvasUIListener ??= () {
           if (mounted && !_isDisposed) {
@@ -1664,7 +1663,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         bool isRegistered = false;
         for (int attempt = 0; attempt < 3; attempt++) {
           isRegistered = intelligentDispatcher.hasUIComponentListener('canvas');
-          if (isRegistered) break;          // 如果注册失败，稍等一下再试
+          if (isRegistered) break; // 如果注册失败，稍等一下再试
           if (attempt < 2) {
             Future.delayed(const Duration(milliseconds: 10), () {
               if (!_isDisposed) {
@@ -1674,7 +1673,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     EditPageLogger.canvasDebug('Canvas UI监听器触发重建(重试)');
                   }
                 };
-                intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
+                intelligentDispatcher.registerUIListener(
+                    'canvas', _canvasUIListener!);
               }
             });
           }
@@ -1877,7 +1877,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   // ✅ 新方法：注销智能状态分发器监听器
   void _unregisterFromIntelligentDispatcher() {
     try {
-      final intelligentDispatcher = widget.controller.intelligentDispatcher;      
+      final intelligentDispatcher = widget.controller.intelligentDispatcher;
       if (intelligentDispatcher != null) {
         // 🚀 修复：注销Canvas UI监听器以修复参考线功能
         EditPageLogger.editPageDebug(
@@ -1887,7 +1887,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
             'component': 'canvas',
           },
         );
-        
+
         // 注销UI监听器（参考线更新等）
         if (_canvasUIListener != null) {
           intelligentDispatcher.removeUIListener('canvas', _canvasUIListener!);

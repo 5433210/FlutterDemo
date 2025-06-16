@@ -47,7 +47,7 @@ class M3PreviewToolbar extends ConsumerWidget {
               const SizedBox(width: 4),
               _ToolButton(
                 icon: Icons.crop_square,
-                tooltip: l10n.characterCollectionToolSelect,
+                tooltip: l10n.characterCollectionToolBox,
                 isSelected: toolMode == Tool.select,
                 onPressed: () =>
                     ref.read(toolModeProvider.notifier).setMode(Tool.select),
@@ -63,7 +63,7 @@ class M3PreviewToolbar extends ConsumerWidget {
               // Delete button
               _ToolButton(
                 icon: Icons.delete,
-                tooltip: l10n.characterCollectionToolDelete,
+                tooltip: l10n.deleteSelected,
                 isEnabled: hasSelection,
                 onPressed: hasSelection
                     ? () async {

@@ -50,7 +50,7 @@ class _M3CharacterManagementNavigationBarState
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return M3PageNavigationBar(
-      title: l10n.characterManagementTitle,
+      title: l10n.characterCollection,
       onBackPressed: widget.onBackPressed,
       titleActions: widget.isBatchMode
           ? [
@@ -64,7 +64,7 @@ class _M3CharacterManagementNavigationBarState
               //     padding: const EdgeInsets.only(left: AppSizes.s),
               //     child: FilledButton.tonalIcon(
               //       icon: const Icon(Icons.delete),
-              //       label: Text(l10n.characterManagementDeleteSelected),
+              //       label: Text(l10n.deleteSelected),
               //       onPressed: widget.onDeleteSelected,
               //     ),
               //   ),
@@ -72,7 +72,7 @@ class _M3CharacterManagementNavigationBarState
               //     padding: const EdgeInsets.only(left: AppSizes.s),
               //     child: FilledButton.tonalIcon(
               //       icon: const Icon(Icons.copy),
-              //       label: Text(l10n.practiceEditCopy),
+              //       label: Text(l10n.copy),
               //       onPressed: widget.onCopySelected,
               //     ),
               //   ),
@@ -85,19 +85,19 @@ class _M3CharacterManagementNavigationBarState
         if (widget.isBatchMode && widget.selectedCount > 0)
           IconButton(
             icon: const Icon(Icons.delete),
-            tooltip: l10n.characterManagementDeleteSelected,
+            tooltip: l10n.deleteSelected,
             onPressed: widget.onDeleteSelected,
           ), // 复制按钮
         if (widget.isBatchMode && widget.selectedCount > 0)
           IconButton(
             icon: const Icon(Icons.copy),
-            tooltip: l10n.practiceEditCopy,
+            tooltip: l10n.copy,
             onPressed: widget.onCopySelected,
           ), // 全选按钮
         if (widget.isBatchMode && widget.onSelectAll != null)
           IconButton(
             icon: const Icon(Icons.select_all),
-            tooltip: l10n.filterSelectAll,
+            tooltip: l10n.selectAll,
             onPressed: widget.onSelectAll,
           ),
 
@@ -107,7 +107,7 @@ class _M3CharacterManagementNavigationBarState
             widget.onClearSelection != null)
           IconButton(
             icon: const Icon(Icons.deselect),
-            tooltip: l10n.filterDeselectAll,
+            tooltip: l10n.deselectAll,
             onPressed: widget.onClearSelection,
           ),
 

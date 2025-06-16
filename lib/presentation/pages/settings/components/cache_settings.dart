@@ -239,7 +239,7 @@ class CacheSettings extends ConsumerWidget {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n.clearCacheConfirmTitle),
+            title: Text(l10n.clearCache),
             content: Text(l10n.clearCacheConfirmMessage),
             actions: [
               TextButton(

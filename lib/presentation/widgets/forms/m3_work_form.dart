@@ -384,13 +384,13 @@ class _M3WorkFormState extends State<M3WorkForm> {
               // Keyboard shortcuts section
               if (widget.showKeyboardShortcuts) ...[
                 Text(
-                  l10n.workFormShortcuts,
+                  l10n.shortcuts,
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: AppSizes.spacingSmall),
                 Text(
-                  'Ctrl+T: ${l10n.workFormTitle}  Ctrl+A: ${l10n.workFormAuthor}  Ctrl+R: ${l10n.workFormRemark}\n'
-                  'Enter: ${l10n.confirm}  Tab: ${l10n.workFormNextField}  Shift+Tab: ${l10n.workFormPreviousField}',
+                  'Ctrl+T: ${l10n.title}  Ctrl+A: ${l10n.author}  Ctrl+R: ${l10n.remarks}\n'
+                  'Enter: ${l10n.confirm}  Tab: ${l10n.nextField}  Shift+Tab: ${l10n.previousField}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -446,7 +446,7 @@ class _M3WorkFormState extends State<M3WorkForm> {
         focusNode: _authorFocus,
         controller: _authorController,
         decoration: InputDecoration(
-          labelText: l10n.workFormAuthor,
+          labelText: l10n.author,
           hintText: _isReadOnly ? null : l10n.workFormAuthorHint,
           suffixText: _authorFocus.hasFocus && !_isReadOnly ? 'Ctrl+A' : null,
           errorStyle: const TextStyle(height: 0),
@@ -491,11 +491,11 @@ class _M3WorkFormState extends State<M3WorkForm> {
     final l10n = AppLocalizations.of(context);
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormDateTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormDateHelp : null,
       helpIcon: Icons.calendar_today_outlined,
       child: DateInputField(
-        label: l10n.workFormCreationDate,
+        label: l10n.creationDate,
         value: widget.initialCreationDate,
         onChanged: _handleDateChange,
         textInputAction: TextInputAction.next,
@@ -545,8 +545,8 @@ class _M3WorkFormState extends State<M3WorkForm> {
         focusNode: _remarkFocus,
         controller: _remarkController,
         decoration: InputDecoration(
-          labelText: l10n.workFormRemark,
-          hintText: _isReadOnly ? null : l10n.workFormRemarkHint,
+          labelText: l10n.remarks,
+          hintText: _isReadOnly ? null : l10n.optional,
           suffixText: _remarkFocus.hasFocus && !_isReadOnly ? 'Ctrl+R' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_remarkController.text.length}/500',
@@ -577,11 +577,11 @@ class _M3WorkFormState extends State<M3WorkForm> {
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormStyleTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormStyleHelp : null,
       helpIcon: Icons.palette_outlined,
       child: DropdownField<String>(
-        label: l10n.workFormStyle,
+        label: l10n.calligraphyStyle,
         value: widget.initialStyle?.value,
         items: [
           DropdownMenuItem(
@@ -606,7 +606,7 @@ class _M3WorkFormState extends State<M3WorkForm> {
           ),
           DropdownMenuItem(
             value: WorkStyle.other.value,
-            child: Text(l10n.workStyleOther),
+            child: Text(l10n.workToolOther),
           ),
         ],
         onChanged: _handleStyleChange,
@@ -633,9 +633,9 @@ class _M3WorkFormState extends State<M3WorkForm> {
         controller: _titleController,
         decoration: InputDecoration(
           labelText: widget.requiredFields.contains(WorkFormField.title)
-              ? '${l10n.workFormTitle} *'
-              : l10n.workFormTitle,
-          hintText: _isReadOnly ? null : l10n.workFormTitleHint,
+              ? '${l10n.title} *'
+              : l10n.title,
+          hintText: _isReadOnly ? null : l10n.inputTitle,
           suffixText: _titleFocus.hasFocus && !_isReadOnly ? 'Ctrl+T' : null,
           errorStyle: const TextStyle(height: 0),
           counterText: '${_titleController.text.length}/100',
@@ -666,11 +666,11 @@ class _M3WorkFormState extends State<M3WorkForm> {
 
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
-      tooltip: l10n.workFormToolTooltip,
+      tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormToolHelp : null,
       helpIcon: Icons.brush_outlined,
       child: DropdownField<String>(
-        label: l10n.workFormTool,
+        label: l10n.writingTool,
         value: widget.initialTool?.value,
         items: [
           DropdownMenuItem(
@@ -702,7 +702,7 @@ class _M3WorkFormState extends State<M3WorkForm> {
         // Date cannot be in the future
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.workFormCreationDate),
+            content: Text(l10n.creationDate),
             behavior: SnackBarBehavior.floating,
           ),
         );

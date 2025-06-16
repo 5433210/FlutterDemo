@@ -7,11 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
-import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../../utils/config/edit_page_logging_config.dart';
-
 import '../../../../../application/providers/service_providers.dart';
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
 
 /// 图像变换处理器混合类
 mixin ImageTransformHandler {
@@ -43,7 +42,7 @@ mixin ImageTransformHandler {
     if (imageUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.imagePropertyPanelCannotApplyNoImage),
+          content: Text(l10n.cannotApplyNoImage),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -104,7 +103,7 @@ mixin ImageTransformHandler {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)
-                .imagePropertyPanelCroppingValueTooLarge),
+                .valueTooLarge('Crop area', 'image bounds')),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -135,8 +134,7 @@ mixin ImageTransformHandler {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.imagePropertyPanelTransformApplied +
-                l10n.imagePropertyPanelNoCropping),
+            content: Text(l10n.transformApplied + l10n.noCropping),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -188,7 +186,7 @@ mixin ImageTransformHandler {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(l10n.imagePropertyPanelLoadError('{error}')),
+                  content: Text(l10n.imageLoadError('{error}')),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -201,7 +199,7 @@ mixin ImageTransformHandler {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(l10n.imagePropertyPanelLoadError('{error}')),
+                  content: Text(l10n.imageLoadError('{error}')),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -223,11 +221,11 @@ mixin ImageTransformHandler {
           content['transformedImageData'] = transformedImageData;
           content['isTransformApplied'] = true;
 
-          String message = l10n.imagePropertyPanelTransformApplied;
+          String message = l10n.transformApplied;
           if (noCropping) {
-            message += l10n.imagePropertyPanelNoCropping;
+            message += l10n.noCropping;
           } else {
-            message += l10n.imagePropertyPanelCroppingApplied(
+            message += l10n.croppingApplied(
                 originalCropLeft.toInt().toString(),
                 originalCropTop.toInt().toString(),
                 originalCropRight.toInt().toString(),
@@ -263,8 +261,7 @@ mixin ImageTransformHandler {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content:
-                    Text(l10n.imagePropertyPanelTransformError(e.toString())),
+                content: Text(l10n.imageTransformError(e.toString())),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -274,7 +271,7 @@ mixin ImageTransformHandler {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.imagePropertyPanelCannotApplyNoSizeInfo),
+          content: Text(l10n.cannotApplyNoSizeInfo),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -308,7 +305,7 @@ mixin ImageTransformHandler {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(l10n.imagePropertyPanelResetSuccess),
+        content: Text(l10n.imageResetSuccess),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -365,4 +362,4 @@ mixin ImageTransformHandler {
       return null;
     }
   }
-} 
+}

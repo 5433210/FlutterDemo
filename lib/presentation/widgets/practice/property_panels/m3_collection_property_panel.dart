@@ -633,7 +633,7 @@ class _M3CollectionPropertyPanelState
       return '"${characters[charIndex]}"';
     }
 
-    return AppLocalizations.of(context).collectionPropertyPanelUnknown;
+    return AppLocalizations.of(context).unknown;
   }
 
   // Load candidate characters
@@ -1134,7 +1134,7 @@ class _M3CollectionPropertyPanelState
       // Skip if no image info for current index
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.collectionPropertyPanelSelectCharacterFirst),
+          content: Text(l10n.selectCharacterFirst),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1174,21 +1174,21 @@ class _M3CollectionPropertyPanelState
 
     switch (propertyName) {
       case 'invert':
-        propertyLabel = l10n.collectionPropertyPanelColorInversion;
+        propertyLabel = l10n.colorInversion;
         valueLabel = value
-            ? l10n.collectionPropertyPanelEnabled
-            : l10n.collectionPropertyPanelDisabled;
+            ? l10n.enabled
+            : l10n.disabled;
         break;
       case 'scale':
-        propertyLabel = l10n.collectionPropertyPanelScale;
+        propertyLabel = l10n.scale;
         valueLabel = value.toString();
         break;
       case 'rotation':
-        propertyLabel = l10n.collectionPropertyPanelRotation;
+        propertyLabel = l10n.rotation;
         valueLabel = value.toString();
         break;
       case 'opacity':
-        propertyLabel = l10n.collectionPropertyPanelOpacity;
+        propertyLabel = l10n.opacity;
         valueLabel = value.toString();
         break;
       default:

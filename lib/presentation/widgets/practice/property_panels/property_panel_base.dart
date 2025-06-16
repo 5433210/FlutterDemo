@@ -201,7 +201,7 @@ class BasicPropertyPanel extends StatelessWidget {
             SizedBox(
               width: 100,
               child: Text(
-                l10n.elementLock,
+                l10n.lock,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -213,7 +213,7 @@ class BasicPropertyPanel extends StatelessWidget {
                 }
               },
             ),
-            Text(element.isLocked ? l10n.elementLocked : l10n.elementUnlocked),
+            Text(element.isLocked ? l10n.locked : l10n.unlocked),
           ],
         ),
         const Divider(),

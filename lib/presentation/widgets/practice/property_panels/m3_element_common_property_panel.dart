@@ -59,7 +59,7 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
         typeDisplayName = l10n.image;
         break;
       case 'collection':
-        typeDisplayName = l10n.collection;
+        typeDisplayName = l10n.characterCollection;
         break;
       case 'group':
         typeDisplayName = l10n.group;

@@ -51,7 +51,7 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
       titleActions: widget.batchMode
           ? [
               Text(
-                l10n.workBrowseSelectedCount(widget.selectedCount),
+                l10n.selectedCount(widget.selectedCount),
                 style: theme.textTheme.bodyMedium,
               ),
             ]
@@ -60,13 +60,13 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
         if (widget.batchMode && widget.selectedCount > 0)
           IconButton(
             icon: const Icon(Icons.delete),
-            tooltip: l10n.workBrowseDeleteSelected(widget.selectedCount),
+            tooltip: l10n.deleteSelected,
             onPressed: _showDeleteConfirmation,
           )
         else if (!widget.batchMode)
           FilledButton.icon(
             icon: const Icon(Icons.add),
-            label: Text(l10n.workBrowseImport),
+            label: Text(l10n.import),
             onPressed: widget.onImport,
           ),
 
@@ -78,9 +78,7 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
         // 批量操作按钮
         IconButton(
           icon: Icon(widget.batchMode ? Icons.close : Icons.checklist),
-          tooltip: widget.batchMode
-              ? l10n.workBrowseBatchDone
-              : l10n.workBrowseBatchMode,
+          tooltip: widget.batchMode ? l10n.done : l10n.batchMode,
           onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
         ),
         // const SizedBox(width: AppSizes.s),
@@ -90,9 +88,8 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
           icon: Icon(widget.viewMode == ViewMode.grid
               ? Icons.view_list
               : Icons.grid_view),
-          tooltip: widget.viewMode == ViewMode.grid
-              ? l10n.workBrowseListView
-              : l10n.workBrowseGridView,
+          tooltip:
+              widget.viewMode == ViewMode.grid ? l10n.listView : l10n.gridView,
           onPressed: () => widget.onViewModeChanged(
               widget.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid),
         ),
@@ -115,16 +112,15 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.workBrowseDeleteConfirmTitle),
-        content:
-            Text(l10n.workBrowseDeleteConfirmMessage(widget.selectedCount)),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.batchDeleteMessage(widget.selectedCount)),
         actions: [
           TextButton(
-            child: Text(l10n.workBrowseCancel),
+            child: Text(l10n.cancel),
             onPressed: () => Navigator.pop(context, false),
           ),
           FilledButton(
-            child: Text(l10n.workBrowseDelete),
+            child: Text(l10n.delete),
             onPressed: () => Navigator.pop(context, true),
           ),
         ],

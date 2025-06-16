@@ -32,9 +32,9 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
     // Calculate status text
     String statusText = '';
     if (collectionState.processing) {
-      statusText = l10n.characterCollectionProcessing;
+      statusText = l10n.processing;
     } else if (collectionState.error != null) {
-      statusText = l10n.characterCollectionError(collectionState.error!);
+      statusText = l10n.error(collectionState.error!);
     }
 
     return M3PageNavigationBar(

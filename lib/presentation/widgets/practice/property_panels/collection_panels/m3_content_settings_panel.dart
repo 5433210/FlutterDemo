@@ -52,7 +52,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
       children: [
         // Character content
         M3PanelStyles.buildSectionTitle(
-            context, l10n.collectionPropertyPanelCharacter),
+            context, l10n.characterCollection),
         M3CharacterInputField(
           initialText: characters,
           selectedCharIndex: selectedCharIndex,
@@ -87,7 +87,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
 
         const SizedBox(height: 16.0), // Text format settings
         M3PanelStyles.buildSectionTitle(
-            context, l10n.collectionPropertyPanelTextSettings),
+            context, l10n.textSettings),
         M3TextFormatPanel(
           content: content,
           onContentPropertyChanged: onContentPropertyChanged,
@@ -97,7 +97,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
 
         // Auto line break setting
         M3PanelStyles.buildSectionTitle(
-            context, l10n.collectionPropertyPanelAutoLineBreak),
+            context, l10n.autoLineBreak),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -111,15 +111,15 @@ class M3ContentSettingsPanel extends ConsumerWidget {
             const SizedBox(width: 8.0),
             Text(
               (content['enableSoftLineBreak'] as bool? ?? false)
-                  ? l10n.collectionPropertyPanelAutoLineBreakEnabled
-                  : l10n.collectionPropertyPanelAutoLineBreakDisabled,
+                  ? l10n.autoLineBreakEnabled
+                  : l10n.autoLineBreakDisabled,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const Spacer(),
             Tooltip(
-              message: l10n.collectionPropertyPanelAutoLineBreakTooltip,
+              message: l10n.autoLineBreak,
               child: Icon(
                 Icons.info_outline,
                 size: 16.0,

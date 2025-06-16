@@ -93,7 +93,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
     if (state.isLoading) {
       return Center(
-        child: LoadingIndicator(message: l10n.workDetailLoading),
+        child: LoadingIndicator(message: l10n.loading),
       );
     }
 
@@ -111,7 +111,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
     final work = state.isEditing ? state.editingWork : state.work;
     if (work == null) {
       return Center(
-        child: Text(l10n.workDetailNoWork),
+        child: Text(l10n.noWorks),
       );
     }
 
@@ -314,8 +314,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       final result = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(l10n.workDetailCancel),
-          content: Text(l10n.workDetailUnsavedChanges),
+          title: Text(l10n.cancel),
+          content: Text(l10n.unsavedChanges),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -418,7 +418,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
             .then((exists) {
           if (!exists && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.workDetailImageLoadError)),
+              SnackBar(
+                  content: Text(l10n.imageLoadError(l10n.imageFileNotExists))),
             );
             return;
           }
@@ -444,16 +445,14 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text('${l10n.workDetailExtractionError}: ${e.toString()}')),
+            SnackBar(content: Text('${l10n.extractionError}: ${e.toString()}')),
           );
         }
       }
     } else {
       // Handle case where there are no images
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workDetailNoImagesForExtraction)),
+        SnackBar(content: Text(l10n.noImages)),
       );
     }
   }
@@ -545,9 +544,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? l10n.workDetailSaveSuccess
-                : l10n.workDetailSaveFailure),
+            content: Text(success ? l10n.saveSuccess : l10n.saveFailure),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -563,7 +560,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${l10n.workDetailSaveFailure}: ${e.toString()}'),
+            content: Text('${l10n.saveFailure}: ${e.toString()}'),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Theme.of(context).colorScheme.error,
           ),

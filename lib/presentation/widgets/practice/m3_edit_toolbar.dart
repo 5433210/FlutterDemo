@@ -100,12 +100,12 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           if (onSelectTool != null) ...[
             // 元素工具组
             _buildToolbarGroup(
-              title: l10n.practiceEditElements,
+              title: l10n.elements,
               children: [
                 _buildElementButton(
                   context: context,
                   icon: Icons.text_fields,
-                  tooltip: '${l10n.practiceEditText} (Alt+T)',
+                  tooltip: '${l10n.text} (Alt+T)',
                   toolName: 'text',
                   isSelected: currentTool == 'text',
                   onPressed: () {
@@ -126,7 +126,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildElementButton(
                   context: context,
                   icon: Icons.image,
-                  tooltip: '${l10n.practiceEditImage} (Alt+I)',
+                  tooltip: '${l10n.image} (Alt+I)',
                   toolName: 'image',
                   isSelected: currentTool == 'image',
                   onPressed: () {
@@ -168,7 +168,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.select_all,
-                  tooltip: '${l10n.practiceEditSelect} (Alt+S)',
+                  tooltip: '${l10n.select} (Alt+S)',
                   onPressed: () {
                     EditPageLogger.editPageDebug(
                       'Toolbar: Select selection tool',
@@ -186,14 +186,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.done_all,
-                    tooltip: l10n.toolbarSelectAll,
+                    tooltip: l10n.selectAll,
                     onPressed: onSelectAll,
                   ),
                 if (onDeselectAll != null)
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.deselect,
-                    tooltip: l10n.toolbarDeselectAll,
+                    tooltip: l10n.deselectAll,
                     onPressed: onDeselectAll,
                   ),
               ],
@@ -205,12 +205,12 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           ],
           // Edit operations group
           _buildToolbarGroup(
-            title: l10n.practiceEditEditOperations,
+            title: l10n.editOperations,
             children: [
               _buildToolbarButton(
                 context: context,
                 icon: Icons.copy,
-                tooltip: l10n.practiceEditCopy,
+                tooltip: l10n.copy,
                 onPressed: hasSelection
                     ? () {
                         EditPageLogger.editPageDebug(
@@ -229,7 +229,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: Icons.paste,
-                tooltip: l10n.practiceEditPaste,
+                tooltip: l10n.paste,
                 onPressed: canPaste
                     ? () {
                         EditPageLogger.editPageDebug(
@@ -246,7 +246,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: Icons.delete,
-                tooltip: l10n.practiceEditDelete,
+                tooltip: l10n.delete,
                 onPressed: hasSelection
                     ? () {
                         EditPageLogger.editPageDebug(
@@ -265,13 +265,13 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: Icons.group,
-                tooltip: l10n.practiceEditGroup,
+                tooltip: l10n.group,
                 onPressed: isMultiSelected ? onGroupElements : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.format_shapes,
-                tooltip: l10n.practiceEditUngroup,
+                tooltip: l10n.ungroup,
                 onPressed: hasSelectedGroup ? onUngroupElements : null,
               ),
             ],
@@ -283,30 +283,30 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
 
           // Layer operations group
           _buildToolbarGroup(
-            title: l10n.practiceEditLayerOperations,
+            title: l10n.layerOperations,
             children: [
               _buildToolbarButton(
                 context: context,
                 icon: Icons.vertical_align_top,
-                tooltip: l10n.practiceEditBringToFront,
+                tooltip: l10n.bringToFront,
                 onPressed: hasSelection ? onBringToFront : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.vertical_align_bottom,
-                tooltip: l10n.practiceEditSendToBack,
+                tooltip: l10n.sendToBack,
                 onPressed: hasSelection ? onSendToBack : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.arrow_upward,
-                tooltip: l10n.practiceEditMoveUp,
+                tooltip: l10n.moveUp,
                 onPressed: hasSelection ? onMoveUp : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.arrow_downward,
-                tooltip: l10n.practiceEditMoveDown,
+                tooltip: l10n.moveDown,
                 onPressed: hasSelection ? onMoveDown : null,
               ),
             ],
@@ -318,14 +318,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
 
           // 对齐辅助组
           _buildToolbarGroup(
-            title: l10n.toolbarAlignmentAssist,
+            title: l10n.alignmentAssist,
             children: [
               _buildToolbarButton(
                 context: context,
                 icon: gridVisible ? Icons.grid_on : Icons.grid_off,
                 tooltip: gridVisible
-                    ? l10n.practiceEditHideGrid
-                    : l10n.practiceEditShowGrid,
+                    ? l10n.hideGrid
+                    : l10n.showGrid,
                 onPressed: onToggleGrid,
                 isActive: gridVisible,
               ),
@@ -334,14 +334,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_paint,
-                  tooltip: l10n.toolbarCopyFormat,
+                  tooltip: l10n.copyFormat,
                   onPressed: hasSelection ? onCopyFormatting : null,
                 ),
               if (onApplyFormatBrush != null)
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_color_fill,
-                  tooltip: l10n.toolbarApplyFormatBrush,
+                  tooltip: l10n.applyFormatBrush,
                   onPressed: hasSelection ? onApplyFormatBrush : null,
                 ),
             ],
@@ -521,17 +521,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     switch (alignmentMode) {
       case AlignmentMode.none:
         icon = Icons.crop_free; // 无辅助图标
-        tooltip = l10n.toolbarAlignmentNone;
+        tooltip = l10n.alignmentNone;
         buttonColor = colorScheme.onSurface.withOpacity(0.5);
         break;
       case AlignmentMode.gridSnap:
         icon = Icons.grid_view; // 网格贴附图标
-        tooltip = l10n.toolbarAlignmentGrid;
+        tooltip = l10n.alignmentGrid;
         buttonColor = Colors.blue;
         break;
       case AlignmentMode.guideline:
         icon = Icons.horizontal_rule; // 参考线图标
-        tooltip = l10n.toolbarAlignmentGuideline;
+        tooltip = l10n.alignmentGuideline;
         buttonColor = Colors.orange;
         break;
     }

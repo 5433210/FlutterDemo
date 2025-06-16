@@ -78,7 +78,7 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
       if (date.isAfter(DateTime.now())) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.workFormCreationDate),
+            content: Text(l10n.creationDate),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -107,11 +107,11 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.workImportDialogError(e.toString())),
+            content: Text(l10n.importFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
-              label: l10n.workBrowseReload,
+              label: l10n.reload,
               onPressed: _handleSubmit,
               textColor: Theme.of(context).colorScheme.onError,
             ),

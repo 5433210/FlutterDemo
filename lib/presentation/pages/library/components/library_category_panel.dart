@@ -358,7 +358,7 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteCategory),
-        content: Text('${l10n.confirmDeleteCategory} "${category.name}"?'),
+        content: Text('${l10n.confirmDelete} "${category.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

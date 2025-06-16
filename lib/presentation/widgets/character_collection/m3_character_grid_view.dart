@@ -27,8 +27,8 @@ class M3CharacterGridView extends ConsumerWidget {
     if (gridState.characters.isEmpty) {
       return M3EmptyState(
         icon: Icons.sentiment_satisfied_alt,
-        title: l10n.characterCollectionNoCharacters,
-        message: l10n.characterCollectionUseSelectionTool,
+        title: l10n.noCharacters,
+        message: l10n.characterCollectionUseBoxTool,
       );
     }
 

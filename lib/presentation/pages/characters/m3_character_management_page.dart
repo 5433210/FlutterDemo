@@ -153,7 +153,7 @@ class _M3CharacterManagementPageState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            '${l10n.selectedCount(ref.read(characterManagementProvider).selectedCharacters.length)} ${l10n.practiceEditCopy.split(' ').first}'),
+            '${l10n.selectedCount(ref.read(characterManagementProvider).selectedCharacters.length)} ${l10n.copy.split(' ').first}'),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -169,8 +169,8 @@ class _M3CharacterManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.characterManagementDeleteConfirm),
-        content: Text(l10n.characterManagementDeleteMessage),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -205,8 +205,8 @@ class _M3CharacterManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.characterManagementDeleteConfirm),
-        content: Text(l10n.characterManagementDeleteMessage),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

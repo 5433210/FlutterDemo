@@ -531,7 +531,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           const Icon(Icons.broken_image, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            '${AppLocalizations.of(context).characterCollectionImageLoadError}: ${error.toString()}',
+            '${AppLocalizations.of(context).imageLoadError}: ${error.toString()}',
             style: const TextStyle(color: Colors.red),
             textAlign: TextAlign.center,
           ),
@@ -576,7 +576,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           const CircularProgressIndicator(strokeWidth: 2),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context).characterCollectionLoadingImage,
+            AppLocalizations.of(context).loadingImage,
             style: const TextStyle(color: Colors.grey),
           ),
         ],

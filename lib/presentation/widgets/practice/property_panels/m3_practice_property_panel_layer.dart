@@ -98,7 +98,7 @@ class _M3LayerPropertyPanelContentState
               ),
               const SizedBox(width: 8),
               Text(
-                l10n.practiceEditLayerProperties,
+                l10n.layerProperties,
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -430,7 +430,7 @@ class _M3LayerPropertyPanelContentState
                         context: context,
                         icon: Icons.vertical_align_bottom,
                         label: l10n.sendToBack,
-                        tooltip: l10n.sendLayerToBack,
+                        tooltip: l10n.sendToBack,
                         onPressed:
                             isBottomLayer ? null : () => _moveLayer('bottom'),
                         colorScheme: colorScheme,
@@ -456,7 +456,7 @@ class _M3LayerPropertyPanelContentState
                     size: 18,
                   ),
                   label: Text(
-                    l10n.practiceEditDeleteLayer,
+                    l10n.deleteLayer,
                     style: textTheme.labelLarge?.copyWith(
                       color: colorScheme.error,
                     ),
@@ -844,8 +844,8 @@ class _M3LayerPropertyPanelContentState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.practiceEditDeleteLayerConfirm),
-        content: Text(l10n.practiceEditDeleteLayerMessage),
+        title: Text(l10n.deleteLayerConfirmMessage),
+        content: Text(l10n.deleteLayerMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

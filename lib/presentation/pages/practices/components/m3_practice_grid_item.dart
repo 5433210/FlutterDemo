@@ -131,7 +131,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                           ),
                           padding: const EdgeInsets.all(AppSizes.xs),
                           onPressed: onToggleFavorite,
-                          tooltip: l10n.filterFavoritesOnly,
+                          tooltip: l10n.favoritesOnly,
                         ),
                       ),
                     ),
@@ -162,7 +162,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '${practice['pageCount'] ?? 0}${l10n.practiceListPages}',
+                        '${practice['pageCount'] ?? 0}${l10n.pages}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -229,7 +229,7 @@ class M3PracticeGridItem extends ConsumerWidget {
 
     if (tags.isEmpty) {
       return Text(
-        AppLocalizations.of(context).tagEditorNoTags,
+        AppLocalizations.of(context).noTags,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.hintColor,
           fontStyle: FontStyle.italic,

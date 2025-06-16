@@ -75,7 +75,7 @@ class WorkImagesManagementView extends ConsumerWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(AppLocalizations.of(context).workImageRestoring),
+            Text(AppLocalizations.of(context).imageRestoring),
           ],
         ),
       );
@@ -138,7 +138,7 @@ class WorkImagesManagementView extends ConsumerWidget {
               toolbarActions: [
                 // 添加图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: l10n.workImportDialogAddImages,
+                  message: l10n.addImage,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: isProcessing ? null : () => notifier.addImages(),
@@ -150,7 +150,7 @@ class WorkImagesManagementView extends ConsumerWidget {
 
                 // 删除图片按钮 - 改为图标按钮
                 Tooltip(
-                  message: l10n.workImportDialogDeleteImage,
+                  message: l10n.deleteImage,
                   preferBelow: false,
                   child: IconButton(
                     onPressed: (isProcessing || state.images.isEmpty)
@@ -293,8 +293,8 @@ class WorkImagesManagementView extends ConsumerWidget {
         builder: (context) {
           final l10n = AppLocalizations.of(context);
           return AlertDialog(
-            title: Text(l10n.workImageDeleteConfirmTitle),
-            content: Text(l10n.workImageDeleteConfirmContent),
+            title: Text(l10n.confirmDelete),
+            content: Text(l10n.deleteMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -322,7 +322,7 @@ class WorkImagesManagementView extends ConsumerWidget {
           final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.workImageDeleting),
+              content: Text(l10n.deleting),
               duration: const Duration(seconds: 1),
             ),
           );
@@ -342,7 +342,7 @@ class WorkImagesManagementView extends ConsumerWidget {
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.workImageDeleteFailed(e.toString())),
+            content: Text(l10n.deleteFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

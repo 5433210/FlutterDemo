@@ -48,7 +48,7 @@ class M3TopNavigationBar extends StatelessWidget
         if (controller.practiceTitle != null)
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: '${l10n.practiceEditEditTitle} (Ctrl+M, T)',
+            tooltip: '${l10n.editTitle} (Ctrl+M, T)',
             onPressed: () => _editTitle(context, l10n),
           ),
       ],
@@ -61,7 +61,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Undo button
             IconButton(
               icon: const Icon(Icons.undo),
-              tooltip: '${l10n.practiceEditTopNavUndo} (Ctrl+Z)',
+              tooltip: '${l10n.undo} (Ctrl+Z)',
               onPressed: controller.state.canUndo ? controller.undo : null,
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canUndo
@@ -74,7 +74,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Redo button
             IconButton(
               icon: const Icon(Icons.redo),
-              tooltip: '${l10n.practiceEditTopNavRedo} (Ctrl+Y)',
+              tooltip: '${l10n.redo} (Ctrl+Y)',
               onPressed: controller.state.canRedo ? controller.redo : null,
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canRedo
@@ -96,8 +96,8 @@ class M3TopNavigationBar extends StatelessWidget
               icon:
                   Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
               tooltip: isPreviewMode
-                  ? '${l10n.practiceEditTopNavExitPreview} (Ctrl+P)'
-                  : '${l10n.practiceEditTopNavPreviewMode} (Ctrl+P)',
+                  ? '${l10n.exitPreview} (Ctrl+P)'
+                  : '${l10n.previewMode} (Ctrl+P)',
               onPressed: onTogglePreviewMode,
               style: IconButton.styleFrom(
                 foregroundColor:
@@ -109,7 +109,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Save button - using FilledButton.icon for consistency with other pages
             FilledButton.icon(
               icon: const Icon(Icons.save),
-              label: Text('${l10n.practiceEditTopNavSave} (Ctrl+S)'),
+              label: Text('${l10n.save} (Ctrl+S)'),
               onPressed: () => _savePractice(context, l10n),
             ),
           ],
@@ -124,7 +124,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Save As button
             IconButton(
               icon: const Icon(Icons.save_as),
-              tooltip: '${l10n.practiceEditTopNavSaveAs} (Ctrl+Shift+S)',
+              tooltip: '${l10n.saveAs} (Ctrl+Shift+S)',
               onPressed: () => _saveAs(context, l10n),
             ),
             const SizedBox(width: AppSizes.s),
@@ -132,7 +132,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Export button
             IconButton(
               icon: const Icon(Icons.file_download),
-              tooltip: '${l10n.practiceEditTopNavExport} (Ctrl+E)',
+              tooltip: '${l10n.export} (Ctrl+E)',
               onPressed: () => _exportPractice(context, l10n),
             ),
           ],
@@ -152,8 +152,8 @@ class M3TopNavigationBar extends StatelessWidget
                     : Icons.view_carousel_outlined,
               ),
               tooltip: showThumbnails
-                  ? '${l10n.practiceEditTopNavHideThumbnails} (Ctrl+O)'
-                  : '${l10n.practiceEditTopNavShowThumbnails} (Ctrl+O)',
+                  ? '${l10n.hideThumbnails} (Ctrl+O)'
+                  : '${l10n.showThumbnails} (Ctrl+O)',
               onPressed: () => onThumbnailToggle(!showThumbnails),
               style: IconButton.styleFrom(
                 foregroundColor:
@@ -209,7 +209,7 @@ class M3TopNavigationBar extends StatelessWidget
         
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.practiceEditTitleUpdated(newTitle))),
+            SnackBar(content: Text(l10n.titleUpdated(newTitle))),
           );
         }
       } catch (error, stackTrace) {
@@ -270,8 +270,8 @@ class M3TopNavigationBar extends StatelessWidget
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(l10n.practiceEditUnsavedChanges),
-            content: Text(l10n.practiceEditUnsavedChangesMessage),
+            title: Text(l10n.unsavedChanges),
+            content: Text(l10n.unsavedChanges),
             actions: <Widget>[
               TextButton(
                 child: Text(l10n.cancel),
@@ -286,7 +286,7 @@ class M3TopNavigationBar extends StatelessWidget
                 },
               ),
               TextButton(
-                child: Text(l10n.practiceEditLeave),
+                child: Text(l10n.leave),
                 onPressed: () {
                   EditPageLogger.editPageDebug(
                     '确认离开编辑页（丢弃更改）',

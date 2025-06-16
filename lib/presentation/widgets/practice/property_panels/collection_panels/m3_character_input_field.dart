@@ -52,7 +52,7 @@ class _M3CharacterInputFieldState extends State<M3CharacterInputField> {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        hintText: l10n.characterEditInputHint,
+        hintText: l10n.inputHint,
         hintStyle: TextStyle(
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
         filled: true,

@@ -66,8 +66,8 @@ class _M3UnifiedWorkDetailPanelState
             child: TabBar(
               controller: _tabController,
               tabs: [
-                Tab(text: l10n.workDetailBasicInfo),
-                Tab(text: l10n.workDetailTags),
+                Tab(text: l10n.basicInfo),
+                Tab(text: l10n.tags),
                 Tab(text: l10n.workDetailCharacters),
               ],
               indicatorSize: TabBarIndicatorSize.tab,
@@ -137,12 +137,12 @@ class _M3UnifiedWorkDetailPanelState
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
-        _buildInfoRow(l10n.workDetailImageCount,
+        _buildInfoRow(l10n.imageCount,
             (widget.work.imageCount ?? 0).toString()),
         _buildInfoRow(
-            l10n.workDetailCreateTime, _formatDateTime(widget.work.createTime)),
+            l10n.createTime, _formatDateTime(widget.work.createTime)),
         _buildInfoRow(
-            l10n.workDetailUpdateTime, _formatDateTime(widget.work.updateTime)),
+            l10n.updateTime, _formatDateTime(widget.work.updateTime)),
       ],
     );
   }
@@ -175,7 +175,7 @@ class _M3UnifiedWorkDetailPanelState
 
         // Use M3WorkForm for both view and edit modes
         M3WorkForm(
-          title: AppLocalizations.of(context).workDetailBasicInfo,
+          title: AppLocalizations.of(context).basicInfo,
           initialTitle: widget.work.title,
           initialAuthor: widget.work.author,
           initialStyle: widget.work.style,
@@ -237,7 +237,7 @@ class _M3UnifiedWorkDetailPanelState
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.spacingMedium),
-          child: Text(l10n.workDetailNoCharacters),
+          child: Text(l10n.noCharacters),
         ),
       );
     }
@@ -278,7 +278,7 @@ class _M3UnifiedWorkDetailPanelState
                 ),
                 const SizedBox(height: AppSizes.spacingSmall),
                 Text(
-                  '${l10n.loadingError}: ${snapshot.error}',
+                  '${l10n.loadFailed}: ${snapshot.error}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -296,7 +296,7 @@ class _M3UnifiedWorkDetailPanelState
             Padding(
               padding: const EdgeInsets.all(AppSizes.spacingMedium),
               child: Text(
-                '${characters.length} ${l10n.characters}',
+                '${characters.length} ${l10n.characterCollection}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

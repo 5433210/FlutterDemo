@@ -99,11 +99,11 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
   String getExpandMessage(AppLocalizations l10n) {
     try {
       // 尝试使用扩展字符串
-      return l10n.practiceListExpandFilter;
+      return l10n.expand;
     } catch (e) {
       // 如果不存在，回退到其他
       try {
-        return l10n.characterFilterExpand;
+        return l10n.expand;
       } catch (e) {
         // 最后回退到硬编码
         return 'Expand Filter Panel';
@@ -160,7 +160,7 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
             children: [
               // 重置按钮
               Tooltip(
-                message: l10n.filterReset,
+                message: l10n.reset,
                 child: IconButton(
                   onPressed: resetFilters,
                   icon: const Icon(Icons.refresh),

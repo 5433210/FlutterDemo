@@ -40,7 +40,7 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
         ),
         child: Center(
           child: Text(
-            l10n.collectionPropertyPanelNoCharacterText,
+            l10n.noCharacters,
             style: textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),

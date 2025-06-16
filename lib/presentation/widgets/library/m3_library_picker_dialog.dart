@@ -105,7 +105,7 @@ class _LibraryPickerDialogViewState
                 child: Row(
                   children: [
                     Text(
-                      widget.title ?? l10n.imagePropertyPanelSelectFromLibrary,
+                      widget.title ?? l10n.fromGallery,
                       style: theme.textTheme.titleLarge,
                     ),
                     const Spacer(),
@@ -116,7 +116,7 @@ class _LibraryPickerDialogViewState
                         AppLogger.debug('【M3LibraryPickerDialog】关闭按钮被点击');
                         Navigator.pop(context, _PickerResult(items: []));
                       },
-                      tooltip: l10n.windowButtonClose,
+                      tooltip: l10n.close,
                     ),
                   ],
                 ),

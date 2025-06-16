@@ -32,7 +32,7 @@ class M3FilterToolSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.filterToolSection,
+          l10n.writingTool,
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
@@ -58,11 +58,11 @@ class M3FilterToolSection extends StatelessWidget {
   String _getLocalizedToolName(WorkTool tool, AppLocalizations l10n) {
     switch (tool) {
       case WorkTool.brush:
-        return l10n.filterToolBrush;
+        return l10n.workToolBrush;
       case WorkTool.hardPen:
-        return l10n.filterToolHardPen;
+        return l10n.workToolHardPen;
       case WorkTool.other:
-        return l10n.filterToolOther;
+        return l10n.workToolOther;
     }
   }
 }

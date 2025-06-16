@@ -80,7 +80,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
                                 color: colorScheme.onSurface),
                             const SizedBox(height: 16),
                             Text(
-                              l10n.characterCollectionLoadingImage,
+                              l10n.loadingImage,
                               style: TextStyle(color: colorScheme.onSurface),
                             ),
                           ],
@@ -104,7 +104,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
                                 color: colorScheme.onError, size: 48),
                             const SizedBox(height: 16),
                             Text(
-                              l10n.characterCollectionError(imageState.error!),
+                              l10n.error(imageState.error!),
                               style: TextStyle(color: colorScheme.onError),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
@@ -114,7 +114,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
                             FilledButton(
                               onPressed: () =>
                                   ref.read(workImageProvider.notifier).reload(),
-                              child: Text(l10n.characterCollectionRetry),
+                              child: Text(l10n.retry),
                             ),
                           ],
                         ),

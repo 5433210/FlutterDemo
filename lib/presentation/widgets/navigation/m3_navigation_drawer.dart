@@ -14,12 +14,12 @@ class M3NavigationDrawer extends StatelessWidget {
         // 字符管理
         NavigationDrawerDestination(
           icon: const Icon(Icons.text_fields),
-          label: Text(l10n.characters),
+          label: Text(l10n.characterCollection),
         ),
         // 作品管理
         NavigationDrawerDestination(
           icon: const Icon(Icons.collections),
-          label: Text(l10n.works),
+          label: Text(l10n.work),
         ),
         // 图库管理
         NavigationDrawerDestination(

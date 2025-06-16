@@ -31,7 +31,7 @@ class M3ContentToolsPanel extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(
-              l10n.practiceEditElements,
+              l10n.elements,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -44,7 +44,7 @@ class M3ContentToolsPanel extends StatelessWidget {
               _buildDraggableToolButton(
                 context: context,
                 icon: Icons.text_fields,
-                label: l10n.practiceEditText,
+                label: l10n.text,
                 toolName: 'text',
                 elementType: 'text',
                 colorScheme: colorScheme,
@@ -52,7 +52,7 @@ class M3ContentToolsPanel extends StatelessWidget {
               _buildDraggableToolButton(
                 context: context,
                 icon: Icons.image,
-                label: l10n.practiceEditImage,
+                label: l10n.image,
                 toolName: 'image',
                 elementType: 'image',
                 colorScheme: colorScheme,
@@ -68,7 +68,7 @@ class M3ContentToolsPanel extends StatelessWidget {
               _buildToolButton(
                 context: context,
                 icon: Icons.select_all,
-                label: l10n.practiceEditSelect,
+                label: l10n.select,
                 toolName: 'select',
                 onPressed: () {
                   onToolSelected('select');

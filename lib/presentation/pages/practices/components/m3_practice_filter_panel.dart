@@ -149,9 +149,9 @@ class _M3PracticeFilterPanelImplState
 
     // 定义可用的排序字段
     final sortFieldOptions = [
-      {'value': 'updateTime', 'label': l10n.practiceListSortByUpdateTime},
-      {'value': 'title', 'label': l10n.practiceListSortByTitle},
-      {'value': 'createTime', 'label': l10n.practiceListSortByCreateTime},
+      {'value': 'updateTime', 'label': l10n.sortByUpdateTime},
+      {'value': 'title', 'label': l10n.sortByTitle},
+      {'value': 'createTime', 'label': l10n.sortByCreateTime},
     ];
 
     return [
@@ -217,7 +217,7 @@ class _M3PracticeFilterPanelImplState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.filterSortSection,
+              l10n.sort,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -276,7 +276,7 @@ class _M3PracticeFilterPanelImplState
                     ),
                     Flexible(
                       child: Text(
-                        l10n.filterSortAscending,
+                        l10n.ascending,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -300,7 +300,7 @@ class _M3PracticeFilterPanelImplState
                     ),
                     Flexible(
                       child: Text(
-                        l10n.filterSortDescending,
+                        l10n.descending,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -319,7 +319,7 @@ class _M3PracticeFilterPanelImplState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.practiceListFilterFavorites,
+              l10n.favorite,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -335,7 +335,7 @@ class _M3PracticeFilterPanelImplState
                   },
                 ),
                 Expanded(
-                  child: Text(l10n.filterFavoritesOnly),
+                  child: Text(l10n.favoritesOnly),
                 ),
               ],
             ),
@@ -411,7 +411,7 @@ class _M3PracticeFilterPanelImplState
             children: [
               // 重置按钮
               Tooltip(
-                message: l10n.filterReset,
+                message: l10n.reset,
                 child: IconButton(
                   onPressed: _resetFilters,
                   icon: const Icon(Icons.refresh),
@@ -424,8 +424,8 @@ class _M3PracticeFilterPanelImplState
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
                   message: widget.isExpanded
-                      ? l10n.filterCollapse
-                      : l10n.filterExpand,
+                      ? l10n.collapse
+                      : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -460,11 +460,11 @@ class _M3PracticeFilterPanelImplState
   }
 
   String _getExpandMessage(AppLocalizations l10n) {
-    return l10n.filterExpand;
+    return l10n.expand;
   }
 
   String _getFilterTitle(AppLocalizations l10n) {
-    return l10n.practiceListFilterTitle;
+    return l10n.filter;
   }
 
   void _resetFilters() {

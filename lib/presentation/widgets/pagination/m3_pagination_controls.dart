@@ -131,7 +131,7 @@ class M3PaginationControls extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 4),
                           child: Text(
-                            l10n.workBrowseItemsPerPage('$size'),
+                            l10n.itemsPerPage('$size'),
                             style: theme.textTheme.bodySmall,
                           ),
                         ))
@@ -143,7 +143,7 @@ class M3PaginationControls extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        l10n.workBrowseItemsPerPage('$pageSize'),
+                        l10n.itemsPerPage('$pageSize'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),

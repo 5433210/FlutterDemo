@@ -31,13 +31,13 @@ class M3NavigationSidebar extends StatelessWidget {
         index: 0,
         icon: Icons.image_outlined,
         selectedIcon: Icons.image,
-        label: l10n.works,
+        label: l10n.work,
       ),
       _NavItem(
         index: 1,
         icon: Icons.font_download_outlined,
         selectedIcon: Icons.font_download,
-        label: l10n.characters,
+        label: l10n.characterCollection,
       ),
       _NavItem(
         index: 2,

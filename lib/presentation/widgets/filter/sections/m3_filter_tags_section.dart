@@ -38,7 +38,7 @@ class _M3FilterTagsSectionState extends State<M3FilterTagsSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.filterTagsSection,
+          l10n.tags,
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
@@ -67,8 +67,8 @@ class _M3FilterTagsSectionState extends State<M3FilterTagsSection> {
           controller: _tagController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: l10n.filterTagsAdd,
-            hintText: l10n.filterTagsAddHint,
+            labelText: l10n.addTag,
+            hintText: l10n.tagsAddHint,
             suffixIcon: IconButton(
               icon: const Icon(Icons.add),
               onPressed: _addCustomTag,
@@ -89,7 +89,7 @@ class _M3FilterTagsSectionState extends State<M3FilterTagsSection> {
         if (widget.selectedTags.isNotEmpty) ...[
           const SizedBox(height: AppSizes.spacingMedium),
           Text(
-            l10n.filterTagsSelected,
+            l10n.tagsSelected,
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 4),

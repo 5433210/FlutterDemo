@@ -100,7 +100,7 @@ class _M3GroupPropertyPanelContentState
               ),
               const SizedBox(width: 8),
               Text(
-                l10n.practiceEditGroupProperties,
+                l10n.groupProperties,
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -538,7 +538,7 @@ class _M3GroupPropertyPanelContentState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      l10n.practiceEditDangerZone,
+                      l10n.dangerZone,
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.error,
@@ -816,7 +816,7 @@ class _M3GroupPropertyPanelContentState
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteGroupConfirm),
-        content: Text(l10n.deleteGroupDescription),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () {

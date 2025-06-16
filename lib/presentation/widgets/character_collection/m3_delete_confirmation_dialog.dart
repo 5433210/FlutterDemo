@@ -21,12 +21,12 @@ class M3DeleteConfirmationDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     
     final title = isBatch 
-        ? l10n.characterCollectionDeleteBatchConfirm(count)
-        : l10n.characterCollectionDeleteConfirm;
+        ? l10n.batchDeleteMessage(count)
+        : l10n.deleteConfirm;
 
     final content = isBatch 
-        ? l10n.characterCollectionDeleteBatchMessage(count)
-        : l10n.characterCollectionDeleteMessage;
+        ? l10n.batchDeleteMessage(count)
+        : l10n.deleteMessage;
 
     // Add keyboard shortcut support
     return KeyboardListener(
@@ -53,7 +53,7 @@ class M3DeleteConfirmationDialog extends StatelessWidget {
             const SizedBox(height: 12),
             // Keyboard shortcut hint
             Text(
-              l10n.characterCollectionDeleteShortcuts,
+              l10n.confirmShortcuts,
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.outline,

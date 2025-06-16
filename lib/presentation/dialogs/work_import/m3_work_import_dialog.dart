@@ -86,7 +86,7 @@ class M3WorkImportDialog extends ConsumerWidget {
                         const LinearProgressIndicator(),
                         const SizedBox(height: 8),
                         Text(
-                          l10n.workImportDialogProcessing,
+                          l10n.processing,
                           style: theme.textTheme.bodyMedium,
                         ),
                       ],

@@ -30,7 +30,7 @@ class M3FilterFavoriteSection extends StatelessWidget {
         ),
         Flexible(
           child: Text(
-            l10n.filterFavoritesOnly,
+            l10n.favoritesOnly,
             overflow: TextOverflow.ellipsis,
           ),
         ),

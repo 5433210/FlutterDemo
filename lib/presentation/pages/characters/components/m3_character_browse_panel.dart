@@ -419,8 +419,8 @@ class _M3CharacterBrowsePanelState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.characterManagementDeleteConfirm),
-        content: Text(l10n.characterManagementDeleteMessage),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

@@ -232,7 +232,7 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
         ),
         _M3WindowButton(
           icon: Icons.close,
-          tooltip: l10n.windowButtonClose,
+          tooltip: l10n.close,
           isClose: true,
           onPressed: () async {
             if (M3TitleBar.isDesktopPlatform) {

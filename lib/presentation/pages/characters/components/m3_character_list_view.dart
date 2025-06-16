@@ -68,7 +68,7 @@ class M3CharacterListView extends ConsumerWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(l10n.characterManagementLoading),
+            Text(l10n.loading),
           ],
         ),
       );
@@ -86,7 +86,7 @@ class M3CharacterListView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.characterManagementError(errorMessage!),
+              l10n.error(errorMessage!),
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ],
@@ -106,12 +106,12 @@ class M3CharacterListView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.characterManagementNoCharacters,
+              l10n.noCharacters,
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.characterManagementNoCharactersHint,
+              l10n.noCharactersFound,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -180,12 +180,12 @@ class M3CharacterListView extends ConsumerWidget {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('${l10n.workFormTitle}: ${character.title}'),
+                              Text('${l10n.title}: ${character.title}'),
                               if (character.author != null)
                                 Text(
-                                    '${l10n.workFormAuthor}: ${character.author}'),
+                                    '${l10n.author}: ${character.author}'),
                               Text(
-                                  '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
+                                  '${l10n.collectionTime}: ${_formatDateTime(character.collectionTime)}'),
                             ],
                           ),
                           trailing: isBatchMode
@@ -210,8 +210,8 @@ class M3CharacterListView extends ConsumerWidget {
                                       onPressed: () =>
                                           onToggleFavorite(character.id),
                                       tooltip: character.isFavorite
-                                          ? l10n.workBrowseRemoveFavorite
-                                          : l10n.workBrowseAddFavorite,
+                                          ? l10n.removeFavorite
+                                          : l10n.addFavorite,
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.edit),
@@ -284,11 +284,11 @@ class M3CharacterListView extends ConsumerWidget {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('${l10n.workFormTitle}: ${character.title}'),
+                          Text('${l10n.title}: ${character.title}'),
                           if (character.author != null)
-                            Text('${l10n.workFormAuthor}: ${character.author}'),
+                            Text('${l10n.author}: ${character.author}'),
                           Text(
-                              '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
+                              '${l10n.collectionTime}: ${_formatDateTime(character.collectionTime)}'),
                         ],
                       ),
                       trailing: isBatchMode
@@ -313,8 +313,8 @@ class M3CharacterListView extends ConsumerWidget {
                                   onPressed: () =>
                                       onToggleFavorite(character.id),
                                   tooltip: character.isFavorite
-                                      ? l10n.workBrowseRemoveFavorite
-                                      : l10n.workBrowseAddFavorite,
+                                      ? l10n.removeFavorite
+                                      : l10n.addFavorite,
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit),

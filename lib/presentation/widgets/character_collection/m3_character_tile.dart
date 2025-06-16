@@ -64,7 +64,7 @@ class M3CharacterTile extends StatelessWidget {
                   ),
                   child: Text(
                     character.character.isEmpty
-                        ? l10n.characterCollectionNoCharacter
+                        ? l10n.noCharacters
                         : character.character,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(

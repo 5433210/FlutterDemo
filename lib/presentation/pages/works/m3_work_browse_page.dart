@@ -173,7 +173,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                 _loadWorks(force: true);
               },
               icon: const Icon(Icons.refresh),
-              label: Text(l10n.workBrowseReload),
+              label: Text(l10n.reload),
             )
           : null,
     );
@@ -257,13 +257,13 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           children: [
             Icon(Icons.error_outline, size: 48, color: colorScheme.error),
             const SizedBox(height: 16),
-            Text(l10n.workBrowseError(state.error!),
+            Text(l10n.error(state.error!),
                 style: TextStyle(color: colorScheme.error)),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => _loadWorks(force: true),
               icon: const Icon(Icons.refresh),
-              label: Text(l10n.workBrowseReload),
+              label: Text(l10n.reload),
             ),
           ],
         ),
@@ -278,7 +278,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  l10n.workBrowseLoading,
+                  l10n.loading,
                   style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -293,16 +293,16 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                         size: 64,
                         color: colorScheme.onSurfaceVariant.withAlpha(128)),
                     const SizedBox(height: 16),
-                    Text(l10n.workBrowseNoWorks,
+                    Text(l10n.noWorks,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    Text(l10n.workBrowseNoWorksHint,
+                    Text(l10n.noWorksHint,
                         style: TextStyle(color: colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 24),
                     FilledButton.icon(
                       onPressed: () => _showImportDialog(context),
                       icon: const Icon(Icons.add),
-                      label: Text(l10n.workBrowseImport),
+                      label: Text(l10n.import),
                     ),
                   ],
                 ),
@@ -407,7 +407,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.workBrowseError(e.toString())),
+            content: Text(l10n.error(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -446,7 +446,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         final l10n = AppLocalizations.of(context);
         scaffoldMessenger.clearSnackBars();
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(l10n.workBrowseError(e.toString()))),
+          SnackBar(content: Text(l10n.error(e.toString()))),
         );
       }
     }

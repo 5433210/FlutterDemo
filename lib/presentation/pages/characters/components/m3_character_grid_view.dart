@@ -172,8 +172,8 @@ class M3CharacterCard extends StatelessWidget {
                   ),
                   onPressed: onToggleFavorite,
                   tooltip: character.isFavorite
-                      ? l10n.workBrowseRemoveFavorite
-                      : l10n.workBrowseAddFavorite,
+                      ? l10n.removeFavorite
+                      : l10n.addFavorite,
                   iconSize: 20,
                   style: IconButton.styleFrom(
                     backgroundColor: theme.colorScheme.surface
@@ -260,7 +260,7 @@ class M3CharacterGridView extends ConsumerWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(l10n.characterManagementLoading),
+            Text(l10n.loading),
           ],
         ),
       );
@@ -278,7 +278,7 @@ class M3CharacterGridView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.characterManagementError(errorMessage!),
+              l10n.error(errorMessage!),
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ],
@@ -298,12 +298,12 @@ class M3CharacterGridView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.characterManagementNoCharacters,
+              l10n.noCharacters,
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.characterManagementNoCharactersHint,
+              l10n.noCharactersFound,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

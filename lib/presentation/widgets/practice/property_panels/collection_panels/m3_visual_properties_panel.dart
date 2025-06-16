@@ -47,11 +47,11 @@ class _M3VisualPropertiesPanelState
       children: [
         // Color settings
         M3PanelStyles.buildSectionTitle(
-            context, l10n.collectionPropertyPanelColorSettings),
+            context, l10n.colorSettings),
         Row(
           children: [
             Text(
-              '${l10n.textPropertyPanelFontColor}:',
+              '${l10n.fontColor}:',
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -158,7 +158,7 @@ class _M3VisualPropertiesPanelState
         const SizedBox(height: 16.0),
 
         // Padding
-        M3PanelStyles.buildSectionTitle(context, l10n.textPropertyPanelPadding),
+        M3PanelStyles.buildSectionTitle(context, l10n.padding),
         Row(
           children: [
             Expanded(
@@ -180,7 +180,7 @@ class _M3VisualPropertiesPanelState
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelPadding,
+                label: l10n.padding,
                 value: padding,
                 suffix: 'px',
                 min: 0,

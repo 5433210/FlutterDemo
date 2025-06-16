@@ -78,8 +78,7 @@ mixin ImageSelectionHandler {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                      l10n.imagePropertyPanelFileNotExist(selectedItem.path)),
+                  content: Text(l10n.fileNotExist(selectedItem.path)),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -96,7 +95,7 @@ mixin ImageSelectionHandler {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(l10n.imagePropertyPanelFileRestored),
+                content: Text(l10n.fileRestored),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -119,7 +118,7 @@ mixin ImageSelectionHandler {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)
-                    .importImageFailed(e.toString())),
+                    .imageImportError(e.toString())),
                 backgroundColor: Colors.red,
               ),
             );
@@ -163,7 +162,7 @@ mixin ImageSelectionHandler {
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.imagePropertyPanelSelectFromLocal),
+        title: Text(l10n.fromLocal),
         content: Container(
           constraints: const BoxConstraints(maxWidth: 400),
           child: Column(
@@ -263,7 +262,7 @@ mixin ImageSelectionHandler {
                     children: [
                       const CircularProgressIndicator(),
                       const SizedBox(height: 16),
-                      Text(l10n.imagePropertyPanelImporting),
+                      Text(l10n.importing),
                     ],
                   ),
                 ),
@@ -321,7 +320,7 @@ mixin ImageSelectionHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.imagePropertyPanelImportSuccess),
+            content: Text(l10n.imageImportSuccess),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -331,7 +330,7 @@ mixin ImageSelectionHandler {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.imagePropertyPanelImportError(e.toString())),
+            content: Text(l10n.imageImportError(e.toString())),
             behavior: SnackBarBehavior.floating,
           ),
         );

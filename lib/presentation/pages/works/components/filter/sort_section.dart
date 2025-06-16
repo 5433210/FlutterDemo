@@ -32,7 +32,7 @@ class SortSection extends StatelessWidget {
           spacing: AppSizes.s,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(l10n.filterSortSection, style: theme.textTheme.titleMedium),
+            Text(l10n.sort, style: theme.textTheme.titleMedium),
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.s,
@@ -52,8 +52,8 @@ class SortSection extends StatelessWidget {
                     Flexible(
                       child: Text(
                         filter.sortOption.descending
-                            ? l10n.filterSortDescending
-                            : l10n.filterSortAscending,
+                            ? l10n.descending
+                            : l10n.ascending,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSecondaryContainer,
                         ),
@@ -158,17 +158,17 @@ class SortSection extends StatelessWidget {
 
   String _getSortFieldLabel(SortField field, AppLocalizations l10n) {
     return switch (field) {
-      SortField.title => l10n.filterSortFieldTitle,
-      SortField.author => l10n.filterSortFieldAuthor,
-      SortField.creationDate => l10n.filterSortFieldCreationDate,
-      SortField.createTime => l10n.filterSortFieldCreateTime,
-      SortField.updateTime => l10n.filterSortFieldUpdateTime,
-      SortField.tool => l10n.filterSortFieldTool,
-      SortField.style => l10n.filterSortFieldStyle,
-      SortField.none => l10n.filterSortFieldNone,
-      SortField.fileName => l10n.filterSortFieldFileName,
-      SortField.fileUpdatedAt => l10n.filterSortFieldFileUpdatedAt,
-      SortField.fileSize => l10n.filterSortFieldFileSize,
+      SortField.title => l10n.title,
+      SortField.author => l10n.author,
+      SortField.creationDate => l10n.creationDate,
+      SortField.createTime => l10n.createTime,
+      SortField.updateTime => l10n.updateTime,
+      SortField.tool => l10n.writingTool,
+      SortField.style => l10n.calligraphyStyle,
+      SortField.none => l10n.none,
+      SortField.fileName => l10n.fileName,
+      SortField.fileUpdatedAt => l10n.fileUpdatedAt,
+      SortField.fileSize => l10n.fileSize,
     };
   }
 }

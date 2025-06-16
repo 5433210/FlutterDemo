@@ -78,7 +78,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         M3PanelStyles.buildPersistentPanelCard(
           context: context,
           panelId: 'text_settings',
-          title: l10n.textPropertyPanelTextSettings,
+          title: l10n.textSettings,
           defaultExpanded: true,
           children: _buildTextSettingsPanelList(context),
         ),
@@ -152,7 +152,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 尺寸设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelDimensions),
+            context, l10n.dimensions),
         Row(
           children: [
             Expanded(
@@ -282,18 +282,18 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
       children: [
         // 文本内容
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelTextContent),
+            context, l10n.textContent),
         _buildTextContentField(text, context),
 
         const SizedBox(height: 16.0),
 
         // 字体设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelFontFamily),
+            context, l10n.fontFamily),
 
         // 字号设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelFontSize),
+            context, l10n.fontSize),
         Row(
           children: [
             Expanded(
@@ -316,7 +316,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelFontSize,
+                label: l10n.fontSize,
                 value: fontSize,
                 suffix: 'px',
                 min: 1,
@@ -336,7 +336,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
           children: [
             // 字体颜色选择器
             Tooltip(
-              message: l10n.textPropertyPanelFontColor,
+              message: l10n.fontColor,
               child: Container(
                 width: 44,
                 height: 44,
@@ -384,7 +384,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             ),
             const SizedBox(width: 8.0), // 背景颜色选择器
             Tooltip(
-              message: l10n.textPropertyPanelBgColor,
+              message: l10n.backgroundColor,
               child: Container(
                 width: 44,
                 height: 44,
@@ -450,7 +450,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               child: DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                  labelText: l10n.textPropertyPanelFontFamily,
+                  labelText: l10n.fontFamily,
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12.0, vertical: 8.0),
@@ -488,7 +488,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 字重设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelFontWeight),
+            context, l10n.fontWeight),
 
         // 字重滑块（针对思源字体优化）
         Column(
@@ -544,7 +544,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                   flex: 2,
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      labelText: l10n.textPropertyPanelFontWeight,
+                      labelText: l10n.fontWeight,
                       border: const OutlineInputBorder(),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12.0, vertical: 8.0),
@@ -613,7 +613,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 字体样式
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelFontStyle),
+            context, l10n.fontStyle),
         Row(
           children: [
             // 斜体按钮
@@ -635,7 +635,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 children: [
                   const Icon(Icons.format_italic, size: 18),
                   const SizedBox(width: 4),
-                  Text(l10n.textPropertyPanelFontStyle),
+                  Text(l10n.fontStyle),
                 ],
               ),
             ),
@@ -666,7 +666,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 children: [
                   const Icon(Icons.format_underlined, size: 18),
                   const SizedBox(width: 4),
-                  Text(l10n.textPropertyPanelUnderline),
+                  Text(l10n.underline),
                 ],
               ),
             ),
@@ -688,7 +688,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 children: [
                   const Icon(Icons.strikethrough_s, size: 18),
                   const SizedBox(width: 4),
-                  Text(l10n.textPropertyPanelLineThrough),
+                  Text(l10n.lineThrough),
                 ],
               ),
             ),
@@ -843,7 +843,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 书写方向
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelWritingMode),
+            context, l10n.writingMode),
         Card(
           elevation: 0,
           color: colorScheme.surfaceContainerHighest,
@@ -916,7 +916,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 字间距设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelLetterSpacing),
+            context, l10n.letterSpacing),
         Row(
           children: [
             Expanded(
@@ -939,7 +939,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelLetterSpacing,
+                label: l10n.letterSpacing,
                 value: letterSpacing,
                 suffix: 'px',
                 min: -5.0,
@@ -957,7 +957,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         // 行间距设置
         M3PanelStyles.buildSectionTitle(
-            context, l10n.textPropertyPanelLineHeight),
+            context, l10n.lineHeight),
         Row(
           children: [
             Expanded(
@@ -980,7 +980,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelLineHeight,
+                label: l10n.lineHeight,
                 value: lineHeight,
                 suffix: 'x',
                 min: 0.5,
@@ -1062,7 +1062,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 内边距设置
-        M3PanelStyles.buildSectionTitle(context, l10n.textPropertyPanelPadding),
+        M3PanelStyles.buildSectionTitle(context, l10n.padding),
         Row(
           children: [
             Expanded(
@@ -1085,7 +1085,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelPadding,
+                label: l10n.padding,
                 value: padding,
                 suffix: 'px',
                 min: 0,

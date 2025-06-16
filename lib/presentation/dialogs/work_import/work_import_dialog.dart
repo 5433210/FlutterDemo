@@ -36,7 +36,7 @@ class WorkImportDialog extends ConsumerWidget {
 
         return Scaffold(
           appBar: BaseNavigationBar(
-            title: Text(l10n.workImportDialogTitle),
+            title: Text(l10n.import),
             actions: [
               // Cancel button
               OutlinedButton.icon(
@@ -47,7 +47,7 @@ class WorkImportDialog extends ConsumerWidget {
                         Navigator.of(context).pop(false);
                       },
                 icon: const Icon(Icons.close),
-                label: Text(l10n.workImportDialogCancel),
+                label: Text(l10n.cancel),
               ),
               const SizedBox(width: AppSizes.s),
               // Import button
@@ -61,7 +61,7 @@ class WorkImportDialog extends ConsumerWidget {
                       }
                     : null,
                 icon: const Icon(Icons.save),
-                label: Text(l10n.workImportDialogImport),
+                label: Text(l10n.import),
               ),
               const SizedBox(width: AppSizes.m),
             ],
@@ -99,7 +99,7 @@ class WorkImportDialog extends ConsumerWidget {
                         const LinearProgressIndicator(),
                         const SizedBox(height: 8),
                         Text(
-                          l10n.workImportDialogProcessing,
+                          l10n.processing,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],

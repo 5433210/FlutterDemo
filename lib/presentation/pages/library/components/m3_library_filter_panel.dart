@@ -97,7 +97,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 children: [
                   Expanded(
                     child: Text(
-                      l10n.filterHeader,
+                      l10n.filter,
                       style: theme.textTheme.titleMedium,
                     ),
                   ),
@@ -106,7 +106,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                     iconSize: AppSizes.iconSizeMedium,
                     visualDensity: VisualDensity.compact,
                     onPressed: _resetFilters,
-                    tooltip: l10n.filterReset,
+                    tooltip: l10n.reset,
                   ),
                 ],
               ),
@@ -122,7 +122,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 controller: widget.searchController,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
-                  hintText: l10n.libraryManagementSearch,
+                  hintText: l10n.search,
                   isDense: true,
                   border: const OutlineInputBorder(),
                 ),
@@ -138,7 +138,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           // Sort section
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
-              title: l10n.libraryManagementSortBy,
+              title: l10n.sortBy,
               isExpanded: _isSortExpanded,
               onToggle: () =>
                   setState(() => _isSortExpanded = !_isSortExpanded),
@@ -172,12 +172,12 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           // Favorites section (现在位于排序下方)
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
-              title: l10n.libraryManagementFavorites,
+              title: l10n.favorite,
               isExpanded: _isFavoriteExpanded,
               onToggle: () =>
                   setState(() => _isFavoriteExpanded = !_isFavoriteExpanded),
               child: SwitchListTile(
-                title: Text(l10n.filterFavoritesOnly),
+                title: Text(l10n.favoritesOnly),
                 value: _showFavoritesOnly,
                 dense: true,
                 visualDensity: VisualDensity.compact,
@@ -196,7 +196,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           ), // Categories section
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
-              title: l10n.libraryManagementCategories,
+              title: l10n.categories,
               isExpanded: _isCategoriesExpanded,
               onToggle: () => setState(
                   () => _isCategoriesExpanded = !_isCategoriesExpanded),
@@ -209,7 +209,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           // Type filter section
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
-              title: l10n.libraryManagementTypes,
+              title: l10n.type,
               isExpanded: _isTypeExpanded,
               onToggle: () =>
                   setState(() => _isTypeExpanded = !_isTypeExpanded),
@@ -240,7 +240,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           // Format filter section
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
-              title: l10n.libraryManagementFormats,
+              title: l10n.format,
               isExpanded: _isFormatExpanded,
               onToggle: () =>
                   setState(() => _isFormatExpanded = !_isFormatExpanded),
@@ -363,8 +363,8 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
   Widget _buildDateRangeSection({required bool isCreationDate}) {
     return _buildCollapsibleSection(
       title: isCreationDate
-          ? l10n.libraryManagementCreatedAt
-          : l10n.libraryManagementUpdatedAt,
+          ? l10n.createdAt
+          : l10n.updatedAt,
       isExpanded:
           isCreationDate ? _isCreationDateExpanded : _isUpdateDateExpanded,
       onToggle: () => setState(() {
@@ -376,8 +376,8 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
       }),
       child: M3FilterDateRangeSection(
         title: isCreationDate
-            ? l10n.libraryManagementCreatedAt
-            : l10n.libraryManagementUpdatedAt,
+            ? l10n.createdAt
+            : l10n.updatedAt,
         filter: isCreationDate ? _creationDateFilter : _updateDateFilter,
         onChanged: (newFilter) {
           if (isCreationDate) {
@@ -410,7 +410,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
 
   Widget _buildFileSizeSection() {
     return _buildCollapsibleSection(
-      title: l10n.libraryManagementFileSize,
+      title: l10n.fileSize,
       isExpanded: _isFileSizeExpanded,
       onToggle: () =>
           setState(() => _isFileSizeExpanded = !_isFileSizeExpanded),
@@ -422,7 +422,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _minSizeController,
                   decoration: InputDecoration(
-                    labelText: l10n.filterMin,
+                    labelText: l10n.min,
                     suffixText: 'MB',
                   ),
                   keyboardType: TextInputType.number,
@@ -434,7 +434,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _maxSizeController,
                   decoration: InputDecoration(
-                    labelText: l10n.filterMax,
+                    labelText: l10n.max,
                     suffixText: 'MB',
                   ),
                   keyboardType: TextInputType.number,
@@ -461,7 +461,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _minWidthController,
                   decoration: InputDecoration(
-                    labelText: '${l10n.width} (${l10n.filterMin})',
+                    labelText: '${l10n.width} (${l10n.min})',
                     suffixText: 'px',
                   ),
                   keyboardType: TextInputType.number,
@@ -473,7 +473,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _maxWidthController,
                   decoration: InputDecoration(
-                    labelText: '${l10n.width} (${l10n.filterMax})',
+                    labelText: '${l10n.width} (${l10n.max})',
                     suffixText: 'px',
                   ),
                   keyboardType: TextInputType.number,
@@ -489,7 +489,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _minHeightController,
                   decoration: InputDecoration(
-                    labelText: '${l10n.height} (${l10n.filterMin})',
+                    labelText: '${l10n.height} (${l10n.min})',
                     suffixText: 'px',
                   ),
                   keyboardType: TextInputType.number,
@@ -501,7 +501,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 child: TextField(
                   controller: _maxHeightController,
                   decoration: InputDecoration(
-                    labelText: '${l10n.height} (${l10n.filterMax})',
+                    labelText: '${l10n.height} (${l10n.max})',
                     suffixText: 'px',
                   ),
                   keyboardType: TextInputType.number,

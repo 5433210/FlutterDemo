@@ -44,7 +44,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         }
       },
       child: AlertDialog(
-        title: Text(l10n.practiceEditEditTitle),
+        title: Text(l10n.editTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -52,8 +52,8 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
               controller: _titleController,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                labelText: l10n.practiceEditPracticeTitle,
-                hintText: l10n.practiceEditEnterTitle,
+                labelText: l10n.title,
+                hintText: l10n.inputTitle,
                 errorText: _errorText,
                 border: const OutlineInputBorder(),
               ),

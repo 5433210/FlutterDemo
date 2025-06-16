@@ -36,7 +36,7 @@ class AppearanceSettings extends ConsumerWidget {
           ),
         ),
         ListTile(
-          title: Text(l10n.themeModeSystem),
+          title: Text(l10n.languageSystem),
           subtitle: Text(l10n.themeModeSystemDescription),
           leading: Icon(Icons.settings_system_daydream_outlined,
               color: colorScheme.primary),

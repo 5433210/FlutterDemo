@@ -50,7 +50,7 @@ class _M3ViewModeImagePreviewState
           Expanded(
             child: Center(
               child: Text(
-                l10n.workDetailNoImages,
+                l10n.noImages,
                 style: theme.textTheme.bodyLarge,
               ),
             ),
@@ -92,7 +92,7 @@ class _M3ViewModeImagePreviewState
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          l10n.workDetailImageLoadError,
+                          l10n.imageLoadError(l10n.imageFileNotExists),
                           style: TextStyle(
                             color: theme.colorScheme.error,
                           ),

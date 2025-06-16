@@ -32,7 +32,7 @@ class M3TextFormatPanel extends StatelessWidget {
       children: [
         // Font size
         Text(
-          '${l10n.textPropertyPanelFontSize}:',
+          '${l10n.fontSize}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelFontSize,
+                label: l10n.fontSize,
                 value: fontSize,
                 suffix: 'px',
                 min: 10,
@@ -77,7 +77,7 @@ class M3TextFormatPanel extends StatelessWidget {
 
         // Letter spacing
         Text(
-          '${l10n.textPropertyPanelLetterSpacing}:',
+          '${l10n.letterSpacing}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelLetterSpacing,
+                label: l10n.letterSpacing,
                 value: letterSpacing,
                 suffix: 'px',
                 min: 0,
@@ -123,7 +123,7 @@ class M3TextFormatPanel extends StatelessWidget {
 
         // Line spacing
         Text(
-          '${l10n.textPropertyPanelLineHeight}:',
+          '${l10n.lineHeight}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.textPropertyPanelLineHeight,
+                label: l10n.lineHeight,
                 value: lineSpacing,
                 suffix: 'px',
                 min: 0,
@@ -169,7 +169,7 @@ class M3TextFormatPanel extends StatelessWidget {
 
         // Horizontal alignment - using Card with IconButtons like text panel
         Text(
-          '${l10n.textPropertyPanelTextAlign}:',
+          '${l10n.textAlign}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -248,7 +248,7 @@ class M3TextFormatPanel extends StatelessWidget {
 
         // Vertical alignment - using Card with IconButtons like text panel
         Text(
-          '${l10n.textPropertyPanelVerticalAlign}:',
+          '${l10n.verticalAlignment}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -327,7 +327,7 @@ class M3TextFormatPanel extends StatelessWidget {
 
         // Writing direction - using Card with IconButtons like text panel
         Text(
-          '${l10n.textPropertyPanelWritingMode}:',
+          '${l10n.writingMode}:',
           style: textTheme.titleSmall?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,

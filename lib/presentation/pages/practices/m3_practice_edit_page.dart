@@ -1281,8 +1281,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         );
         if (_clipboardElement != null) {
           scaffoldMessenger.showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)
-                  .elementCopiedToClipboardWithPreload)));
+              content:
+                  Text(AppLocalizations.of(context).elementCopiedToClipboard)));
         }
       }
     } catch (e) {
@@ -1379,8 +1379,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.practiceEditConfirmDeleteTitle),
-        content: Text(l10n.practiceEditConfirmDeleteMessage),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteElementConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1439,7 +1439,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       _controller.updatePracticeTitle(newTitle);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditTitleUpdated(newTitle))),
+          SnackBar(content: Text(l10n.titleUpdated(newTitle))),
         );
       }
     }
@@ -2218,8 +2218,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(l10n.practiceEditUnsavedChanges),
-            content: Text(l10n.practiceEditUnsavedChangesExitConfirmation),
+            title: Text(l10n.unsavedChanges),
+            content: Text(l10n.unsavedChanges),
             actions: <Widget>[
               TextButton(
                 child: Text(l10n.cancel),
@@ -2228,7 +2228,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                 },
               ),
               TextButton(
-                child: Text(l10n.practiceEditExit),
+                child: Text(l10n.exit),
                 onPressed: () {
                   Navigator.of(context).pop(true);
                 },
@@ -2500,7 +2500,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     if (_controller.state.pages.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditCannotSaveNoPages)),
+        SnackBar(content: Text(l10n.cannotSaveNoPages)),
       );
       return;
     }
@@ -2547,8 +2547,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         final shouldOverwrite = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n.practiceEditTitleExists),
-            content: Text(l10n.practiceEditTitleExistsMessage),
+            title: Text(l10n.titleExists),
+            content: Text(l10n.titleExistsMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -2556,7 +2556,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text(l10n.practiceEditOverwrite),
+                child: Text(l10n.overwrite),
               ),
             ],
           ),
@@ -2576,14 +2576,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             );
           } else {
             scaffoldMessenger.showSnackBar(
-              SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+              SnackBar(content: Text(l10n.saveFailure)),
             );
           }
         }
       } else {
         // 处理其他失败情况
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+          SnackBar(content: Text(l10n.saveFailure)),
         );
       }
     } catch (e) {
@@ -2596,8 +2596,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
       if (mounted) {
         scaffoldMessenger.showSnackBar(
-          SnackBar(
-              content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+          SnackBar(content: Text('${l10n.saveFailure}: ${e.toString()}')),
         );
       }
     }
@@ -2611,7 +2610,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     if (_controller.state.pages.isEmpty) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.practiceEditCannotSaveNoPages)),
+        SnackBar(content: Text(l10n.cannotSaveNoPages)),
       );
       return false;
     }
@@ -2644,7 +2643,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           data: {'practiceId': _controller.practiceId},
         );
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
+          SnackBar(content: Text(l10n.saveSuccess)),
         );
         return true;
       } else if (result is String && result == 'title_exists') {
@@ -2652,8 +2651,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         final shouldOverwrite = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n.practiceEditTitleExists),
-            content: Text(l10n.practiceEditTitleExistsMessage),
+            title: Text(l10n.titleExists),
+            content: Text(l10n.titleExistsMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -2661,7 +2660,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text(l10n.practiceEditOverwrite),
+                child: Text(l10n.overwrite),
               ),
             ],
           ),
@@ -2677,12 +2676,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
           if (saveResult == true) {
             scaffoldMessenger.showSnackBar(
-              SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
+              SnackBar(content: Text(l10n.saveSuccess)),
             );
             return true;
           } else {
             scaffoldMessenger.showSnackBar(
-              SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+              SnackBar(content: Text(l10n.saveFailure)),
             );
             return false;
           }
@@ -2691,7 +2690,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       } else {
         // 处理其他失败情况
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(l10n.practiceEditSaveFailed)),
+          SnackBar(content: Text(l10n.saveFailure)),
         );
         return false;
       }
@@ -2705,8 +2704,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
       if (mounted) {
         scaffoldMessenger.showSnackBar(
-          SnackBar(
-              content: Text('${l10n.practiceEditSaveFailed}: ${e.toString()}')),
+          SnackBar(content: Text('${l10n.saveFailure}: ${e.toString()}')),
         );
       }
       return false;

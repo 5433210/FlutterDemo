@@ -70,8 +70,8 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
           isScrollable: true,
           labelPadding: const EdgeInsets.symmetric(horizontal: 16),
           tabs: [
-            Tab(text: l10n.filterDatePresets),
-            Tab(text: l10n.filterDateCustom),
+            Tab(text: l10n.presets),
+            Tab(text: l10n.custom),
           ],
         ),
         const SizedBox(height: AppSizes.m),
@@ -121,7 +121,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
       children: [
         _buildDateField(
           context: context,
-          label: l10n.filterDateStartDate,
+          label: l10n.startDate,
           value: _startDate,
           onPressed: () => _selectDate(context, true),
           l10n: l10n,
@@ -129,7 +129,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
         const SizedBox(height: AppSizes.m),
         _buildDateField(
           context: context,
-          label: l10n.filterDateEndDate,
+          label: l10n.endDate,
           value: _endDate,
           onPressed: () => _selectDate(context, false),
           l10n: l10n,
@@ -142,14 +142,14 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
                 Expanded(
                   child: FilledButton(
                     onPressed: _applyDateRange,
-                    child: Text(l10n.filterDateApply),
+                    child: Text(l10n.apply),
                   ),
                 ),
               if (_hasValidRange) const SizedBox(width: AppSizes.s),
               Expanded(
                 child: TextButton(
                   onPressed: _clearDateRange,
-                  child: Text(l10n.filterDateClear),
+                  child: Text(l10n.filterClear),
                 ),
               ),
             ],
@@ -175,9 +175,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
           width: double.infinity,
           child: OutlinedButton.icon(
             icon: const Icon(Icons.calendar_today, size: 18),
-            label: Text(value != null
-                ? _formatDate(value)
-                : l10n.filterDateSelectPrompt),
+            label: Text(value != null ? _formatDate(value) : l10n.selectDate),
             onPressed: onPressed,
           ),
         ),
@@ -247,12 +245,9 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     }
 
     if (filter.start != null || filter.end != null) {
-      final start = filter.start != null
-          ? _formatDate(filter.start!)
-          : l10n.filterDateStartDate;
-      final end = filter.end != null
-          ? _formatDate(filter.end!)
-          : l10n.filterDateEndDate;
+      final start =
+          filter.start != null ? _formatDate(filter.start!) : l10n.startDate;
+      final end = filter.end != null ? _formatDate(filter.end!) : l10n.endDate;
       return '$start - $end';
     }
 
@@ -266,20 +261,20 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
 
   String _getPresetLabel(DateRangePreset preset, AppLocalizations l10n) {
     return switch (preset) {
-      DateRangePreset.today => l10n.filterDatePresetToday,
-      DateRangePreset.yesterday => l10n.filterDatePresetYesterday,
-      DateRangePreset.thisWeek => l10n.filterDatePresetThisWeek,
-      DateRangePreset.lastWeek => l10n.filterDatePresetLastWeek,
-      DateRangePreset.thisMonth => l10n.filterDatePresetThisMonth,
-      DateRangePreset.lastMonth => l10n.filterDatePresetLastMonth,
-      DateRangePreset.thisYear => l10n.filterDatePresetThisYear,
-      DateRangePreset.lastYear => l10n.filterDatePresetLastYear,
-      DateRangePreset.last7Days => l10n.filterDatePresetLast7Days,
-      DateRangePreset.last30Days => l10n.filterDatePresetLast30Days,
-      DateRangePreset.last90Days => l10n.filterDatePresetLast90Days,
-      DateRangePreset.last365Days => l10n.filterDatePresetLast365Days,
-      DateRangePreset.all => l10n.filterDatePresetAll,
-      DateRangePreset.custom => l10n.filterDateCustom,
+      DateRangePreset.today => l10n.today,
+      DateRangePreset.yesterday => l10n.yesterday,
+      DateRangePreset.thisWeek => l10n.thisWeek,
+      DateRangePreset.lastWeek => l10n.lastWeek,
+      DateRangePreset.thisMonth => l10n.thisMonth,
+      DateRangePreset.lastMonth => l10n.lastMonth,
+      DateRangePreset.thisYear => l10n.thisYear,
+      DateRangePreset.lastYear => l10n.lastYear,
+      DateRangePreset.last7Days => l10n.last7Days,
+      DateRangePreset.last30Days => l10n.last30Days,
+      DateRangePreset.last90Days => l10n.last90Days,
+      DateRangePreset.last365Days => l10n.last365Days,
+      DateRangePreset.all => l10n.allTime,
+      DateRangePreset.custom => l10n.custom,
     };
   }
 

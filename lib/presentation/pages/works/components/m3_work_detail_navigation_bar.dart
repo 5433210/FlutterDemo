@@ -65,14 +65,14 @@ class M3WorkDetailNavigationBar extends StatelessWidget
               // 取消按钮
               OutlinedButton.icon(
                 icon: const Icon(Icons.close),
-                label: Text(l10n.workDetailCancel),
+                label: Text(l10n.cancel),
                 onPressed: onCancel,
               ),
               const SizedBox(width: AppSizes.m),
               // 保存按钮
               FilledButton.icon(
                 icon: const Icon(Icons.save),
-                label: Text(l10n.workDetailSave),
+                label: Text(l10n.save),
                 onPressed: hasChanges ? onSave : null,
               ),
             ]
@@ -81,7 +81,7 @@ class M3WorkDetailNavigationBar extends StatelessWidget
               if (showExtractButton) ...[
                 FilledButton.icon(
                   icon: const Icon(Icons.text_fields),
-                  label: Text(l10n.workDetailExtract),
+                  label: Text(l10n.extract),
                   onPressed: onExtract,
                 ),
                 const SizedBox(width: AppSizes.m),
@@ -89,7 +89,7 @@ class M3WorkDetailNavigationBar extends StatelessWidget
               // 编辑按钮
               FilledButton.icon(
                 icon: const Icon(Icons.edit),
-                label: Text(l10n.workDetailEdit),
+                label: Text(l10n.edit),
                 onPressed: onEdit,
               ),
             ],

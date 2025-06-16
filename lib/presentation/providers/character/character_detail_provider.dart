@@ -66,7 +66,7 @@ String getLocalizedFormatDescription(
 
   switch (format) {
     case CharacterImageType.original:
-      return l10n.characterDetailFormatOriginalDesc;
+      return l10n.originalImageDesc;
     case CharacterImageType.binary:
       return l10n.characterDetailFormatBinaryDesc;
     case CharacterImageType.thumbnail:
@@ -90,7 +90,7 @@ String getLocalizedFormatName(BuildContext context, CharacterImageType format) {
 
   switch (format) {
     case CharacterImageType.original:
-      return l10n.characterDetailFormatOriginal;
+      return l10n.original;
     case CharacterImageType.binary:
       return l10n.characterDetailFormatBinary;
     case CharacterImageType.thumbnail:

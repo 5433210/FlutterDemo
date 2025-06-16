@@ -186,8 +186,8 @@ class _M3LibraryManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.confirmDeleteAllItems),
-        content: Text(l10n.confirmDeleteFilteredItems(state.items.length)),
+        title: Text(l10n.confirmDeleteAll),
+        content: Text(l10n.batchDeleteMessage(state.items.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -223,8 +223,8 @@ class _M3LibraryManagementPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.libraryManagementDeleteConfirm),
-        content: Text(l10n.libraryManagementDeleteMessage),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -303,7 +303,7 @@ class _M3LibraryManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.importFailedMessage(e.toString())),
+            content: Text(l10n.importFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -350,7 +350,7 @@ class _M3LibraryManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.importFailedMessage(e.toString())),
+            content: Text(l10n.importFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -439,7 +439,7 @@ class _M3LibraryManagementPageState
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(l10n.importingImages),
+                Text(l10n.importing),
               ],
             ),
           ),

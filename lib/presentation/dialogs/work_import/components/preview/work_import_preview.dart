@@ -89,8 +89,8 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                         onPressed:
                             handleAdd, // 处理中禁用                        icon: const Icon(Icons.add_photo_alternate),
                         label: isSmallWidth
-                            ? Text(l10n.workImportAdd)
-                            : Text(l10n.workImportAddImage),
+                            ? Text(l10n.add)
+                            : Text(l10n.addImage),
                       ),
                     ),
                     Padding(
@@ -101,8 +101,8 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                           Icons.delete_outline,
                         ),
                         label: isSmallWidth
-                            ? Text(l10n.workImportDelete)
-                            : Text(l10n.workImportDeleteImage),
+                            ? Text(l10n.delete)
+                            : Text(l10n.deleteImage),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
                           side: BorderSide(
@@ -145,7 +145,7 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                     }
                   }
                 },
-                confirmText: l10n.workImportImport,
+                confirmText: l10n.import,
               ),
           ],
         );
@@ -171,7 +171,7 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
     final l10n = AppLocalizations.of(context);
     String title = isLastImage ? l10n.confirmDelete : l10n.confirmDeleteAll;
     String message =
-        isLastImage ? l10n.confirmDeleteAllMessage : l10n.confirmDeleteMessage;
+        isLastImage ? l10n.deleteLastMessage : l10n.deleteMessage;
 
     final confirmed = await showConfirmDialog(
       context: context,

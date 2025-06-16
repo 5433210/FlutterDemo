@@ -35,7 +35,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     if (state.error != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          final errorMsg = '${l10n.practiceListFilterTitle}: ${state.error}';
+          final errorMsg = '${l10n.filter}: ${state.error}';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMsg)),
           );
@@ -159,8 +159,8 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.practiceListDeleteConfirm),
-        content: Text(l10n.practiceListDeleteMessage),
+        title: Text(l10n.deleteConfirm),
+        content: Text(l10n.deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

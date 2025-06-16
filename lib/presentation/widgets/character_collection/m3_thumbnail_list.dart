@@ -115,7 +115,7 @@ class M3ThumbnailList extends ConsumerWidget {
                               .clearSelectedRegions();
                         }
                       : null,
-                  tooltip: l10n.characterCollectionPreviousPage,
+                  tooltip: l10n.previousPage,
                 ),
 
                 // Next page
@@ -142,7 +142,7 @@ class M3ThumbnailList extends ConsumerWidget {
                               .clearSelectedRegions();
                         }
                       : null,
-                  tooltip: l10n.characterCollectionNextPage,
+                  tooltip: l10n.nextPage,
                 ),
               ],
             ),

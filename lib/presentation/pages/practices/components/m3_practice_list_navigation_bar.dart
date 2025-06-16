@@ -73,13 +73,13 @@ class _M3PracticeListNavigationBarState
             if (widget.isBatchMode && widget.selectedCount > 0)
               IconButton(
                 icon: const Icon(Icons.delete),
-                tooltip: l10n.practiceListDeleteSelected,
+                tooltip: l10n.deleteSelected,
                 onPressed: widget.onDeleteSelected,
               )
             else if (!widget.isBatchMode)
               FilledButton.icon(
                 icon: const Icon(Icons.add),
-                label: Text(l10n.practiceListNewPractice),
+                label: Text(l10n.newItem),
                 onPressed: widget.onNewPractice,
               ),
           ],
@@ -88,18 +88,14 @@ class _M3PracticeListNavigationBarState
         // 批量操作按钮
         IconButton(
           icon: Icon(widget.isBatchMode ? Icons.close : Icons.checklist),
-          tooltip: widget.isBatchMode
-              ? l10n.practiceListBatchDone
-              : l10n.practiceListBatchMode,
+          tooltip: widget.isBatchMode ? l10n.done : l10n.batchMode,
           onPressed: widget.onToggleBatchMode,
         ),
 
         // 视图切换按钮
         IconButton(
           icon: Icon(widget.isGridView ? Icons.view_list : Icons.grid_view),
-          tooltip: widget.isGridView
-              ? l10n.practiceListListView
-              : l10n.practiceListGridView,
+          tooltip: widget.isGridView ? l10n.listView : l10n.gridView,
           onPressed: widget.onToggleViewMode,
         ),
       ],

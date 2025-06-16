@@ -172,7 +172,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     if (widget.workId.isEmpty) {
       return Center(
         child: Text(
-          l10n.characterCollectionNoCharacters,
+          l10n.noCharacters,
           style:
               TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
@@ -195,7 +195,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     if (selectedRegion == null) {
       return Center(
         child: Text(
-          l10n.characterCollectionSelectRegion,
+          l10n.boxRegion,
           style: TextStyle(color: colorScheme.onSurfaceVariant),
         ),
       );
@@ -246,7 +246,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.characterCollectionSwitchingPage),
+              content: Text(l10n.switchingPage),
               duration: const Duration(seconds: 1),
             ),
           );

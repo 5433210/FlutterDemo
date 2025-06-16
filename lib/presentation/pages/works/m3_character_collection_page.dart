@@ -79,7 +79,7 @@ class M3LoadingOverlay extends StatelessWidget {
                 CircularProgressIndicator(color: colorScheme.primary),
                 const SizedBox(width: 16),
                 Text(
-                  l10n.characterCollectionProcessing,
+                  l10n.processing,
                   style: TextStyle(
                     fontSize: 16,
                     color: colorScheme.onSurface,
@@ -259,7 +259,7 @@ class _M3CharacterCollectionPageState
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          l10n.characterCollectionError(error),
+          l10n.error(error),
           style: TextStyle(color: colorScheme.onError),
         ),
       ),
@@ -286,7 +286,7 @@ class _M3CharacterCollectionPageState
                 size: 64, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
-              l10n.characterCollectionImageLoadError,
+              l10n.imageLoadError(l10n.imageFileNotExists),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -295,7 +295,7 @@ class _M3CharacterCollectionPageState
             ),
             const SizedBox(height: 8),
             Text(
-              _imageError ?? l10n.characterCollectionImageInvalid,
+              _imageError ?? l10n.imageInvalid,
               style:
                   TextStyle(color: colorScheme.onSurfaceVariant.withAlpha(204)),
               textAlign: TextAlign.center,
@@ -303,13 +303,13 @@ class _M3CharacterCollectionPageState
             const SizedBox(height: 24),
             FilledButton.icon(
               icon: const Icon(Icons.refresh),
-              label: Text(l10n.characterCollectionRetry),
+              label: Text(l10n.retry),
               onPressed: _loadInitialData,
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.characterCollectionReturnToDetails),
+              child: Text(l10n.back),
             ),
           ],
         ),
@@ -343,8 +343,8 @@ class _M3CharacterCollectionPageState
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: Text(l10n.characterCollectionUnsavedChanges),
-          content: Text(l10n.characterCollectionUnsavedChangesMessage),
+          title: Text(l10n.unsavedChanges),
+          content: Text(l10n.unsavedChanges),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false), // Cancel
@@ -361,7 +361,7 @@ class _M3CharacterCollectionPageState
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: Text(l10n.characterCollectionLeave),
+              child: Text(l10n.leave),
             ),
           ],
         ),
@@ -471,7 +471,7 @@ class _M3CharacterCollectionPageState
       if (imageBytes == null || imageBytes.isEmpty) {
         setState(() {
           _isImageValid = false;
-          _imageError = l10n.characterCollectionImageLoadError;
+          _imageError = l10n.imageLoadError(l10n.imageFileNotExists);
         });
         return;
       }
@@ -484,7 +484,7 @@ class _M3CharacterCollectionPageState
         if (!isValid) {
           setState(() {
             _isImageValid = false;
-            _imageError = l10n.characterCollectionImageInvalid;
+            _imageError = l10n.imageInvalid;
           });
           return;
         }

@@ -107,16 +107,16 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                                   icon: const Icon(Icons.add_photo_alternate),
                                   label: isSmallWidth
                                       ? Text(l10n.import)
-                                      : Text(l10n.workImportDialogAddImages),
+                                      : Text(l10n.addImage),
                                 ),
                                 const SizedBox(width: 8),
                                 OutlinedButton.icon(
                                   onPressed: () => _handleAddFromGallery(),
                                   icon: const Icon(Icons.collections),
                                   label: isSmallWidth
-                                      ? Text(l10n.workImportDialogFromGallery)
+                                      ? Text(l10n.fromGallery)
                                       : Text(
-                                          l10n.workImportDialogFromGalleryLong),
+                                          l10n.fromGallery),
                                 ),
                               ],
                             ),
@@ -132,7 +132,7 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                               ),
                               label: isSmallWidth
                                   ? Text(l10n.delete)
-                                  : Text(l10n.workImportDialogDeleteImage),
+                                  : Text(l10n.deleteImage),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: theme.colorScheme.error,
                                 side: BorderSide(
@@ -167,8 +167,8 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                     : () {
                         _handleConfirmAndClose();
                       },
-                confirmText: l10n.workImportDialogImport,
-                cancelText: l10n.workImportDialogCancel,
+                confirmText: l10n.import,
+                cancelText: l10n.cancel,
                 isProcessing: state.isProcessing,
               ),
           ],
@@ -191,12 +191,12 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
           ),
           const SizedBox(height: 16),
           Text(
-            l10n.workImportDialogNoImages,
+            l10n.noImages,
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.workImportDialogNoImagesHint,
+            l10n.addImageHint,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -208,13 +208,13 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
               FilledButton.tonalIcon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_photo_alternate),
-                label: Text(l10n.workImportDialogAddImages),
+                label: Text(l10n.addImage),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => _handleAddFromGallery(),
                 icon: const Icon(Icons.collections),
-                label: Text(l10n.workImportDialogFromGallery),
+                label: Text(l10n.fromGallery),
               ),
             ],
           ),
@@ -284,8 +284,8 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     if (state.images.isEmpty) return;
 
     final isLastImage = state.images.length == 1;
-    String title = l10n.workImportDialogDeleteImage;
-    String message = l10n.workImportDialogDeleteImageConfirm;
+    String title = l10n.deleteImage;
+    String message = l10n.deleteMessage;
 
     final confirmed = await showConfirmDialog(
       context: context,

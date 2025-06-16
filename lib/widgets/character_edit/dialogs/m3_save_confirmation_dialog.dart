@@ -71,7 +71,7 @@ class _M3SaveConfirmationDialogState extends State<M3SaveConfirmationDialog> {
         }
       },
       child: AlertDialog(
-        title: Text(l10n.characterEditSaveConfirmTitle),
+        title: Text(l10n.save),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +79,7 @@ class _M3SaveConfirmationDialogState extends State<M3SaveConfirmationDialog> {
             Text(l10n.characterEditSaveConfirmMessage(widget.character)),
             const SizedBox(height: 8),
             Text(
-              l10n.characterEditSaveShortcuts,
+              l10n.confirmShortcuts,
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.outline,
@@ -88,7 +88,7 @@ class _M3SaveConfirmationDialogState extends State<M3SaveConfirmationDialog> {
             ),
             if (widget.showPreview && widget.previewWidget != null) ...[
               const SizedBox(height: 16),
-              Text(l10n.characterEditSavePreview),
+              Text(l10n.savePreview),
               const SizedBox(height: 8),
               SizedBox(
                 width: 200,

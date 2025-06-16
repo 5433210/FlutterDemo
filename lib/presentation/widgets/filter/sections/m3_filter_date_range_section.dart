@@ -52,23 +52,16 @@ class _M3FilterDateRangeSectionState extends State<M3FilterDateRangeSection> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _buildPresetChip(DateRangePreset.today, l10n.filterDatePresetToday),
-            _buildPresetChip(
-                DateRangePreset.yesterday, l10n.filterDatePresetYesterday),
-            _buildPresetChip(
-                DateRangePreset.thisWeek, l10n.filterDatePresetThisWeek),
-            _buildPresetChip(
-                DateRangePreset.lastWeek, l10n.filterDatePresetLastWeek),
-            _buildPresetChip(
-                DateRangePreset.thisMonth, l10n.filterDatePresetThisMonth),
-            _buildPresetChip(
-                DateRangePreset.lastMonth, l10n.filterDatePresetLastMonth),
-            _buildPresetChip(
-                DateRangePreset.thisYear, l10n.filterDatePresetThisYear),
-            _buildPresetChip(
-                DateRangePreset.lastYear, l10n.filterDatePresetLastYear),
-            _buildPresetChip(DateRangePreset.all, l10n.filterDatePresetAll),
-            _buildPresetChip(DateRangePreset.custom, l10n.filterDateCustom),
+            _buildPresetChip(DateRangePreset.today, l10n.today),
+            _buildPresetChip(DateRangePreset.yesterday, l10n.yesterday),
+            _buildPresetChip(DateRangePreset.thisWeek, l10n.thisWeek),
+            _buildPresetChip(DateRangePreset.lastWeek, l10n.lastWeek),
+            _buildPresetChip(DateRangePreset.thisMonth, l10n.thisMonth),
+            _buildPresetChip(DateRangePreset.lastMonth, l10n.lastMonth),
+            _buildPresetChip(DateRangePreset.thisYear, l10n.thisYear),
+            _buildPresetChip(DateRangePreset.lastYear, l10n.lastYear),
+            _buildPresetChip(DateRangePreset.all, l10n.allTime),
+            _buildPresetChip(DateRangePreset.custom, l10n.custom),
           ],
         ),
 
@@ -83,7 +76,7 @@ class _M3FilterDateRangeSectionState extends State<M3FilterDateRangeSection> {
                   children: [
                     Expanded(
                       child: _buildDateField(
-                        label: l10n.filterDateStartDate,
+                        label: l10n.startDate,
                         date: _startDate,
                         onTap: () => _selectDate(true),
                       ),
@@ -91,7 +84,7 @@ class _M3FilterDateRangeSectionState extends State<M3FilterDateRangeSection> {
                     const SizedBox(width: AppSizes.spacingMedium),
                     Expanded(
                       child: _buildDateField(
-                        label: l10n.filterDateEndDate,
+                        label: l10n.endDate,
                         date: _endDate,
                         onTap: () => _selectDate(false),
                       ),

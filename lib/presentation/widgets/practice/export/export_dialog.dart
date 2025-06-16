@@ -173,8 +173,7 @@ class _ExportDialogState extends State<ExportDialog> {
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
                           child: Text(
-                            l10n.exportDialogMultipleFilesNote(
-                                widget.pageCount),
+                            l10n.multipleFilesNote(widget.pageCount),
                             style: const TextStyle(color: Colors.blue),
                           ),
                         ),
@@ -244,7 +243,7 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportFormat}:',
+        Text('${l10n.exportType}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Wrap(
@@ -299,14 +298,14 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogFitPolicy}:',
+        Text('${l10n.fitMode}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: RadioListTile<PdfFitPolicy>(
-                title: Text(l10n.exportDialogFitWidth),
+                title: Text(l10n.fitWidth),
                 value: PdfFitPolicy.width,
                 groupValue: _fitPolicy,
                 contentPadding: EdgeInsets.zero,
@@ -321,7 +320,7 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
             Expanded(
               child: RadioListTile<PdfFitPolicy>(
-                title: Text(l10n.exportDialogFitHeight),
+                title: Text(l10n.fitHeight),
                 value: PdfFitPolicy.height,
                 groupValue: _fitPolicy,
                 contentPadding: EdgeInsets.zero,
@@ -337,7 +336,7 @@ class _ExportDialogState extends State<ExportDialog> {
           ],
         ),
         RadioListTile<PdfFitPolicy>(
-          title: Text(l10n.exportDialogFitContain),
+          title: Text(l10n.fitContain),
           value: PdfFitPolicy.contain,
           groupValue: _fitPolicy,
           contentPadding: EdgeInsets.zero,
@@ -390,7 +389,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   border: const OutlineInputBorder(),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  suffixText: l10n.exportDialogCentimeter,
+                  suffixText: l10n.centimeter,
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -452,25 +451,25 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogPageMargins}:',
+        Text('${l10n.pageMargins}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: _buildMarginInput(l10n.exportDialogMarginTop, 0),
+              child: _buildMarginInput(l10n.marginTop, 0),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput(l10n.exportDialogMarginRight, 1),
+              child: _buildMarginInput(l10n.marginRight, 1),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput(l10n.exportDialogMarginBottom, 2),
+              child: _buildMarginInput(l10n.marginBottom, 2),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput(l10n.exportDialogMarginLeft, 3),
+              child: _buildMarginInput(l10n.marginLeft, 3),
             ),
           ],
         ),
@@ -485,7 +484,7 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogPageOrientation}:',
+        Text('${l10n.pageOrientation}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         // 自动检测选项
@@ -522,7 +521,7 @@ class _ExportDialogState extends State<ExportDialog> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        l10n.exportDialogPortrait,
+                        l10n.portrait,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -550,7 +549,7 @@ class _ExportDialogState extends State<ExportDialog> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        l10n.exportDialogLandscape,
+                        l10n.landscape,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -593,7 +592,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${l10n.autoDetect}: ${_isLandscape ? l10n.exportDialogLandscape : l10n.exportDialogPortrait}',
+                      '${l10n.autoDetect}: ${_isLandscape ? l10n.landscape : l10n.portrait}',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blue.shade700,
@@ -615,7 +614,7 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogLocation}:',
+        Text('${l10n.location}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
@@ -629,7 +628,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  _outputPath ?? l10n.exportDialogSelectLocation,
+                  _outputPath ?? l10n.selectExportLocation,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -637,7 +636,7 @@ class _ExportDialogState extends State<ExportDialog> {
             const SizedBox(width: 8),
             ElevatedButton(
               onPressed: _selectDirectory,
-              child: Text(l10n.exportDialogBrowse),
+              child: Text(l10n.browse),
             ),
           ],
         ),
@@ -652,14 +651,14 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogPageRange}:',
+        Text('${l10n.pageRange}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: RadioListTile<PageRangeType>(
-                title: Text(l10n.exportDialogAllPages),
+                title: Text(l10n.allPages),
                 value: PageRangeType.all,
                 groupValue: _pageRangeType,
                 contentPadding: EdgeInsets.zero,
@@ -678,7 +677,7 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
             Expanded(
               child: RadioListTile<PageRangeType>(
-                title: Text(l10n.exportDialogCurrentPage),
+                title: Text(l10n.currentPage),
                 value: PageRangeType.current,
                 groupValue: _pageRangeType,
                 contentPadding: EdgeInsets.zero,
@@ -701,7 +700,7 @@ class _ExportDialogState extends State<ExportDialog> {
         RadioListTile<PageRangeType>(
           title: Row(
             children: [
-              Text('${l10n.exportDialogCustomRange} '),
+              Text('${l10n.customRange} '),
               Expanded(
                 child: TextField(
                   controller: _pageRangeController,
@@ -754,7 +753,7 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogPageSize}:',
+        Text('${l10n.pageSize}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<PdfPageFormat>(
@@ -769,7 +768,7 @@ class _ExportDialogState extends State<ExportDialog> {
             return DropdownMenuItem<PdfPageFormat>(
               value: entry.value,
               child: Text(
-                '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})',
+                '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.centimeter})',
                 overflow: TextOverflow.ellipsis,
               ),
             );
@@ -794,7 +793,7 @@ class _ExportDialogState extends State<ExportDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${l10n.exportDialogOutputQuality}:',
+        Text('${l10n.outputQuality}:',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
@@ -838,13 +837,13 @@ class _ExportDialogState extends State<ExportDialog> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                l10n.exportDialogPreview,
+                l10n.preview,
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               if (widget.pageCount > 1 && _pagePreviewCache.isNotEmpty)
                 Text(
-                  l10n.exportDialogPreviewPage(
+                  l10n.previewPage(
                     _previewPageIndex + 1,
                     widget.pageCount,
                   ),
@@ -895,19 +894,17 @@ class _ExportDialogState extends State<ExportDialog> {
                               ),
                       )
                     : Center(
-                        child: Text(l10n.exportDialogNoPreview),
+                        child: Text(l10n.canNotPreview),
                       ),
           ),
           const SizedBox(height: 8),
           if (_exportType == ExportType.pdf)
             Center(
               child: Text(
-                l10n.exportDialogDimensions(
+                l10n.exportDimensions(
                   _getEffectivePageFormat().width / PdfPageFormat.cm,
                   _getEffectivePageFormat().height / PdfPageFormat.cm,
-                  _isLandscape
-                      ? l10n.exportDialogLandscape
-                      : l10n.exportDialogPortrait,
+                  _isLandscape ? l10n.landscape : l10n.portrait,
                 ),
                 style: const TextStyle(fontSize: 12),
               ),
@@ -922,7 +919,7 @@ class _ExportDialogState extends State<ExportDialog> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    tooltip: l10n.exportDialogPreviousPage,
+                    tooltip: l10n.previousPage,
                     onPressed: _previewPageIndex > 0
                         ? () => _switchPreviewPage(_previewPageIndex - 1)
                         : null,
@@ -930,7 +927,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   Text('${_previewPageIndex + 1} / ${widget.pageCount}'),
                   IconButton(
                     icon: const Icon(Icons.arrow_forward),
-                    tooltip: l10n.exportDialogNextPage,
+                    tooltip: l10n.nextPage,
                     onPressed: _previewPageIndex < widget.pageCount - 1
                         ? () => _switchPreviewPage(_previewPageIndex + 1)
                         : null,
@@ -1003,7 +1000,7 @@ class _ExportDialogState extends State<ExportDialog> {
     if (fileName.isEmpty) {
       debugPrint('ExportDialog: 错误 - 文件名为空');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exportDialogEnterFilename)),
+        SnackBar(content: Text(l10n.inputFileName)),
       );
       return;
     }
@@ -1013,7 +1010,7 @@ class _ExportDialogState extends State<ExportDialog> {
     if (invalidChars.hasMatch(fileName)) {
       debugPrint('ExportDialog: 错误 - 文件名包含非法字符');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exportDialogInvalidFilename)),
+        SnackBar(content: Text(l10n.invalidFilename)),
       );
       return;
     }
@@ -1028,8 +1025,7 @@ class _ExportDialogState extends State<ExportDialog> {
       } catch (e) {
         debugPrint('ExportDialog: 创建导出目录失败: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('${l10n.exportDialogCreateDirectoryFailed}: $e')),
+          SnackBar(content: Text('${l10n.createExportDirectoryFailed}: $e')),
         );
         return;
       }
@@ -1155,9 +1151,9 @@ class _ExportDialogState extends State<ExportDialog> {
   String _getFileNameHint() {
     final l10n = AppLocalizations.of(context);
     if (_exportType == ExportType.pdf || widget.pageCount <= 1) {
-      return l10n.enterFileName;
+      return l10n.inputFileName;
     } else {
-      return l10n.exportDialogFilenamePrefix;
+      return l10n.filenamePrefix;
     }
   }
 
@@ -1177,11 +1173,11 @@ class _ExportDialogState extends State<ExportDialog> {
   String _getPixelRatioLabel() {
     final l10n = AppLocalizations.of(context);
     if (_pixelRatio == 1.0) {
-      return l10n.exportDialogQualityStandard;
+      return l10n.qualityStandard;
     } else if (_pixelRatio == 2.0) {
-      return l10n.exportDialogQualityHigh;
+      return l10n.qualityHigh;
     } else {
-      return l10n.exportDialogQualityUltra;
+      return l10n.qualityUltra;
     }
   }
 
@@ -1281,7 +1277,7 @@ class _ExportDialogState extends State<ExportDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(AppLocalizations.of(context)
-                  .selectDirectoryFailed(e.toString()))),
+                  .createExportDirectoryFailed(e.toString()))),
         );
       }
     }

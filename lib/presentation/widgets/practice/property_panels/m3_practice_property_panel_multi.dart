@@ -479,7 +479,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
         M3PanelStyles.buildPersistentPanelCard(
           context: context,
           panelId: 'multi_selection_delete_tools',
-          title: l10n.practiceEditDangerZone,
+          title: l10n.dangerZone,
           defaultExpanded: false,
           children: [
             // 删除按钮

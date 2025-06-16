@@ -19,7 +19,7 @@ class ToolSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return WorkFilterSection(
-      title: l10n.filterToolSection,
+      title: l10n.writingTool,
       child: _buildToolChips(context),
     );
   }
@@ -48,9 +48,9 @@ class ToolSection extends StatelessWidget {
   
   String _getToolLabel(WorkTool tool, AppLocalizations l10n) {
     return switch (tool) {
-      WorkTool.brush => l10n.filterToolBrush,
-      WorkTool.hardPen => l10n.filterToolHardPen,
-      WorkTool.other => l10n.filterToolOther,
+      WorkTool.brush => l10n.workToolBrush,
+      WorkTool.hardPen => l10n.workToolHardPen,
+      WorkTool.other => l10n.workToolOther,
     };
   }
 }

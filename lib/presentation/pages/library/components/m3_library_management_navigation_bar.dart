@@ -113,7 +113,7 @@ class _M3LibraryManagementNavigationBarState
               //     padding: const EdgeInsets.only(left: 4),
               //     child: FilledButton.tonalIcon(
               //       icon: const Icon(Icons.delete),
-              //       label: Text(l10n.libraryManagementDeleteSelected),
+              //       label: Text(l10n.deleteSuccess),
               //       onPressed: widget.onDeleteSelected,
               //     ),
               //   ),
@@ -124,7 +124,7 @@ class _M3LibraryManagementNavigationBarState
         if (!widget.isBatchMode)
           PopupMenuButton<String>(
             icon: const Icon(Icons.add_photo_alternate),
-            tooltip: l10n.libraryManagementImport,
+            tooltip: l10n.import,
             onSelected: (value) {
               if (value == 'file' && widget.onImportFiles != null) {
                 widget.onImportFiles!();
@@ -139,7 +139,7 @@ class _M3LibraryManagementNavigationBarState
                   children: [
                     const Icon(Icons.image),
                     const SizedBox(width: 8),
-                    Text(l10n.libraryManagementImportFiles),
+                    Text(l10n.importFiles),
                   ],
                 ),
               ),
@@ -149,7 +149,7 @@ class _M3LibraryManagementNavigationBarState
                   children: [
                     const Icon(Icons.folder),
                     const SizedBox(width: 8),
-                    Text(l10n.libraryManagementImportFolder),
+                    Text(l10n.importFolder),
                   ],
                 ),
               ),
@@ -210,14 +210,14 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0)
             IconButton(
               icon: const Icon(Icons.delete),
-              tooltip: l10n.libraryManagementDeleteSelected,
+              tooltip: l10n.deleteSuccess,
               onPressed: widget.onDeleteSelected,
             ),
         ], // 删除全部按钮 - 在非批量模式下显示
         if (!widget.isBatchMode && widget.onDeleteAll != null)
           IconButton(
             icon: const Icon(Icons.delete_sweep),
-            tooltip: l10n.deleteAllItems,
+            tooltip: l10n.deleteAll,
             onPressed: widget.onDeleteAll,
           ),
 

@@ -68,7 +68,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
               CircularProgressIndicator(color: colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                l10n.collectionPropertyPanelSearchInProgress,
+                l10n.searching,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -93,7 +93,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
           children: [
             Center(
               child: Text(
-                l10n.collectionPropertyPanelNoCharactersFound,
+                l10n.noCharactersFound,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -102,7 +102,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
             const SizedBox(height: 8),
             if (selectedChar.isNotEmpty)
               Text(
-                '${l10n.collectionPropertyPanelSelectedCharacter}: "$selectedChar"',
+                '${l10n.selectedCharacter}: "$selectedChar"',
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withAlpha(179), // 0.7 透明度
                 ),
@@ -111,7 +111,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Text(
-                  '${l10n.collectionPropertyPanelAvailableCharacters}: ${candidateCharacters.map((e) => e.character).join(", ")}',
+                  '${l10n.availableCharacters}: ${candidateCharacters.map((e) => e.character).join(", ")}',
                   style: textTheme.bodySmall?.copyWith(
                     color:
                         colorScheme.onSurfaceVariant.withAlpha(179), // 0.7 透明度
@@ -145,7 +145,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  '${l10n.imagePropertyPanelDisplay}:',
+                  '${l10n.displayMode}:',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -153,7 +153,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
 
                 // Current character inversion button
                 FilterChip(
-                  label: Text(l10n.collectionPropertyPanelCurrentCharInversion),
+                  label: Text(l10n.currentCharInversion),
                   selected: isCurrentCharInverted,
                   showCheckmark: true,
                   checkmarkColor: colorScheme.onSecondaryContainer,

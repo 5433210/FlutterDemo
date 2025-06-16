@@ -273,7 +273,7 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
       _buildSectionCard(
         context,
         M3FilterDateRangeSection(
-          title: l10n.filterDateSection,
+          title: l10n.createTime,
           filter: DateRangeFilter(
             preset: widget.filter.datePreset,
             start: widget.filter.dateRange?.start,
@@ -366,7 +366,7 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
             children: [
               // 重置按钮
               Tooltip(
-                message: l10n.filterReset,
+                message: l10n.reset,
                 child: IconButton(
                   onPressed: _resetFilters,
                   icon: const Icon(Icons.refresh),
@@ -379,8 +379,8 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
                   message: widget.isExpanded
-                      ? l10n.filterCollapse
-                      : l10n.filterExpand,
+                      ? l10n.collapse
+                      : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -416,11 +416,11 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
 
   String _getExpandMessage(AppLocalizations l10n) {
     // 使用通用回退
-    return l10n.filterExpand;
+    return l10n.expand;
   }
 
   String _getFilterTitle(AppLocalizations l10n) {
-    return l10n.filterTitle;
+    return l10n.filterAndSort;
   }
 
   void _resetFilters() {

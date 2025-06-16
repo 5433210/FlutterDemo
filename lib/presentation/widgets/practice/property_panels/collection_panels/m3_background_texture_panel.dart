@@ -130,7 +130,7 @@ class _M3BackgroundTexturePanelState
                 children: [
                   FilledButton.icon(
                     icon: const Icon(Icons.image),
-                    label: Text(l10n.textureSelectFromLibrary),
+                    label: Text(l10n.fromGallery),
                     onPressed: () => _selectTexture(
                         context, content, widget.onContentPropertyChanged),
                   ),
@@ -141,7 +141,7 @@ class _M3BackgroundTexturePanelState
                       width: double.infinity,
                       child: TextButton.icon(
                         icon: const Icon(Icons.delete_outline),
-                        label: Text(l10n.textureRemove),
+                        label: Text(l10n.remove),
                         onPressed: () {
                           AppLogger.info(
                             '用户移除背景纹理',
@@ -295,25 +295,23 @@ class _M3BackgroundTexturePanelState
         const SizedBox(height: 16.0),
 
         // 5. Texture Fit Mode Settings (scaleToFit, fill, scaleToCover)
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.imagePropertyPanelFitMode),
+        M3PanelStyles.buildSectionTitle(context, l10n.fitMode),
         DropdownButton<String>(
           value: textureFitMode,
           isExpanded: true,
           items: [
             DropdownMenuItem(
               value: 'fill',
-              child: Text(l10n.imagePropertyPanelFitFill),
+              child: Text(l10n.fitFill),
             ),
             DropdownMenuItem(
               value: 'scaleToFit',
               child: Text(l10n
-                  .imagePropertyPanelFitContain), // Use contain as closest equivalent to scaleToFit
+                  .fitContain), // Use contain as closest equivalent to scaleToFit
             ),
             DropdownMenuItem(
               value: 'scaleToCover',
-              child: Text(l10n
-                  .imagePropertyPanelFitCover), // Use cover for scaleToCover
+              child: Text(l10n.fitCover), // Use cover for scaleToCover
             ),
           ],
           onChanged: (value) {
@@ -846,7 +844,7 @@ class _M3BackgroundTexturePanelState
     // 打开选择对话框
     final selectedTexture = await M3LibraryPickerDialog.show(
       context,
-      title: l10n.textureSelectFromLibrary,
+      title: l10n.fromGallery,
     );
 
     // 如果用户取消了选择，直接返回

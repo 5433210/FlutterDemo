@@ -282,7 +282,7 @@ class _M3CharacterFilterPanelImplState
       _buildSectionCard(
         context,
         M3FilterDateRangeSection(
-          title: l10n.characterFilterCreationDate,
+          title: l10n.creationDate,
           filter: DateRangeFilter(
             preset: widget.filter.creationDatePreset,
             start: widget.filter.creationDateRange?.start,
@@ -309,7 +309,7 @@ class _M3CharacterFilterPanelImplState
       _buildSectionCard(
         context,
         M3FilterDateRangeSection(
-          title: l10n.characterFilterCollectionDate,
+          title: l10n.collectionDate,
           filter: DateRangeFilter(
             preset: widget.filter.collectionDatePreset,
             start: widget.filter.collectionDateRange?.start,
@@ -398,7 +398,7 @@ class _M3CharacterFilterPanelImplState
             children: [
               // 重置按钮
               Tooltip(
-                message: l10n.filterReset,
+                message: l10n.reset,
                 child: IconButton(
                   onPressed: _resetFilters,
                   icon: const Icon(Icons.refresh),
@@ -411,8 +411,8 @@ class _M3CharacterFilterPanelImplState
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
                   message: widget.isExpanded
-                      ? l10n.filterCollapse
-                      : l10n.filterExpand,
+                      ? l10n.collapse
+                      : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -448,11 +448,11 @@ class _M3CharacterFilterPanelImplState
 
   String _getExpandMessage(AppLocalizations l10n) {
     // 使用通用回退
-    return l10n.filterExpand;
+    return l10n.expand;
   }
 
   String _getFilterTitle(AppLocalizations l10n) {
-    return l10n.characterFilterTitle;
+    return l10n.filterAndSort;
   }
 
   void _resetFilters() {

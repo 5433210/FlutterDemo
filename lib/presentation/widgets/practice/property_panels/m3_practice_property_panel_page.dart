@@ -65,7 +65,7 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
               ),
               const SizedBox(width: 8),
               Text(
-                l10n.practiceEditPageProperties,
+                l10n.pageProperties,
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,

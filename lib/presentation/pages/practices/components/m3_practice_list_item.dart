@@ -142,7 +142,7 @@ class M3PracticeListItem extends ConsumerWidget {
                                 minHeight: 32,
                               ),
                               padding: const EdgeInsets.all(AppSizes.xs),
-                              tooltip: l10n.filterFavoritesOnly,
+                              tooltip: l10n.favoritesOnly,
                             ),
                         ],
                       ),
@@ -161,7 +161,7 @@ class M3PracticeListItem extends ConsumerWidget {
                           _buildInfoChip(
                             context,
                             Icons.article_outlined,
-                            '${practice['pageCount'] ?? 0}${l10n.practiceListPages}',
+                            '${practice['pageCount'] ?? 0}${l10n.pages}',
                           ),
                         ],
                       ),
@@ -215,7 +215,7 @@ class M3PracticeListItem extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              l10n.practiceListThumbnailError,
+              l10n.thumbnailLoadError,
               style: TextStyle(
                 color:
                     colorScheme.onSurfaceVariant.withAlpha(178), // 0.7 opacity
@@ -289,7 +289,7 @@ class M3PracticeListItem extends ConsumerWidget {
 
     if (tags.isEmpty) {
       return Text(
-        AppLocalizations.of(context).tagEditorNoTags,
+        AppLocalizations.of(context).noTags,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.hintColor,
           fontStyle: FontStyle.italic,

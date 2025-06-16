@@ -38,7 +38,7 @@ class PracticeOverwriteConfirmDialog extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.practiceEditOverwrite),
+            child: Text(l10n.overwrite),
           ),
         ],
       ),

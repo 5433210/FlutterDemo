@@ -134,7 +134,7 @@ class _M3CharacterDetailPanelState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.characterDetailBasicInfo,
+                          l10n.basicInfo,
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: AppSizes.spacingSmall),
@@ -147,39 +147,36 @@ class _M3CharacterDetailPanelState
                         if (character.tool != null)
                           _buildInfoItem(
                             theme,
-                            title: l10n.characterDetailWritingTool,
-                            content: character.tool?.label ??
-                                l10n.characterDetailUnknown,
+                            title: l10n.writingTool,
+                            content: character.tool?.label ?? l10n.unknown,
                             iconData: Icons.brush,
                           ),
                         if (character.style != null)
                           _buildInfoItem(
                             theme,
-                            title: l10n.characterDetailCalligraphyStyle,
-                            content: character.style?.label ??
-                                l10n.characterDetailUnknown,
+                            title: l10n.calligraphyStyle,
+                            content: character.style?.label ?? l10n.unknown,
                             iconData: Icons.style,
                           ),
                         _buildInfoItem(
                           theme,
-                          title: l10n.characterDetailCollectionTime,
+                          title: l10n.collectionTime,
                           content: _formatDateTime(character.collectionTime),
                           iconData: Icons.access_time,
                         ),
                         const Divider(),
                         Text(
-                          l10n.characterDetailWorkInfo,
+                          l10n.workInfo,
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: AppSizes.spacingSmall),
                         _buildInfoItemWithButton(
                           theme,
-                          title: l10n.characterDetailWorkTitle,
+                          title: l10n.title,
                           content: character.title,
                           iconData: Icons.book,
                           buttonIcon: Icons.arrow_forward,
-                          buttonTooltip:
-                              l10n.characterCollectionReturnToDetails,
+                          buttonTooltip: l10n.back,
                           onButtonPressed: () {
                             if (character.workId.isNotEmpty) {
                               // 使用命名路由导航到作品详情页
@@ -195,22 +192,21 @@ class _M3CharacterDetailPanelState
                         if (character.author != null)
                           _buildInfoItem(
                             theme,
-                            title: l10n.characterDetailAuthor,
-                            content:
-                                character.author ?? l10n.characterDetailUnknown,
+                            title: l10n.author,
+                            content: character.author ?? l10n.unknown,
                             iconData: Icons.person,
                           ),
                         if (character.creationTime != null)
                           _buildInfoItem(
                             theme,
-                            title: l10n.characterDetailCreationTime,
+                            title: l10n.creationDate,
                             content: _formatDateTime(character.creationTime!),
                             iconData: Icons.calendar_today,
                           ),
                         if (character.tags.isNotEmpty) ...[
                           const Divider(),
                           Text(
-                            l10n.characterDetailTags,
+                            l10n.tags,
                             style: theme.textTheme.titleMedium,
                           ),
                           const SizedBox(height: AppSizes.spacingSmall),
@@ -234,7 +230,7 @@ class _M3CharacterDetailPanelState
                         ElevatedButton.icon(
                           onPressed: () => _showAddTagDialog(character, l10n),
                           icon: const Icon(Icons.add),
-                          label: Text(l10n.characterDetailAddTag),
+                          label: Text(l10n.addTag),
                         ),
                       ],
                     ),
@@ -276,7 +272,7 @@ class _M3CharacterDetailPanelState
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.characterDetailTagAddError(e.toString())),
+            content: Text(l10n.tagAddError(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -447,9 +443,8 @@ class _M3CharacterDetailPanelState
           onPressed: () async {
             widget.onToggleFavorite?.call();
           },
-          tooltip: character.isFavorite
-              ? l10n.workBrowseRemoveFavorite
-              : l10n.workBrowseAddFavorite,
+          tooltip:
+              character.isFavorite ? l10n.removeFavorite : l10n.addFavorite,
           constraints: const BoxConstraints(
             minWidth: 40,
             minHeight: 40,
@@ -555,7 +550,7 @@ class _M3CharacterDetailPanelState
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        l10n.characterCollectionImageLoadError,
+                        l10n.imageLoadError(error.toString()),
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ],
@@ -581,7 +576,7 @@ class _M3CharacterDetailPanelState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  l10n.characterCollectionNoCharacter,
+                  l10n.noCharacters,
                   style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -718,7 +713,7 @@ class _M3CharacterDetailPanelState
       String formatTypeName;
       switch (format.format) {
         case CharacterImageType.original:
-          formatTypeName = l10n.characterDetailFormatOriginal;
+          formatTypeName = l10n.original;
           break;
         case CharacterImageType.binary:
           formatTypeName = l10n.characterDetailFormatBinary;
@@ -757,7 +752,7 @@ class _M3CharacterDetailPanelState
           break;
       }
 
-      return '${format.name}\n${l10n.characterDetailFormatType}: $formatTypeName\n${l10n.characterDetailFormatExtension}: $extension\n${l10n.characterDetailFormatDescription}: ${format.description}';
+      return '${format.name}\n${l10n.formatType}: $formatTypeName\n${l10n.fileExtension}: $extension\n${l10n.characterDetailFormatDescription}: ${format.description}';
     } catch (e) {
       // 如果格式对象不是预期的类型，返回一个简单的提示
       return '图片格式信息';
@@ -777,7 +772,7 @@ class _M3CharacterDetailPanelState
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.characterDetailTagRemoveError(e.toString())),
+            content: Text(l10n.tagRemoveError(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -791,12 +786,12 @@ class _M3CharacterDetailPanelState
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(l10n.characterDetailAddTag),
+          title: Text(l10n.addTag),
           content: TextField(
             controller: _tagController,
             autofocus: true,
             decoration: InputDecoration(
-              hintText: l10n.characterDetailTagHint,
+              hintText: l10n.tagHint,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -816,7 +811,7 @@ class _M3CharacterDetailPanelState
                 _tagController.clear();
                 Navigator.of(context).pop();
               },
-              child: Text(l10n.characterDetailAddTag),
+              child: Text(l10n.addTag),
             ),
           ],
         );

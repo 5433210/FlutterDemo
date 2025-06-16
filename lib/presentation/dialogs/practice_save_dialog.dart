@@ -34,8 +34,8 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final title = widget.isSaveAs
-        ? l10n.practiceEditTopNavSaveAs
-        : l10n.practiceEditSavePractice;
+        ? l10n.saveAs
+        : l10n.save;
 
     return KeyboardListener(
       focusNode: FocusNode(),
@@ -57,8 +57,8 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
-                labelText: l10n.practiceEditPracticeTitle,
-                hintText: l10n.practiceEditEnterTitle,
+                labelText: l10n.title,
+                hintText: l10n.inputTitle,
                 errorText: _errorText,
                 border: const OutlineInputBorder(),
               ),
@@ -125,7 +125,7 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
     // 检查标题是否为空
     if (title.isEmpty) {
       setState(() {
-        _errorText = l10n.practiceEditEnterTitle;
+        _errorText = l10n.inputTitle;
       });
       return false;
     }
@@ -143,7 +143,7 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
         // 如果是另存为操作，标题已存在且非本身的标题，显示错误
         if (exists && (widget.isSaveAs || title != widget.initialTitle)) {
           setState(() {
-            _errorText = l10n.practiceEditTitleExistsMessage;
+            _errorText = l10n.titleExistsMessage;
           });
           return false;
         }
