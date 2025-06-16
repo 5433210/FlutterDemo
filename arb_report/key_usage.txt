@@ -1,0 +1,26 @@
+=== Key Usage Statistics ===
+Total keys in ARB: 1178
+Total keys used in code: 905
+Unused keys: 273
+
+Top used keys:
+cancel: used in 58 files
+confirm: used in 20 files
+delete: used in 20 files
+opacity: used in 12 files
+edit: used in 11 files
+days: used in 10 files
+width: used in 9 files
+height: used in 9 files
+save: used in 8 files
+rotation: used in 8 files
+workFormTitle: used in 7 files
+elements: used in 7 files
+selectedCount: used in 6 files
+filterExpand: used in 6 files
+practiceEditSaveFailed: used in 6 files
+filterReset: used in 5 files
+workFormAuthor: used in 5 files
+filterFavoritesOnly: used in 5 files
+hours: used in 5 files
+saveFailed: used in 5 files

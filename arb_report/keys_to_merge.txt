@@ -1,0 +1,1325 @@
+=== Keys to Merge (Identical Values) ===
+Total: 302 keys
+
+Keep: practiceEditAddLayer
+  ZH: 添加图层
+  EN: Add Layer
+Merge from:
+  - addLayer
+Usage count: 1
+
+Keep: alignCenter
+  ZH: 居中
+  EN: Align Center
+Merge from:
+  - alignMiddle
+  - center
+Usage count: 2
+
+Keep: appTitle
+  ZH: 字字珠玑
+  EN: Char As Gem
+Merge from:
+  - appName
+Usage count: 3
+
+Keep: back
+  ZH: 返回
+  EN: Back
+Merge from:
+  - characterCollectionBack
+  - practiceEditTopNavBack
+  - workDetailBack
+Usage count: 1
+
+Keep: backgroundColor
+  ZH: 背景颜色
+  EN: Background Color
+Merge from:
+  - collectionPropertyPanelBackgroundColor
+  - textPropertyPanelBgColor
+Usage count: 5
+
+Keep: basicInfo
+  ZH: 基本信息
+  EN: Basic Info
+Merge from:
+  - characterDetailBasicInfo
+  - libraryManagementBasicInfo
+  - workDetailBasicInfo
+Usage count: 3
+
+Keep: batchOperations
+  ZH: 批量操作
+  EN: Batch Operations
+Merge from:
+  - filterBatchActions
+Usage count: 2
+
+Keep: cancel
+  ZH: 取消
+  EN: Cancel
+Merge from:
+  - workBrowseCancel
+  - workDetailCancel
+  - workImportDialogCancel
+Usage count: 58
+
+Keep: libraryManagementCategories
+  ZH: 分类
+  EN: Categories
+Merge from:
+  - categories
+Usage count: 2
+
+Keep: characterManagementDeleteConfirm
+  ZH: 确认删除
+  EN: Confirm Deletion
+Merge from:
+  - characterCollectionDeleteConfirm
+  - confirmDelete
+  - libraryManagementDeleteConfirm
+  - practiceEditConfirmDeleteTitle
+  - practiceListDeleteConfirm
+  - workBrowseDeleteConfirmTitle
+  - workImageDeleteConfirmTitle
+  - characterCollectionDeleteConfirm
+  - practiceListDeleteConfirm
+  - workBrowseDeleteConfirmTitle
+Usage count: 3
+
+Keep: characterCollectionFilterAll
+  ZH: 全部
+  EN: All
+Merge from:
+  - practiceListStatusAll
+Usage count: 1
+
+Keep: libraryManagementFavorite
+  ZH: 收藏
+  EN: Favorite
+Merge from:
+  - characterCollectionFilterFavorite
+  - libraryManagementFavorites
+  - practiceListFilterFavorites
+  - characterCollectionFilterFavorite
+Usage count: 2
+
+Keep: characterCollectionHelp
+  ZH: 帮助
+  EN: Help
+Merge from:
+  - workFormHelp
+Usage count: 0
+
+Keep: windowButtonClose
+  ZH: 关闭
+  EN: Close
+Merge from:
+  - characterCollectionHelpClose
+  - close
+Usage count: 2
+
+Keep: characterCollectionLeave
+  ZH: 离开
+  EN: Leave
+Merge from:
+  - practiceEditLeave
+Usage count: 1
+
+Keep: characterCollectionNextPage
+  ZH: 下一页
+  EN: Next Page
+Merge from:
+  - exportDialogNextPage
+Usage count: 1
+
+Keep: characterCollectionNoCharacter
+  ZH: 无字符
+  EN: No character
+Merge from:
+  - collectionPropertyPanelNoCharacterText
+Usage count: 2
+
+Keep: characterCollectionPreviousPage
+  ZH: 上一页
+  EN: Previous Page
+Merge from:
+  - exportDialogPreviousPage
+Usage count: 1
+
+Keep: characterCollectionProcessing
+  ZH: 处理中...
+  EN: Processing...
+Merge from:
+  - workImportDialogProcessing
+Usage count: 2
+
+Keep: retry
+  ZH: 重试
+  EN: Retry
+Merge from:
+  - characterCollectionRetry
+Usage count: 4
+
+Keep: practiceEditUnsavedChanges
+  ZH: 未保存的更改
+  EN: Unsaved Changes
+Merge from:
+  - characterCollectionUnsavedChanges
+Usage count: 2
+
+Keep: characterDetailAddTag
+  ZH: 添加标签
+  EN: Add Tag
+Merge from:
+  - characterFilterAddTag
+  - filterTagsAdd
+  - addTag
+Usage count: 3
+
+Keep: workFormAuthor
+  ZH: 作者
+  EN: Author
+Merge from:
+  - characterDetailAuthor
+  - filterSortFieldAuthor
+  - author
+Usage count: 5
+
+Keep: filterStyleSection
+  ZH: 书法风格
+  EN: Calligraphy Style
+Merge from:
+  - characterDetailCalligraphyStyle
+  - characterFilterCalligraphyStyle
+Usage count: 2
+
+Keep: characterDetailFormatOriginal
+  ZH: 原始
+  EN: Original
+Merge from:
+  - collectionPropertyPanelOriginal
+  - imagePropertyPanelFitOriginal
+Usage count: 2
+
+Keep: characterDetailFormatThumbnail
+  ZH: 缩略图
+  EN: Thumbnail
+Merge from:
+  - characterDetailFormatThumbnailDesc
+Usage count: 2
+
+Keep: libraryManagementType
+  ZH: 类型
+  EN: Type
+Merge from:
+  - characterDetailFormatType
+  - libraryManagementTypes
+  - characterDetailFormatType
+Usage count: 2
+
+Keep: characterDetailTags
+  ZH: 标签
+  EN: Tags
+Merge from:
+  - characterFilterTags
+  - filterTagsSection
+  - libraryManagementTags
+  - workDetailTags
+Usage count: 1
+
+Keep: characterDetailUnknown
+  ZH: 未知
+  EN: Unknown
+Merge from:
+  - collectionPropertyPanelUnknown
+Usage count: 3
+
+Keep: filterToolSection
+  ZH: 书写工具
+  EN: Writing Tool
+Merge from:
+  - characterDetailWritingTool
+  - characterFilterWritingTool
+Usage count: 2
+
+Keep: characterEditRedo
+  ZH: 重做
+  EN: Redo
+Merge from:
+  - practiceEditTopNavRedo
+Usage count: 1
+
+Keep: characterEditThumbnailLoadError
+  ZH: 加载缩略图失败
+  EN: Failed to load thumbnail
+Merge from:
+  - characterEditThumbnailLoadFailed
+Usage count: 1
+
+Keep: characterEditUndo
+  ZH: 撤销
+  EN: Undo
+Merge from:
+  - practiceEditTopNavUndo
+Usage count: 2
+
+Keep: workFormCreationDate
+  ZH: 创作日期
+  EN: Creation Date
+Merge from:
+  - characterFilterCreationDate
+  - filterSortFieldCreationDate
+Usage count: 4
+
+Keep: filterExpand
+  ZH: 展开筛选面板
+  EN: Expand Filter Panel
+Merge from:
+  - characterFilterExpand
+  - characterFilterExpand
+  - practiceListExpandFilter
+Usage count: 6
+
+Keep: filterFavoritesOnly
+  ZH: 仅显示收藏
+  EN: Show favorites only
+Merge from:
+  - characterFilterFavoritesOnly
+Usage count: 5
+
+Keep: filterTagsSelected
+  ZH: 已选标签：
+  EN: Selected Tags:
+Merge from:
+  - characterFilterSelectedTags
+Usage count: 1
+
+Keep: filterSortSection
+  ZH: 排序
+  EN: Sort
+Merge from:
+  - characterFilterSort
+Usage count: 3
+
+Keep: characterFilterTitle
+  ZH: 筛选与排序
+  EN: Filter & Sort
+Merge from:
+  - filterTitle
+  - filterHeader
+  - filterTitle
+Usage count: 1
+
+Keep: workBrowseBatchDone
+  ZH: 完成
+  EN: Done
+Merge from:
+  - characterManagementBatchDone
+  - practiceListBatchDone
+  - done
+Usage count: 2
+
+Keep: workBrowseBatchMode
+  ZH: 批量模式
+  EN: Batch Mode
+Merge from:
+  - characterManagementBatchMode
+  - practiceListBatchMode
+Usage count: 2
+
+Keep: characterManagementDeleteSelected
+  ZH: 删除所选
+  EN: Delete selected
+Merge from:
+  - practiceListDeleteSelected
+  - deleteSelected
+Usage count: 2
+
+Keep: workBrowseError
+  ZH: 错误：{message}
+  EN: Error: {message}
+Merge from:
+  - characterManagementError
+Usage count: 3
+
+Keep: gridView
+  ZH: 网格视图
+  EN: Grid View
+Merge from:
+  - characterManagementGridView
+  - libraryManagementGridView
+  - practiceListGridView
+  - workBrowseGridView
+  - characterManagementGridView
+  - practiceListGridView
+  - workBrowseGridView
+Usage count: 2
+
+Keep: workBrowseItemsPerPage
+  ZH: {count}项/页
+  EN: {count} per page
+Merge from:
+  - characterManagementItemsPerPage
+  - characterManagementItemsPerPage
+  - filterItemsPerPage
+  - practiceListItemsPerPage
+Usage count: 2
+
+Keep: listView
+  ZH: 列表视图
+  EN: List View
+Merge from:
+  - characterManagementListView
+  - libraryManagementListView
+  - practiceListListView
+  - workBrowseListView
+  - characterManagementListView
+  - practiceListListView
+  - workBrowseListView
+Usage count: 2
+
+Keep: characterManagementSearch
+  ZH: 搜索字符、作品或作者
+  EN: Search characters, works, or authors
+Merge from:
+  - searchCharactersWorksAuthors
+Usage count: 0
+
+Keep: characters
+  ZH: 集字
+  EN: Characters
+Merge from:
+  - characterManagementTitle
+  - collection
+  - collectionPropertyPanelCharacter
+  - storageCharacters
+  - workDetailCharacters
+Usage count: 3
+
+Keep: clearCache
+  ZH: 清除缓存
+  EN: Clear Cache
+Merge from:
+  - clearCacheConfirmTitle
+Usage count: 1
+
+Keep: clearImageCache
+  ZH: 清除图像缓存
+  EN: Clear Image Cache
+Merge from:
+  - collectionPropertyPanelClearImageCache
+Usage count: 0
+
+Keep: deselectAll
+  ZH: 取消选择
+  EN: Deselect All
+Merge from:
+  - clearSelection
+  - toolbarDeselectAll
+  - filterDeselectAll
+  - toolbarDeselectAll
+Usage count: 2
+
+Keep: collectionPropertyPanel
+  ZH: 采集属性
+  EN: Collection Properties
+Merge from:
+  - practiceEditCollectionProperties
+Usage count: 0
+
+Keep: collectionPropertyPanelAutoLineBreak
+  ZH: 自动换行
+  EN: Auto Line Break
+Merge from:
+  - collectionPropertyPanelAutoLineBreakTooltip
+Usage count: 1
+
+Keep: collectionPropertyPanelBorder
+  ZH: 边框
+  EN: Border
+Merge from:
+  - imagePropertyPanelBorder
+Usage count: 0
+
+Keep: collectionPropertyPanelBorderColor
+  ZH: 边框颜色
+  EN: Border Color
+Merge from:
+  - imagePropertyPanelBorderColor
+Usage count: 0
+
+Keep: collectionPropertyPanelBorderWidth
+  ZH: 边框宽度
+  EN: Border Width
+Merge from:
+  - imagePropertyPanelBorderWidth
+Usage count: 0
+
+Keep: collectionPropertyPanelCacheCleared
+  ZH: 图像缓存已清除
+  EN: Image cache cleared
+Merge from:
+  - imageCacheCleared
+Usage count: 0
+
+Keep: collectionPropertyPanelCacheClearFailed
+  ZH: 清除图像缓存失败
+  EN: Failed to clear image cache
+Merge from:
+  - imageCacheClearFailed
+Usage count: 0
+
+Keep: workDetailCharacters
+  ZH: 字符
+  EN: Characters
+Merge from:
+  - collectionPropertyPanelCharIndex
+Usage count: 1
+
+Keep: collectionPropertyPanelContent
+  ZH: 内容属性
+  EN: Content Properties
+Merge from:
+  - collectionPropertyPanelHeaderContent
+  - imagePropertyPanelContent
+  - practiceEditContentProperties
+Usage count: 0
+
+Keep: imagePropertyPanelFlip
+  ZH: 翻转
+  EN: Flip
+Merge from:
+  - collectionPropertyPanelFlip
+Usage count: 1
+
+Keep: imagePropertyPanelFlipHorizontal
+  ZH: 水平翻转
+  EN: Flip Horizontal
+Merge from:
+  - collectionPropertyPanelFlipHorizontally
+Usage count: 1
+
+Keep: imagePropertyPanelFlipVertical
+  ZH: 垂直翻转
+  EN: Flip Vertical
+Merge from:
+  - collectionPropertyPanelFlipVertically
+Usage count: 1
+
+Keep: textPropertyPanelFontSize
+  ZH: 字体大小
+  EN: Font Size
+Merge from:
+  - collectionPropertyPanelFontSize
+Usage count: 4
+
+Keep: geometryProperties
+  ZH: 几何属性
+  EN: Geometry Properties
+Merge from:
+  - collectionPropertyPanelGeometry
+  - collectionPropertyPanelHeaderGeometry
+  - imagePropertyPanelGeometry
+  - practiceEditGeometryProperties
+  - textPropertyPanelGeometry
+Usage count: 3
+
+Keep: collectionPropertyPanelHeaderVisual
+  ZH: 视觉属性
+  EN: Visual Properties
+Merge from:
+  - practiceEditVisualProperties
+Usage count: 0
+
+Keep: opacity
+  ZH: 不透明度
+  EN: Opacity
+Merge from:
+  - collectionPropertyPanelOpacity
+  - imagePropertyPanelOpacity
+  - textPropertyPanelOpacity
+Usage count: 12
+
+Keep: textPropertyPanelPadding
+  ZH: 内边距
+  EN: Padding
+Merge from:
+  - collectionPropertyPanelPadding
+Usage count: 4
+
+Keep: collectionPropertyPanelReset
+  ZH: 重置
+  EN: Reset
+Merge from:
+  - imagePropertyPanelReset
+Usage count: 0
+
+Keep: rotation
+  ZH: 旋转
+  EN: Rotation
+Merge from:
+  - collectionPropertyPanelRotation
+  - imagePropertyPanelRotation
+Usage count: 8
+
+Keep: collectionPropertyPanelTextSettings
+  ZH: 文本设置
+  EN: Text Settings
+Merge from:
+  - textPropertyPanelTextSettings
+Usage count: 1
+
+Keep: visualSettings
+  ZH: 视觉设置
+  EN: Visual Settings
+Merge from:
+  - collectionPropertyPanelVisual
+  - imagePropertyPanelVisual
+  - textPropertyPanelVisual
+Usage count: 3
+
+Keep: confirm
+  ZH: 确定
+  EN: Confirm
+Merge from:
+  - ok
+Usage count: 20
+
+Keep: imagePropertyPanelFitContain
+  ZH: 包含
+  EN: Contain
+Merge from:
+  - contains
+  - textureFillModeContain
+  - textureFillModeContain
+Usage count: 1
+
+Keep: delete
+  ZH: 删除
+  EN: Delete
+Merge from:
+  - deleteBackup
+  - workBrowseDelete
+  - workImportDelete
+Usage count: 20
+
+Keep: dimensions
+  ZH: 尺寸
+  EN: Dimensions
+Merge from:
+  - imagePropertyPanelDimensions
+  - libraryManagementSize
+  - textPropertyPanelDimensions
+  - imagePropertyPanelDimensions
+  - textPropertyPanelDimensions
+Usage count: 3
+
+Keep: edit
+  ZH: 编辑
+  EN: Edit
+Merge from:
+  - workDetailEdit
+Usage count: 11
+
+Keep: elementCopiedToClipboard
+  ZH: 元素已复制到剪贴板
+  EN: Element copied to clipboard
+Merge from:
+  - elementCopied
+Usage count: 2
+
+Keep: elements
+  ZH: 元素
+  EN: Elements
+Merge from:
+  - practiceEditElements
+Usage count: 7
+
+Keep: export
+  ZH: 导出
+  EN: Export
+Merge from:
+  - practiceEditTopNavExport
+Usage count: 3
+
+Keep: exportDialogCustomRange
+  ZH: 自定义范围
+  EN: Custom Range
+Merge from:
+  - filterCustomRange
+Usage count: 1
+
+Keep: exportDialogLandscape
+  ZH: 横向
+  EN: Landscape
+Merge from:
+  - landscape
+Usage count: 3
+
+Keep: exportDialogPageSize
+  ZH: 页面大小
+  EN: Page Size
+Merge from:
+  - pageSize
+Usage count: 1
+
+Keep: exportDialogPortrait
+  ZH: 纵向
+  EN: Portrait
+Merge from:
+  - portrait
+Usage count: 3
+
+Keep: exportDialogPreview
+  ZH: 预览
+  EN: Preview
+Merge from:
+  - preview
+  - previewText
+  - textPropertyPanelPreview
+Usage count: 1
+
+Keep: files
+  ZH: 文件数量
+  EN: File Count
+Merge from:
+  - fileCount
+Usage count: 1
+
+Keep: filterDateApply
+  ZH: 应用
+  EN: Apply
+Merge from:
+  - filterApply
+  - apply
+Usage count: 1
+
+Keep: filterClear
+  ZH: 清除
+  EN: Clear
+Merge from:
+  - filterDateClear
+Usage count: 2
+
+Keep: filterDateEndDate
+  ZH: 结束日期
+  EN: End Date
+Merge from:
+  - filterEndDate
+  - endDate
+Usage count: 3
+
+Keep: filterDatePresets
+  ZH: 预设
+  EN: Presets
+Merge from:
+  - filterPresetSection
+Usage count: 1
+
+Keep: libraryManagementCreatedAt
+  ZH: 创建时间
+  EN: Created at
+Merge from:
+  - filterDateSection
+  - filterSortFieldCreateTime
+  - workDetailCreateTime
+Usage count: 3
+
+Keep: selectDate
+  ZH: 选择日期
+  EN: Select Date
+Merge from:
+  - filterDateSelectPrompt
+  - filterSelectDate
+  - workFormSelectDate
+Usage count: 2
+
+Keep: filterDateStartDate
+  ZH: 开始日期
+  EN: Start Date
+Merge from:
+  - filterStartDate
+  - startDate
+Usage count: 3
+
+Keep: filterSelectAll
+  ZH: 全选
+  EN: Select All
+Merge from:
+  - toolbarSelectAll
+  - selectAll
+  - toolbarSelectAll
+Usage count: 1
+
+Keep: filterSortDescending
+  ZH: 降序
+  EN: Descending
+Merge from:
+  - libraryManagementSortDesc
+Usage count: 3
+
+Keep: filterSortFieldFileSize
+  ZH: 文件大小
+  EN: File Size
+Merge from:
+  - libraryManagementFileSize
+  - libraryManagementSortByFileSize
+Usage count: 2
+
+Keep: filterSortFieldNone
+  ZH: 无
+  EN: None
+Merge from:
+  - imagePropertyPanelFitNone
+Usage count: 2
+
+Keep: filterSortFieldStyle
+  ZH: 风格
+  EN: Style
+Merge from:
+  - workFormStyle
+  - collectionPropertyPanelStyle
+  - workFormStyle
+Usage count: 2
+
+Keep: workFormTitle
+  ZH: 标题
+  EN: Title
+Merge from:
+  - filterSortFieldTitle
+Usage count: 7
+
+Keep: filterSortFieldTool
+  ZH: 工具
+  EN: Tool
+Merge from:
+  - workFormTool
+Usage count: 2
+
+Keep: filterSortFieldUpdateTime
+  ZH: 更新时间
+  EN: Update Time
+Merge from:
+  - libraryManagementUpdatedAt
+  - workDetailUpdateTime
+  - workDetailUpdateTime
+Usage count: 3
+
+Keep: filterStyleClerical
+  ZH: 隶书
+  EN: Clerical Script
+Merge from:
+  - workStyleClerical
+Usage count: 2
+
+Keep: filterStyleCursive
+  ZH: 草书
+  EN: Cursive Script
+Merge from:
+  - workStyleCursive
+Usage count: 2
+
+Keep: filterStyleOther
+  ZH: 其他
+  EN: Other
+Merge from:
+  - filterToolOther
+  - workStyleOther
+  - workToolOther
+Usage count: 2
+
+Keep: filterStyleRegular
+  ZH: 楷书
+  EN: Regular Script
+Merge from:
+  - workStyleRegular
+Usage count: 2
+
+Keep: filterStyleRunning
+  ZH: 行书
+  EN: Running Script
+Merge from:
+  - workStyleRunning
+Usage count: 2
+
+Keep: filterStyleSeal
+  ZH: 篆书
+  EN: Seal Script
+Merge from:
+  - workStyleSeal
+Usage count: 2
+
+Keep: filterToolBrush
+  ZH: 毛笔
+  EN: Brush
+Merge from:
+  - workToolBrush
+Usage count: 2
+
+Keep: filterToolHardPen
+  ZH: 硬笔
+  EN: Hard Pen
+Merge from:
+  - workToolHardPen
+Usage count: 2
+
+Keep: groupElements
+  ZH: 组合元素
+  EN: Group Elements
+Merge from:
+  - groupElement
+Usage count: 2
+
+Keep: height
+  ZH: 高度
+  EN: Height
+Merge from:
+  - libraryManagementSizeHeight
+  - libraryManagementSizeHeight
+  - elementHeight
+Usage count: 9
+
+Keep: imagePropertyPanel
+  ZH: 图像属性
+  EN: Image Properties
+Merge from:
+  - practiceEditImageProperties
+  - imagePropertyPanelTitle
+  - practiceEditImageProperties
+Usage count: 0
+
+Keep: practiceEditOverwrite
+  ZH: 覆盖
+  EN: Overwrite
+Merge from:
+  - imagePropertyPanelFitCover
+  - textureFillModeCover
+Usage count: 4
+
+Keep: imagePropertyPanelLoading
+  ZH: 加载中...
+  EN: Loading image...
+Merge from:
+  - libraryManagementLoading
+  - commonLoading
+Usage count: 0
+
+Keep: workImportDialogNoImages
+  ZH: 未选择图像
+  EN: No images selected
+Merge from:
+  - imagePropertyPanelNoImage
+Usage count: 1
+
+Keep: position
+  ZH: 位置
+  EN: Position
+Merge from:
+  - imagePropertyPanelPosition
+  - libraryManagementLocation
+  - textPropertyPanelPosition
+  - imagePropertyPanelPosition
+  - textPropertyPanelPosition
+Usage count: 3
+
+Keep: workImportDialogImport
+  ZH: 导入
+  EN: Import
+Merge from:
+  - import
+  - libraryManagementImport
+  - workImportImport
+Usage count: 3
+
+Keep: languageSystem
+  ZH: 系统
+  EN: System
+Merge from:
+  - themeModeSystem
+Usage count: 1
+
+Keep: layer
+  ZH: 图层
+  EN: Layer
+Merge from:
+  - practiceEditLayerPanel
+Usage count: 3
+
+Keep: layerOperations
+  ZH: 图层操作
+  EN: Layer Operations
+Merge from:
+  - practiceEditLayerOperations
+Usage count: 1
+
+Keep: libraryManagement
+  ZH: 图库
+  EN: Library
+Merge from:
+  - storageGallery
+Usage count: 3
+
+Keep: libraryManagementFormat
+  ZH: 格式
+  EN: Format
+Merge from:
+  - libraryManagementFormats
+Usage count: 1
+
+Keep: name
+  ZH: 名称
+  EN: Name
+Merge from:
+  - libraryManagementName
+  - libraryManagementName
+  - libraryManagementSortByName
+Usage count: 5
+
+Keep: workFormRemark
+  ZH: 备注
+  EN: Remark
+Merge from:
+  - libraryManagementRemarks
+Usage count: 3
+
+Keep: width
+  ZH: 宽度
+  EN: Width
+Merge from:
+  - libraryManagementSizeWidth
+  - libraryManagementSizeWidth
+  - elementWidth
+Usage count: 9
+
+Keep: libraryManagementSortByFileSize
+  ZH: 按文件大小
+  EN: File Size
+Merge from:
+  - libraryManagementSortBySize
+Usage count: 0
+
+Keep: locked
+  ZH: 已锁定
+  EN: Locked
+Merge from:
+  - elementLocked
+Usage count: 5
+
+Keep: tagEditorNoTags
+  ZH: 无标签
+  EN: No tags
+Merge from:
+  - noTags
+Usage count: 3
+
+Keep: practiceEditSaveFailed
+  ZH: 保存失败
+  EN: Save failed
+Merge from:
+  - workDetailSaveFailure
+Usage count: 6
+
+Keep: practiceEditSaveSuccess
+  ZH: 保存成功
+  EN: Save successful
+Merge from:
+  - workDetailSaveSuccess
+  - saveSuccess
+Usage count: 2
+
+Keep: practiceEditText
+  ZH: 文本
+  EN: Text
+Merge from:
+  - text
+Usage count: 2
+
+Keep: practiceEditTextProperties
+  ZH: 文本属性
+  EN: Text Properties
+Merge from:
+  - textPropertyPanel
+Usage count: 0
+
+Keep: save
+  ZH: 保存
+  EN: Save
+Merge from:
+  - practiceEditTopNavSave
+  - workDetailSave
+Usage count: 8
+
+Keep: practiceListStatusDraft
+  ZH: 草稿
+  EN: Draft
+Merge from:
+  - workStatusDraft
+Usage count: 0
+
+Keep: practices
+  ZH: 字帖
+  EN: Practices
+Merge from:
+  - practiceListTitle
+Usage count: 2
+
+Keep: works
+  ZH: 作品
+  EN: Works
+Merge from:
+  - storageWorks
+  - workBrowseTitle
+  - work
+  - workBrowseTitle
+Usage count: 2
+
+Keep: verticalAlignment
+  ZH: 垂直对齐
+  EN: Vertical Alignment
+Merge from:
+  - textPropertyPanelVerticalAlign
+Usage count: 2
+
+Keep: textureRemove
+  ZH: 移除
+  EN: Remove
+Merge from:
+  - remove
+Usage count: 1
+
+Keep: unlocked
+  ZH: 未锁定
+  EN: Unlocked
+Merge from:
+  - elementUnlocked
+Usage count: 1
+
+Keep: workBrowseImport
+  ZH: 导入作品
+  EN: Import Work
+Merge from:
+  - workImportDialogTitle
+Usage count: 4
+
+Keep: workFormDateTooltip
+  ZH: 按Tab导航到下一个字段
+  EN: Press Tab to navigate to the next field
+Merge from:
+  - workFormStyleTooltip
+  - workFormToolTooltip
+Usage count: 3
+
+Keep: colorPickerTitle
+  ZH: 选择颜色
+  EN: Select Color
+Merge from:
+  - selectColorTitle
+Usage count: 1
+
+Keep: workImportAddImage
+  ZH: 添加图片
+  EN: Add Image
+Merge from:
+  - addImages
+Usage count: 1
+
+Keep: workImportDeleteImage
+  ZH: 删除图片
+  EN: Delete Image
+Merge from:
+  - confirmDeleteAll
+Usage count: 1
+
+Keep: importFailedMessage
+  ZH: 导入失败: {error}
+  EN: Import failed: {error}
+Merge from:
+  - importFileFailed
+  - workImportDialogError
+  - importFileFailed
+Usage count: 2
+
+Keep: canvasResetView
+  ZH: 复位
+  EN: Reset
+Merge from:
+  - collectionPropertyPanelReset
+  - imagePropertyPanelReset
+Usage count: 0
+
+Keep: characterCollectionError
+  ZH: 错误：{error}
+  EN: Error: {error}
+Merge from:
+  - imagePropertyPanelErrorMessage
+Usage count: 3
+
+Keep: characterCollectionLoadingImage
+  ZH: 加载图像中...
+  EN: Loading image...
+Merge from:
+  - imagePropertyPanelLoading
+Usage count: 2
+
+Keep: workDetailBasicInfo
+  ZH: 基本信息
+  EN: Basic Information
+Merge from:
+  - characterDetailBasicInfo
+  - libraryManagementBasicInfo
+Usage count: 2
+
+Keep: filterDateSection
+  ZH: 创建时间
+  EN: Creation Time
+Merge from:
+  - characterDetailCreationTime
+  - filterSortFieldCreateTime
+  - workDetailCreateTime
+Usage count: 2
+
+Keep: filterTagsAddHint
+  ZH: 输入标签名称并按回车
+  EN: Enter tag name and press Enter
+Merge from:
+  - characterFilterAddTagHint
+Usage count: 1
+
+Keep: filterCollapse
+  ZH: 收起筛选面板
+  EN: Collapse Filter Panel
+Merge from:
+  - characterFilterCollapse
+  - practiceListCollapseFilter
+Usage count: 3
+
+Keep: practiceEditCollection
+  ZH: 采集
+  EN: Collection
+Merge from:
+  - collection
+Usage count: 2
+
+Keep: collectionPropertyPanelCharacter
+  ZH: 集字
+  EN: Character
+Merge from:
+  - collectionPropertyPanelCharIndex
+Usage count: 1
+
+Keep: exportDialogPageOrientation
+  ZH: 页面朝向
+  EN: Page Orientation
+Merge from:
+  - pageOrientation
+Usage count: 1
+
+Keep: filterSortFieldFileName
+  ZH: 文件名称
+  EN: File Name
+Merge from:
+  - fileName
+Usage count: 2
+
+Keep: selectedCount
+  ZH: 已选择{count}个
+  EN: {count} selected
+Merge from:
+  - filterItemsSelected
+  - workBrowseSelectedCount
+Usage count: 6
+
+Keep: tagEditorSuggestedTags
+  ZH: 建议标签：
+  EN: Suggested tags:
+Merge from:
+  - filterTagsSuggested
+Usage count: 1
+
+Keep: practiceEditImage
+  ZH: 图像
+  EN: Image
+Merge from:
+  - image
+Usage count: 2
+
+Keep: imagePropertyPanelFitCover
+  ZH: 覆盖
+  EN: Cover
+Merge from:
+  - textureFillModeCover
+Usage count: 1
+
+Keep: imagePropertyPanelNoImageSelected
+  ZH: 未选择图片
+  EN: No image selected
+Merge from:
+  - imagePropertyPanelNoImage
+  - commonNoImageSelected
+Usage count: 1
+
+Keep: imagePropertyPanelSelectFromLibrary
+  ZH: 从图库选择
+  EN: Select from Library
+Merge from:
+  - textureSelectFromLibrary
+Usage count: 2
+
+Keep: libraryManagementFavorites
+  ZH: 收藏
+  EN: Favorites
+Merge from:
+  - practiceListFilterFavorites
+Usage count: 1
+
+Keep: libraryManagementFileSize
+  ZH: 文件大小
+  EN: File size
+Merge from:
+  - libraryManagementSortBySize
+Usage count: 2
+
+Keep: libraryManagementLoading
+  ZH: 加载中...
+  EN: Loading...
+Merge from:
+  - commonLoading
+Usage count: 0
+
+Keep: elementSize
+  ZH: 大小
+  EN: Size
+Merge from:
+  - libraryManagementSize
+Usage count: 1
+
+Keep: practiceEditConfirmDeleteTitle
+  ZH: 确认删除
+  EN: Confirm Delete
+Merge from:
+  - workImageDeleteConfirmTitle
+Usage count: 1
+
+Keep: practiceListDeleteSelected
+  ZH: 删除所选
+  EN: Delete Selected
+Merge from:
+  - workBrowseDeleteSelected
+Usage count: 1
+
+Keep: restore
+  ZH: 恢复
+  EN: Restore
+Merge from:
+  - windowButtonRestore
+Usage count: 1
+
+Keep: workImportDialogDeleteImage
+  ZH: 删除图像
+  EN: Delete Image
+Merge from:
+  - workImportDeleteImage
+Usage count: 3
+

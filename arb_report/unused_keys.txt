@@ -1,0 +1,1095 @@
+=== Unused ARB Keys ===
+Total: 273 keys
+
+Key: about
+  ZH: 关于
+  EN: About
+
+Key: addElementName
+  ZH: 添加{type}元素
+  EN: Add {type} element
+
+Key: addLayer
+  ZH: 添加图层
+  EN: Add Layer
+
+Key: addPage
+  ZH: 添加页面
+  EN: Add Page
+
+Key: alignmentRequiresMultipleElements
+  ZH: 对齐操作需要至少2个元素
+  EN: Alignment requires at least 2 elements
+
+Key: appName
+  ZH: 字字珠玑
+  EN: Char As Gem
+
+Key: canvasResetView
+  ZH: 复位
+  EN: Reset
+
+Key: categories
+  ZH: 分类
+  EN: Categories
+
+Key: categoryHasItems
+  ZH: 此分类下有 {count} 个项目
+  EN: {count} items in this category
+
+Key: categoryNameCannotBeEmpty
+  ZH: 分类名称不能为空
+  EN: Category name cannot be empty
+
+Key: categoryPanelTitle
+  ZH: 分类面板
+  EN: Category Panel
+
+Key: center
+  ZH: 居中
+  EN: Center
+
+Key: characterCollectionBack
+  ZH: 返回
+  EN: Back
+
+Key: characterCollectionHelp
+  ZH: 帮助
+  EN: Help
+
+Key: characterCollectionHelpClose
+  ZH: 关闭
+  EN: Close
+
+Key: characterCollectionHelpExport
+  ZH: 导出帮助文档
+  EN: Export Help Document
+
+Key: characterCollectionHelpExportSoon
+  ZH: 帮助文档导出功能即将推出
+  EN: Help document export coming soon
+
+Key: characterCollectionHelpGuide
+  ZH: 字符采集指南
+  EN: Character Collection Guide
+
+Key: characterCollectionHelpIntro
+  ZH: 字符采集允许您从图像中提取、编辑和管理字符。以下是详细指南：
+  EN: Character collection allows you to extract, edit, and manage characters from images. Here's a detailed guide:
+
+Key: characterCollectionHelpNotes
+  ZH: 注意事项
+  EN: Notes
+
+Key: characterCollectionHelpSection1
+  ZH: 1. 选择与导航
+  EN: 1. Selection & Navigation
+
+Key: characterCollectionHelpSection2
+  ZH: 2. 区域调整
+  EN: 2. Region Adjustment
+
+Key: characterCollectionHelpSection3
+  ZH: 3. 橡皮工具
+  EN: 3. Eraser Tool
+
+Key: characterCollectionHelpSection4
+  ZH: 4. 数据保存
+  EN: 4. Data Saving
+
+Key: characterCollectionHelpSection5
+  ZH: 5. 键盘快捷键
+  EN: 5. Keyboard Shortcuts
+
+Key: characterCollectionHelpTitle
+  ZH: 字符采集帮助
+  EN: Character Collection Help
+
+Key: characterDetailFormatName
+  ZH: 格式名称
+  EN: Format Name
+
+Key: characterEditDefaultsSaved
+  ZH: 默认设置已保存
+  EN: Defaults saved successfully
+
+Key: characterEditPanImage
+  ZH: 平移图像（按住Alt）
+  EN: Pan image (hold Alt)
+
+Key: characterFilterAddTag
+  ZH: 添加标签
+  EN: Add Tag
+
+Key: characterFilterAddTagHint
+  ZH: 输入标签名称并按 Enter
+  EN: Enter tag name and press Enter
+
+Key: characterFilterCalligraphyStyle
+  ZH: 书法风格
+  EN: Calligraphy Style
+
+Key: characterFilterCollapse
+  ZH: 折叠筛选面板
+  EN: Collapse Filter Panel
+
+Key: characterFilterFavoritesOnly
+  ZH: 仅显示收藏
+  EN: Show favorites only
+
+Key: characterFilterSelectedTags
+  ZH: 已选标签：
+  EN: Selected Tags:
+
+Key: characterFilterSort
+  ZH: 排序
+  EN: Sort
+
+Key: characterFilterTags
+  ZH: 标签
+  EN: Tags
+
+Key: characterFilterWritingTool
+  ZH: 书写工具
+  EN: Writing Tool
+
+Key: characterManagementBatchDone
+  ZH: 完成
+  EN: Done
+
+Key: characterManagementBatchMode
+  ZH: 批量模式
+  EN: Batch Mode
+
+Key: characterManagementGridView
+  ZH: 网格视图
+  EN: Grid View
+
+Key: characterManagementItemsPerPage
+  ZH: {count}项/页
+  EN: {count} per page
+
+Key: characterManagementListView
+  ZH: 列表视图
+  EN: List View
+
+Key: characterManagementSearch
+  ZH: 搜索字符、作品或作者
+  EN: Search characters, works, or authors
+
+Key: clearImageCache
+  ZH: 清除图像缓存
+  EN: Clear Image Cache
+
+Key: clearSelection
+  ZH: 取消选择
+  EN: Clear Selection
+
+Key: collectionElement
+  ZH: 集字元素
+  EN: Collection Element
+
+Key: collectionPropertyPanel
+  ZH: 采集属性
+  EN: Collection Properties
+
+Key: collectionPropertyPanelBackgroundColor
+  ZH: 背景颜色
+  EN: Background Color
+
+Key: collectionPropertyPanelBorder
+  ZH: 边框
+  EN: Border
+
+Key: collectionPropertyPanelBorderColor
+  ZH: 边框颜色
+  EN: Border Color
+
+Key: collectionPropertyPanelBorderWidth
+  ZH: 边框宽度
+  EN: Border Width
+
+Key: collectionPropertyPanelCacheClearFailed
+  ZH: 清除图像缓存失败
+  EN: Failed to clear image cache
+
+Key: collectionPropertyPanelCacheCleared
+  ZH: 图像缓存已清除
+  EN: Image cache cleared
+
+Key: collectionPropertyPanelCandidateCharacters
+  ZH: 候选字符
+  EN: Candidate Characters
+
+Key: collectionPropertyPanelCharIndex
+  ZH: 字符
+  EN: Character
+
+Key: collectionPropertyPanelCharacterSettings
+  ZH: 字符设置
+  EN: Character Settings
+
+Key: collectionPropertyPanelCharacterSource
+  ZH: 字符来源
+  EN: Character Source
+
+Key: collectionPropertyPanelClearImageCache
+  ZH: 清除图像缓存
+  EN: Clear Image Cache
+
+Key: collectionPropertyPanelColorPicker
+  ZH: 颜色选择器
+  EN: Pick Color
+
+Key: collectionPropertyPanelContent
+  ZH: 内容属性
+  EN: Content Properties
+
+Key: collectionPropertyPanelFlip
+  ZH: 翻转
+  EN: Flip
+
+Key: collectionPropertyPanelFlipHorizontally
+  ZH: 水平翻转
+  EN: Flip Horizontally
+
+Key: collectionPropertyPanelFlipVertically
+  ZH: 垂直翻转
+  EN: Flip Vertically
+
+Key: collectionPropertyPanelFontSize
+  ZH: 字体大小
+  EN: Font Size
+
+Key: collectionPropertyPanelGeometry
+  ZH: 几何属性
+  EN: Geometry Properties
+
+Key: collectionPropertyPanelGlobalInversion
+  ZH: 全局反转
+  EN: Global Inversion
+
+Key: collectionPropertyPanelHeaderContent
+  ZH: 内容属性
+  EN: Content Properties
+
+Key: collectionPropertyPanelHeaderGeometry
+  ZH: 几何属性
+  EN: Geometry Properties
+
+Key: collectionPropertyPanelHeaderVisual
+  ZH: 视觉属性
+  EN: Visual Properties
+
+Key: collectionPropertyPanelInvertDisplay
+  ZH: 反转显示颜色
+  EN: Invert Display Colors
+
+Key: collectionPropertyPanelNoCharacterSelected
+  ZH: 未选择字符
+  EN: No character selected
+
+Key: collectionPropertyPanelOf
+  ZH: /
+  EN: of
+
+Key: collectionPropertyPanelOriginal
+  ZH: 原始
+  EN: Original
+
+Key: collectionPropertyPanelPadding
+  ZH: 内边距
+  EN: Padding
+
+Key: collectionPropertyPanelPropertyUpdated
+  ZH: 属性已更新
+  EN: Property updated
+
+Key: collectionPropertyPanelRender
+  ZH: 渲染模式
+  EN: Render Mode
+
+Key: collectionPropertyPanelReset
+  ZH: 重置
+  EN: Reset
+
+Key: collectionPropertyPanelSelectCharacter
+  ZH: 请选择字符
+  EN: Please select a character
+
+Key: collectionPropertyPanelStyle
+  ZH: 样式
+  EN: Style
+
+Key: collectionPropertyPanelStyled
+  ZH: 样式化
+  EN: Styled
+
+Key: collectionPropertyPanelVisual
+  ZH: 视觉设置
+  EN: Visual Settings
+
+Key: collectionPropertyPanelWorkSource
+  ZH: 作品来源
+  EN: Work Source
+
+Key: commonError
+  ZH: 发生错误
+  EN: An error occurred
+
+Key: commonLoading
+  ZH: 加载中...
+  EN: Loading...
+
+Key: commonNoImageSelected
+  ZH: 没有选择图片
+  EN: No image selected
+
+Key: commonSuccess
+  ZH: 操作成功
+  EN: Operation successful
+
+Key: contains
+  ZH: 包含
+  EN: Contains
+
+Key: copyLayerName
+  ZH: {name} (复制)
+  EN: {name} (Copy)
+
+Key: defaultWhiteColor
+  ZH: 出错时返回默认白色
+  EN: Return default white on error
+
+Key: deleteCategoryWithFilesConfirmMessage
+  ZH: 确定要删除分类"{name}"及其包含的{count}个文件？此操作无法撤销！
+  EN: Are you sure you want to delete category "{name}" and its {count} files? This action cannot be undone!
+
+Key: deleteCategoryWithFilesWarning
+  ZH: 警告
+  EN: Warning
+
+Key: deleteCurrentImage
+  ZH: 删除当前图片
+  EN: Delete current image
+
+Key: deleteElementName
+  ZH: 删除{type}元素
+  EN: Delete {type} element
+
+Key: deleteGroupElements
+  ZH: 删除组内元素
+  EN: Delete Group Elements
+
+Key: distributionOperations
+  ZH: 分布操作
+  EN: Distribution Operations
+
+Key: distributionRequiresThreeElements
+  ZH: 分布操作需要至少3个元素
+  EN: Distribution requires at least 3 elements
+
+Key: doubleClickToEdit
+  ZH: 属性面板编辑文本
+  EN: Edit text in properties panel
+
+Key: editCategory
+  ZH: 编辑分类
+  EN: Edit Category
+
+Key: elementCopiedToClipboardWithPreload
+  ZH: 元素已复制到剪贴板（已预加载图像）
+  EN: Element copied to clipboard (images preloaded)
+
+Key: elementDistribution
+  ZH: 元素分布
+  EN: Element Distribution
+
+Key: elementType
+  ZH: 元素类型
+  EN: Element Type
+
+Key: elementsCopied
+  ZH: {count}个元素已复制到剪贴板
+  EN: {count} element(s) copied to clipboard
+
+Key: enterGroupEditMode
+  ZH: 进入组编辑模式
+  EN: Enter Group Edit Mode
+
+Key: errorDefaultColor
+  ZH: 出错时返回默认颜色
+  EN: Return default color on error
+
+Key: errorSelectingImage
+  ZH: 选择图片时出错：{error}
+  EN: Error selecting image: {error}
+
+Key: exportBackupDescription
+  ZH: 将备份导出到外部位置
+  EN: Export a backup to an external location
+
+Key: exportFailedWithError
+  ZH: 导出失败: {error}
+  EN: Export failed: {error}
+
+Key: fileCount
+  ZH: 文件数量
+  EN: File Count
+
+Key: filterApply
+  ZH: 应用
+  EN: Apply
+
+Key: filterBatchActions
+  ZH: 批量操作
+  EN: Batch Actions
+
+Key: filterBatchSelection
+  ZH: 批量选择
+  EN: Selection
+
+Key: filterCustomRange
+  ZH: 自定义范围
+  EN: Custom Range
+
+Key: filterDateRange
+  ZH: 日期范围
+  EN: Date Range
+
+Key: filterEndDate
+  ZH: 结束日期
+  EN: End Date
+
+Key: filterItemsPerPage
+  ZH: 每页 {count} 项
+  EN: {count} per page
+
+Key: filterItemsSelected
+  ZH: 已选择 {count} 项
+  EN: {count} selected
+
+Key: filterPanel
+  ZH: 筛选面板
+  EN: Filter Panel
+
+Key: filterPresetSection
+  ZH: 预设
+  EN: Presets
+
+Key: filterSearchPlaceholder
+  ZH: 搜索...
+  EN: Search...
+
+Key: filterSection
+  ZH: 筛选选项
+  EN: Filter Options
+
+Key: filterSelectDate
+  ZH: 选择日期
+  EN: Select Date
+
+Key: filterSelectDateRange
+  ZH: 选择日期范围
+  EN: Select date range
+
+Key: filterSortDirection
+  ZH: 排序方向
+  EN: Sort Direction
+
+Key: filterSortField
+  ZH: 排序字段
+  EN: Sort By
+
+Key: filterStartDate
+  ZH: 开始日期
+  EN: Start Date
+
+Key: filterTagsNone
+  ZH: 未选择标签
+  EN: No tags selected
+
+Key: filterTagsSuggested
+  ZH: 推荐标签：
+  EN: Suggested tags:
+
+Key: filterToggle
+  ZH: 切换筛选
+  EN: Toggle Filters
+
+Key: filterTotalItems
+  ZH: 共计：{count} 项
+  EN: Total: {count} items
+
+Key: generalSettings
+  ZH: 常规设置
+  EN: General Settings
+
+Key: groupElement
+  ZH: 组合元素
+  EN: Group Element
+
+Key: groupInfo
+  ZH: 组信息
+  EN: Group Info
+
+Key: imageCacheClearFailed
+  ZH: 清除图像缓存失败
+  EN: Failed to clear image cache
+
+Key: imageCacheCleared
+  ZH: 图像缓存已清除
+  EN: Image cache cleared
+
+Key: imageElement
+  ZH: 图片元素
+  EN: Image Element
+
+Key: imageExportSuccess
+  ZH: 导出{count}个图片成功
+  EN: Successfully exported {count} images
+
+Key: imagePropertyPanel
+  ZH: 图像属性
+  EN: Image Properties
+
+Key: imagePropertyPanelBorder
+  ZH: 边框
+  EN: Border
+
+Key: imagePropertyPanelBorderColor
+  ZH: 边框颜色
+  EN: Border Color
+
+Key: imagePropertyPanelBorderWidth
+  ZH: 边框宽度
+  EN: Border Width
+
+Key: imagePropertyPanelBrightness
+  ZH: 亮度
+  EN: Brightness
+
+Key: imagePropertyPanelContent
+  ZH: 内容属性
+  EN: Content Properties
+
+Key: imagePropertyPanelContrast
+  ZH: 对比度
+  EN: Contrast
+
+Key: imagePropertyPanelCornerRadius
+  ZH: 圆角半径
+  EN: Corner Radius
+
+Key: imagePropertyPanelCroppingValueTooLarge
+  ZH: 无法应用变换：裁剪值过大，导致无效的裁剪区域
+  EN: Cannot apply transform: Cropping values too large resulting in invalid crop region
+
+Key: imagePropertyPanelDimensions
+  ZH: 尺寸
+  EN: Dimensions
+
+Key: imagePropertyPanelErrorMessage
+  ZH: 发生错误: {error}
+  EN: Error: {error}
+
+Key: imagePropertyPanelFileLoadError
+  ZH: 文件加载失败
+  EN: Failed to load image: {error}
+
+Key: imagePropertyPanelFileNotRecovered
+  ZH: 图片文件丢失且无法恢复
+  EN: File could not be recovered
+
+Key: imagePropertyPanelFilters
+  ZH: 图像滤镜
+  EN: Image Filters
+
+Key: imagePropertyPanelFit
+  ZH: 适应
+  EN: Fit
+
+Key: imagePropertyPanelFitNone
+  ZH: 无
+  EN: None
+
+Key: imagePropertyPanelGeometry
+  ZH: 几何属性
+  EN: Geometry Properties
+
+Key: imagePropertyPanelImageSize
+  ZH: 图像大小
+  EN: Image Size
+
+Key: imagePropertyPanelLibraryProcessing
+  ZH: 图库功能开发中...
+  EN: Processing library...
+
+Key: imagePropertyPanelLoading
+  ZH: 加载中...
+  EN: Loading image...
+
+Key: imagePropertyPanelNoImage
+  ZH: 未选择图像
+  EN: No image selected
+
+Key: imagePropertyPanelOpacity
+  ZH: 不透明度
+  EN: Opacity
+
+Key: imagePropertyPanelOriginalSize
+  ZH: 原始大小
+  EN: Original Size
+
+Key: imagePropertyPanelPosition
+  ZH: 位置
+  EN: Position
+
+Key: imagePropertyPanelPreserveRatio
+  ZH: 保持宽高比
+  EN: Preserve Aspect Ratio
+
+Key: imagePropertyPanelReset
+  ZH: 重置
+  EN: Reset
+
+Key: imagePropertyPanelRotation
+  ZH: 旋转
+  EN: Rotation
+
+Key: imagePropertyPanelSaturation
+  ZH: 饱和度
+  EN: Saturation
+
+Key: imagePropertyPanelSelectFromLocalDescription
+  ZH: 选择的图片将会自动导入到图库
+  EN: The selected image will be automatically imported to the library
+
+Key: imagePropertyPanelTitle
+  ZH: 图片属性
+  EN: Image Properties
+
+Key: imagePropertyPanelVisual
+  ZH: 视觉设置
+  EN: Visual Settings
+
+Key: importBackupDescription
+  ZH: 从外部位置导入备份
+  EN: Import a backup from an external location
+
+Key: importImageFailed
+  ZH: 导入图片失败: {error}
+  EN: Import image failed: {error}
+
+Key: inputFieldHint
+  ZH: 请输入{field}
+  EN: Please input {field}
+
+Key: invalidBackupFile
+  ZH: 无效的备份文件
+  EN: Invalid backup file
+
+Key: libraryManagementEnterBatchMode
+  ZH: 进入批量选择模式
+  EN: Enter batch mode
+
+Key: libraryManagementError
+  ZH: 加载失败：{message}
+  EN: Failed to load: {message}
+
+Key: libraryManagementExitBatchMode
+  ZH: 退出批量选择模式
+  EN: Exit batch mode
+
+Key: libraryManagementGridView
+  ZH: 网格视图
+  EN: Grid view
+
+Key: libraryManagementListView
+  ZH: 列表视图
+  EN: List view
+
+Key: libraryManagementLoading
+  ZH: 加载中...
+  EN: Loading...
+
+Key: libraryManagementLocation
+  ZH: 位置
+  EN: Location
+
+Key: libraryManagementNoItems
+  ZH: 暂无项目
+  EN: No items
+
+Key: libraryManagementNoItemsHint
+  ZH: 尝试添加一些项目或更改筛选条件
+  EN: Try adding some items or changing filters
+
+Key: libraryManagementSize
+  ZH: 尺寸
+  EN: Size
+
+Key: libraryManagementSizeHeight
+  ZH: 高度
+  EN: Height
+
+Key: libraryManagementSizeWidth
+  ZH: 宽度
+  EN: Width
+
+Key: libraryManagementSortByDate
+  ZH: 按日期
+  EN: Date
+
+Key: libraryManagementSortByFileSize
+  ZH: 按文件大小
+  EN: File Size
+
+Key: libraryManagementSortByName
+  ZH: 按名称
+  EN: Name
+
+Key: libraryManagementSortBySize
+  ZH: 按文件大小
+  EN: File size
+
+Key: libraryManagementSortDesc
+  ZH: 降序
+  EN: Sort Order
+
+Key: moveSelectedElementsToLayer
+  ZH: 移动选中元素到图层
+  EN: Move Selected Elements to Layer
+
+Key: newCategory
+  ZH: 新建分类
+  EN: New Category
+
+Key: nextImage
+  ZH: 下一张图片
+  EN: Next Image
+
+Key: pageName
+  ZH: 页面{index}
+  EN: Page {index}
+
+Key: pdfExportSuccessNoFile
+  ZH: PDF导出成功，但无法找到文件: {path}
+  EN: PDF export successful, but file not found: {path}
+
+Key: ppiHelperText
+  ZH: 用于计算画布像素大小，默认300ppi
+  EN: Used to calculate canvas pixel size, default is 300ppi
+
+Key: practiceEditAddElementTitle
+  ZH: 添加元素
+  EN: Add Element
+
+Key: practiceEditBackToHome
+  ZH: 返回首页
+  EN: Back to Home
+
+Key: practiceEditCollectionProperties
+  ZH: 采集属性
+  EN: Collection Properties
+
+Key: practiceEditContentProperties
+  ZH: 内容属性
+  EN: Content Properties
+
+Key: practiceEditContentTools
+  ZH: 内容工具
+  EN: Content Tools
+
+Key: practiceEditDisableSnap
+  ZH: 禁用对齐 (Ctrl+R)
+  EN: Disable Snap (Ctrl+R)
+
+Key: practiceEditElementProperties
+  ZH: 元素属性
+  EN: Element Properties
+
+Key: practiceEditElementSelectionInfo
+  ZH: 已选择{count}个元素
+  EN: {count} elements selected
+
+Key: practiceEditEnableSnap
+  ZH: 启用对齐 (Ctrl+R)
+  EN: Enable Snap (Ctrl+R)
+
+Key: practiceEditGeometryProperties
+  ZH: 几何属性
+  EN: Geometry Properties
+
+Key: practiceEditHelperFunctions
+  ZH: 辅助功能
+  EN: Helper Functions
+
+Key: practiceEditImageProperties
+  ZH: 图像属性
+  EN: Image Properties
+
+Key: practiceEditLoadFailed
+  ZH: 加载字帖失败：{error}
+  EN: Failed to load practice: {error}
+
+Key: practiceEditMultiSelectionProperties
+  ZH: 多选属性
+  EN: Multi-Selection Properties
+
+Key: practiceEditPracticeLoadFailed
+  ZH: 加载字帖失败：字帖不存在或已被删除
+  EN: Failed to load practice: Practice does not exist or has been deleted
+
+Key: practiceEditPropertyPanel
+  ZH: 属性
+  EN: Properties
+
+Key: practiceEditSaveAndExit
+  ZH: 保存并退出
+  EN: Save & Exit
+
+Key: practiceEditSaveAndLeave
+  ZH: 保存并离开
+  EN: Save & Leave
+
+Key: practiceEditTextProperties
+  ZH: 文本属性
+  EN: Text Properties
+
+Key: practiceEditToolbar
+  ZH: 编辑工具栏
+  EN: Edit Toolbar
+
+Key: practiceEditTopNavBack
+  ZH: 返回
+  EN: Back
+
+Key: practiceEditVisualProperties
+  ZH: 视觉属性
+  EN: Visual Properties
+
+Key: practiceListCollapseFilter
+  ZH: 折叠过滤面板
+  EN: Collapse Filter Panel
+
+Key: practiceListError
+  ZH: 加载字帖错误
+  EN: Error loading practice sheets
+
+Key: practiceListItemsPerPage
+  ZH: 每页{count}个
+  EN: {count} per page
+
+Key: practiceListResetFilter
+  ZH: 重置过滤器
+  EN: Reset Filter
+
+Key: practiceListSortByStatus
+  ZH: 按状态排序
+  EN: Sort by Status
+
+Key: practiceListStatus
+  ZH: 状态
+  EN: Status
+
+Key: practiceListStatusAll
+  ZH: 全部
+  EN: All
+
+Key: practiceListStatusCompleted
+  ZH: 已完成
+  EN: Completed
+
+Key: practiceListStatusDraft
+  ZH: 草稿
+  EN: Draft
+
+Key: practiceListTotalItems
+  ZH: {count}张字帖
+  EN: {count} practice sheets
+
+Key: practicePageSettings
+  ZH: 页面设置
+  EN: Page Settings
+
+Key: practiceSheetOverwritten
+  ZH: 字帖 "{title}" 已覆盖保存
+  EN: Copybook "{title}" overwritten and saved
+
+Key: previewText
+  ZH: 预览
+  EN: Preview
+
+Key: previousImage
+  ZH: 上一张图片
+  EN: Previous Image
+
+Key: print
+  ZH: 打印
+  EN: Print
+
+Key: printPreparationFailed
+  ZH: 打印准备失败: {error}
+  EN: Print preparation failed: {error}
+
+Key: removedFromAllCategories
+  ZH: 已从所有分类中移除
+  EN: Removed from all categories
+
+Key: restartAppRequired
+  ZH: 需要重启应用以完成恢复过程。
+  EN: The application needs to be restarted to complete the restore process.
+
+Key: restartLater
+  ZH: 稍后
+  EN: Later
+
+Key: restartNow
+  ZH: 立即重启
+  EN: Restart Now
+
+Key: restoreSuccess
+  ZH: 恢复成功
+  EN: Restore completed successfully
+
+Key: searchCharactersWorksAuthors
+  ZH: 搜索字符、作品或作者
+  EN: Search characters, works, or authors
+
+Key: selectCollection
+  ZH: 选择采集
+  EN: Select Collection
+
+Key: selectDeleteOption
+  ZH: 选择删除选项：
+  EN: Select delete option:
+
+Key: selectDirectoryFailed
+  ZH: 选择目录失败: {error}
+  EN: Select directory failed: {error}
+
+Key: sortAndFilter
+  ZH: 排序和筛选
+  EN: Sort & Filter
+
+Key: storageCharacters
+  ZH: 集字
+  EN: Storage of Characters
+
+Key: storageGallery
+  ZH: 图库
+  EN: Storage of Gallery
+
+Key: storageWorks
+  ZH: 作品
+  EN: Storage of Works
+
+Key: textElement
+  ZH: 文本元素
+  EN: Text Element
+
+Key: textPropertyPanel
+  ZH: 文本属性
+  EN: Text Properties
+
+Key: textPropertyPanelGeometry
+  ZH: 几何属性
+  EN: Geometry Properties
+
+Key: textPropertyPanelHorizontal
+  ZH: 水平
+  EN: Horizontal
+
+Key: textPropertyPanelOpacity
+  ZH: 不透明度
+  EN: Opacity
+
+Key: textPropertyPanelPosition
+  ZH: 位置
+  EN: Position
+
+Key: textPropertyPanelPreview
+  ZH: 预览
+  EN: Preview
+
+Key: textPropertyPanelVertical
+  ZH: 垂直
+  EN: Vertical
+
+Key: textPropertyPanelVisual
+  ZH: 视觉设置
+  EN: Visual Settings
+
+Key: textureApplicationRange
+  ZH: 纹理应用范围
+  EN: Texture Application Range
+
+Key: textureFillModeNoRepeat
+  ZH: 不重复
+  EN: No Repeat
+
+Key: textureFillModeRepeatX
+  ZH: 水平重复
+  EN: Repeat Horizontally
+
+Key: textureFillModeRepeatY
+  ZH: 垂直重复
+  EN: Repeat Vertically
+
+Key: textureRangeBackground
+  ZH: 整个背景
+  EN: Entire Background
+
+Key: textureRangeCharacter
+  ZH: 仅字符
+  EN: Character Only
+
+Key: themeModeLight
+  ZH: 亮色
+  EN: Light
+
+Key: toggleTestText
+  ZH: 切换测试文本
+  EN: Toggle Test Text
+
+Key: unknownElementType
+  ZH: 未知元素类型: {type}
+  EN: Unknown element type: {type}
+
+Key: verticalTextModeEnabled
+  ZH: 竖排文本预览 - 超出高度自动换列，可横向滚动
+  EN: Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally
+
+Key: workDetailBack
+  ZH: 返回
+  EN: Back
+
+Key: workDetailViewMore
+  ZH: 查看更多
+  EN: View More
+
+Key: workFormHelp
+  ZH: 帮助
+  EN: Help
+
+Key: workFormRequiredField
+  ZH: 必填字段
+  EN: Required field
+
+Key: workImportDialogSuccess
+  ZH: 导入成功
+  EN: Import successful
+
+Key: workStatusArchived
+  ZH: 已归档
+  EN: Archived
+
+Key: workStatusDraft
+  ZH: 草稿
+  EN: Draft
+
+Key: workStatusPublished
+  ZH: 已发布
+  EN: Published
+
