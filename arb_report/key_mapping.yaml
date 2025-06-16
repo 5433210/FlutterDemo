@@ -1,0 +1,4410 @@
+# ARB Key Mapping for Optimization (with Unused Key Marking)
+# Edit this file to customize key replacements
+# Format:
+# Replacement keys:
+# # 以下键替代了其他键
+# key: value
+#    key: value
+#    replaced_key1: value1
+#    replaced_key2: value2
+# 
+# Normal keys:
+# # 以下是普通键
+# key: value
+#    key: value
+# 
+# Unused keys:
+# # 以下是未使用的键
+# key: value
+#    key: value
+
+# === Analysis Summary ===
+# Total keys: 1178
+# Keys with identical values: 227
+# Keys with similar core meaning: 66
+# Unused keys: 273
+# Common prefixes: character(302), work(229), practice(228), filter(164), image(161), collection(117), library(96), text(53), edit(11), app(10)
+
+# === Keys by Semantic Categories ===
+
+# --- ACTION (6 keys) ---
+
+# 以下键替代了其他键
+layerOperations: 图层操作
+   layerOperations: 图层操作
+   practiceEditLayerOperations: 图层操作
+
+# 以下是普通键
+batchOperations: 批量操作
+   batchOperations: 批量操作
+
+# 以下是普通键
+groupOperations: 组合操作
+   groupOperations: 组合操作
+
+# 以下是未使用的键 [UNUSED]
+distributionOperations: 分布操作
+   distributionOperations: 分布操作
+
+# 以下是未使用的键 [UNUSED]
+distributionRequiresThreeElements: 分布操作需要至少3个元素
+   distributionRequiresThreeElements: 分布操作需要至少3个元素
+
+# 以下是未使用的键 [UNUSED]
+filterBatchActions: 批量操作
+   filterBatchActions: 批量操作
+
+
+# --- BUTTON (150 keys) ---
+
+# 以下键替代了其他键
+addTag: 添加标签
+   addTag: 添加标签
+   characterDetailAddTag: 添加标签
+   characterFilterAddTag: 添加标签
+   filterTagsAdd: 添加标签
+
+# 以下键替代了其他键
+back: 返回
+   back: 返回
+   characterCollectionBack: 返回
+   practiceEditTopNavBack: 返回
+   workDetailBack: 返回
+
+# 以下键替代了其他键
+cancel: 取消
+   cancel: 取消
+   workBrowseCancel: 取消
+   workDetailCancel: 取消
+   workImportDialogCancel: 取消
+
+# 以下键替代了其他键
+close: 关闭
+   close: 关闭
+   characterCollectionHelpClose: 关闭
+   windowButtonClose: 关闭
+
+# 以下键替代了其他键
+delete: 删除
+   delete: 删除
+   deleteBackup: 删除
+   workBrowseDelete: 删除
+   workImportDelete: 删除
+
+# 以下键替代了其他键
+edit: 编辑
+   edit: 编辑
+   workDetailEdit: 编辑
+
+# 以下键替代了其他键
+practiceEditAddLayer: 添加图层
+   practiceEditAddLayer: 添加图层
+   addLayer: 添加图层
+
+# 以下键替代了其他键
+practiceEditUnsavedChanges: 未保存的更改
+   practiceEditUnsavedChanges: 未保存的更改
+   characterCollectionUnsavedChanges: 未保存的更改
+
+# 以下键替代了其他键
+practiceListDeleteConfirm: 确认删除
+   practiceListDeleteConfirm: 确认删除
+   characterCollectionDeleteConfirm: 确认删除
+
+# 以下键替代了其他键
+save: 保存
+   save: 保存
+   practiceEditTopNavSave: 保存
+   workDetailSave: 保存
+
+# 以下键替代了其他键
+saveSuccess: 保存成功
+   saveSuccess: 保存成功
+   practiceEditSaveSuccess: 保存成功
+   workDetailSaveSuccess: 保存成功
+
+# 以下键替代了其他键
+workDetailSaveFailure: 保存失败
+   workDetailSaveFailure: 保存失败
+   practiceEditSaveFailed: 保存失败
+
+# 以下是普通键
+addCategory: 添加分类
+   addCategory: 添加分类
+
+# 以下是普通键
+addFromGalleryFailed: 从图库添加图片失败: {error}
+   addFromGalleryFailed: 从图库添加图片失败: {error}
+
+# 以下是普通键
+addImages: 添加图片
+   addImages: 添加图片
+
+# 以下是普通键
+addedToCategory: 已添加到分类
+   addedToCategory: 已添加到分类
+
+# 以下是普通键
+cannotDeleteOnlyPage: 无法删除唯一的页面
+   cannotDeleteOnlyPage: 无法删除唯一的页面
+
+# 以下是普通键
+cannotSaveMissingController: 无法保存：缺少控制器
+   cannotSaveMissingController: 无法保存：缺少控制器
+
+# 以下是普通键
+characterCollectionDeleteBatchConfirm: 确认删除{count}个已保存区域？
+   characterCollectionDeleteBatchConfirm: 确认删除{count}个已保存区域？
+
+# 以下是普通键
+characterCollectionDeleteBatchMessage: 您即将删除{count}个已保存区域。此操作无法撤消。
+   characterCollectionDeleteBatchMessage: 您即将删除{count}个已保存区域。此操作无法撤消。
+
+# 以下是普通键
+characterCollectionDeleteMessage: 您即将删除所选区域。此操作无法撤消。
+   characterCollectionDeleteMessage: 您即将删除所选区域。此操作无法撤消。
+
+# 以下是普通键
+characterCollectionDeleteShortcuts: 快捷键：Enter 确认，Esc 取消
+   characterCollectionDeleteShortcuts: 快捷键：Enter 确认，Esc 取消
+
+# 以下是普通键
+characterCollectionReturnToDetails: 返回作品详情
+   characterCollectionReturnToDetails: 返回作品详情
+
+# 以下是普通键
+characterCollectionToolDelete: 删除所选 (Ctrl+D)
+   characterCollectionToolDelete: 删除所选 (Ctrl+D)
+
+# 以下是普通键
+characterCollectionUnsavedChangesMessage: 您有未保存的区域修改。离开将丢失这些更改。
+
+确定要离开吗？
+   characterCollectionUnsavedChangesMessage: 您有未保存的区域修改。离开将丢失这些更改。
+
+确定要离开吗？
+
+# 以下是普通键
+characterDetailTagAddError: 添加标签失败: {error}
+   characterDetailTagAddError: 添加标签失败: {error}
+
+# 以下是普通键
+characterEditCompletingSave: 完成保存...
+   characterEditCompletingSave: 完成保存...
+
+# 以下是普通键
+characterEditPreparingSave: 准备保存...
+   characterEditPreparingSave: 准备保存...
+
+# 以下是普通键
+characterEditSaveComplete: 保存完成
+   characterEditSaveComplete: 保存完成
+
+# 以下是普通键
+characterEditSaveConfirmMessage: 确认保存「{character}」？
+   characterEditSaveConfirmMessage: 确认保存「{character}」？
+
+# 以下是普通键
+characterEditSaveConfirmTitle: 保存字符
+   characterEditSaveConfirmTitle: 保存字符
+
+# 以下是普通键
+characterEditSaveShortcuts: 按 Enter 保存，Esc 取消
+   characterEditSaveShortcuts: 按 Enter 保存，Esc 取消
+
+# 以下是普通键
+characterEditSaveTimeout: 保存超时
+   characterEditSaveTimeout: 保存超时
+
+# 以下是普通键
+characterEditSavingToStorage: 保存到存储中...
+   characterEditSavingToStorage: 保存到存储中...
+
+# 以下是普通键
+characterManagementDeleteConfirm: 确认删除
+   characterManagementDeleteConfirm: 确认删除
+
+# 以下是普通键
+characterManagementDeleteMessage: 确定要删除选中的字符吗？此操作无法撤消。
+   characterManagementDeleteMessage: 确定要删除选中的字符吗？此操作无法撤消。
+
+# 以下是普通键
+characterManagementDeleteSelected: 删除所选
+   characterManagementDeleteSelected: 删除所选
+
+# 以下是普通键
+clearCacheConfirmMessage: 确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。
+   clearCacheConfirmMessage: 确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。
+
+# 以下是普通键
+confirm: 确定
+   confirm: 确定
+
+# 以下是普通键
+confirmDelete: 确认删除
+   confirmDelete: 确认删除
+
+# 以下是普通键
+confirmDeleteAll: 删除图片
+   confirmDeleteAll: 删除图片
+
+# 以下是普通键
+confirmDeleteAllItems: 确认删除所有项目
+   confirmDeleteAllItems: 确认删除所有项目
+
+# 以下是普通键
+confirmDeleteAllMessage: 这是最后一张图片，删除后将退出导入。确定要删除吗？
+   confirmDeleteAllMessage: 这是最后一张图片，删除后将退出导入。确定要删除吗？
+
+# 以下是普通键
+confirmDeleteCategory: 确认删除分类
+   confirmDeleteCategory: 确认删除分类
+
+# 以下是普通键
+confirmDeleteFilteredItems: 确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。
+   confirmDeleteFilteredItems: 确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。
+
+# 以下是普通键
+confirmDeleteMessage: 确定要删除选中的图片吗？
+   confirmDeleteMessage: 确定要删除选中的图片吗？
+
+# 以下是普通键
+confirmRemoveFromCategory: 确定要将选中的{count}个项目从当前分类中移除吗？
+   confirmRemoveFromCategory: 确定要将选中的{count}个项目从当前分类中移除吗？
+
+# 以下是普通键
+deleteAll: 全部删除
+   deleteAll: 全部删除
+
+# 以下是普通键
+deleteAllItems: 删除全部
+   deleteAllItems: 删除全部
+
+# 以下是普通键
+deleteBackupConfirmMessage: 确定要删除此备份吗？此操作无法撤消。
+   deleteBackupConfirmMessage: 确定要删除此备份吗？此操作无法撤消。
+
+# 以下是普通键
+deleteBackupConfirmTitle: 删除备份
+   deleteBackupConfirmTitle: 删除备份
+
+# 以下是普通键
+deleteCategory: 删除分类
+   deleteCategory: 删除分类
+
+# 以下是普通键
+deleteCategoryOnly: 仅删除分类
+   deleteCategoryOnly: 仅删除分类
+
+# 以下是普通键
+deleteCategoryWithFiles: 删除分类及文件
+   deleteCategoryWithFiles: 删除分类及文件
+
+# 以下是普通键
+deleteCharactersConfirm: 确定要删除这 {count} 个字符吗？此操作不可恢复。
+   deleteCharactersConfirm: 确定要删除这 {count} 个字符吗？此操作不可恢复。
+
+# 以下是普通键
+deleteConfirmation: 删除确认
+   deleteConfirmation: 删除确认
+
+# 以下是普通键
+deleteFailure: 备份删除失败
+   deleteFailure: 备份删除失败
+
+# 以下是普通键
+deleteGroup: 删除组
+   deleteGroup: 删除组
+
+# 以下是普通键
+deleteGroupConfirm: 确认删除组
+   deleteGroupConfirm: 确认删除组
+
+# 以下是普通键
+deleteGroupDescription: 确定要删除此组吗？此操作无法撤消。
+   deleteGroupDescription: 确定要删除此组吗？此操作无法撤消。
+
+# 以下是普通键
+deletePage: 删除页面
+   deletePage: 删除页面
+
+# 以下是普通键
+deleteSelected: 删除选中
+   deleteSelected: 删除选中
+
+# 以下是普通键
+deleteSuccess: 备份删除成功
+   deleteSuccess: 备份删除成功
+
+# 以下是普通键
+deselectAll: 取消选择
+   deselectAll: 取消选择
+
+# 以下是普通键
+editField: 编辑{field}
+   editField: 编辑{field}
+
+# 以下是普通键
+editGroupContents: 编辑组内容
+   editGroupContents: 编辑组内容
+
+# 以下是普通键
+editGroupContentsDescription: 编辑已选组的内容
+   editGroupContentsDescription: 编辑已选组的内容
+
+# 以下是普通键
+editLabel: 编辑{label}
+   editLabel: 编辑{label}
+
+# 以下是普通键
+emptyStateNoPractices: 没有练习
+点击添加按钮创建新练习
+   emptyStateNoPractices: 没有练习
+点击添加按钮创建新练习
+
+# 以下是普通键
+emptyStateNoWorks: 没有作品
+点击添加按钮导入作品
+   emptyStateNoWorks: 没有作品
+点击添加按钮导入作品
+
+# 以下是普通键
+exportDialogFilenamePrefix: 输入文件名前缀（将自动添加页码）
+   exportDialogFilenamePrefix: 输入文件名前缀（将自动添加页码）
+
+# 以下是普通键
+exportDialogMultipleFilesNote: 注意: 将导出 {count} 个图片文件，文件名将自动添加页码。
+   exportDialogMultipleFilesNote: 注意: 将导出 {count} 个图片文件，文件名将自动添加页码。
+
+# 以下是普通键
+filterDeselectAll: 取消全选
+   filterDeselectAll: 取消全选
+
+# 以下是普通键
+keepBackupCountDescription: 删除旧备份前保留的备份数量
+   keepBackupCountDescription: 删除旧备份前保留的备份数量
+
+# 以下是普通键
+libraryManagementDeleteConfirm: 确认删除
+   libraryManagementDeleteConfirm: 确认删除
+
+# 以下是普通键
+libraryManagementDeleteMessage: 确定要删除选中的项目吗？此操作不可恢复。
+   libraryManagementDeleteMessage: 确定要删除选中的项目吗？此操作不可恢复。
+
+# 以下是普通键
+libraryManagementDeleteSelected: 删除选中项目
+   libraryManagementDeleteSelected: 删除选中项目
+
+# 以下是普通键
+libraryManagementRemarksHint: 添加备注信息
+   libraryManagementRemarksHint: 添加备注信息
+
+# 以下是普通键
+navigationBackToPrevious: 返回到之前的页面
+   navigationBackToPrevious: 返回到之前的页面
+
+# 以下是普通键
+navigationNoHistory: 无法返回
+   navigationNoHistory: 无法返回
+
+# 以下是普通键
+navigationSelectPage: 您想返回到以下哪个页面？
+   navigationSelectPage: 您想返回到以下哪个页面？
+
+# 以下是普通键
+ok: 确定
+   ok: 确定
+
+# 以下是普通键
+practiceEditCannotSaveNoPages: 无法保存：字帖无页面
+   practiceEditCannotSaveNoPages: 无法保存：字帖无页面
+
+# 以下是普通键
+practiceEditConfirmDeleteMessage: 确定要删除这些元素吗？
+   practiceEditConfirmDeleteMessage: 确定要删除这些元素吗？
+
+# 以下是普通键
+practiceEditConfirmDeleteTitle: 确认删除
+   practiceEditConfirmDeleteTitle: 确认删除
+
+# 以下是普通键
+practiceEditDelete: 删除 (Ctrl+D)
+   practiceEditDelete: 删除 (Ctrl+D)
+
+# 以下是普通键
+practiceEditDeleteLayer: 删除图层
+   practiceEditDeleteLayer: 删除图层
+
+# 以下是普通键
+practiceEditDeleteLayerConfirm: 确定要删除此图层吗？
+   practiceEditDeleteLayerConfirm: 确定要删除此图层吗？
+
+# 以下是普通键
+practiceEditDeleteLayerMessage: 此图层上的所有元素将被删除。此操作无法撤消。
+   practiceEditDeleteLayerMessage: 此图层上的所有元素将被删除。此操作无法撤消。
+
+# 以下是普通键
+practiceEditEditOperations: 编辑操作
+   practiceEditEditOperations: 编辑操作
+
+# 以下是普通键
+practiceEditEditTitle: 编辑标题
+   practiceEditEditTitle: 编辑标题
+
+# 以下是普通键
+practiceEditNoLayers: 无图层，请添加图层
+   practiceEditNoLayers: 无图层，请添加图层
+
+# 以下是普通键
+practiceEditSavePractice: 保存字帖
+   practiceEditSavePractice: 保存字帖
+
+# 以下是普通键
+practiceEditTitle: 字帖编辑
+   practiceEditTitle: 字帖编辑
+
+# 以下是普通键
+practiceEditUngroup: 取消组合 (Ctrl+U)
+   practiceEditUngroup: 取消组合 (Ctrl+U)
+
+# 以下是普通键
+practiceEditUnsavedChangesExitConfirmation: 您有未保存的更改。确定要退出吗？
+   practiceEditUnsavedChangesExitConfirmation: 您有未保存的更改。确定要退出吗？
+
+# 以下是普通键
+practiceEditUnsavedChangesMessage: 您有未保存的更改。确定要离开吗？
+   practiceEditUnsavedChangesMessage: 您有未保存的更改。确定要离开吗？
+
+# 以下是普通键
+practiceListDeleteMessage: 确定要删除选中的字帖吗？此操作无法撤消。
+   practiceListDeleteMessage: 确定要删除选中的字帖吗？此操作无法撤消。
+
+# 以下是普通键
+practiceListDeleteSelected: 删除所选
+   practiceListDeleteSelected: 删除所选
+
+# 以下是普通键
+practiceSheetSaved: 字帖 "{title}" 已保存
+   practiceSheetSaved: 字帖 "{title}" 已保存
+
+# 以下是普通键
+resetSettingsConfirmMessage: 确定要将所有缓存设置重置为默认值吗？
+   resetSettingsConfirmMessage: 确定要将所有缓存设置重置为默认值吗？
+
+# 以下是普通键
+restoreConfirmMessage: 确定要从此备份恢复吗？这将替换您当前的所有数据。
+   restoreConfirmMessage: 确定要从此备份恢复吗？这将替换您当前的所有数据。
+
+# 以下是普通键
+saveFailed: 保存失败，请稍后重试
+   saveFailed: 保存失败，请稍后重试
+
+# 以下是普通键
+saveFailedWithError: 保存失败：{error}
+   saveFailedWithError: 保存失败：{error}
+
+# 以下是普通键
+submitFailed: 提交失败：{error}
+   submitFailed: 提交失败：{error}
+
+# 以下是普通键
+textPropertyPanelLineThrough: 删除线
+   textPropertyPanelLineThrough: 删除线
+
+# 以下是普通键
+toolbarDeselectAll: 取消选择
+   toolbarDeselectAll: 取消选择
+
+# 以下是普通键
+ungroup: 取消组合
+   ungroup: 取消组合
+
+# 以下是普通键
+ungroupDescription: 确定要解散此组吗？
+   ungroupDescription: 确定要解散此组吗？
+
+# 以下是普通键
+workBrowseAddFavorite: 添加到收藏
+   workBrowseAddFavorite: 添加到收藏
+
+# 以下是普通键
+workBrowseDeleteConfirmMessage: 确定要删除已选的{count}个作品吗？此操作无法撤消。
+   workBrowseDeleteConfirmMessage: 确定要删除已选的{count}个作品吗？此操作无法撤消。
+
+# 以下是普通键
+workBrowseDeleteConfirmTitle: 确认删除
+   workBrowseDeleteConfirmTitle: 确认删除
+
+# 以下是普通键
+workBrowseDeleteSelected: 删除{count}个
+   workBrowseDeleteSelected: 删除{count}个
+
+# 以下是普通键
+workDetailNoWork: 作品不存在或已被删除
+   workDetailNoWork: 作品不存在或已被删除
+
+# 以下是普通键
+workDetailUnsavedChanges: 您有未保存的更改。确定要放弃它们吗？
+   workDetailUnsavedChanges: 您有未保存的更改。确定要放弃它们吗？
+
+# 以下是普通键
+workImageDeleteConfirmContent: 确定要删除当前选中的图片吗？
+   workImageDeleteConfirmContent: 确定要删除当前选中的图片吗？
+
+# 以下是普通键
+workImageDeleteConfirmTitle: 确认删除
+   workImageDeleteConfirmTitle: 确认删除
+
+# 以下是普通键
+workImageDeleteFailed: 删除图片失败：{error}
+   workImageDeleteFailed: 删除图片失败：{error}
+
+# 以下是普通键
+workImageDeleting: 正在删除图片...
+   workImageDeleting: 正在删除图片...
+
+# 以下是普通键
+workImportAdd: 添加
+   workImportAdd: 添加
+
+# 以下是普通键
+workImportAddImage: 添加图片
+   workImportAddImage: 添加图片
+
+# 以下是普通键
+workImportDeleteImage: 删除图片
+   workImportDeleteImage: 删除图片
+
+# 以下是普通键
+workImportDialogAddImages: 添加图像
+   workImportDialogAddImages: 添加图像
+
+# 以下是普通键
+workImportDialogDeleteImage: 删除图像
+   workImportDialogDeleteImage: 删除图像
+
+# 以下是普通键
+workImportDialogDeleteImageConfirm: 确定要删除此图像吗？
+   workImportDialogDeleteImageConfirm: 确定要删除此图像吗？
+
+# 以下是普通键
+workImportDialogNoImagesHint: 点击添加图像
+   workImportDialogNoImagesHint: 点击添加图像
+
+# 以下是未使用的键 [UNUSED]
+addElementName: 添加{type}元素
+   addElementName: 添加{type}元素
+
+# 以下是未使用的键 [UNUSED]
+addPage: 添加页面
+   addPage: 添加页面
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpIntro: 字符采集允许您从图像中提取、编辑和管理字符。以下是详细指南：
+   characterCollectionHelpIntro: 字符采集允许您从图像中提取、编辑和管理字符。以下是详细指南：
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpSection4: 4. 数据保存
+   characterCollectionHelpSection4: 4. 数据保存
+
+# 以下是未使用的键 [UNUSED]
+characterEditDefaultsSaved: 默认设置已保存
+   characterEditDefaultsSaved: 默认设置已保存
+
+# 以下是未使用的键 [UNUSED]
+clearSelection: 取消选择
+   clearSelection: 取消选择
+
+# 以下是未使用的键 [UNUSED]
+defaultWhiteColor: 出错时返回默认白色
+   defaultWhiteColor: 出错时返回默认白色
+
+# 以下是未使用的键 [UNUSED]
+deleteCategoryWithFilesConfirmMessage: 确定要删除分类"{name}"及其包含的{count}个文件？此操作无法撤销！
+   deleteCategoryWithFilesConfirmMessage: 确定要删除分类"{name}"及其包含的{count}个文件？此操作无法撤销！
+
+# 以下是未使用的键 [UNUSED]
+deleteCurrentImage: 删除当前图片
+   deleteCurrentImage: 删除当前图片
+
+# 以下是未使用的键 [UNUSED]
+deleteElementName: 删除{type}元素
+   deleteElementName: 删除{type}元素
+
+# 以下是未使用的键 [UNUSED]
+deleteGroupElements: 删除组内元素
+   deleteGroupElements: 删除组内元素
+
+# 以下是未使用的键 [UNUSED]
+doubleClickToEdit: 属性面板编辑文本
+   doubleClickToEdit: 属性面板编辑文本
+
+# 以下是未使用的键 [UNUSED]
+editCategory: 编辑分类
+   editCategory: 编辑分类
+
+# 以下是未使用的键 [UNUSED]
+enterGroupEditMode: 进入组编辑模式
+   enterGroupEditMode: 进入组编辑模式
+
+# 以下是未使用的键 [UNUSED]
+errorDefaultColor: 出错时返回默认颜色
+   errorDefaultColor: 出错时返回默认颜色
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementNoItemsHint: 尝试添加一些项目或更改筛选条件
+   libraryManagementNoItemsHint: 尝试添加一些项目或更改筛选条件
+
+# 以下是未使用的键 [UNUSED]
+practiceEditAddElementTitle: 添加元素
+   practiceEditAddElementTitle: 添加元素
+
+# 以下是未使用的键 [UNUSED]
+practiceEditBackToHome: 返回首页
+   practiceEditBackToHome: 返回首页
+
+# 以下是未使用的键 [UNUSED]
+practiceEditPracticeLoadFailed: 加载字帖失败：字帖不存在或已被删除
+   practiceEditPracticeLoadFailed: 加载字帖失败：字帖不存在或已被删除
+
+# 以下是未使用的键 [UNUSED]
+practiceEditSaveAndExit: 保存并退出
+   practiceEditSaveAndExit: 保存并退出
+
+# 以下是未使用的键 [UNUSED]
+practiceEditSaveAndLeave: 保存并离开
+   practiceEditSaveAndLeave: 保存并离开
+
+# 以下是未使用的键 [UNUSED]
+practiceEditToolbar: 编辑工具栏
+   practiceEditToolbar: 编辑工具栏
+
+# 以下是未使用的键 [UNUSED]
+practiceSheetOverwritten: 字帖 "{title}" 已覆盖保存
+   practiceSheetOverwritten: 字帖 "{title}" 已覆盖保存
+
+# 以下是未使用的键 [UNUSED]
+selectDeleteOption: 选择删除选项：
+   selectDeleteOption: 选择删除选项：
+
+
+# --- COLOR (18 keys) ---
+
+# 以下键替代了其他键
+backgroundColor: 背景颜色
+   backgroundColor: 背景颜色
+   collectionPropertyPanelBackgroundColor: 背景颜色
+   textPropertyPanelBgColor: 背景颜色
+
+# 以下键替代了其他键
+imagePropertyPanelBorderColor: 边框颜色
+   imagePropertyPanelBorderColor: 边框颜色
+   collectionPropertyPanelBorderColor: 边框颜色
+
+# 以下键替代了其他键
+opacity: 不透明度
+   opacity: 不透明度
+   collectionPropertyPanelOpacity: 不透明度
+   imagePropertyPanelOpacity: 不透明度
+   textPropertyPanelOpacity: 不透明度
+
+# 以下是普通键
+characterDetailFormatSquareTransparent: 方形透明
+   characterDetailFormatSquareTransparent: 方形透明
+
+# 以下是普通键
+characterDetailFormatSquareTransparentDesc: 规整为正方形的透明PNG图像
+   characterDetailFormatSquareTransparentDesc: 规整为正方形的透明PNG图像
+
+# 以下是普通键
+characterDetailFormatTransparent: 透明
+   characterDetailFormatTransparent: 透明
+
+# 以下是普通键
+characterDetailFormatTransparentDesc: 去背景的透明PNG图像
+   characterDetailFormatTransparentDesc: 去背景的透明PNG图像
+
+# 以下是普通键
+collectionPropertyPanelColorInversion: 颜色反转
+   collectionPropertyPanelColorInversion: 颜色反转
+
+# 以下是普通键
+color: 颜色
+   color: 颜色
+
+# 以下是普通键
+colorCode: 颜色代码
+   colorCode: 颜色代码
+
+# 以下是普通键
+colorCodeHelp: 输入6位十六进制颜色代码 (例如: FF5500)
+   colorCodeHelp: 输入6位十六进制颜色代码 (例如: FF5500)
+
+# 以下是普通键
+colorCodeInvalid: 无效的颜色代码
+   colorCodeInvalid: 无效的颜色代码
+
+# 以下是普通键
+textPropertyPanelFontColor: 文本颜色
+   textPropertyPanelFontColor: 文本颜色
+
+# 以下是普通键
+textureOpacity: 纹理不透明度
+   textureOpacity: 纹理不透明度
+
+# 以下是普通键
+toggleBackground: 切换背景
+   toggleBackground: 切换背景
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelInvertDisplay: 反转显示颜色
+   collectionPropertyPanelInvertDisplay: 反转显示颜色
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelBorderColor: 边框颜色
+   imagePropertyPanelBorderColor: 边框颜色
+
+# 以下是未使用的键 [UNUSED]
+textureRangeBackground: 整个背景
+   textureRangeBackground: 整个背景
+
+
+# --- COMMON (5 keys) ---
+
+# 以下是普通键
+basicInfo: 基本信息
+   basicInfo: 基本信息
+
+# 以下是普通键
+characterDetailBasicInfo: 基本信息
+   characterDetailBasicInfo: 基本信息
+
+# 以下是普通键
+exportDialogQualityStandard: 标准 (1x)
+   exportDialogQualityStandard: 标准 (1x)
+
+# 以下是普通键
+libraryManagementBasicInfo: 基本信息
+   libraryManagementBasicInfo: 基本信息
+
+# 以下是普通键
+workDetailBasicInfo: 基本信息
+   workDetailBasicInfo: 基本信息
+
+
+# --- DIALOG (43 keys) ---
+
+# 以下键替代了其他键
+colorPickerTitle: 选择颜色
+   colorPickerTitle: 选择颜色
+   selectColorTitle: 选择颜色
+
+# 以下是普通键
+characterCollectionSelectRegion: 请在预览区域选择字符区域
+   characterCollectionSelectRegion: 请在预览区域选择字符区域
+
+# 以下是普通键
+characterCollectionToolSelect: 选择工具 (Ctrl+B)
+   characterCollectionToolSelect: 选择工具 (Ctrl+B)
+
+# 以下是普通键
+characterCollectionUseSelectionTool: 使用左侧的选择工具从图像中提取字符
+   characterCollectionUseSelectionTool: 使用左侧的选择工具从图像中提取字符
+
+# 以下是普通键
+characterEditNoRegionSelected: 未选择区域
+   characterEditNoRegionSelected: 未选择区域
+
+# 以下是普通键
+charactersSelected: 已选择 {count} 个字符
+   charactersSelected: 已选择 {count} 个字符
+
+# 以下是普通键
+collectionPropertyPanelSelectCharacterFirst: 请先选择字符
+   collectionPropertyPanelSelectCharacterFirst: 请先选择字符
+
+# 以下是普通键
+emptyStateNoSelection: 未选择任何项目
+点击项目以选择
+   emptyStateNoSelection: 未选择任何项目
+点击项目以选择
+
+# 以下是普通键
+exportDialogSelectLocation: 请选择导出位置
+   exportDialogSelectLocation: 请选择导出位置
+
+# 以下是普通键
+imagePropertyPanelImageSelection: 图片选择
+   imagePropertyPanelImageSelection: 图片选择
+
+# 以下是普通键
+imagePropertyPanelNoImageSelected: 未选择图片
+   imagePropertyPanelNoImageSelected: 未选择图片
+
+# 以下是普通键
+imagePropertyPanelSelectFromLibrary: 从图库选择
+   imagePropertyPanelSelectFromLibrary: 从图库选择
+
+# 以下是普通键
+imagePropertyPanelSelectFromLocal: 从本地选择
+   imagePropertyPanelSelectFromLocal: 从本地选择
+
+# 以下是普通键
+noElementsSelected: 未选择元素
+   noElementsSelected: 未选择元素
+
+# 以下是普通键
+noPageSelected: 未选择页面
+   noPageSelected: 未选择页面
+
+# 以下是普通键
+practiceEditSelect: 选择
+   practiceEditSelect: 选择
+
+# 以下是普通键
+selectBackup: 选择备份
+   selectBackup: 选择备份
+
+# 以下是普通键
+selectCategoryToApply: 请选择要应用的分类:
+   selectCategoryToApply: 请选择要应用的分类:
+
+# 以下是普通键
+selectColor: 选择{type}
+   selectColor: 选择{type}
+
+# 以下是普通键
+selectExportLocation: 选择导出位置
+   selectExportLocation: 选择导出位置
+
+# 以下是普通键
+selectImage: 选择图片
+   selectImage: 选择图片
+
+# 以下是普通键
+selectImportFile: 选择备份文件
+   selectImportFile: 选择备份文件
+
+# 以下是普通键
+selectParentCategory: 选择父分类
+   selectParentCategory: 选择父分类
+
+# 以下是普通键
+selectTargetLayer: 选择目标图层
+   selectTargetLayer: 选择目标图层
+
+# 以下是普通键
+selected: 已选择
+   selected: 已选择
+
+# 以下是普通键
+selectedCount: 已选择{count}个
+   selectedCount: 已选择{count}个
+
+# 以下是普通键
+textureSelectFromLibrary: 从库中选择
+   textureSelectFromLibrary: 从库中选择
+
+# 以下是普通键
+workImportDialogFromGalleryLong: 从图库中选择图像
+   workImportDialogFromGalleryLong: 从图库中选择图像
+
+# 以下是普通键
+workImportDialogNoImages: 未选择图像
+   workImportDialogNoImages: 未选择图像
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpSection1: 1. 选择与导航
+   characterCollectionHelpSection1: 1. 选择与导航
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelColorPicker: 颜色选择器
+   collectionPropertyPanelColorPicker: 颜色选择器
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelNoCharacterSelected: 未选择字符
+   collectionPropertyPanelNoCharacterSelected: 未选择字符
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelSelectCharacter: 请选择字符
+   collectionPropertyPanelSelectCharacter: 请选择字符
+
+# 以下是未使用的键 [UNUSED]
+commonNoImageSelected: 没有选择图片
+   commonNoImageSelected: 没有选择图片
+
+# 以下是未使用的键 [UNUSED]
+errorSelectingImage: 选择图片时出错：{error}
+   errorSelectingImage: 选择图片时出错：{error}
+
+# 以下是未使用的键 [UNUSED]
+filterBatchSelection: 批量选择
+   filterBatchSelection: 批量选择
+
+# 以下是未使用的键 [UNUSED]
+filterItemsSelected: 已选择 {count} 项
+   filterItemsSelected: 已选择 {count} 项
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelNoImage: 未选择图像
+   imagePropertyPanelNoImage: 未选择图像
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelSelectFromLocalDescription: 选择的图片将会自动导入到图库
+   imagePropertyPanelSelectFromLocalDescription: 选择的图片将会自动导入到图库
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementEnterBatchMode: 进入批量选择模式
+   libraryManagementEnterBatchMode: 进入批量选择模式
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementExitBatchMode: 退出批量选择模式
+   libraryManagementExitBatchMode: 退出批量选择模式
+
+# 以下是未使用的键 [UNUSED]
+practiceEditElementSelectionInfo: 已选择{count}个元素
+   practiceEditElementSelectionInfo: 已选择{count}个元素
+
+# 以下是未使用的键 [UNUSED]
+selectCollection: 选择采集
+   selectCollection: 选择采集
+
+
+# --- FILE (29 keys) ---
+
+# 以下键替代了其他键
+export: 导出
+   export: 导出
+   practiceEditTopNavExport: 导出
+
+# 以下键替代了其他键
+files: 文件数量
+   files: 文件数量
+   fileCount: 文件数量
+
+# 以下键替代了其他键
+import: 导入
+   import: 导入
+   libraryManagementImport: 导入
+   workImportDialogImport: 导入
+   workImportImport: 导入
+
+# 以下键替代了其他键
+workBrowseImport: 导入作品
+   workBrowseImport: 导入作品
+   workImportDialogTitle: 导入作品
+
+# 以下是普通键
+characterEditThumbnailEmpty: 缩略图文件为空
+   characterEditThumbnailEmpty: 缩略图文件为空
+
+# 以下是普通键
+dropToImportImages: 释放鼠标以导入图片
+   dropToImportImages: 释放鼠标以导入图片
+
+# 以下是普通键
+enterFileName: 输入文件名
+   enterFileName: 输入文件名
+
+# 以下是普通键
+exportBackup: 导出备份
+   exportBackup: 导出备份
+
+# 以下是普通键
+exportDialogEnterFilename: 请输入文件名
+   exportDialogEnterFilename: 请输入文件名
+
+# 以下是普通键
+exportDialogInvalidFilename: 文件名不能包含以下字符: \ / : * ? " < > |
+   exportDialogInvalidFilename: 文件名不能包含以下字符: \ / : * ? " < > |
+
+# 以下是普通键
+exportDialogLocation: 导出位置
+   exportDialogLocation: 导出位置
+
+# 以下是普通键
+exporting: 正在导出，请稍候...
+   exporting: 正在导出，请稍候...
+
+# 以下是普通键
+exportingBackup: 导出备份中...
+   exportingBackup: 导出备份中...
+
+# 以下是普通键
+fileName: 文件名
+   fileName: 文件名
+
+# 以下是普通键
+imageFileNotExists: 图片文件不存在
+   imageFileNotExists: 图片文件不存在
+
+# 以下是普通键
+imagePropertyPanelFileNotExist: 文件不存在：{path}
+   imagePropertyPanelFileNotExist: 文件不存在：{path}
+
+# 以下是普通键
+imagePropertyPanelImporting: 导入图像中...
+   imagePropertyPanelImporting: 导入图像中...
+
+# 以下是普通键
+importBackup: 导入备份
+   importBackup: 导入备份
+
+# 以下是普通键
+importingBackup: 正在导入备份...
+   importingBackup: 正在导入备份...
+
+# 以下是普通键
+importingImages: 正在导入图片，请稍候...
+   importingImages: 正在导入图片，请稍候...
+
+# 以下是普通键
+libraryManagementImportFiles: 导入文件
+   libraryManagementImportFiles: 导入文件
+
+# 以下是普通键
+libraryManagementImportFolder: 导入文件夹
+   libraryManagementImportFolder: 导入文件夹
+
+# 以下是普通键
+openFolder: 打开文件夹
+   openFolder: 打开文件夹
+
+# 以下是普通键
+workBrowseNoWorksHint: 尝试导入新作品或更改筛选条件
+   workBrowseNoWorksHint: 尝试导入新作品或更改筛选条件
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpExport: 导出帮助文档
+   characterCollectionHelpExport: 导出帮助文档
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpExportSoon: 帮助文档导出功能即将推出
+   characterCollectionHelpExportSoon: 帮助文档导出功能即将推出
+
+# 以下是未使用的键 [UNUSED]
+exportBackupDescription: 将备份导出到外部位置
+   exportBackupDescription: 将备份导出到外部位置
+
+# 以下是未使用的键 [UNUSED]
+importBackupDescription: 从外部位置导入备份
+   importBackupDescription: 从外部位置导入备份
+
+# 以下是未使用的键 [UNUSED]
+invalidBackupFile: 无效的备份文件
+   invalidBackupFile: 无效的备份文件
+
+
+# --- FORMAT (43 keys) ---
+
+# 以下键替代了其他键
+filterSortSection: 排序
+   filterSortSection: 排序
+   characterFilterSort: 排序
+
+# 以下键替代了其他键
+filterTitle: 筛选与排序
+   filterTitle: 筛选与排序
+   characterFilterTitle: 筛选与排序
+
+# 以下键替代了其他键
+workBrowseBatchMode: 批量模式
+   workBrowseBatchMode: 批量模式
+   characterManagementBatchMode: 批量模式
+   practiceListBatchMode: 批量模式
+
+# 以下是普通键
+alignBottom: 底对齐
+   alignBottom: 底对齐
+
+# 以下是普通键
+alignLeft: 左对齐
+   alignLeft: 左对齐
+
+# 以下是普通键
+alignRight: 右对齐
+   alignRight: 右对齐
+
+# 以下是普通键
+alignTop: 顶对齐
+   alignTop: 顶对齐
+
+# 以下是普通键
+alignmentOperations: 对齐操作
+   alignmentOperations: 对齐操作
+
+# 以下是普通键
+characterDetailFormatExtension: 文件格式
+   characterDetailFormatExtension: 文件格式
+
+# 以下是普通键
+characterEditInvertMode: 反转模式
+   characterEditInvertMode: 反转模式
+
+# 以下是普通键
+exitBatchMode: 退出批量模式
+   exitBatchMode: 退出批量模式
+
+# 以下是普通键
+exportDialogFitPolicy: 适配方式
+   exportDialogFitPolicy: 适配方式
+
+# 以下是普通键
+exportFormat: 导出格式
+   exportFormat: 导出格式
+
+# 以下是普通键
+horizontalAlignment: 水平对齐
+   horizontalAlignment: 水平对齐
+
+# 以下是普通键
+imagePropertyPanelDisplay: 显示模式
+   imagePropertyPanelDisplay: 显示模式
+
+# 以下是普通键
+imagePropertyPanelFitMode: 适应模式
+   imagePropertyPanelFitMode: 适应模式
+
+# 以下是普通键
+libraryManagementFormat: 格式
+   libraryManagementFormat: 格式
+
+# 以下是普通键
+libraryManagementFormats: 格式
+   libraryManagementFormats: 格式
+
+# 以下是普通键
+libraryManagementSortBy: 排序方式
+   libraryManagementSortBy: 排序方式
+
+# 以下是普通键
+practiceEditTopNavExitPreview: 退出预览模式
+   practiceEditTopNavExitPreview: 退出预览模式
+
+# 以下是普通键
+practiceEditTopNavPreviewMode: 预览模式
+   practiceEditTopNavPreviewMode: 预览模式
+
+# 以下是普通键
+textPropertyPanelFontStyle: 字体样式
+   textPropertyPanelFontStyle: 字体样式
+
+# 以下是普通键
+textPropertyPanelTextAlign: 文本对齐
+   textPropertyPanelTextAlign: 文本对齐
+
+# 以下是普通键
+textPropertyPanelVerticalAlign: 垂直对齐
+   textPropertyPanelVerticalAlign: 垂直对齐
+
+# 以下是普通键
+textPropertyPanelWritingMode: 书写模式
+   textPropertyPanelWritingMode: 书写模式
+
+# 以下是普通键
+textureFillMode: 纹理填充模式
+   textureFillMode: 纹理填充模式
+
+# 以下是普通键
+themeMode: 主题模式
+   themeMode: 主题模式
+
+# 以下是普通键
+toolbarAlignmentAssist: 对齐辅助
+   toolbarAlignmentAssist: 对齐辅助
+
+# 以下是普通键
+toolbarAlignmentGrid: 网格贴附模式 - 点击切换到参考线对齐
+   toolbarAlignmentGrid: 网格贴附模式 - 点击切换到参考线对齐
+
+# 以下是普通键
+toolbarAlignmentGuideline: 参考线对齐模式 - 点击切换到无辅助
+   toolbarAlignmentGuideline: 参考线对齐模式 - 点击切换到无辅助
+
+# 以下是普通键
+toolbarAlignmentNone: 无辅助对齐 - 点击启用网格贴附
+   toolbarAlignmentNone: 无辅助对齐 - 点击启用网格贴附
+
+# 以下是普通键
+toolbarApplyFormatBrush: 应用格式刷 (Alt+W)
+   toolbarApplyFormatBrush: 应用格式刷 (Alt+W)
+
+# 以下是普通键
+toolbarCopyFormat: 复制格式 (Alt+Q)
+   toolbarCopyFormat: 复制格式 (Alt+Q)
+
+# 以下是普通键
+verticalAlignment: 垂直对齐
+   verticalAlignment: 垂直对齐
+
+# 以下是未使用的键 [UNUSED]
+alignmentRequiresMultipleElements: 对齐操作需要至少2个元素
+   alignmentRequiresMultipleElements: 对齐操作需要至少2个元素
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelRender: 渲染模式
+   collectionPropertyPanelRender: 渲染模式
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelStyle: 样式
+   collectionPropertyPanelStyle: 样式
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelStyled: 样式化
+   collectionPropertyPanelStyled: 样式化
+
+# 以下是未使用的键 [UNUSED]
+filterSortDirection: 排序方向
+   filterSortDirection: 排序方向
+
+# 以下是未使用的键 [UNUSED]
+filterSortField: 排序字段
+   filterSortField: 排序字段
+
+# 以下是未使用的键 [UNUSED]
+practiceEditDisableSnap: 禁用对齐 (Ctrl+R)
+   practiceEditDisableSnap: 禁用对齐 (Ctrl+R)
+
+# 以下是未使用的键 [UNUSED]
+practiceEditEnableSnap: 启用对齐 (Ctrl+R)
+   practiceEditEnableSnap: 启用对齐 (Ctrl+R)
+
+# 以下是未使用的键 [UNUSED]
+sortAndFilter: 排序和筛选
+   sortAndFilter: 排序和筛选
+
+
+# --- HELP (4 keys) ---
+
+# 以下键替代了其他键
+workFormHelp: 帮助
+   workFormHelp: 帮助
+   characterCollectionHelp: 帮助
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpGuide: 字符采集指南
+   characterCollectionHelpGuide: 字符采集指南
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpTitle: 字符采集帮助
+   characterCollectionHelpTitle: 字符采集帮助
+
+# 以下是未使用的键 [UNUSED]
+workFormHelp: 帮助
+   workFormHelp: 帮助
+
+
+# --- LABEL (121 keys) ---
+
+# 以下键替代了其他键
+author: 作者
+   author: 作者
+   characterDetailAuthor: 作者
+   filterSortFieldAuthor: 作者
+   workFormAuthor: 作者
+
+# 以下键替代了其他键
+characterManagementSearch: 搜索字符、作品或作者
+   characterManagementSearch: 搜索字符、作品或作者
+   searchCharactersWorksAuthors: 搜索字符、作品或作者
+
+# 以下键替代了其他键
+collectionPropertyPanel: 采集属性
+   collectionPropertyPanel: 采集属性
+   practiceEditCollectionProperties: 采集属性
+
+# 以下键替代了其他键
+endDate: 结束日期
+   endDate: 结束日期
+   filterDateEndDate: 结束日期
+   filterEndDate: 结束日期
+
+# 以下键替代了其他键
+filterTagsSelected: 已选标签：
+   filterTagsSelected: 已选标签：
+   characterFilterSelectedTags: 已选标签：
+
+# 以下键替代了其他键
+geometryProperties: 几何属性
+   geometryProperties: 几何属性
+   collectionPropertyPanelHeaderGeometry: 几何属性
+   practiceEditGeometryProperties: 几何属性
+   textPropertyPanelGeometry: 几何属性
+
+# 以下键替代了其他键
+imagePropertyPanel: 图像属性
+   imagePropertyPanel: 图像属性
+   practiceEditImageProperties: 图像属性
+
+# 以下键替代了其他键
+imagePropertyPanelContent: 内容属性
+   imagePropertyPanelContent: 内容属性
+   collectionPropertyPanelContent: 内容属性
+   collectionPropertyPanelHeaderContent: 内容属性
+   practiceEditContentProperties: 内容属性
+
+# 以下键替代了其他键
+name: 名称
+   name: 名称
+   libraryManagementName: 名称
+
+# 以下键替代了其他键
+pageSize: 页面大小
+   pageSize: 页面大小
+   exportDialogPageSize: 页面大小
+
+# 以下键替代了其他键
+practiceEditVisualProperties: 视觉属性
+   practiceEditVisualProperties: 视觉属性
+   collectionPropertyPanelHeaderVisual: 视觉属性
+
+# 以下键替代了其他键
+selectDate: 选择日期
+   selectDate: 选择日期
+   filterDateSelectPrompt: 选择日期
+   filterSelectDate: 选择日期
+   workFormSelectDate: 选择日期
+
+# 以下键替代了其他键
+startDate: 开始日期
+   startDate: 开始日期
+   filterDateStartDate: 开始日期
+   filterStartDate: 开始日期
+
+# 以下键替代了其他键
+textPropertyPanel: 文本属性
+   textPropertyPanel: 文本属性
+   practiceEditTextProperties: 文本属性
+
+# 以下键替代了其他键
+textPropertyPanelFontSize: 字体大小
+   textPropertyPanelFontSize: 字体大小
+   collectionPropertyPanelFontSize: 字体大小
+
+# 以下键替代了其他键
+textPropertyPanelGeometry: 几何属性
+   textPropertyPanelGeometry: 几何属性
+   collectionPropertyPanelGeometry: 几何属性
+   imagePropertyPanelGeometry: 几何属性
+
+# 以下键替代了其他键
+workDetailTags: 标签
+   workDetailTags: 标签
+   characterDetailTags: 标签
+   characterFilterTags: 标签
+   filterTagsSection: 标签
+   libraryManagementTags: 标签
+
+# 以下键替代了其他键
+workFormCreationDate: 创作日期
+   workFormCreationDate: 创作日期
+   characterFilterCreationDate: 创作日期
+   filterSortFieldCreationDate: 创作日期
+
+# 以下键替代了其他键
+workFormTitle: 标题
+   workFormTitle: 标题
+   filterSortFieldTitle: 标题
+
+# 以下是普通键
+adjustGridSize: 调整网格大小
+   adjustGridSize: 调整网格大小
+
+# 以下是普通键
+afterDate: 某个日期之后
+   afterDate: 某个日期之后
+
+# 以下是普通键
+allTypes: 所有类型
+   allTypes: 所有类型
+
+# 以下是普通键
+beforeDate: 某个日期之前
+   beforeDate: 某个日期之前
+
+# 以下是普通键
+cacheSize: 缓存大小
+   cacheSize: 缓存大小
+
+# 以下是普通键
+canvasPixelSize: 画布像素大小
+   canvasPixelSize: 画布像素大小
+
+# 以下是普通键
+categoryName: 分类名称
+   categoryName: 分类名称
+
+# 以下是普通键
+characterDetailCollectionTime: 采集时间
+   characterDetailCollectionTime: 采集时间
+
+# 以下是普通键
+characterDetailCreationTime: 创作时间
+   characterDetailCreationTime: 创作时间
+
+# 以下是普通键
+characterDetailFormatType: 类型
+   characterDetailFormatType: 类型
+
+# 以下是普通键
+characterDetailTagHint: 输入标签名称
+   characterDetailTagHint: 输入标签名称
+
+# 以下是普通键
+characterDetailTagRemoveError: 移除标签失败, 错误: {error}
+   characterDetailTagRemoveError: 移除标签失败, 错误: {error}
+
+# 以下是普通键
+characterDetailWorkTitle: 作品标题
+   characterDetailWorkTitle: 作品标题
+
+# 以下是普通键
+characterEditThumbnailSizeError: 获取缩略图大小失败
+   characterEditThumbnailSizeError: 获取缩略图大小失败
+
+# 以下是普通键
+characterFilterCollectionDate: 采集日期
+   characterFilterCollectionDate: 采集日期
+
+# 以下是普通键
+commonProperties: 通用属性
+   commonProperties: 通用属性
+
+# 以下是普通键
+commonTags: 常用标签:
+   commonTags: 常用标签:
+
+# 以下是普通键
+customSize: 自定义大小
+   customSize: 自定义大小
+
+# 以下是普通键
+diskCacheSize: 磁盘缓存大小
+   diskCacheSize: 磁盘缓存大小
+
+# 以下是普通键
+diskCacheSizeDescription: 磁盘缓存的最大大小
+   diskCacheSizeDescription: 磁盘缓存的最大大小
+
+# 以下是普通键
+diskCacheTtlDescription: 缓存文件在磁盘上保留的时间
+   diskCacheTtlDescription: 缓存文件在磁盘上保留的时间
+
+# 以下是普通键
+elementSize: 大小
+   elementSize: 大小
+
+# 以下是普通键
+enterCategoryName: 请输入分类名称
+   enterCategoryName: 请输入分类名称
+
+# 以下是普通键
+filterDatePresetAll: 全部时间
+   filterDatePresetAll: 全部时间
+
+# 以下是普通键
+filterDateSection: 创建时间
+   filterDateSection: 创建时间
+
+# 以下是普通键
+filterSortFieldCreateTime: 创建时间
+   filterSortFieldCreateTime: 创建时间
+
+# 以下是普通键
+filterSortFieldFileName: 文件名称
+   filterSortFieldFileName: 文件名称
+
+# 以下是普通键
+filterSortFieldFileSize: 文件大小
+   filterSortFieldFileSize: 文件大小
+
+# 以下是普通键
+filterSortFieldFileUpdatedAt: 文件修改时间
+   filterSortFieldFileUpdatedAt: 文件修改时间
+
+# 以下是普通键
+filterSortFieldUpdateTime: 更新时间
+   filterSortFieldUpdateTime: 更新时间
+
+# 以下是普通键
+filterTagsAddHint: 输入标签名称并按回车
+   filterTagsAddHint: 输入标签名称并按回车
+
+# 以下是普通键
+gridSize: 网格大小
+   gridSize: 网格大小
+
+# 以下是普通键
+imagePropertyPanelGeometryWarning: 这些属性调整整个元素框，而不是图像内容本身
+   imagePropertyPanelGeometryWarning: 这些属性调整整个元素框，而不是图像内容本身
+
+# 以下是普通键
+inputNewTag: 输入新标签...
+   inputNewTag: 输入新标签...
+
+# 以下是普通键
+lastBackupTime: 上次备份时间
+   lastBackupTime: 上次备份时间
+
+# 以下是普通键
+libraryManagementCreatedAt: 创建时间
+   libraryManagementCreatedAt: 创建时间
+
+# 以下是普通键
+libraryManagementFileSize: 文件大小
+   libraryManagementFileSize: 文件大小
+
+# 以下是普通键
+libraryManagementTimeInfo: 时间信息
+   libraryManagementTimeInfo: 时间信息
+
+# 以下是普通键
+libraryManagementType: 类型
+   libraryManagementType: 类型
+
+# 以下是普通键
+libraryManagementTypes: 类型
+   libraryManagementTypes: 类型
+
+# 以下是普通键
+libraryManagementUpdatedAt: 更新时间
+   libraryManagementUpdatedAt: 更新时间
+
+# 以下是普通键
+noTags: 无标签
+   noTags: 无标签
+
+# 以下是普通键
+overwriteMessage: 已存在标题为"{title}"的字帖，是否覆盖？
+   overwriteMessage: 已存在标题为"{title}"的字帖，是否覆盖？
+
+# 以下是普通键
+practiceEditEnterTitle: 请输入字帖标题
+   practiceEditEnterTitle: 请输入字帖标题
+
+# 以下是普通键
+practiceEditGroupProperties: 组属性
+   practiceEditGroupProperties: 组属性
+
+# 以下是普通键
+practiceEditLayerProperties: 图层属性
+   practiceEditLayerProperties: 图层属性
+
+# 以下是普通键
+practiceEditPageProperties: 页面属性
+   practiceEditPageProperties: 页面属性
+
+# 以下是普通键
+practiceEditPracticeTitle: 字帖标题
+   practiceEditPracticeTitle: 字帖标题
+
+# 以下是普通键
+practiceEditTitleExists: 标题已存在
+   practiceEditTitleExists: 标题已存在
+
+# 以下是普通键
+practiceEditTitleUpdated: 标题已更新为"{title}"
+   practiceEditTitleUpdated: 标题已更新为"{title}"
+
+# 以下是普通键
+practiceListSortByCreateTime: 按创建时间排序
+   practiceListSortByCreateTime: 按创建时间排序
+
+# 以下是普通键
+practiceListSortByTitle: 按标题排序
+   practiceListSortByTitle: 按标题排序
+
+# 以下是普通键
+practiceListSortByUpdateTime: 按更新时间排序
+   practiceListSortByUpdateTime: 按更新时间排序
+
+# 以下是普通键
+presetSize: 预设大小
+   presetSize: 预设大小
+
+# 以下是普通键
+tagEditorEnterTagHint: 输入标签并按Enter
+   tagEditorEnterTagHint: 输入标签并按Enter
+
+# 以下是普通键
+tagEditorNoTags: 无标签
+   tagEditorNoTags: 无标签
+
+# 以下是普通键
+tagEditorSuggestedTags: 建议标签：
+   tagEditorSuggestedTags: 建议标签：
+
+# 以下是普通键
+tagsHint: 输入标签...
+   tagsHint: 输入标签...
+
+# 以下是普通键
+titleAlreadyExists: 已存在相同标题的字帖，请使用其他标题
+   titleAlreadyExists: 已存在相同标题的字帖，请使用其他标题
+
+# 以下是普通键
+titleCannotBeEmpty: 标题不能为空
+   titleCannotBeEmpty: 标题不能为空
+
+# 以下是普通键
+workDetailCreateTime: 创建时间
+   workDetailCreateTime: 创建时间
+
+# 以下是普通键
+workDetailUpdateTime: 更新时间
+   workDetailUpdateTime: 更新时间
+
+# 以下是普通键
+workFormAuthorHelp: 可选，作品的创作者
+   workFormAuthorHelp: 可选，作品的创作者
+
+# 以下是普通键
+workFormAuthorHint: 输入作者名称
+   workFormAuthorHint: 输入作者名称
+
+# 以下是普通键
+workFormAuthorMaxLength: 作者名称不能超过50个字符
+   workFormAuthorMaxLength: 作者名称不能超过50个字符
+
+# 以下是普通键
+workFormAuthorTooltip: 按Ctrl+A快速跳转到作者字段
+   workFormAuthorTooltip: 按Ctrl+A快速跳转到作者字段
+
+# 以下是普通键
+workFormCreationDateError: 创作日期不能超过当前日期
+   workFormCreationDateError: 创作日期不能超过当前日期
+
+# 以下是普通键
+workFormDateHelp: 作品的完成日期
+   workFormDateHelp: 作品的完成日期
+
+# 以下是普通键
+workFormStyleHelp: 作品的主要风格类型
+   workFormStyleHelp: 作品的主要风格类型
+
+# 以下是普通键
+workFormTitleHelp: 作品的主标题，显示在作品列表中
+   workFormTitleHelp: 作品的主标题，显示在作品列表中
+
+# 以下是普通键
+workFormTitleHint: 输入标题
+   workFormTitleHint: 输入标题
+
+# 以下是普通键
+workFormTitleMaxLength: 标题不能超过100个字符
+   workFormTitleMaxLength: 标题不能超过100个字符
+
+# 以下是普通键
+workFormTitleMinLength: 标题必须至少2个字符
+   workFormTitleMinLength: 标题必须至少2个字符
+
+# 以下是普通键
+workFormTitleRequired: 标题为必填项
+   workFormTitleRequired: 标题为必填项
+
+# 以下是普通键
+workFormTitleTooltip: 按Ctrl+T快速跳转到标题字段
+   workFormTitleTooltip: 按Ctrl+T快速跳转到标题字段
+
+# 以下是未使用的键 [UNUSED]
+categoryNameCannotBeEmpty: 分类名称不能为空
+   categoryNameCannotBeEmpty: 分类名称不能为空
+
+# 以下是未使用的键 [UNUSED]
+characterDetailFormatName: 格式名称
+   characterDetailFormatName: 格式名称
+
+# 以下是未使用的键 [UNUSED]
+characterFilterAddTagHint: 输入标签名称并按 Enter
+   characterFilterAddTagHint: 输入标签名称并按 Enter
+
+# 以下是未使用的键 [UNUSED]
+characterManagementSearch: 搜索字符、作品或作者
+   characterManagementSearch: 搜索字符、作品或作者
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanel: 采集属性
+   collectionPropertyPanel: 采集属性
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelPropertyUpdated: 属性已更新
+   collectionPropertyPanelPropertyUpdated: 属性已更新
+
+# 以下是未使用的键 [UNUSED]
+elementType: 元素类型
+   elementType: 元素类型
+
+# 以下是未使用的键 [UNUSED]
+filterDateRange: 日期范围
+   filterDateRange: 日期范围
+
+# 以下是未使用的键 [UNUSED]
+filterSelectDateRange: 选择日期范围
+   filterSelectDateRange: 选择日期范围
+
+# 以下是未使用的键 [UNUSED]
+filterTagsNone: 未选择标签
+   filterTagsNone: 未选择标签
+
+# 以下是未使用的键 [UNUSED]
+filterTagsSuggested: 推荐标签：
+   filterTagsSuggested: 推荐标签：
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanel: 图像属性
+   imagePropertyPanel: 图像属性
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelContent: 内容属性
+   imagePropertyPanelContent: 内容属性
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelImageSize: 图像大小
+   imagePropertyPanelImageSize: 图像大小
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelOriginalSize: 原始大小
+   imagePropertyPanelOriginalSize: 原始大小
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelTitle: 图片属性
+   imagePropertyPanelTitle: 图片属性
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSortByDate: 按日期
+   libraryManagementSortByDate: 按日期
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSortByFileSize: 按文件大小
+   libraryManagementSortByFileSize: 按文件大小
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSortByName: 按名称
+   libraryManagementSortByName: 按名称
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSortBySize: 按文件大小
+   libraryManagementSortBySize: 按文件大小
+
+# 以下是未使用的键 [UNUSED]
+ppiHelperText: 用于计算画布像素大小，默认300ppi
+   ppiHelperText: 用于计算画布像素大小，默认300ppi
+
+# 以下是未使用的键 [UNUSED]
+practiceEditElementProperties: 元素属性
+   practiceEditElementProperties: 元素属性
+
+# 以下是未使用的键 [UNUSED]
+practiceEditMultiSelectionProperties: 多选属性
+   practiceEditMultiSelectionProperties: 多选属性
+
+# 以下是未使用的键 [UNUSED]
+practiceEditPropertyPanel: 属性
+   practiceEditPropertyPanel: 属性
+
+# 以下是未使用的键 [UNUSED]
+practiceEditVisualProperties: 视觉属性
+   practiceEditVisualProperties: 视觉属性
+
+# 以下是未使用的键 [UNUSED]
+textPropertyPanel: 文本属性
+   textPropertyPanel: 文本属性
+
+# 以下是未使用的键 [UNUSED]
+unknownElementType: 未知元素类型: {type}
+   unknownElementType: 未知元素类型: {type}
+
+
+# --- MESSAGE (81 keys) ---
+
+# 以下键替代了其他键
+characterEditThumbnailLoadError: 加载缩略图失败
+   characterEditThumbnailLoadError: 加载缩略图失败
+   characterEditThumbnailLoadFailed: 加载缩略图失败
+
+# 以下键替代了其他键
+imageCacheClearFailed: 清除图像缓存失败
+   imageCacheClearFailed: 清除图像缓存失败
+   collectionPropertyPanelCacheClearFailed: 清除图像缓存失败
+
+# 以下键替代了其他键
+importFileFailed: 导入失败: {error}
+   importFileFailed: 导入失败: {error}
+   importFailedMessage: 导入失败: {error}
+
+# 以下键替代了其他键
+workBrowseError: 错误：{message}
+   workBrowseError: 错误：{message}
+   characterManagementError: 错误：{message}
+
+# 以下是普通键
+appRestartFailed: 应用重启失败，请手动重启应用
+   appRestartFailed: 应用重启失败，请手动重启应用
+
+# 以下是普通键
+appRestartingMessage: 数据恢复成功，正在重启应用...
+   appRestartingMessage: 数据恢复成功，正在重启应用...
+
+# 以下是普通键
+backupFailure: 创建备份失败
+   backupFailure: 创建备份失败
+
+# 以下是普通键
+backupSuccess: 备份创建成功
+   backupSuccess: 备份创建成功
+
+# 以下是普通键
+cacheClearedMessage: 缓存已成功清除
+   cacheClearedMessage: 缓存已成功清除
+
+# 以下是普通键
+cannotCapturePageImage: 无法捕获页面图像
+   cannotCapturePageImage: 无法捕获页面图像
+
+# 以下是普通键
+characterCollectionError: 错误：{error}
+   characterCollectionError: 错误：{error}
+
+# 以下是普通键
+characterCollectionFindSwitchFailed: 查找并切换页面失败：{error}
+   characterCollectionFindSwitchFailed: 查找并切换页面失败：{error}
+
+# 以下是普通键
+characterCollectionImageLoadError: 无法加载图像
+   characterCollectionImageLoadError: 无法加载图像
+
+# 以下是普通键
+characterDetailLoadError: 加载字符详情失败
+   characterDetailLoadError: 加载字符详情失败
+
+# 以下是普通键
+characterEditImageLoadError: 图像加载错误
+   characterEditImageLoadError: 图像加载错误
+
+# 以下是普通键
+characterEditImageLoadFailed: 加载或处理字符图像失败
+   characterEditImageLoadFailed: 加载或处理字符图像失败
+
+# 以下是普通键
+characterEditThumbnailCheckFailed: 缩略图检查失败
+   characterEditThumbnailCheckFailed: 缩略图检查失败
+
+# 以下是普通键
+characterEditUnknownError: 未知错误
+   characterEditUnknownError: 未知错误
+
+# 以下是普通键
+confirmOverwrite: 确认覆盖
+   confirmOverwrite: 确认覆盖
+
+# 以下是普通键
+couldNotGetFilePath: 无法获取文件路径
+   couldNotGetFilePath: 无法获取文件路径
+
+# 以下是普通键
+emptyStateError: 加载失败
+请稍后再试
+   emptyStateError: 加载失败
+请稍后再试
+
+# 以下是普通键
+exportDialogCreateDirectoryFailed: 创建导出目录失败
+   exportDialogCreateDirectoryFailed: 创建导出目录失败
+
+# 以下是普通键
+exportDialogNoPreview: 无法生成预览
+   exportDialogNoPreview: 无法生成预览
+
+# 以下是普通键
+exportFailed: 导出失败: 参数不完整
+   exportFailed: 导出失败: 参数不完整
+
+# 以下是普通键
+exportFailure: 备份导出失败
+   exportFailure: 备份导出失败
+
+# 以下是普通键
+exportSuccess: 备份导出成功
+   exportSuccess: 备份导出成功
+
+# 以下是普通键
+imageExportFailed: 图片导出失败
+   imageExportFailed: 图片导出失败
+
+# 以下是普通键
+imageIndexError: 图片索引错误
+   imageIndexError: 图片索引错误
+
+# 以下是普通键
+imageLoadFailed: 图片加载失败
+   imageLoadFailed: 图片加载失败
+
+# 以下是普通键
+imagePropertyPanelCannotApplyNoSizeInfo: 无法获取图片尺寸信息
+   imagePropertyPanelCannotApplyNoSizeInfo: 无法获取图片尺寸信息
+
+# 以下是普通键
+imagePropertyPanelImportError: 导入图像失败：{error}
+   imagePropertyPanelImportError: 导入图像失败：{error}
+
+# 以下是普通键
+imagePropertyPanelImportSuccess: 图像导入成功
+   imagePropertyPanelImportSuccess: 图像导入成功
+
+# 以下是普通键
+imagePropertyPanelLoadError: 加载图像失败：{error}...
+   imagePropertyPanelLoadError: 加载图像失败：{error}...
+
+# 以下是普通键
+imagePropertyPanelProcessingPathError: 处理路径错误：{error}
+   imagePropertyPanelProcessingPathError: 处理路径错误：{error}
+
+# 以下是普通键
+imagePropertyPanelResetSuccess: 重置成功
+   imagePropertyPanelResetSuccess: 重置成功
+
+# 以下是普通键
+imagePropertyPanelTransformError: 应用变换失败：{error}
+   imagePropertyPanelTransformError: 应用变换失败：{error}
+
+# 以下是普通键
+importFailure: 备份导入失败
+   importFailure: 备份导入失败
+
+# 以下是普通键
+importFileSuccess: 成功导入文件
+   importFileSuccess: 成功导入文件
+
+# 以下是普通键
+importSuccess: 备份导入成功
+   importSuccess: 备份导入成功
+
+# 以下是普通键
+importSuccessMessage: 成功导入 {count} 个文件
+   importSuccessMessage: 成功导入 {count} 个文件
+
+# 以下是普通键
+initializationFailed: 初始化失败：{error}
+   initializationFailed: 初始化失败：{error}
+
+# 以下是普通键
+loadFailed: 加载失败
+   loadFailed: 加载失败
+
+# 以下是普通键
+loadPracticeSheetFailed: 加载字帖失败
+   loadPracticeSheetFailed: 加载字帖失败
+
+# 以下是普通键
+loadingError: 加载错误
+   loadingError: 加载错误
+
+# 以下是普通键
+openGalleryFailed: 打开图库失败: {error}
+   openGalleryFailed: 打开图库失败: {error}
+
+# 以下是普通键
+overwriteConfirm: 覆盖确认
+   overwriteConfirm: 覆盖确认
+
+# 以下是普通键
+pdfExportFailed: PDF导出失败
+   pdfExportFailed: PDF导出失败
+
+# 以下是普通键
+pdfExportSuccess: PDF导出成功: {path}
+   pdfExportSuccess: PDF导出成功: {path}
+
+# 以下是普通键
+practiceEditPracticeLoaded: 字帖"{title}"加载成功
+   practiceEditPracticeLoaded: 字帖"{title}"加载成功
+
+# 以下是普通键
+practiceListThumbnailError: 缩略图加载失败
+   practiceListThumbnailError: 缩略图加载失败
+
+# 以下是普通键
+refreshDataFailed: 刷新数据失败: {error}
+   refreshDataFailed: 刷新数据失败: {error}
+
+# 以下是普通键
+renderFailed: 渲染失败
+   renderFailed: 渲染失败
+
+# 以下是普通键
+restoreConfirmTitle: 恢复确认
+   restoreConfirmTitle: 恢复确认
+
+# 以下是普通键
+restoreFailure: 恢复失败
+   restoreFailure: 恢复失败
+
+# 以下是普通键
+ungroupConfirm: 确认解组
+   ungroupConfirm: 确认解组
+
+# 以下是普通键
+workDetailExtractionError: 无法打开字符提取
+   workDetailExtractionError: 无法打开字符提取
+
+# 以下是普通键
+workDetailImageLoadError: 选中的图像无法加载，请尝试重新导入图像
+   workDetailImageLoadError: 选中的图像无法加载，请尝试重新导入图像
+
+# 以下是普通键
+workDetailNoImagesForExtraction: 无法提取字符：作品没有图像
+   workDetailNoImagesForExtraction: 无法提取字符：作品没有图像
+
+# 以下是普通键
+workImportDialogError: 导入失败：{error}
+   workImportDialogError: 导入失败：{error}
+
+# 以下是未使用的键 [UNUSED]
+commonError: 发生错误
+   commonError: 发生错误
+
+# 以下是未使用的键 [UNUSED]
+commonLoading: 加载中...
+   commonLoading: 加载中...
+
+# 以下是未使用的键 [UNUSED]
+commonSuccess: 操作成功
+   commonSuccess: 操作成功
+
+# 以下是未使用的键 [UNUSED]
+deleteCategoryWithFilesWarning: 警告
+   deleteCategoryWithFilesWarning: 警告
+
+# 以下是未使用的键 [UNUSED]
+exportFailedWithError: 导出失败: {error}
+   exportFailedWithError: 导出失败: {error}
+
+# 以下是未使用的键 [UNUSED]
+imageCacheClearFailed: 清除图像缓存失败
+   imageCacheClearFailed: 清除图像缓存失败
+
+# 以下是未使用的键 [UNUSED]
+imageExportSuccess: 导出{count}个图片成功
+   imageExportSuccess: 导出{count}个图片成功
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelCroppingValueTooLarge: 无法应用变换：裁剪值过大，导致无效的裁剪区域
+   imagePropertyPanelCroppingValueTooLarge: 无法应用变换：裁剪值过大，导致无效的裁剪区域
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelErrorMessage: 发生错误: {error}
+   imagePropertyPanelErrorMessage: 发生错误: {error}
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelFileLoadError: 文件加载失败
+   imagePropertyPanelFileLoadError: 文件加载失败
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelFileNotRecovered: 图片文件丢失且无法恢复
+   imagePropertyPanelFileNotRecovered: 图片文件丢失且无法恢复
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelLoading: 加载中...
+   imagePropertyPanelLoading: 加载中...
+
+# 以下是未使用的键 [UNUSED]
+importImageFailed: 导入图片失败: {error}
+   importImageFailed: 导入图片失败: {error}
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementError: 加载失败：{message}
+   libraryManagementError: 加载失败：{message}
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementLoading: 加载中...
+   libraryManagementLoading: 加载中...
+
+# 以下是未使用的键 [UNUSED]
+pdfExportSuccessNoFile: PDF导出成功，但无法找到文件: {path}
+   pdfExportSuccessNoFile: PDF导出成功，但无法找到文件: {path}
+
+# 以下是未使用的键 [UNUSED]
+practiceEditLoadFailed: 加载字帖失败：{error}
+   practiceEditLoadFailed: 加载字帖失败：{error}
+
+# 以下是未使用的键 [UNUSED]
+practiceListError: 加载字帖错误
+   practiceListError: 加载字帖错误
+
+# 以下是未使用的键 [UNUSED]
+printPreparationFailed: 打印准备失败: {error}
+   printPreparationFailed: 打印准备失败: {error}
+
+# 以下是未使用的键 [UNUSED]
+restoreSuccess: 恢复成功
+   restoreSuccess: 恢复成功
+
+# 以下是未使用的键 [UNUSED]
+selectDirectoryFailed: 选择目录失败: {error}
+   selectDirectoryFailed: 选择目录失败: {error}
+
+# 以下是未使用的键 [UNUSED]
+workImportDialogSuccess: 导入成功
+   workImportDialogSuccess: 导入成功
+
+
+# --- NAVIGATION (16 keys) ---
+
+# 以下键替代了其他键
+workFormDateTooltip: 按Tab导航到下一个字段
+   workFormDateTooltip: 按Tab导航到下一个字段
+   workFormStyleTooltip: 按Tab导航到下一个字段
+   workFormToolTooltip: 按Tab导航到下一个字段
+
+# 以下是普通键
+autoDetectPageOrientation: 自动检测页面方向
+   autoDetectPageOrientation: 自动检测页面方向
+
+# 以下是普通键
+characterCollectionSwitchingPage: 正在切换到字符页面...
+   characterCollectionSwitchingPage: 正在切换到字符页面...
+
+# 以下是普通键
+exportDialogAllPages: 全部页面
+   exportDialogAllPages: 全部页面
+
+# 以下是普通键
+exportDialogCurrentPage: 当前页面
+   exportDialogCurrentPage: 当前页面
+
+# 以下是普通键
+exportDialogFitContain: 包含在页面内
+   exportDialogFitContain: 包含在页面内
+
+# 以下是普通键
+exportDialogPageMargins: 页面边距 (厘米)
+   exportDialogPageMargins: 页面边距 (厘米)
+
+# 以下是普通键
+exportDialogPageOrientation: 页面朝向
+   exportDialogPageOrientation: 页面朝向
+
+# 以下是普通键
+exportDialogPageRange: 页面范围
+   exportDialogPageRange: 页面范围
+
+# 以下是普通键
+noPagesToExport: 没有可导出的页面
+   noPagesToExport: 没有可导出的页面
+
+# 以下是普通键
+noPagesToPrint: 没有可打印的页面
+   noPagesToPrint: 没有可打印的页面
+
+# 以下是普通键
+pageOrientation: 页面方向
+   pageOrientation: 页面方向
+
+# 以下是普通键
+practiceEditTopNavHideThumbnails: 隐藏页面缩略图
+   practiceEditTopNavHideThumbnails: 隐藏页面缩略图
+
+# 以下是普通键
+practiceEditTopNavShowThumbnails: 显示页面缩略图
+   practiceEditTopNavShowThumbnails: 显示页面缩略图
+
+# 以下是未使用的键 [UNUSED]
+pageName: 页面{index}
+   pageName: 页面{index}
+
+# 以下是未使用的键 [UNUSED]
+practicePageSettings: 页面设置
+   practicePageSettings: 页面设置
+
+
+# --- OTHER (425 keys) ---
+
+# 以下键替代了其他键
+appTitle: 字字珠玑
+   appTitle: 字字珠玑
+   appName: 字字珠玑
+
+# 以下键替代了其他键
+apply: 应用
+   apply: 应用
+   filterApply: 应用
+   filterDateApply: 应用
+
+# 以下键替代了其他键
+characterCollectionFilterAll: 全部
+   characterCollectionFilterAll: 全部
+   practiceListStatusAll: 全部
+
+# 以下键替代了其他键
+characterCollectionNoCharacter: 无字符
+   characterCollectionNoCharacter: 无字符
+   collectionPropertyPanelNoCharacterText: 无字符
+
+# 以下键替代了其他键
+characterDetailCalligraphyStyle: 书法风格
+   characterDetailCalligraphyStyle: 书法风格
+   characterFilterCalligraphyStyle: 书法风格
+
+# 以下键替代了其他键
+characterDetailFormatOriginal: 原始
+   characterDetailFormatOriginal: 原始
+   collectionPropertyPanelOriginal: 原始
+   imagePropertyPanelFitOriginal: 原始
+
+# 以下键替代了其他键
+characterDetailWritingTool: 书写工具
+   characterDetailWritingTool: 书写工具
+   characterFilterWritingTool: 书写工具
+
+# 以下键替代了其他键
+characterEditRedo: 重做
+   characterEditRedo: 重做
+   practiceEditTopNavRedo: 重做
+
+# 以下键替代了其他键
+characterEditUndo: 撤销
+   characterEditUndo: 撤销
+   practiceEditTopNavUndo: 撤销
+
+# 以下键替代了其他键
+clearCache: 清除缓存
+   clearCache: 清除缓存
+   clearCacheConfirmTitle: 清除缓存
+
+# 以下键替代了其他键
+clearImageCache: 清除图像缓存
+   clearImageCache: 清除图像缓存
+   collectionPropertyPanelClearImageCache: 清除图像缓存
+
+# 以下键替代了其他键
+elements: 元素
+   elements: 元素
+   practiceEditElements: 元素
+
+# 以下键替代了其他键
+exportDialogCustomRange: 自定义范围
+   exportDialogCustomRange: 自定义范围
+   filterCustomRange: 自定义范围
+
+# 以下键替代了其他键
+exportDialogNextPage: 下一页
+   exportDialogNextPage: 下一页
+   characterCollectionNextPage: 下一页
+
+# 以下键替代了其他键
+exportDialogPreviousPage: 上一页
+   exportDialogPreviousPage: 上一页
+   characterCollectionPreviousPage: 上一页
+
+# 以下键替代了其他键
+filterClear: 清除
+   filterClear: 清除
+   filterDateClear: 清除
+
+# 以下键替代了其他键
+filterDatePresets: 预设
+   filterDatePresets: 预设
+   filterPresetSection: 预设
+
+# 以下键替代了其他键
+filterExpand: 展开筛选面板
+   filterExpand: 展开筛选面板
+   characterFilterExpand: 展开筛选面板
+
+# 以下键替代了其他键
+filterFavoritesOnly: 仅显示收藏
+   filterFavoritesOnly: 仅显示收藏
+   characterFilterFavoritesOnly: 仅显示收藏
+
+# 以下键替代了其他键
+filterSortFieldNone: 无
+   filterSortFieldNone: 无
+   imagePropertyPanelFitNone: 无
+
+# 以下键替代了其他键
+filterStyleSection: 书法风格
+   filterStyleSection: 书法风格
+   characterDetailCalligraphyStyle: 书法风格
+
+# 以下键替代了其他键
+filterToolSection: 书写工具
+   filterToolSection: 书写工具
+   characterDetailWritingTool: 书写工具
+
+# 以下键替代了其他键
+gridView: 网格视图
+   gridView: 网格视图
+   practiceListGridView: 网格视图
+
+# 以下键替代了其他键
+imagePropertyPanelBorder: 边框
+   imagePropertyPanelBorder: 边框
+   collectionPropertyPanelBorder: 边框
+
+# 以下键替代了其他键
+imagePropertyPanelFlip: 翻转
+   imagePropertyPanelFlip: 翻转
+   collectionPropertyPanelFlip: 翻转
+
+# 以下键替代了其他键
+imagePropertyPanelReset: 重置
+   imagePropertyPanelReset: 重置
+   collectionPropertyPanelReset: 重置
+
+# 以下键替代了其他键
+landscape: 横向
+   landscape: 横向
+   exportDialogLandscape: 横向
+
+# 以下键替代了其他键
+languageSystem: 系统
+   languageSystem: 系统
+   themeModeSystem: 系统
+
+# 以下键替代了其他键
+libraryManagementCategories: 分类
+   libraryManagementCategories: 分类
+   categories: 分类
+
+# 以下键替代了其他键
+portrait: 纵向
+   portrait: 纵向
+   exportDialogPortrait: 纵向
+
+# 以下键替代了其他键
+position: 位置
+   position: 位置
+   imagePropertyPanelPosition: 位置
+   textPropertyPanelPosition: 位置
+
+# 以下键替代了其他键
+practiceEditLeave: 离开
+   practiceEditLeave: 离开
+   characterCollectionLeave: 离开
+
+# 以下键替代了其他键
+preview: 预览
+   preview: 预览
+   exportDialogPreview: 预览
+   previewText: 预览
+   textPropertyPanelPreview: 预览
+
+# 以下键替代了其他键
+remove: 移除
+   remove: 移除
+   textureRemove: 移除
+
+# 以下键替代了其他键
+retry: 重试
+   retry: 重试
+   characterCollectionRetry: 重试
+
+# 以下键替代了其他键
+rotation: 旋转
+   rotation: 旋转
+   collectionPropertyPanelRotation: 旋转
+   imagePropertyPanelRotation: 旋转
+
+# 以下键替代了其他键
+text: 文本
+   text: 文本
+   practiceEditText: 文本
+
+# 以下键替代了其他键
+textPropertyPanelPadding: 内边距
+   textPropertyPanelPadding: 内边距
+   collectionPropertyPanelPadding: 内边距
+
+# 以下键替代了其他键
+workBrowseItemsPerPage: {count}项/页
+   workBrowseItemsPerPage: {count}项/页
+   characterManagementItemsPerPage: {count}项/页
+
+# 以下键替代了其他键
+workFormStyle: 风格
+   workFormStyle: 风格
+   filterSortFieldStyle: 风格
+
+# 以下键替代了其他键
+workFormTool: 工具
+   workFormTool: 工具
+   filterSortFieldTool: 工具
+
+# 以下键替代了其他键
+workImportDialogProcessing: 处理中...
+   workImportDialogProcessing: 处理中...
+   characterCollectionProcessing: 处理中...
+
+# 以下键替代了其他键
+workStatusDraft: 草稿
+   workStatusDraft: 草稿
+   practiceListStatusDraft: 草稿
+
+# 以下键替代了其他键
+workStyleClerical: 隶书
+   workStyleClerical: 隶书
+   filterStyleClerical: 隶书
+
+# 以下键替代了其他键
+workStyleCursive: 草书
+   workStyleCursive: 草书
+   filterStyleCursive: 草书
+
+# 以下键替代了其他键
+workStyleOther: 其他
+   workStyleOther: 其他
+   filterStyleOther: 其他
+
+# 以下键替代了其他键
+workStyleRegular: 楷书
+   workStyleRegular: 楷书
+   filterStyleRegular: 楷书
+
+# 以下键替代了其他键
+workStyleRunning: 行书
+   workStyleRunning: 行书
+   filterStyleRunning: 行书
+
+# 以下键替代了其他键
+workStyleSeal: 篆书
+   workStyleSeal: 篆书
+   filterStyleSeal: 篆书
+
+# 以下键替代了其他键
+workToolBrush: 毛笔
+   workToolBrush: 毛笔
+   filterToolBrush: 毛笔
+
+# 以下键替代了其他键
+workToolHardPen: 硬笔
+   workToolHardPen: 硬笔
+   filterToolHardPen: 硬笔
+
+# 以下键替代了其他键
+workToolOther: 其他
+   workToolOther: 其他
+   filterToolOther: 其他
+   workStyleOther: 其他
+
+# 以下是普通键
+a4Size: A4 (210×297mm)
+   a4Size: A4 (210×297mm)
+
+# 以下是普通键
+a5Size: A5 (148×210mm)
+   a5Size: A5 (148×210mm)
+
+# 以下是普通键
+alignCenter: 居中
+   alignCenter: 居中
+
+# 以下是普通键
+alignHorizontalCenter: 水平居中
+   alignHorizontalCenter: 水平居中
+
+# 以下是普通键
+alignMiddle: 居中
+   alignMiddle: 居中
+
+# 以下是普通键
+alignVerticalCenter: 垂直居中
+   alignVerticalCenter: 垂直居中
+
+# 以下是普通键
+allCategories: 所有分类
+   allCategories: 所有分类
+
+# 以下是普通键
+appRestarting: 正在重启应用
+   appRestarting: 正在重启应用
+
+# 以下是普通键
+backupDescription: 描述（可选）
+   backupDescription: 描述（可选）
+
+# 以下是普通键
+backupDescriptionHint: 输入此备份的描述
+   backupDescriptionHint: 输入此备份的描述
+
+# 以下是普通键
+backupList: 备份列表
+   backupList: 备份列表
+
+# 以下是普通键
+backupSettings: 备份与恢复
+   backupSettings: 备份与恢复
+
+# 以下是普通键
+bringLayerToFront: 图层置于顶层
+   bringLayerToFront: 图层置于顶层
+
+# 以下是普通键
+bringToFront: 置于顶层
+   bringToFront: 置于顶层
+
+# 以下是普通键
+canvasResetViewTooltip: 重置视图位置
+   canvasResetViewTooltip: 重置视图位置
+
+# 以下是普通键
+categoryManagement: 分类管理
+   categoryManagement: 分类管理
+
+# 以下是普通键
+characterCollectionFilterFavorite: 收藏
+   characterCollectionFilterFavorite: 收藏
+
+# 以下是普通键
+characterCollectionFilterRecent: 最近
+   characterCollectionFilterRecent: 最近
+
+# 以下是普通键
+characterCollectionLoadingImage: 加载图像中...
+   characterCollectionLoadingImage: 加载图像中...
+
+# 以下是普通键
+characterCollectionPreviewTab: 字符预览
+   characterCollectionPreviewTab: 字符预览
+
+# 以下是普通键
+characterCollectionResultsTab: 采集结果
+   characterCollectionResultsTab: 采集结果
+
+# 以下是普通键
+characterCollectionSearchHint: 搜索字符...
+   characterCollectionSearchHint: 搜索字符...
+
+# 以下是普通键
+characterCollectionTitle: 字符采集
+   characterCollectionTitle: 字符采集
+
+# 以下是普通键
+characterCollectionToolPan: 平移工具 (Ctrl+V)
+   characterCollectionToolPan: 平移工具 (Ctrl+V)
+
+# 以下是普通键
+characterCount: 集字数量
+   characterCount: 集字数量
+
+# 以下是普通键
+characterDetailFormatBinary: 二值化
+   characterDetailFormatBinary: 二值化
+
+# 以下是普通键
+characterDetailFormatBinaryDesc: 黑白二值化图像
+   characterDetailFormatBinaryDesc: 黑白二值化图像
+
+# 以下是普通键
+characterDetailFormatDescription: 描述
+   characterDetailFormatDescription: 描述
+
+# 以下是普通键
+characterDetailFormatOutline: 轮廓
+   characterDetailFormatOutline: 轮廓
+
+# 以下是普通键
+characterDetailFormatOutlineDesc: 仅显示轮廓
+   characterDetailFormatOutlineDesc: 仅显示轮廓
+
+# 以下是普通键
+characterDetailFormatSquareBinary: 方形二值化
+   characterDetailFormatSquareBinary: 方形二值化
+
+# 以下是普通键
+characterDetailFormatSquareBinaryDesc: 规整为正方形的二值化图像
+   characterDetailFormatSquareBinaryDesc: 规整为正方形的二值化图像
+
+# 以下是普通键
+characterDetailFormatSquareOutline: 方形轮廓
+   characterDetailFormatSquareOutline: 方形轮廓
+
+# 以下是普通键
+characterDetailFormatSquareOutlineDesc: 规整为正方形的轮廓图像
+   characterDetailFormatSquareOutlineDesc: 规整为正方形的轮廓图像
+
+# 以下是普通键
+characterDetailFormatThumbnail: 缩略图
+   characterDetailFormatThumbnail: 缩略图
+
+# 以下是普通键
+characterDetailFormatThumbnailDesc: 缩略图
+   characterDetailFormatThumbnailDesc: 缩略图
+
+# 以下是普通键
+characterDetailSimplifiedChar: 简体字符
+   characterDetailSimplifiedChar: 简体字符
+
+# 以下是普通键
+characterDetailTitle: 字符详情
+   characterDetailTitle: 字符详情
+
+# 以下是普通键
+characterDetailWorkInfo: 作品信息
+   characterDetailWorkInfo: 作品信息
+
+# 以下是普通键
+characterEditImageInvert: 图像反转
+   characterEditImageInvert: 图像反转
+
+# 以下是普通键
+characterEditInitializing: 初始化中...
+   characterEditInitializing: 初始化中...
+
+# 以下是普通键
+characterEditInputCharacter: 输入字符
+   characterEditInputCharacter: 输入字符
+
+# 以下是普通键
+characterEditInputHint: 在此输入
+   characterEditInputHint: 在此输入
+
+# 以下是普通键
+characterEditLoadingImage: 加载字符图像中...
+   characterEditLoadingImage: 加载字符图像中...
+
+# 以下是普通键
+characterEditNoiseReduction: 降噪
+   characterEditNoiseReduction: 降噪
+
+# 以下是普通键
+characterEditOnlyOneCharacter: 只允许一个字符
+   characterEditOnlyOneCharacter: 只允许一个字符
+
+# 以下是普通键
+characterEditPleaseEnterCharacter: 请输入字符
+   characterEditPleaseEnterCharacter: 请输入字符
+
+# 以下是普通键
+characterEditProcessingEraseData: 处理擦除数据...
+   characterEditProcessingEraseData: 处理擦除数据...
+
+# 以下是普通键
+characterEditProcessingImage: 处理图像中...
+   characterEditProcessingImage: 处理图像中...
+
+# 以下是普通键
+characterEditSavePreview: 字符预览：
+   characterEditSavePreview: 字符预览：
+
+# 以下是普通键
+characterEditShowContour: 显示轮廓
+   characterEditShowContour: 显示轮廓
+
+# 以下是普通键
+characterEditThreshold: 阈值
+   characterEditThreshold: 阈值
+
+# 以下是普通键
+characterEditValidChineseCharacter: 请输入有效的汉字
+   characterEditValidChineseCharacter: 请输入有效的汉字
+
+# 以下是普通键
+characterManagementLoading: 加载字符中...
+   characterManagementLoading: 加载字符中...
+
+# 以下是普通键
+characterManagementNoCharactersHint: 尝试更改搜索或筛选条件
+   characterManagementNoCharactersHint: 尝试更改搜索或筛选条件
+
+# 以下是普通键
+characterManagementTitle: 集字
+   characterManagementTitle: 集字
+
+# 以下是普通键
+characters: 集字
+   characters: 集字
+
+# 以下是普通键
+collection: 集字
+   collection: 集字
+
+# 以下是普通键
+collectionPropertyPanelAvailableCharacters: 可用字符
+   collectionPropertyPanelAvailableCharacters: 可用字符
+
+# 以下是普通键
+collectionPropertyPanelCharacter: 集字
+   collectionPropertyPanelCharacter: 集字
+
+# 以下是普通键
+collectionPropertyPanelCurrentCharInversion: 当前字符反转
+   collectionPropertyPanelCurrentCharInversion: 当前字符反转
+
+# 以下是普通键
+collectionPropertyPanelSearchInProgress: 搜索字符中...
+   collectionPropertyPanelSearchInProgress: 搜索字符中...
+
+# 以下是普通键
+copySelected: 复制选中项目
+   copySelected: 复制选中项目
+
+# 以下是普通键
+create: 创建
+   create: 创建
+
+# 以下是普通键
+createBackup: 创建备份
+   createBackup: 创建备份
+
+# 以下是普通键
+createBackupDescription: 创建新的数据备份
+   createBackupDescription: 创建新的数据备份
+
+# 以下是普通键
+creatingBackup: 正在创建备份...
+   creatingBackup: 正在创建备份...
+
+# 以下是普通键
+cutSelected: 剪切选中项目
+   cutSelected: 剪切选中项目
+
+# 以下是普通键
+dataEmpty: 数据为空
+   dataEmpty: 数据为空
+
+# 以下是普通键
+dataIncomplete: 数据不完整
+   dataIncomplete: 数据不完整
+
+# 以下是普通键
+days: {count, plural, =1{1天} other{{count}天}}
+   days: {count, plural, =1{1天} other{{count}天}}
+
+# 以下是普通键
+distributeHorizontally: 水平均匀分布
+   distributeHorizontally: 水平均匀分布
+
+# 以下是普通键
+distributeVertically: 垂直均匀分布
+   distributeVertically: 垂直均匀分布
+
+# 以下是普通键
+distribution: 分布
+   distribution: 分布
+
+# 以下是普通键
+dynasty: 朝代
+   dynasty: 朝代
+
+# 以下是普通键
+elementHeight: 高
+   elementHeight: 高
+
+# 以下是普通键
+elementId: 元素ID
+   elementId: 元素ID
+
+# 以下是普通键
+elementLock: 锁定
+   elementLock: 锁定
+
+# 以下是普通键
+elementWidth: 宽
+   elementWidth: 宽
+
+# 以下是普通键
+empty: 空
+   empty: 空
+
+# 以下是普通键
+emptyGroup: 空组合
+   emptyGroup: 空组合
+
+# 以下是普通键
+emptyStateNoCharacters: 没有字形
+从作品中提取字形后可在此查看
+   emptyStateNoCharacters: 没有字形
+从作品中提取字形后可在此查看
+
+# 以下是普通键
+emptyStateNoResults: 没有找到匹配的结果
+尝试更改搜索条件
+   emptyStateNoResults: 没有找到匹配的结果
+尝试更改搜索条件
+
+# 以下是普通键
+exportDialogBrowse: 浏览...
+   exportDialogBrowse: 浏览...
+
+# 以下是普通键
+exportDialogCentimeter: 厘米
+   exportDialogCentimeter: 厘米
+
+# 以下是普通键
+exportDialogDimensions: {width}厘米 × {height}厘米 ({orientation})
+   exportDialogDimensions: {width}厘米 × {height}厘米 ({orientation})
+
+# 以下是普通键
+exportDialogMarginBottom: 下
+   exportDialogMarginBottom: 下
+
+# 以下是普通键
+exportDialogMarginLeft: 左
+   exportDialogMarginLeft: 左
+
+# 以下是普通键
+exportDialogMarginRight: 右
+   exportDialogMarginRight: 右
+
+# 以下是普通键
+exportDialogMarginTop: 上
+   exportDialogMarginTop: 上
+
+# 以下是普通键
+exportDialogOutputQuality: 输出质量
+   exportDialogOutputQuality: 输出质量
+
+# 以下是普通键
+exportDialogPreviewPage:  (第 {current}/{total} 页)
+   exportDialogPreviewPage:  (第 {current}/{total} 页)
+
+# 以下是普通键
+exportDialogQualityHigh: 高清 (2x)
+   exportDialogQualityHigh: 高清 (2x)
+
+# 以下是普通键
+exportDialogQualityUltra: 超清 (3x)
+   exportDialogQualityUltra: 超清 (3x)
+
+# 以下是普通键
+exportDialogRangeExample: 例如: 1-3,5,7-9
+   exportDialogRangeExample: 例如: 1-3,5,7-9
+
+# 以下是普通键
+filterCollapse: 收起筛选面板
+   filterCollapse: 收起筛选面板
+
+# 以下是普通键
+filterDateCustom: 自定义
+   filterDateCustom: 自定义
+
+# 以下是普通键
+filterDatePresetLast30Days: 最近30天
+   filterDatePresetLast30Days: 最近30天
+
+# 以下是普通键
+filterDatePresetLast365Days: 最近365天
+   filterDatePresetLast365Days: 最近365天
+
+# 以下是普通键
+filterDatePresetLast7Days: 最近7天
+   filterDatePresetLast7Days: 最近7天
+
+# 以下是普通键
+filterDatePresetLast90Days: 最近90天
+   filterDatePresetLast90Days: 最近90天
+
+# 以下是普通键
+filterDatePresetToday: 今天
+   filterDatePresetToday: 今天
+
+# 以下是普通键
+filterDatePresetYesterday: 昨天
+   filterDatePresetYesterday: 昨天
+
+# 以下是普通键
+filterHeader: 筛选
+   filterHeader: 筛选
+
+# 以下是普通键
+filterMax: 最大
+   filterMax: 最大
+
+# 以下是普通键
+filterMin: 最小
+   filterMin: 最小
+
+# 以下是普通键
+filterReset: 重置筛选
+   filterReset: 重置筛选
+
+# 以下是普通键
+filterSelectAll: 全选
+   filterSelectAll: 全选
+
+# 以下是普通键
+filterSortAscending: 升序
+   filterSortAscending: 升序
+
+# 以下是普通键
+filterSortDescending: 降序
+   filterSortDescending: 降序
+
+# 以下是普通键
+fullScreen: 全屏显示
+   fullScreen: 全屏显示
+
+# 以下是普通键
+gridSizeExtraLarge: 特大
+   gridSizeExtraLarge: 特大
+
+# 以下是普通键
+gridSizeLarge: 大
+   gridSizeLarge: 大
+
+# 以下是普通键
+gridSizeMedium: 中
+   gridSizeMedium: 中
+
+# 以下是普通键
+gridSizeSmall: 小
+   gridSizeSmall: 小
+
+# 以下是普通键
+group: 组合
+   group: 组合
+
+# 以下是普通键
+groupElements: 组合元素
+   groupElements: 组合元素
+
+# 以下是普通键
+hideElement: 隐藏元素
+   hideElement: 隐藏元素
+
+# 以下是普通键
+hideImagePreview: 隐藏图片预览
+   hideImagePreview: 隐藏图片预览
+
+# 以下是普通键
+horizontalLeftToRight: 横排左起
+   horizontalLeftToRight: 横排左起
+
+# 以下是普通键
+horizontalRightToLeft: 横排右起
+   horizontalRightToLeft: 横排右起
+
+# 以下是普通键
+image: 图片
+   image: 图片
+
+# 以下是普通键
+imagePropertyPanelApplyTransform: 应用变换
+   imagePropertyPanelApplyTransform: 应用变换
+
+# 以下是普通键
+imagePropertyPanelCannotApplyNoImage: 没有可用的图片
+   imagePropertyPanelCannotApplyNoImage: 没有可用的图片
+
+# 以下是普通键
+imagePropertyPanelCropBottom: 底部裁剪
+   imagePropertyPanelCropBottom: 底部裁剪
+
+# 以下是普通键
+imagePropertyPanelCropLeft: 左侧裁剪
+   imagePropertyPanelCropLeft: 左侧裁剪
+
+# 以下是普通键
+imagePropertyPanelCropRight: 右侧裁剪
+   imagePropertyPanelCropRight: 右侧裁剪
+
+# 以下是普通键
+imagePropertyPanelCropTop: 顶部裁剪
+   imagePropertyPanelCropTop: 顶部裁剪
+
+# 以下是普通键
+imagePropertyPanelCropping: 裁剪
+   imagePropertyPanelCropping: 裁剪
+
+# 以下是普通键
+imagePropertyPanelCroppingApplied:  (裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)
+   imagePropertyPanelCroppingApplied:  (裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)
+
+# 以下是普通键
+imagePropertyPanelFitContain: 包含
+   imagePropertyPanelFitContain: 包含
+
+# 以下是普通键
+imagePropertyPanelFitCover: 覆盖
+   imagePropertyPanelFitCover: 覆盖
+
+# 以下是普通键
+imagePropertyPanelFitFill: 填充
+   imagePropertyPanelFitFill: 填充
+
+# 以下是普通键
+imagePropertyPanelFlipHorizontal: 水平翻转
+   imagePropertyPanelFlipHorizontal: 水平翻转
+
+# 以下是普通键
+imagePropertyPanelFlipVertical: 垂直翻转
+   imagePropertyPanelFlipVertical: 垂直翻转
+
+# 以下是普通键
+imagePropertyPanelImageTransform: 图像变换
+   imagePropertyPanelImageTransform: 图像变换
+
+# 以下是普通键
+imagePropertyPanelNoCropping: （无裁剪）
+   imagePropertyPanelNoCropping: （无裁剪）
+
+# 以下是普通键
+imagePropertyPanelPreview: 图像预览
+   imagePropertyPanelPreview: 图像预览
+
+# 以下是普通键
+imagePropertyPanelPreviewNotice: 注意：预览期间显示的重复日志是正常的
+   imagePropertyPanelPreviewNotice: 注意：预览期间显示的重复日志是正常的
+
+# 以下是普通键
+imagePropertyPanelResetTransform: 重置变换
+   imagePropertyPanelResetTransform: 重置变换
+
+# 以下是普通键
+imagePropertyPanelTransformWarning: 这些变换会修改图像内容本身，而不仅仅是元素框架
+   imagePropertyPanelTransformWarning: 这些变换会修改图像内容本身，而不仅仅是元素框架
+
+# 以下是普通键
+inputChineseContent: 请输入汉字内容
+   inputChineseContent: 请输入汉字内容
+
+# 以下是普通键
+keepBackupCount: 保留备份数量
+   keepBackupCount: 保留备份数量
+
+# 以下是普通键
+language: 语言
+   language: 语言
+
+# 以下是普通键
+languageEn: English
+   languageEn: English
+
+# 以下是普通键
+languageZh: 简体中文
+   languageZh: 简体中文
+
+# 以下是普通键
+layer: 图层
+   layer: 图层
+
+# 以下是普通键
+layer1: 图层 1
+   layer1: 图层 1
+
+# 以下是普通键
+layerElements: 图层元素
+   layerElements: 图层元素
+
+# 以下是普通键
+layerInfo: 图层信息
+   layerInfo: 图层信息
+
+# 以下是普通键
+layerName: 图层{index}
+   layerName: 图层{index}
+
+# 以下是普通键
+libraryCount: 图库数量
+   libraryCount: 图库数量
+
+# 以下是普通键
+libraryManagement: 图库
+   libraryManagement: 图库
+
+# 以下是普通键
+libraryManagementDetail: 详情
+   libraryManagementDetail: 详情
+
+# 以下是普通键
+libraryManagementFavorite: 收藏
+   libraryManagementFavorite: 收藏
+
+# 以下是普通键
+libraryManagementFavorites: 收藏
+   libraryManagementFavorites: 收藏
+
+# 以下是普通键
+libraryManagementMetadata: 元数据
+   libraryManagementMetadata: 元数据
+
+# 以下是普通键
+libraryManagementNoRemarks: 无备注
+   libraryManagementNoRemarks: 无备注
+
+# 以下是普通键
+libraryManagementPath: 路径
+   libraryManagementPath: 路径
+
+# 以下是普通键
+libraryManagementRemarks: 备注
+   libraryManagementRemarks: 备注
+
+# 以下是普通键
+libraryManagementResolution: 分辨率
+   libraryManagementResolution: 分辨率
+
+# 以下是普通键
+libraryManagementSearch: 搜索项目...
+   libraryManagementSearch: 搜索项目...
+
+# 以下是普通键
+listView: 列表视图
+   listView: 列表视图
+
+# 以下是普通键
+lockElement: 锁定元素
+   lockElement: 锁定元素
+
+# 以下是普通键
+lockUnlockAllElements: 锁定/解锁所有元素
+   lockUnlockAllElements: 锁定/解锁所有元素
+
+# 以下是普通键
+memoryDataCacheCapacity: 内存数据缓存容量
+   memoryDataCacheCapacity: 内存数据缓存容量
+
+# 以下是普通键
+memoryDataCacheCapacityDescription: 内存中保留的数据项数量
+   memoryDataCacheCapacityDescription: 内存中保留的数据项数量
+
+# 以下是普通键
+memoryImageCacheCapacity: 内存图像缓存容量
+   memoryImageCacheCapacity: 内存图像缓存容量
+
+# 以下是普通键
+memoryImageCacheCapacityDescription: 内存中保留的图像数量
+   memoryImageCacheCapacityDescription: 内存中保留的图像数量
+
+# 以下是普通键
+moveDown: 下移
+   moveDown: 下移
+
+# 以下是普通键
+moveLayerDown: 图层下移
+   moveLayerDown: 图层下移
+
+# 以下是普通键
+moveLayerUp: 图层上移
+   moveLayerUp: 图层上移
+
+# 以下是普通键
+moveUp: 上移
+   moveUp: 上移
+
+# 以下是普通键
+navCollapseSidebar: 收起侧边栏
+   navCollapseSidebar: 收起侧边栏
+
+# 以下是普通键
+navExpandSidebar: 展开侧边栏
+   navExpandSidebar: 展开侧边栏
+
+# 以下是普通键
+no: 否
+   no: 否
+
+# 以下是普通键
+noBackups: 没有可用的备份
+   noBackups: 没有可用的备份
+
+# 以下是普通键
+noCategories: 无分类
+   noCategories: 无分类
+
+# 以下是普通键
+noDisplayableImages: 没有可显示的图片
+   noDisplayableImages: 没有可显示的图片
+
+# 以下是普通键
+noElementsInLayer: 此图层中没有元素
+   noElementsInLayer: 此图层中没有元素
+
+# 以下是普通键
+noImages: 没有图片
+   noImages: 没有图片
+
+# 以下是普通键
+noTexture: 无纹理
+   noTexture: 无纹理
+
+# 以下是普通键
+noTopLevelCategory: 无（顶级分类）
+   noTopLevelCategory: 无（顶级分类）
+
+# 以下是普通键
+parentCategory: 父分类（可选）
+   parentCategory: 父分类（可选）
+
+# 以下是普通键
+pinyin: 拼音
+   pinyin: 拼音
+
+# 以下是普通键
+pixels: 像素
+   pixels: 像素
+
+# 以下是普通键
+pleaseEnterValidNumber: 请输入有效的数字
+   pleaseEnterValidNumber: 请输入有效的数字
+
+# 以下是普通键
+practiceEditBringToFront: 置于顶层 (Ctrl+T)
+   practiceEditBringToFront: 置于顶层 (Ctrl+T)
+
+# 以下是普通键
+practiceEditCollection: 采集
+   practiceEditCollection: 采集
+
+# 以下是普通键
+practiceEditCopy: 复制 (Ctrl+Shift+C)
+   practiceEditCopy: 复制 (Ctrl+Shift+C)
+
+# 以下是普通键
+practiceEditDangerZone: 危险区域
+   practiceEditDangerZone: 危险区域
+
+# 以下是普通键
+practiceEditExit: 退出
+   practiceEditExit: 退出
+
+# 以下是普通键
+practiceEditGroup: 组合 (Ctrl+J)
+   practiceEditGroup: 组合 (Ctrl+J)
+
+# 以下是普通键
+practiceEditHideGrid: 隐藏网格 (Ctrl+G)
+   practiceEditHideGrid: 隐藏网格 (Ctrl+G)
+
+# 以下是普通键
+practiceEditImage: 图像
+   practiceEditImage: 图像
+
+# 以下是普通键
+practiceEditLayerPanel: 图层
+   practiceEditLayerPanel: 图层
+
+# 以下是普通键
+practiceEditMoveDown: 下移 (Ctrl+Shift+B)
+   practiceEditMoveDown: 下移 (Ctrl+Shift+B)
+
+# 以下是普通键
+practiceEditMoveUp: 上移 (Ctrl+Shift+T)
+   practiceEditMoveUp: 上移 (Ctrl+Shift+T)
+
+# 以下是普通键
+practiceEditOverwrite: 覆盖
+   practiceEditOverwrite: 覆盖
+
+# 以下是普通键
+practiceEditPaste: 粘贴 (Ctrl+Shift+V)
+   practiceEditPaste: 粘贴 (Ctrl+Shift+V)
+
+# 以下是普通键
+practiceEditSendToBack: 置于底层 (Ctrl+B)
+   practiceEditSendToBack: 置于底层 (Ctrl+B)
+
+# 以下是普通键
+practiceEditShowGrid: 显示网格 (Ctrl+G)
+   practiceEditShowGrid: 显示网格 (Ctrl+G)
+
+# 以下是普通键
+practiceEditTopNavSaveAs: 另存为
+   practiceEditTopNavSaveAs: 另存为
+
+# 以下是普通键
+practiceListExpandFilter: 展开过滤面板
+   practiceListExpandFilter: 展开过滤面板
+
+# 以下是普通键
+practiceListFilterFavorites: 收藏
+   practiceListFilterFavorites: 收藏
+
+# 以下是普通键
+practiceListFilterTitle: 字帖过滤
+   practiceListFilterTitle: 字帖过滤
+
+# 以下是普通键
+practiceListListView: 列表视图
+   practiceListListView: 列表视图
+
+# 以下是普通键
+practiceListLoading: 加载字帖中...
+   practiceListLoading: 加载字帖中...
+
+# 以下是普通键
+practiceListNewPractice: 新建字帖
+   practiceListNewPractice: 新建字帖
+
+# 以下是普通键
+practiceListPages: 页
+   practiceListPages: 页
+
+# 以下是普通键
+practiceListSearch: 搜索字帖...
+   practiceListSearch: 搜索字帖...
+
+# 以下是普通键
+practiceListTitle: 字帖
+   practiceListTitle: 字帖
+
+# 以下是普通键
+practiceSheetNotExists: 字帖不存在
+   practiceSheetNotExists: 字帖不存在
+
+# 以下是普通键
+practices: 字帖
+   practices: 字帖
+
+# 以下是普通键
+preparingPrint: 正在准备打印，请稍候...
+   preparingPrint: 正在准备打印，请稍候...
+
+# 以下是普通键
+removeFromCategory: 从当前分类移除
+   removeFromCategory: 从当前分类移除
+
+# 以下是普通键
+rename: 重命名
+   rename: 重命名
+
+# 以下是普通键
+restore: 恢复
+   restore: 恢复
+
+# 以下是普通键
+restoreBackup: 恢复备份
+   restoreBackup: 恢复备份
+
+# 以下是普通键
+restoringBackup: 正在从备份恢复...
+   restoringBackup: 正在从备份恢复...
+
+# 以下是普通键
+rotateLeft: 向左旋转
+   rotateLeft: 向左旋转
+
+# 以下是普通键
+rotateRight: 向右旋转
+   rotateRight: 向右旋转
+
+# 以下是普通键
+searchCategories: 搜索分类...
+   searchCategories: 搜索分类...
+
+# 以下是普通键
+selectAll: 全选
+   selectAll: 全选
+
+# 以下是普通键
+sendLayerToBack: 图层置于底层
+   sendLayerToBack: 图层置于底层
+
+# 以下是普通键
+sendToBack: 置于底层
+   sendToBack: 置于底层
+
+# 以下是普通键
+showElement: 显示元素
+   showElement: 显示元素
+
+# 以下是普通键
+showGrid: 显示网格
+   showGrid: 显示网格
+
+# 以下是普通键
+showHideAllElements: 显示/隐藏所有元素
+   showHideAllElements: 显示/隐藏所有元素
+
+# 以下是普通键
+showImagePreview: 显示图片预览
+   showImagePreview: 显示图片预览
+
+# 以下是普通键
+sourceHanSansFont: 思源黑体 (Source Han Sans)
+   sourceHanSansFont: 思源黑体 (Source Han Sans)
+
+# 以下是普通键
+sourceHanSerifFont: 思源宋体 (Source Han Serif)
+   sourceHanSerifFont: 思源宋体 (Source Han Serif)
+
+# 以下是普通键
+sourceInfo: 出处信息
+   sourceInfo: 出处信息
+
+# 以下是普通键
+storageDetails: 存储详情
+   storageDetails: 存储详情
+
+# 以下是普通键
+storageLocation: 存储位置
+   storageLocation: 存储位置
+
+# 以下是普通键
+strokeCount: 笔画
+   strokeCount: 笔画
+
+# 以下是普通键
+textPropertyPanelFontFamily: 字体
+   textPropertyPanelFontFamily: 字体
+
+# 以下是普通键
+textPropertyPanelFontWeight: 字体粗细
+   textPropertyPanelFontWeight: 字体粗细
+
+# 以下是普通键
+textPropertyPanelLetterSpacing: 字符间距
+   textPropertyPanelLetterSpacing: 字符间距
+
+# 以下是普通键
+textPropertyPanelLineHeight: 行高
+   textPropertyPanelLineHeight: 行高
+
+# 以下是普通键
+textPropertyPanelTextContent: 文本内容
+   textPropertyPanelTextContent: 文本内容
+
+# 以下是普通键
+textPropertyPanelUnderline: 下划线
+   textPropertyPanelUnderline: 下划线
+
+# 以下是普通键
+textureFillModeContain: 包含
+   textureFillModeContain: 包含
+
+# 以下是普通键
+textureFillModeCover: 覆盖
+   textureFillModeCover: 覆盖
+
+# 以下是普通键
+textureFillModeRepeat: 重复
+   textureFillModeRepeat: 重复
+
+# 以下是普通键
+themeModeDark: 暗色
+   themeModeDark: 暗色
+
+# 以下是普通键
+themeModeDescription: 使用深色主题获得更好的夜间观看体验
+   themeModeDescription: 使用深色主题获得更好的夜间观看体验
+
+# 以下是普通键
+to: 至
+   to: 至
+
+# 以下是普通键
+toolModePanTooltip: 拖拽工具 (Ctrl+V)
+   toolModePanTooltip: 拖拽工具 (Ctrl+V)
+
+# 以下是普通键
+toolModeSelectTooltip: 框选工具 (Ctrl+B)
+   toolModeSelectTooltip: 框选工具 (Ctrl+B)
+
+# 以下是普通键
+toolbarSelectAll: 全选
+   toolbarSelectAll: 全选
+
+# 以下是普通键
+total: 总计
+   total: 总计
+
+# 以下是普通键
+totalItems: 共 {count} 个
+   totalItems: 共 {count} 个
+
+# 以下是普通键
+unlockElement: 解锁元素
+   unlockElement: 解锁元素
+
+# 以下是普通键
+valueTooLarge: {label}不能大于{max}
+   valueTooLarge: {label}不能大于{max}
+
+# 以下是普通键
+valueTooSmall: {label}不能小于{min}
+   valueTooSmall: {label}不能小于{min}
+
+# 以下是普通键
+verticalLeftToRight: 竖排左起
+   verticalLeftToRight: 竖排左起
+
+# 以下是普通键
+verticalRightToLeft: 竖排右起
+   verticalRightToLeft: 竖排右起
+
+# 以下是普通键
+visibility: 可见性
+   visibility: 可见性
+
+# 以下是普通键
+visible: 可见
+   visible: 可见
+
+# 以下是普通键
+widgetRefRequired: 需要WidgetRef才能创建CollectionPainter
+   widgetRefRequired: 需要WidgetRef才能创建CollectionPainter
+
+# 以下是普通键
+windowButtonMaximize: 最大化
+   windowButtonMaximize: 最大化
+
+# 以下是普通键
+windowButtonMinimize: 最小化
+   windowButtonMinimize: 最小化
+
+# 以下是普通键
+windowButtonRestore: 还原
+   windowButtonRestore: 还原
+
+# 以下是普通键
+work: 作品
+   work: 作品
+
+# 以下是普通键
+workBrowseGridView: 网格视图
+   workBrowseGridView: 网格视图
+
+# 以下是普通键
+workBrowseListView: 列表视图
+   workBrowseListView: 列表视图
+
+# 以下是普通键
+workBrowseLoading: 加载作品中...
+   workBrowseLoading: 加载作品中...
+
+# 以下是普通键
+workBrowseReload: 重新加载
+   workBrowseReload: 重新加载
+
+# 以下是普通键
+workBrowseRemoveFavorite: 从收藏中移除
+   workBrowseRemoveFavorite: 从收藏中移除
+
+# 以下是普通键
+workBrowseSearch: 搜索作品...
+   workBrowseSearch: 搜索作品...
+
+# 以下是普通键
+workBrowseTitle: 作品
+   workBrowseTitle: 作品
+
+# 以下是普通键
+workCount: 作品数量
+   workCount: 作品数量
+
+# 以下是普通键
+workDetailCharacters: 字符
+   workDetailCharacters: 字符
+
+# 以下是普通键
+workDetailExtract: 提取字符
+   workDetailExtract: 提取字符
+
+# 以下是普通键
+workDetailImageCount: 图像数量
+   workDetailImageCount: 图像数量
+
+# 以下是普通键
+workDetailLoading: 加载作品详情中...
+   workDetailLoading: 加载作品详情中...
+
+# 以下是普通键
+workDetailNoCharacters: 暂无字符
+   workDetailNoCharacters: 暂无字符
+
+# 以下是普通键
+workDetailNoImages: 没有可显示的图像
+   workDetailNoImages: 没有可显示的图像
+
+# 以下是普通键
+workDetailOtherInfo: 其他信息
+   workDetailOtherInfo: 其他信息
+
+# 以下是普通键
+workDetailTitle: 作品详情
+   workDetailTitle: 作品详情
+
+# 以下是普通键
+workFormNextField: 下一个字段
+   workFormNextField: 下一个字段
+
+# 以下是普通键
+workFormPreviousField: 上一个字段
+   workFormPreviousField: 上一个字段
+
+# 以下是普通键
+workFormRemark: 备注
+   workFormRemark: 备注
+
+# 以下是普通键
+workFormRemarkHelp: 可选，关于作品的附加信息
+   workFormRemarkHelp: 可选，关于作品的附加信息
+
+# 以下是普通键
+workFormRemarkHint: 可选
+   workFormRemarkHint: 可选
+
+# 以下是普通键
+workFormRemarkMaxLength: 备注不能超过500个字符
+   workFormRemarkMaxLength: 备注不能超过500个字符
+
+# 以下是普通键
+workFormRemarkTooltip: 按Ctrl+R快速跳转到备注字段
+   workFormRemarkTooltip: 按Ctrl+R快速跳转到备注字段
+
+# 以下是普通键
+workFormShortcuts: 键盘快捷键
+   workFormShortcuts: 键盘快捷键
+
+# 以下是普通键
+workFormToolHelp: 创作此作品使用的主要工具
+   workFormToolHelp: 创作此作品使用的主要工具
+
+# 以下是普通键
+workImageRestoring: 正在恢复图片数据...
+   workImageRestoring: 正在恢复图片数据...
+
+# 以下是普通键
+workImportDialogFromGallery: 从图库
+   workImportDialogFromGallery: 从图库
+
+# 以下是普通键
+works: 作品
+   works: 作品
+
+# 以下是普通键
+yes: 是
+   yes: 是
+
+# 以下是未使用的键 [UNUSED]
+about: 关于
+   about: 关于
+
+# 以下是未使用的键 [UNUSED]
+canvasResetView: 复位
+   canvasResetView: 复位
+
+# 以下是未使用的键 [UNUSED]
+categoryHasItems: 此分类下有 {count} 个项目
+   categoryHasItems: 此分类下有 {count} 个项目
+
+# 以下是未使用的键 [UNUSED]
+categoryPanelTitle: 分类面板
+   categoryPanelTitle: 分类面板
+
+# 以下是未使用的键 [UNUSED]
+center: 居中
+   center: 居中
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpNotes: 注意事项
+   characterCollectionHelpNotes: 注意事项
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpSection2: 2. 区域调整
+   characterCollectionHelpSection2: 2. 区域调整
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpSection3: 3. 橡皮工具
+   characterCollectionHelpSection3: 3. 橡皮工具
+
+# 以下是未使用的键 [UNUSED]
+characterCollectionHelpSection5: 5. 键盘快捷键
+   characterCollectionHelpSection5: 5. 键盘快捷键
+
+# 以下是未使用的键 [UNUSED]
+characterEditPanImage: 平移图像（按住Alt）
+   characterEditPanImage: 平移图像（按住Alt）
+
+# 以下是未使用的键 [UNUSED]
+characterFilterCollapse: 折叠筛选面板
+   characterFilterCollapse: 折叠筛选面板
+
+# 以下是未使用的键 [UNUSED]
+characterManagementGridView: 网格视图
+   characterManagementGridView: 网格视图
+
+# 以下是未使用的键 [UNUSED]
+characterManagementListView: 列表视图
+   characterManagementListView: 列表视图
+
+# 以下是未使用的键 [UNUSED]
+clearImageCache: 清除图像缓存
+   clearImageCache: 清除图像缓存
+
+# 以下是未使用的键 [UNUSED]
+collectionElement: 集字元素
+   collectionElement: 集字元素
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelCandidateCharacters: 候选字符
+   collectionPropertyPanelCandidateCharacters: 候选字符
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelCharIndex: 字符
+   collectionPropertyPanelCharIndex: 字符
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelCharacterSource: 字符来源
+   collectionPropertyPanelCharacterSource: 字符来源
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelFlipHorizontally: 水平翻转
+   collectionPropertyPanelFlipHorizontally: 水平翻转
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelFlipVertically: 垂直翻转
+   collectionPropertyPanelFlipVertically: 垂直翻转
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelGlobalInversion: 全局反转
+   collectionPropertyPanelGlobalInversion: 全局反转
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelOf: /
+   collectionPropertyPanelOf: /
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelWorkSource: 作品来源
+   collectionPropertyPanelWorkSource: 作品来源
+
+# 以下是未使用的键 [UNUSED]
+contains: 包含
+   contains: 包含
+
+# 以下是未使用的键 [UNUSED]
+copyLayerName: {name} (复制)
+   copyLayerName: {name} (复制)
+
+# 以下是未使用的键 [UNUSED]
+elementDistribution: 元素分布
+   elementDistribution: 元素分布
+
+# 以下是未使用的键 [UNUSED]
+filterItemsPerPage: 每页 {count} 项
+   filterItemsPerPage: 每页 {count} 项
+
+# 以下是未使用的键 [UNUSED]
+filterPanel: 筛选面板
+   filterPanel: 筛选面板
+
+# 以下是未使用的键 [UNUSED]
+filterSearchPlaceholder: 搜索...
+   filterSearchPlaceholder: 搜索...
+
+# 以下是未使用的键 [UNUSED]
+filterToggle: 切换筛选
+   filterToggle: 切换筛选
+
+# 以下是未使用的键 [UNUSED]
+filterTotalItems: 共计：{count} 项
+   filterTotalItems: 共计：{count} 项
+
+# 以下是未使用的键 [UNUSED]
+groupElement: 组合元素
+   groupElement: 组合元素
+
+# 以下是未使用的键 [UNUSED]
+groupInfo: 组信息
+   groupInfo: 组信息
+
+# 以下是未使用的键 [UNUSED]
+imageElement: 图片元素
+   imageElement: 图片元素
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelBorder: 边框
+   imagePropertyPanelBorder: 边框
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelBrightness: 亮度
+   imagePropertyPanelBrightness: 亮度
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelContrast: 对比度
+   imagePropertyPanelContrast: 对比度
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelCornerRadius: 圆角半径
+   imagePropertyPanelCornerRadius: 圆角半径
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelFilters: 图像滤镜
+   imagePropertyPanelFilters: 图像滤镜
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelFit: 适应
+   imagePropertyPanelFit: 适应
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelLibraryProcessing: 图库功能开发中...
+   imagePropertyPanelLibraryProcessing: 图库功能开发中...
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelPreserveRatio: 保持宽高比
+   imagePropertyPanelPreserveRatio: 保持宽高比
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelReset: 重置
+   imagePropertyPanelReset: 重置
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelSaturation: 饱和度
+   imagePropertyPanelSaturation: 饱和度
+
+# 以下是未使用的键 [UNUSED]
+inputFieldHint: 请输入{field}
+   inputFieldHint: 请输入{field}
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementGridView: 网格视图
+   libraryManagementGridView: 网格视图
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementListView: 列表视图
+   libraryManagementListView: 列表视图
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementLocation: 位置
+   libraryManagementLocation: 位置
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementNoItems: 暂无项目
+   libraryManagementNoItems: 暂无项目
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSortDesc: 降序
+   libraryManagementSortDesc: 降序
+
+# 以下是未使用的键 [UNUSED]
+moveSelectedElementsToLayer: 移动选中元素到图层
+   moveSelectedElementsToLayer: 移动选中元素到图层
+
+# 以下是未使用的键 [UNUSED]
+newCategory: 新建分类
+   newCategory: 新建分类
+
+# 以下是未使用的键 [UNUSED]
+nextImage: 下一张图片
+   nextImage: 下一张图片
+
+# 以下是未使用的键 [UNUSED]
+practiceEditContentTools: 内容工具
+   practiceEditContentTools: 内容工具
+
+# 以下是未使用的键 [UNUSED]
+practiceEditHelperFunctions: 辅助功能
+   practiceEditHelperFunctions: 辅助功能
+
+# 以下是未使用的键 [UNUSED]
+practiceListCollapseFilter: 折叠过滤面板
+   practiceListCollapseFilter: 折叠过滤面板
+
+# 以下是未使用的键 [UNUSED]
+practiceListItemsPerPage: 每页{count}个
+   practiceListItemsPerPage: 每页{count}个
+
+# 以下是未使用的键 [UNUSED]
+practiceListResetFilter: 重置过滤器
+   practiceListResetFilter: 重置过滤器
+
+# 以下是未使用的键 [UNUSED]
+practiceListTotalItems: {count}张字帖
+   practiceListTotalItems: {count}张字帖
+
+# 以下是未使用的键 [UNUSED]
+previousImage: 上一张图片
+   previousImage: 上一张图片
+
+# 以下是未使用的键 [UNUSED]
+print: 打印
+   print: 打印
+
+# 以下是未使用的键 [UNUSED]
+restartLater: 稍后
+   restartLater: 稍后
+
+# 以下是未使用的键 [UNUSED]
+restartNow: 立即重启
+   restartNow: 立即重启
+
+# 以下是未使用的键 [UNUSED]
+storageCharacters: 集字
+   storageCharacters: 集字
+
+# 以下是未使用的键 [UNUSED]
+storageGallery: 图库
+   storageGallery: 图库
+
+# 以下是未使用的键 [UNUSED]
+storageWorks: 作品
+   storageWorks: 作品
+
+# 以下是未使用的键 [UNUSED]
+textElement: 文本元素
+   textElement: 文本元素
+
+# 以下是未使用的键 [UNUSED]
+textPropertyPanelHorizontal: 水平
+   textPropertyPanelHorizontal: 水平
+
+# 以下是未使用的键 [UNUSED]
+textPropertyPanelVertical: 垂直
+   textPropertyPanelVertical: 垂直
+
+# 以下是未使用的键 [UNUSED]
+textureApplicationRange: 纹理应用范围
+   textureApplicationRange: 纹理应用范围
+
+# 以下是未使用的键 [UNUSED]
+textureFillModeNoRepeat: 不重复
+   textureFillModeNoRepeat: 不重复
+
+# 以下是未使用的键 [UNUSED]
+textureFillModeRepeatX: 水平重复
+   textureFillModeRepeatX: 水平重复
+
+# 以下是未使用的键 [UNUSED]
+textureFillModeRepeatY: 垂直重复
+   textureFillModeRepeatY: 垂直重复
+
+# 以下是未使用的键 [UNUSED]
+textureRangeCharacter: 仅字符
+   textureRangeCharacter: 仅字符
+
+# 以下是未使用的键 [UNUSED]
+themeModeLight: 亮色
+   themeModeLight: 亮色
+
+# 以下是未使用的键 [UNUSED]
+toggleTestText: 切换测试文本
+   toggleTestText: 切换测试文本
+
+# 以下是未使用的键 [UNUSED]
+workDetailViewMore: 查看更多
+   workDetailViewMore: 查看更多
+
+# 以下是未使用的键 [UNUSED]
+workFormRequiredField: 必填字段
+   workFormRequiredField: 必填字段
+
+# 以下是未使用的键 [UNUSED]
+workStatusDraft: 草稿
+   workStatusDraft: 草稿
+
+
+# --- SETTING (30 keys) ---
+
+# 以下键替代了其他键
+collectionPropertyPanelAutoLineBreak: 自动换行
+   collectionPropertyPanelAutoLineBreak: 自动换行
+   collectionPropertyPanelAutoLineBreakTooltip: 自动换行
+
+# 以下键替代了其他键
+textPropertyPanelTextSettings: 文本设置
+   textPropertyPanelTextSettings: 文本设置
+   collectionPropertyPanelTextSettings: 文本设置
+
+# 以下键替代了其他键
+textPropertyPanelVisual: 视觉设置
+   textPropertyPanelVisual: 视觉设置
+   collectionPropertyPanelVisual: 视觉设置
+   imagePropertyPanelVisual: 视觉设置
+
+# 以下键替代了其他键
+visualSettings: 视觉设置
+   visualSettings: 视觉设置
+   textPropertyPanelVisual: 视觉设置
+
+# 以下是普通键
+autoBackup: 自动备份
+   autoBackup: 自动备份
+
+# 以下是普通键
+autoBackupDescription: 定期自动备份您的数据
+   autoBackupDescription: 定期自动备份您的数据
+
+# 以下是普通键
+autoBackupInterval: 自动备份间隔
+   autoBackupInterval: 自动备份间隔
+
+# 以下是普通键
+autoBackupIntervalDescription: 自动备份的频率
+   autoBackupIntervalDescription: 自动备份的频率
+
+# 以下是普通键
+autoCleanup: 自动清理
+   autoCleanup: 自动清理
+
+# 以下是普通键
+autoCleanupDescription: 自动清理旧的缓存文件
+   autoCleanupDescription: 自动清理旧的缓存文件
+
+# 以下是普通键
+autoCleanupInterval: 自动清理间隔
+   autoCleanupInterval: 自动清理间隔
+
+# 以下是普通键
+autoDetect: 自动检测
+   autoDetect: 自动检测
+
+# 以下是普通键
+cacheSettings: 缓存设置
+   cacheSettings: 缓存设置
+
+# 以下是普通键
+collectionPropertyPanelColorSettings: 颜色设置
+   collectionPropertyPanelColorSettings: 颜色设置
+
+# 以下是普通键
+contentSettings: 内容设置
+   contentSettings: 内容设置
+
+# 以下是普通键
+gridSettings: 网格设置
+   gridSettings: 网格设置
+
+# 以下是普通键
+imagePropertyPanelAutoImportNotice: 所选图像将自动导入到您的图库中以便更好地管理
+   imagePropertyPanelAutoImportNotice: 所选图像将自动导入到您的图库中以便更好地管理
+
+# 以下是普通键
+ppiSetting: PPI设置（每英寸像素数）
+   ppiSetting: PPI设置（每英寸像素数）
+
+# 以下是普通键
+practiceEditDefaultLayer: 默认图层
+   practiceEditDefaultLayer: 默认图层
+
+# 以下是普通键
+resetSettingsConfirmTitle: 重置设置
+   resetSettingsConfirmTitle: 重置设置
+
+# 以下是普通键
+resetToDefaults: 重置为默认值
+   resetToDefaults: 重置为默认值
+
+# 以下是普通键
+setCategory: 设置分类
+   setCategory: 设置分类
+
+# 以下是普通键
+setCategoryForItems: 设置分类 ({count}个项目)
+   setCategoryForItems: 设置分类 ({count}个项目)
+
+# 以下是普通键
+settings: 设置
+   settings: 设置
+
+# 以下是普通键
+storageSettings: 存储设置
+   storageSettings: 存储设置
+
+# 以下是普通键
+themeModeSystemDescription: 根据系统设置自动切换深色/亮色主题
+   themeModeSystemDescription: 根据系统设置自动切换深色/亮色主题
+
+# 以下是未使用的键 [UNUSED]
+collectionPropertyPanelCharacterSettings: 字符设置
+   collectionPropertyPanelCharacterSettings: 字符设置
+
+# 以下是未使用的键 [UNUSED]
+filterSection: 筛选选项
+   filterSection: 筛选选项
+
+# 以下是未使用的键 [UNUSED]
+generalSettings: 常规设置
+   generalSettings: 常规设置
+
+# 以下是未使用的键 [UNUSED]
+verticalTextModeEnabled: 竖排文本预览 - 超出高度自动换列，可横向滚动
+   verticalTextModeEnabled: 竖排文本预览 - 超出高度自动换列，可横向滚动
+
+
+# --- SIZE (11 keys) ---
+
+# 以下键替代了其他键
+dimensions: 尺寸
+   dimensions: 尺寸
+   imagePropertyPanelDimensions: 尺寸
+   textPropertyPanelDimensions: 尺寸
+
+# 以下键替代了其他键
+height: 高度
+   height: 高度
+   libraryManagementSizeHeight: 高度
+
+# 以下键替代了其他键
+imagePropertyPanelBorderWidth: 边框宽度
+   imagePropertyPanelBorderWidth: 边框宽度
+   collectionPropertyPanelBorderWidth: 边框宽度
+
+# 以下键替代了其他键
+width: 宽度
+   width: 宽度
+   libraryManagementSizeWidth: 宽度
+
+# 以下是普通键
+characterEditBrushSize: 笔刷尺寸
+   characterEditBrushSize: 笔刷尺寸
+
+# 以下是普通键
+collectionPropertyPanelScale: 缩放
+   collectionPropertyPanelScale: 缩放
+
+# 以下是普通键
+exportDialogFitHeight: 适合高度
+   exportDialogFitHeight: 适合高度
+
+# 以下是普通键
+exportDialogFitWidth: 适合宽度
+   exportDialogFitWidth: 适合宽度
+
+# 以下是普通键
+resetZoom: 重置缩放
+   resetZoom: 重置缩放
+
+# 以下是未使用的键 [UNUSED]
+imagePropertyPanelBorderWidth: 边框宽度
+   imagePropertyPanelBorderWidth: 边框宽度
+
+# 以下是未使用的键 [UNUSED]
+libraryManagementSize: 尺寸
+   libraryManagementSize: 尺寸
+
+
+# --- STATUS (50 keys) ---
+
+# 以下键替代了其他键
+characterDetailUnknown: 未知
+   characterDetailUnknown: 未知
+   collectionPropertyPanelUnknown: 未知
+
+# 以下键替代了其他键
+done: 完成
+   done: 完成
+   characterManagementBatchDone: 完成
+   practiceListBatchDone: 完成
+   workBrowseBatchDone: 完成
+
+# 以下键替代了其他键
+imageCacheCleared: 图像缓存已清除
+   imageCacheCleared: 图像缓存已清除
+   collectionPropertyPanelCacheCleared: 图像缓存已清除
+
+# 以下键替代了其他键
+locked: 已锁定
+   locked: 已锁定
+   elementLocked: 已锁定
+
+# 以下键替代了其他键
+unlocked: 未锁定
+   unlocked: 未锁定
+   elementUnlocked: 未锁定
+
+# 以下是普通键
+autoCleanupIntervalDescription: 自动清理运行的频率
+   autoCleanupIntervalDescription: 自动清理运行的频率
+
+# 以下是普通键
+characterCollectionImageInvalid: 图像数据无效或已损坏
+   characterCollectionImageInvalid: 图像数据无效或已损坏
+
+# 以下是普通键
+characterCollectionNoCharacters: 尚未采集字符
+   characterCollectionNoCharacters: 尚未采集字符
+
+# 以下是普通键
+characterDetailFormatOriginalDesc: 未经处理的原始图像
+   characterDetailFormatOriginalDesc: 未经处理的原始图像
+
+# 以下是普通键
+characterEditCharacterUpdated: 「字符已更新
+   characterEditCharacterUpdated: 「字符已更新
+
+# 以下是普通键
+characterEditThumbnailNotFound: 未找到缩略图
+   characterEditThumbnailNotFound: 未找到缩略图
+
+# 以下是普通键
+characterManagementNoCharacters: 未找到字符
+   characterManagementNoCharacters: 未找到字符
+
+# 以下是普通键
+collectionPropertyPanelAutoLineBreakDisabled: 已禁用自动换行
+   collectionPropertyPanelAutoLineBreakDisabled: 已禁用自动换行
+
+# 以下是普通键
+collectionPropertyPanelAutoLineBreakEnabled: 已启用自动换行
+   collectionPropertyPanelAutoLineBreakEnabled: 已启用自动换行
+
+# 以下是普通键
+collectionPropertyPanelDisabled: 已禁用
+   collectionPropertyPanelDisabled: 已禁用
+
+# 以下是普通键
+collectionPropertyPanelEnabled: 已启用
+   collectionPropertyPanelEnabled: 已启用
+
+# 以下是普通键
+collectionPropertyPanelNoCharactersFound: 未找到匹配的字符
+   collectionPropertyPanelNoCharactersFound: 未找到匹配的字符
+
+# 以下是普通键
+collectionPropertyPanelSelectedCharacter: 已选字符
+   collectionPropertyPanelSelectedCharacter: 已选字符
+
+# 以下是普通键
+elementCopied: 元素已复制到剪贴板
+   elementCopied: 元素已复制到剪贴板
+
+# 以下是普通键
+elementCopiedToClipboard: 元素已复制到剪贴板
+   elementCopiedToClipboard: 元素已复制到剪贴板
+
+# 以下是普通键
+folderImportComplete: 文件夹导入完成
+   folderImportComplete: 文件夹导入完成
+
+# 以下是普通键
+formatBrushActivated: 格式刷已激活，点击目标元素应用样式
+   formatBrushActivated: 格式刷已激活，点击目标元素应用样式
+
+# 以下是普通键
+imagePropertyPanelFileRestored: 图片已从图库中恢复
+   imagePropertyPanelFileRestored: 图片已从图库中恢复
+
+# 以下是普通键
+imagePropertyPanelTransformApplied: 变换已应用
+   imagePropertyPanelTransformApplied: 变换已应用
+
+# 以下是普通键
+imageUpdated: 图片已更新
+   imageUpdated: 图片已更新
+
+# 以下是普通键
+lockStatus: 锁定状态
+   lockStatus: 锁定状态
+
+# 以下是普通键
+navigationNoHistoryMessage: 已经到达当前功能区的最开始页面。
+   navigationNoHistoryMessage: 已经到达当前功能区的最开始页面。
+
+# 以下是普通键
+overwriteExistingPractice: 已存在名为"{title}"的字帖，是否覆盖？
+   overwriteExistingPractice: 已存在名为"{title}"的字帖，是否覆盖？
+
+# 以下是普通键
+practiceEditTitleExistsMessage: 已存在同名字帖。是否覆盖？
+   practiceEditTitleExistsMessage: 已存在同名字帖。是否覆盖？
+
+# 以下是普通键
+practiceListNoResults: 未找到字帖
+   practiceListNoResults: 未找到字帖
+
+# 以下是普通键
+restartAfterRestored: 注意：恢复完成后应用将自动重启
+   restartAfterRestored: 注意：恢复完成后应用将自动重启
+
+# 以下是普通键
+settingsResetMessage: 设置已重置为默认值
+   settingsResetMessage: 设置已重置为默认值
+
+# 以下是普通键
+stateAndDisplay: 状态与显示
+   stateAndDisplay: 状态与显示
+
+# 以下是普通键
+storageUsed: 已使用存储
+   storageUsed: 已使用存储
+
+# 以下是普通键
+unknownCategory: 未知分类
+   unknownCategory: 未知分类
+
+# 以下是普通键
+unnamedElement: 未命名元素
+   unnamedElement: 未命名元素
+
+# 以下是普通键
+unnamedGroup: 未命名组
+   unnamedGroup: 未命名组
+
+# 以下是普通键
+unnamedLayer: 未命名图层
+   unnamedLayer: 未命名图层
+
+# 以下是普通键
+workBrowseNoWorks: 未找到作品
+   workBrowseNoWorks: 未找到作品
+
+# 以下是普通键
+workBrowseSelectedCount: 已选{count}个
+   workBrowseSelectedCount: 已选{count}个
+
+# 以下是未使用的键 [UNUSED]
+elementCopiedToClipboardWithPreload: 元素已复制到剪贴板（已预加载图像）
+   elementCopiedToClipboardWithPreload: 元素已复制到剪贴板（已预加载图像）
+
+# 以下是未使用的键 [UNUSED]
+elementsCopied: {count}个元素已复制到剪贴板
+   elementsCopied: {count}个元素已复制到剪贴板
+
+# 以下是未使用的键 [UNUSED]
+imageCacheCleared: 图像缓存已清除
+   imageCacheCleared: 图像缓存已清除
+
+# 以下是未使用的键 [UNUSED]
+practiceListSortByStatus: 按状态排序
+   practiceListSortByStatus: 按状态排序
+
+# 以下是未使用的键 [UNUSED]
+practiceListStatus: 状态
+   practiceListStatus: 状态
+
+# 以下是未使用的键 [UNUSED]
+practiceListStatusCompleted: 已完成
+   practiceListStatusCompleted: 已完成
+
+# 以下是未使用的键 [UNUSED]
+removedFromAllCategories: 已从所有分类中移除
+   removedFromAllCategories: 已从所有分类中移除
+
+# 以下是未使用的键 [UNUSED]
+restartAppRequired: 需要重启应用以完成恢复过程。
+   restartAppRequired: 需要重启应用以完成恢复过程。
+
+# 以下是未使用的键 [UNUSED]
+workStatusArchived: 已归档
+   workStatusArchived: 已归档
+
+# 以下是未使用的键 [UNUSED]
+workStatusPublished: 已发布
+   workStatusPublished: 已发布
+
+
+# --- TIME (8 keys) ---
+
+# 以下是普通键
+diskCacheTtl: 磁盘缓存生命周期
+   diskCacheTtl: 磁盘缓存生命周期
+
+# 以下是普通键
+filterDatePresetLastMonth: 上个月
+   filterDatePresetLastMonth: 上个月
+
+# 以下是普通键
+filterDatePresetLastWeek: 上周
+   filterDatePresetLastWeek: 上周
+
+# 以下是普通键
+filterDatePresetLastYear: 去年
+   filterDatePresetLastYear: 去年
+
+# 以下是普通键
+filterDatePresetThisMonth: 本月
+   filterDatePresetThisMonth: 本月
+
+# 以下是普通键
+filterDatePresetThisWeek: 本周
+   filterDatePresetThisWeek: 本周
+
+# 以下是普通键
+filterDatePresetThisYear: 今年
+   filterDatePresetThisYear: 今年
+
+# 以下是普通键
+hours: {count, plural, =1{1小时} other{{count}小时}}
+   hours: {count, plural, =1{1小时} other{{count}小时}}
+

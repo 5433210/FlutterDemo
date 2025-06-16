@@ -1,0 +1,45 @@
+=== Common Patterns in Values ===
+
+Common Chinese Prefixes:
+  - '删除': 28 occurrences
+  - '加载': 22 occurrences
+  - '选择': 21 occurrences
+  - '确定': 21 occurrences
+  - '确定要': 19 occurrences
+  - '添加': 17 occurrences
+  - '保存': 17 occurrences
+  - '导入': 16 occurrences
+  - '确认': 15 occurrences
+  - '图像': 14 occurrences
+  - '确定要删': 14 occurrences
+  - '确定要删除': 14 occurrences
+  - '输入': 13 occurrences
+  - '图层': 13 occurrences
+  - '作品': 13 occurrences
+  - '无法': 12 occurrences
+  - '确认删': 12 occurrences
+  - '确认删除': 12 occurrences
+  - '字符': 12 occurrences
+  - '文件': 12 occurrences
+
+Common English Prefixes:
+  - 'Co': 54 occurrences
+  - 'Re': 49 occurrences
+  - 'Se': 49 occurrences
+  - 'No': 47 occurrences
+  - 'Im': 43 occurrences
+  - 'No ': 38 occurrences
+  - 'Pr': 38 occurrences
+  - 'De': 36 occurrences
+  - 'Sel': 31 occurrences
+  - 'Sele': 31 occurrences
+  - 'Selec': 31 occurrences
+  - 'Select': 31 occurrences
+  - 'Fa': 30 occurrences
+  - 'Fi': 29 occurrences
+  - 'Ca': 28 occurrences
+  - 'Del': 28 occurrences
+  - 'Dele': 28 occurrences
+  - 'Delet': 28 occurrences
+  - 'Delete': 27 occurrences
+  - 'Fai': 26 occurrences

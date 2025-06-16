@@ -1,0 +1,2067 @@
+=== Semantic Groups Analysis ===
+Total groups: 143
+
+Group: param_pattern_imagePropertyPanelLoadError
+Keys (18):
+  - addFromGalleryFailed
+    ZH: 从图库添加图片失败: {error}
+    EN: Failed to add image from gallery: {error}
+    Context: button
+    Action: add
+  - characterCollectionError
+    ZH: 错误：{error}
+    EN: Error: {error}
+    Context: error
+    Action: sort
+  - characterCollectionFindSwitchFailed
+    ZH: 查找并切换页面失败：{error}
+    EN: Find and switch page failed: {error}
+    Context: error
+    Action: view
+  - characterDetailTagAddError
+    ZH: 添加标签失败: {error}
+    EN: Failed to add tag, error: {error}
+    Context: button
+    Action: add
+  - characterDetailTagRemoveError
+    ZH: 移除标签失败, 错误: {error}
+    EN: Failed to remove tag, error: {error}
+    Context: button
+    Action: delete
+  - imagePropertyPanelImportError
+    ZH: 导入图像失败：{error}
+    EN: Failed to import image: {error}
+    Context: error
+    Action: view
+  - imagePropertyPanelLoadError
+    ZH: 加载图像失败：{error}...
+    EN: Failed to load image: {error}...
+    Context: error
+    Action: import
+  - imagePropertyPanelProcessingPathError
+    ZH: 处理路径错误：{error}
+    EN: Processing path error: {error}
+    Context: error
+  - imagePropertyPanelTransformError
+    ZH: 应用变换失败：{error}
+    EN: Failed to apply transform: {error}
+    Context: form
+    Action: view
+  - importFailedMessage
+    ZH: 导入失败: {error}
+    EN: Import failed: {error}
+    Context: dialog
+    Action: view
+  - importFileFailed
+    ZH: 导入失败: {error}
+    EN: Import failed: {error}
+    Context: error
+    Action: view
+  - initializationFailed
+    ZH: 初始化失败：{error}
+    EN: Initialization failed: {error}
+    Context: error
+  - openGalleryFailed
+    ZH: 打开图库失败: {error}
+    EN: Open gallery failed: {error}
+    Context: error
+    Action: view
+  - refreshDataFailed
+    ZH: 刷新数据失败: {error}
+    EN: Refresh data failed: {error}
+    Context: error
+    Action: view
+  - saveFailedWithError
+    ZH: 保存失败：{error}
+    EN: Save failed: {error}
+    Context: button
+    Action: edit
+  - submitFailed
+    ZH: 提交失败：{error}
+    EN: Submit failed: {error}
+    Context: button
+    Action: view
+  - workImageDeleteFailed
+    ZH: 删除图片失败：{error}
+    EN: Failed to delete image: {error}
+    Context: button
+    Action: delete
+  - workImportDialogError
+    ZH: 导入失败：{error}
+    EN: Import failed: {error}
+    Context: dialog
+    Action: view
+
+Group: param_pattern_selectedCount
+Keys (14):
+  - characterCollectionDeleteBatchConfirm
+    ZH: 确认删除{count}个已保存区域？
+    EN: Confirm deletion of {count} saved regions?
+    Context: button
+    Action: delete
+  - characterCollectionDeleteBatchMessage
+    ZH: 您即将删除{count}个已保存区域。此操作无法撤消。
+    EN: You are about to delete {count} saved regions. This action cannot be undone.
+    Context: button
+    Action: add
+  - charactersSelected
+    ZH: 已选择 {count} 个字符
+    EN: {count} characters selected
+    Context: menu
+    Action: select
+  - confirmDeleteFilteredItems
+    ZH: 确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。
+    EN: Are you sure you want to delete all {count} items under the current filter? This action cannot be undone.
+    Context: button
+    Action: edit
+  - confirmRemoveFromCategory
+    ZH: 确定要将选中的{count}个项目从当前分类中移除吗？
+    EN: Are you sure you want to remove the selected {count} items from the current category?
+    Context: button
+    Action: edit
+  - deleteCharactersConfirm
+    ZH: 确定要删除这 {count} 个字符吗？此操作不可恢复。
+    EN: Are you sure you want to delete these {count} characters? This action cannot be undone.
+    Context: button
+    Action: delete
+  - exportDialogMultipleFilesNote
+    ZH: 注意: 将导出 {count} 个图片文件，文件名将自动添加页码。
+    EN: Note: Will export {count} image files, filenames will be automatically numbered.
+    Context: dialog
+    Action: export
+  - importSuccessMessage
+    ZH: 成功导入 {count} 个文件
+    EN: Successfully imported {count} files
+    Context: dialog
+    Action: view
+  - selectedCount
+    ZH: 已选择{count}个
+    EN: {count} selected
+    Context: menu
+    Action: edit
+  - setCategoryForItems
+    ZH: 设置分类 ({count}个项目)
+    EN: Set Category ({count} items)
+    Context: dialog
+    Action: edit
+  - totalItems
+    ZH: 共 {count} 个
+    EN: Total: {count}
+    Context: menu
+  - workBrowseDeleteConfirmMessage
+    ZH: 确定要删除已选的{count}个作品吗？此操作无法撤消。
+    EN: Are you sure you want to delete {count} selected works? This action cannot be undone.
+    Context: button
+    Action: delete
+  - workBrowseItemsPerPage
+    ZH: {count}项/页
+    EN: {count} per page
+    Context: menu
+  - workBrowseSelectedCount
+    ZH: 已选{count}个
+    EN: {count} selected
+    Context: button
+    Action: cancel
+
+Group: exact_match_geometryProperties
+Keys (6):
+  - collectionPropertyPanelGeometry
+    ZH: 几何属性
+    EN: Geometry Properties
+  - collectionPropertyPanelHeaderGeometry
+    ZH: 几何属性
+    EN: Geometry Properties
+  - geometryProperties
+    ZH: 几何属性
+    EN: Geometry Properties
+    Context: menu
+    Action: settings
+  - imagePropertyPanelGeometry
+    ZH: 几何属性
+    EN: Geometry Properties
+  - practiceEditGeometryProperties
+    ZH: 几何属性
+    EN: Geometry Properties
+  - textPropertyPanelGeometry
+    ZH: 几何属性
+    EN: Geometry Properties
+
+Group: exact_match_characterDetailTags
+Keys (5):
+  - characterDetailTags
+    ZH: 标签
+    EN: Tags
+    Context: title
+  - characterFilterTags
+    ZH: 标签
+    EN: Tags
+  - filterTagsSection
+    ZH: 标签
+    EN: Tags
+    Context: title
+    Action: search
+  - libraryManagementTags
+    ZH: 标签
+    EN: Tags
+    Context: label
+    Action: edit
+  - workDetailTags
+    ZH: 标签
+    EN: Tags
+    Context: tooltip
+
+Group: param_pattern_practiceEditTitleUpdated
+Keys (5):
+  - overwriteExistingPractice
+    ZH: 已存在名为"{title}"的字帖，是否覆盖？
+    EN: A copybook named "{title}" already exists. Do you want to overwrite it?
+    Context: button
+    Action: confirm
+  - overwriteMessage
+    ZH: 已存在标题为"{title}"的字帖，是否覆盖？
+    EN: A copybook with title "{title}" already exists. Do you want to overwrite it?
+    Context: button
+    Action: confirm
+  - practiceEditPracticeLoaded
+    ZH: 字帖"{title}"加载成功
+    EN: Practice "{title}" loaded successfully
+    Context: title
+    Action: edit
+  - practiceEditTitleUpdated
+    ZH: 标题已更新为"{title}"
+    EN: Title updated to "{title}"
+    Context: menu
+    Action: add
+  - practiceSheetSaved
+    ZH: 字帖 "{title}" 已保存
+    EN: Copybook "{title}" saved
+    Context: button
+    Action: view
+
+Group: exact_match_workBrowseListView
+Keys (4):
+  - characterManagementListView
+    ZH: 列表视图
+    EN: List View
+  - listView
+    ZH: 列表视图
+    EN: List View
+    Context: button
+    Action: view
+  - practiceListListView
+    ZH: 列表视图
+    EN: List View
+    Context: button
+    Action: view
+  - workBrowseListView
+    ZH: 列表视图
+    EN: List View
+    Context: button
+    Action: edit
+
+Group: exact_match_visualSettings
+Keys (4):
+  - collectionPropertyPanelVisual
+    ZH: 视觉设置
+    EN: Visual Settings
+  - imagePropertyPanelVisual
+    ZH: 视觉设置
+    EN: Visual Settings
+  - textPropertyPanelVisual
+    ZH: 视觉设置
+    EN: Visual Settings
+  - visualSettings
+    ZH: 视觉设置
+    EN: Visual Settings
+    Context: menu
+    Action: settings
+
+Group: exact_match_filterStyleOther
+Keys (4):
+  - filterStyleOther
+    ZH: 其他
+    EN: Other
+    Action: search
+  - filterToolOther
+    ZH: 其他
+    EN: Other
+    Action: search
+  - workStyleOther
+    ZH: 其他
+    EN: Other
+    Context: menu
+    Action: edit
+  - workToolOther
+    ZH: 其他
+    EN: Other
+    Context: menu
+    Action: edit
+
+Group: exact_match_opacity
+Keys (4):
+  - collectionPropertyPanelOpacity
+    ZH: 不透明度
+    EN: Opacity
+    Context: label
+  - imagePropertyPanelOpacity
+    ZH: 不透明度
+    EN: Opacity
+  - opacity
+    ZH: 不透明度
+    EN: Opacity
+    Context: status
+    Action: edit
+  - textPropertyPanelOpacity
+    ZH: 不透明度
+    EN: Opacity
+
+Group: exact_match_exportDialogPreview
+Keys (4):
+  - exportDialogPreview
+    ZH: 预览
+    EN: Preview
+    Context: dialog
+    Action: view
+  - preview
+    ZH: 预览
+    EN: Preview
+    Context: form
+    Action: view
+  - previewText
+    ZH: 预览
+    EN: Preview
+  - textPropertyPanelPreview
+    ZH: 预览
+    EN: Preview
+
+Group: exact_match_workBrowseDeleteConfirmTitle
+Keys (4):
+  - characterCollectionDeleteConfirm
+    ZH: 确认删除
+    EN: Confirm Deletion
+    Context: button
+    Action: delete
+  - characterManagementDeleteConfirm
+    ZH: 确认删除
+    EN: Confirm Deletion
+    Context: button
+    Action: delete
+  - practiceListDeleteConfirm
+    ZH: 确认删除
+    EN: Confirm Deletion
+    Context: button
+    Action: delete
+  - workBrowseDeleteConfirmTitle
+    ZH: 确认删除
+    EN: Confirm Deletion
+    Context: button
+    Action: delete
+
+Group: exact_match_back
+Keys (4):
+  - back
+    ZH: 返回
+    EN: Back
+    Context: button
+    Action: cancel
+  - characterCollectionBack
+    ZH: 返回
+    EN: Back
+  - practiceEditTopNavBack
+    ZH: 返回
+    EN: Back
+  - workDetailBack
+    ZH: 返回
+    EN: Back
+
+Group: exact_match_delete
+Keys (4):
+  - delete
+    ZH: 删除
+    EN: Delete
+    Context: button
+    Action: delete
+  - deleteBackup
+    ZH: 删除
+    EN: Delete
+    Context: button
+    Action: delete
+  - workBrowseDelete
+    ZH: 删除
+    EN: Delete
+    Context: button
+    Action: delete
+  - workImportDelete
+    ZH: 删除
+    EN: Delete
+    Context: button
+    Action: delete
+
+Group: exact_match_workFormAuthor
+Keys (4):
+  - author
+    ZH: 作者
+    EN: Author
+    Context: tooltip
+  - characterDetailAuthor
+    ZH: 作者
+    EN: Author
+    Context: menu
+  - filterSortFieldAuthor
+    ZH: 作者
+    EN: Author
+    Context: form
+    Action: add
+  - workFormAuthor
+    ZH: 作者
+    EN: Author
+    Context: form
+    Action: confirm
+
+Group: exact_match_selectDate
+Keys (4):
+  - filterDateSelectPrompt
+    ZH: 选择日期
+    EN: Select Date
+    Context: button
+    Action: select
+  - filterSelectDate
+    ZH: 选择日期
+    EN: Select Date
+  - selectDate
+    ZH: 选择日期
+    EN: Select Date
+    Context: button
+    Action: view
+  - workFormSelectDate
+    ZH: 选择日期
+    EN: Select Date
+    Context: form
+    Action: select
+
+Group: exact_match_collectionPropertyPanelHeaderContent
+Keys (4):
+  - collectionPropertyPanelContent
+    ZH: 内容属性
+    EN: Content Properties
+  - collectionPropertyPanelHeaderContent
+    ZH: 内容属性
+    EN: Content Properties
+  - imagePropertyPanelContent
+    ZH: 内容属性
+    EN: Content Properties
+  - practiceEditContentProperties
+    ZH: 内容属性
+    EN: Content Properties
+
+Group: exact_match_workBrowseBatchDone
+Keys (4):
+  - characterManagementBatchDone
+    ZH: 完成
+    EN: Done
+  - done
+    ZH: 完成
+    EN: Done
+    Context: button
+    Action: confirm
+  - practiceListBatchDone
+    ZH: 完成
+    EN: Done
+    Context: button
+    Action: select
+  - workBrowseBatchDone
+    ZH: 完成
+    EN: Done
+    Context: button
+    Action: edit
+
+Group: exact_match_workImportDialogImport
+Keys (4):
+  - import
+    ZH: 导入
+    EN: Import
+    Context: button
+    Action: add
+  - libraryManagementImport
+    ZH: 导入
+    EN: Import
+    Context: button
+    Action: add
+  - workImportDialogImport
+    ZH: 导入
+    EN: Import
+    Context: button
+    Action: save
+  - workImportImport
+    ZH: 导入
+    EN: Import
+    Context: button
+    Action: add
+
+Group: exact_match_characterDetailAddTag
+Keys (4):
+  - addTag
+    ZH: 添加标签
+    EN: Add Tag
+    Context: button
+    Action: add
+  - characterDetailAddTag
+    ZH: 添加标签
+    EN: Add Tag
+    Context: button
+    Action: add
+  - characterFilterAddTag
+    ZH: 添加标签
+    EN: Add Tag
+  - filterTagsAdd
+    ZH: 添加标签
+    EN: Add Tag
+    Context: button
+    Action: add
+
+Group: exact_match_cancel
+Keys (4):
+  - cancel
+    ZH: 取消
+    EN: Cancel
+    Context: button
+    Action: save
+  - workBrowseCancel
+    ZH: 取消
+    EN: Cancel
+    Context: button
+    Action: cancel
+  - workDetailCancel
+    ZH: 取消
+    EN: Cancel
+    Context: button
+    Action: edit
+  - workImportDialogCancel
+    ZH: 取消
+    EN: Cancel
+    Context: button
+    Action: cancel
+
+Group: exact_match_gridView
+Keys (4):
+  - characterManagementGridView
+    ZH: 网格视图
+    EN: Grid View
+  - gridView
+    ZH: 网格视图
+    EN: Grid View
+    Context: button
+    Action: view
+  - practiceListGridView
+    ZH: 网格视图
+    EN: Grid View
+    Context: button
+    Action: view
+  - workBrowseGridView
+    ZH: 网格视图
+    EN: Grid View
+    Context: button
+    Action: edit
+
+Group: exact_match_filterToolSection
+Keys (3):
+  - characterDetailWritingTool
+    ZH: 书写工具
+    EN: Writing Tool
+    Context: menu
+  - characterFilterWritingTool
+    ZH: 书写工具
+    EN: Writing Tool
+  - filterToolSection
+    ZH: 书写工具
+    EN: Writing Tool
+    Context: title
+    Action: search
+
+Group: exact_match_dimensions
+Keys (3):
+  - dimensions
+    ZH: 尺寸
+    EN: Dimensions
+    Context: dialog
+    Action: edit
+  - imagePropertyPanelDimensions
+    ZH: 尺寸
+    EN: Dimensions
+  - textPropertyPanelDimensions
+    ZH: 尺寸
+    EN: Dimensions
+    Context: form
+    Action: edit
+
+Group: exact_match_characterDetailFormatOriginal
+Keys (3):
+  - characterDetailFormatOriginal
+    ZH: 原始
+    EN: Original
+    Context: form
+  - collectionPropertyPanelOriginal
+    ZH: 原始
+    EN: Original
+  - imagePropertyPanelFitOriginal
+    ZH: 原始
+    EN: Original
+    Context: label
+
+Group: exact_match_workBrowseBatchMode
+Keys (3):
+  - characterManagementBatchMode
+    ZH: 批量模式
+    EN: Batch Mode
+  - practiceListBatchMode
+    ZH: 批量模式
+    EN: Batch Mode
+    Context: button
+  - workBrowseBatchMode
+    ZH: 批量模式
+    EN: Batch Mode
+    Context: button
+    Action: edit
+
+Group: exact_match_filterStyleSection
+Keys (3):
+  - characterDetailCalligraphyStyle
+    ZH: 书法风格
+    EN: Calligraphy Style
+    Context: menu
+  - characterFilterCalligraphyStyle
+    ZH: 书法风格
+    EN: Calligraphy Style
+  - filterStyleSection
+    ZH: 书法风格
+    EN: Calligraphy Style
+    Context: title
+    Action: search
+
+Group: exact_match_filterDateStartDate
+Keys (3):
+  - filterDateStartDate
+    ZH: 开始日期
+    EN: Start Date
+    Context: button
+    Action: select
+  - filterStartDate
+    ZH: 开始日期
+    EN: Start Date
+  - startDate
+    ZH: 开始日期
+    EN: Start Date
+    Context: button
+    Action: select
+
+Group: exact_match_workDetailBasicInfo
+Keys (3):
+  - characterDetailBasicInfo
+    ZH: 基本信息
+    EN: Basic Information
+    Context: title
+  - libraryManagementBasicInfo
+    ZH: 基本信息
+    EN: Basic Information
+    Context: tooltip
+    Action: edit
+  - workDetailBasicInfo
+    ZH: 基本信息
+    EN: Basic Information
+    Context: tooltip
+    Action: edit
+
+Group: exact_match_saveSuccess
+Keys (3):
+  - practiceEditSaveSuccess
+    ZH: 保存成功
+    EN: Save successful
+    Context: button
+    Action: edit
+  - saveSuccess
+    ZH: 保存成功
+    EN: Save successful
+    Context: button
+    Action: edit
+  - workDetailSaveSuccess
+    ZH: 保存成功
+    EN: Save successful
+    Context: button
+    Action: view
+
+Group: exact_match_workFormCreationDate
+Keys (3):
+  - characterFilterCreationDate
+    ZH: 创作日期
+    EN: Creation Date
+    Context: title
+    Action: search
+  - filterSortFieldCreationDate
+    ZH: 创作日期
+    EN: Creation Date
+    Context: form
+    Action: add
+  - workFormCreationDate
+    ZH: 创作日期
+    EN: Creation Date
+    Context: form
+    Action: view
+
+Group: exact_match_filterDateEndDate
+Keys (3):
+  - endDate
+    ZH: 结束日期
+    EN: End Date
+    Context: button
+    Action: select
+  - filterDateEndDate
+    ZH: 结束日期
+    EN: End Date
+    Context: button
+    Action: select
+  - filterEndDate
+    ZH: 结束日期
+    EN: End Date
+
+Group: exact_match_position
+Keys (3):
+  - imagePropertyPanelPosition
+    ZH: 位置
+    EN: Position
+  - position
+    ZH: 位置
+    EN: Position
+    Context: menu
+    Action: edit
+  - textPropertyPanelPosition
+    ZH: 位置
+    EN: Position
+
+Group: exact_match_workFormDateTooltip
+Keys (3):
+  - workFormDateTooltip
+    ZH: 按Tab导航到下一个字段
+    EN: Press Tab to navigate to the next field
+    Context: form
+    Action: view
+  - workFormStyleTooltip
+    ZH: 按Tab导航到下一个字段
+    EN: Press Tab to navigate to the next field
+    Context: form
+    Action: view
+  - workFormToolTooltip
+    ZH: 按Tab导航到下一个字段
+    EN: Press Tab to navigate to the next field
+    Context: form
+    Action: view
+
+Group: exact_match_save
+Keys (3):
+  - practiceEditTopNavSave
+    ZH: 保存
+    EN: Save
+    Context: button
+    Action: edit
+  - save
+    ZH: 保存
+    EN: Save
+    Context: button
+    Action: save
+  - workDetailSave
+    ZH: 保存
+    EN: Save
+    Context: button
+    Action: edit
+
+Group: exact_match_apply
+Keys (3):
+  - apply
+    ZH: 应用
+    EN: Apply
+  - filterApply
+    ZH: 应用
+    EN: Apply
+  - filterDateApply
+    ZH: 应用
+    EN: Apply
+    Context: button
+    Action: search
+
+Group: exact_match_backgroundColor
+Keys (3):
+  - backgroundColor
+    ZH: 背景颜色
+    EN: Background Color
+    Context: button
+    Action: add
+  - collectionPropertyPanelBackgroundColor
+    ZH: 背景颜色
+    EN: Background Color
+  - textPropertyPanelBgColor
+    ZH: 背景颜色
+    EN: Background Color
+    Context: dialog
+
+Group: exact_match_windowButtonClose
+Keys (3):
+  - characterCollectionHelpClose
+    ZH: 关闭
+    EN: Close
+  - close
+    ZH: 关闭
+    EN: Close
+    Context: button
+  - windowButtonClose
+    ZH: 关闭
+    EN: Close
+    Context: button
+    Action: select
+
+Group: exact_match_filterDateSection
+Keys (3):
+  - filterDateSection
+    ZH: 创建时间
+    EN: Creation Time
+    Context: title
+    Action: search
+  - filterSortFieldCreateTime
+    ZH: 创建时间
+    EN: Creation Time
+    Context: form
+    Action: add
+  - workDetailCreateTime
+    ZH: 创建时间
+    EN: Creation Time
+    Context: form
+    Action: add
+
+Group: exact_match_rotation
+Keys (3):
+  - collectionPropertyPanelRotation
+    ZH: 旋转
+    EN: Rotation
+    Context: label
+  - imagePropertyPanelRotation
+    ZH: 旋转
+    EN: Rotation
+  - rotation
+    ZH: 旋转
+    EN: Rotation
+    Context: form
+    Action: edit
+
+Group: exact_match_filterExpand
+Keys (2):
+  - characterFilterExpand
+    ZH: 展开筛选面板
+    EN: Expand Filter Panel
+    Context: menu
+    Action: search
+  - filterExpand
+    ZH: 展开筛选面板
+    EN: Expand Filter Panel
+    Context: button
+    Action: search
+
+Group: exact_match_characterCollectionNoCharacter
+Keys (2):
+  - characterCollectionNoCharacter
+    ZH: 无字符
+    EN: No character
+    Context: form
+  - collectionPropertyPanelNoCharacterText
+    ZH: 无字符
+    EN: No character
+    Context: form
+
+Group: exact_match_clearCache
+Keys (2):
+  - clearCache
+    ZH: 清除缓存
+    EN: Clear Cache
+    Context: button
+    Action: delete
+  - clearCacheConfirmTitle
+    ZH: 清除缓存
+    EN: Clear Cache
+    Context: button
+    Action: delete
+
+Group: exact_match_imagePropertyPanelBorderColor
+Keys (2):
+  - collectionPropertyPanelBorderColor
+    ZH: 边框颜色
+    EN: Border Color
+  - imagePropertyPanelBorderColor
+    ZH: 边框颜色
+    EN: Border Color
+
+Group: exact_match_textPropertyPanelFontSize
+Keys (2):
+  - collectionPropertyPanelFontSize
+    ZH: 字体大小
+    EN: Font Size
+  - textPropertyPanelFontSize
+    ZH: 字体大小
+    EN: Font Size
+    Context: title
+    Action: edit
+
+Group: exact_match_textPropertyPanelPadding
+Keys (2):
+  - collectionPropertyPanelPadding
+    ZH: 内边距
+    EN: Padding
+  - textPropertyPanelPadding
+    ZH: 内边距
+    EN: Padding
+    Context: button
+    Action: add
+
+Group: exact_match_collectionPropertyPanelReset
+Keys (2):
+  - collectionPropertyPanelReset
+    ZH: 重置
+    EN: Reset
+  - imagePropertyPanelReset
+    ZH: 重置
+    EN: Reset
+
+Group: exact_match_unlocked
+Keys (2):
+  - elementUnlocked
+    ZH: 未锁定
+    EN: Unlocked
+  - unlocked
+    ZH: 未锁定
+    EN: Unlocked
+
+Group: exact_match_filterSortFieldTool
+Keys (2):
+  - filterSortFieldTool
+    ZH: 工具
+    EN: Tool
+    Context: form
+    Action: add
+  - workFormTool
+    ZH: 工具
+    EN: Tool
+    Context: form
+    Action: delete
+
+Group: exact_match_filterDatePresets
+Keys (2):
+  - filterDatePresets
+    ZH: 预设
+    EN: Presets
+    Context: button
+    Action: add
+  - filterPresetSection
+    ZH: 预设
+    EN: Presets
+
+Group: exact_match_height
+Keys (2):
+  - height
+    ZH: 高度
+    EN: Height
+    Context: title
+    Action: search
+  - libraryManagementSizeHeight
+    ZH: 高度
+    EN: Height
+
+Group: exact_match_files
+Keys (2):
+  - fileCount
+    ZH: 文件数量
+    EN: File Count
+  - files
+    ZH: 文件数量
+    EN: File Count
+    Context: menu
+    Action: add
+
+Group: exact_match_appTitle
+Keys (2):
+  - appName
+    ZH: 字字珠玑
+    EN: Char As Gem
+  - appTitle
+    ZH: 字字珠玑
+    EN: Char As Gem
+    Context: form
+
+Group: exact_match_practiceListStatusDraft
+Keys (2):
+  - practiceListStatusDraft
+    ZH: 草稿
+    EN: Draft
+  - workStatusDraft
+    ZH: 草稿
+    EN: Draft
+
+Group: exact_match_characterEditThumbnailLoadError
+Keys (2):
+  - characterEditThumbnailLoadError
+    ZH: 加载缩略图失败
+    EN: Failed to load thumbnail
+    Context: error
+    Action: edit
+  - characterEditThumbnailLoadFailed
+    ZH: 加载缩略图失败
+    EN: Failed to load thumbnail
+    Context: error
+    Action: edit
+
+Group: exact_match_filterStyleRegular
+Keys (2):
+  - filterStyleRegular
+    ZH: 楷书
+    EN: Regular Script
+    Action: search
+  - workStyleRegular
+    ZH: 楷书
+    EN: Regular Script
+    Context: menu
+    Action: delete
+
+Group: exact_match_libraryManagementType
+Keys (2):
+  - characterDetailFormatType
+    ZH: 类型
+    EN: Type
+    Context: form
+  - libraryManagementType
+    ZH: 类型
+    EN: Type
+    Context: form
+
+Group: exact_match_libraryManagementFavorite
+Keys (2):
+  - characterCollectionFilterFavorite
+    ZH: 收藏
+    EN: Favorite
+    Context: form
+    Action: select
+  - libraryManagementFavorite
+    ZH: 收藏
+    EN: Favorite
+    Context: menu
+
+Group: exact_match_retry
+Keys (2):
+  - characterCollectionRetry
+    ZH: 重试
+    EN: Retry
+    Context: button
+    Action: import
+  - retry
+    ZH: 重试
+    EN: Retry
+    Context: button
+    Action: view
+
+Group: exact_match_filterSortFieldNone
+Keys (2):
+  - filterSortFieldNone
+    ZH: 无
+    EN: None
+    Context: form
+    Action: edit
+  - imagePropertyPanelFitNone
+    ZH: 无
+    EN: None
+
+Group: exact_match_filterStyleRunning
+Keys (2):
+  - filterStyleRunning
+    ZH: 行书
+    EN: Running Script
+    Action: search
+  - workStyleRunning
+    ZH: 行书
+    EN: Running Script
+    Context: menu
+    Action: delete
+
+Group: exact_match_workImportDialogProcessing
+Keys (2):
+  - characterCollectionProcessing
+    ZH: 处理中...
+    EN: Processing...
+    Context: status
+  - workImportDialogProcessing
+    ZH: 处理中...
+    EN: Processing...
+    Context: dialog
+    Action: import
+
+Group: exact_match_characterDetailUnknown
+Keys (2):
+  - characterDetailUnknown
+    ZH: 未知
+    EN: Unknown
+    Context: label
+  - collectionPropertyPanelUnknown
+    ZH: 未知
+    EN: Unknown
+    Action: import
+
+Group: exact_match_filterClear
+Keys (2):
+  - filterClear
+    ZH: 清除
+    EN: Clear
+    Context: button
+    Action: delete
+  - filterDateClear
+    ZH: 清除
+    EN: Clear
+    Context: button
+    Action: delete
+
+Group: exact_match_workBrowseItemsPerPage
+Keys (2):
+  - characterManagementItemsPerPage
+    ZH: {count}项/页
+    EN: {count} per page
+  - workBrowseItemsPerPage
+    ZH: {count}项/页
+    EN: {count} per page
+    Context: menu
+
+Group: exact_match_libraryManagementFavorites
+Keys (2):
+  - libraryManagementFavorites
+    ZH: 收藏
+    EN: Favorites
+    Context: title
+  - practiceListFilterFavorites
+    ZH: 收藏
+    EN: Favorites
+    Context: menu
+    Action: search
+
+Group: exact_match_practiceEditImageProperties
+Keys (2):
+  - imagePropertyPanel
+    ZH: 图像属性
+    EN: Image Properties
+  - practiceEditImageProperties
+    ZH: 图像属性
+    EN: Image Properties
+
+Group: exact_match_characterCollectionLeave
+Keys (2):
+  - characterCollectionLeave
+    ZH: 离开
+    EN: Leave
+    Context: error
+  - practiceEditLeave
+    ZH: 离开
+    EN: Leave
+    Context: button
+    Action: edit
+
+Group: exact_match_collectionPropertyPanelHeaderVisual
+Keys (2):
+  - collectionPropertyPanelHeaderVisual
+    ZH: 视觉属性
+    EN: Visual Properties
+  - practiceEditVisualProperties
+    ZH: 视觉属性
+    EN: Visual Properties
+
+Group: exact_match_layerOperations
+Keys (2):
+  - layerOperations
+    ZH: 图层操作
+    EN: Layer Operations
+    Context: title
+  - practiceEditLayerOperations
+    ZH: 图层操作
+    EN: Layer Operations
+    Context: button
+    Action: edit
+
+Group: exact_match_works
+Keys (2):
+  - workBrowseTitle
+    ZH: 作品
+    EN: Works
+    Context: button
+    Action: view
+  - works
+    ZH: 作品
+    EN: Works
+    Context: label
+    Action: select
+
+Group: exact_match_filterSortSection
+Keys (2):
+  - characterFilterSort
+    ZH: 排序
+    EN: Sort
+  - filterSortSection
+    ZH: 排序
+    EN: Sort
+    Context: title
+    Action: search
+
+Group: exact_match_practiceEditTopNavRedo
+Keys (2):
+  - characterEditRedo
+    ZH: 重做
+    EN: Redo
+    Context: button
+    Action: edit
+  - practiceEditTopNavRedo
+    ZH: 重做
+    EN: Redo
+    Context: button
+    Action: edit
+
+Group: exact_match_filterSelectAll
+Keys (2):
+  - filterSelectAll
+    ZH: 全选
+    EN: Select All
+    Context: button
+    Action: select
+  - toolbarSelectAll
+    ZH: 全选
+    EN: Select All
+    Context: button
+    Action: select
+
+Group: exact_match_collectionPropertyPanel
+Keys (2):
+  - collectionPropertyPanel
+    ZH: 采集属性
+    EN: Collection Properties
+  - practiceEditCollectionProperties
+    ZH: 采集属性
+    EN: Collection Properties
+
+Group: exact_match_width
+Keys (2):
+  - libraryManagementSizeWidth
+    ZH: 宽度
+    EN: Width
+  - width
+    ZH: 宽度
+    EN: Width
+    Context: title
+    Action: search
+
+Group: exact_match_characterEditUndo
+Keys (2):
+  - characterEditUndo
+    ZH: 撤销
+    EN: Undo
+    Context: button
+    Action: edit
+  - practiceEditTopNavUndo
+    ZH: 撤销
+    EN: Undo
+    Context: button
+    Action: edit
+
+Group: exact_match_workFormStyle
+Keys (2):
+  - filterSortFieldStyle
+    ZH: 风格
+    EN: Style
+    Context: form
+    Action: edit
+  - workFormStyle
+    ZH: 风格
+    EN: Style
+    Context: form
+    Action: delete
+
+Group: exact_match_workBrowseImport
+Keys (2):
+  - workBrowseImport
+    ZH: 导入作品
+    EN: Import Work
+    Context: button
+    Action: add
+  - workImportDialogTitle
+    ZH: 导入作品
+    EN: Import Work
+    Context: button
+    Action: add
+
+Group: exact_match_export
+Keys (2):
+  - export
+    ZH: 导出
+    EN: Export
+    Context: button
+    Action: import
+  - practiceEditTopNavExport
+    ZH: 导出
+    EN: Export
+    Context: button
+    Action: edit
+
+Group: exact_match_textureRemove
+Keys (2):
+  - remove
+    ZH: 移除
+    EN: Remove
+    Context: button
+    Action: edit
+  - textureRemove
+    ZH: 移除
+    EN: Remove
+    Context: button
+    Action: delete
+
+Group: exact_match_imageCacheClearFailed
+Keys (2):
+  - collectionPropertyPanelCacheClearFailed
+    ZH: 清除图像缓存失败
+    EN: Failed to clear image cache
+  - imageCacheClearFailed
+    ZH: 清除图像缓存失败
+    EN: Failed to clear image cache
+
+Group: exact_match_filterTagsSelected
+Keys (2):
+  - characterFilterSelectedTags
+    ZH: 已选标签：
+    EN: Selected Tags:
+  - filterTagsSelected
+    ZH: 已选标签：
+    EN: Selected Tags:
+    Context: menu
+    Action: select
+
+Group: exact_match_name
+Keys (2):
+  - libraryManagementName
+    ZH: 名称
+    EN: Name
+    Context: form
+    Action: select
+  - name
+    ZH: 名称
+    EN: Name
+    Context: form
+    Action: sort
+
+Group: exact_match_libraryManagementLoading
+Keys (2):
+  - commonLoading
+    ZH: 加载中...
+    EN: Loading...
+  - libraryManagementLoading
+    ZH: 加载中...
+    EN: Loading...
+
+Group: exact_match_importFailedMessage
+Keys (2):
+  - importFailedMessage
+    ZH: 导入失败: {error}
+    EN: Import failed: {error}
+    Context: dialog
+    Action: view
+  - importFileFailed
+    ZH: 导入失败: {error}
+    EN: Import failed: {error}
+    Context: error
+    Action: view
+
+Group: exact_match_filterStyleCursive
+Keys (2):
+  - filterStyleCursive
+    ZH: 草书
+    EN: Cursive Script
+    Action: search
+  - workStyleCursive
+    ZH: 草书
+    EN: Cursive Script
+    Context: menu
+    Action: delete
+
+Group: exact_match_filterToolBrush
+Keys (2):
+  - filterToolBrush
+    ZH: 毛笔
+    EN: Brush
+    Context: label
+    Action: search
+  - workToolBrush
+    ZH: 毛笔
+    EN: Brush
+    Context: menu
+    Action: delete
+
+Group: exact_match_characterCollectionPreviousPage
+Keys (2):
+  - characterCollectionPreviousPage
+    ZH: 上一页
+    EN: Previous Page
+    Context: button
+  - exportDialogPreviousPage
+    ZH: 上一页
+    EN: Previous Page
+    Context: button
+    Action: view
+
+Group: exact_match_filterToolHardPen
+Keys (2):
+  - filterToolHardPen
+    ZH: 硬笔
+    EN: Hard Pen
+    Action: search
+  - workToolHardPen
+    ZH: 硬笔
+    EN: Hard Pen
+    Context: menu
+    Action: delete
+
+Group: exact_match_filterFavoritesOnly
+Keys (2):
+  - characterFilterFavoritesOnly
+    ZH: 仅显示收藏
+    EN: Show favorites only
+  - filterFavoritesOnly
+    ZH: 仅显示收藏
+    EN: Show favorites only
+    Context: menu
+    Action: view
+
+Group: exact_match_collectionPropertyPanelAutoLineBreakTooltip
+Keys (2):
+  - collectionPropertyPanelAutoLineBreak
+    ZH: 自动换行
+    EN: Auto Line Break
+    Context: form
+  - collectionPropertyPanelAutoLineBreakTooltip
+    ZH: 自动换行
+    EN: Auto Line Break
+    Context: dialog
+
+Group: exact_match_exportDialogLandscape
+Keys (2):
+  - exportDialogLandscape
+    ZH: 横向
+    EN: Landscape
+    Context: dialog
+    Action: export
+  - landscape
+    ZH: 横向
+    EN: Landscape
+    Context: menu
+
+Group: exact_match_locked
+Keys (2):
+  - elementLocked
+    ZH: 已锁定
+    EN: Locked
+  - locked
+    ZH: 已锁定
+    EN: Locked
+    Context: menu
+
+Group: exact_match_filterSortFieldUpdateTime
+Keys (2):
+  - filterSortFieldUpdateTime
+    ZH: 更新时间
+    EN: Update Time
+    Context: form
+    Action: edit
+  - workDetailUpdateTime
+    ZH: 更新时间
+    EN: Update Time
+    Context: form
+    Action: add
+
+Group: exact_match_selectColorTitle
+Keys (2):
+  - colorPickerTitle
+    ZH: 选择颜色
+    EN: Select Color
+    Context: dialog
+    Action: select
+  - selectColorTitle
+    ZH: 选择颜色
+    EN: Select Color
+    Context: dialog
+    Action: select
+
+Group: exact_match_characterCollectionFilterAll
+Keys (2):
+  - characterCollectionFilterAll
+    ZH: 全部
+    EN: All
+    Context: button
+    Action: search
+  - practiceListStatusAll
+    ZH: 全部
+    EN: All
+
+Group: exact_match_collectionPropertyPanelTextSettings
+Keys (2):
+  - collectionPropertyPanelTextSettings
+    ZH: 文本设置
+    EN: Text Settings
+    Context: form
+    Action: edit
+  - textPropertyPanelTextSettings
+    ZH: 文本设置
+    EN: Text Settings
+    Context: menu
+    Action: settings
+
+Group: exact_match_imagePropertyPanelFlip
+Keys (2):
+  - collectionPropertyPanelFlip
+    ZH: 翻转
+    EN: Flip
+  - imagePropertyPanelFlip
+    ZH: 翻转
+    EN: Flip
+    Context: button
+
+Group: exact_match_practiceEditSaveFailed
+Keys (2):
+  - practiceEditSaveFailed
+    ZH: 保存失败
+    EN: Save failed
+    Context: button
+    Action: edit
+  - workDetailSaveFailure
+    ZH: 保存失败
+    EN: Save failed
+    Context: button
+    Action: save
+
+Group: exact_match_collectionPropertyPanelCacheCleared
+Keys (2):
+  - collectionPropertyPanelCacheCleared
+    ZH: 图像缓存已清除
+    EN: Image cache cleared
+  - imageCacheCleared
+    ZH: 图像缓存已清除
+    EN: Image cache cleared
+
+Group: exact_match_clearImageCache
+Keys (2):
+  - clearImageCache
+    ZH: 清除图像缓存
+    EN: Clear Image Cache
+  - collectionPropertyPanelClearImageCache
+    ZH: 清除图像缓存
+    EN: Clear Image Cache
+
+Group: exact_match_collectionPropertyPanelBorder
+Keys (2):
+  - collectionPropertyPanelBorder
+    ZH: 边框
+    EN: Border
+  - imagePropertyPanelBorder
+    ZH: 边框
+    EN: Border
+
+Group: exact_match_exportDialogCustomRange
+Keys (2):
+  - exportDialogCustomRange
+    ZH: 自定义范围
+    EN: Custom Range
+    Context: dialog
+    Action: export
+  - filterCustomRange
+    ZH: 自定义范围
+    EN: Custom Range
+
+Group: exact_match_libraryManagementCategories
+Keys (2):
+  - categories
+    ZH: 分类
+    EN: Categories
+  - libraryManagementCategories
+    ZH: 分类
+    EN: Categories
+    Context: title
+    Action: edit
+
+Group: exact_match_collectionPropertyPanelBorderWidth
+Keys (2):
+  - collectionPropertyPanelBorderWidth
+    ZH: 边框宽度
+    EN: Border Width
+  - imagePropertyPanelBorderWidth
+    ZH: 边框宽度
+    EN: Border Width
+
+Group: exact_match_exportDialogPortrait
+Keys (2):
+  - exportDialogPortrait
+    ZH: 纵向
+    EN: Portrait
+    Context: dialog
+    Action: export
+  - portrait
+    ZH: 纵向
+    EN: Portrait
+    Context: menu
+
+Group: exact_match_deselectAll
+Keys (2):
+  - deselectAll
+    ZH: 取消选择
+    EN: Deselect All
+    Context: button
+    Action: cancel
+  - toolbarDeselectAll
+    ZH: 取消选择
+    EN: Deselect All
+    Context: button
+    Action: select
+
+Group: exact_match_characterCollectionNextPage
+Keys (2):
+  - characterCollectionNextPage
+    ZH: 下一页
+    EN: Next Page
+    Context: tooltip
+  - exportDialogNextPage
+    ZH: 下一页
+    EN: Next Page
+    Context: button
+    Action: view
+
+Group: exact_match_workBrowseError
+Keys (2):
+  - characterManagementError
+    ZH: 错误：{message}
+    EN: Error: {message}
+    Context: dialog
+  - workBrowseError
+    ZH: 错误：{message}
+    EN: Error: {message}
+    Context: error
+    Action: view
+
+Group: exact_match_practiceEditUnsavedChanges
+Keys (2):
+  - characterCollectionUnsavedChanges
+    ZH: 未保存的更改
+    EN: Unsaved Changes
+    Context: button
+    Action: edit
+  - practiceEditUnsavedChanges
+    ZH: 未保存的更改
+    EN: Unsaved Changes
+    Context: button
+    Action: edit
+
+Group: exact_match_workImageDeleteConfirmTitle
+Keys (2):
+  - practiceEditConfirmDeleteTitle
+    ZH: 确认删除
+    EN: Confirm Delete
+    Context: button
+    Action: edit
+  - workImageDeleteConfirmTitle
+    ZH: 确认删除
+    EN: Confirm Delete
+    Context: button
+    Action: delete
+
+Group: exact_match_practiceEditAddLayer
+Keys (2):
+  - addLayer
+    ZH: 添加图层
+    EN: Add Layer
+  - practiceEditAddLayer
+    ZH: 添加图层
+    EN: Add Layer
+    Context: button
+    Action: add
+
+Group: exact_match_practiceEditTextProperties
+Keys (2):
+  - practiceEditTextProperties
+    ZH: 文本属性
+    EN: Text Properties
+  - textPropertyPanel
+    ZH: 文本属性
+    EN: Text Properties
+
+Group: exact_match_workFormHelp
+Keys (2):
+  - characterCollectionHelp
+    ZH: 帮助
+    EN: Help
+  - workFormHelp
+    ZH: 帮助
+    EN: Help
+
+Group: exact_match_elements
+Keys (2):
+  - elements
+    ZH: 元素
+    EN: Elements
+    Context: form
+    Action: view
+  - practiceEditElements
+    ZH: 元素
+    EN: Elements
+    Context: button
+    Action: add
+
+Group: exact_match_searchCharactersWorksAuthors
+Keys (2):
+  - characterManagementSearch
+    ZH: 搜索字符、作品或作者
+    EN: Search characters, works, or authors
+  - searchCharactersWorksAuthors
+    ZH: 搜索字符、作品或作者
+    EN: Search characters, works, or authors
+
+Group: exact_match_practiceEditText
+Keys (2):
+  - practiceEditText
+    ZH: 文本
+    EN: Text
+    Context: form
+    Action: edit
+  - text
+    ZH: 文本
+    EN: Text
+    Context: form
+    Action: view
+
+Group: exact_match_filterTitle
+Keys (2):
+  - characterFilterTitle
+    ZH: 筛选与排序
+    EN: Filter & Sort
+    Context: title
+    Action: edit
+  - filterTitle
+    ZH: 筛选与排序
+    EN: Filter & Sort
+    Context: title
+    Action: edit
+
+Group: exact_match_textureFillModeCover
+Keys (2):
+  - imagePropertyPanelFitCover
+    ZH: 覆盖
+    EN: Cover
+    Context: label
+  - textureFillModeCover
+    ZH: 覆盖
+    EN: Cover
+    Context: form
+    Action: delete
+
+Group: exact_match_filterStyleSeal
+Keys (2):
+  - filterStyleSeal
+    ZH: 篆书
+    EN: Seal Script
+    Action: search
+  - workStyleSeal
+    ZH: 篆书
+    EN: Seal Script
+    Context: menu
+    Action: delete
+
+Group: exact_match_imagePropertyPanelFitContain
+Keys (2):
+  - imagePropertyPanelFitContain
+    ZH: 包含
+    EN: Contain
+    Context: label
+  - textureFillModeContain
+    ZH: 包含
+    EN: Contain
+    Context: form
+    Action: edit
+
+Group: exact_match_workFormTitle
+Keys (2):
+  - filterSortFieldTitle
+    ZH: 标题
+    EN: Title
+    Context: form
+    Action: search
+  - workFormTitle
+    ZH: 标题
+    EN: Title
+    Context: form
+    Action: select
+
+Group: exact_match_filterStyleClerical
+Keys (2):
+  - filterStyleClerical
+    ZH: 隶书
+    EN: Clerical Script
+    Action: search
+  - workStyleClerical
+    ZH: 隶书
+    EN: Clerical Script
+    Context: menu
+    Action: delete
+
+Group: exact_match_edit
+Keys (2):
+  - edit
+    ZH: 编辑
+    EN: Edit
+    Context: tooltip
+    Action: edit
+  - workDetailEdit
+    ZH: 编辑
+    EN: Edit
+    Context: button
+    Action: edit
+
+Group: exact_match_exportDialogPageSize
+Keys (2):
+  - exportDialogPageSize
+    ZH: 页面大小
+    EN: Page Size
+    Context: dialog
+    Action: export
+  - pageSize
+    ZH: 页面大小
+    EN: Page Size
+    Context: button
+    Action: add
+
+Group: exact_match_themeModeSystem
+Keys (2):
+  - languageSystem
+    ZH: 系统
+    EN: System
+  - themeModeSystem
+    ZH: 系统
+    EN: System
+    Context: menu
+    Action: settings
+
+Group: param_pattern_imagePropertyPanelFileNotExist
+Keys (2):
+  - imagePropertyPanelFileNotExist
+    ZH: 文件不存在：{path}
+    EN: File does not exist: {path}
+    Context: menu
+    Action: edit
+  - pdfExportSuccess
+    ZH: PDF导出成功: {path}
+    EN: PDF export successful: {path}
+    Context: label
+    Action: export
+
+Group: param_pattern_workBrowseError
+Keys (2):
+  - characterManagementError
+    ZH: 错误：{message}
+    EN: Error: {message}
+    Context: dialog
+  - workBrowseError
+    ZH: 错误：{message}
+    EN: Error: {message}
+    Context: error
+    Action: view
+
+Group: semantic_similar_libraryManagementFileSize
+Keys (2):
+  - filterSortFieldFileSize
+    ZH: 文件大小
+    EN: File Size
+    Context: form
+    Action: edit
+  - libraryManagementFileSize
+    ZH: 文件大小
+    EN: File size
+    Context: form
+
+Group: semantic_similar_tagEditorNoTags
+Keys (2):
+  - noTags
+    ZH: 无标签
+    EN: No Tags
+    Context: label
+  - tagEditorNoTags
+    ZH: 无标签
+    EN: No tags
+    Context: form
+    Action: edit
+
+Group: semantic_similar_workImportDeleteImage
+Keys (2):
+  - confirmDeleteAll
+    ZH: 删除图片
+    EN: Delete image
+    Context: button
+    Action: delete
+  - workImportDeleteImage
+    ZH: 删除图片
+    EN: Delete Image
+    Context: button
+    Action: delete
+
+Group: semantic_similar_characterCollectionPreviewTab
+Keys (2):
+  - characterCollectionPreviewTab
+    ZH: 字符预览
+    EN: Character Preview
+    Context: menu
+    Action: view
+  - characterEditSavePreview
+    ZH: 字符预览：
+    EN: Character preview:
+    Context: button
+    Action: edit
+
+Group: semantic_similar_characterManagementDeleteSelected
+Keys (2):
+  - characterManagementDeleteSelected
+    ZH: 删除所选
+    EN: Delete selected
+    Context: button
+    Action: delete
+  - practiceListDeleteSelected
+    ZH: 删除所选
+    EN: Delete Selected
+    Context: button
+    Action: delete
+
+Group: semantic_similar_deleteAllItems
+Keys (2):
+  - deleteAll
+    ZH: 全部删除
+    EN: Delete All
+    Context: button
+    Action: delete
+  - deleteAllItems
+    ZH: 删除全部
+    EN: Delete all
+    Context: button
+    Action: delete
+
+Group: semantic_similar_selectExportLocation
+Keys (2):
+  - exportDialogSelectLocation
+    ZH: 请选择导出位置
+    EN: Please select export location
+    Context: dialog
+    Action: select
+  - selectExportLocation
+    ZH: 选择导出位置
+    EN: Select Export Location
+    Context: dialog
+    Action: select
+
+Group: semantic_similar_layer
+Keys (2):
+  - layer
+    ZH: 图层
+    EN: Layer
+    Context: button
+    Action: delete
+  - layer1
+    ZH: 图层 1
+    EN: Layer 1
+    Context: title
+
+Group: semantic_similar_backupSettings
+Keys (2):
+  - backupSettings
+    ZH: 备份与恢复
+    EN: Backup & Restore
+    Context: menu
+    Action: cancel
+  - restoreBackup
+    ZH: 恢复备份
+    EN: Restore Backup
+    Context: button
+    Action: view
+
+Group: semantic_similar_deleteCategoryOnly
+Keys (2):
+  - deleteCategory
+    ZH: 删除分类
+    EN: Delete Category
+    Context: button
+    Action: delete
+  - deleteCategoryOnly
+    ZH: 仅删除分类
+    EN: Delete category only
+    Context: button
+    Action: delete
+
+Group: semantic_similar_characterCollectionToolDelete
+Keys (2):
+  - characterCollectionToolDelete
+    ZH: 删除所选 (Ctrl+D)
+    EN: Delete selected (Ctrl+D)
+    Context: button
+    Action: delete
+  - practiceEditDelete
+    ZH: 删除 (Ctrl+D)
+    EN: Delete (Ctrl+D)
+    Context: button
+    Action: edit
+
+Group: semantic_similar_workImageDeleteConfirmContent
+Keys (2):
+  - confirmDeleteMessage
+    ZH: 确定要删除选中的图片吗？
+    EN: Are you sure you want to delete the selected images?
+    Context: button
+    Action: delete
+  - workImageDeleteConfirmContent
+    ZH: 确定要删除当前选中的图片吗？
+    EN: Are you sure you want to delete the selected image?
+    Context: button
+    Action: delete
+
+Group: semantic_similar_deleteBackupConfirmMessage
+Keys (2):
+  - deleteBackupConfirmMessage
+    ZH: 确定要删除此备份吗？此操作无法撤消。
+    EN: Are you sure you want to delete this backup? This action cannot be undone.
+    Context: button
+    Action: delete
+  - deleteGroupDescription
+    ZH: 确定要删除此组吗？此操作无法撤消。
+    EN: Are you sure you want to delete this group? This action cannot be undone.
+    Context: button
+    Action: edit
+
+Group: semantic_similar_characterManagementDeleteMessage
+Keys (2):
+  - characterManagementDeleteMessage
+    ZH: 确定要删除选中的字符吗？此操作无法撤消。
+    EN: Are you sure you want to delete the selected characters? This action cannot be undone.
+    Context: button
+    Action: delete
+  - practiceListDeleteMessage
+    ZH: 确定要删除选中的字帖吗？此操作无法撤消。
+    EN: Are you sure you want to delete the selected practice sheets? This action cannot be undone.
+    Context: button
+    Action: delete
+
+Group: semantic_similar_elementCopiedToClipboard
+Keys (2):
+  - elementCopied
+    ZH: 元素已复制到剪贴板
+    EN: element(s) copied to clipboard
+    Action: view
+  - elementCopiedToClipboard
+    ZH: 元素已复制到剪贴板
+    EN: Element copied to clipboard
+    Context: status
+    Action: edit
+

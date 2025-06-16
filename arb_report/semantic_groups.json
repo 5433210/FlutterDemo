@@ -1,0 +1,4534 @@
+{
+  "exact_match_filterExpand": {
+    "keys": [
+      "filterExpand",
+      "characterFilterExpand"
+    ],
+    "values": {
+      "zh": {
+        "filterExpand": "展开筛选面板",
+        "characterFilterExpand": "展开筛选面板"
+      },
+      "en": {
+        "filterExpand": "Expand Filter Panel",
+        "characterFilterExpand": "Expand Filter Panel"
+      }
+    },
+    "contexts": {
+      "filterExpand": "button",
+      "characterFilterExpand": "menu"
+    },
+    "actions": {
+      "filterExpand": "search",
+      "characterFilterExpand": "search"
+    },
+    "modules": {
+      "filterExpand": null,
+      "characterFilterExpand": null
+    }
+  },
+  "exact_match_characterCollectionNoCharacter": {
+    "keys": [
+      "collectionPropertyPanelNoCharacterText",
+      "characterCollectionNoCharacter"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelNoCharacterText": "无字符",
+        "characterCollectionNoCharacter": "无字符"
+      },
+      "en": {
+        "collectionPropertyPanelNoCharacterText": "No character",
+        "characterCollectionNoCharacter": "No character"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelNoCharacterText": "form",
+      "characterCollectionNoCharacter": "form"
+    },
+    "actions": {
+      "collectionPropertyPanelNoCharacterText": null,
+      "characterCollectionNoCharacter": null
+    },
+    "modules": {
+      "collectionPropertyPanelNoCharacterText": "practice",
+      "characterCollectionNoCharacter": null
+    }
+  },
+  "exact_match_clearCache": {
+    "keys": [
+      "clearCache",
+      "clearCacheConfirmTitle"
+    ],
+    "values": {
+      "zh": {
+        "clearCache": "清除缓存",
+        "clearCacheConfirmTitle": "清除缓存"
+      },
+      "en": {
+        "clearCache": "Clear Cache",
+        "clearCacheConfirmTitle": "Clear Cache"
+      }
+    },
+    "contexts": {
+      "clearCache": "button",
+      "clearCacheConfirmTitle": "button"
+    },
+    "actions": {
+      "clearCache": "delete",
+      "clearCacheConfirmTitle": "delete"
+    },
+    "modules": {
+      "clearCache": null,
+      "clearCacheConfirmTitle": null
+    }
+  },
+  "exact_match_imagePropertyPanelBorderColor": {
+    "keys": [
+      "imagePropertyPanelBorderColor",
+      "collectionPropertyPanelBorderColor"
+    ],
+    "values": {
+      "zh": {
+        "imagePropertyPanelBorderColor": "边框颜色",
+        "collectionPropertyPanelBorderColor": "边框颜色"
+      },
+      "en": {
+        "imagePropertyPanelBorderColor": "Border Color",
+        "collectionPropertyPanelBorderColor": "Border Color"
+      }
+    },
+    "contexts": {
+      "imagePropertyPanelBorderColor": null,
+      "collectionPropertyPanelBorderColor": null
+    },
+    "actions": {
+      "imagePropertyPanelBorderColor": null,
+      "collectionPropertyPanelBorderColor": null
+    },
+    "modules": {
+      "imagePropertyPanelBorderColor": null,
+      "collectionPropertyPanelBorderColor": null
+    }
+  },
+  "exact_match_workBrowseListView": {
+    "keys": [
+      "characterManagementListView",
+      "workBrowseListView",
+      "practiceListListView",
+      "listView"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementListView": "列表视图",
+        "workBrowseListView": "列表视图",
+        "practiceListListView": "列表视图",
+        "listView": "列表视图"
+      },
+      "en": {
+        "characterManagementListView": "List View",
+        "workBrowseListView": "List View",
+        "practiceListListView": "List View",
+        "listView": "List View"
+      }
+    },
+    "contexts": {
+      "characterManagementListView": null,
+      "workBrowseListView": "button",
+      "practiceListListView": "button",
+      "listView": "button"
+    },
+    "actions": {
+      "characterManagementListView": null,
+      "workBrowseListView": "edit",
+      "practiceListListView": "view",
+      "listView": "view"
+    },
+    "modules": {
+      "characterManagementListView": null,
+      "workBrowseListView": null,
+      "practiceListListView": null,
+      "listView": "work"
+    }
+  },
+  "exact_match_textPropertyPanelFontSize": {
+    "keys": [
+      "collectionPropertyPanelFontSize",
+      "textPropertyPanelFontSize"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelFontSize": "字体大小",
+        "textPropertyPanelFontSize": "字体大小"
+      },
+      "en": {
+        "collectionPropertyPanelFontSize": "Font Size",
+        "textPropertyPanelFontSize": "Font Size"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelFontSize": null,
+      "textPropertyPanelFontSize": "title"
+    },
+    "actions": {
+      "collectionPropertyPanelFontSize": null,
+      "textPropertyPanelFontSize": "edit"
+    },
+    "modules": {
+      "collectionPropertyPanelFontSize": null,
+      "textPropertyPanelFontSize": "practice"
+    }
+  },
+  "exact_match_textPropertyPanelPadding": {
+    "keys": [
+      "textPropertyPanelPadding",
+      "collectionPropertyPanelPadding"
+    ],
+    "values": {
+      "zh": {
+        "textPropertyPanelPadding": "内边距",
+        "collectionPropertyPanelPadding": "内边距"
+      },
+      "en": {
+        "textPropertyPanelPadding": "Padding",
+        "collectionPropertyPanelPadding": "Padding"
+      }
+    },
+    "contexts": {
+      "textPropertyPanelPadding": "button",
+      "collectionPropertyPanelPadding": null
+    },
+    "actions": {
+      "textPropertyPanelPadding": "add",
+      "collectionPropertyPanelPadding": null
+    },
+    "modules": {
+      "textPropertyPanelPadding": "practice",
+      "collectionPropertyPanelPadding": null
+    }
+  },
+  "exact_match_filterToolSection": {
+    "keys": [
+      "filterToolSection",
+      "characterFilterWritingTool",
+      "characterDetailWritingTool"
+    ],
+    "values": {
+      "zh": {
+        "filterToolSection": "书写工具",
+        "characterFilterWritingTool": "书写工具",
+        "characterDetailWritingTool": "书写工具"
+      },
+      "en": {
+        "filterToolSection": "Writing Tool",
+        "characterFilterWritingTool": "Writing Tool",
+        "characterDetailWritingTool": "Writing Tool"
+      }
+    },
+    "contexts": {
+      "filterToolSection": "title",
+      "characterFilterWritingTool": null,
+      "characterDetailWritingTool": "menu"
+    },
+    "actions": {
+      "filterToolSection": "search",
+      "characterFilterWritingTool": null,
+      "characterDetailWritingTool": null
+    },
+    "modules": {
+      "filterToolSection": null,
+      "characterFilterWritingTool": null,
+      "characterDetailWritingTool": null
+    }
+  },
+  "exact_match_visualSettings": {
+    "keys": [
+      "visualSettings",
+      "imagePropertyPanelVisual",
+      "collectionPropertyPanelVisual",
+      "textPropertyPanelVisual"
+    ],
+    "values": {
+      "zh": {
+        "visualSettings": "视觉设置",
+        "imagePropertyPanelVisual": "视觉设置",
+        "collectionPropertyPanelVisual": "视觉设置",
+        "textPropertyPanelVisual": "视觉设置"
+      },
+      "en": {
+        "visualSettings": "Visual Settings",
+        "imagePropertyPanelVisual": "Visual Settings",
+        "collectionPropertyPanelVisual": "Visual Settings",
+        "textPropertyPanelVisual": "Visual Settings"
+      }
+    },
+    "contexts": {
+      "visualSettings": "menu",
+      "imagePropertyPanelVisual": null,
+      "collectionPropertyPanelVisual": null,
+      "textPropertyPanelVisual": null
+    },
+    "actions": {
+      "visualSettings": "settings",
+      "imagePropertyPanelVisual": null,
+      "collectionPropertyPanelVisual": null,
+      "textPropertyPanelVisual": null
+    },
+    "modules": {
+      "visualSettings": "practice",
+      "imagePropertyPanelVisual": null,
+      "collectionPropertyPanelVisual": null,
+      "textPropertyPanelVisual": null
+    }
+  },
+  "exact_match_filterStyleOther": {
+    "keys": [
+      "filterStyleOther",
+      "workStyleOther",
+      "workToolOther",
+      "filterToolOther"
+    ],
+    "values": {
+      "zh": {
+        "filterStyleOther": "其他",
+        "workStyleOther": "其他",
+        "workToolOther": "其他",
+        "filterToolOther": "其他"
+      },
+      "en": {
+        "filterStyleOther": "Other",
+        "workStyleOther": "Other",
+        "workToolOther": "Other",
+        "filterToolOther": "Other"
+      }
+    },
+    "contexts": {
+      "filterStyleOther": null,
+      "workStyleOther": "menu",
+      "workToolOther": "menu",
+      "filterToolOther": null
+    },
+    "actions": {
+      "filterStyleOther": "search",
+      "workStyleOther": "edit",
+      "workToolOther": "edit",
+      "filterToolOther": "search"
+    },
+    "modules": {
+      "filterStyleOther": null,
+      "workStyleOther": null,
+      "workToolOther": null,
+      "filterToolOther": null
+    }
+  },
+  "exact_match_dimensions": {
+    "keys": [
+      "textPropertyPanelDimensions",
+      "dimensions",
+      "imagePropertyPanelDimensions"
+    ],
+    "values": {
+      "zh": {
+        "textPropertyPanelDimensions": "尺寸",
+        "dimensions": "尺寸",
+        "imagePropertyPanelDimensions": "尺寸"
+      },
+      "en": {
+        "textPropertyPanelDimensions": "Dimensions",
+        "dimensions": "Dimensions",
+        "imagePropertyPanelDimensions": "Dimensions"
+      }
+    },
+    "contexts": {
+      "textPropertyPanelDimensions": "form",
+      "dimensions": "dialog",
+      "imagePropertyPanelDimensions": null
+    },
+    "actions": {
+      "textPropertyPanelDimensions": "edit",
+      "dimensions": "edit",
+      "imagePropertyPanelDimensions": null
+    },
+    "modules": {
+      "textPropertyPanelDimensions": "practice",
+      "dimensions": "practice",
+      "imagePropertyPanelDimensions": null
+    }
+  },
+  "exact_match_collectionPropertyPanelReset": {
+    "keys": [
+      "collectionPropertyPanelReset",
+      "imagePropertyPanelReset"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelReset": "重置",
+        "imagePropertyPanelReset": "重置"
+      },
+      "en": {
+        "collectionPropertyPanelReset": "Reset",
+        "imagePropertyPanelReset": "Reset"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelReset": null,
+      "imagePropertyPanelReset": null
+    },
+    "actions": {
+      "collectionPropertyPanelReset": null,
+      "imagePropertyPanelReset": null
+    },
+    "modules": {
+      "collectionPropertyPanelReset": null,
+      "imagePropertyPanelReset": null
+    }
+  },
+  "exact_match_unlocked": {
+    "keys": [
+      "unlocked",
+      "elementUnlocked"
+    ],
+    "values": {
+      "zh": {
+        "unlocked": "未锁定",
+        "elementUnlocked": "未锁定"
+      },
+      "en": {
+        "unlocked": "Unlocked",
+        "elementUnlocked": "Unlocked"
+      }
+    },
+    "contexts": {
+      "unlocked": null,
+      "elementUnlocked": null
+    },
+    "actions": {
+      "unlocked": null,
+      "elementUnlocked": null
+    },
+    "modules": {
+      "unlocked": "practice",
+      "elementUnlocked": "practice"
+    }
+  },
+  "exact_match_characterDetailFormatOriginal": {
+    "keys": [
+      "characterDetailFormatOriginal",
+      "imagePropertyPanelFitOriginal",
+      "collectionPropertyPanelOriginal"
+    ],
+    "values": {
+      "zh": {
+        "characterDetailFormatOriginal": "原始",
+        "imagePropertyPanelFitOriginal": "原始",
+        "collectionPropertyPanelOriginal": "原始"
+      },
+      "en": {
+        "characterDetailFormatOriginal": "Original",
+        "imagePropertyPanelFitOriginal": "Original",
+        "collectionPropertyPanelOriginal": "Original"
+      }
+    },
+    "contexts": {
+      "characterDetailFormatOriginal": "form",
+      "imagePropertyPanelFitOriginal": "label",
+      "collectionPropertyPanelOriginal": null
+    },
+    "actions": {
+      "characterDetailFormatOriginal": null,
+      "imagePropertyPanelFitOriginal": null,
+      "collectionPropertyPanelOriginal": null
+    },
+    "modules": {
+      "characterDetailFormatOriginal": "character",
+      "imagePropertyPanelFitOriginal": "practice",
+      "collectionPropertyPanelOriginal": null
+    }
+  },
+  "exact_match_filterSortFieldTool": {
+    "keys": [
+      "filterSortFieldTool",
+      "workFormTool"
+    ],
+    "values": {
+      "zh": {
+        "filterSortFieldTool": "工具",
+        "workFormTool": "工具"
+      },
+      "en": {
+        "filterSortFieldTool": "Tool",
+        "workFormTool": "Tool"
+      }
+    },
+    "contexts": {
+      "filterSortFieldTool": "form",
+      "workFormTool": "form"
+    },
+    "actions": {
+      "filterSortFieldTool": "add",
+      "workFormTool": "delete"
+    },
+    "modules": {
+      "filterSortFieldTool": null,
+      "workFormTool": null
+    }
+  },
+  "exact_match_opacity": {
+    "keys": [
+      "textPropertyPanelOpacity",
+      "opacity",
+      "collectionPropertyPanelOpacity",
+      "imagePropertyPanelOpacity"
+    ],
+    "values": {
+      "zh": {
+        "textPropertyPanelOpacity": "不透明度",
+        "opacity": "不透明度",
+        "collectionPropertyPanelOpacity": "不透明度",
+        "imagePropertyPanelOpacity": "不透明度"
+      },
+      "en": {
+        "textPropertyPanelOpacity": "Opacity",
+        "opacity": "Opacity",
+        "collectionPropertyPanelOpacity": "Opacity",
+        "imagePropertyPanelOpacity": "Opacity"
+      }
+    },
+    "contexts": {
+      "textPropertyPanelOpacity": null,
+      "opacity": "status",
+      "collectionPropertyPanelOpacity": "label",
+      "imagePropertyPanelOpacity": null
+    },
+    "actions": {
+      "textPropertyPanelOpacity": null,
+      "opacity": "edit",
+      "collectionPropertyPanelOpacity": null,
+      "imagePropertyPanelOpacity": null
+    },
+    "modules": {
+      "textPropertyPanelOpacity": null,
+      "opacity": "practice",
+      "collectionPropertyPanelOpacity": "practice",
+      "imagePropertyPanelOpacity": null
+    }
+  },
+  "exact_match_filterDatePresets": {
+    "keys": [
+      "filterDatePresets",
+      "filterPresetSection"
+    ],
+    "values": {
+      "zh": {
+        "filterDatePresets": "预设",
+        "filterPresetSection": "预设"
+      },
+      "en": {
+        "filterDatePresets": "Presets",
+        "filterPresetSection": "Presets"
+      }
+    },
+    "contexts": {
+      "filterDatePresets": "button",
+      "filterPresetSection": null
+    },
+    "actions": {
+      "filterDatePresets": "add",
+      "filterPresetSection": null
+    },
+    "modules": {
+      "filterDatePresets": null,
+      "filterPresetSection": null
+    }
+  },
+  "exact_match_exportDialogPreview": {
+    "keys": [
+      "previewText",
+      "textPropertyPanelPreview",
+      "exportDialogPreview",
+      "preview"
+    ],
+    "values": {
+      "zh": {
+        "previewText": "预览",
+        "textPropertyPanelPreview": "预览",
+        "exportDialogPreview": "预览",
+        "preview": "预览"
+      },
+      "en": {
+        "previewText": "Preview",
+        "textPropertyPanelPreview": "Preview",
+        "exportDialogPreview": "Preview",
+        "preview": "Preview"
+      }
+    },
+    "contexts": {
+      "previewText": null,
+      "textPropertyPanelPreview": null,
+      "exportDialogPreview": "dialog",
+      "preview": "form"
+    },
+    "actions": {
+      "previewText": null,
+      "textPropertyPanelPreview": null,
+      "exportDialogPreview": "view",
+      "preview": "view"
+    },
+    "modules": {
+      "previewText": null,
+      "textPropertyPanelPreview": null,
+      "exportDialogPreview": "practice",
+      "preview": "practice"
+    }
+  },
+  "exact_match_height": {
+    "keys": [
+      "height",
+      "libraryManagementSizeHeight"
+    ],
+    "values": {
+      "zh": {
+        "height": "高度",
+        "libraryManagementSizeHeight": "高度"
+      },
+      "en": {
+        "height": "Height",
+        "libraryManagementSizeHeight": "Height"
+      }
+    },
+    "contexts": {
+      "height": "title",
+      "libraryManagementSizeHeight": null
+    },
+    "actions": {
+      "height": "search",
+      "libraryManagementSizeHeight": null
+    },
+    "modules": {
+      "height": "work",
+      "libraryManagementSizeHeight": null
+    }
+  },
+  "exact_match_geometryProperties": {
+    "keys": [
+      "imagePropertyPanelGeometry",
+      "collectionPropertyPanelGeometry",
+      "textPropertyPanelGeometry",
+      "geometryProperties",
+      "collectionPropertyPanelHeaderGeometry",
+      "practiceEditGeometryProperties"
+    ],
+    "values": {
+      "zh": {
+        "imagePropertyPanelGeometry": "几何属性",
+        "collectionPropertyPanelGeometry": "几何属性",
+        "textPropertyPanelGeometry": "几何属性",
+        "geometryProperties": "几何属性",
+        "collectionPropertyPanelHeaderGeometry": "几何属性",
+        "practiceEditGeometryProperties": "几何属性"
+      },
+      "en": {
+        "imagePropertyPanelGeometry": "Geometry Properties",
+        "collectionPropertyPanelGeometry": "Geometry Properties",
+        "textPropertyPanelGeometry": "Geometry Properties",
+        "geometryProperties": "Geometry Properties",
+        "collectionPropertyPanelHeaderGeometry": "Geometry Properties",
+        "practiceEditGeometryProperties": "Geometry Properties"
+      }
+    },
+    "contexts": {
+      "imagePropertyPanelGeometry": null,
+      "collectionPropertyPanelGeometry": null,
+      "textPropertyPanelGeometry": null,
+      "geometryProperties": "menu",
+      "collectionPropertyPanelHeaderGeometry": null,
+      "practiceEditGeometryProperties": null
+    },
+    "actions": {
+      "imagePropertyPanelGeometry": null,
+      "collectionPropertyPanelGeometry": null,
+      "textPropertyPanelGeometry": null,
+      "geometryProperties": "settings",
+      "collectionPropertyPanelHeaderGeometry": null,
+      "practiceEditGeometryProperties": null
+    },
+    "modules": {
+      "imagePropertyPanelGeometry": null,
+      "collectionPropertyPanelGeometry": null,
+      "textPropertyPanelGeometry": null,
+      "geometryProperties": "practice",
+      "collectionPropertyPanelHeaderGeometry": null,
+      "practiceEditGeometryProperties": null
+    }
+  },
+  "exact_match_files": {
+    "keys": [
+      "files",
+      "fileCount"
+    ],
+    "values": {
+      "zh": {
+        "files": "文件数量",
+        "fileCount": "文件数量"
+      },
+      "en": {
+        "files": "File Count",
+        "fileCount": "File Count"
+      }
+    },
+    "contexts": {
+      "files": "menu",
+      "fileCount": null
+    },
+    "actions": {
+      "files": "add",
+      "fileCount": null
+    },
+    "modules": {
+      "files": null,
+      "fileCount": null
+    }
+  },
+  "exact_match_appTitle": {
+    "keys": [
+      "appName",
+      "appTitle"
+    ],
+    "values": {
+      "zh": {
+        "appName": "字字珠玑",
+        "appTitle": "字字珠玑"
+      },
+      "en": {
+        "appName": "Char As Gem",
+        "appTitle": "Char As Gem"
+      }
+    },
+    "contexts": {
+      "appName": null,
+      "appTitle": "form"
+    },
+    "actions": {
+      "appName": null,
+      "appTitle": null
+    },
+    "modules": {
+      "appName": null,
+      "appTitle": null
+    }
+  },
+  "exact_match_workBrowseBatchMode": {
+    "keys": [
+      "characterManagementBatchMode",
+      "practiceListBatchMode",
+      "workBrowseBatchMode"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementBatchMode": "批量模式",
+        "practiceListBatchMode": "批量模式",
+        "workBrowseBatchMode": "批量模式"
+      },
+      "en": {
+        "characterManagementBatchMode": "Batch Mode",
+        "practiceListBatchMode": "Batch Mode",
+        "workBrowseBatchMode": "Batch Mode"
+      }
+    },
+    "contexts": {
+      "characterManagementBatchMode": null,
+      "practiceListBatchMode": "button",
+      "workBrowseBatchMode": "button"
+    },
+    "actions": {
+      "characterManagementBatchMode": null,
+      "practiceListBatchMode": null,
+      "workBrowseBatchMode": "edit"
+    },
+    "modules": {
+      "characterManagementBatchMode": null,
+      "practiceListBatchMode": null,
+      "workBrowseBatchMode": null
+    }
+  },
+  "exact_match_workBrowseDeleteConfirmTitle": {
+    "keys": [
+      "characterCollectionDeleteConfirm",
+      "practiceListDeleteConfirm",
+      "workBrowseDeleteConfirmTitle",
+      "characterManagementDeleteConfirm"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionDeleteConfirm": "确认删除",
+        "practiceListDeleteConfirm": "确认删除",
+        "workBrowseDeleteConfirmTitle": "确认删除",
+        "characterManagementDeleteConfirm": "确认删除"
+      },
+      "en": {
+        "characterCollectionDeleteConfirm": "Confirm Deletion",
+        "practiceListDeleteConfirm": "Confirm Deletion",
+        "workBrowseDeleteConfirmTitle": "Confirm Deletion",
+        "characterManagementDeleteConfirm": "Confirm Deletion"
+      }
+    },
+    "contexts": {
+      "characterCollectionDeleteConfirm": "button",
+      "practiceListDeleteConfirm": "button",
+      "workBrowseDeleteConfirmTitle": "button",
+      "characterManagementDeleteConfirm": "button"
+    },
+    "actions": {
+      "characterCollectionDeleteConfirm": "delete",
+      "practiceListDeleteConfirm": "delete",
+      "workBrowseDeleteConfirmTitle": "delete",
+      "characterManagementDeleteConfirm": "delete"
+    },
+    "modules": {
+      "characterCollectionDeleteConfirm": null,
+      "practiceListDeleteConfirm": null,
+      "workBrowseDeleteConfirmTitle": null,
+      "characterManagementDeleteConfirm": null
+    }
+  },
+  "exact_match_practiceListStatusDraft": {
+    "keys": [
+      "practiceListStatusDraft",
+      "workStatusDraft"
+    ],
+    "values": {
+      "zh": {
+        "practiceListStatusDraft": "草稿",
+        "workStatusDraft": "草稿"
+      },
+      "en": {
+        "practiceListStatusDraft": "Draft",
+        "workStatusDraft": "Draft"
+      }
+    },
+    "contexts": {
+      "practiceListStatusDraft": null,
+      "workStatusDraft": null
+    },
+    "actions": {
+      "practiceListStatusDraft": null,
+      "workStatusDraft": null
+    },
+    "modules": {
+      "practiceListStatusDraft": null,
+      "workStatusDraft": null
+    }
+  },
+  "exact_match_characterEditThumbnailLoadError": {
+    "keys": [
+      "characterEditThumbnailLoadError",
+      "characterEditThumbnailLoadFailed"
+    ],
+    "values": {
+      "zh": {
+        "characterEditThumbnailLoadError": "加载缩略图失败",
+        "characterEditThumbnailLoadFailed": "加载缩略图失败"
+      },
+      "en": {
+        "characterEditThumbnailLoadError": "Failed to load thumbnail",
+        "characterEditThumbnailLoadFailed": "Failed to load thumbnail"
+      }
+    },
+    "contexts": {
+      "characterEditThumbnailLoadError": "error",
+      "characterEditThumbnailLoadFailed": "error"
+    },
+    "actions": {
+      "characterEditThumbnailLoadError": "edit",
+      "characterEditThumbnailLoadFailed": "edit"
+    },
+    "modules": {
+      "characterEditThumbnailLoadError": null,
+      "characterEditThumbnailLoadFailed": null
+    }
+  },
+  "exact_match_filterStyleRegular": {
+    "keys": [
+      "workStyleRegular",
+      "filterStyleRegular"
+    ],
+    "values": {
+      "zh": {
+        "workStyleRegular": "楷书",
+        "filterStyleRegular": "楷书"
+      },
+      "en": {
+        "workStyleRegular": "Regular Script",
+        "filterStyleRegular": "Regular Script"
+      }
+    },
+    "contexts": {
+      "workStyleRegular": "menu",
+      "filterStyleRegular": null
+    },
+    "actions": {
+      "workStyleRegular": "delete",
+      "filterStyleRegular": "search"
+    },
+    "modules": {
+      "workStyleRegular": null,
+      "filterStyleRegular": null
+    }
+  },
+  "exact_match_back": {
+    "keys": [
+      "back",
+      "workDetailBack",
+      "characterCollectionBack",
+      "practiceEditTopNavBack"
+    ],
+    "values": {
+      "zh": {
+        "back": "返回",
+        "workDetailBack": "返回",
+        "characterCollectionBack": "返回",
+        "practiceEditTopNavBack": "返回"
+      },
+      "en": {
+        "back": "Back",
+        "workDetailBack": "Back",
+        "characterCollectionBack": "Back",
+        "practiceEditTopNavBack": "Back"
+      }
+    },
+    "contexts": {
+      "back": "button",
+      "workDetailBack": null,
+      "characterCollectionBack": null,
+      "practiceEditTopNavBack": null
+    },
+    "actions": {
+      "back": "cancel",
+      "workDetailBack": null,
+      "characterCollectionBack": null,
+      "practiceEditTopNavBack": null
+    },
+    "modules": {
+      "back": "common",
+      "workDetailBack": null,
+      "characterCollectionBack": null,
+      "practiceEditTopNavBack": null
+    }
+  },
+  "exact_match_libraryManagementType": {
+    "keys": [
+      "libraryManagementType",
+      "characterDetailFormatType"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementType": "类型",
+        "characterDetailFormatType": "类型"
+      },
+      "en": {
+        "libraryManagementType": "Type",
+        "characterDetailFormatType": "Type"
+      }
+    },
+    "contexts": {
+      "libraryManagementType": "form",
+      "characterDetailFormatType": "form"
+    },
+    "actions": {
+      "libraryManagementType": null,
+      "characterDetailFormatType": null
+    },
+    "modules": {
+      "libraryManagementType": "work",
+      "characterDetailFormatType": null
+    }
+  },
+  "exact_match_libraryManagementFavorite": {
+    "keys": [
+      "characterCollectionFilterFavorite",
+      "libraryManagementFavorite"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionFilterFavorite": "收藏",
+        "libraryManagementFavorite": "收藏"
+      },
+      "en": {
+        "characterCollectionFilterFavorite": "Favorite",
+        "libraryManagementFavorite": "Favorite"
+      }
+    },
+    "contexts": {
+      "characterCollectionFilterFavorite": "form",
+      "libraryManagementFavorite": "menu"
+    },
+    "actions": {
+      "characterCollectionFilterFavorite": "select",
+      "libraryManagementFavorite": null
+    },
+    "modules": {
+      "characterCollectionFilterFavorite": null,
+      "libraryManagementFavorite": "work"
+    }
+  },
+  "exact_match_retry": {
+    "keys": [
+      "retry",
+      "characterCollectionRetry"
+    ],
+    "values": {
+      "zh": {
+        "retry": "重试",
+        "characterCollectionRetry": "重试"
+      },
+      "en": {
+        "retry": "Retry",
+        "characterCollectionRetry": "Retry"
+      }
+    },
+    "contexts": {
+      "retry": "button",
+      "characterCollectionRetry": "button"
+    },
+    "actions": {
+      "retry": "view",
+      "characterCollectionRetry": "import"
+    },
+    "modules": {
+      "retry": "common",
+      "characterCollectionRetry": null
+    }
+  },
+  "exact_match_filterSortFieldNone": {
+    "keys": [
+      "filterSortFieldNone",
+      "imagePropertyPanelFitNone"
+    ],
+    "values": {
+      "zh": {
+        "filterSortFieldNone": "无",
+        "imagePropertyPanelFitNone": "无"
+      },
+      "en": {
+        "filterSortFieldNone": "None",
+        "imagePropertyPanelFitNone": "None"
+      }
+    },
+    "contexts": {
+      "filterSortFieldNone": "form",
+      "imagePropertyPanelFitNone": null
+    },
+    "actions": {
+      "filterSortFieldNone": "edit",
+      "imagePropertyPanelFitNone": null
+    },
+    "modules": {
+      "filterSortFieldNone": null,
+      "imagePropertyPanelFitNone": null
+    }
+  },
+  "exact_match_filterStyleRunning": {
+    "keys": [
+      "workStyleRunning",
+      "filterStyleRunning"
+    ],
+    "values": {
+      "zh": {
+        "workStyleRunning": "行书",
+        "filterStyleRunning": "行书"
+      },
+      "en": {
+        "workStyleRunning": "Running Script",
+        "filterStyleRunning": "Running Script"
+      }
+    },
+    "contexts": {
+      "workStyleRunning": "menu",
+      "filterStyleRunning": null
+    },
+    "actions": {
+      "workStyleRunning": "delete",
+      "filterStyleRunning": "search"
+    },
+    "modules": {
+      "workStyleRunning": null,
+      "filterStyleRunning": null
+    }
+  },
+  "exact_match_workImportDialogProcessing": {
+    "keys": [
+      "workImportDialogProcessing",
+      "characterCollectionProcessing"
+    ],
+    "values": {
+      "zh": {
+        "workImportDialogProcessing": "处理中...",
+        "characterCollectionProcessing": "处理中..."
+      },
+      "en": {
+        "workImportDialogProcessing": "Processing...",
+        "characterCollectionProcessing": "Processing..."
+      }
+    },
+    "contexts": {
+      "workImportDialogProcessing": "dialog",
+      "characterCollectionProcessing": "status"
+    },
+    "actions": {
+      "workImportDialogProcessing": "import",
+      "characterCollectionProcessing": null
+    },
+    "modules": {
+      "workImportDialogProcessing": null,
+      "characterCollectionProcessing": null
+    }
+  },
+  "exact_match_characterDetailUnknown": {
+    "keys": [
+      "collectionPropertyPanelUnknown",
+      "characterDetailUnknown"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelUnknown": "未知",
+        "characterDetailUnknown": "未知"
+      },
+      "en": {
+        "collectionPropertyPanelUnknown": "Unknown",
+        "characterDetailUnknown": "Unknown"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelUnknown": null,
+      "characterDetailUnknown": "label"
+    },
+    "actions": {
+      "collectionPropertyPanelUnknown": "import",
+      "characterDetailUnknown": null
+    },
+    "modules": {
+      "collectionPropertyPanelUnknown": "practice",
+      "characterDetailUnknown": null
+    }
+  },
+  "exact_match_filterClear": {
+    "keys": [
+      "filterDateClear",
+      "filterClear"
+    ],
+    "values": {
+      "zh": {
+        "filterDateClear": "清除",
+        "filterClear": "清除"
+      },
+      "en": {
+        "filterDateClear": "Clear",
+        "filterClear": "Clear"
+      }
+    },
+    "contexts": {
+      "filterDateClear": "button",
+      "filterClear": "button"
+    },
+    "actions": {
+      "filterDateClear": "delete",
+      "filterClear": "delete"
+    },
+    "modules": {
+      "filterDateClear": null,
+      "filterClear": null
+    }
+  },
+  "exact_match_workBrowseItemsPerPage": {
+    "keys": [
+      "workBrowseItemsPerPage",
+      "characterManagementItemsPerPage"
+    ],
+    "values": {
+      "zh": {
+        "workBrowseItemsPerPage": "{count}项/页",
+        "characterManagementItemsPerPage": "{count}项/页"
+      },
+      "en": {
+        "workBrowseItemsPerPage": "{count} per page",
+        "characterManagementItemsPerPage": "{count} per page"
+      }
+    },
+    "contexts": {
+      "workBrowseItemsPerPage": "menu",
+      "characterManagementItemsPerPage": null
+    },
+    "actions": {
+      "workBrowseItemsPerPage": null,
+      "characterManagementItemsPerPage": null
+    },
+    "modules": {
+      "workBrowseItemsPerPage": null,
+      "characterManagementItemsPerPage": null
+    }
+  },
+  "exact_match_libraryManagementFavorites": {
+    "keys": [
+      "libraryManagementFavorites",
+      "practiceListFilterFavorites"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementFavorites": "收藏",
+        "practiceListFilterFavorites": "收藏"
+      },
+      "en": {
+        "libraryManagementFavorites": "Favorites",
+        "practiceListFilterFavorites": "Favorites"
+      }
+    },
+    "contexts": {
+      "libraryManagementFavorites": "title",
+      "practiceListFilterFavorites": "menu"
+    },
+    "actions": {
+      "libraryManagementFavorites": null,
+      "practiceListFilterFavorites": "search"
+    },
+    "modules": {
+      "libraryManagementFavorites": "work",
+      "practiceListFilterFavorites": null
+    }
+  },
+  "exact_match_filterStyleSection": {
+    "keys": [
+      "filterStyleSection",
+      "characterFilterCalligraphyStyle",
+      "characterDetailCalligraphyStyle"
+    ],
+    "values": {
+      "zh": {
+        "filterStyleSection": "书法风格",
+        "characterFilterCalligraphyStyle": "书法风格",
+        "characterDetailCalligraphyStyle": "书法风格"
+      },
+      "en": {
+        "filterStyleSection": "Calligraphy Style",
+        "characterFilterCalligraphyStyle": "Calligraphy Style",
+        "characterDetailCalligraphyStyle": "Calligraphy Style"
+      }
+    },
+    "contexts": {
+      "filterStyleSection": "title",
+      "characterFilterCalligraphyStyle": null,
+      "characterDetailCalligraphyStyle": "menu"
+    },
+    "actions": {
+      "filterStyleSection": "search",
+      "characterFilterCalligraphyStyle": null,
+      "characterDetailCalligraphyStyle": null
+    },
+    "modules": {
+      "filterStyleSection": null,
+      "characterFilterCalligraphyStyle": null,
+      "characterDetailCalligraphyStyle": null
+    }
+  },
+  "exact_match_practiceEditImageProperties": {
+    "keys": [
+      "practiceEditImageProperties",
+      "imagePropertyPanel"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditImageProperties": "图像属性",
+        "imagePropertyPanel": "图像属性"
+      },
+      "en": {
+        "practiceEditImageProperties": "Image Properties",
+        "imagePropertyPanel": "Image Properties"
+      }
+    },
+    "contexts": {
+      "practiceEditImageProperties": null,
+      "imagePropertyPanel": null
+    },
+    "actions": {
+      "practiceEditImageProperties": null,
+      "imagePropertyPanel": null
+    },
+    "modules": {
+      "practiceEditImageProperties": null,
+      "imagePropertyPanel": null
+    }
+  },
+  "exact_match_characterCollectionLeave": {
+    "keys": [
+      "characterCollectionLeave",
+      "practiceEditLeave"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionLeave": "离开",
+        "practiceEditLeave": "离开"
+      },
+      "en": {
+        "characterCollectionLeave": "Leave",
+        "practiceEditLeave": "Leave"
+      }
+    },
+    "contexts": {
+      "characterCollectionLeave": "error",
+      "practiceEditLeave": "button"
+    },
+    "actions": {
+      "characterCollectionLeave": null,
+      "practiceEditLeave": "edit"
+    },
+    "modules": {
+      "characterCollectionLeave": null,
+      "practiceEditLeave": "practice"
+    }
+  },
+  "exact_match_delete": {
+    "keys": [
+      "workBrowseDelete",
+      "deleteBackup",
+      "delete",
+      "workImportDelete"
+    ],
+    "values": {
+      "zh": {
+        "workBrowseDelete": "删除",
+        "deleteBackup": "删除",
+        "delete": "删除",
+        "workImportDelete": "删除"
+      },
+      "en": {
+        "workBrowseDelete": "Delete",
+        "deleteBackup": "Delete",
+        "delete": "Delete",
+        "workImportDelete": "Delete"
+      }
+    },
+    "contexts": {
+      "workBrowseDelete": "button",
+      "deleteBackup": "button",
+      "delete": "button",
+      "workImportDelete": "button"
+    },
+    "actions": {
+      "workBrowseDelete": "delete",
+      "deleteBackup": "delete",
+      "delete": "delete",
+      "workImportDelete": "delete"
+    },
+    "modules": {
+      "workBrowseDelete": null,
+      "deleteBackup": null,
+      "delete": "work",
+      "workImportDelete": null
+    }
+  },
+  "exact_match_collectionPropertyPanelHeaderVisual": {
+    "keys": [
+      "collectionPropertyPanelHeaderVisual",
+      "practiceEditVisualProperties"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelHeaderVisual": "视觉属性",
+        "practiceEditVisualProperties": "视觉属性"
+      },
+      "en": {
+        "collectionPropertyPanelHeaderVisual": "Visual Properties",
+        "practiceEditVisualProperties": "Visual Properties"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelHeaderVisual": null,
+      "practiceEditVisualProperties": null
+    },
+    "actions": {
+      "collectionPropertyPanelHeaderVisual": null,
+      "practiceEditVisualProperties": null
+    },
+    "modules": {
+      "collectionPropertyPanelHeaderVisual": null,
+      "practiceEditVisualProperties": null
+    }
+  },
+  "exact_match_layerOperations": {
+    "keys": [
+      "layerOperations",
+      "practiceEditLayerOperations"
+    ],
+    "values": {
+      "zh": {
+        "layerOperations": "图层操作",
+        "practiceEditLayerOperations": "图层操作"
+      },
+      "en": {
+        "layerOperations": "Layer Operations",
+        "practiceEditLayerOperations": "Layer Operations"
+      }
+    },
+    "contexts": {
+      "layerOperations": "title",
+      "practiceEditLayerOperations": "button"
+    },
+    "actions": {
+      "layerOperations": null,
+      "practiceEditLayerOperations": "edit"
+    },
+    "modules": {
+      "layerOperations": "practice",
+      "practiceEditLayerOperations": "practice"
+    }
+  },
+  "exact_match_works": {
+    "keys": [
+      "workBrowseTitle",
+      "works"
+    ],
+    "values": {
+      "zh": {
+        "workBrowseTitle": "作品",
+        "works": "作品"
+      },
+      "en": {
+        "workBrowseTitle": "Works",
+        "works": "Works"
+      }
+    },
+    "contexts": {
+      "workBrowseTitle": "button",
+      "works": "label"
+    },
+    "actions": {
+      "workBrowseTitle": "view",
+      "works": "select"
+    },
+    "modules": {
+      "workBrowseTitle": null,
+      "works": null
+    }
+  },
+  "exact_match_filterDateStartDate": {
+    "keys": [
+      "filterStartDate",
+      "startDate",
+      "filterDateStartDate"
+    ],
+    "values": {
+      "zh": {
+        "filterStartDate": "开始日期",
+        "startDate": "开始日期",
+        "filterDateStartDate": "开始日期"
+      },
+      "en": {
+        "filterStartDate": "Start Date",
+        "startDate": "Start Date",
+        "filterDateStartDate": "Start Date"
+      }
+    },
+    "contexts": {
+      "filterStartDate": null,
+      "startDate": "button",
+      "filterDateStartDate": "button"
+    },
+    "actions": {
+      "filterStartDate": null,
+      "startDate": "select",
+      "filterDateStartDate": "select"
+    },
+    "modules": {
+      "filterStartDate": null,
+      "startDate": null,
+      "filterDateStartDate": null
+    }
+  },
+  "exact_match_filterSortSection": {
+    "keys": [
+      "filterSortSection",
+      "characterFilterSort"
+    ],
+    "values": {
+      "zh": {
+        "filterSortSection": "排序",
+        "characterFilterSort": "排序"
+      },
+      "en": {
+        "filterSortSection": "Sort",
+        "characterFilterSort": "Sort"
+      }
+    },
+    "contexts": {
+      "filterSortSection": "title",
+      "characterFilterSort": null
+    },
+    "actions": {
+      "filterSortSection": "search",
+      "characterFilterSort": null
+    },
+    "modules": {
+      "filterSortSection": null,
+      "characterFilterSort": null
+    }
+  },
+  "exact_match_practiceEditTopNavRedo": {
+    "keys": [
+      "practiceEditTopNavRedo",
+      "characterEditRedo"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditTopNavRedo": "重做",
+        "characterEditRedo": "重做"
+      },
+      "en": {
+        "practiceEditTopNavRedo": "Redo",
+        "characterEditRedo": "Redo"
+      }
+    },
+    "contexts": {
+      "practiceEditTopNavRedo": "button",
+      "characterEditRedo": "button"
+    },
+    "actions": {
+      "practiceEditTopNavRedo": "edit",
+      "characterEditRedo": "edit"
+    },
+    "modules": {
+      "practiceEditTopNavRedo": "practice",
+      "characterEditRedo": null
+    }
+  },
+  "exact_match_filterSelectAll": {
+    "keys": [
+      "filterSelectAll",
+      "toolbarSelectAll"
+    ],
+    "values": {
+      "zh": {
+        "filterSelectAll": "全选",
+        "toolbarSelectAll": "全选"
+      },
+      "en": {
+        "filterSelectAll": "Select All",
+        "toolbarSelectAll": "Select All"
+      }
+    },
+    "contexts": {
+      "filterSelectAll": "button",
+      "toolbarSelectAll": "button"
+    },
+    "actions": {
+      "filterSelectAll": "select",
+      "toolbarSelectAll": "select"
+    },
+    "modules": {
+      "filterSelectAll": null,
+      "toolbarSelectAll": "practice"
+    }
+  },
+  "exact_match_workDetailBasicInfo": {
+    "keys": [
+      "workDetailBasicInfo",
+      "characterDetailBasicInfo",
+      "libraryManagementBasicInfo"
+    ],
+    "values": {
+      "zh": {
+        "workDetailBasicInfo": "基本信息",
+        "characterDetailBasicInfo": "基本信息",
+        "libraryManagementBasicInfo": "基本信息"
+      },
+      "en": {
+        "workDetailBasicInfo": "Basic Information",
+        "characterDetailBasicInfo": "Basic Information",
+        "libraryManagementBasicInfo": "Basic Information"
+      }
+    },
+    "contexts": {
+      "workDetailBasicInfo": "tooltip",
+      "characterDetailBasicInfo": "title",
+      "libraryManagementBasicInfo": "tooltip"
+    },
+    "actions": {
+      "workDetailBasicInfo": "edit",
+      "characterDetailBasicInfo": null,
+      "libraryManagementBasicInfo": "edit"
+    },
+    "modules": {
+      "workDetailBasicInfo": null,
+      "characterDetailBasicInfo": null,
+      "libraryManagementBasicInfo": "work"
+    }
+  },
+  "exact_match_saveSuccess": {
+    "keys": [
+      "workDetailSaveSuccess",
+      "saveSuccess",
+      "practiceEditSaveSuccess"
+    ],
+    "values": {
+      "zh": {
+        "workDetailSaveSuccess": "保存成功",
+        "saveSuccess": "保存成功",
+        "practiceEditSaveSuccess": "保存成功"
+      },
+      "en": {
+        "workDetailSaveSuccess": "Save successful",
+        "saveSuccess": "Save successful",
+        "practiceEditSaveSuccess": "Save successful"
+      }
+    },
+    "contexts": {
+      "workDetailSaveSuccess": "button",
+      "saveSuccess": "button",
+      "practiceEditSaveSuccess": "button"
+    },
+    "actions": {
+      "workDetailSaveSuccess": "view",
+      "saveSuccess": "edit",
+      "practiceEditSaveSuccess": "edit"
+    },
+    "modules": {
+      "workDetailSaveSuccess": null,
+      "saveSuccess": "work",
+      "practiceEditSaveSuccess": null
+    }
+  },
+  "exact_match_workFormAuthor": {
+    "keys": [
+      "workFormAuthor",
+      "author",
+      "characterDetailAuthor",
+      "filterSortFieldAuthor"
+    ],
+    "values": {
+      "zh": {
+        "workFormAuthor": "作者",
+        "author": "作者",
+        "characterDetailAuthor": "作者",
+        "filterSortFieldAuthor": "作者"
+      },
+      "en": {
+        "workFormAuthor": "Author",
+        "author": "Author",
+        "characterDetailAuthor": "Author",
+        "filterSortFieldAuthor": "Author"
+      }
+    },
+    "contexts": {
+      "workFormAuthor": "form",
+      "author": "tooltip",
+      "characterDetailAuthor": "menu",
+      "filterSortFieldAuthor": "form"
+    },
+    "actions": {
+      "workFormAuthor": "confirm",
+      "author": null,
+      "characterDetailAuthor": null,
+      "filterSortFieldAuthor": "add"
+    },
+    "modules": {
+      "workFormAuthor": null,
+      "author": "character",
+      "characterDetailAuthor": null,
+      "filterSortFieldAuthor": null
+    }
+  },
+  "exact_match_collectionPropertyPanel": {
+    "keys": [
+      "collectionPropertyPanel",
+      "practiceEditCollectionProperties"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanel": "采集属性",
+        "practiceEditCollectionProperties": "采集属性"
+      },
+      "en": {
+        "collectionPropertyPanel": "Collection Properties",
+        "practiceEditCollectionProperties": "Collection Properties"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanel": null,
+      "practiceEditCollectionProperties": null
+    },
+    "actions": {
+      "collectionPropertyPanel": null,
+      "practiceEditCollectionProperties": null
+    },
+    "modules": {
+      "collectionPropertyPanel": null,
+      "practiceEditCollectionProperties": null
+    }
+  },
+  "exact_match_selectDate": {
+    "keys": [
+      "selectDate",
+      "workFormSelectDate",
+      "filterDateSelectPrompt",
+      "filterSelectDate"
+    ],
+    "values": {
+      "zh": {
+        "selectDate": "选择日期",
+        "workFormSelectDate": "选择日期",
+        "filterDateSelectPrompt": "选择日期",
+        "filterSelectDate": "选择日期"
+      },
+      "en": {
+        "selectDate": "Select Date",
+        "workFormSelectDate": "Select Date",
+        "filterDateSelectPrompt": "Select Date",
+        "filterSelectDate": "Select Date"
+      }
+    },
+    "contexts": {
+      "selectDate": "button",
+      "workFormSelectDate": "form",
+      "filterDateSelectPrompt": "button",
+      "filterSelectDate": null
+    },
+    "actions": {
+      "selectDate": "view",
+      "workFormSelectDate": "select",
+      "filterDateSelectPrompt": "select",
+      "filterSelectDate": null
+    },
+    "modules": {
+      "selectDate": null,
+      "workFormSelectDate": null,
+      "filterDateSelectPrompt": null,
+      "filterSelectDate": null
+    }
+  },
+  "exact_match_collectionPropertyPanelHeaderContent": {
+    "keys": [
+      "collectionPropertyPanelHeaderContent",
+      "collectionPropertyPanelContent",
+      "imagePropertyPanelContent",
+      "practiceEditContentProperties"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelHeaderContent": "内容属性",
+        "collectionPropertyPanelContent": "内容属性",
+        "imagePropertyPanelContent": "内容属性",
+        "practiceEditContentProperties": "内容属性"
+      },
+      "en": {
+        "collectionPropertyPanelHeaderContent": "Content Properties",
+        "collectionPropertyPanelContent": "Content Properties",
+        "imagePropertyPanelContent": "Content Properties",
+        "practiceEditContentProperties": "Content Properties"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelHeaderContent": null,
+      "collectionPropertyPanelContent": null,
+      "imagePropertyPanelContent": null,
+      "practiceEditContentProperties": null
+    },
+    "actions": {
+      "collectionPropertyPanelHeaderContent": null,
+      "collectionPropertyPanelContent": null,
+      "imagePropertyPanelContent": null,
+      "practiceEditContentProperties": null
+    },
+    "modules": {
+      "collectionPropertyPanelHeaderContent": null,
+      "collectionPropertyPanelContent": null,
+      "imagePropertyPanelContent": null,
+      "practiceEditContentProperties": null
+    }
+  },
+  "exact_match_width": {
+    "keys": [
+      "width",
+      "libraryManagementSizeWidth"
+    ],
+    "values": {
+      "zh": {
+        "width": "宽度",
+        "libraryManagementSizeWidth": "宽度"
+      },
+      "en": {
+        "width": "Width",
+        "libraryManagementSizeWidth": "Width"
+      }
+    },
+    "contexts": {
+      "width": "title",
+      "libraryManagementSizeWidth": null
+    },
+    "actions": {
+      "width": "search",
+      "libraryManagementSizeWidth": null
+    },
+    "modules": {
+      "width": "work",
+      "libraryManagementSizeWidth": null
+    }
+  },
+  "exact_match_characterEditUndo": {
+    "keys": [
+      "practiceEditTopNavUndo",
+      "characterEditUndo"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditTopNavUndo": "撤销",
+        "characterEditUndo": "撤销"
+      },
+      "en": {
+        "practiceEditTopNavUndo": "Undo",
+        "characterEditUndo": "Undo"
+      }
+    },
+    "contexts": {
+      "practiceEditTopNavUndo": "button",
+      "characterEditUndo": "button"
+    },
+    "actions": {
+      "practiceEditTopNavUndo": "edit",
+      "characterEditUndo": "edit"
+    },
+    "modules": {
+      "practiceEditTopNavUndo": "practice",
+      "characterEditUndo": null
+    }
+  },
+  "exact_match_workFormCreationDate": {
+    "keys": [
+      "workFormCreationDate",
+      "characterFilterCreationDate",
+      "filterSortFieldCreationDate"
+    ],
+    "values": {
+      "zh": {
+        "workFormCreationDate": "创作日期",
+        "characterFilterCreationDate": "创作日期",
+        "filterSortFieldCreationDate": "创作日期"
+      },
+      "en": {
+        "workFormCreationDate": "Creation Date",
+        "characterFilterCreationDate": "Creation Date",
+        "filterSortFieldCreationDate": "Creation Date"
+      }
+    },
+    "contexts": {
+      "workFormCreationDate": "form",
+      "characterFilterCreationDate": "title",
+      "filterSortFieldCreationDate": "form"
+    },
+    "actions": {
+      "workFormCreationDate": "view",
+      "characterFilterCreationDate": "search",
+      "filterSortFieldCreationDate": "add"
+    },
+    "modules": {
+      "workFormCreationDate": null,
+      "characterFilterCreationDate": null,
+      "filterSortFieldCreationDate": null
+    }
+  },
+  "exact_match_workFormStyle": {
+    "keys": [
+      "workFormStyle",
+      "filterSortFieldStyle"
+    ],
+    "values": {
+      "zh": {
+        "workFormStyle": "风格",
+        "filterSortFieldStyle": "风格"
+      },
+      "en": {
+        "workFormStyle": "Style",
+        "filterSortFieldStyle": "Style"
+      }
+    },
+    "contexts": {
+      "workFormStyle": "form",
+      "filterSortFieldStyle": "form"
+    },
+    "actions": {
+      "workFormStyle": "delete",
+      "filterSortFieldStyle": "edit"
+    },
+    "modules": {
+      "workFormStyle": null,
+      "filterSortFieldStyle": null
+    }
+  },
+  "exact_match_workBrowseImport": {
+    "keys": [
+      "workBrowseImport",
+      "workImportDialogTitle"
+    ],
+    "values": {
+      "zh": {
+        "workBrowseImport": "导入作品",
+        "workImportDialogTitle": "导入作品"
+      },
+      "en": {
+        "workBrowseImport": "Import Work",
+        "workImportDialogTitle": "Import Work"
+      }
+    },
+    "contexts": {
+      "workBrowseImport": "button",
+      "workImportDialogTitle": "button"
+    },
+    "actions": {
+      "workBrowseImport": "add",
+      "workImportDialogTitle": "add"
+    },
+    "modules": {
+      "workBrowseImport": null,
+      "workImportDialogTitle": null
+    }
+  },
+  "exact_match_export": {
+    "keys": [
+      "export",
+      "practiceEditTopNavExport"
+    ],
+    "values": {
+      "zh": {
+        "export": "导出",
+        "practiceEditTopNavExport": "导出"
+      },
+      "en": {
+        "export": "Export",
+        "practiceEditTopNavExport": "Export"
+      }
+    },
+    "contexts": {
+      "export": "button",
+      "practiceEditTopNavExport": "button"
+    },
+    "actions": {
+      "export": "import",
+      "practiceEditTopNavExport": "edit"
+    },
+    "modules": {
+      "export": "practice",
+      "practiceEditTopNavExport": "practice"
+    }
+  },
+  "exact_match_workBrowseBatchDone": {
+    "keys": [
+      "done",
+      "practiceListBatchDone",
+      "workBrowseBatchDone",
+      "characterManagementBatchDone"
+    ],
+    "values": {
+      "zh": {
+        "done": "完成",
+        "practiceListBatchDone": "完成",
+        "workBrowseBatchDone": "完成",
+        "characterManagementBatchDone": "完成"
+      },
+      "en": {
+        "done": "Done",
+        "practiceListBatchDone": "Done",
+        "workBrowseBatchDone": "Done",
+        "characterManagementBatchDone": "Done"
+      }
+    },
+    "contexts": {
+      "done": "button",
+      "practiceListBatchDone": "button",
+      "workBrowseBatchDone": "button",
+      "characterManagementBatchDone": null
+    },
+    "actions": {
+      "done": "confirm",
+      "practiceListBatchDone": "select",
+      "workBrowseBatchDone": "edit",
+      "characterManagementBatchDone": null
+    },
+    "modules": {
+      "done": null,
+      "practiceListBatchDone": null,
+      "workBrowseBatchDone": null,
+      "characterManagementBatchDone": null
+    }
+  },
+  "exact_match_textureRemove": {
+    "keys": [
+      "textureRemove",
+      "remove"
+    ],
+    "values": {
+      "zh": {
+        "textureRemove": "移除",
+        "remove": "移除"
+      },
+      "en": {
+        "textureRemove": "Remove",
+        "remove": "Remove"
+      }
+    },
+    "contexts": {
+      "textureRemove": "button",
+      "remove": "button"
+    },
+    "actions": {
+      "textureRemove": "delete",
+      "remove": "edit"
+    },
+    "modules": {
+      "textureRemove": "practice",
+      "remove": "work"
+    }
+  },
+  "exact_match_imageCacheClearFailed": {
+    "keys": [
+      "imageCacheClearFailed",
+      "collectionPropertyPanelCacheClearFailed"
+    ],
+    "values": {
+      "zh": {
+        "imageCacheClearFailed": "清除图像缓存失败",
+        "collectionPropertyPanelCacheClearFailed": "清除图像缓存失败"
+      },
+      "en": {
+        "imageCacheClearFailed": "Failed to clear image cache",
+        "collectionPropertyPanelCacheClearFailed": "Failed to clear image cache"
+      }
+    },
+    "contexts": {
+      "imageCacheClearFailed": null,
+      "collectionPropertyPanelCacheClearFailed": null
+    },
+    "actions": {
+      "imageCacheClearFailed": null,
+      "collectionPropertyPanelCacheClearFailed": null
+    },
+    "modules": {
+      "imageCacheClearFailed": null,
+      "collectionPropertyPanelCacheClearFailed": null
+    }
+  },
+  "exact_match_characterDetailTags": {
+    "keys": [
+      "characterDetailTags",
+      "workDetailTags",
+      "characterFilterTags",
+      "libraryManagementTags",
+      "filterTagsSection"
+    ],
+    "values": {
+      "zh": {
+        "characterDetailTags": "标签",
+        "workDetailTags": "标签",
+        "characterFilterTags": "标签",
+        "libraryManagementTags": "标签",
+        "filterTagsSection": "标签"
+      },
+      "en": {
+        "characterDetailTags": "Tags",
+        "workDetailTags": "Tags",
+        "characterFilterTags": "Tags",
+        "libraryManagementTags": "Tags",
+        "filterTagsSection": "Tags"
+      }
+    },
+    "contexts": {
+      "characterDetailTags": "title",
+      "workDetailTags": "tooltip",
+      "characterFilterTags": null,
+      "libraryManagementTags": "label",
+      "filterTagsSection": "title"
+    },
+    "actions": {
+      "characterDetailTags": null,
+      "workDetailTags": null,
+      "characterFilterTags": null,
+      "libraryManagementTags": "edit",
+      "filterTagsSection": "search"
+    },
+    "modules": {
+      "characterDetailTags": null,
+      "workDetailTags": null,
+      "characterFilterTags": null,
+      "libraryManagementTags": "work",
+      "filterTagsSection": null
+    }
+  },
+  "exact_match_filterTagsSelected": {
+    "keys": [
+      "filterTagsSelected",
+      "characterFilterSelectedTags"
+    ],
+    "values": {
+      "zh": {
+        "filterTagsSelected": "已选标签：",
+        "characterFilterSelectedTags": "已选标签："
+      },
+      "en": {
+        "filterTagsSelected": "Selected Tags:",
+        "characterFilterSelectedTags": "Selected Tags:"
+      }
+    },
+    "contexts": {
+      "filterTagsSelected": "menu",
+      "characterFilterSelectedTags": null
+    },
+    "actions": {
+      "filterTagsSelected": "select",
+      "characterFilterSelectedTags": null
+    },
+    "modules": {
+      "filterTagsSelected": null,
+      "characterFilterSelectedTags": null
+    }
+  },
+  "exact_match_name": {
+    "keys": [
+      "libraryManagementName",
+      "name"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementName": "名称",
+        "name": "名称"
+      },
+      "en": {
+        "libraryManagementName": "Name",
+        "name": "Name"
+      }
+    },
+    "contexts": {
+      "libraryManagementName": "form",
+      "name": "form"
+    },
+    "actions": {
+      "libraryManagementName": "select",
+      "name": "sort"
+    },
+    "modules": {
+      "libraryManagementName": "work",
+      "name": "practice"
+    }
+  },
+  "exact_match_libraryManagementLoading": {
+    "keys": [
+      "libraryManagementLoading",
+      "commonLoading"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementLoading": "加载中...",
+        "commonLoading": "加载中..."
+      },
+      "en": {
+        "libraryManagementLoading": "Loading...",
+        "commonLoading": "Loading..."
+      }
+    },
+    "contexts": {
+      "libraryManagementLoading": null,
+      "commonLoading": null
+    },
+    "actions": {
+      "libraryManagementLoading": null,
+      "commonLoading": null
+    },
+    "modules": {
+      "libraryManagementLoading": null,
+      "commonLoading": null
+    }
+  },
+  "exact_match_importFailedMessage": {
+    "keys": [
+      "importFailedMessage",
+      "importFileFailed"
+    ],
+    "values": {
+      "zh": {
+        "importFailedMessage": "导入失败: {error}",
+        "importFileFailed": "导入失败: {error}"
+      },
+      "en": {
+        "importFailedMessage": "Import failed: {error}",
+        "importFileFailed": "Import failed: {error}"
+      }
+    },
+    "contexts": {
+      "importFailedMessage": "dialog",
+      "importFileFailed": "error"
+    },
+    "actions": {
+      "importFailedMessage": "view",
+      "importFileFailed": "view"
+    },
+    "modules": {
+      "importFailedMessage": "work",
+      "importFileFailed": "work"
+    }
+  },
+  "exact_match_filterDateEndDate": {
+    "keys": [
+      "filterDateEndDate",
+      "filterEndDate",
+      "endDate"
+    ],
+    "values": {
+      "zh": {
+        "filterDateEndDate": "结束日期",
+        "filterEndDate": "结束日期",
+        "endDate": "结束日期"
+      },
+      "en": {
+        "filterDateEndDate": "End Date",
+        "filterEndDate": "End Date",
+        "endDate": "End Date"
+      }
+    },
+    "contexts": {
+      "filterDateEndDate": "button",
+      "filterEndDate": null,
+      "endDate": "button"
+    },
+    "actions": {
+      "filterDateEndDate": "select",
+      "filterEndDate": null,
+      "endDate": "select"
+    },
+    "modules": {
+      "filterDateEndDate": null,
+      "filterEndDate": null,
+      "endDate": null
+    }
+  },
+  "exact_match_position": {
+    "keys": [
+      "imagePropertyPanelPosition",
+      "textPropertyPanelPosition",
+      "position"
+    ],
+    "values": {
+      "zh": {
+        "imagePropertyPanelPosition": "位置",
+        "textPropertyPanelPosition": "位置",
+        "position": "位置"
+      },
+      "en": {
+        "imagePropertyPanelPosition": "Position",
+        "textPropertyPanelPosition": "Position",
+        "position": "Position"
+      }
+    },
+    "contexts": {
+      "imagePropertyPanelPosition": null,
+      "textPropertyPanelPosition": null,
+      "position": "menu"
+    },
+    "actions": {
+      "imagePropertyPanelPosition": null,
+      "textPropertyPanelPosition": null,
+      "position": "edit"
+    },
+    "modules": {
+      "imagePropertyPanelPosition": null,
+      "textPropertyPanelPosition": null,
+      "position": "practice"
+    }
+  },
+  "exact_match_filterStyleCursive": {
+    "keys": [
+      "filterStyleCursive",
+      "workStyleCursive"
+    ],
+    "values": {
+      "zh": {
+        "filterStyleCursive": "草书",
+        "workStyleCursive": "草书"
+      },
+      "en": {
+        "filterStyleCursive": "Cursive Script",
+        "workStyleCursive": "Cursive Script"
+      }
+    },
+    "contexts": {
+      "filterStyleCursive": null,
+      "workStyleCursive": "menu"
+    },
+    "actions": {
+      "filterStyleCursive": "search",
+      "workStyleCursive": "delete"
+    },
+    "modules": {
+      "filterStyleCursive": null,
+      "workStyleCursive": null
+    }
+  },
+  "exact_match_filterToolBrush": {
+    "keys": [
+      "filterToolBrush",
+      "workToolBrush"
+    ],
+    "values": {
+      "zh": {
+        "filterToolBrush": "毛笔",
+        "workToolBrush": "毛笔"
+      },
+      "en": {
+        "filterToolBrush": "Brush",
+        "workToolBrush": "Brush"
+      }
+    },
+    "contexts": {
+      "filterToolBrush": "label",
+      "workToolBrush": "menu"
+    },
+    "actions": {
+      "filterToolBrush": "search",
+      "workToolBrush": "delete"
+    },
+    "modules": {
+      "filterToolBrush": null,
+      "workToolBrush": null
+    }
+  },
+  "exact_match_characterCollectionPreviousPage": {
+    "keys": [
+      "characterCollectionPreviousPage",
+      "exportDialogPreviousPage"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionPreviousPage": "上一页",
+        "exportDialogPreviousPage": "上一页"
+      },
+      "en": {
+        "characterCollectionPreviousPage": "Previous Page",
+        "exportDialogPreviousPage": "Previous Page"
+      }
+    },
+    "contexts": {
+      "characterCollectionPreviousPage": "button",
+      "exportDialogPreviousPage": "button"
+    },
+    "actions": {
+      "characterCollectionPreviousPage": null,
+      "exportDialogPreviousPage": "view"
+    },
+    "modules": {
+      "characterCollectionPreviousPage": null,
+      "exportDialogPreviousPage": "practice"
+    }
+  },
+  "exact_match_filterToolHardPen": {
+    "keys": [
+      "filterToolHardPen",
+      "workToolHardPen"
+    ],
+    "values": {
+      "zh": {
+        "filterToolHardPen": "硬笔",
+        "workToolHardPen": "硬笔"
+      },
+      "en": {
+        "filterToolHardPen": "Hard Pen",
+        "workToolHardPen": "Hard Pen"
+      }
+    },
+    "contexts": {
+      "filterToolHardPen": null,
+      "workToolHardPen": "menu"
+    },
+    "actions": {
+      "filterToolHardPen": "search",
+      "workToolHardPen": "delete"
+    },
+    "modules": {
+      "filterToolHardPen": null,
+      "workToolHardPen": null
+    }
+  },
+  "exact_match_filterFavoritesOnly": {
+    "keys": [
+      "filterFavoritesOnly",
+      "characterFilterFavoritesOnly"
+    ],
+    "values": {
+      "zh": {
+        "filterFavoritesOnly": "仅显示收藏",
+        "characterFilterFavoritesOnly": "仅显示收藏"
+      },
+      "en": {
+        "filterFavoritesOnly": "Show favorites only",
+        "characterFilterFavoritesOnly": "Show favorites only"
+      }
+    },
+    "contexts": {
+      "filterFavoritesOnly": "menu",
+      "characterFilterFavoritesOnly": null
+    },
+    "actions": {
+      "filterFavoritesOnly": "view",
+      "characterFilterFavoritesOnly": null
+    },
+    "modules": {
+      "filterFavoritesOnly": "work",
+      "characterFilterFavoritesOnly": null
+    }
+  },
+  "exact_match_collectionPropertyPanelAutoLineBreakTooltip": {
+    "keys": [
+      "collectionPropertyPanelAutoLineBreakTooltip",
+      "collectionPropertyPanelAutoLineBreak"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelAutoLineBreakTooltip": "自动换行",
+        "collectionPropertyPanelAutoLineBreak": "自动换行"
+      },
+      "en": {
+        "collectionPropertyPanelAutoLineBreakTooltip": "Auto Line Break",
+        "collectionPropertyPanelAutoLineBreak": "Auto Line Break"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelAutoLineBreakTooltip": "dialog",
+      "collectionPropertyPanelAutoLineBreak": "form"
+    },
+    "actions": {
+      "collectionPropertyPanelAutoLineBreakTooltip": null,
+      "collectionPropertyPanelAutoLineBreak": null
+    },
+    "modules": {
+      "collectionPropertyPanelAutoLineBreakTooltip": "practice",
+      "collectionPropertyPanelAutoLineBreak": "practice"
+    }
+  },
+  "exact_match_workImportDialogImport": {
+    "keys": [
+      "libraryManagementImport",
+      "workImportDialogImport",
+      "import",
+      "workImportImport"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementImport": "导入",
+        "workImportDialogImport": "导入",
+        "import": "导入",
+        "workImportImport": "导入"
+      },
+      "en": {
+        "libraryManagementImport": "Import",
+        "workImportDialogImport": "Import",
+        "import": "Import",
+        "workImportImport": "Import"
+      }
+    },
+    "contexts": {
+      "libraryManagementImport": "button",
+      "workImportDialogImport": "button",
+      "import": "button",
+      "workImportImport": "button"
+    },
+    "actions": {
+      "libraryManagementImport": "add",
+      "workImportDialogImport": "save",
+      "import": "add",
+      "workImportImport": "add"
+    },
+    "modules": {
+      "libraryManagementImport": "work",
+      "workImportDialogImport": null,
+      "import": null,
+      "workImportImport": null
+    }
+  },
+  "exact_match_workFormDateTooltip": {
+    "keys": [
+      "workFormStyleTooltip",
+      "workFormDateTooltip",
+      "workFormToolTooltip"
+    ],
+    "values": {
+      "zh": {
+        "workFormStyleTooltip": "按Tab导航到下一个字段",
+        "workFormDateTooltip": "按Tab导航到下一个字段",
+        "workFormToolTooltip": "按Tab导航到下一个字段"
+      },
+      "en": {
+        "workFormStyleTooltip": "Press Tab to navigate to the next field",
+        "workFormDateTooltip": "Press Tab to navigate to the next field",
+        "workFormToolTooltip": "Press Tab to navigate to the next field"
+      }
+    },
+    "contexts": {
+      "workFormStyleTooltip": "form",
+      "workFormDateTooltip": "form",
+      "workFormToolTooltip": "form"
+    },
+    "actions": {
+      "workFormStyleTooltip": "view",
+      "workFormDateTooltip": "view",
+      "workFormToolTooltip": "view"
+    },
+    "modules": {
+      "workFormStyleTooltip": null,
+      "workFormDateTooltip": null,
+      "workFormToolTooltip": null
+    }
+  },
+  "exact_match_exportDialogLandscape": {
+    "keys": [
+      "exportDialogLandscape",
+      "landscape"
+    ],
+    "values": {
+      "zh": {
+        "exportDialogLandscape": "横向",
+        "landscape": "横向"
+      },
+      "en": {
+        "exportDialogLandscape": "Landscape",
+        "landscape": "Landscape"
+      }
+    },
+    "contexts": {
+      "exportDialogLandscape": "dialog",
+      "landscape": "menu"
+    },
+    "actions": {
+      "exportDialogLandscape": "export",
+      "landscape": null
+    },
+    "modules": {
+      "exportDialogLandscape": "practice",
+      "landscape": "practice"
+    }
+  },
+  "exact_match_locked": {
+    "keys": [
+      "locked",
+      "elementLocked"
+    ],
+    "values": {
+      "zh": {
+        "locked": "已锁定",
+        "elementLocked": "已锁定"
+      },
+      "en": {
+        "locked": "Locked",
+        "elementLocked": "Locked"
+      }
+    },
+    "contexts": {
+      "locked": "menu",
+      "elementLocked": null
+    },
+    "actions": {
+      "locked": null,
+      "elementLocked": null
+    },
+    "modules": {
+      "locked": "practice",
+      "elementLocked": "practice"
+    }
+  },
+  "exact_match_filterSortFieldUpdateTime": {
+    "keys": [
+      "workDetailUpdateTime",
+      "filterSortFieldUpdateTime"
+    ],
+    "values": {
+      "zh": {
+        "workDetailUpdateTime": "更新时间",
+        "filterSortFieldUpdateTime": "更新时间"
+      },
+      "en": {
+        "workDetailUpdateTime": "Update Time",
+        "filterSortFieldUpdateTime": "Update Time"
+      }
+    },
+    "contexts": {
+      "workDetailUpdateTime": "form",
+      "filterSortFieldUpdateTime": "form"
+    },
+    "actions": {
+      "workDetailUpdateTime": "add",
+      "filterSortFieldUpdateTime": "edit"
+    },
+    "modules": {
+      "workDetailUpdateTime": null,
+      "filterSortFieldUpdateTime": "work"
+    }
+  },
+  "exact_match_selectColorTitle": {
+    "keys": [
+      "selectColorTitle",
+      "colorPickerTitle"
+    ],
+    "values": {
+      "zh": {
+        "selectColorTitle": "选择颜色",
+        "colorPickerTitle": "选择颜色"
+      },
+      "en": {
+        "selectColorTitle": "Select Color",
+        "colorPickerTitle": "Select Color"
+      }
+    },
+    "contexts": {
+      "selectColorTitle": "dialog",
+      "colorPickerTitle": "dialog"
+    },
+    "actions": {
+      "selectColorTitle": "select",
+      "colorPickerTitle": "select"
+    },
+    "modules": {
+      "selectColorTitle": "common",
+      "colorPickerTitle": "common"
+    }
+  },
+  "exact_match_characterCollectionFilterAll": {
+    "keys": [
+      "characterCollectionFilterAll",
+      "practiceListStatusAll"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionFilterAll": "全部",
+        "practiceListStatusAll": "全部"
+      },
+      "en": {
+        "characterCollectionFilterAll": "All",
+        "practiceListStatusAll": "All"
+      }
+    },
+    "contexts": {
+      "characterCollectionFilterAll": "button",
+      "practiceListStatusAll": null
+    },
+    "actions": {
+      "characterCollectionFilterAll": "search",
+      "practiceListStatusAll": null
+    },
+    "modules": {
+      "characterCollectionFilterAll": null,
+      "practiceListStatusAll": null
+    }
+  },
+  "exact_match_characterDetailAddTag": {
+    "keys": [
+      "filterTagsAdd",
+      "addTag",
+      "characterDetailAddTag",
+      "characterFilterAddTag"
+    ],
+    "values": {
+      "zh": {
+        "filterTagsAdd": "添加标签",
+        "addTag": "添加标签",
+        "characterDetailAddTag": "添加标签",
+        "characterFilterAddTag": "添加标签"
+      },
+      "en": {
+        "filterTagsAdd": "Add Tag",
+        "addTag": "Add Tag",
+        "characterDetailAddTag": "Add Tag",
+        "characterFilterAddTag": "Add Tag"
+      }
+    },
+    "contexts": {
+      "filterTagsAdd": "button",
+      "addTag": "button",
+      "characterDetailAddTag": "button",
+      "characterFilterAddTag": null
+    },
+    "actions": {
+      "filterTagsAdd": "add",
+      "addTag": "add",
+      "characterDetailAddTag": "add",
+      "characterFilterAddTag": null
+    },
+    "modules": {
+      "filterTagsAdd": null,
+      "addTag": null,
+      "characterDetailAddTag": null,
+      "characterFilterAddTag": null
+    }
+  },
+  "exact_match_save": {
+    "keys": [
+      "workDetailSave",
+      "save",
+      "practiceEditTopNavSave"
+    ],
+    "values": {
+      "zh": {
+        "workDetailSave": "保存",
+        "save": "保存",
+        "practiceEditTopNavSave": "保存"
+      },
+      "en": {
+        "workDetailSave": "Save",
+        "save": "Save",
+        "practiceEditTopNavSave": "Save"
+      }
+    },
+    "contexts": {
+      "workDetailSave": "button",
+      "save": "button",
+      "practiceEditTopNavSave": "button"
+    },
+    "actions": {
+      "workDetailSave": "edit",
+      "save": "save",
+      "practiceEditTopNavSave": "edit"
+    },
+    "modules": {
+      "workDetailSave": null,
+      "save": "work",
+      "practiceEditTopNavSave": "practice"
+    }
+  },
+  "exact_match_apply": {
+    "keys": [
+      "apply",
+      "filterApply",
+      "filterDateApply"
+    ],
+    "values": {
+      "zh": {
+        "apply": "应用",
+        "filterApply": "应用",
+        "filterDateApply": "应用"
+      },
+      "en": {
+        "apply": "Apply",
+        "filterApply": "Apply",
+        "filterDateApply": "Apply"
+      }
+    },
+    "contexts": {
+      "apply": null,
+      "filterApply": null,
+      "filterDateApply": "button"
+    },
+    "actions": {
+      "apply": null,
+      "filterApply": null,
+      "filterDateApply": "search"
+    },
+    "modules": {
+      "apply": "work",
+      "filterApply": null,
+      "filterDateApply": null
+    }
+  },
+  "exact_match_collectionPropertyPanelTextSettings": {
+    "keys": [
+      "collectionPropertyPanelTextSettings",
+      "textPropertyPanelTextSettings"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelTextSettings": "文本设置",
+        "textPropertyPanelTextSettings": "文本设置"
+      },
+      "en": {
+        "collectionPropertyPanelTextSettings": "Text Settings",
+        "textPropertyPanelTextSettings": "Text Settings"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelTextSettings": "form",
+      "textPropertyPanelTextSettings": "menu"
+    },
+    "actions": {
+      "collectionPropertyPanelTextSettings": "edit",
+      "textPropertyPanelTextSettings": "settings"
+    },
+    "modules": {
+      "collectionPropertyPanelTextSettings": "practice",
+      "textPropertyPanelTextSettings": "practice"
+    }
+  },
+  "exact_match_cancel": {
+    "keys": [
+      "workImportDialogCancel",
+      "cancel",
+      "workDetailCancel",
+      "workBrowseCancel"
+    ],
+    "values": {
+      "zh": {
+        "workImportDialogCancel": "取消",
+        "cancel": "取消",
+        "workDetailCancel": "取消",
+        "workBrowseCancel": "取消"
+      },
+      "en": {
+        "workImportDialogCancel": "Cancel",
+        "cancel": "Cancel",
+        "workDetailCancel": "Cancel",
+        "workBrowseCancel": "Cancel"
+      }
+    },
+    "contexts": {
+      "workImportDialogCancel": "button",
+      "cancel": "button",
+      "workDetailCancel": "button",
+      "workBrowseCancel": "button"
+    },
+    "actions": {
+      "workImportDialogCancel": "cancel",
+      "cancel": "save",
+      "workDetailCancel": "edit",
+      "workBrowseCancel": "cancel"
+    },
+    "modules": {
+      "workImportDialogCancel": null,
+      "cancel": "common",
+      "workDetailCancel": null,
+      "workBrowseCancel": null
+    }
+  },
+  "exact_match_imagePropertyPanelFlip": {
+    "keys": [
+      "collectionPropertyPanelFlip",
+      "imagePropertyPanelFlip"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelFlip": "翻转",
+        "imagePropertyPanelFlip": "翻转"
+      },
+      "en": {
+        "collectionPropertyPanelFlip": "Flip",
+        "imagePropertyPanelFlip": "Flip"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelFlip": null,
+      "imagePropertyPanelFlip": "button"
+    },
+    "actions": {
+      "collectionPropertyPanelFlip": null,
+      "imagePropertyPanelFlip": null
+    },
+    "modules": {
+      "collectionPropertyPanelFlip": null,
+      "imagePropertyPanelFlip": "practice"
+    }
+  },
+  "exact_match_backgroundColor": {
+    "keys": [
+      "textPropertyPanelBgColor",
+      "backgroundColor",
+      "collectionPropertyPanelBackgroundColor"
+    ],
+    "values": {
+      "zh": {
+        "textPropertyPanelBgColor": "背景颜色",
+        "backgroundColor": "背景颜色",
+        "collectionPropertyPanelBackgroundColor": "背景颜色"
+      },
+      "en": {
+        "textPropertyPanelBgColor": "Background Color",
+        "backgroundColor": "Background Color",
+        "collectionPropertyPanelBackgroundColor": "Background Color"
+      }
+    },
+    "contexts": {
+      "textPropertyPanelBgColor": "dialog",
+      "backgroundColor": "button",
+      "collectionPropertyPanelBackgroundColor": null
+    },
+    "actions": {
+      "textPropertyPanelBgColor": null,
+      "backgroundColor": "add",
+      "collectionPropertyPanelBackgroundColor": null
+    },
+    "modules": {
+      "textPropertyPanelBgColor": "practice",
+      "backgroundColor": "practice",
+      "collectionPropertyPanelBackgroundColor": null
+    }
+  },
+  "exact_match_windowButtonClose": {
+    "keys": [
+      "close",
+      "characterCollectionHelpClose",
+      "windowButtonClose"
+    ],
+    "values": {
+      "zh": {
+        "close": "关闭",
+        "characterCollectionHelpClose": "关闭",
+        "windowButtonClose": "关闭"
+      },
+      "en": {
+        "close": "Close",
+        "characterCollectionHelpClose": "Close",
+        "windowButtonClose": "Close"
+      }
+    },
+    "contexts": {
+      "close": "button",
+      "characterCollectionHelpClose": null,
+      "windowButtonClose": "button"
+    },
+    "actions": {
+      "close": null,
+      "characterCollectionHelpClose": null,
+      "windowButtonClose": "select"
+    },
+    "modules": {
+      "close": "work",
+      "characterCollectionHelpClose": null,
+      "windowButtonClose": "work"
+    }
+  },
+  "exact_match_filterDateSection": {
+    "keys": [
+      "workDetailCreateTime",
+      "filterDateSection",
+      "filterSortFieldCreateTime"
+    ],
+    "values": {
+      "zh": {
+        "workDetailCreateTime": "创建时间",
+        "filterDateSection": "创建时间",
+        "filterSortFieldCreateTime": "创建时间"
+      },
+      "en": {
+        "workDetailCreateTime": "Creation Time",
+        "filterDateSection": "Creation Time",
+        "filterSortFieldCreateTime": "Creation Time"
+      }
+    },
+    "contexts": {
+      "workDetailCreateTime": "form",
+      "filterDateSection": "title",
+      "filterSortFieldCreateTime": "form"
+    },
+    "actions": {
+      "workDetailCreateTime": "add",
+      "filterDateSection": "search",
+      "filterSortFieldCreateTime": "add"
+    },
+    "modules": {
+      "workDetailCreateTime": null,
+      "filterDateSection": null,
+      "filterSortFieldCreateTime": null
+    }
+  },
+  "exact_match_practiceEditSaveFailed": {
+    "keys": [
+      "practiceEditSaveFailed",
+      "workDetailSaveFailure"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditSaveFailed": "保存失败",
+        "workDetailSaveFailure": "保存失败"
+      },
+      "en": {
+        "practiceEditSaveFailed": "Save failed",
+        "workDetailSaveFailure": "Save failed"
+      }
+    },
+    "contexts": {
+      "practiceEditSaveFailed": "button",
+      "workDetailSaveFailure": "button"
+    },
+    "actions": {
+      "practiceEditSaveFailed": "edit",
+      "workDetailSaveFailure": "save"
+    },
+    "modules": {
+      "practiceEditSaveFailed": null,
+      "workDetailSaveFailure": null
+    }
+  },
+  "exact_match_collectionPropertyPanelCacheCleared": {
+    "keys": [
+      "collectionPropertyPanelCacheCleared",
+      "imageCacheCleared"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelCacheCleared": "图像缓存已清除",
+        "imageCacheCleared": "图像缓存已清除"
+      },
+      "en": {
+        "collectionPropertyPanelCacheCleared": "Image cache cleared",
+        "imageCacheCleared": "Image cache cleared"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelCacheCleared": null,
+      "imageCacheCleared": null
+    },
+    "actions": {
+      "collectionPropertyPanelCacheCleared": null,
+      "imageCacheCleared": null
+    },
+    "modules": {
+      "collectionPropertyPanelCacheCleared": null,
+      "imageCacheCleared": null
+    }
+  },
+  "exact_match_clearImageCache": {
+    "keys": [
+      "clearImageCache",
+      "collectionPropertyPanelClearImageCache"
+    ],
+    "values": {
+      "zh": {
+        "clearImageCache": "清除图像缓存",
+        "collectionPropertyPanelClearImageCache": "清除图像缓存"
+      },
+      "en": {
+        "clearImageCache": "Clear Image Cache",
+        "collectionPropertyPanelClearImageCache": "Clear Image Cache"
+      }
+    },
+    "contexts": {
+      "clearImageCache": null,
+      "collectionPropertyPanelClearImageCache": null
+    },
+    "actions": {
+      "clearImageCache": null,
+      "collectionPropertyPanelClearImageCache": null
+    },
+    "modules": {
+      "clearImageCache": null,
+      "collectionPropertyPanelClearImageCache": null
+    }
+  },
+  "exact_match_collectionPropertyPanelBorder": {
+    "keys": [
+      "collectionPropertyPanelBorder",
+      "imagePropertyPanelBorder"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelBorder": "边框",
+        "imagePropertyPanelBorder": "边框"
+      },
+      "en": {
+        "collectionPropertyPanelBorder": "Border",
+        "imagePropertyPanelBorder": "Border"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelBorder": null,
+      "imagePropertyPanelBorder": null
+    },
+    "actions": {
+      "collectionPropertyPanelBorder": null,
+      "imagePropertyPanelBorder": null
+    },
+    "modules": {
+      "collectionPropertyPanelBorder": null,
+      "imagePropertyPanelBorder": null
+    }
+  },
+  "exact_match_exportDialogCustomRange": {
+    "keys": [
+      "exportDialogCustomRange",
+      "filterCustomRange"
+    ],
+    "values": {
+      "zh": {
+        "exportDialogCustomRange": "自定义范围",
+        "filterCustomRange": "自定义范围"
+      },
+      "en": {
+        "exportDialogCustomRange": "Custom Range",
+        "filterCustomRange": "Custom Range"
+      }
+    },
+    "contexts": {
+      "exportDialogCustomRange": "dialog",
+      "filterCustomRange": null
+    },
+    "actions": {
+      "exportDialogCustomRange": "export",
+      "filterCustomRange": null
+    },
+    "modules": {
+      "exportDialogCustomRange": "practice",
+      "filterCustomRange": null
+    }
+  },
+  "exact_match_libraryManagementCategories": {
+    "keys": [
+      "libraryManagementCategories",
+      "categories"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementCategories": "分类",
+        "categories": "分类"
+      },
+      "en": {
+        "libraryManagementCategories": "Categories",
+        "categories": "Categories"
+      }
+    },
+    "contexts": {
+      "libraryManagementCategories": "title",
+      "categories": null
+    },
+    "actions": {
+      "libraryManagementCategories": "edit",
+      "categories": null
+    },
+    "modules": {
+      "libraryManagementCategories": "work",
+      "categories": null
+    }
+  },
+  "exact_match_gridView": {
+    "keys": [
+      "characterManagementGridView",
+      "gridView",
+      "workBrowseGridView",
+      "practiceListGridView"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementGridView": "网格视图",
+        "gridView": "网格视图",
+        "workBrowseGridView": "网格视图",
+        "practiceListGridView": "网格视图"
+      },
+      "en": {
+        "characterManagementGridView": "Grid View",
+        "gridView": "Grid View",
+        "workBrowseGridView": "Grid View",
+        "practiceListGridView": "Grid View"
+      }
+    },
+    "contexts": {
+      "characterManagementGridView": null,
+      "gridView": "button",
+      "workBrowseGridView": "button",
+      "practiceListGridView": "button"
+    },
+    "actions": {
+      "characterManagementGridView": null,
+      "gridView": "view",
+      "workBrowseGridView": "edit",
+      "practiceListGridView": "view"
+    },
+    "modules": {
+      "characterManagementGridView": null,
+      "gridView": "work",
+      "workBrowseGridView": null,
+      "practiceListGridView": null
+    }
+  },
+  "exact_match_collectionPropertyPanelBorderWidth": {
+    "keys": [
+      "collectionPropertyPanelBorderWidth",
+      "imagePropertyPanelBorderWidth"
+    ],
+    "values": {
+      "zh": {
+        "collectionPropertyPanelBorderWidth": "边框宽度",
+        "imagePropertyPanelBorderWidth": "边框宽度"
+      },
+      "en": {
+        "collectionPropertyPanelBorderWidth": "Border Width",
+        "imagePropertyPanelBorderWidth": "Border Width"
+      }
+    },
+    "contexts": {
+      "collectionPropertyPanelBorderWidth": null,
+      "imagePropertyPanelBorderWidth": null
+    },
+    "actions": {
+      "collectionPropertyPanelBorderWidth": null,
+      "imagePropertyPanelBorderWidth": null
+    },
+    "modules": {
+      "collectionPropertyPanelBorderWidth": null,
+      "imagePropertyPanelBorderWidth": null
+    }
+  },
+  "exact_match_exportDialogPortrait": {
+    "keys": [
+      "exportDialogPortrait",
+      "portrait"
+    ],
+    "values": {
+      "zh": {
+        "exportDialogPortrait": "纵向",
+        "portrait": "纵向"
+      },
+      "en": {
+        "exportDialogPortrait": "Portrait",
+        "portrait": "Portrait"
+      }
+    },
+    "contexts": {
+      "exportDialogPortrait": "dialog",
+      "portrait": "menu"
+    },
+    "actions": {
+      "exportDialogPortrait": "export",
+      "portrait": null
+    },
+    "modules": {
+      "exportDialogPortrait": "practice",
+      "portrait": "practice"
+    }
+  },
+  "exact_match_deselectAll": {
+    "keys": [
+      "deselectAll",
+      "toolbarDeselectAll"
+    ],
+    "values": {
+      "zh": {
+        "deselectAll": "取消选择",
+        "toolbarDeselectAll": "取消选择"
+      },
+      "en": {
+        "deselectAll": "Deselect All",
+        "toolbarDeselectAll": "Deselect All"
+      }
+    },
+    "contexts": {
+      "deselectAll": "button",
+      "toolbarDeselectAll": "button"
+    },
+    "actions": {
+      "deselectAll": "cancel",
+      "toolbarDeselectAll": "select"
+    },
+    "modules": {
+      "deselectAll": "work",
+      "toolbarDeselectAll": "practice"
+    }
+  },
+  "exact_match_characterCollectionNextPage": {
+    "keys": [
+      "characterCollectionNextPage",
+      "exportDialogNextPage"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionNextPage": "下一页",
+        "exportDialogNextPage": "下一页"
+      },
+      "en": {
+        "characterCollectionNextPage": "Next Page",
+        "exportDialogNextPage": "Next Page"
+      }
+    },
+    "contexts": {
+      "characterCollectionNextPage": "tooltip",
+      "exportDialogNextPage": "button"
+    },
+    "actions": {
+      "characterCollectionNextPage": null,
+      "exportDialogNextPage": "view"
+    },
+    "modules": {
+      "characterCollectionNextPage": null,
+      "exportDialogNextPage": "practice"
+    }
+  },
+  "exact_match_workBrowseError": {
+    "keys": [
+      "characterManagementError",
+      "workBrowseError"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementError": "错误：{message}",
+        "workBrowseError": "错误：{message}"
+      },
+      "en": {
+        "characterManagementError": "Error: {message}",
+        "workBrowseError": "Error: {message}"
+      }
+    },
+    "contexts": {
+      "characterManagementError": "dialog",
+      "workBrowseError": "error"
+    },
+    "actions": {
+      "characterManagementError": null,
+      "workBrowseError": "view"
+    },
+    "modules": {
+      "characterManagementError": null,
+      "workBrowseError": null
+    }
+  },
+  "exact_match_rotation": {
+    "keys": [
+      "rotation",
+      "imagePropertyPanelRotation",
+      "collectionPropertyPanelRotation"
+    ],
+    "values": {
+      "zh": {
+        "rotation": "旋转",
+        "imagePropertyPanelRotation": "旋转",
+        "collectionPropertyPanelRotation": "旋转"
+      },
+      "en": {
+        "rotation": "Rotation",
+        "imagePropertyPanelRotation": "Rotation",
+        "collectionPropertyPanelRotation": "Rotation"
+      }
+    },
+    "contexts": {
+      "rotation": "form",
+      "imagePropertyPanelRotation": null,
+      "collectionPropertyPanelRotation": "label"
+    },
+    "actions": {
+      "rotation": "edit",
+      "imagePropertyPanelRotation": null,
+      "collectionPropertyPanelRotation": null
+    },
+    "modules": {
+      "rotation": "practice",
+      "imagePropertyPanelRotation": null,
+      "collectionPropertyPanelRotation": "practice"
+    }
+  },
+  "exact_match_practiceEditUnsavedChanges": {
+    "keys": [
+      "practiceEditUnsavedChanges",
+      "characterCollectionUnsavedChanges"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditUnsavedChanges": "未保存的更改",
+        "characterCollectionUnsavedChanges": "未保存的更改"
+      },
+      "en": {
+        "practiceEditUnsavedChanges": "Unsaved Changes",
+        "characterCollectionUnsavedChanges": "Unsaved Changes"
+      }
+    },
+    "contexts": {
+      "practiceEditUnsavedChanges": "button",
+      "characterCollectionUnsavedChanges": "button"
+    },
+    "actions": {
+      "practiceEditUnsavedChanges": "edit",
+      "characterCollectionUnsavedChanges": "edit"
+    },
+    "modules": {
+      "practiceEditUnsavedChanges": "practice",
+      "characterCollectionUnsavedChanges": null
+    }
+  },
+  "exact_match_workImageDeleteConfirmTitle": {
+    "keys": [
+      "workImageDeleteConfirmTitle",
+      "practiceEditConfirmDeleteTitle"
+    ],
+    "values": {
+      "zh": {
+        "workImageDeleteConfirmTitle": "确认删除",
+        "practiceEditConfirmDeleteTitle": "确认删除"
+      },
+      "en": {
+        "workImageDeleteConfirmTitle": "Confirm Delete",
+        "practiceEditConfirmDeleteTitle": "Confirm Delete"
+      }
+    },
+    "contexts": {
+      "workImageDeleteConfirmTitle": "button",
+      "practiceEditConfirmDeleteTitle": "button"
+    },
+    "actions": {
+      "workImageDeleteConfirmTitle": "delete",
+      "practiceEditConfirmDeleteTitle": "edit"
+    },
+    "modules": {
+      "workImageDeleteConfirmTitle": null,
+      "practiceEditConfirmDeleteTitle": null
+    }
+  },
+  "exact_match_practiceEditAddLayer": {
+    "keys": [
+      "addLayer",
+      "practiceEditAddLayer"
+    ],
+    "values": {
+      "zh": {
+        "addLayer": "添加图层",
+        "practiceEditAddLayer": "添加图层"
+      },
+      "en": {
+        "addLayer": "Add Layer",
+        "practiceEditAddLayer": "Add Layer"
+      }
+    },
+    "contexts": {
+      "addLayer": null,
+      "practiceEditAddLayer": "button"
+    },
+    "actions": {
+      "addLayer": null,
+      "practiceEditAddLayer": "add"
+    },
+    "modules": {
+      "addLayer": null,
+      "practiceEditAddLayer": "practice"
+    }
+  },
+  "exact_match_practiceEditTextProperties": {
+    "keys": [
+      "practiceEditTextProperties",
+      "textPropertyPanel"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditTextProperties": "文本属性",
+        "textPropertyPanel": "文本属性"
+      },
+      "en": {
+        "practiceEditTextProperties": "Text Properties",
+        "textPropertyPanel": "Text Properties"
+      }
+    },
+    "contexts": {
+      "practiceEditTextProperties": null,
+      "textPropertyPanel": null
+    },
+    "actions": {
+      "practiceEditTextProperties": null,
+      "textPropertyPanel": null
+    },
+    "modules": {
+      "practiceEditTextProperties": null,
+      "textPropertyPanel": null
+    }
+  },
+  "exact_match_workFormHelp": {
+    "keys": [
+      "workFormHelp",
+      "characterCollectionHelp"
+    ],
+    "values": {
+      "zh": {
+        "workFormHelp": "帮助",
+        "characterCollectionHelp": "帮助"
+      },
+      "en": {
+        "workFormHelp": "Help",
+        "characterCollectionHelp": "Help"
+      }
+    },
+    "contexts": {
+      "workFormHelp": null,
+      "characterCollectionHelp": null
+    },
+    "actions": {
+      "workFormHelp": null,
+      "characterCollectionHelp": null
+    },
+    "modules": {
+      "workFormHelp": null,
+      "characterCollectionHelp": null
+    }
+  },
+  "exact_match_elements": {
+    "keys": [
+      "elements",
+      "practiceEditElements"
+    ],
+    "values": {
+      "zh": {
+        "elements": "元素",
+        "practiceEditElements": "元素"
+      },
+      "en": {
+        "elements": "Elements",
+        "practiceEditElements": "Elements"
+      }
+    },
+    "contexts": {
+      "elements": "form",
+      "practiceEditElements": "button"
+    },
+    "actions": {
+      "elements": "view",
+      "practiceEditElements": "add"
+    },
+    "modules": {
+      "elements": "practice",
+      "practiceEditElements": "practice"
+    }
+  },
+  "exact_match_searchCharactersWorksAuthors": {
+    "keys": [
+      "searchCharactersWorksAuthors",
+      "characterManagementSearch"
+    ],
+    "values": {
+      "zh": {
+        "searchCharactersWorksAuthors": "搜索字符、作品或作者",
+        "characterManagementSearch": "搜索字符、作品或作者"
+      },
+      "en": {
+        "searchCharactersWorksAuthors": "Search characters, works, or authors",
+        "characterManagementSearch": "Search characters, works, or authors"
+      }
+    },
+    "contexts": {
+      "searchCharactersWorksAuthors": null,
+      "characterManagementSearch": null
+    },
+    "actions": {
+      "searchCharactersWorksAuthors": null,
+      "characterManagementSearch": null
+    },
+    "modules": {
+      "searchCharactersWorksAuthors": null,
+      "characterManagementSearch": null
+    }
+  },
+  "exact_match_practiceEditText": {
+    "keys": [
+      "practiceEditText",
+      "text"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditText": "文本",
+        "text": "文本"
+      },
+      "en": {
+        "practiceEditText": "Text",
+        "text": "Text"
+      }
+    },
+    "contexts": {
+      "practiceEditText": "form",
+      "text": "form"
+    },
+    "actions": {
+      "practiceEditText": "edit",
+      "text": "view"
+    },
+    "modules": {
+      "practiceEditText": "practice",
+      "text": "practice"
+    }
+  },
+  "exact_match_filterTitle": {
+    "keys": [
+      "filterTitle",
+      "characterFilterTitle"
+    ],
+    "values": {
+      "zh": {
+        "filterTitle": "筛选与排序",
+        "characterFilterTitle": "筛选与排序"
+      },
+      "en": {
+        "filterTitle": "Filter & Sort",
+        "characterFilterTitle": "Filter & Sort"
+      }
+    },
+    "contexts": {
+      "filterTitle": "title",
+      "characterFilterTitle": "title"
+    },
+    "actions": {
+      "filterTitle": "edit",
+      "characterFilterTitle": "edit"
+    },
+    "modules": {
+      "filterTitle": null,
+      "characterFilterTitle": null
+    }
+  },
+  "exact_match_textureFillModeCover": {
+    "keys": [
+      "textureFillModeCover",
+      "imagePropertyPanelFitCover"
+    ],
+    "values": {
+      "zh": {
+        "textureFillModeCover": "覆盖",
+        "imagePropertyPanelFitCover": "覆盖"
+      },
+      "en": {
+        "textureFillModeCover": "Cover",
+        "imagePropertyPanelFitCover": "Cover"
+      }
+    },
+    "contexts": {
+      "textureFillModeCover": "form",
+      "imagePropertyPanelFitCover": "label"
+    },
+    "actions": {
+      "textureFillModeCover": "delete",
+      "imagePropertyPanelFitCover": null
+    },
+    "modules": {
+      "textureFillModeCover": "practice",
+      "imagePropertyPanelFitCover": "practice"
+    }
+  },
+  "exact_match_filterStyleSeal": {
+    "keys": [
+      "filterStyleSeal",
+      "workStyleSeal"
+    ],
+    "values": {
+      "zh": {
+        "filterStyleSeal": "篆书",
+        "workStyleSeal": "篆书"
+      },
+      "en": {
+        "filterStyleSeal": "Seal Script",
+        "workStyleSeal": "Seal Script"
+      }
+    },
+    "contexts": {
+      "filterStyleSeal": null,
+      "workStyleSeal": "menu"
+    },
+    "actions": {
+      "filterStyleSeal": "search",
+      "workStyleSeal": "delete"
+    },
+    "modules": {
+      "filterStyleSeal": null,
+      "workStyleSeal": null
+    }
+  },
+  "exact_match_imagePropertyPanelFitContain": {
+    "keys": [
+      "imagePropertyPanelFitContain",
+      "textureFillModeContain"
+    ],
+    "values": {
+      "zh": {
+        "imagePropertyPanelFitContain": "包含",
+        "textureFillModeContain": "包含"
+      },
+      "en": {
+        "imagePropertyPanelFitContain": "Contain",
+        "textureFillModeContain": "Contain"
+      }
+    },
+    "contexts": {
+      "imagePropertyPanelFitContain": "label",
+      "textureFillModeContain": "form"
+    },
+    "actions": {
+      "imagePropertyPanelFitContain": null,
+      "textureFillModeContain": "edit"
+    },
+    "modules": {
+      "imagePropertyPanelFitContain": "practice",
+      "textureFillModeContain": "practice"
+    }
+  },
+  "exact_match_workFormTitle": {
+    "keys": [
+      "workFormTitle",
+      "filterSortFieldTitle"
+    ],
+    "values": {
+      "zh": {
+        "workFormTitle": "标题",
+        "filterSortFieldTitle": "标题"
+      },
+      "en": {
+        "workFormTitle": "Title",
+        "filterSortFieldTitle": "Title"
+      }
+    },
+    "contexts": {
+      "workFormTitle": "form",
+      "filterSortFieldTitle": "form"
+    },
+    "actions": {
+      "workFormTitle": "select",
+      "filterSortFieldTitle": "search"
+    },
+    "modules": {
+      "workFormTitle": null,
+      "filterSortFieldTitle": null
+    }
+  },
+  "exact_match_filterStyleClerical": {
+    "keys": [
+      "workStyleClerical",
+      "filterStyleClerical"
+    ],
+    "values": {
+      "zh": {
+        "workStyleClerical": "隶书",
+        "filterStyleClerical": "隶书"
+      },
+      "en": {
+        "workStyleClerical": "Clerical Script",
+        "filterStyleClerical": "Clerical Script"
+      }
+    },
+    "contexts": {
+      "workStyleClerical": "menu",
+      "filterStyleClerical": null
+    },
+    "actions": {
+      "workStyleClerical": "delete",
+      "filterStyleClerical": "search"
+    },
+    "modules": {
+      "workStyleClerical": null,
+      "filterStyleClerical": null
+    }
+  },
+  "exact_match_edit": {
+    "keys": [
+      "workDetailEdit",
+      "edit"
+    ],
+    "values": {
+      "zh": {
+        "workDetailEdit": "编辑",
+        "edit": "编辑"
+      },
+      "en": {
+        "workDetailEdit": "Edit",
+        "edit": "Edit"
+      }
+    },
+    "contexts": {
+      "workDetailEdit": "button",
+      "edit": "tooltip"
+    },
+    "actions": {
+      "workDetailEdit": "edit",
+      "edit": "edit"
+    },
+    "modules": {
+      "workDetailEdit": null,
+      "edit": "work"
+    }
+  },
+  "exact_match_exportDialogPageSize": {
+    "keys": [
+      "exportDialogPageSize",
+      "pageSize"
+    ],
+    "values": {
+      "zh": {
+        "exportDialogPageSize": "页面大小",
+        "pageSize": "页面大小"
+      },
+      "en": {
+        "exportDialogPageSize": "Page Size",
+        "pageSize": "Page Size"
+      }
+    },
+    "contexts": {
+      "exportDialogPageSize": "dialog",
+      "pageSize": "button"
+    },
+    "actions": {
+      "exportDialogPageSize": "export",
+      "pageSize": "add"
+    },
+    "modules": {
+      "exportDialogPageSize": "practice",
+      "pageSize": "practice"
+    }
+  },
+  "exact_match_themeModeSystem": {
+    "keys": [
+      "themeModeSystem",
+      "languageSystem"
+    ],
+    "values": {
+      "zh": {
+        "themeModeSystem": "系统",
+        "languageSystem": "系统"
+      },
+      "en": {
+        "themeModeSystem": "System",
+        "languageSystem": "System"
+      }
+    },
+    "contexts": {
+      "themeModeSystem": "menu",
+      "languageSystem": null
+    },
+    "actions": {
+      "themeModeSystem": "settings",
+      "languageSystem": null
+    },
+    "modules": {
+      "themeModeSystem": null,
+      "languageSystem": null
+    }
+  },
+  "param_pattern_imagePropertyPanelLoadError": {
+    "keys": [
+      "initializationFailed",
+      "characterDetailTagAddError",
+      "addFromGalleryFailed",
+      "refreshDataFailed",
+      "workImageDeleteFailed",
+      "characterDetailTagRemoveError",
+      "saveFailedWithError",
+      "importFailedMessage",
+      "characterCollectionError",
+      "workImportDialogError",
+      "characterCollectionFindSwitchFailed",
+      "imagePropertyPanelLoadError",
+      "imagePropertyPanelProcessingPathError",
+      "imagePropertyPanelImportError",
+      "importFileFailed",
+      "submitFailed",
+      "openGalleryFailed",
+      "imagePropertyPanelTransformError"
+    ],
+    "values": {
+      "zh": {
+        "initializationFailed": "初始化失败：{error}",
+        "characterDetailTagAddError": "添加标签失败: {error}",
+        "addFromGalleryFailed": "从图库添加图片失败: {error}",
+        "refreshDataFailed": "刷新数据失败: {error}",
+        "workImageDeleteFailed": "删除图片失败：{error}",
+        "characterDetailTagRemoveError": "移除标签失败, 错误: {error}",
+        "saveFailedWithError": "保存失败：{error}",
+        "importFailedMessage": "导入失败: {error}",
+        "characterCollectionError": "错误：{error}",
+        "workImportDialogError": "导入失败：{error}",
+        "characterCollectionFindSwitchFailed": "查找并切换页面失败：{error}",
+        "imagePropertyPanelLoadError": "加载图像失败：{error}...",
+        "imagePropertyPanelProcessingPathError": "处理路径错误：{error}",
+        "imagePropertyPanelImportError": "导入图像失败：{error}",
+        "importFileFailed": "导入失败: {error}",
+        "submitFailed": "提交失败：{error}",
+        "openGalleryFailed": "打开图库失败: {error}",
+        "imagePropertyPanelTransformError": "应用变换失败：{error}"
+      },
+      "en": {
+        "initializationFailed": "Initialization failed: {error}",
+        "characterDetailTagAddError": "Failed to add tag, error: {error}",
+        "addFromGalleryFailed": "Failed to add image from gallery: {error}",
+        "refreshDataFailed": "Refresh data failed: {error}",
+        "workImageDeleteFailed": "Failed to delete image: {error}",
+        "characterDetailTagRemoveError": "Failed to remove tag, error: {error}",
+        "saveFailedWithError": "Save failed: {error}",
+        "importFailedMessage": "Import failed: {error}",
+        "characterCollectionError": "Error: {error}",
+        "workImportDialogError": "Import failed: {error}",
+        "characterCollectionFindSwitchFailed": "Find and switch page failed: {error}",
+        "imagePropertyPanelLoadError": "Failed to load image: {error}...",
+        "imagePropertyPanelProcessingPathError": "Processing path error: {error}",
+        "imagePropertyPanelImportError": "Failed to import image: {error}",
+        "importFileFailed": "Import failed: {error}",
+        "submitFailed": "Submit failed: {error}",
+        "openGalleryFailed": "Open gallery failed: {error}",
+        "imagePropertyPanelTransformError": "Failed to apply transform: {error}"
+      }
+    },
+    "contexts": {
+      "initializationFailed": "error",
+      "characterDetailTagAddError": "button",
+      "addFromGalleryFailed": "button",
+      "refreshDataFailed": "error",
+      "workImageDeleteFailed": "button",
+      "characterDetailTagRemoveError": "button",
+      "saveFailedWithError": "button",
+      "importFailedMessage": "dialog",
+      "characterCollectionError": "error",
+      "workImportDialogError": "dialog",
+      "characterCollectionFindSwitchFailed": "error",
+      "imagePropertyPanelLoadError": "error",
+      "imagePropertyPanelProcessingPathError": "error",
+      "imagePropertyPanelImportError": "error",
+      "importFileFailed": "error",
+      "submitFailed": "button",
+      "openGalleryFailed": "error",
+      "imagePropertyPanelTransformError": "form"
+    },
+    "actions": {
+      "initializationFailed": null,
+      "characterDetailTagAddError": "add",
+      "addFromGalleryFailed": "add",
+      "refreshDataFailed": "view",
+      "workImageDeleteFailed": "delete",
+      "characterDetailTagRemoveError": "delete",
+      "saveFailedWithError": "edit",
+      "importFailedMessage": "view",
+      "characterCollectionError": "sort",
+      "workImportDialogError": "view",
+      "characterCollectionFindSwitchFailed": "view",
+      "imagePropertyPanelLoadError": "import",
+      "imagePropertyPanelProcessingPathError": null,
+      "imagePropertyPanelImportError": "view",
+      "importFileFailed": "view",
+      "submitFailed": "view",
+      "openGalleryFailed": "view",
+      "imagePropertyPanelTransformError": "view"
+    },
+    "modules": {
+      "initializationFailed": null,
+      "characterDetailTagAddError": null,
+      "addFromGalleryFailed": null,
+      "refreshDataFailed": "work",
+      "workImageDeleteFailed": null,
+      "characterDetailTagRemoveError": null,
+      "saveFailedWithError": "work",
+      "importFailedMessage": "work",
+      "characterCollectionError": null,
+      "workImportDialogError": null,
+      "characterCollectionFindSwitchFailed": null,
+      "imagePropertyPanelLoadError": "practice",
+      "imagePropertyPanelProcessingPathError": "practice",
+      "imagePropertyPanelImportError": "practice",
+      "importFileFailed": "work",
+      "submitFailed": null,
+      "openGalleryFailed": "practice",
+      "imagePropertyPanelTransformError": "practice"
+    }
+  },
+  "param_pattern_selectedCount": {
+    "keys": [
+      "workBrowseItemsPerPage",
+      "characterCollectionDeleteBatchMessage",
+      "importSuccessMessage",
+      "confirmRemoveFromCategory",
+      "totalItems",
+      "selectedCount",
+      "charactersSelected",
+      "deleteCharactersConfirm",
+      "workBrowseSelectedCount",
+      "confirmDeleteFilteredItems",
+      "characterCollectionDeleteBatchConfirm",
+      "setCategoryForItems",
+      "exportDialogMultipleFilesNote",
+      "workBrowseDeleteConfirmMessage"
+    ],
+    "values": {
+      "zh": {
+        "workBrowseItemsPerPage": "{count}项/页",
+        "characterCollectionDeleteBatchMessage": "您即将删除{count}个已保存区域。此操作无法撤消。",
+        "importSuccessMessage": "成功导入 {count} 个文件",
+        "confirmRemoveFromCategory": "确定要将选中的{count}个项目从当前分类中移除吗？",
+        "totalItems": "共 {count} 个",
+        "selectedCount": "已选择{count}个",
+        "charactersSelected": "已选择 {count} 个字符",
+        "deleteCharactersConfirm": "确定要删除这 {count} 个字符吗？此操作不可恢复。",
+        "workBrowseSelectedCount": "已选{count}个",
+        "confirmDeleteFilteredItems": "确定要删除当前筛选条件下的所有{count}个项目吗？此操作无法撤销。",
+        "characterCollectionDeleteBatchConfirm": "确认删除{count}个已保存区域？",
+        "setCategoryForItems": "设置分类 ({count}个项目)",
+        "exportDialogMultipleFilesNote": "注意: 将导出 {count} 个图片文件，文件名将自动添加页码。",
+        "workBrowseDeleteConfirmMessage": "确定要删除已选的{count}个作品吗？此操作无法撤消。"
+      },
+      "en": {
+        "workBrowseItemsPerPage": "{count} per page",
+        "characterCollectionDeleteBatchMessage": "You are about to delete {count} saved regions. This action cannot be undone.",
+        "importSuccessMessage": "Successfully imported {count} files",
+        "confirmRemoveFromCategory": "Are you sure you want to remove the selected {count} items from the current category?",
+        "totalItems": "Total: {count}",
+        "selectedCount": "{count} selected",
+        "charactersSelected": "{count} characters selected",
+        "deleteCharactersConfirm": "Are you sure you want to delete these {count} characters? This action cannot be undone.",
+        "workBrowseSelectedCount": "{count} selected",
+        "confirmDeleteFilteredItems": "Are you sure you want to delete all {count} items under the current filter? This action cannot be undone.",
+        "characterCollectionDeleteBatchConfirm": "Confirm deletion of {count} saved regions?",
+        "setCategoryForItems": "Set Category ({count} items)",
+        "exportDialogMultipleFilesNote": "Note: Will export {count} image files, filenames will be automatically numbered.",
+        "workBrowseDeleteConfirmMessage": "Are you sure you want to delete {count} selected works? This action cannot be undone."
+      }
+    },
+    "contexts": {
+      "workBrowseItemsPerPage": "menu",
+      "characterCollectionDeleteBatchMessage": "button",
+      "importSuccessMessage": "dialog",
+      "confirmRemoveFromCategory": "button",
+      "totalItems": "menu",
+      "selectedCount": "menu",
+      "charactersSelected": "menu",
+      "deleteCharactersConfirm": "button",
+      "workBrowseSelectedCount": "button",
+      "confirmDeleteFilteredItems": "button",
+      "characterCollectionDeleteBatchConfirm": "button",
+      "setCategoryForItems": "dialog",
+      "exportDialogMultipleFilesNote": "dialog",
+      "workBrowseDeleteConfirmMessage": "button"
+    },
+    "actions": {
+      "workBrowseItemsPerPage": null,
+      "characterCollectionDeleteBatchMessage": "add",
+      "importSuccessMessage": "view",
+      "confirmRemoveFromCategory": "edit",
+      "totalItems": null,
+      "selectedCount": "edit",
+      "charactersSelected": "select",
+      "deleteCharactersConfirm": "delete",
+      "workBrowseSelectedCount": "cancel",
+      "confirmDeleteFilteredItems": "edit",
+      "characterCollectionDeleteBatchConfirm": "delete",
+      "setCategoryForItems": "edit",
+      "exportDialogMultipleFilesNote": "export",
+      "workBrowseDeleteConfirmMessage": "delete"
+    },
+    "modules": {
+      "workBrowseItemsPerPage": null,
+      "characterCollectionDeleteBatchMessage": null,
+      "importSuccessMessage": "work",
+      "confirmRemoveFromCategory": "work",
+      "totalItems": null,
+      "selectedCount": "work",
+      "charactersSelected": null,
+      "deleteCharactersConfirm": null,
+      "workBrowseSelectedCount": null,
+      "confirmDeleteFilteredItems": "work",
+      "characterCollectionDeleteBatchConfirm": null,
+      "setCategoryForItems": "work",
+      "exportDialogMultipleFilesNote": "practice",
+      "workBrowseDeleteConfirmMessage": null
+    }
+  },
+  "param_pattern_imagePropertyPanelFileNotExist": {
+    "keys": [
+      "pdfExportSuccess",
+      "imagePropertyPanelFileNotExist"
+    ],
+    "values": {
+      "zh": {
+        "pdfExportSuccess": "PDF导出成功: {path}",
+        "imagePropertyPanelFileNotExist": "文件不存在：{path}"
+      },
+      "en": {
+        "pdfExportSuccess": "PDF export successful: {path}",
+        "imagePropertyPanelFileNotExist": "File does not exist: {path}"
+      }
+    },
+    "contexts": {
+      "pdfExportSuccess": "label",
+      "imagePropertyPanelFileNotExist": "menu"
+    },
+    "actions": {
+      "pdfExportSuccess": "export",
+      "imagePropertyPanelFileNotExist": "edit"
+    },
+    "modules": {
+      "pdfExportSuccess": "practice",
+      "imagePropertyPanelFileNotExist": "practice"
+    }
+  },
+  "param_pattern_practiceEditTitleUpdated": {
+    "keys": [
+      "practiceEditTitleUpdated",
+      "practiceEditPracticeLoaded",
+      "overwriteExistingPractice",
+      "overwriteMessage",
+      "practiceSheetSaved"
+    ],
+    "values": {
+      "zh": {
+        "practiceEditTitleUpdated": "标题已更新为\"{title}\"",
+        "practiceEditPracticeLoaded": "字帖\"{title}\"加载成功",
+        "overwriteExistingPractice": "已存在名为\"{title}\"的字帖，是否覆盖？",
+        "overwriteMessage": "已存在标题为\"{title}\"的字帖，是否覆盖？",
+        "practiceSheetSaved": "字帖 \"{title}\" 已保存"
+      },
+      "en": {
+        "practiceEditTitleUpdated": "Title updated to \"{title}\"",
+        "practiceEditPracticeLoaded": "Practice \"{title}\" loaded successfully",
+        "overwriteExistingPractice": "A copybook named \"{title}\" already exists. Do you want to overwrite it?",
+        "overwriteMessage": "A copybook with title \"{title}\" already exists. Do you want to overwrite it?",
+        "practiceSheetSaved": "Copybook \"{title}\" saved"
+      }
+    },
+    "contexts": {
+      "practiceEditTitleUpdated": "menu",
+      "practiceEditPracticeLoaded": "title",
+      "overwriteExistingPractice": "button",
+      "overwriteMessage": "button",
+      "practiceSheetSaved": "button"
+    },
+    "actions": {
+      "practiceEditTitleUpdated": "add",
+      "practiceEditPracticeLoaded": "edit",
+      "overwriteExistingPractice": "confirm",
+      "overwriteMessage": "confirm",
+      "practiceSheetSaved": "view"
+    },
+    "modules": {
+      "practiceEditTitleUpdated": "practice",
+      "practiceEditPracticeLoaded": null,
+      "overwriteExistingPractice": "practice",
+      "overwriteMessage": null,
+      "practiceSheetSaved": "practice"
+    }
+  },
+  "param_pattern_workBrowseError": {
+    "keys": [
+      "characterManagementError",
+      "workBrowseError"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementError": "错误：{message}",
+        "workBrowseError": "错误：{message}"
+      },
+      "en": {
+        "characterManagementError": "Error: {message}",
+        "workBrowseError": "Error: {message}"
+      }
+    },
+    "contexts": {
+      "characterManagementError": "dialog",
+      "workBrowseError": "error"
+    },
+    "actions": {
+      "characterManagementError": null,
+      "workBrowseError": "view"
+    },
+    "modules": {
+      "characterManagementError": null,
+      "workBrowseError": null
+    }
+  },
+  "semantic_similar_libraryManagementFileSize": {
+    "keys": [
+      "libraryManagementFileSize",
+      "filterSortFieldFileSize"
+    ],
+    "values": {
+      "zh": {
+        "libraryManagementFileSize": "文件大小",
+        "filterSortFieldFileSize": "文件大小"
+      },
+      "en": {
+        "libraryManagementFileSize": "File size",
+        "filterSortFieldFileSize": "File Size"
+      }
+    },
+    "contexts": {
+      "libraryManagementFileSize": "form",
+      "filterSortFieldFileSize": "form"
+    },
+    "actions": {
+      "libraryManagementFileSize": null,
+      "filterSortFieldFileSize": "edit"
+    },
+    "modules": {
+      "libraryManagementFileSize": "work",
+      "filterSortFieldFileSize": null
+    }
+  },
+  "semantic_similar_tagEditorNoTags": {
+    "keys": [
+      "noTags",
+      "tagEditorNoTags"
+    ],
+    "values": {
+      "zh": {
+        "noTags": "无标签",
+        "tagEditorNoTags": "无标签"
+      },
+      "en": {
+        "noTags": "No Tags",
+        "tagEditorNoTags": "No tags"
+      }
+    },
+    "contexts": {
+      "noTags": "label",
+      "tagEditorNoTags": "form"
+    },
+    "actions": {
+      "noTags": null,
+      "tagEditorNoTags": "edit"
+    },
+    "modules": {
+      "noTags": "work",
+      "tagEditorNoTags": null
+    }
+  },
+  "semantic_similar_workImportDeleteImage": {
+    "keys": [
+      "workImportDeleteImage",
+      "confirmDeleteAll"
+    ],
+    "values": {
+      "zh": {
+        "workImportDeleteImage": "删除图片",
+        "confirmDeleteAll": "删除图片"
+      },
+      "en": {
+        "workImportDeleteImage": "Delete Image",
+        "confirmDeleteAll": "Delete image"
+      }
+    },
+    "contexts": {
+      "workImportDeleteImage": "button",
+      "confirmDeleteAll": "button"
+    },
+    "actions": {
+      "workImportDeleteImage": "delete",
+      "confirmDeleteAll": "delete"
+    },
+    "modules": {
+      "workImportDeleteImage": null,
+      "confirmDeleteAll": null
+    }
+  },
+  "semantic_similar_characterCollectionPreviewTab": {
+    "keys": [
+      "characterEditSavePreview",
+      "characterCollectionPreviewTab"
+    ],
+    "values": {
+      "zh": {
+        "characterEditSavePreview": "字符预览：",
+        "characterCollectionPreviewTab": "字符预览"
+      },
+      "en": {
+        "characterEditSavePreview": "Character preview:",
+        "characterCollectionPreviewTab": "Character Preview"
+      }
+    },
+    "contexts": {
+      "characterEditSavePreview": "button",
+      "characterCollectionPreviewTab": "menu"
+    },
+    "actions": {
+      "characterEditSavePreview": "edit",
+      "characterCollectionPreviewTab": "view"
+    },
+    "modules": {
+      "characterEditSavePreview": null,
+      "characterCollectionPreviewTab": "practice"
+    }
+  },
+  "semantic_similar_characterManagementDeleteSelected": {
+    "keys": [
+      "characterManagementDeleteSelected",
+      "practiceListDeleteSelected"
+    ],
+    "values": {
+      "zh": {
+        "characterManagementDeleteSelected": "删除所选",
+        "practiceListDeleteSelected": "删除所选"
+      },
+      "en": {
+        "characterManagementDeleteSelected": "Delete selected",
+        "practiceListDeleteSelected": "Delete Selected"
+      }
+    },
+    "contexts": {
+      "characterManagementDeleteSelected": "button",
+      "practiceListDeleteSelected": "button"
+    },
+    "actions": {
+      "characterManagementDeleteSelected": "delete",
+      "practiceListDeleteSelected": "delete"
+    },
+    "modules": {
+      "characterManagementDeleteSelected": null,
+      "practiceListDeleteSelected": null
+    }
+  },
+  "semantic_similar_deleteAllItems": {
+    "keys": [
+      "deleteAllItems",
+      "deleteAll"
+    ],
+    "values": {
+      "zh": {
+        "deleteAllItems": "删除全部",
+        "deleteAll": "全部删除"
+      },
+      "en": {
+        "deleteAllItems": "Delete all",
+        "deleteAll": "Delete All"
+      }
+    },
+    "contexts": {
+      "deleteAllItems": "button",
+      "deleteAll": "button"
+    },
+    "actions": {
+      "deleteAllItems": "delete",
+      "deleteAll": "delete"
+    },
+    "modules": {
+      "deleteAllItems": "work",
+      "deleteAll": null
+    }
+  },
+  "semantic_similar_selectExportLocation": {
+    "keys": [
+      "selectExportLocation",
+      "exportDialogSelectLocation"
+    ],
+    "values": {
+      "zh": {
+        "selectExportLocation": "选择导出位置",
+        "exportDialogSelectLocation": "请选择导出位置"
+      },
+      "en": {
+        "selectExportLocation": "Select Export Location",
+        "exportDialogSelectLocation": "Please select export location"
+      }
+    },
+    "contexts": {
+      "selectExportLocation": "dialog",
+      "exportDialogSelectLocation": "dialog"
+    },
+    "actions": {
+      "selectExportLocation": "select",
+      "exportDialogSelectLocation": "select"
+    },
+    "modules": {
+      "selectExportLocation": "practice",
+      "exportDialogSelectLocation": "practice"
+    }
+  },
+  "semantic_similar_layer": {
+    "keys": [
+      "layer1",
+      "layer"
+    ],
+    "values": {
+      "zh": {
+        "layer1": "图层 1",
+        "layer": "图层"
+      },
+      "en": {
+        "layer1": "Layer 1",
+        "layer": "Layer"
+      }
+    },
+    "contexts": {
+      "layer1": "title",
+      "layer": "button"
+    },
+    "actions": {
+      "layer1": null,
+      "layer": "delete"
+    },
+    "modules": {
+      "layer1": "practice",
+      "layer": "practice"
+    }
+  },
+  "semantic_similar_backupSettings": {
+    "keys": [
+      "backupSettings",
+      "restoreBackup"
+    ],
+    "values": {
+      "zh": {
+        "backupSettings": "备份与恢复",
+        "restoreBackup": "恢复备份"
+      },
+      "en": {
+        "backupSettings": "Backup & Restore",
+        "restoreBackup": "Restore Backup"
+      }
+    },
+    "contexts": {
+      "backupSettings": "menu",
+      "restoreBackup": "button"
+    },
+    "actions": {
+      "backupSettings": "cancel",
+      "restoreBackup": "view"
+    },
+    "modules": {
+      "backupSettings": null,
+      "restoreBackup": null
+    }
+  },
+  "semantic_similar_deleteCategoryOnly": {
+    "keys": [
+      "deleteCategoryOnly",
+      "deleteCategory"
+    ],
+    "values": {
+      "zh": {
+        "deleteCategoryOnly": "仅删除分类",
+        "deleteCategory": "删除分类"
+      },
+      "en": {
+        "deleteCategoryOnly": "Delete category only",
+        "deleteCategory": "Delete Category"
+      }
+    },
+    "contexts": {
+      "deleteCategoryOnly": "button",
+      "deleteCategory": "button"
+    },
+    "actions": {
+      "deleteCategoryOnly": "delete",
+      "deleteCategory": "delete"
+    },
+    "modules": {
+      "deleteCategoryOnly": "work",
+      "deleteCategory": "work"
+    }
+  },
+  "semantic_similar_characterCollectionToolDelete": {
+    "keys": [
+      "characterCollectionToolDelete",
+      "practiceEditDelete"
+    ],
+    "values": {
+      "zh": {
+        "characterCollectionToolDelete": "删除所选 (Ctrl+D)",
+        "practiceEditDelete": "删除 (Ctrl+D)"
+      },
+      "en": {
+        "characterCollectionToolDelete": "Delete selected (Ctrl+D)",
+        "practiceEditDelete": "Delete (Ctrl+D)"
+      }
+    },
+    "contexts": {
+      "characterCollectionToolDelete": "button",
+      "practiceEditDelete": "button"
+    },
+    "actions": {
+      "characterCollectionToolDelete": "delete",
+      "practiceEditDelete": "edit"
+    },
+    "modules": {
+      "characterCollectionToolDelete": null,
+      "practiceEditDelete": "practice"
+    }
+  },
+  "semantic_similar_workImageDeleteConfirmContent": {
+    "keys": [
+      "workImageDeleteConfirmContent",
+      "confirmDeleteMessage"
+    ],
+    "values": {
+      "zh": {
+        "workImageDeleteConfirmContent": "确定要删除当前选中的图片吗？",
+        "confirmDeleteMessage": "确定要删除选中的图片吗？"
+      },
+      "en": {
+        "workImageDeleteConfirmContent": "Are you sure you want to delete the selected image?",
+        "confirmDeleteMessage": "Are you sure you want to delete the selected images?"
+      }
+    },
+    "contexts": {
+      "workImageDeleteConfirmContent": "button",
+      "confirmDeleteMessage": "button"
+    },
+    "actions": {
+      "workImageDeleteConfirmContent": "delete",
+      "confirmDeleteMessage": "delete"
+    },
+    "modules": {
+      "workImageDeleteConfirmContent": null,
+      "confirmDeleteMessage": null
+    }
+  },
+  "semantic_similar_deleteBackupConfirmMessage": {
+    "keys": [
+      "deleteBackupConfirmMessage",
+      "deleteGroupDescription"
+    ],
+    "values": {
+      "zh": {
+        "deleteBackupConfirmMessage": "确定要删除此备份吗？此操作无法撤消。",
+        "deleteGroupDescription": "确定要删除此组吗？此操作无法撤消。"
+      },
+      "en": {
+        "deleteBackupConfirmMessage": "Are you sure you want to delete this backup? This action cannot be undone.",
+        "deleteGroupDescription": "Are you sure you want to delete this group? This action cannot be undone."
+      }
+    },
+    "contexts": {
+      "deleteBackupConfirmMessage": "button",
+      "deleteGroupDescription": "button"
+    },
+    "actions": {
+      "deleteBackupConfirmMessage": "delete",
+      "deleteGroupDescription": "edit"
+    },
+    "modules": {
+      "deleteBackupConfirmMessage": null,
+      "deleteGroupDescription": "practice"
+    }
+  },
+  "semantic_similar_characterManagementDeleteMessage": {
+    "keys": [
+      "practiceListDeleteMessage",
+      "characterManagementDeleteMessage"
+    ],
+    "values": {
+      "zh": {
+        "practiceListDeleteMessage": "确定要删除选中的字帖吗？此操作无法撤消。",
+        "characterManagementDeleteMessage": "确定要删除选中的字符吗？此操作无法撤消。"
+      },
+      "en": {
+        "practiceListDeleteMessage": "Are you sure you want to delete the selected practice sheets? This action cannot be undone.",
+        "characterManagementDeleteMessage": "Are you sure you want to delete the selected characters? This action cannot be undone."
+      }
+    },
+    "contexts": {
+      "practiceListDeleteMessage": "button",
+      "characterManagementDeleteMessage": "button"
+    },
+    "actions": {
+      "practiceListDeleteMessage": "delete",
+      "characterManagementDeleteMessage": "delete"
+    },
+    "modules": {
+      "practiceListDeleteMessage": null,
+      "characterManagementDeleteMessage": null
+    }
+  },
+  "semantic_similar_elementCopiedToClipboard": {
+    "keys": [
+      "elementCopiedToClipboard",
+      "elementCopied"
+    ],
+    "values": {
+      "zh": {
+        "elementCopiedToClipboard": "元素已复制到剪贴板",
+        "elementCopied": "元素已复制到剪贴板"
+      },
+      "en": {
+        "elementCopiedToClipboard": "Element copied to clipboard",
+        "elementCopied": "element(s) copied to clipboard"
+      }
+    },
+    "contexts": {
+      "elementCopiedToClipboard": "status",
+      "elementCopied": null
+    },
+    "actions": {
+      "elementCopiedToClipboard": "edit",
+      "elementCopied": "view"
+    },
+    "modules": {
+      "elementCopiedToClipboard": null,
+      "elementCopied": null
+    }
+  }
+}
