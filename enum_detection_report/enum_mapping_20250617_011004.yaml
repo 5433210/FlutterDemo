@@ -1,0 +1,576 @@
+# 枚举显示名称映射文件
+# 请审核以下内容，修改英文翻译，并将 approved 设置为 true
+# 只有 approved: true 的条目会被处理
+
+!!python/object/apply:collections.OrderedDict
+- - - enum_based_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - AppLanguage
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_applanguage_tolocale
+                - text_zh: 'AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString()
+                    ?? '
+                  text_en: 'AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString()
+                    ?? '
+                  enum_name: AppLanguage
+                  enum_value: toLocale
+                  file: domain\enums\app_language.dart
+                  line: 44
+                  approved: false
+              - - enum_applanguage_fromstring
+                - text_zh: 'AppLanguage.fromString: 解析结果: $result'
+                  text_en: 'AppLanguage.fromString: 解析结果: $result'
+                  enum_name: AppLanguage
+                  enum_value: fromString
+                  file: domain\enums\app_language.dart
+                  line: 62
+                  approved: false
+        - - AppThemeMode
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_appthememode_system
+                - text_zh: 跟随系统
+                  text_en: 跟随系统
+                  enum_name: AppThemeMode
+                  enum_value: system
+                  file: domain\enums\app_theme_mode.dart
+                  line: 17
+                  approved: false
+              - - enum_appthememode_light
+                - text_zh: 浅色模式
+                  text_en: 浅色模式
+                  enum_name: AppThemeMode
+                  enum_value: light
+                  file: domain\enums\app_theme_mode.dart
+                  line: 18
+                  approved: false
+              - - enum_appthememode_dark
+                - text_zh: 深色模式
+                  text_en: 深色模式
+                  enum_name: AppThemeMode
+                  enum_value: dark
+                  file: domain\enums\app_theme_mode.dart
+                  line: 19
+                  approved: false
+        - - DateRangePreset
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_daterangepreset_last365days
+                - text_zh: 最近一年
+                  text_en: 最近一年
+                  enum_name: DateRangePreset
+                  enum_value: last365Days
+                  file: domain\models\common\date_range_filter.dart
+                  line: 165
+                  approved: false
+              - - enum_daterangepreset_lastmonth
+                - text_zh: 上月
+                  text_en: 上月
+                  enum_name: DateRangePreset
+                  enum_value: lastMonth
+                  file: domain\models\common\date_range_filter.dart
+                  line: 167
+                  approved: false
+  - - pattern_based_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - enum_mappings
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_enum_mappings_1
+                - text_zh: ${practice.title} (副本)
+                  text_en: ${practice.title} (副本)
+                  pattern_type: enum_mappings
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 54
+                  approved: false
+              - - enum_enum_mappings_2
+                - text_zh: 非列表格式
+                  text_en: 非列表格式
+                  pattern_type: enum_mappings
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 346
+                  approved: false
+              - - enum_enum_mappings_3
+                - text_zh: 'title'']}, 页面数: ${json['
+                  text_en: 'title'']}, 页面数: ${json['
+                  pattern_type: enum_mappings
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 346
+                  approved: false
+              - - enum_enum_mappings_4
+                - text_zh: 图片 ${Random().nextInt(1000)}
+                  text_en: 图片 ${Random().nextInt(1000)}
+                  pattern_type: enum_mappings
+                  file: domain\factories\element_factory.dart
+                  line: 27
+                  approved: false
+              - - enum_enum_mappings_5
+                - text_zh: 文本 ${Random().nextInt(1000)}
+                  text_en: 文本 ${Random().nextInt(1000)}
+                  pattern_type: enum_mappings
+                  file: domain\factories\element_factory.dart
+                  line: 64
+                  approved: false
+              - - enum_enum_mappings_6
+                - text_zh: 集字 ${Random().nextInt(1000)}
+                  text_en: 集字 ${Random().nextInt(1000)}
+                  pattern_type: enum_mappings
+                  file: domain\factories\element_factory.dart
+                  line: 100
+                  approved: false
+              - - enum_enum_mappings_7
+                - text_zh: $count天
+                  text_en: $count天
+                  pattern_type: enum_mappings
+                  file: l10n\app_localizations_zh.dart
+                  line: 563
+                  approved: false
+              - - enum_enum_mappings_8
+                - text_zh: 1天
+                  text_en: 1天
+                  pattern_type: enum_mappings
+                  file: l10n\app_localizations_zh.dart
+                  line: 564
+                  approved: false
+              - - enum_enum_mappings_9
+                - text_zh: $count小时
+                  text_en: $count小时
+                  pattern_type: enum_mappings
+                  file: l10n\app_localizations_zh.dart
+                  line: 994
+                  approved: false
+              - - enum_enum_mappings_10
+                - text_zh: 1小时
+                  text_en: 1小时
+                  pattern_type: enum_mappings
+                  file: l10n\app_localizations_zh.dart
+                  line: 995
+                  approved: false
+              - - enum_enum_mappings_11
+                - text_zh: snapshotCount']} 个快照, ${snapshotStats[
+                  text_en: snapshotCount']} 个快照, ${snapshotStats[
+                  pattern_type: enum_mappings
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 260
+                  approved: false
+              - - enum_enum_mappings_12
+                - text_zh: snapshotCount']}个快照, ${stats[
+                  text_en: snapshotCount']}个快照, ${stats[
+                  pattern_type: enum_mappings
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 319
+                  approved: false
+              - - enum_enum_mappings_13
+                - text_zh: 'PreDrag阶段异常: $e'
+                  text_en: 'PreDrag阶段异常: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 400
+                  approved: false
+              - - enum_enum_mappings_14
+                - text_zh: UI组件没有注册监听器
+                  text_en: UI组件没有注册监听器
+                  pattern_type: enum_mappings
+                  file: presentation\pages\practices\widgets\m3_practice_edit_canvas.dart
+                  line: 1643
+                  approved: false
+              - - enum_enum_mappings_15
+                - text_zh: 编辑标签
+                  text_en: 编辑标签
+                  pattern_type: enum_mappings
+                  file: presentation\pages\works\components\content\items\m3_work_list_item.dart
+                  line: 330
+                  approved: false
+              - - enum_enum_mappings_16
+                - text_zh: 应用恢复
+                  text_en: 应用恢复
+                  pattern_type: enum_mappings
+                  file: presentation\providers\works_providers.dart
+                  line: 35
+                  approved: false
+              - - enum_enum_mappings_17
+                - text_zh: 数据变更
+                  text_en: 数据变更
+                  pattern_type: enum_mappings
+                  file: presentation\providers\works_providers.dart
+                  line: 38
+                  approved: false
+              - - enum_enum_mappings_18
+                - text_zh: 导入完成
+                  text_en: 导入完成
+                  pattern_type: enum_mappings
+                  file: presentation\providers\works_providers.dart
+                  line: 41
+                  approved: false
+              - - enum_enum_mappings_19
+                - text_zh: 用户请求
+                  text_en: 用户请求
+                  pattern_type: enum_mappings
+                  file: presentation\providers\works_providers.dart
+                  line: 44
+                  approved: false
+              - - enum_enum_mappings_20
+                - text_zh: '操作失败: $e'
+                  text_en: '操作失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_detail_provider.dart
+                  line: 62
+                  approved: false
+              - - enum_enum_mappings_21
+                - text_zh: '操作失败: $e'
+                  text_en: '操作失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_detail_provider.dart
+                  line: 254
+                  approved: false
+              - - enum_enum_mappings_22
+                - text_zh: 选择图片 (可按住Ctrl多选)
+                  text_en: 选择图片 (可按住Ctrl多选)
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 55
+                  approved: false
+              - - enum_enum_mappings_23
+                - text_zh: 已添加 $successCount 张图片，$errorCount 张图片无法处理
+                  text_en: 已添加 $successCount 张图片，$errorCount 张图片无法处理
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 152
+                  approved: false
+              - - enum_enum_mappings_24
+                - text_zh: 无法处理所选图片
+                  text_en: 无法处理所选图片
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 154
+                  approved: false
+              - - enum_enum_mappings_25
+                - text_zh: 无法添加所选图片
+                  text_en: 无法添加所选图片
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 157
+                  approved: false
+              - - enum_enum_mappings_26
+                - text_zh: '添加图片失败: ${e.toString()}'
+                  text_en: '添加图片失败: ${e.toString()}'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 165
+                  approved: false
+              - - enum_enum_mappings_27
+                - text_zh: '删除图片失败: ${e.toString()}'
+                  text_en: '删除图片失败: ${e.toString()}'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 246
+                  approved: false
+              - - enum_enum_mappings_28
+                - text_zh: '重排序图片失败: $e'
+                  text_en: '重排序图片失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 368
+                  approved: false
+              - - enum_enum_mappings_29
+                - text_zh: '保存图片更改失败: $e'
+                  text_en: '保存图片更改失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 444
+                  approved: false
+              - - enum_enum_mappings_30
+                - text_zh: '图片排序失败: $e'
+                  text_en: '图片排序失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\work_image_editor_provider.dart
+                  line: 485
+                  approved: false
+              - - enum_enum_mappings_31
+                - text_zh: '创建选区失败: ${e.toString()}'
+                  text_en: '创建选区失败: ${e.toString()}'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 204
+                  approved: false
+              - - enum_enum_mappings_32
+                - text_zh: '加载选区数据失败: ${e.toString()}'
+                  text_en: '加载选区数据失败: ${e.toString()}'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 544
+                  approved: false
+              - - enum_enum_mappings_33
+                - text_zh: '刷新区域数据失败: ${e.toString()}'
+                  text_en: '刷新区域数据失败: ${e.toString()}'
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 629
+                  approved: false
+              - - enum_enum_mappings_34
+                - text_zh: 删除字符失败：${e.toString()}
+                  text_en: 删除字符失败：${e.toString()}
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_management_provider.dart
+                  line: 141
+                  approved: false
+              - - enum_enum_mappings_35
+                - text_zh: 删除字符失败：${e.toString()}
+                  text_en: 删除字符失败：${e.toString()}
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_management_provider.dart
+                  line: 168
+                  approved: false
+              - - enum_enum_mappings_36
+                - text_zh: 加载字符数据失败：${e.toString()}
+                  text_en: 加载字符数据失败：${e.toString()}
+                  pattern_type: enum_mappings
+                  file: presentation\providers\character\character_management_provider.dart
+                  line: 204
+                  approved: false
+              - - enum_enum_mappings_37
+                - text_zh: 作品浏览
+                  text_en: 作品浏览
+                  pattern_type: enum_mappings
+                  file: presentation\providers\navigation\global_navigation_provider.dart
+                  line: 22
+                  approved: false
+              - - enum_enum_mappings_38
+                - text_zh: 字符管理
+                  text_en: 字符管理
+                  pattern_type: enum_mappings
+                  file: presentation\providers\navigation\global_navigation_provider.dart
+                  line: 23
+                  approved: false
+              - - enum_enum_mappings_39
+                - text_zh: 字帖列表
+                  text_en: 字帖列表
+                  pattern_type: enum_mappings
+                  file: presentation\providers\navigation\global_navigation_provider.dart
+                  line: 24
+                  approved: false
+              - - enum_enum_mappings_40
+                - text_zh: 图库管理
+                  text_en: 图库管理
+                  pattern_type: enum_mappings
+                  file: presentation\providers\navigation\global_navigation_provider.dart
+                  line: 25
+                  approved: false
+              - - enum_enum_mappings_41
+                - text_zh: '添加图片失败: $e'
+                  text_en: '添加图片失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\viewmodels\work_import_view_model.dart
+                  line: 65
+                  approved: false
+              - - enum_enum_mappings_42
+                - text_zh: '从图库添加图片失败: $e'
+                  text_en: '从图库添加图片失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\viewmodels\work_import_view_model.dart
+                  line: 121
+                  approved: false
+              - - enum_enum_mappings_43
+                - text_zh: '导入失败: $e'
+                  text_en: '导入失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\viewmodels\work_import_view_model.dart
+                  line: 161
+                  approved: false
+              - - enum_enum_mappings_44
+                - text_zh: '初始化图片失败: $e'
+                  text_en: '初始化图片失败: $e'
+                  pattern_type: enum_mappings
+                  file: presentation\viewmodels\work_import_view_model.dart
+                  line: 185
+                  approved: false
+              - - enum_enum_mappings_45
+                - text_zh: 调节
+                  text_en: 调节
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 165
+                  approved: false
+              - - enum_enum_mappings_46
+                - text_zh: 代码
+                  text_en: 代码
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 166
+                  approved: false
+              - - enum_enum_mappings_47
+                - text_zh: 批量更新${updatedElementIds.length}个元素
+                  text_en: 批量更新${updatedElementIds.length}个元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\batch_update_mixin.dart
+                  line: 204
+                  approved: false
+              - - enum_enum_mappings_48
+                - text_zh: 删除${operations.length}个元素
+                  text_en: 删除${operations.length}个元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\element_management_mixin.dart
+                  line: 508
+                  approved: false
+              - - enum_enum_mappings_49
+                - text_zh: 批量更新${updatedElementIds.length}个元素
+                  text_en: 批量更新${updatedElementIds.length}个元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\element_management_mixin.dart
+                  line: 1082
+                  approved: false
+              - - enum_enum_mappings_50
+                - text_zh: 对齐${operations.length}个元素
+                  text_en: 对齐${operations.length}个元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\element_operations_mixin.dart
+                  line: 191
+                  approved: false
+              - - enum_enum_mappings_51
+                - text_zh: 均匀分布元素
+                  text_en: 均匀分布元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\element_operations_mixin.dart
+                  line: 489
+                  approved: false
+              - - enum_enum_mappings_52
+                - text_zh: 未命名字帖
+                  text_en: 未命名字帖
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 289
+                  approved: false
+              - - enum_enum_mappings_53
+                - text_zh: 添加复制图层中的元素
+                  text_en: 添加复制图层中的元素
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\layer_management_mixin.dart
+                  line: 295
+                  approved: false
+              - - enum_enum_mappings_54
+                - text_zh: 复制图层
+                  text_en: 复制图层
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\layer_management_mixin.dart
+                  line: 298
+                  approved: false
+              - - enum_enum_mappings_55
+                - text_zh: 显示所有图层
+                  text_en: 显示所有图层
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\layer_management_mixin.dart
+                  line: 558
+                  approved: false
+              - - enum_enum_mappings_56
+                - text_zh: 'averageFPS''].toStringAsFixed(1)} (目标: ${frame['
+                  text_en: 'averageFPS''].toStringAsFixed(1)} (目标: ${frame['
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\optimization_metrics_collector.dart
+                  line: 338
+                  approved: false
+              - - enum_enum_mappings_57
+                - text_zh: 字帖
+                  text_en: 字帖
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\optimized_save_service.dart
+                  line: 165
+                  approved: false
+              - - enum_enum_mappings_58
+                - text_zh: name'] = '页面 ${pages[i][
+                  text_en: name'] = '页面 ${pages[i][
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\page_operations.dart
+                  line: 230
+                  approved: false
+              - - enum_enum_mappings_59
+                - text_zh: 最终
+                  text_en: 最终
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\text_renderer.dart
+                  line: 244
+                  approved: false
+              - - enum_enum_mappings_60
+                - text_zh: 基础属性
+                  text_en: 基础属性
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 22
+                  approved: false
+              - - enum_enum_mappings_61
+                - text_zh: 保存更改
+                  text_en: 保存更改
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 16
+                  approved: false
+              - - enum_enum_mappings_62
+                - text_zh: 框选工具
+                  text_en: 框选工具
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 35
+                  approved: false
+              - - enum_enum_mappings_63
+                - text_zh: 多选工具
+                  text_en: 多选工具
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 40
+                  approved: false
+              - - enum_enum_mappings_64
+                - text_zh: 删除选中区域
+                  text_en: 删除选中区域
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 45
+                  approved: false
+              - - enum_enum_mappings_65
+                - text_zh: 点击添加或拖放图片
+                  text_en: 点击添加或拖放图片
+                  pattern_type: enum_mappings
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 69
+                  approved: false
+        - - enum_when_expressions
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_enum_when_expressions_1
+                - text_zh: 跟随系统
+                  text_en: 跟随系统
+                  pattern_type: enum_when_expressions
+                  file: domain\enums\app_theme_mode.dart
+                  line: 17
+                  approved: false
+              - - enum_enum_when_expressions_2
+                - text_zh: 浅色模式
+                  text_en: 浅色模式
+                  pattern_type: enum_when_expressions
+                  file: domain\enums\app_theme_mode.dart
+                  line: 18
+                  approved: false
+              - - enum_enum_when_expressions_3
+                - text_zh: 深色模式
+                  text_en: 深色模式
+                  pattern_type: enum_when_expressions
+                  file: domain\enums\app_theme_mode.dart
+                  line: 19
+                  approved: false
+              - - enum_enum_when_expressions_4
+                - text_zh: 最近一年
+                  text_en: 最近一年
+                  pattern_type: enum_when_expressions
+                  file: domain\models\common\date_range_filter.dart
+                  line: 165
+                  approved: false
+              - - enum_enum_when_expressions_5
+                - text_zh: 上月
+                  text_en: 上月
+                  pattern_type: enum_when_expressions
+                  file: domain\models\common\date_range_filter.dart
+                  line: 167
+                  approved: false
+        - - enum_extensions
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_enum_extensions_1
+                - text_zh: '文件名不能包含以下字符: \\ / : * ? \'
+                  text_en: '文件名不能包含以下字符: \\ / : * ? \'
+                  pattern_type: enum_extensions
+                  file: l10n\app_localizations_zh.dart
+                  line: 1143
+                  approved: false

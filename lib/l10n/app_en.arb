@@ -706,5 +706,21 @@
   "writingMode": "Writing Mode",
   "writingTool": "Writing Tool",
   "yes": "Yes",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "boxTool": "Box Tool",
+  "multiSelectTool": "Multi-Select Tool",
+  "deleteSelectedArea": "Delete Selected Area",
+  "adjust": "Adjust",
+  "code": "Code",
+  "noPreviewAvailable": "No preview available",
+  "pageNotImplemented": "Page not implemented",
+  "selectedElementNotFound": "Selected element not found",
+  "sansSerif": "Sans Serif",
+  "serif": "Serif",
+  "monospace": "Monospace",
+  "stretch": "Stretch",
+  "firstPage": "First Page",
+  "lastPage": "Last Page",
+  "renameLayer": "Rename Layer",
+  "implementationComingSoon": "This feature is under development, please stay tuned!"
 }

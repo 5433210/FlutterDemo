@@ -66,7 +66,7 @@ class M3PaginationControls extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.first_page, size: 20),
                 onPressed: currentPage > 1 ? () => onPageChanged(1) : null,
-                tooltip: 'First Page',
+                tooltip: AppLocalizations.of(context)!.firstPage,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: const EdgeInsets.all(8),
@@ -76,7 +76,7 @@ class M3PaginationControls extends StatelessWidget {
                 onPressed: currentPage > 1
                     ? () => onPageChanged(currentPage - 1)
                     : null,
-                tooltip: 'Previous Page',
+                tooltip: AppLocalizations.of(context)!.previousPage,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: const EdgeInsets.all(8),
@@ -94,7 +94,7 @@ class M3PaginationControls extends StatelessWidget {
                 onPressed: currentPage < totalPages
                     ? () => onPageChanged(currentPage + 1)
                     : null,
-                tooltip: 'Next Page',
+                tooltip: AppLocalizations.of(context)!.nextPage,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: const EdgeInsets.all(8),
@@ -104,7 +104,7 @@ class M3PaginationControls extends StatelessWidget {
                 onPressed: currentPage < totalPages
                     ? () => onPageChanged(totalPages)
                     : null,
-                tooltip: 'Last Page',
+                tooltip: AppLocalizations.of(context)!.lastPage,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: const EdgeInsets.all(8),

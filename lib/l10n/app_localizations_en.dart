@@ -2237,4 +2237,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterday => 'Yesterday';
+
+  @override
+  String get boxTool => 'Box Tool';
+
+  @override
+  String get multiSelectTool => 'Multi-Select Tool';
+
+  @override
+  String get deleteSelectedArea => 'Delete Selected Area';
+
+  @override
+  String get adjust => 'Adjust';
+
+  @override
+  String get code => 'Code';
+
+  @override
+  String get noPreviewAvailable => 'No preview available';
+
+  @override
+  String get pageNotImplemented => 'Page not implemented';
+
+  @override
+  String get selectedElementNotFound => 'Selected element not found';
+
+  @override
+  String get sansSerif => 'Sans Serif';
+
+  @override
+  String get serif => 'Serif';
+
+  @override
+  String get monospace => 'Monospace';
+
+  @override
+  String get stretch => 'Stretch';
+
+  @override
+  String get firstPage => 'First Page';
+
+  @override
+  String get lastPage => 'Last Page';
+
+  @override
+  String get renameLayer => 'Rename Layer';
+
+  @override
+  String get implementationComingSoon => 'This feature is under development, please stay tuned!';
 }

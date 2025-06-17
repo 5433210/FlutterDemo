@@ -1,0 +1,504 @@
+# 最终硬编码文本映射文件
+# 专注于UI文本，排除了调试和日志信息
+# 请审核以下内容，并将 approved 设置为 true
+
+!!python/object/apply:collections.OrderedDict
+- - - reuse_existing_keys
+    - !!python/object/apply:collections.OrderedDict
+      - - - ui_text
+          - !!python/object/apply:collections.OrderedDict
+            - - - elementCopied
+                - action: reuse_existing
+                  existing_key: elementCopied
+                  text_zh: ${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)}
+                    已复制到剪贴板
+                  file: lib\presentation\pages\library\m3_library_management_page.dart
+                  line: 148
+                  similarity: 0.875
+                  approved: false
+              - - sourceHanSansFont
+                - action: reuse_existing
+                  existing_key: sourceHanSansFont
+                  text_zh: '思源黑体 (SourceHanSans):'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 136
+                  similarity: 0.947
+                  approved: false
+              - - sourceHanSerifFont
+                - action: reuse_existing
+                  existing_key: sourceHanSerifFont
+                  text_zh: '思源宋体 (SourceHanSerif):'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 141
+                  similarity: 0.95
+                  approved: false
+              - - resetZoom
+                - action: reuse_existing
+                  existing_key: resetZoom
+                  text_zh: 重置缩放
+                  file: lib\presentation\widgets\common\zoomable_image_view.dart
+                  line: 103
+                  similarity: 1.0
+                  approved: false
+              - - shortcuts
+                - action: reuse_existing
+                  existing_key: shortcuts
+                  text_zh: '键盘快捷键:'
+                  file: lib\presentation\widgets\forms\work_form.dart
+                  line: 385
+                  similarity: 1.0
+                  approved: false
+              - - location
+                - action: reuse_existing
+                  existing_key: location
+                  text_zh: 位置
+                  file: lib\presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 29
+                  similarity: 1.0
+                  approved: false
+              - - opacity
+                - action: reuse_existing
+                  existing_key: opacity
+                  text_zh: 透明度
+                  file: lib\presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 171
+                  similarity: 0.857
+                  approved: false
+              - - colorPicker
+                - action: reuse_existing
+                  existing_key: colorPicker
+                  text_zh: 选择颜色
+                  file: lib\presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 292
+                  similarity: 1.0
+                  approved: false
+              - - addImage
+                - action: reuse_existing
+                  existing_key: addImage
+                  text_zh: 添加图片
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 11
+                  similarity: 1.0
+                  approved: false
+              - - deleteImage
+                - action: reuse_existing
+                  existing_key: deleteImage
+                  text_zh: 删除图片
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 22
+                  similarity: 1.0
+                  approved: false
+  - - create_new_keys
+    - !!python/object/apply:collections.OrderedDict
+      - - - ui_text
+          - !!python/object/apply:collections.OrderedDict
+            - - - e
+                - action: create_new
+                  text_zh: '应用启动失败: $e'
+                  text_en: '应用启动失败: $e'
+                  file: lib\main.dart
+                  line: 123
+                  similarity: 0
+                  approved: false
+              - - text1
+                - action: create_new
+                  text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: lib\presentation\pages\home_page.dart
+                  line: 24
+                  similarity: 0
+                  approved: false
+              - - text2
+                - action: create_new
+                  text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: lib\presentation\pages\home_page.dart
+                  line: 31
+                  similarity: 0
+                  approved: false
+              - - selectedcountRefReadLibrarymanagementproviderSelecteditemsLength
+                - action: create_new
+                  text_zh: ${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)}
+                    已剪切到剪贴板
+                  text_en: ${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)}
+                    已剪切到剪贴板
+                  file: lib\presentation\pages\library\m3_library_management_page.dart
+                  line: 169
+                  similarity: 0
+                  approved: false
+              - - stateSelecteditemsLength
+                - action: create_new
+                  text_zh: 已将${state.selectedItems.length}个项目添加到
+                  text_en: 已将${state.selectedItems.length}个项目添加到
+                  file: lib\presentation\pages\library\components\library_category_panel.dart
+                  line: 217
+                  similarity: 0
+                  approved: false
+              - - hascontent
+                - action: create_new
+                  text_zh: '剪贴板状态: ${hasContent ? '
+                  text_en: '剪贴板状态: ${hasContent ? '
+                  file: lib\presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 703
+                  similarity: 0
+                  approved: false
+              - - text3
+                - action: create_new
+                  text_zh: 调试：检查剪贴板
+                  text_en: 调试：检查剪贴板
+                  file: lib\presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 707
+                  similarity: 0
+                  approved: false
+              - - widgetControllerStateCurrenttool
+                - action: create_new
+                  text_zh: '当前工具: ${widget.controller.state.currentTool}'
+                  text_en: '当前工具: ${widget.controller.state.currentTool}'
+                  file: lib\presentation\pages\practices\widgets\m3_practice_edit_canvas.dart
+                  line: 1009
+                  similarity: 0
+                  approved: false
+              - - text4
+                - action: create_new
+                  text_zh: 选择模式
+                  text_en: 选择模式
+                  file: lib\presentation\pages\practices\widgets\m3_practice_edit_canvas.dart
+                  line: 1036
+                  similarity: 0
+                  approved: false
+              - - text5
+                - action: create_new
+                  text_zh: 编辑标签
+                  text_en: 编辑标签
+                  file: lib\presentation\pages\works\components\content\items\m3_work_list_item.dart
+                  line: 330
+                  similarity: 0
+                  approved: false
+              - - text6
+                - action: create_new
+                  text_zh: 快捷选择
+                  text_en: 快捷选择
+                  file: lib\presentation\widgets\date_range_picker.dart
+                  line: 181
+                  similarity: 0
+                  approved: false
+              - - text7
+                - action: create_new
+                  text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 11
+                  similarity: 0
+                  approved: false
+              - - text8
+                - action: create_new
+                  text_zh: 这个工具用于测试不同字体的显示效果。每种字体都会显示相同的文本，包括英文、数字和中文。特别测试了字重从w100到w900的完整范围，以验证字体是否正确响应字重变化。
+                  text_en: 这个工具用于测试不同字体的显示效果。每种字体都会显示相同的文本，包括英文、数字和中文。特别测试了字重从w100到w900的完整范围，以验证字体是否正确响应字重变化。
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 23
+                  similarity: 0
+                  approved: false
+              - - text9
+                - action: create_new
+                  text_zh: '注意事项:'
+                  text_en: '注意事项:'
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 38
+                  similarity: 0
+                  approved: false
+              - - text10
+                - action: create_new
+                  text_zh: 1. 思源黑体和思源宋体是可变字体，理论上支持w100-w900的全部字重。
+                  text_en: 1. 思源黑体和思源宋体是可变字体，理论上支持w100-w900的全部字重。
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 43
+                  similarity: 0
+                  approved: false
+              - - text11
+                - action: create_new
+                  text_zh: 2. 如果字重变化不明显，可能是因为字体文件未正确注册或Flutter对可变字体的支持有限制。
+                  text_en: 2. 如果字重变化不明显，可能是因为字体文件未正确注册或Flutter对可变字体的支持有限制。
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 46
+                  similarity: 0
+                  approved: false
+              - - text12
+                - action: create_new
+                  text_zh: 3. 系统默认字体通常只支持有限的字重变化（如normal和bold）。
+                  text_en: 3. 系统默认字体通常只支持有限的字重变化（如normal和bold）。
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 49
+                  similarity: 0
+                  approved: false
+              - - text13
+                - action: create_new
+                  text_zh: 字重范围测试 (w100-w900)
+                  text_en: 字重范围测试 (w100-w900)
+                  file: lib\presentation\widgets\font_tester.dart
+                  line: 117
+                  similarity: 0
+                  approved: false
+              - - text14
+                - action: create_new
+                  text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 11
+                  similarity: 0
+                  approved: false
+              - - text15
+                - action: create_new
+                  text_zh: 这个工具专门用于测试思源黑体和思源宋体的字重变化。我们测试了不同的字重注册方式和渲染方式，以找出为什么只有两种粗细变化生效。
+                  text_en: 这个工具专门用于测试思源黑体和思源宋体的字重变化。我们测试了不同的字重注册方式和渲染方式，以找出为什么只有两种粗细变化生效。
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 23
+                  similarity: 0
+                  approved: false
+              - - text16
+                - action: create_new
+                  text_zh: 字体文件信息
+                  text_en: 字体文件信息
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 122
+                  similarity: 0
+                  approved: false
+              - - variableFont
+                - action: create_new
+                  text_zh: '- 类型: 可变字体 (Variable Font)'
+                  text_en: '- 类型: 可变字体 (Variable Font)'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 138
+                  similarity: 0
+                  approved: false
+              - - wght
+                - action: create_new
+                  text_zh: '- 字重轴: wght (100-900)'
+                  text_en: '- 字重轴: wght (100-900)'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 139
+                  similarity: 0
+                  approved: false
+              - - text17
+                - action: create_new
+                  text_zh: '注意: Flutter对可变字体的支持可能有限制。如果字重变化不明显，可能是因为:'
+                  text_en: '注意: Flutter对可变字体的支持可能有限制。如果字重变化不明显，可能是因为:'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 146
+                  similarity: 0
+                  approved: false
+              - - text18
+                - action: create_new
+                  text_zh: 1. Flutter引擎对可变字体的支持不完整
+                  text_en: 1. Flutter引擎对可变字体的支持不完整
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 150
+                  similarity: 0
+                  approved: false
+              - - text19
+                - action: create_new
+                  text_zh: 2. 字体文件的字重轴未被正确识别
+                  text_en: 2. 字体文件的字重轴未被正确识别
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 151
+                  similarity: 0
+                  approved: false
+              - - text20
+                - action: create_new
+                  text_zh: 3. 字体注册方式不正确
+                  text_en: 3. 字体注册方式不正确
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 152
+                  similarity: 0
+                  approved: false
+              - - text21
+                - action: create_new
+                  text_zh: 4. 平台特定的字体渲染限制
+                  text_en: 4. 平台特定的字体渲染限制
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 153
+                  similarity: 0
+                  approved: false
+              - - text22
+                - action: create_new
+                  text_zh: '可能的解决方案:'
+                  text_en: '可能的解决方案:'
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 155
+                  similarity: 0
+                  approved: false
+              - - text23
+                - action: create_new
+                  text_zh: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  text_en: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 159
+                  similarity: 0
+                  approved: false
+              - - text24
+                - action: create_new
+                  text_zh: 2. 使用非可变字体的多个字重文件
+                  text_en: 2. 使用非可变字体的多个字重文件
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 160
+                  similarity: 0
+                  approved: false
+              - - text25
+                - action: create_new
+                  text_zh: 3. 使用fontVariations属性直接设置字重轴的值
+                  text_en: 3. 使用fontVariations属性直接设置字重轴的值
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 161
+                  similarity: 0
+                  approved: false
+              - - text26
+                - action: create_new
+                  text_zh: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  text_en: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 162
+                  similarity: 0
+                  approved: false
+              - - abc
+                - action: create_new
+                  text_zh: 永曰月明清风 ABC 123
+                  text_en: 永曰月明清风 ABC 123
+                  file: lib\presentation\widgets\font_weight_tester.dart
+                  line: 210
+                  similarity: 0
+                  approved: false
+              - - text27
+                - action: create_new
+                  text_zh: 无法加载图片
+                  text_en: 无法加载图片
+                  file: lib\presentation\widgets\common\zoomable_image_view.dart
+                  line: 153
+                  similarity: 0
+                  approved: false
+              - - ctrlTTitleCtrlACtrlRN
+                - action: create_new
+                  text_zh: 'Ctrl+T: 标题  Ctrl+A: 作者  Ctrl+R: 备注\n'
+                  text_en: 'Ctrl+T: 标题  Ctrl+A: 作者  Ctrl+R: 备注\n'
+                  file: lib\presentation\widgets\forms\work_form.dart
+                  line: 390
+                  similarity: 0
+                  approved: false
+              - - currentfpsTostringFps
+                - action: create_new
+                  text_zh: '拖拽帧率: ${currentFps.toString()} FPS'
+                  text_en: '拖拽帧率: ${currentFps.toString()} FPS'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 665
+                  similarity: 0
+                  approved: false
+              - - avgfpsTostringasfixedFps
+                - action: create_new
+                  text_zh: '平均帧率: ${avgFps.toStringAsFixed(1)} FPS'
+                  text_en: '平均帧率: ${avgFps.toStringAsFixed(1)} FPS'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 673
+                  similarity: 0
+                  approved: false
+              - - updatecountBatchupdatecount
+                - action: create_new
+                  text_zh: '更新次数: $updateCount (批量: $batchUpdateCount)'
+                  text_en: '更新次数: $updateCount (批量: $batchUpdateCount)'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 680
+                  similarity: 0
+                  approved: false
+              - - avgupdatetimeTostringasfixedMs
+                - action: create_new
+                  text_zh: '平均更新时间: ${avgUpdateTime.toStringAsFixed(2)}ms'
+                  text_en: '平均更新时间: ${avgUpdateTime.toStringAsFixed(2)}ms'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 684
+                  similarity: 0
+                  approved: false
+              - - elementcount
+                - action: create_new
+                  text_zh: '拖拽元素: $elementCount'
+                  text_en: '拖拽元素: $elementCount'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 688
+                  similarity: 0
+                  approved: false
+              - - text28
+                - action: create_new
+                  text_zh: '⚠️ 性能警告: 帧率过低'
+                  text_en: '⚠️ 性能警告: 帧率过低'
+                  file: lib\presentation\widgets\practice\performance_monitor.dart
+                  line: 693
+                  similarity: 0
+                  approved: false
+              - - text29
+                - action: create_new
+                  text_zh: 暂无内容
+                  text_en: 暂无内容
+                  file: lib\presentation\widgets\practice\text_renderer.dart
+                  line: 961
+                  similarity: 0
+                  approved: false
+              - - text30
+                - action: create_new
+                  text_zh: 思源字体支持更精确的字重变化
+                  text_en: 思源字体支持更精确的字重变化
+                  file: lib\presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 598
+                  similarity: 0
+                  approved: false
+              - - text31
+                - action: create_new
+                  text_zh: 旋转角度
+                  text_en: 旋转角度
+                  file: lib\presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 139
+                  similarity: 0
+                  approved: false
+              - - text32
+                - action: create_new
+                  text_zh: 所属图层
+                  text_en: 所属图层
+                  file: lib\presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 226
+                  similarity: 0
+                  approved: false
+              - - text33
+                - action: create_new
+                  text_zh: 保存更改
+                  text_en: 保存更改
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 16
+                  similarity: 0
+                  approved: false
+              - - text34
+                - action: create_new
+                  text_zh: 框选工具
+                  text_en: 框选工具
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 35
+                  similarity: 0
+                  approved: false
+              - - text35
+                - action: create_new
+                  text_zh: 多选工具
+                  text_en: 多选工具
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 40
+                  similarity: 0
+                  approved: false
+              - - text36
+                - action: create_new
+                  text_zh: 删除选中区域
+                  text_en: 删除选中区域
+                  file: lib\presentation\widgets\works\preview_mode_config.dart
+                  line: 45
+                  similarity: 0
+                  approved: false
+              - - dynamicbrushsizeTostringasfixed
+                - action: create_new
+                  text_zh: 笔刷大小已根据图像尺寸自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}
+                  text_en: 笔刷大小已根据图像尺寸自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}
+                  file: lib\widgets\character_edit\m3_character_edit_panel.dart
+                  line: 1811
+                  similarity: 0
+                  approved: false

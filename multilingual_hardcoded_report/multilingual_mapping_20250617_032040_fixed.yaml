@@ -1,0 +1,651 @@
+# 多语言硬编码文本映射文件
+# 包含中文和英文硬编码检测结果
+# 请审核新建条目，修改翻译，并将 approved 设置为 true
+# 复用条目已自动批准
+
+!!python/object/apply:collections.OrderedDict
+- - - chinese_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - ui_properties
+          - !!python/object/apply:collections.OrderedDict
+            - - - 副本
+                - text_zh: ${practice.title} (副本)
+                  text_en: ${practice.title} (副本)
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 54
+                  action: create_new
+                  approved: false
+              - - works编辑标签
+                - text_zh: 编辑标签
+                  text_en: 编辑标签
+                  file: presentation\pages\works\components\content\items\m3_work_list_item.dart
+                  line: 330
+                  action: create_new
+                  approved: false
+              - - resetZoom
+                - text_zh: 重置缩放
+                  text_en: Reset Zoom
+                  file: presentation\widgets\common\zoomable_image_view.dart
+                  line: 103
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - widget基础属性
+                - text_zh: 基础属性
+                  text_en: 基础属性
+                  file: presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 22
+                  action: create_new
+                  approved: false
+              - - colorPicker
+                - text_zh: 选择颜色
+                  text_en: Color Picker
+                  file: presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 292
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - addImage
+                - text_zh: 添加图片
+                  text_en: Add Image
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 58
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - widget保存更改
+                - text_zh: 保存更改
+                  text_en: 保存更改
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 16
+                  action: create_new
+                  approved: false
+              - - deleteImage
+                - text_zh: 删除图片
+                  text_en: Delete Image
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 63
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - boxTool
+                - text_zh: 框选工具
+                  text_en: Box Tool
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 35
+                  action: create_new
+                  approved: true
+              - - multiSelectTool
+                - text_zh: 多选工具
+                  text_en: Multi-Select Tool
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 40
+                  action: create_new
+                  approved: true
+              - - deleteSelectedArea
+                - text_zh: 删除选中区域
+                  text_en: Delete Selected Area
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 45
+                  action: create_new
+                  approved: true
+        - - ui_text_widget
+          - !!python/object/apply:collections.OrderedDict
+            - - - home_page.dart字体测试工具
+                - text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: presentation\pages\home_page.dart
+                  line: 24
+                  action: create_new
+                  approved: false
+              - - home_page.dart字体粗细测试工具
+                - text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: presentation\pages\home_page.dart
+                  line: 31
+                  action: create_new
+                  approved: false
+              - - widget字体测试工具
+                - text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: presentation\widgets\font_tester.dart
+                  line: 11
+                  action: create_new
+                  approved: false
+              - - widget字体粗细测试工具
+                - text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 11
+                  action: create_new
+                  approved: false
+              - - sourceHanSansFont
+                - text_zh: '思源黑体 (SourceHanSans):'
+                  text_en: Source Han Sans
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 136
+                  action: reuse_existing
+                  similarity: 0.9302325581395349
+                  approved: true
+              - - widget文件
+                - text_zh: '- 文件: assets/fonts/chinese/SourceHanSansCN-VF.otf'
+                  text_en: '- 文件: assets/fonts/chinese/SourceHanSansCN-VF.otf'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 137
+                  action: create_new
+                  approved: false
+              - - widget类型可变字体
+                - text_zh: '- 类型: 可变字体 (Variable Font)'
+                  text_en: '- 类型: 可变字体 (Variable Font)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 138
+                  action: create_new
+                  approved: false
+              - - widget字重轴
+                - text_zh: '- 字重轴: wght (100-900)'
+                  text_en: '- 字重轴: wght (100-900)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 139
+                  action: create_new
+                  approved: false
+              - - sourceHanSerifFont
+                - text_zh: '思源宋体 (SourceHanSerif):'
+                  text_en: Source Han Serif
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 141
+                  action: reuse_existing
+                  similarity: 0.9333333333333333
+                  approved: true
+              - - widget文件1
+                - text_zh: '- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf'
+                  text_en: '- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 142
+                  action: create_new
+                  approved: false
+              - - widget类型可变字体1
+                - text_zh: '- 类型: 可变字体 (Variable Font)'
+                  text_en: '- 类型: 可变字体 (Variable Font)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 143
+                  action: create_new
+                  approved: false
+              - - widget字重轴1
+                - text_zh: '- 字重轴: wght (100-900)'
+                  text_en: '- 字重轴: wght (100-900)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 144
+                  action: create_new
+                  approved: false
+              - - widget引擎对可变字体的
+                - text_zh: 1. Flutter引擎对可变字体的支持不完整
+                  text_en: 1. Flutter引擎对可变字体的支持不完整
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 150
+                  action: create_new
+                  approved: false
+              - - widget字体文件的字重轴
+                - text_zh: 2. 字体文件的字重轴未被正确识别
+                  text_en: 2. 字体文件的字重轴未被正确识别
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 151
+                  action: create_new
+                  approved: false
+              - - widget字体注册方式不正
+                - text_zh: 3. 字体注册方式不正确
+                  text_en: 3. 字体注册方式不正确
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 152
+                  action: create_new
+                  approved: false
+              - - widget平台特定的字体渲
+                - text_zh: 4. 平台特定的字体渲染限制
+                  text_en: 4. 平台特定的字体渲染限制
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 153
+                  action: create_new
+                  approved: false
+              - - widget使用不同的字体家
+                - text_zh: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  text_en: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 159
+                  action: create_new
+                  approved: false
+              - - widget使用非可变字体的
+                - text_zh: 2. 使用非可变字体的多个字重文件
+                  text_en: 2. 使用非可变字体的多个字重文件
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 160
+                  action: create_new
+                  approved: false
+              - - widget使用属性直接设置
+                - text_zh: 3. 使用fontVariations属性直接设置字重轴的值
+                  text_en: 3. 使用fontVariations属性直接设置字重轴的值
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 161
+                  action: create_new
+                  approved: false
+              - - widget在应用中提供字体
+                - text_zh: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  text_en: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 162
+                  action: create_new
+                  approved: false
+        - - ui_appbar_navigation
+          - !!python/object/apply:collections.OrderedDict
+            - - - presets
+                - text_zh: 预设
+                  text_en: Presets
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 164
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - adjust
+                - text_zh: 调节
+                  text_en: Adjust
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 165
+                  action: create_new
+                  approved: true
+              - - code
+                - text_zh: 代码
+                  text_en: Code
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 166
+                  action: create_new
+                  approved: true
+  - - english_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - ui_text_widget
+          - !!python/object/apply:collections.OrderedDict
+            - - - home_page.dartHomepage
+                - text_en: Home Page
+                  text_zh: Home Page
+                  file: presentation\pages\home_page.dart
+                  line: 13
+                  action: create_new
+                  approved: false
+              - - home_page.dartHomepage2
+                - text_en: Home Page
+                  text_zh: Home Page
+                  file: presentation\pages\home_page.dart
+                  line: 18
+                  action: create_new
+                  approved: false
+              - - noPreviewAvailable
+                - text_en: No preview available
+                  text_zh: 无有效预览
+                  file: presentation\pages\library\components\resizable_image_preview_panel.dart
+                  line: 135
+                  action: create_new
+                  approved: true
+              - - pageNotImplemented
+                - text_en: Page not implemented
+                  text_zh: 页面未实现
+                  file: presentation\pages\main\m3_main_window.dart
+                  line: 403
+                  action: create_new
+                  approved: true
+              - - unknownElementType
+                - text_en: "Unknown element type: TYPE_PLACEHOLDER"
+                  text_zh: "未知元素类型: TYPE_PLACEHOLDER"
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 940
+                  action: reuse_existing
+                  approved: true
+              - - selectedElementNotFound
+                - text_en: Selected element not found
+                  text_zh: 选中的元素未找到
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 943
+                  action: create_new
+                  approved: true
+              - - edit
+                - text_en: edit
+                  text_zh: 编辑
+                  file: presentation\pages\practices\components\m3_practice_list_item.dart
+                  line: 394
+                  action: reuse_existing
+                  approved: true
+              - - practicesTageditingfunctionalitywill
+                - text_en: Tag editing functionality will be implemented later
+                  text_zh: Tag editing functionality will be implemented later
+                  file: presentation\pages\practices\components\m3_practice_list_item.dart
+                  line: 397
+                  action: create_new
+                  approved: false
+              - - cancel
+                - text_en: Cancel
+                  text_zh: 取消
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 996
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - save
+                - text_en: Save
+                  text_zh: 保存
+                  file: presentation\pages\practices\widgets\practice_title_edit_dialog.dart
+                  line: 64
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - edit
+                - text_en: Edit
+                  text_zh: 编辑                  
+                  file: presentation\pages\practices\widgets\practice_title_edit_dialog.dart
+                  line: 39
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - elements
+                - text_en: Element
+                  text_zh: 元素
+                  file: presentation\widgets\practice\memory_efficient_element_representation.dart
+                  line: 306
+                  action: reuse_existing
+                  similarity: 0.9333333333333333
+                  approved: true
+              - - widgetPerformancebaselinecreated
+                - text_en: Performance baseline created
+                  text_zh: Performance baseline created
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 844
+                  action: create_new
+                  approved: false
+              - - widgetPerformancedataexportedto
+                - text_en: Performance data exported to console
+                  text_zh: Performance data exported to console
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 858
+                  action: create_new
+                  approved: false
+              - - widgetResetperformancedata
+                - text_en: Reset Performance Data
+                  text_zh: Reset Performance Data
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 991
+                  action: create_new
+                  approved: false
+              - - widgetPerformancedatareset
+                - text_en: Performance data reset
+                  text_zh: Performance data reset
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 1010
+                  action: create_new
+                  approved: false
+              - - reset
+                - text_en: Reset
+                  text_zh: 重置
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 1016
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - sansSerif
+                - text_en: Sans Serif
+                  text_zh: Sans Serif
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 463
+                  action: create_new
+                  approved: true
+              - - serif
+                - text_en: Serif
+                  text_zh: Serif
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 464
+                  action: create_new
+                  approved: true
+              - - monospace
+                - text_en: Monospace
+                  text_zh: Monospace
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 466
+                  action: create_new
+                  approved: true
+              - - stretch
+                - text_en: Stretch
+                  text_zh: 拉伸
+                  file: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+                  line: 213
+                  action: create_new
+                  approved: true
+        - - ui_appbar_navigation
+          - !!python/object/apply:collections.OrderedDict
+            - - - home_page.dartHomepage1
+                - text_en: Home Page
+                  text_zh: Home Page
+                  file: presentation\pages\home_page.dart
+                  line: 13
+                  action: create_new
+                  approved: false
+              - - text
+                - text_en: Text
+                  text_zh: 文本
+                  file: presentation\pages\practices\widgets\content_tools_panel.dart
+                  line: 38
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - image
+                - text_en: Image
+                  text_zh: 图片
+                  file: presentation\pages\practices\widgets\content_tools_panel.dart
+                  line: 44
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - characterCollection
+                - text_en: Character Collection
+                  text_zh: 集字
+                  file: presentation\pages\practices\widgets\content_tools_panel.dart
+                  line: 50
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - select
+                - text_en: Select
+                  text_zh: 选择
+                  file: presentation\pages\practices\widgets\content_tools_panel.dart
+                  line: 56
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - widgetExcellent
+                - text_en: Excellent
+                  text_zh: Excellent
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 925
+                  action: create_new
+                  approved: false
+              - - widgetGood
+                - text_en: Good
+                  text_zh: Good
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 927
+                  action: create_new
+                  approved: false
+              - - widgetAcceptable
+                - text_en: Acceptable
+                  text_zh: Acceptable
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 929
+                  action: create_new
+                  approved: false
+              - - widgetPoor
+                - text_en: Poor
+                  text_zh: Poor
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 931
+                  action: create_new
+                  approved: false
+              - - widgetCritical
+                - text_en: Critical
+                  text_zh: Critical
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 933
+                  action: create_new
+                  approved: false
+              - - unknown
+                - text_en: Unknown
+                  text_zh: 未知
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 935
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - ppi
+                - text_en: PPI
+                  text_zh: PPI
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_page.dart
+                  line: 269
+                  action: create_new
+                  approved: false
+        - - ui_buttons_labels
+          - !!python/object/apply:collections.OrderedDict
+            - - - libraryNopreviewavailable1
+                - text_en: No preview available
+                  text_zh: No preview available
+                  file: presentation\pages\library\components\resizable_image_preview_panel.dart
+                  line: 135
+                  action: create_new
+                  approved: false
+              - - mainPagenotimplemented1
+                - text_en: Page not implemented
+                  text_zh: Page not implemented
+                  file: presentation\pages\main\m3_main_window.dart
+                  line: 403
+                  action: create_new
+                  approved: false
+              - - practicesUnsupportedelementtype1
+                - text_en: Unsupported element type
+                  text_zh: Unsupported element type
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 940
+                  action: create_new
+                  approved: false
+              - - practicesSelectedelementnotfound1
+                - text_en: Selected element not found
+                  text_zh: Selected element not found
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 943
+                  action: create_new
+                  approved: false
+              - - cancel
+                - text_en: Cancel
+                  text_zh: 取消
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 996
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - save
+                - text_en: Save
+                  text_zh: 保存
+                  file: presentation\pages\practices\components\m3_practice_list_item.dart
+                  line: 411
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - elements
+                - text_en: Element
+                  text_zh: 元素
+                  file: presentation\widgets\practice\memory_efficient_element_representation.dart
+                  line: 306
+                  action: reuse_existing
+                  similarity: 0.9333333333333333
+                  approved: true
+              - - reset
+                - text_en: Reset
+                  text_zh: 重置
+                  file: presentation\widgets\practice\performance_dashboard.dart
+                  line: 1016
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - widgetSansserif1
+                - text_en: Sans Serif
+                  text_zh: Sans Serif
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 463
+                  action: create_new
+                  approved: false
+              - - widgetSerif1
+                - text_en: Serif
+                  text_zh: Serif
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 464
+                  action: create_new
+                  approved: false
+              - - widgetMonospace1
+                - text_en: Monospace
+                  text_zh: Monospace
+                  file: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart
+                  line: 466
+                  action: create_new
+                  approved: false
+              - - stretch
+                - text_en: Stretch
+                  text_zh: 拉伸
+                  file: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+                  line: 213
+                  action: create_new
+                  approved: false
+        - - ui_properties
+          - !!python/object/apply:collections.OrderedDict
+            - - - title
+                - text_en: Title
+                  text_zh: 标题
+                  file: presentation\pages\practices\widgets\practice_title_edit_dialog.dart
+                  line: 43
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - edit
+                - text_en: Edit
+                  text_zh: 编辑
+                  file: presentation\pages\works\components\content\items\m3_work_grid_item.dart
+                  line: 178
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - firstPage
+                - text_en: First Page
+                  text_zh: 第一页
+                  file: presentation\widgets\pagination\m3_pagination_controls.dart
+                  line: 69
+                  action: create_new
+                  approved: true
+              - - previousPage
+                - text_en: Previous Page
+                  text_zh: 上一页
+                  file: presentation\widgets\pagination\m3_pagination_controls.dart
+                  line: 79
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - nextPage
+                - text_en: Next Page
+                  text_zh: 下一页
+                  file: presentation\widgets\pagination\m3_pagination_controls.dart
+                  line: 97
+                  action: reuse_existing
+                  similarity: 1.0
+                  approved: true
+              - - lastPage
+                - text_en: Last Page
+                  text_zh: 最后一页
+                  file: presentation\widgets\pagination\m3_pagination_controls.dart
+                  line: 107
+                  action: create_new
+                  approved: true
+              - - renameLayer
+                - text_en: Rename Layer
+                  text_zh: 重命名图层
+                  file: presentation\widgets\practice\m3_practice_layer_panel.dart
+                  line: 302
+                  action: create_new
+                  approved: true

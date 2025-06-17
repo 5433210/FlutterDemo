@@ -706,5 +706,21 @@
   "writingMode": "书写模式",
   "writingTool": "书写工具",
   "yes": "是",
-  "yesterday": "昨天"
+  "yesterday": "昨天",
+  "boxTool": "框选工具",
+  "multiSelectTool": "多选工具",
+  "deleteSelectedArea": "删除选中区域",
+  "adjust": "调节",
+  "code": "代码",
+  "noPreviewAvailable": "无有效预览",
+  "pageNotImplemented": "页面未实现",
+  "selectedElementNotFound": "选中的元素未找到",
+  "sansSerif": "Sans Serif",
+  "serif": "Serif",
+  "monospace": "Monospace",
+  "stretch": "拉伸",
+  "firstPage": "第一页",
+  "lastPage": "最后一页",
+  "renameLayer": "重命名图层",
+  "implementationComingSoon": "此功能正在开发中，敬请期待！"
 }

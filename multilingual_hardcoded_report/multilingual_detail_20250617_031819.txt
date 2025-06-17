@@ -1,0 +1,391 @@
+=== 多语言硬编码文本详细报告 ===
+
+=== 中文硬编码详情 ===
+
+--- UI_PROPERTIES (13 个) ---
+文件: application\repositories\practice_repository_impl.dart, 行: 54
+文本: "${practice.title} (副本)"
+建议键: 副本
+
+文件: presentation\pages\works\components\content\items\m3_work_list_item.dart, 行: 330
+文本: "编辑标签"
+建议键: works编辑标签
+
+文件: presentation\widgets\common\zoomable_image_view.dart, 行: 103
+文本: "重置缩放"
+复用键: resetZoom (相似度: 1.00)
+
+文件: presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 22
+文本: "基础属性"
+建议键: widget基础属性
+
+文件: presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 292
+文本: "选择颜色"
+复用键: colorPicker (相似度: 1.00)
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 11
+文本: "添加图片"
+复用键: addImage (相似度: 1.00)
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 16
+文本: "保存更改"
+建议键: widget保存更改
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 22
+文本: "删除图片"
+复用键: deleteImage (相似度: 1.00)
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 35
+文本: "框选工具"
+建议键: widget框选工具
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 40
+文本: "多选工具"
+建议键: widget多选工具
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 45
+文本: "删除选中区域"
+建议键: widget删除选中区域
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 58
+文本: "添加图片"
+复用键: addImage (相似度: 1.00)
+
+文件: presentation\widgets\works\preview_mode_config.dart, 行: 63
+文本: "删除图片"
+复用键: deleteImage (相似度: 1.00)
+
+
+--- UI_TEXT_WIDGET (20 个) ---
+文件: presentation\pages\home_page.dart, 行: 24
+文本: "字体测试工具"
+建议键: home_page.dart字体测试工具
+
+文件: presentation\pages\home_page.dart, 行: 31
+文本: "字体粗细测试工具"
+建议键: home_page.dart字体粗细测试工具
+
+文件: presentation\widgets\font_tester.dart, 行: 11
+文本: "字体测试工具"
+建议键: widget字体测试工具
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 11
+文本: "字体粗细测试工具"
+建议键: widget字体粗细测试工具
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 136
+文本: "思源黑体 (SourceHanSans):"
+复用键: sourceHanSansFont (相似度: 0.93)
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 137
+文本: "- 文件: assets/fonts/chinese/SourceHanSansCN-VF.otf"
+建议键: widget文件
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 138
+文本: "- 类型: 可变字体 (Variable Font)"
+建议键: widget类型可变字体
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 139
+文本: "- 字重轴: wght (100-900)"
+建议键: widget字重轴
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 141
+文本: "思源宋体 (SourceHanSerif):"
+复用键: sourceHanSerifFont (相似度: 0.93)
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 142
+文本: "- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf"
+建议键: widget文件1
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 143
+文本: "- 类型: 可变字体 (Variable Font)"
+建议键: widget类型可变字体1
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 144
+文本: "- 字重轴: wght (100-900)"
+建议键: widget字重轴1
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 150
+文本: "1. Flutter引擎对可变字体的支持不完整"
+建议键: widget引擎对可变字体的
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 151
+文本: "2. 字体文件的字重轴未被正确识别"
+建议键: widget字体文件的字重轴
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 152
+文本: "3. 字体注册方式不正确"
+建议键: widget字体注册方式不正
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 153
+文本: "4. 平台特定的字体渲染限制"
+建议键: widget平台特定的字体渲
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 159
+文本: "1. 使用不同的字体家族名称注册同一字体文件的不同字重"
+建议键: widget使用不同的字体家
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 160
+文本: "2. 使用非可变字体的多个字重文件"
+建议键: widget使用非可变字体的
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 161
+文本: "3. 使用fontVariations属性直接设置字重轴的值"
+建议键: widget使用属性直接设置
+
+文件: presentation\widgets\font_weight_tester.dart, 行: 162
+文本: "4. 在应用中提供字体粗细预览，帮助用户选择合适的字重"
+建议键: widget在应用中提供字体
+
+
+--- UI_APPBAR_NAVIGATION (3 个) ---
+文件: presentation\widgets\common\m3_color_picker.dart, 行: 164
+文本: "预设"
+复用键: presets (相似度: 1.00)
+
+文件: presentation\widgets\common\m3_color_picker.dart, 行: 165
+文本: "调节"
+建议键: widget调节
+
+文件: presentation\widgets\common\m3_color_picker.dart, 行: 166
+文本: "代码"
+建议键: widget代码
+
+
+=== 英文硬编码详情 ===
+
+--- UI_TEXT_WIDGET (24 个) ---
+文件: presentation\pages\home_page.dart, 行: 13
+文本: "Home Page"
+建议键: home_page.dartHomepage
+
+文件: presentation\pages\home_page.dart, 行: 18
+文本: "Home Page"
+建议键: home_page.dartHomepage2
+
+文件: presentation\pages\library\components\resizable_image_preview_panel.dart, 行: 135
+文本: "No preview available"
+建议键: libraryNopreviewavailable
+
+文件: presentation\pages\main\m3_main_window.dart, 行: 403
+文本: "Page not implemented"
+建议键: mainPagenotimplemented
+
+文件: presentation\pages\practices\m3_practice_edit_page.dart, 行: 940
+文本: "Unsupported element type"
+建议键: practicesUnsupportedelementtype
+
+文件: presentation\pages\practices\m3_practice_edit_page.dart, 行: 943
+文本: "Selected element not found"
+建议键: practicesSelectedelementnotfound
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 394
+文本: "Edit Tags"
+建议键: practicesEdittags
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 397
+文本: "Tag editing functionality will be implemented later"
+建议键: practicesTageditingfunctionalitywill
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 404
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 411
+文本: "Save"
+复用键: save (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\practice_title_edit_dialog.dart, 行: 39
+文本: "Edit Practice Title"
+建议键: practicesEditpracticetitle
+
+文件: presentation\pages\practices\widgets\practice_title_edit_dialog.dart, 行: 53
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\practice_title_edit_dialog.dart, 行: 64
+文本: "Save"
+复用键: save (相似度: 1.00)
+
+文件: presentation\widgets\practice\memory_efficient_element_representation.dart, 行: 306
+文本: "Element"
+复用键: elements (相似度: 0.93)
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 844
+文本: "Performance baseline created"
+建议键: widgetPerformancebaselinecreated
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 858
+文本: "Performance data exported to console"
+建议键: widgetPerformancedataexportedto
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 991
+文本: "Reset Performance Data"
+建议键: widgetResetperformancedata
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 996
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 1010
+文本: "Performance data reset"
+建议键: widgetPerformancedatareset
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 1016
+文本: "Reset"
+复用键: reset (相似度: 1.00)
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 463
+文本: "Sans Serif"
+建议键: widgetSansserif
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 464
+文本: "Serif"
+建议键: widgetSerif
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 466
+文本: "Monospace"
+建议键: widgetMonospace
+
+文件: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart, 行: 213
+文本: "Stretch"
+建议键: widgetStretch
+
+
+--- UI_APPBAR_NAVIGATION (12 个) ---
+文件: presentation\pages\home_page.dart, 行: 13
+文本: "Home Page"
+建议键: home_page.dartHomepage1
+
+文件: presentation\pages\practices\widgets\content_tools_panel.dart, 行: 38
+文本: "Text"
+复用键: text (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\content_tools_panel.dart, 行: 44
+文本: "Image"
+复用键: image (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\content_tools_panel.dart, 行: 50
+文本: "Collection"
+复用键: practiceEditCollection (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\content_tools_panel.dart, 行: 56
+文本: "Select"
+复用键: select (相似度: 1.00)
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 925
+文本: "Excellent"
+建议键: widgetExcellent
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 927
+文本: "Good"
+建议键: widgetGood
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 929
+文本: "Acceptable"
+建议键: widgetAcceptable
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 931
+文本: "Poor"
+建议键: widgetPoor
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 933
+文本: "Critical"
+建议键: widgetCritical
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 935
+文本: "Unknown"
+复用键: unknown (相似度: 1.00)
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_page.dart, 行: 269
+文本: "PPI"
+建议键: widgetPpi
+
+
+--- UI_BUTTONS_LABELS (14 个) ---
+文件: presentation\pages\library\components\resizable_image_preview_panel.dart, 行: 135
+文本: "No preview available"
+建议键: libraryNopreviewavailable1
+
+文件: presentation\pages\main\m3_main_window.dart, 行: 403
+文本: "Page not implemented"
+建议键: mainPagenotimplemented1
+
+文件: presentation\pages\practices\m3_practice_edit_page.dart, 行: 940
+文本: "Unsupported element type"
+建议键: practicesUnsupportedelementtype1
+
+文件: presentation\pages\practices\m3_practice_edit_page.dart, 行: 943
+文本: "Selected element not found"
+建议键: practicesSelectedelementnotfound1
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 404
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\pages\practices\components\m3_practice_list_item.dart, 行: 411
+文本: "Save"
+复用键: save (相似度: 1.00)
+
+文件: presentation\pages\practices\widgets\practice_title_edit_dialog.dart, 行: 53
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\widgets\practice\memory_efficient_element_representation.dart, 行: 306
+文本: "Element"
+复用键: elements (相似度: 0.93)
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 996
+文本: "Cancel"
+复用键: cancel (相似度: 1.00)
+
+文件: presentation\widgets\practice\performance_dashboard.dart, 行: 1016
+文本: "Reset"
+复用键: reset (相似度: 1.00)
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 463
+文本: "Sans Serif"
+建议键: widgetSansserif1
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 464
+文本: "Serif"
+建议键: widgetSerif1
+
+文件: presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 466
+文本: "Monospace"
+建议键: widgetMonospace1
+
+文件: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart, 行: 213
+文本: "Stretch"
+建议键: widgetStretch1
+
+
+--- UI_PROPERTIES (7 个) ---
+文件: presentation\pages\practices\widgets\practice_title_edit_dialog.dart, 行: 43
+文本: "Title"
+复用键: title (相似度: 1.00)
+
+文件: presentation\pages\works\components\content\items\m3_work_grid_item.dart, 行: 178
+文本: "Edit Tags"
+建议键: worksEdittags
+
+文件: presentation\widgets\pagination\m3_pagination_controls.dart, 行: 69
+文本: "First Page"
+建议键: widgetFirstpage
+
+文件: presentation\widgets\pagination\m3_pagination_controls.dart, 行: 79
+文本: "Previous Page"
+复用键: previousPage (相似度: 1.00)
+
+文件: presentation\widgets\pagination\m3_pagination_controls.dart, 行: 97
+文本: "Next Page"
+复用键: nextPage (相似度: 1.00)
+
+文件: presentation\widgets\pagination\m3_pagination_controls.dart, 行: 107
+文本: "Last Page"
+建议键: widgetLastpage
+
+文件: presentation\widgets\practice\m3_practice_layer_panel.dart, 行: 302
+文本: "Rename Layer"
+建议键: widgetRenamelayer
+

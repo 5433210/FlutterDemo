@@ -1,0 +1,304 @@
+=== 枚举显示名称分析报告 ===
+生成时间: 2025-06-17 01:10:04
+
+枚举定义总数: 61
+有硬编码显示文本的枚举: 3
+
+=== 所有枚举定义 ===
+枚举名: AppLanguage
+文件: domain\enums\app_language.dart
+值: system, zh, en, language, language, language, languageSystem, languageZh, languageEn, null, locale, name, system, zh, en, system, unknown, result
+----------------------------------------
+枚举名: AppThemeMode
+文件: domain\enums\app_theme_mode.dart
+值: system, light, dark, settings_system_daydream_outlined, light_mode_outlined, dark_mode_outlined, system, light, dark, name, system, light, dark, system, unknown
+----------------------------------------
+枚举名: SortField
+文件: domain\enums\sort_field.dart
+值: value, label, value
+----------------------------------------
+枚举名: WorkStatus
+文件: domain\enums\work_status.dart
+值: value, label, value, archived, draft, isDraft, published, value, draft
+----------------------------------------
+枚举名: WorkStyle
+文件: domain\enums\work_style.dart
+值: value, label, value, value, value, other, v, value
+----------------------------------------
+枚举名: WorkTool
+文件: domain\enums\work_tool.dart
+值: value, label, value, value, value, other, v, value
+----------------------------------------
+枚举名: SortDirection
+文件: presentation\widgets\filter\sections\m3_filter_sort_section.dart
+值: ascending, descending
+----------------------------------------
+枚举名: CharacterImageType
+文件: domain\models\character\character_image_type.dart
+值: original, binary, thumbnail, squareBinary, squareTransparent, transparent, outline, squareOutline
+----------------------------------------
+枚举名: CharacterRegionState
+文件: domain\models\character\character_region_state.dart
+值: normal, selected
+----------------------------------------
+枚举名: UndoActionType
+文件: domain\models\character\undo_action.dart
+值: create, update, delete, erase
+----------------------------------------
+枚举名: DateRangePreset
+文件: domain\models\common\date_range_filter.dart
+值: today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth, thisYear, lastYear, last7Days, last30Days, last90Days, last365Days, all, custom
+----------------------------------------
+枚举名: CollectionDirection
+文件: domain\models\practice\practice_element.dart
+值: horizontal, vertical, horizontalReversed
+----------------------------------------
+枚举名: _RequestType
+文件: infrastructure\cache\services\optimized_image_cache_service.dart
+值: preload, demand
+----------------------------------------
+枚举名: LogCategory
+文件: infrastructure\logging\log_category.dart
+值: ui, business, data, network, performance
+----------------------------------------
+枚举名: LogLevel
+文件: infrastructure\logging\log_level.dart
+值: debug, info, warning, error, fatal, grey, blue, yellow, red, purple
+----------------------------------------
+枚举名: LayerChangeType
+文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+值: update, error, performance
+----------------------------------------
+枚举名: DragPhase
+文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+值: idle, preDrag, dragging, postDrag
+----------------------------------------
+枚举名: ElementChangeType
+文件: presentation\pages\practices\widgets\element_change_types.dart
+值: text, color, contentOnly, width, sizeOnly, x, positionOnly, sizeAndPosition, created, deleted, visibility, opacity, rotation, multiple
+----------------------------------------
+枚举名: StateChangeType
+文件: presentation\pages\practices\widgets\state_change_dispatcher.dart
+值: dragStart, dragUpdate, dragEnd, selectionChange, elementUpdate, toolChange, viewportChange, layerVisibilityChange, elementOrderChange, pageChange, gridSettingsChange
+----------------------------------------
+枚举名: LayerUpdateType
+文件: presentation\pages\practices\widgets\layers\layer_render_manager.dart
+值: registered, configChanged, needsRebuild
+----------------------------------------
+枚举名: LayerPriority
+文件: presentation\pages\practices\widgets\layers\layer_types.dart
+值: critical, high, medium, low
+----------------------------------------
+枚举名: LayerVisibility
+文件: presentation\pages\practices\widgets\layers\layer_types.dart
+值: visible, hidden, dimmed, optimized
+----------------------------------------
+枚举名: RenderLayerType
+文件: presentation\pages\practices\widgets\layers\layer_types.dart
+值: grid, staticBackground, content, dragPreview, boxes, interaction, guideline, toolbars, uiOverlay
+----------------------------------------
+枚举名: CullingStrategy
+文件: presentation\pages\practices\widgets\layers\viewport_culling_manager.dart
+值: basic, adaptive, aggressive, conservative
+----------------------------------------
+枚举名: RefreshEventType
+文件: presentation\providers\character\character_refresh_notifier.dart
+值: characterSaved, characterDeleted, regionUpdated, eraseDataReloaded, pageChanged
+----------------------------------------
+枚举名: EraseMode
+文件: presentation\providers\character\erase_state.dart
+值: draw, pan
+----------------------------------------
+枚举名: Tool
+文件: presentation\providers\character\tool_mode_provider.dart
+值: pan, select, pan_tool, crop_square, toolModePanTooltip, toolModeSelectTooltip
+----------------------------------------
+枚举名: GridSizeOption
+文件: presentation\providers\settings\grid_size_provider.dart
+值: minItemWidth
+----------------------------------------
+枚举名: PracticeRefreshReason
+文件: presentation\services\practice_list_refresh_service.dart
+值: saved, deleted, updated, batchOperation
+----------------------------------------
+枚举名: FilterType
+文件: presentation\viewmodels\states\character_grid_state.dart
+值: all, recent, favorite
+----------------------------------------
+枚举名: ViewMode
+文件: presentation\viewmodels\states\work_browse_state.dart
+值: grid
+----------------------------------------
+枚举名: PracticeViewMode
+文件: presentation\viewmodels\states\practice_list_state.dart
+值: grid
+----------------------------------------
+枚举名: LoadRequestStatus
+文件: presentation\viewmodels\states\work_browse_state.dart
+值: idle, throttled, loading
+----------------------------------------
+枚举名: ResponsiveBreakpoint
+文件: presentation\widgets\responsive_builder.dart
+值: xs, sm, md
+----------------------------------------
+枚举名: EmptyStateType
+文件: presentation\widgets\common\empty_state.dart
+值: noWorks, noCharacters, noPractices, noResults, noSelection, error, custom
+----------------------------------------
+枚举名: WorkFormField
+文件: presentation\widgets\forms\work_form.dart
+值: title, author, style, tool, creationDate, remark
+----------------------------------------
+枚举名: CacheAdaptationStrategy
+文件: presentation\widgets\practice\adaptive_cache_manager.dart
+值: memoryFirst, performanceFirst, balanced
+----------------------------------------
+枚举名: HeatLevel
+文件: presentation\widgets\practice\advanced_cache_manager.dart
+值: cold, warm, hot, veryHot
+----------------------------------------
+枚举名: MemoryPressureLevel
+文件: presentation\widgets\practice\performance_optimizer.dart
+值: normal, mild, moderate, threshold, severe
+----------------------------------------
+枚举名: CachePriority
+文件: presentation\widgets\practice\element_cache_manager.dart
+值: low, medium, high, pinned
+----------------------------------------
+枚举名: CacheStrategy
+文件: presentation\widgets\practice\element_cache_manager.dart
+值: leastRecentlyUsed, leastFrequentlyUsed, priorityBased
+----------------------------------------
+枚举名: LoadingStrategy
+文件: presentation\widgets\practice\enhanced_ondemand_resource_loader.dart
+值: immediate, backgroundOptimized, memoryOptimized, adaptive
+----------------------------------------
+枚举名: LoadPriority
+文件: presentation\widgets\practice\enhanced_ondemand_resource_loader.dart
+值: immediate, high, normal, low, background
+----------------------------------------
+枚举名: PerformanceEventType
+文件: presentation\widgets\practice\enhanced_performance_tracker.dart
+值: frameJank, operationStart, operationEnd, baselineCreated, performanceRegression, memoryWarning, cpuSpike
+----------------------------------------
+枚举名: PerformanceGrade
+文件: presentation\widgets\practice\enhanced_performance_tracker.dart
+值: excellent, good, acceptable, poor, critical, unknown
+----------------------------------------
+枚举名: PerformanceSeverity
+文件: presentation\widgets\practice\enhanced_performance_tracker.dart
+值: info, warning, critical
+----------------------------------------
+枚举名: ElementRepresentationMode
+文件: presentation\widgets\practice\memory_efficient_element_representation.dart
+值: full, quality, preview, compressed, proxy, adaptive
+----------------------------------------
+枚举名: NotificationType
+文件: presentation\widgets\practice\optimization_metrics_collector.dart
+值: direct, throttled, intelligent, fallback
+----------------------------------------
+枚举名: DevicePerformanceLevel
+文件: presentation\widgets\practice\performance_optimizer.dart
+值: low, medium, high
+----------------------------------------
+枚举名: RebuildStrategy
+文件: presentation\widgets\practice\selective_rebuild_manager.dart
+值: contentUpdate, minimalRebuild, layoutUpdate, rotation, transformUpdate, fullRebuild
+----------------------------------------
+枚举名: _GestureMode
+文件: presentation\widgets\practice\smart_canvas_gesture_handler.dart
+值: idle, pan, elementDrag, selectionBox, multiTouch
+----------------------------------------
+枚举名: _GestureTypeEnum
+文件: presentation\widgets\practice\smart_gesture_dispatcher.dart
+值: unknown, tap, elementDrag, selectionBox, canvasPan, multiScale, multiRotate, multiPan, fastPan
+----------------------------------------
+枚举名: _TapType
+文件: presentation\widgets\practice\smart_gesture_dispatcher.dart
+值: normal, elementSelect, elementDeselect, clearSelection, contextMenu
+----------------------------------------
+枚举名: PageRangeType
+文件: presentation\widgets\practice\export\export_dialog.dart
+值: all, current, custom
+----------------------------------------
+枚举名: PdfFitPolicy
+文件: presentation\widgets\practice\export\export_dialog.dart
+值: width, height, contain
+----------------------------------------
+枚举名: ExportType
+文件: presentation\widgets\practice\export\export_service.dart
+值: name, extension, name
+----------------------------------------
+枚举名: AlignmentDirection
+文件: presentation\widgets\practice\guideline_alignment\guideline_types.dart
+值: horizontal, vertical
+----------------------------------------
+枚举名: AlignmentMode
+文件: presentation\widgets\practice\guideline_alignment\guideline_types.dart
+值: none, gridSnap, guideline
+----------------------------------------
+枚举名: GuidelineType
+文件: presentation\widgets\practice\guideline_alignment\guideline_types.dart
+值: horizontalCenterLine, verticalCenterLine, horizontalTopEdge, horizontalBottomEdge, verticalLeftEdge, verticalRightEdge
+----------------------------------------
+枚举名: PreviewMode
+文件: presentation\widgets\works\preview_types.dart
+值: import, edit, view, extract
+----------------------------------------
+枚举名: ToolbarActionPlacement
+文件: presentation\widgets\works\preview_types.dart
+值: left, right, center
+----------------------------------------
+
+=== 硬编码显示文本分析 ===
+
+枚举: AppLanguage
+文件: domain\enums\app_language.dart
+硬编码显示文本数量: 4
+  - 文件: domain\enums\app_language.dart, 行: 44
+    文本: "AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString() ?? "
+    枚举值: toLocale
+    上下文: 'AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString() ?? "null (跟随系统)"}');
+  - 文件: domain\enums\app_language.dart, 行: 55
+    文本: "AppLanguage.fromString: 从字符串 "
+    枚举值: fromString
+    上下文: debugPrint('AppLanguage.fromString: 从字符串 "$value" 解析语言设置');
+  - 文件: domain\enums\app_language.dart, 行: 55
+    文本: " 解析语言设置"
+    枚举值: fromString
+    上下文: debugPrint('AppLanguage.fromString: 从字符串 "$value" 解析语言设置');
+  - 文件: domain\enums\app_language.dart, 行: 62
+    文本: "AppLanguage.fromString: 解析结果: $result"
+    枚举值: fromString
+    上下文: debugPrint('AppLanguage.fromString: 解析结果: $result');
+--------------------------------------------------
+
+枚举: AppThemeMode
+文件: domain\enums\app_theme_mode.dart
+硬编码显示文本数量: 3
+  - 文件: domain\enums\app_theme_mode.dart, 行: 17
+    文本: "跟随系统"
+    枚举值: system
+    上下文: AppThemeMode.system => '跟随系统',
+  - 文件: domain\enums\app_theme_mode.dart, 行: 18
+    文本: "浅色模式"
+    枚举值: light
+    上下文: AppThemeMode.light => '浅色模式',
+  - 文件: domain\enums\app_theme_mode.dart, 行: 19
+    文本: "深色模式"
+    枚举值: dark
+    上下文: AppThemeMode.dark => '深色模式',
+--------------------------------------------------
+
+枚举: DateRangePreset
+文件: domain\models\common\date_range_filter.dart
+硬编码显示文本数量: 2
+  - 文件: domain\models\common\date_range_filter.dart, 行: 165
+    文本: "最近一年"
+    枚举值: last365Days
+    上下文: DateRangePreset.last365Days => '最近一年',
+  - 文件: domain\models\common\date_range_filter.dart, 行: 167
+    文本: "上月"
+    枚举值: lastMonth
+    上下文: DateRangePreset.lastMonth => '上月',
+--------------------------------------------------

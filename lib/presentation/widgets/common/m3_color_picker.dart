@@ -137,7 +137,7 @@ class _M3ColorPickerState extends State<M3ColorPicker>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         // 颜色预览区域
@@ -160,10 +160,10 @@ class _M3ColorPickerState extends State<M3ColorPicker>
         // 模式选择标签页
         TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.grid_view), text: '预设'),
-            Tab(icon: Icon(Icons.tune), text: '调节'),
-            Tab(icon: Icon(Icons.code), text: '代码'),
+          tabs: [
+            Tab(icon: const Icon(Icons.grid_view), text: l10n.presets),
+            Tab(icon: const Icon(Icons.tune), text: l10n.adjust),
+            Tab(icon: const Icon(Icons.code), text: l10n.code),
           ],
         ),
 

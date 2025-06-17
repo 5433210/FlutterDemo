@@ -1,0 +1,4005 @@
+# 综合硬编码文本映射文件
+# 包含UI界面文本和枚举显示名称的硬编码检测结果
+# 请审核以下内容，修改英文翻译，并将 approved 设置为 true
+# 只有 approved: true 的条目会被处理
+
+!!python/object/apply:collections.OrderedDict
+- - - ui_text_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - error_messages
+          - !!python/object/apply:collections.OrderedDict
+            - - - common_error_严重错误应用启动失败
+                - text_zh: '严重错误：应用启动失败: $e'
+                  text_en: '严重错误：应用启动失败: $e'
+                  file: main.dart
+                  line: 109
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_正在创建实例
+                - text_zh: 正在创建 PracticeService 实例
+                  text_en: 正在创建 PracticeService 实例
+                  file: application\providers\service_providers.dart
+                  line: 105
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_实例创建成功
+                - text_zh: PracticeStorageService 实例创建成功
+                  text_en: PracticeStorageService 实例创建成功
+                  file: application\providers\service_providers.dart
+                  line: 91
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_练习不存在
+                - text_zh: 练习不存在
+                  text_en: 练习不存在
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 48
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_获取练习失败
+                - text_zh: '获取练习失败: $e'
+                  text_en: '获取练习失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 77
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理单个练习实体失败
+                - text_zh: '处理单个练习实体失败: $e'
+                  text_en: '处理单个练习实体失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 97
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_获取所有练习失败
+                - text_zh: '获取所有练习失败: $e'
+                  text_en: '获取所有练习失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 104
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理单个练习实体标签
+                - text_zh: '处理单个练习实体标签失败: $e'
+                  text_en: '处理单个练习实体标签失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 124
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_获取所有标签失败
+                - text_zh: '获取所有标签失败: $e'
+                  text_en: '获取所有标签失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 131
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检查标题是否存在排除
+                - text_zh: '检查标题是否存在: $title, 排除ID: $excludeId'
+                  text_en: '检查标题是否存在: $title, 排除ID: $excludeId'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 147
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_标题
+                - text_zh: 标题
+                  text_en: 标题
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 159
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检查标题是否存在失败
+                - text_zh: '检查标题是否存在失败: $e'
+                  text_en: '检查标题是否存在失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 163
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_成功解析页面数据个页
+                - text_zh: 成功解析页面数据：${pages.length} 个页面
+                  text_en: 成功解析页面数据：${pages.length} 个页面
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 231
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_解析字段失败不是有效
+                - text_zh: 解析pages字段失败：不是有效的列表
+                  text_en: 解析pages字段失败：不是有效的列表
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 206
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_解析字段失败
+                - text_zh: '解析pages字段失败: $e'
+                  text_en: '解析pages字段失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 731
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_加载字帖失败
+                - text_zh: '加载字帖失败: $e'
+                  text_en: '加载字帖失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 255
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_生成查询参数
+                - text_zh: '生成查询参数: $queryParams'
+                  text_en: '生成查询参数: $queryParams'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 266
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询结果数量
+                - text_zh: '查询结果数量: ${list.length}'
+                  text_en: '查询结果数量: ${list.length}'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 269
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据库中总共有条练习
+                - text_zh: 数据库中总共有 $totalCount 条练习记录
+                  text_en: 数据库中总共有 $totalCount 条练习记录
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 274
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_警告数据库中没有任何
+                - text_zh: '⚠️ 警告: 数据库中没有任何练习记录，请先创建练习'
+                  text_en: '⚠️ 警告: 数据库中没有任何练习记录，请先创建练习'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 276
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_警告数据库中有记录但
+                - text_zh: '⚠️ 警告: 数据库中有记录，但当前过滤条件没有匹配的结果'
+                  text_en: '⚠️ 警告: 数据库中有记录，但当前过滤条件没有匹配的结果'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 278
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理查询结果中的单个
+                - text_zh: '处理查询结果中的单个练习实体失败: $e'
+                  text_en: '处理查询结果中的单个练习实体失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 293
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询练习失败
+                - text_zh: '查询练习失败: $e'
+                  text_en: '查询练习失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 300
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询字帖
+                - text_zh: '查询字帖: $field $operator $value'
+                  text_en: '查询字帖: $field $operator $value'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 312
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询结果条记录
+                - text_zh: '查询结果: ${results.length} 条记录'
+                  text_en: '查询结果: ${results.length} 条记录'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 326
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询字帖失败
+                - text_zh: '查询字帖失败: $e'
+                  text_en: '查询字帖失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 330
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始
+                - text_zh: 'PracticeService.toggleFavorite 开始: ID=$id'
+                  text_en: 'PracticeService.toggleFavorite 开始: ID=$id'
+                  file: application\services\practice\practice_service.dart
+                  line: 253
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_调用堆栈
+                - text_zh: '调用堆栈: ${StackTrace.current}'
+                  text_en: '调用堆栈: ${StackTrace.current}'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 340
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_转换为成功包含个字段
+                - text_zh: 转换为JSON成功, JSON包含 ${json.length} 个字段
+                  text_en: 转换为JSON成功, JSON包含 ${json.length} 个字段
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 344
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据准备完成字段
+                - text_zh: '数据准备完成，字段: ${preparedData.keys.join('
+                  text_en: '数据准备完成，字段: ${preparedData.keys.join('
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 350
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始调用
+                - text_zh: 开始调用 _db.save($_table, ${practice.id}, ...)
+                  text_en: 开始调用 _db.save($_table, ${practice.id}, ...)
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 352
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_调用成功
+                - text_zh: _db.set 调用成功
+                  text_en: _db.set 调用成功
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 448
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_验证成功数据已保存到
+                - text_zh: '验证成功，数据已保存到数据库: ${savedData['
+                  text_en: '验证成功，数据已保存到数据库: ${savedData['
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 363
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_完成
+                - text_zh: === PracticeService.createPractice 完成 ===
+                  text_en: === PracticeService.createPractice 完成 ===
+                  file: application\services\practice\practice_service.dart
+                  line: 49
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_错误保存实体失败
+                - text_zh: '错误: 保存实体失败: $e'
+                  text_en: '错误: 保存实体失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 368
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_错误堆栈
+                - text_zh: '错误堆栈: ${e is Error ? e.stackTrace :'
+                  text_en: '错误堆栈: ${e is Error ? e.stackTrace :'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 451
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始保存个实体
+                - text_zh: 'saveMany: 开始保存 ${practices.length} 个实体'
+                  text_en: 'saveMany: 开始保存 ${practices.length} 个实体'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 377
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理的实体
+                - text_zh: 'saveMany: 处理ID=${p.id}的实体'
+                  text_en: 'saveMany: 处理ID=${p.id}的实体'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 382
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_批量保存成功
+                - text_zh: 'saveMany: 批量保存成功'
+                  text_en: 'saveMany: 批量保存成功'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 387
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_失败
+                - text_zh: 'updateFavoriteStatus失败: $e'
+                  text_en: 'updateFavoriteStatus失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 523
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_缩略图数据
+                - text_zh: '缩略图数据: ${thumbnail != null ?'
+                  text_en: '缩略图数据: ${thumbnail != null ?'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 417
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_新建字帖设置
+                - text_zh: 新建字帖，设置 createTime=$now
+                  text_en: 新建字帖，设置 createTime=$now
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 422
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_现有字帖尝试获取原有
+                - text_zh: 现有字帖，尝试获取原有 createTime...
+                  text_en: 现有字帖，尝试获取原有 createTime...
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 425
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_警告无法获取现有字帖
+                - text_zh: '警告: 无法获取现有字帖数据 [ID=$id]'
+                  text_en: '警告: 无法获取现有字帖数据 [ID=$id]'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 428
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_使用原有的
+                - text_zh: '使用原有的 createTime: ${existingPractice['
+                  text_en: '使用原有的 createTime: ${existingPractice['
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 434
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_无法获取原有使用当前
+                - text_zh: '无法获取原有createTime，使用当前时间作为fallback: $now'
+                  text_en: '无法获取原有createTime，使用当前时间作为fallback: $now'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 438
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始调用方法
+                - text_zh: === savePracticeRaw 开始调用 _db.set 方法 ===
+                  text_en: === savePracticeRaw 开始调用 _db.set 方法 ===
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 443
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_参数
+                - text_zh: '参数: title=$title, tags=$tags, status=$status'
+                  text_en: '参数: title=$title, tags=$tags, status=$status'
+                  file: application\services\practice\practice_service.dart
+                  line: 37
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据内容
+                - text_zh: '数据内容: ${data.keys.join('
+                  text_en: '数据内容: ${data.keys.join('
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 445
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_错误调用失败
+                - text_zh: '错误: _db.set 调用失败: $e'
+                  text_en: '错误: _db.set 调用失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 450
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已保存数据到数据库
+                - text_zh: 'savePracticeRaw: 已保存数据到数据库，ID=$practiceId'
+                  text_en: 'savePracticeRaw: 已保存数据到数据库，ID=$practiceId'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 454
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始验证数据是否已保
+                - text_zh: 开始验证数据是否已保存...
+                  text_en: 开始验证数据是否已保存...
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 457
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据保存失败无法在数
+                - text_zh: '数据保存失败，无法在数据库中找到记录: $practiceId'
+                  text_en: '数据保存失败，无法在数据库中找到记录: $practiceId'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 462
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据保存验证成功
+                - text_zh: '数据保存验证成功: ${savedData['
+                  text_en: '数据保存验证成功: ${savedData['
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 464
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_保存字帖失败
+                - text_zh: '保存字帖失败: $e'
+                  text_en: '保存字帖失败: $e'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 477
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_找不到的记录
+                - text_zh: 'updateFavoriteStatus: 找不到ID=$id的记录'
+                  text_en: 'updateFavoriteStatus: 找不到ID=$id的记录'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 508
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_成功更新收藏状态
+                - text_zh: 'updateFavoriteStatus: 成功更新收藏状态'
+                  text_en: 'updateFavoriteStatus: 成功更新收藏状态'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 520
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_添加关键词筛选条件
+                - text_zh: '添加关键词筛选条件: title LIKE %${filter.keyword}%'
+                  text_en: '添加关键词筛选条件: title LIKE %${filter.keyword}%'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 539
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_添加标签筛选条件
+                - text_zh: '添加标签筛选条件: tags LIKE %$tag%'
+                  text_en: '添加标签筛选条件: tags LIKE %$tag%'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 547
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_添加状态筛选条件
+                - text_zh: '添加状态筛选条件: status=${filter.status}'
+                  text_en: '添加状态筛选条件: status=${filter.status}'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 554
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_添加收藏筛选条件使用
+                - text_zh: '添加收藏筛选条件: isFavorite=1 (使用条件格式)'
+                  text_en: '添加收藏筛选条件: isFavorite=1 (使用条件格式)'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 579
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_注意如果没有收藏的练
+                - text_zh: '⚠️ 注意: 如果没有收藏的练习，带有isFavorite=1条件的查询将不返回结果'
+                  text_en: '⚠️ 注意: 如果没有收藏的练习，带有isFavorite=1条件的查询将不返回结果'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 580
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_设置排序
+                - text_zh: '设置排序: ${query['
+                  text_en: '设置排序: ${query['
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 591
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_最终查询参数
+                - text_zh: '最终查询参数: $query'
+                  text_en: '最终查询参数: $query'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 598
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始处理数据共个字段
+                - text_zh: '_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段'
+                  text_en: '_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 611
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_移除字段数据库中不存
+                - text_zh: '_prepareForSave: 移除status字段，数据库中不存在该列'
+                  text_en: '_prepareForSave: 移除status字段，数据库中不存在该列'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 617
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_字段不存在设为默认值
+                - text_zh: '_processDbData: isFavorite字段不存在，设为默认值false'
+                  text_en: '_processDbData: isFavorite字段不存在，设为默认值false'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 748
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_字段已经是字符串
+                - text_zh: '_prepareForSave: pages字段已经是字符串'
+                  text_en: '_prepareForSave: pages字段已经是字符串'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 665
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_字段类型未知设为空字
+                - text_zh: '_prepareForSave: pages字段类型未知，设为空字符串'
+                  text_en: '_prepareForSave: pages字段类型未知，设为空字符串'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 668
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_转换字段失败设为空字
+                - text_zh: '_prepareForSave: 转换pages字段失败: $e，设为空字符串'
+                  text_en: '_prepareForSave: 转换pages字段失败: $e，设为空字符串'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 672
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_字段不存在设为空列表
+                - text_zh: '_prepareForSave: pages字段不存在，设为空列表'
+                  text_en: '_prepareForSave: pages字段不存在，设为空列表'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 678
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_字段不存在于数据库设
+                - text_zh: '_processDbData: status字段不存在于数据库，设为默认值active'
+                  text_en: '_processDbData: status字段不存在于数据库，设为默认值active'
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 754
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_目录不存在
+                - text_zh: 目录不存在：$dirPath
+                  text_en: 目录不存在：$dirPath
+                  file: application\services\library_import_service.dart
+                  line: 32
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_文件不存在
+                - text_zh: 文件不存在
+                  text_en: 文件不存在
+                  file: infrastructure\storage\local_storage.dart
+                  line: 297
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_不支持的文件类型
+                - text_zh: 不支持的文件类型：$mimeType
+                  text_en: 不支持的文件类型：$mimeType
+                  file: application\services\library_import_service.dart
+                  line: 87
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_生成缩略图失败
+                - text_zh: 生成缩略图失败
+                  text_en: 生成缩略图失败
+                  file: application\services\library_import_service.dart
+                  line: 106
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_项目不存在
+                - text_zh: 项目不存在：$id
+                  text_en: 项目不存在：$id
+                  file: application\services\library_service.dart
+                  line: 57
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_保存图像文件失败
+                - text_zh: '保存图像文件失败: $e'
+                  text_en: '保存图像文件失败: $e'
+                  file: application\services\character\character_service.dart
+                  line: 611
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_更新字符失败
+                - text_zh: '更新字符失败: $e'
+                  text_en: '更新字符失败: $e'
+                  file: application\services\character\character_service.dart
+                  line: 641
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_预览区域无效
+                - text_zh: 预览区域无效
+                  text_en: 预览区域无效
+                  file: application\services\image\character_image_processor.dart
+                  line: 93
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_图像解码失败
+                - text_zh: 图像解码失败
+                  text_en: 图像解码失败
+                  file: application\services\image\character_image_processor.dart
+                  line: 188
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理区域无效
+                - text_zh: 处理区域无效
+                  text_en: 处理区域无效
+                  file: application\services\image\character_image_processor.dart
+                  line: 180
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_没有轮廓点
+                - text_zh: 没有轮廓点
+                  text_en: 没有轮廓点
+                  file: application\services\image\character_image_processor.dart
+                  line: 559
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_无法计算有效的轮廓边
+                - text_zh: 无法计算有效的轮廓边界
+                  text_en: 无法计算有效的轮廓边界
+                  file: application\services\image\character_image_processor.dart
+                  line: 579
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已创建实体生成的准备
+                - text_zh: 已创建实体，生成的ID=${practice.id}, 准备调用 _repository.save...
+                  text_en: 已创建实体，生成的ID=${practice.id}, 准备调用 _repository.save...
+                  file: application\services\practice\practice_service.dart
+                  line: 44
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_调用成功返回
+                - text_zh: _repository.save 调用成功，返回ID=${result.id}
+                  text_en: _repository.save 调用成功，返回ID=${result.id}
+                  file: application\services\practice\practice_service.dart
+                  line: 191
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_错误失败
+                - text_zh: '错误: createPractice 失败 - $e'
+                  text_en: '错误: createPractice 失败 - $e'
+                  file: application\services\practice\practice_service.dart
+                  line: 52
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检测到空将创建新字帖
+                - text_zh: 检测到空 ID，将创建新字帖
+                  text_en: 检测到空 ID，将创建新字帖
+                  file: application\services\practice\practice_service.dart
+                  line: 127
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_创建完成新
+                - text_zh: 创建完成，新ID=${newPractice.id}
+                  text_en: 创建完成，新ID=${newPractice.id}
+                  file: application\services\practice\practice_service.dart
+                  line: 132
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检测到页面数据将更新
+                - text_zh: 检测到页面数据，将更新页面
+                  text_en: 检测到页面数据，将更新页面
+                  file: application\services\practice\practice_service.dart
+                  line: 136
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_准备保存更新后的实体
+                - text_zh: 准备保存更新后的实体，调用 _repository.save...
+                  text_en: 准备保存更新后的实体，调用 _repository.save...
+                  file: application\services\practice\practice_service.dart
+                  line: 138
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_准备保存缩略图大小字
+                - text_zh: 准备保存缩略图, 大小=${thumbnail.length} 字节
+                  text_en: 准备保存缩略图, 大小=${thumbnail.length} 字节
+                  file: application\services\practice\practice_service.dart
+                  line: 195
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_压缩后缩略图大小字节
+                - text_zh: 压缩后缩略图大小=${compressedThumbnail.length} 字节
+                  text_en: 压缩后缩略图大小=${compressedThumbnail.length} 字节
+                  file: application\services\practice\practice_service.dart
+                  line: 197
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已保存新字帖缩略图到
+                - text_zh: '已保存新字帖缩略图到文件系统: ${newPractice.id}'
+                  text_en: '已保存新字帖缩略图到文件系统: ${newPractice.id}'
+                  file: application\services\practice\practice_service.dart
+                  line: 163
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_完成更新页面分支
+                - text_zh: === PracticeService.savePractice 完成(更新页面分支) ===
+                  text_en: === PracticeService.savePractice 完成(更新页面分支) ===
+                  file: application\services\practice\practice_service.dart
+                  line: 152
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_完成无页面分支
+                - text_zh: === PracticeService.savePractice 完成(无页面分支) ===
+                  text_en: === PracticeService.savePractice 完成(无页面分支) ===
+                  file: application\services\practice\practice_service.dart
+                  line: 166
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检测到现有将更新字帖
+                - text_zh: 检测到现有ID=$id，将更新字帖
+                  text_en: 检测到现有ID=$id，将更新字帖
+                  file: application\services\practice\practice_service.dart
+                  line: 171
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_错误无法找到的字帖
+                - text_zh: '错误: 无法找到ID=$id的字帖'
+                  text_en: '错误: 无法找到ID=$id的字帖'
+                  file: application\services\practice\practice_service.dart
+                  line: 174
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_无法找到指定的字帖
+                - text_zh: '无法找到指定的字帖: $id'
+                  text_en: '无法找到指定的字帖: $id'
+                  file: application\services\practice\practice_service.dart
+                  line: 175
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_创建了更新后的实体准
+                - text_zh: 创建了更新后的实体, 准备调用 _repository.save...
+                  text_en: 创建了更新后的实体, 准备调用 _repository.save...
+                  file: application\services\practice\practice_service.dart
+                  line: 187
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已保存现有字帖缩略图
+                - text_zh: '已保存现有字帖缩略图到文件系统: ${result.id}'
+                  text_en: '已保存现有字帖缩略图到文件系统: ${result.id}'
+                  file: application\services\practice\practice_service.dart
+                  line: 199
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_完成更新字帖分支
+                - text_zh: === PracticeService.savePractice 完成(更新字帖分支) ===
+                  text_en: === PracticeService.savePractice 完成(更新字帖分支) ===
+                  file: application\services\practice\practice_service.dart
+                  line: 202
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已保存缩略图到文件系
+                - text_zh: '已保存缩略图到文件系统: $practiceId'
+                  text_en: '已保存缩略图到文件系统: $practiceId'
+                  file: application\services\practice\practice_service.dart
+                  line: 234
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_获取字帖结果
+                - text_zh: '获取字帖结果: ${practice != null ?'
+                  text_en: '获取字帖结果: ${practice != null ?'
+                  file: application\services\practice\practice_service.dart
+                  line: 256
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_当前收藏状态
+                - text_zh: '当前收藏状态: ${practice.isFavorite}'
+                  text_en: '当前收藏状态: ${practice.isFavorite}'
+                  file: application\services\practice\practice_service.dart
+                  line: 260
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_新的收藏状态
+                - text_zh: '新的收藏状态: $newFavoriteStatus'
+                  text_en: '新的收藏状态: $newFavoriteStatus'
+                  file: application\services\practice\practice_service.dart
+                  line: 264
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_使用轻量级方法更新收
+                - text_zh: 使用轻量级方法更新收藏状态成功
+                  text_en: 使用轻量级方法更新收藏状态成功
+                  file: application\services\practice\practice_service.dart
+                  line: 272
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_轻量级方法失败尝试完
+                - text_zh: 轻量级方法失败，尝试完整保存
+                  text_en: 轻量级方法失败，尝试完整保存
+                  file: application\services\practice\practice_service.dart
+                  line: 276
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_保存结果成功
+                - text_zh: '保存结果: 成功'
+                  text_en: '保存结果: 成功'
+                  file: application\services\practice\practice_service.dart
+                  line: 281
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_警告无法解码缩略图将
+                - text_zh: '警告: 无法解码缩略图，将使用原始数据'
+                  text_en: '警告: 无法解码缩略图，将使用原始数据'
+                  file: application\services\practice\practice_service.dart
+                  line: 313
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_文件大小字节
+                - text_zh: '文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节'
+                  text_en: '文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节'
+                  file: application\services\practice\practice_service.dart
+                  line: 346
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_封面导入图保存失败
+                - text_zh: 封面导入图保存失败
+                  text_en: 封面导入图保存失败
+                  file: application\services\storage\work_storage_service.dart
+                  line: 198
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_封面缩略图保存失败
+                - text_zh: 封面缩略图保存失败
+                  text_en: 封面缩略图保存失败
+                  file: application\services\storage\work_storage_service.dart
+                  line: 242
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_源文件不存在
+                - text_zh: 源文件不存在
+                  text_en: 源文件不存在
+                  file: infrastructure\storage\local_storage.dart
+                  line: 320
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_源图片不存在
+                - text_zh: 源图片不存在
+                  text_en: 源图片不存在
+                  file: application\services\work\work_image_service.dart
+                  line: 669
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_图片文件不能为空
+                - text_zh: 图片文件不能为空
+                  text_en: 图片文件不能为空
+                  file: application\services\work\work_service.dart
+                  line: 132
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_作品不存在
+                - text_zh: '作品不存在: $workId'
+                  text_en: '作品不存在: $workId'
+                  file: application\services\work\work_service.dart
+                  line: 267
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_从字符串
+                - text_zh: 'AppLanguage.fromString: 从字符串'
+                  text_en: 'AppLanguage.fromString: 从字符串'
+                  file: domain\enums\app_language.dart
+                  line: 55
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_解析结果
+                - text_zh: 'AppLanguage.fromString: 解析结果: $result'
+                  text_en: 'AppLanguage.fromString: 解析结果: $result'
+                  file: domain\enums\app_language.dart
+                  line: 62
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_处理结果反序列化失败
+                - text_zh: '处理结果反序列化失败: $e'
+                  text_en: '处理结果反序列化失败: $e'
+                  file: domain\models\character\processing_result.dart
+                  line: 123
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_备份文件不存在
+                - text_zh: '备份文件不存在: $backupPath'
+                  text_en: '备份文件不存在: $backupPath'
+                  file: infrastructure\backup\backup_service.dart
+                  line: 372
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_备份中未找到应用数据
+                - text_zh: 备份中未找到应用数据目录
+                  text_en: 备份中未找到应用数据目录
+                  file: infrastructure\backup\backup_service.dart
+                  line: 787
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_备份中未找到数据库目
+                - text_zh: 备份中未找到数据库目录
+                  text_en: 备份中未找到数据库目录
+                  file: infrastructure\backup\backup_service.dart
+                  line: 865
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_备份中未找到数据库文
+                - text_zh: 备份中未找到数据库文件
+                  text_en: 备份中未找到数据库文件
+                  file: infrastructure\backup\backup_service.dart
+                  line: 877
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据库恢复需要重启应
+                - text_zh: 数据库恢复需要重启应用
+                  text_en: 数据库恢复需要重启应用
+                  file: infrastructure\backup\backup_service.dart
+                  line: 928
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_初始化磁盘缓存失败
+                - text_zh: '初始化磁盘缓存失败: $e'
+                  text_en: '初始化磁盘缓存失败: $e'
+                  file: infrastructure\cache\implementations\disk_cache.dart
+                  line: 84
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_读取缓存文件失败
+                - text_zh: '读取缓存文件失败: $e'
+                  text_en: '读取缓存文件失败: $e'
+                  file: infrastructure\cache\implementations\disk_cache.dart
+                  line: 119
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_写入缓存文件失败
+                - text_zh: '写入缓存文件失败: $e'
+                  text_en: '写入缓存文件失败: $e'
+                  file: infrastructure\cache\implementations\disk_cache.dart
+                  line: 154
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_删除缓存文件失败
+                - text_zh: '删除缓存文件失败: $e'
+                  text_en: '删除缓存文件失败: $e'
+                  file: infrastructure\cache\implementations\disk_cache.dart
+                  line: 171
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_清空缓存目录失败
+                - text_zh: '清空缓存目录失败: $e'
+                  text_en: '清空缓存目录失败: $e'
+                  file: infrastructure\cache\implementations\disk_cache.dart
+                  line: 189
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_清理缓存失败
+                - text_zh: '清理缓存失败: $e'
+                  text_en: '清理缓存失败: $e'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 81
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已清除所有缓存
+                - text_zh: 已清除所有缓存
+                  text_en: 已清除所有缓存
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 25
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已启动缓存监控间隔分
+                - text_zh: '已启动缓存监控，间隔: ${interval.inMinutes}分钟'
+                  text_en: '已启动缓存监控，间隔: ${interval.inMinutes}分钟'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 38
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_当前缓存总大小
+                - text_zh: '当前缓存总大小: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB'
+                  text_en: '当前缓存总大小: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 52
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_缓存大小超过阈值开始
+                - text_zh: 缓存大小超过阈值，开始清理
+                  text_en: 缓存大小超过阈值，开始清理
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 57
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_检查内存使用失败
+                - text_zh: '检查内存使用失败: $e'
+                  text_en: '检查内存使用失败: $e'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 61
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已清理缓存
+                - text_zh: '已清理缓存: $cache'
+                  text_en: '已清理缓存: $cache'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 78
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_获取缓存大小失败
+                - text_zh: '获取缓存大小失败: $e'
+                  text_en: '获取缓存大小失败: $e'
+                  file: infrastructure\cache\services\cache_manager.dart
+                  line: 93
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_日志记录失败原始消息
+                - text_zh: 'EditPageLogger.fileOpsError: 日志记录失败: $e, 原始消息: $message'
+                  text_en: 'EditPageLogger.fileOpsError: 日志记录失败: $e, 原始消息: $message'
+                  file: infrastructure\logging\edit_page_logger_extension.dart
+                  line: 245
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_无法恢复数据库文件
+                - text_zh: '无法恢复数据库文件: $e, $renameError, $storageError'
+                  text_en: '无法恢复数据库文件: $e, $renameError, $storageError'
+                  file: infrastructure\persistence\sqlite\database_restore_handler.dart
+                  line: 148
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_统计查询失败
+                - text_zh: '统计查询失败: $e'
+                  text_en: '统计查询失败: $e'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 64
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_查询失败
+                - text_zh: '查询失败: $e'
+                  text_en: '查询失败: $e'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 161
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_开始保存数据到
+                - text_zh: 'SQLiteDatabase.save: 开始保存数据到 $table, id=$id'
+                  text_en: 'SQLiteDatabase.save: 开始保存数据到 $table, id=$id'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 186
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_记录已存在执行更新
+                - text_zh: 'SQLiteDatabase.save: 记录已存在，执行更新'
+                  text_en: 'SQLiteDatabase.save: 记录已存在，执行更新'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 199
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_更新完成影响行数
+                - text_zh: 'SQLiteDatabase.save: 更新完成，影响行数: $updateCount'
+                  text_en: 'SQLiteDatabase.save: 更新完成，影响行数: $updateCount'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 206
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_记录不存在执行插入
+                - text_zh: 'SQLiteDatabase.save: 记录不存在，执行插入'
+                  text_en: 'SQLiteDatabase.save: 记录不存在，执行插入'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 209
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_插入完成
+                - text_zh: 'SQLiteDatabase.save: 插入完成'
+                  text_en: 'SQLiteDatabase.save: 插入完成'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 215
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_保存后无法验证数据记
+                - text_zh: 'SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id'
+                  text_en: 'SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 227
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据保存成功已验证
+                - text_zh: 'SQLiteDatabase.save: 数据保存成功，已验证 $table.$id'
+                  text_en: 'SQLiteDatabase.save: 数据保存成功，已验证 $table.$id'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 229
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_保存失败
+                - text_zh: 'SQLiteDatabase.save: 保存失败: $e'
+                  text_en: 'SQLiteDatabase.save: 保存失败: $e'
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 231
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_数据库降级不支持
+                - text_zh: 数据库降级不支持
+                  text_en: 数据库降级不支持
+                  file: infrastructure\persistence\sqlite\sqlite_database.dart
+                  line: 559
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言操作系统语言
+                - text_zh: '【系统语言】操作系统语言检测: $platformLocale'
+                  text_en: '【系统语言】操作系统语言检测: $platformLocale'
+                  file: presentation\app.dart
+                  line: 47
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言检测到中文系
+                - text_zh: '【系统语言】检测到中文系统语言，设置为: zh'
+                  text_en: '【系统语言】检测到中文系统语言，设置为: zh'
+                  file: presentation\app.dart
+                  line: 55
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言检测到英文系
+                - text_zh: '【系统语言】检测到英文系统语言，设置为: en'
+                  text_en: '【系统语言】检测到英文系统语言，设置为: en'
+                  file: presentation\app.dart
+                  line: 58
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言未检测到支持
+                - text_zh: 【系统语言】未检测到支持的系统语言，默认使用中文
+                  text_en: 【系统语言】未检测到支持的系统语言，默认使用中文
+                  file: presentation\app.dart
+                  line: 62
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言当前用户语言
+                - text_zh: '【系统语言】当前用户语言设置: $userLanguage'
+                  text_en: '【系统语言】当前用户语言设置: $userLanguage'
+                  file: presentation\app.dart
+                  line: 85
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_系统语言最终使用的语
+                - text_zh: '【系统语言】最终使用的语言: ${finalLocale?.languageCode ??'
+                  text_en: '【系统语言】最终使用的语言: ${finalLocale?.languageCode ??'
+                  file: presentation\app.dart
+                  line: 92
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_开始复制选中元素
+                - text_zh: 开始复制选中元素...
+                  text_en: 开始复制选中元素...
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 10
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_复制结果
+                - text_zh: '复制结果: ${clipboardElement != null ?'
+                  text_en: '复制结果: ${clipboardElement != null ?'
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 12
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_复制的元素类型
+                - text_zh: '复制的元素类型: ${clipboardElement['
+                  text_en: '复制的元素类型: ${clipboardElement['
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 15
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_剪贴板详细检查
+                - text_zh: ======= 剪贴板详细检查 =======
+                  text_en: ======= 剪贴板详细检查 =======
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 29
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_内部剪贴板内容类型
+                - text_zh: '内部剪贴板内容类型: ${clipboardElement['
+                  text_en: '内部剪贴板内容类型: ${clipboardElement['
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 33
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_字符
+                - text_zh: '字符ID: ${clipboardElement['
+                  text_en: '字符ID: ${clipboardElement['
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 42
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_图库项目
+                - text_zh: '图库项目IDs: ${clipboardElement['
+                  text_en: '图库项目IDs: ${clipboardElement['
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 46
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_图片
+                - text_zh: '图片URL: ${clipboardElement['
+                  text_en: '图片URL: ${clipboardElement['
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 48
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_内部剪贴板完整内容
+                - text_zh: '内部剪贴板完整内容: $clipboardElement'
+                  text_en: '内部剪贴板完整内容: $clipboardElement'
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 53
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_内部剪贴板为空
+                - text_zh: 内部剪贴板为空
+                  text_en: 内部剪贴板为空
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 56
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_剪贴板检查结束
+                - text_zh: ======= 剪贴板检查结束 =======
+                  text_en: ======= 剪贴板检查结束 =======
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 59
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_剪贴板监控错误
+                - text_zh: '剪贴板监控错误: $e'
+                  text_en: '剪贴板监控错误: $e'
+                  file: presentation\pages\practices\clipboard_enhancements.dart
+                  line: 83
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_网格显示切换
+                - text_zh: '🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}'
+                  text_en: '🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}'
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 2895
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_网格大小
+                - text_zh: '🎨 网格大小: ${_controller.state.gridSize}'
+                  text_en: '🎨 网格大小: ${_controller.state.gridSize}'
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 2896
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_调用
+                - text_zh: 🎨 调用 triggerGridSettingsChange()
+                  text_en: 🎨 调用 triggerGridSettingsChange()
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 2901
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_调用强制重建
+                - text_zh: 🎨 调用 setState() 强制重建UI
+                  text_en: 🎨 调用 setState() 强制重建UI
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 2905
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_网格切换完成
+                - text_zh: 🎨 网格切换完成
+                  text_en: 🎨 网格切换完成
+                  file: presentation\pages\practices\m3_practice_edit_page.dart
+                  line: 2908
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_平移警告偏移量包含值
+                - text_zh: '【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！'
+                  text_en: '【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！'
+                  file: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+                  line: 540
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_平移回调后偏移量
+                - text_zh: '【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition'
+                  text_en: '【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition'
+                  file: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+                  line: 557
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_选择点击已选中元素取
+                - text_zh: '【选择】handleTapUp: 点击已选中元素，取消选中: $id'
+                  text_en: '【选择】handleTapUp: 点击已选中元素，取消选中: $id'
+                  file: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+                  line: 686
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_选择点击空白区域清除
+                - text_zh: '【选择】handleTapUp: 点击空白区域，清除选择'
+                  text_en: '【选择】handleTapUp: 点击空白区域，清除选择'
+                  file: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+                  line: 737
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_层级处理器错误
+                - text_zh: '📡 CanvasStructureListener: 层级处理器错误 - $type: $e'
+                  text_en: '📡 CanvasStructureListener: 层级处理器错误 - $type: $e'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 52
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_已释放资源
+                - text_zh: '🎯 DragOperationManager: 已释放资源'
+                  text_en: '🎯 DragOperationManager: 已释放资源'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 117
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_注册层级处理器
+                - text_zh: '📡 CanvasStructureListener: 注册层级处理器 - $type'
+                  text_en: '📡 CanvasStructureListener: 注册层级处理器 - $type'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 99
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_取消注册层级处理器
+                - text_zh: '📡 CanvasStructureListener: 取消注册层级处理器 - $type'
+                  text_en: '📡 CanvasStructureListener: 取消注册层级处理器 - $type'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 105
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_处理页面背景变化
+                - text_zh: '📡 StaticBackground: 处理页面背景变化'
+                  text_en: '📡 StaticBackground: 处理页面背景变化'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 161
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_处理网格设置变化
+                - text_zh: '📡 StaticBackground: 处理网格设置变化'
+                  text_en: '📡 StaticBackground: 处理网格设置变化'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 163
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_处理元素变化个元素
+                - text_zh: '📡 Content: 处理元素变化 - ${event.elements.length} 个元素'
+                  text_en: '📡 Content: 处理元素变化 - ${event.elements.length} 个元素'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 170
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_处理图层可见性变化
+                - text_zh: '📡 Content: 处理图层可见性变化'
+                  text_en: '📡 Content: 处理图层可见性变化'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 172
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_处理工具变化
+                - text_zh: '📡 Interaction: 处理工具变化 - ${event.newTool}'
+                  text_en: '📡 Interaction: 处理工具变化 - ${event.newTool}'
+                  file: presentation\pages\practices\widgets\canvas_structure_listener.dart
+                  line: 190
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_取消通知计时器失败
+                - text_zh: '取消通知计时器失败: $e'
+                  text_en: '取消通知计时器失败: $e'
+                  file: presentation\pages\practices\widgets\content_render_controller.dart
+                  line: 106
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_关闭失败
+                - text_zh: '关闭stream controller失败: $e'
+                  text_en: '关闭stream controller失败: $e'
+                  file: presentation\pages\practices\widgets\content_render_controller.dart
+                  line: 112
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_失败
+                - text_zh: 'dispose cache manager失败: $e'
+                  text_en: 'dispose cache manager失败: $e'
+                  file: presentation\pages\practices\widgets\content_render_layer.dart
+                  line: 237
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_移除拖拽状态监听器失
+                - text_zh: '移除拖拽状态监听器失败: $e'
+                  text_en: '移除拖拽状态监听器失败: $e'
+                  file: presentation\pages\practices\widgets\content_render_controller.dart
+                  line: 131
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_过程中发生异常
+                - text_zh: 'ContentRenderLayer dispose过程中发生异常: $e'
+                  text_en: 'ContentRenderLayer dispose过程中发生异常: $e'
+                  file: presentation\pages\practices\widgets\content_render_layer.dart
+                  line: 240
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_警告可能未能成功调用
+                - text_zh: 警告：ContentRenderLayer super.dispose()可能未能成功调用
+                  text_en: 警告：ContentRenderLayer super.dispose()可能未能成功调用
+                  file: presentation\pages\practices\widgets\content_render_layer.dart
+                  line: 264
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_调用失败
+                - text_zh: 'ContentRenderLayer super.dispose()调用失败: $disposeError'
+                  text_en: 'ContentRenderLayer super.dispose()调用失败: $disposeError'
+                  file: presentation\pages\practices\widgets\content_render_layer.dart
+                  line: 248
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_最终调用失败
+                - text_zh: 'ContentRenderLayer 最终super.dispose()调用失败: $finalError'
+                  text_en: 'ContentRenderLayer 最终super.dispose()调用失败: $finalError'
+                  file: presentation\pages\practices\widgets\content_render_layer.dart
+                  line: 254
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_取消拖拽操作
+                - text_zh: '🎯 DragOperationManager: 取消拖拽操作'
+                  text_en: '🎯 DragOperationManager: 取消拖拽操作'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 69
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_拖拽取消处理失败
+                - text_zh: '🎯 DragOperationManager: 拖拽取消处理失败 - $e'
+                  text_en: '🎯 DragOperationManager: 拖拽取消处理失败 - $e'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 98
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_结束拖拽操作
+                - text_zh: '🎯 DragOperationManager: 结束拖拽操作'
+                  text_en: '🎯 DragOperationManager: 结束拖拽操作'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 128
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_拖拽结束处理失败
+                - text_zh: '🎯 DragOperationManager: 拖拽结束处理失败 - $e'
+                  text_en: '🎯 DragOperationManager: 拖拽结束处理失败 - $e'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 134
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_开始拖拽操作
+                - text_zh: '🎯 DragOperationManager: 开始拖拽操作'
+                  text_en: '🎯 DragOperationManager: 开始拖拽操作'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 157
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_拖拽操作启动失败
+                - text_zh: '🎯 DragOperationManager: 拖拽操作启动失败 - $e'
+                  text_en: '🎯 DragOperationManager: 拖拽操作启动失败 - $e'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 174
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_拖拽更新失败
+                - text_zh: '🎯 DragOperationManager: 拖拽更新失败 - $e'
+                  text_en: '🎯 DragOperationManager: 拖拽更新失败 - $e'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 217
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_应用最终位置
+                - text_zh: '🎯 DragOperationManager: 应用最终位置'
+                  text_en: '🎯 DragOperationManager: 应用最终位置'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 223
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_网格吸附从到
+                - text_zh: '🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)'
+                  text_en: '🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 288
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_创建撤销重做操作
+                - text_zh: '🎯 DragOperationManager: 创建撤销/重做操作'
+                  text_en: '🎯 DragOperationManager: 创建撤销/重做操作'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 299
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_执行阶段
+                - text_zh: '🎯 DragOperationManager: 执行PreDrag阶段'
+                  text_en: '🎯 DragOperationManager: 执行PreDrag阶段'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 360
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_阶段异常
+                - text_zh: '🎯 DragOperationManager: PostDrag阶段异常 - $e'
+                  text_en: '🎯 DragOperationManager: PostDrag阶段异常 - $e'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 352
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_初始化完成
+                - text_zh: '🎯 DragOperationManager: 初始化完成'
+                  text_en: '🎯 DragOperationManager: 初始化完成'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 407
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - practices_error_已创建个元素快照
+                - text_zh: '🎯 DragOperationManager: 已创建 ${elementsList.length} 个元素快照'
+                  text_en: '🎯 DragOperationManager: 已创建 ${elementsList.length} 个元素快照'
+                  file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                  line: 431
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_当前页面未设置无法创
+                - text_zh: 当前页面ID未设置，无法创建选区
+                  text_en: 当前页面ID未设置，无法创建选区
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 142
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_当前页面图像未设置无
+                - text_zh: 当前页面图像未设置，无法创建选区
+                  text_en: 当前页面图像未设置，无法创建选区
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 145
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_选区尺寸过小最小尺寸
+                - text_zh: 选区尺寸过小，最小尺寸为20x20
+                  text_en: 选区尺寸过小，最小尺寸为20x20
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 148
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_页面图像未设置无法加
+                - text_zh: 页面图像未设置，无法加载选区数据
+                  text_en: 页面图像未设置，无法加载选区数据
+                  file: presentation\providers\character\character_collection_provider.dart
+                  line: 451
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_已经在加载中跳过
+                - text_zh: 'PracticeListViewModel: 已经在加载中，跳过'
+                  text_en: 'PracticeListViewModel: 已经在加载中，跳过'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 148
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_开始加载练习数据设置
+                - text_zh: 'PracticeListViewModel: 开始加载练习数据，设置isLoading=true'
+                  text_en: 'PracticeListViewModel: 开始加载练习数据，设置isLoading=true'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 152
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_调用
+                - text_zh: 'PracticeListViewModel: 调用 _practiceService.count'
+                  text_en: 'PracticeListViewModel: 调用 _practiceService.count'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 176
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_详细过滤条件
+                - text_zh: 'PracticeListViewModel: 详细过滤条件: ${filter.toJson()}'
+                  text_en: 'PracticeListViewModel: 详细过滤条件: ${filter.toJson()}'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 168
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_查询结果数量
+                - text_zh: 'PracticeListViewModel: 查询结果数量: ${practicesResult.length}'
+                  text_en: 'PracticeListViewModel: 查询结果数量: ${practicesResult.length}'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 170
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_没有找到匹配的练习数
+                - text_zh: 'PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库'
+                  text_en: 'PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 172
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_总记录数
+                - text_zh: 'PracticeListViewModel: 总记录数: $totalCount'
+                  text_en: 'PracticeListViewModel: 总记录数: $totalCount'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 178
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_转换练习实体失败
+                - text_zh: 'PracticeListViewModel: 转换练习实体失败: $e'
+                  text_en: 'PracticeListViewModel: 转换练习实体失败: $e'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 200
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_错误堆栈
+                - text_zh: 'PracticeListViewModel: 错误堆栈: $loadStack'
+                  text_en: 'PracticeListViewModel: 错误堆栈: $loadStack'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 533
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_没有找到收藏的练习数
+                - text_zh: 'PracticeListViewModel: ⚠️ 没有找到收藏的练习数据，考虑关闭收藏过滤器'
+                  text_en: 'PracticeListViewModel: ⚠️ 没有找到收藏的练习数据，考虑关闭收藏过滤器'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 210
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_持久化当前状态
+                - text_zh: 'PracticeListViewModel: 持久化当前状态'
+                  text_en: 'PracticeListViewModel: 持久化当前状态'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 220
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_加载练习失败
+                - text_zh: 'PracticeListViewModel: 加载练习失败: $e'
+                  text_en: 'PracticeListViewModel: 加载练习失败: $e'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 223
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_重置过滤器
+                - text_zh: 'PracticeListViewModel: 重置过滤器'
+                  text_en: 'PracticeListViewModel: 重置过滤器'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 237
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_过滤器未变更跳过更新
+                - text_zh: 'PracticeListViewModel: 过滤器未变更，跳过更新'
+                  text_en: 'PracticeListViewModel: 过滤器未变更，跳过更新'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 341
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_开始初始化数据
+                - text_zh: 'PracticeListViewModel: 开始初始化数据...'
+                  text_en: 'PracticeListViewModel: 开始初始化数据...'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 491
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_已恢复状态过滤条件
+                - text_zh: 'PracticeListViewModel: 已恢复状态，过滤条件：${savedState.filter}'
+                  text_en: 'PracticeListViewModel: 已恢复状态，过滤条件：${savedState.filter}'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 495
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_开始加载练习数据强制
+                - text_zh: 'PracticeListViewModel: 开始加载练习数据（强制刷新）'
+                  text_en: 'PracticeListViewModel: 开始加载练习数据（强制刷新）'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 513
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_初始化失败
+                - text_zh: 'PracticeListViewModel: 初始化失败: $e'
+                  text_en: 'PracticeListViewModel: 初始化失败: $e'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 516
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_尝试重新加载练习数据
+                - text_zh: 'PracticeListViewModel: 尝试重新加载练习数据'
+                  text_en: 'PracticeListViewModel: 尝试重新加载练习数据'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 529
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_重试加载失败
+                - text_zh: 'PracticeListViewModel: 重试加载失败: $loadError'
+                  text_en: 'PracticeListViewModel: 重试加载失败: $loadError'
+                  file: presentation\viewmodels\practice_list_view_model.dart
+                  line: 532
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - viewmodel_error_没有找到有效的图片文
+                - text_zh: 没有找到有效的图片文件
+                  text_en: 没有找到有效的图片文件
+                  file: presentation\viewmodels\work_import_view_model.dart
+                  line: 101
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_区域绘制失败
+                - text_zh: '区域绘制失败: ${region.id}, error: $e\n$stack'
+                  text_en: '区域绘制失败: ${region.id}, error: $e\n$stack'
+                  file: presentation\widgets\character_collection\regions_painter.dart
+                  line: 82
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制失败
+                - text_zh: 'RegionsPainter绘制失败: $e\n$stack'
+                  text_en: 'RegionsPainter绘制失败: $e\n$stack'
+                  file: presentation\widgets\character_collection\regions_painter.dart
+                  line: 86
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_缓存图像数据失败
+                - text_zh: '缓存图像数据失败: $e'
+                  text_en: '缓存图像数据失败: $e'
+                  file: presentation\widgets\image\cached_image.dart
+                  line: 102
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件不存在或无法访问
+                - text_zh: '文件不存在或无法访问: $filePath'
+                  text_en: '文件不存在或无法访问: $filePath'
+                  file: presentation\widgets\library\m3_library_browsing_panel.dart
+                  line: 615
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制异常
+                - text_zh: 绘制异常：$e
+                  text_en: 绘制异常：$e
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 107
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制字符背景色
+                - text_zh: '🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}'
+                  text_en: '🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 186
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_没有字符图像数据
+                - text_zh: 没有字符图像数据
+                  text_en: 没有字符图像数据
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 336
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_尝试查找索引键
+                - text_zh: '尝试查找索引键1: $index'
+                  text_en: '尝试查找索引键1: $index'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 351
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_找到子键
+                - text_zh: '找到characterImages子键: $characterImages'
+                  text_en: '找到characterImages子键: $characterImages'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 380
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_没有找到字符
+                - text_zh: 没有找到字符
+                  text_en: 没有找到字符
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 389
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取字符图像失败
+                - text_zh: '获取字符图像失败: $e'
+                  text_en: '获取字符图像失败: $e'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 392
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始加载纹理缓存键
+                - text_zh: '🔄 开始加载纹理: $path (缓存键: $cacheKey)'
+                  text_en: '🔄 开始加载纹理: $path (缓存键: $cacheKey)'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 401
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_纹理加载成功并缓存
+                - text_zh: '✅ 纹理加载成功并缓存: $cacheKey (${image.width}x${image.height})'
+                  text_en: '✅ 纹理加载成功并缓存: $cacheKey (${image.width}x${image.height})'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 436
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_加载纹理失败路径
+                - text_zh: '❌ 加载纹理失败: $e, 路径: $path'
+                  text_en: '❌ 加载纹理失败: $e, 路径: $path'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 440
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_加载字符图像失败
+                - text_zh: '加载字符图像失败: $e'
+                  text_en: '加载字符图像失败: $e'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 488
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_生成纹理缓存键
+                - text_zh: '🔑 生成纹理缓存键: $cacheKey'
+                  text_en: '🔑 生成纹理缓存键: $cacheKey'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 516
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_同步获取纹理缓存图像
+                - text_zh: '⚠️ 同步获取纹理缓存图像时出错: $e'
+                  text_en: '⚠️ 同步获取纹理缓存图像时出错: $e'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 532
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_纹理绘制错误
+                - text_zh: '❌ 纹理绘制错误: $e\n$stack'
+                  text_en: '❌ 纹理绘制错误: $e\n$stack'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 561
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从内存缓存中找到图像
+                - text_zh: '从内存缓存中找到图像: $cacheKey'
+                  text_en: '从内存缓存中找到图像: $cacheKey'
+                  file: presentation\widgets\practice\collection_painter.dart
+                  line: 603
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_显示导出对话框
+                - text_zh: 显示导出对话框
+                  text_en: 显示导出对话框
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 42
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出对话框返回结果
+                - text_zh: '导出对话框返回结果: $result'
+                  text_en: '导出对话框返回结果: $result'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 72
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误导出对话框返回的
+                - text_zh: '错误: 导出对话框返回的结果缺少必要的键'
+                  text_en: '错误: 导出对话框返回的结果缺少必要的键'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 78
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始导出
+                - text_zh: 开始导出PDF
+                  text_en: 开始导出PDF
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 113
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出的额外参数
+                - text_zh: '导出PDF的额外参数: $extraParams'
+                  text_en: '导出PDF的额外参数: $extraParams'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 119
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出结果
+                - text_zh: 'PDF导出结果: ${pdfPath != null ?'
+                  text_en: 'PDF导出结果: ${pdfPath != null ?'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 129
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_检查导出的文件是否存
+                - text_zh: '检查导出的PDF文件是否存在: $exists'
+                  text_en: '检查导出的PDF文件是否存在: $exists'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 135
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出的文件大小字节
+                - text_zh: '导出的PDF文件大小: $fileSize 字节'
+                  text_en: '导出的PDF文件大小: $fileSize 字节'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 139
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始导出图片格式
+                - text_zh: '开始导出图片, 格式: ${exportType.name}'
+                  text_en: '开始导出图片, 格式: ${exportType.name}'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 173
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出的图片
+                - text_zh: '导出的图片 ${i + 1}: ${imagePaths[i]}'
+                  text_en: '导出的图片 ${i + 1}: ${imagePaths[i]}'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 186
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_检查导出的第一个图片
+                - text_zh: '检查导出的第一个图片文件是否存在: $exists'
+                  text_en: '检查导出的第一个图片文件是否存在: $exists'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 195
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出的第一个图片文件
+                - text_zh: '导出的第一个图片文件大小: $fileSize 字节'
+                  text_en: '导出的第一个图片文件大小: $fileSize 字节'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 199
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出过程中发生异常
+                - text_zh: '导出过程中发生异常: $e'
+                  text_en: '导出过程中发生异常: $e'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 228
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_异常堆栈
+                - text_zh: '异常堆栈: $stack'
+                  text_en: '异常堆栈: $stack'
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 229
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出字帖过程结束
+                - text_zh: === 导出字帖过程结束 ===
+                  text_en: === 导出字帖过程结束 ===
+                  file: presentation\widgets\practice\file_operations.dart
+                  line: 237
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_渲染进度
+                - text_zh: '渲染进度: $current/$total'
+                  text_en: '渲染进度: $current/$total'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 64
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_检查标题是否存在时出
+                - text_zh: '检查标题是否存在时出错: $e'
+                  text_en: '检查标题是否存在时出错: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 84
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_加载字帖失败
+                - text_zh: '加载字帖失败: $e'
+                  text_en: '加载字帖失败: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 119
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始保存字帖
+                - text_zh: '开始保存字帖: $saveTitle, ID: $currentPracticeId'
+                  text_en: '开始保存字帖: $saveTitle, ID: $currentPracticeId'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 217
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_缩略图生成完成
+                - text_zh: '缩略图生成完成: ${thumbnail != null ?'
+                  text_en: '缩略图生成完成: ${thumbnail != null ?'
+                  file: presentation\widgets\practice\file_operations_mixin.dart
+                  line: 202
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_字帖保存成功
+                - text_zh: '字帖保存成功: $saveTitle, ID: $currentPracticeId'
+                  text_en: '字帖保存成功: $saveTitle, ID: $currentPracticeId'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 243
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_保存字帖失败
+                - text_zh: '保存字帖失败: $e'
+                  text_en: '保存字帖失败: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 246
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始另存为新字帖
+                - text_zh: '开始另存为新字帖: $title'
+                  text_en: '开始另存为新字帖: $title'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 150
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_字帖另存为成功
+                - text_zh: '字帖另存为成功: $title, ID: $currentPracticeId'
+                  text_en: '字帖另存为成功: $title, ID: $currentPracticeId'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 176
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_另存为字帖失败
+                - text_zh: '另存为字帖失败: $e'
+                  text_en: '另存为字帖失败: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 179
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_生成缩略图失败
+                - text_zh: '生成缩略图失败: $e'
+                  text_en: '生成缩略图失败: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 328
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_无法获取渲染对象
+                - text_zh: 无法获取渲染对象
+                  text_en: 无法获取渲染对象
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 41
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_无法将图像转换为字节
+                - text_zh: 无法将图像转换为字节数组
+                  text_en: 无法将图像转换为字节数组
+                  file: widgets\character_edit\character_edit_canvas.dart
+                  line: 731
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从捕获图像失败
+                - text_zh: '从 RepaintBoundary 捕获图像失败: $e'
+                  text_en: '从 RepaintBoundary 捕获图像失败: $e'
+                  file: presentation\widgets\practice\practice_persistence_mixin.dart
+                  line: 64
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_堆栈跟踪
+                - text_zh: '堆栈跟踪: $stack'
+                  text_en: '堆栈跟踪: $stack'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 398
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_纹理缓存统计信息
+                - text_zh: 📊 纹理缓存统计信息
+                  text_en: 📊 纹理缓存统计信息
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 33
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_纹理路径为空
+                - text_zh: ❌ 纹理路径为空
+                  text_en: ❌ 纹理路径为空
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 57
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从缓存加载纹理
+                - text_zh: '✅ 从缓存加载纹理: $fileId'
+                  text_en: '✅ 从缓存加载纹理: $fileId'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 69
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_纹理正在加载中
+                - text_zh: '⏳ 纹理正在加载中: $fileId'
+                  text_en: '⏳ 纹理正在加载中: $fileId'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 75
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从文件系统加载纹理成
+                - text_zh: '✅ 从文件系统加载纹理成功: $fileId (${image.width}x${image.height})'
+                  text_en: '✅ 从文件系统加载纹理成功: $fileId (${image.width}x${image.height})'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 103
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从文件系统加载纹理失
+                - text_zh: '❌ 从文件系统加载纹理失败: $e'
+                  text_en: '❌ 从文件系统加载纹理失败: $e'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 107
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_从存储服务加载纹理成
+                - text_zh: '✅ 从存储服务加载纹理成功: $fileId (${image.width}x${image.height})'
+                  text_en: '✅ 从存储服务加载纹理成功: $fileId (${image.width}x${image.height})'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 142
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_使用服务加载纹理失败
+                - text_zh: '❌ 使用服务加载纹理失败: $e'
+                  text_en: '❌ 使用服务加载纹理失败: $e'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 150
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_无法加载纹理
+                - text_zh: '❌ 无法加载纹理: $path'
+                  text_en: '❌ 无法加载纹理: $path'
+                  file: presentation\widgets\practice\texture_manager.dart
+                  line: 154
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_页面背景颜色
+                - text_zh: '页面背景颜色: $bgColorStr'
+                  text_en: '页面背景颜色: $bgColorStr'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 30
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_页面元素数量
+                - text_zh: '页面元素数量: ${elements.length}'
+                  text_en: '页面元素数量: ${elements.length}'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 37
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_缩放比例原始尺寸
+                - text_zh: '缩放比例: $scale (原始尺寸: ${pageWidth}x$pageHeight)'
+                  text_en: '缩放比例: $scale (原始尺寸: ${pageWidth}x$pageHeight)'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 45
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制标题
+                - text_zh: '绘制标题: $title'
+                  text_en: '绘制标题: $title'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 134
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_集字元素字符数量
+                - text_zh: '集字元素字符数量: ${characters.length}'
+                  text_en: '集字元素字符数量: ${characters.length}'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 200
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_集字元素尺寸字体大小
+                - text_zh: '集字元素尺寸: ${width}x$height, 字体大小: $fontSize, 字体颜色: $fontColor'
+                  text_en: '集字元素尺寸: ${width}x$height, 字体大小: $fontSize, 字体颜色: $fontColor'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 211
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_集字元素文本
+                - text_zh: '集字元素文本: $text'
+                  text_en: '集字元素文本: $text'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 232
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制集字元素失败
+                - text_zh: '绘制集字元素失败: $e'
+                  text_en: '绘制集字元素失败: $e'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 279
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制组合元素失败
+                - text_zh: '绘制组合元素失败: $e'
+                  text_en: '绘制组合元素失败: $e'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 323
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_绘制文本元素失败
+                - text_zh: '绘制文本元素失败: $e'
+                  text_en: '绘制文本元素失败: $e'
+                  file: presentation\widgets\practice\thumbnail_generator.dart
+                  line: 414
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始导出文件
+                - text_zh: 'ExportDialog: 开始导出文件'
+                  text_en: 'ExportDialog: 开始导出文件'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 987
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误未选择导出位置
+                - text_zh: 'ExportDialog: 错误 - 未选择导出位置'
+                  text_en: 'ExportDialog: 错误 - 未选择导出位置'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 990
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_用户输入的文件名
+                - text_zh: 'ExportDialog: 用户输入的文件名:'
+                  text_en: 'ExportDialog: 用户输入的文件名:'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 998
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误文件名为空
+                - text_zh: 'ExportDialog: 错误 - 文件名为空'
+                  text_en: 'ExportDialog: 错误 - 文件名为空'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1001
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误文件名包含非法字
+                - text_zh: 'ExportDialog: 错误 - 文件名包含非法字符'
+                  text_en: 'ExportDialog: 错误 - 文件名包含非法字符'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1011
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出目录不存在尝试创
+                - text_zh: 'ExportDialog: 导出目录不存在，尝试创建: $_outputPath'
+                  text_en: 'ExportDialog: 导出目录不存在，尝试创建: $_outputPath'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1021
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_成功创建导出目录
+                - text_zh: 'ExportDialog: 成功创建导出目录'
+                  text_en: 'ExportDialog: 成功创建导出目录'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1024
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_创建导出目录失败
+                - text_zh: 'ExportDialog: 创建导出目录失败: $e'
+                  text_en: 'ExportDialog: 创建导出目录失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1026
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出回调返回值
+                - text_zh: 'ExportDialog: 导出回调返回值: $result'
+                  text_en: 'ExportDialog: 导出回调返回值: $result'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1065
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_关闭导出对话框并返回
+                - text_zh: 'ExportDialog: 关闭导出对话框并返回结果'
+                  text_en: 'ExportDialog: 关闭导出对话框并返回结果'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1066
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_预览生成失败
+                - text_zh: '预览生成失败: $e'
+                  text_en: '预览生成失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1131
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始初始化默认导出路
+                - text_zh: 'ExportDialog: 开始初始化默认导出路径'
+                  text_en: 'ExportDialog: 开始初始化默认导出路径'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1187
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取目录失败
+                - text_zh: 'ExportDialog: 获取Downloads目录失败: $e'
+                  text_en: 'ExportDialog: 获取Downloads目录失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1193
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取目录也失败
+                - text_zh: 'ExportDialog: 获取Documents目录也失败: $e2'
+                  text_en: 'ExportDialog: 获取Documents目录也失败: $e2'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1198
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取临时目录也失败
+                - text_zh: 'ExportDialog: 获取临时目录也失败: $e3'
+                  text_en: 'ExportDialog: 获取临时目录也失败: $e3'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1203
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_无法获取任何默认路径
+                - text_zh: 'ExportDialog: 无法获取任何默认路径，用户需要手动选择'
+                  text_en: 'ExportDialog: 无法获取任何默认路径，用户需要手动选择'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1211
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取到默认路径
+                - text_zh: 'ExportDialog: 获取到默认路径: ${directory.path}'
+                  text_en: 'ExportDialog: 获取到默认路径: ${directory.path}'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1215
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_目录是否存在
+                - text_zh: 'ExportDialog: 目录是否存在: $exists'
+                  text_en: 'ExportDialog: 目录是否存在: $exists'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1219
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_目录写入权限测试成功
+                - text_zh: 'ExportDialog: 目录写入权限测试成功'
+                  text_en: 'ExportDialog: 目录写入权限测试成功'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1225
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_测试文件已删除
+                - text_zh: 'ExportDialog: 测试文件已删除'
+                  text_en: 'ExportDialog: 测试文件已删除'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1261
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_目录写入权限测试失败
+                - text_zh: 'ExportDialog: 目录写入权限测试失败: $e'
+                  text_en: 'ExportDialog: 目录写入权限测试失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1229
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_获取默认路径失败
+                - text_zh: 'ExportDialog: 获取默认路径失败: $e'
+                  text_en: 'ExportDialog: 获取默认路径失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1238
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始选择导出目录
+                - text_zh: 'ExportDialog: 开始选择导出目录'
+                  text_en: 'ExportDialog: 开始选择导出目录'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1246
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_用户选择的目录
+                - text_zh: 'ExportDialog: 用户选择的目录: $selectedDirectory'
+                  text_en: 'ExportDialog: 用户选择的目录: $selectedDirectory'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1248
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_选择的目录是否存在
+                - text_zh: 'ExportDialog: 选择的目录是否存在: $exists'
+                  text_en: 'ExportDialog: 选择的目录是否存在: $exists'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1253
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_选择的目录写入权限测
+                - text_zh: 'ExportDialog: 选择的目录写入权限测试失败: $e'
+                  text_en: 'ExportDialog: 选择的目录写入权限测试失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1263
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_用户取消了目录选择
+                - text_zh: 'ExportDialog: 用户取消了目录选择'
+                  text_en: 'ExportDialog: 用户取消了目录选择'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1270
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_选择目录失败
+                - text_zh: 'ExportDialog: 选择目录失败: $e'
+                  text_en: 'ExportDialog: 选择目录失败: $e'
+                  file: presentation\widgets\practice\export\export_dialog.dart
+                  line: 1273
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误输出路径为空
+                - text_zh: '错误: 输出路径为空'
+                  text_en: '错误: 输出路径为空'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 146
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_检查文件系统权限
+                - text_zh: 检查文件系统权限...
+                  text_en: 检查文件系统权限...
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 152
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件系统权限检查通过
+                - text_zh: 文件系统权限检查通过
+                  text_en: 文件系统权限检查通过
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 156
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件系统权限检查失败
+                - text_zh: '文件系统权限检查失败: $e'
+                  text_en: '文件系统权限检查失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 158
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_尝试创建目录并再次检
+                - text_zh: 尝试创建目录并再次检查权限...
+                  text_en: 尝试创建目录并再次检查权限...
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 159
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_创建目录
+                - text_zh: '创建目录: $outputPath'
+                  text_en: '创建目录: $outputPath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 340
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误无法创建目录
+                - text_zh: '错误: 无法创建目录: $outputPath'
+                  text_en: '错误: 无法创建目录: $outputPath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 346
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_目录已准备好
+                - text_zh: '目录已准备好: $outputPath'
+                  text_en: '目录已准备好: $outputPath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 350
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误未能渲染任何页面
+                - text_zh: '错误: 未能渲染任何页面'
+                  text_en: '错误: 未能渲染任何页面'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 265
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_成功渲染个页面
+                - text_zh: 成功渲染 ${pageImages.length} 个页面
+                  text_en: 成功渲染 ${pageImages.length} 个页面
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 269
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_保存图片文件到
+                - text_zh: '保存图片文件到: $filePath'
+                  text_en: '保存图片文件到: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 88
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件已存在先删除
+                - text_zh: '文件已存在，先删除: $filePath'
+                  text_en: '文件已存在，先删除: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 365
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始写入图片文件
+                - text_zh: '开始写入图片文件: $filePath'
+                  text_en: '开始写入图片文件: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 100
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_图片文件保存成功大小
+                - text_zh: '图片文件保存成功: $filePath (大小: $fileSize 字节)'
+                  text_en: '图片文件保存成功: $filePath (大小: $fileSize 字节)'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 106
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件读取测试成功字节
+                - text_zh: '文件读取测试成功: ${readTest.length} 字节'
+                  text_en: '文件读取测试成功: ${readTest.length} 字节'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 381
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件读取测试失败
+                - text_zh: '文件读取测试失败: $e'
+                  text_en: '文件读取测试失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 383
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_错误文件写入后不存在
+                - text_zh: '错误: PDF文件写入后不存在: $filePath'
+                  text_en: '错误: PDF文件写入后不存在: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 388
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_保存图片文件失败
+                - text_zh: '保存图片文件失败: $e'
+                  text_en: '保存图片文件失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 121
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出完成成功导出个文
+                - text_zh: 导出完成，成功导出 ${exportedFiles.length} 个文件
+                  text_en: 导出完成，成功导出 ${exportedFiles.length} 个文件
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 126
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出图片失败
+                - text_zh: '导出图片失败: $e'
+                  text_en: '导出图片失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 129
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_使用页面格式朝向
+                - text_zh: '使用页面格式: $pageFormat, 朝向: ${isLandscape ?'
+                  text_en: '使用页面格式: $pageFormat, 朝向: ${isLandscape ?'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 186
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出所有页面页
+                - text_zh: '导出所有页面: ${pageIndices.length}页'
+                  text_en: '导出所有页面: ${pageIndices.length}页'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 196
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_只导出当前页面第页
+                - text_zh: '只导出当前页面: 第${currentPage + 1}页'
+                  text_en: '只导出当前页面: 第${currentPage + 1}页'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 203
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出自定义范围页面页
+                - text_zh: '导出自定义范围页面: $pageRange => ${pageIndices.length}页'
+                  text_en: '导出自定义范围页面: $pageRange => ${pageIndices.length}页'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 210
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_警告未指定有效页面范
+                - text_zh: '警告: 未指定有效页面范围，默认使用第一页'
+                  text_en: '警告: 未指定有效页面范围，默认使用第一页'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 221
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_适配策略
+                - text_zh: '适配策略: $fitPolicy'
+                  text_en: '适配策略: $fitPolicy'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 241
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_警告跳过无效的页面索
+                - text_zh: '警告: 跳过无效的页面索引: $pageIndex (超出范围)'
+                  text_en: '警告: 跳过无效的页面索引: $pageIndex (超出范围)'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 247
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_成功渲染第页
+                - text_zh: 成功渲染第 ${pageIndex + 1} 页
+                  text_en: 成功渲染第 ${pageIndex + 1} 页
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 258
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_警告未能渲染第页跳过
+                - text_zh: '警告: 未能渲染第 ${pageIndex + 1} 页，跳过'
+                  text_en: '警告: 未能渲染第 ${pageIndex + 1} 页，跳过'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 260
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_添加第页到字节
+                - text_zh: '添加第 ${pageIndex + 1} 页到PDF: ${image.length} 字节'
+                  text_en: '添加第 ${pageIndex + 1} 页到PDF: ${image.length} 字节'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 279
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_应用适配策略
+                - text_zh: '应用适配策略: $fitPolicy'
+                  text_en: '应用适配策略: $fitPolicy'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 303
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_保存文件到
+                - text_zh: '保存PDF文件到: $filePath'
+                  text_en: '保存PDF文件到: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 354
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_生成完成字节
+                - text_zh: 'PDF生成完成: ${pdfBytes.length} 字节'
+                  text_en: 'PDF生成完成: ${pdfBytes.length} 字节'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 361
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_开始写入文件
+                - text_zh: '开始写入PDF文件: $filePath'
+                  text_en: '开始写入PDF文件: $filePath'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 370
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_文件保存成功大小字节
+                - text_zh: 'PDF文件保存成功: $filePath (大小: $fileSize 字节)'
+                  text_en: 'PDF文件保存成功: $filePath (大小: $fileSize 字节)'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 376
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_保存文件失败
+                - text_zh: '保存PDF文件失败: $e'
+                  text_en: '保存PDF文件失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 392
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_导出失败
+                - text_zh: '导出PDF失败: $e'
+                  text_en: '导出PDF失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 397
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_解析页面范围失败
+                - text_zh: '解析页面范围失败: $e'
+                  text_en: '解析页面范围失败: $e'
+                  file: presentation\widgets\practice\export\export_service.dart
+                  line: 448
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_图片文件为空
+                - text_zh: 图片文件为空
+                  text_en: 图片文件为空
+                  file: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+                  line: 812
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_无法加载纹理图片
+                - text_zh: '无法加载纹理图片: $e'
+                  text_en: '无法加载纹理图片: $e'
+                  file: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+                  line: 824
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - common_error_已恢复优先级焦点到
+                - text_zh: '已恢复优先级焦点到: ${node.debugLabel ??'
+                  text_en: '已恢复优先级焦点到: ${node.debugLabel ??'
+                  file: utils\focus\focus_persistence.dart
+                  line: 38
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+              - - widget_error_轮廓处理超时
+                - text_zh: 轮廓处理超时
+                  text_en: 轮廓处理超时
+                  file: widgets\character_edit\character_edit_canvas.dart
+                  line: 709
+                  context_type: error_messages
+                  detection_type: ui_text
+                  approved: false
+        - - ui_properties
+          - !!python/object/apply:collections.OrderedDict
+            - - - common_hint_副本
+                - text_zh: ${practice.title} (副本)
+                  text_en: ${practice.title} (副本)
+                  file: application\repositories\practice_repository_impl.dart
+                  line: 54
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - works_hint_编辑标签
+                - text_zh: 编辑标签
+                  text_en: 编辑标签
+                  file: presentation\pages\works\components\content\items\m3_work_list_item.dart
+                  line: 330
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - widget_hint_基础属性
+                - text_zh: 基础属性
+                  text_en: 基础属性
+                  file: presentation\widgets\practice\property_panels\property_panel_base.dart
+                  line: 22
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - widget_hint_保存更改
+                - text_zh: 保存更改
+                  text_en: 保存更改
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 16
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - widget_hint_框选工具
+                - text_zh: 框选工具
+                  text_en: 框选工具
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 35
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - widget_hint_多选工具
+                - text_zh: 多选工具
+                  text_en: 多选工具
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 40
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+              - - widget_hint_删除选中区域
+                - text_zh: 删除选中区域
+                  text_en: 删除选中区域
+                  file: presentation\widgets\works\preview_mode_config.dart
+                  line: 45
+                  context_type: ui_properties
+                  detection_type: ui_text
+                  approved: false
+        - - ui_text_widget
+          - !!python/object/apply:collections.OrderedDict
+            - - - home_pagedart_text_字体测试工具
+                - text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: presentation\pages\home_page.dart
+                  line: 24
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - home_pagedart_text_字体粗细测试工具
+                - text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: presentation\pages\home_page.dart
+                  line: 31
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_字体测试工具
+                - text_zh: 字体测试工具
+                  text_en: 字体测试工具
+                  file: presentation\widgets\font_tester.dart
+                  line: 11
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_字体粗细测试工具
+                - text_zh: 字体粗细测试工具
+                  text_en: 字体粗细测试工具
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 11
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_思源黑体
+                - text_zh: '思源黑体 (SourceHanSans):'
+                  text_en: '思源黑体 (SourceHanSans):'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 136
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_文件
+                - text_zh: '- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf'
+                  text_en: '- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 142
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_类型可变字体
+                - text_zh: '- 类型: 可变字体 (Variable Font)'
+                  text_en: '- 类型: 可变字体 (Variable Font)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 143
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_字重轴
+                - text_zh: '- 字重轴: wght (100-900)'
+                  text_en: '- 字重轴: wght (100-900)'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 144
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_思源宋体
+                - text_zh: '思源宋体 (SourceHanSerif):'
+                  text_en: '思源宋体 (SourceHanSerif):'
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 141
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_引擎对可变字体的支持
+                - text_zh: 1. Flutter引擎对可变字体的支持不完整
+                  text_en: 1. Flutter引擎对可变字体的支持不完整
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 150
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_字体文件的字重轴未被
+                - text_zh: 2. 字体文件的字重轴未被正确识别
+                  text_en: 2. 字体文件的字重轴未被正确识别
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 151
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_字体注册方式不正确
+                - text_zh: 3. 字体注册方式不正确
+                  text_en: 3. 字体注册方式不正确
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 152
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_平台特定的字体渲染限
+                - text_zh: 4. 平台特定的字体渲染限制
+                  text_en: 4. 平台特定的字体渲染限制
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 153
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_使用不同的字体家族名
+                - text_zh: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  text_en: 1. 使用不同的字体家族名称注册同一字体文件的不同字重
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 159
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_使用非可变字体的多个
+                - text_zh: 2. 使用非可变字体的多个字重文件
+                  text_en: 2. 使用非可变字体的多个字重文件
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 160
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_使用属性直接设置字重
+                - text_zh: 3. 使用fontVariations属性直接设置字重轴的值
+                  text_en: 3. 使用fontVariations属性直接设置字重轴的值
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 161
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+              - - widget_text_在应用中提供字体粗细
+                - text_zh: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  text_en: 4. 在应用中提供字体粗细预览，帮助用户选择合适的字重
+                  file: presentation\widgets\font_weight_tester.dart
+                  line: 162
+                  context_type: ui_text_widget
+                  detection_type: ui_text
+                  approved: false
+        - - ui_appbar_navigation
+          - !!python/object/apply:collections.OrderedDict
+            - - - widget_nav_调节
+                - text_zh: 调节
+                  text_en: 调节
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 165
+                  context_type: ui_appbar_navigation
+                  detection_type: ui_text
+                  approved: false
+              - - widget_nav_代码
+                - text_zh: 代码
+                  text_en: 代码
+                  file: presentation\widgets\common\m3_color_picker.dart
+                  line: 166
+                  context_type: ui_appbar_navigation
+                  detection_type: ui_text
+                  approved: false
+        - - string_constants
+          - !!python/object/apply:collections.OrderedDict
+            - - - widget_str_添加元素
+                - text_zh: 添加元素
+                  text_en: 添加元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 20
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_删除元素
+                - text_zh: 删除元素
+                  text_en: 删除元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 61
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_更新元素属性
+                - text_zh: 更新元素属性
+                  text_en: 更新元素属性
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 103
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_移动元素
+                - text_zh: 移动元素
+                  text_en: 移动元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 194
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_调整元素大小
+                - text_zh: 调整元素大小
+                  text_en: 调整元素大小
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 260
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_旋转元素
+                - text_zh: 旋转元素
+                  text_en: 旋转元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 326
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_旋转组合元素
+                - text_zh: 旋转组合元素
+                  text_en: 旋转组合元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 378
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_更新图层属性
+                - text_zh: 更新图层属性
+                  text_en: 更新图层属性
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 526
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_重新排序图层
+                - text_zh: 重新排序图层
+                  text_en: 重新排序图层
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 553
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_添加页面
+                - text_zh: 添加页面
+                  text_en: 添加页面
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 579
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_重新排序页面
+                - text_zh: 重新排序页面
+                  text_en: 重新排序页面
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 605
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_更新页面属性
+                - text_zh: 更新页面属性
+                  text_en: 更新页面属性
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 632
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_取消组合元素
+                - text_zh: 取消组合元素
+                  text_en: 取消组合元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 721
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_应用格式刷
+                - text_zh: 应用格式刷
+                  text_en: 应用格式刷
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 780
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_上移一层
+                - text_zh: 上移一层
+                  text_en: 上移一层
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 886
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_下移一层
+                - text_zh: 下移一层
+                  text_en: 下移一层
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 914
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_粘贴元素
+                - text_zh: 粘贴元素
+                  text_en: 粘贴元素
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 941
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_删除所有图层
+                - text_zh: 删除所有图层
+                  text_en: 删除所有图层
+                  file: presentation\widgets\practice\undo_operations.dart
+                  line: 985
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+              - - widget_str_或
+                - text_zh: translate', // 'translate' 或
+                  text_en: translate', // 'translate' 或
+                  file: presentation\widgets\practice\guideline_alignment\guideline_manager.dart
+                  line: 220
+                  context_type: string_constants
+                  detection_type: ui_text
+                  approved: false
+  - - enum_mappings
+    - !!python/object/apply:collections.OrderedDict
+      - - - enum_based
+          - !!python/object/apply:collections.OrderedDict
+            - - - AppLanguage
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_applanguage_tolocale
+                      - text_zh: 'AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString()
+                          ?? '
+                        text_en: 'AppLanguage.toLocale: 语言设置 $this 转换为 Locale: ${locale?.toString()
+                          ?? '
+                        enum_name: AppLanguage
+                        enum_value: toLocale
+                        file: domain\enums\app_language.dart
+                        line: 44
+                        detection_type: enum_based
+                        approved: false
+                    - - enum_applanguage_fromstring
+                      - text_zh: 'AppLanguage.fromString: 解析结果: $result'
+                        text_en: 'AppLanguage.fromString: 解析结果: $result'
+                        enum_name: AppLanguage
+                        enum_value: fromString
+                        file: domain\enums\app_language.dart
+                        line: 62
+                        detection_type: enum_based
+                        approved: false
+              - - AppThemeMode
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_appthememode_system
+                      - text_zh: 跟随系统
+                        text_en: 跟随系统
+                        enum_name: AppThemeMode
+                        enum_value: system
+                        file: domain\enums\app_theme_mode.dart
+                        line: 17
+                        detection_type: enum_based
+                        approved: false
+                    - - enum_appthememode_light
+                      - text_zh: 浅色模式
+                        text_en: 浅色模式
+                        enum_name: AppThemeMode
+                        enum_value: light
+                        file: domain\enums\app_theme_mode.dart
+                        line: 18
+                        detection_type: enum_based
+                        approved: false
+                    - - enum_appthememode_dark
+                      - text_zh: 深色模式
+                        text_en: 深色模式
+                        enum_name: AppThemeMode
+                        enum_value: dark
+                        file: domain\enums\app_theme_mode.dart
+                        line: 19
+                        detection_type: enum_based
+                        approved: false
+              - - DateRangePreset
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_daterangepreset_last365days
+                      - text_zh: 最近一年
+                        text_en: 最近一年
+                        enum_name: DateRangePreset
+                        enum_value: last365Days
+                        file: domain\models\common\date_range_filter.dart
+                        line: 165
+                        detection_type: enum_based
+                        approved: false
+                    - - enum_daterangepreset_lastmonth
+                      - text_zh: 上月
+                        text_en: 上月
+                        enum_name: DateRangePreset
+                        enum_value: lastMonth
+                        file: domain\models\common\date_range_filter.dart
+                        line: 167
+                        detection_type: enum_based
+                        approved: false
+        - - pattern_based
+          - !!python/object/apply:collections.OrderedDict
+            - - - enum_mappings
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_pattern_enum_mappings_1
+                      - text_zh: ${practice.title} (副本)
+                        text_en: ${practice.title} (副本)
+                        pattern_type: enum_mappings
+                        file: application\repositories\practice_repository_impl.dart
+                        line: 54
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_2
+                      - text_zh: 非列表格式
+                        text_en: 非列表格式
+                        pattern_type: enum_mappings
+                        file: application\repositories\practice_repository_impl.dart
+                        line: 346
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_3
+                      - text_zh: 'title'']}, 页面数: ${json['
+                        text_en: 'title'']}, 页面数: ${json['
+                        pattern_type: enum_mappings
+                        file: application\repositories\practice_repository_impl.dart
+                        line: 346
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_4
+                      - text_zh: 图片 ${Random().nextInt(1000)}
+                        text_en: 图片 ${Random().nextInt(1000)}
+                        pattern_type: enum_mappings
+                        file: domain\factories\element_factory.dart
+                        line: 27
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_5
+                      - text_zh: 文本 ${Random().nextInt(1000)}
+                        text_en: 文本 ${Random().nextInt(1000)}
+                        pattern_type: enum_mappings
+                        file: domain\factories\element_factory.dart
+                        line: 64
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_6
+                      - text_zh: 集字 ${Random().nextInt(1000)}
+                        text_en: 集字 ${Random().nextInt(1000)}
+                        pattern_type: enum_mappings
+                        file: domain\factories\element_factory.dart
+                        line: 100
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_7
+                      - text_zh: $count天
+                        text_en: $count天
+                        pattern_type: enum_mappings
+                        file: l10n\app_localizations_zh.dart
+                        line: 563
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_8
+                      - text_zh: 1天
+                        text_en: 1天
+                        pattern_type: enum_mappings
+                        file: l10n\app_localizations_zh.dart
+                        line: 564
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_9
+                      - text_zh: $count小时
+                        text_en: $count小时
+                        pattern_type: enum_mappings
+                        file: l10n\app_localizations_zh.dart
+                        line: 994
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_10
+                      - text_zh: 1小时
+                        text_en: 1小时
+                        pattern_type: enum_mappings
+                        file: l10n\app_localizations_zh.dart
+                        line: 995
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_11
+                      - text_zh: snapshotCount']} 个快照, ${snapshotStats[
+                        text_en: snapshotCount']} 个快照, ${snapshotStats[
+                        pattern_type: enum_mappings
+                        file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                        line: 260
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_12
+                      - text_zh: snapshotCount']}个快照, ${stats[
+                        text_en: snapshotCount']}个快照, ${stats[
+                        pattern_type: enum_mappings
+                        file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                        line: 319
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_13
+                      - text_zh: 'PreDrag阶段异常: $e'
+                        text_en: 'PreDrag阶段异常: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\pages\practices\widgets\drag_operation_manager.dart
+                        line: 400
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_14
+                      - text_zh: UI组件没有注册监听器
+                        text_en: UI组件没有注册监听器
+                        pattern_type: enum_mappings
+                        file: presentation\pages\practices\widgets\m3_practice_edit_canvas.dart
+                        line: 1643
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_15
+                      - text_zh: 编辑标签
+                        text_en: 编辑标签
+                        pattern_type: enum_mappings
+                        file: presentation\pages\works\components\content\items\m3_work_list_item.dart
+                        line: 330
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_16
+                      - text_zh: 应用恢复
+                        text_en: 应用恢复
+                        pattern_type: enum_mappings
+                        file: presentation\providers\works_providers.dart
+                        line: 35
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_17
+                      - text_zh: 数据变更
+                        text_en: 数据变更
+                        pattern_type: enum_mappings
+                        file: presentation\providers\works_providers.dart
+                        line: 38
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_18
+                      - text_zh: 导入完成
+                        text_en: 导入完成
+                        pattern_type: enum_mappings
+                        file: presentation\providers\works_providers.dart
+                        line: 41
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_19
+                      - text_zh: 用户请求
+                        text_en: 用户请求
+                        pattern_type: enum_mappings
+                        file: presentation\providers\works_providers.dart
+                        line: 44
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_20
+                      - text_zh: '操作失败: $e'
+                        text_en: '操作失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_detail_provider.dart
+                        line: 62
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_21
+                      - text_zh: '操作失败: $e'
+                        text_en: '操作失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_detail_provider.dart
+                        line: 254
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_22
+                      - text_zh: 选择图片 (可按住Ctrl多选)
+                        text_en: 选择图片 (可按住Ctrl多选)
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 55
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_23
+                      - text_zh: 已添加 $successCount 张图片，$errorCount 张图片无法处理
+                        text_en: 已添加 $successCount 张图片，$errorCount 张图片无法处理
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 152
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_24
+                      - text_zh: 无法处理所选图片
+                        text_en: 无法处理所选图片
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 154
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_25
+                      - text_zh: 无法添加所选图片
+                        text_en: 无法添加所选图片
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 157
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_26
+                      - text_zh: '添加图片失败: ${e.toString()}'
+                        text_en: '添加图片失败: ${e.toString()}'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 165
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_27
+                      - text_zh: '删除图片失败: ${e.toString()}'
+                        text_en: '删除图片失败: ${e.toString()}'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 246
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_28
+                      - text_zh: '重排序图片失败: $e'
+                        text_en: '重排序图片失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 368
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_29
+                      - text_zh: '保存图片更改失败: $e'
+                        text_en: '保存图片更改失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 444
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_30
+                      - text_zh: '图片排序失败: $e'
+                        text_en: '图片排序失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\work_image_editor_provider.dart
+                        line: 485
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_31
+                      - text_zh: '创建选区失败: ${e.toString()}'
+                        text_en: '创建选区失败: ${e.toString()}'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_collection_provider.dart
+                        line: 204
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_32
+                      - text_zh: '加载选区数据失败: ${e.toString()}'
+                        text_en: '加载选区数据失败: ${e.toString()}'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_collection_provider.dart
+                        line: 544
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_33
+                      - text_zh: '刷新区域数据失败: ${e.toString()}'
+                        text_en: '刷新区域数据失败: ${e.toString()}'
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_collection_provider.dart
+                        line: 629
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_34
+                      - text_zh: 删除字符失败：${e.toString()}
+                        text_en: 删除字符失败：${e.toString()}
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_management_provider.dart
+                        line: 141
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_35
+                      - text_zh: 删除字符失败：${e.toString()}
+                        text_en: 删除字符失败：${e.toString()}
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_management_provider.dart
+                        line: 168
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_36
+                      - text_zh: 加载字符数据失败：${e.toString()}
+                        text_en: 加载字符数据失败：${e.toString()}
+                        pattern_type: enum_mappings
+                        file: presentation\providers\character\character_management_provider.dart
+                        line: 204
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_37
+                      - text_zh: 作品浏览
+                        text_en: 作品浏览
+                        pattern_type: enum_mappings
+                        file: presentation\providers\navigation\global_navigation_provider.dart
+                        line: 22
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_38
+                      - text_zh: 字符管理
+                        text_en: 字符管理
+                        pattern_type: enum_mappings
+                        file: presentation\providers\navigation\global_navigation_provider.dart
+                        line: 23
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_39
+                      - text_zh: 字帖列表
+                        text_en: 字帖列表
+                        pattern_type: enum_mappings
+                        file: presentation\providers\navigation\global_navigation_provider.dart
+                        line: 24
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_40
+                      - text_zh: 图库管理
+                        text_en: 图库管理
+                        pattern_type: enum_mappings
+                        file: presentation\providers\navigation\global_navigation_provider.dart
+                        line: 25
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_41
+                      - text_zh: '添加图片失败: $e'
+                        text_en: '添加图片失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\viewmodels\work_import_view_model.dart
+                        line: 65
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_42
+                      - text_zh: '从图库添加图片失败: $e'
+                        text_en: '从图库添加图片失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\viewmodels\work_import_view_model.dart
+                        line: 121
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_43
+                      - text_zh: '导入失败: $e'
+                        text_en: '导入失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\viewmodels\work_import_view_model.dart
+                        line: 161
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_44
+                      - text_zh: '初始化图片失败: $e'
+                        text_en: '初始化图片失败: $e'
+                        pattern_type: enum_mappings
+                        file: presentation\viewmodels\work_import_view_model.dart
+                        line: 185
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_45
+                      - text_zh: 调节
+                        text_en: 调节
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\common\m3_color_picker.dart
+                        line: 165
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_46
+                      - text_zh: 代码
+                        text_en: 代码
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\common\m3_color_picker.dart
+                        line: 166
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_47
+                      - text_zh: 批量更新${updatedElementIds.length}个元素
+                        text_en: 批量更新${updatedElementIds.length}个元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\batch_update_mixin.dart
+                        line: 204
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_48
+                      - text_zh: 删除${operations.length}个元素
+                        text_en: 删除${operations.length}个元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\element_management_mixin.dart
+                        line: 508
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_49
+                      - text_zh: 批量更新${updatedElementIds.length}个元素
+                        text_en: 批量更新${updatedElementIds.length}个元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\element_management_mixin.dart
+                        line: 1082
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_50
+                      - text_zh: 对齐${operations.length}个元素
+                        text_en: 对齐${operations.length}个元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\element_operations_mixin.dart
+                        line: 191
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_51
+                      - text_zh: 均匀分布元素
+                        text_en: 均匀分布元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\element_operations_mixin.dart
+                        line: 489
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_52
+                      - text_zh: 未命名字帖
+                        text_en: 未命名字帖
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\file_operations.dart
+                        line: 289
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_53
+                      - text_zh: 添加复制图层中的元素
+                        text_en: 添加复制图层中的元素
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\layer_management_mixin.dart
+                        line: 295
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_54
+                      - text_zh: 复制图层
+                        text_en: 复制图层
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\layer_management_mixin.dart
+                        line: 298
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_55
+                      - text_zh: 显示所有图层
+                        text_en: 显示所有图层
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\layer_management_mixin.dart
+                        line: 558
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_56
+                      - text_zh: 'averageFPS''].toStringAsFixed(1)} (目标: ${frame['
+                        text_en: 'averageFPS''].toStringAsFixed(1)} (目标: ${frame['
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\optimization_metrics_collector.dart
+                        line: 338
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_57
+                      - text_zh: 字帖
+                        text_en: 字帖
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\optimized_save_service.dart
+                        line: 165
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_58
+                      - text_zh: name'] = '页面 ${pages[i][
+                        text_en: name'] = '页面 ${pages[i][
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\page_operations.dart
+                        line: 230
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_59
+                      - text_zh: 最终
+                        text_en: 最终
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\text_renderer.dart
+                        line: 244
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_60
+                      - text_zh: 基础属性
+                        text_en: 基础属性
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\practice\property_panels\property_panel_base.dart
+                        line: 22
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_61
+                      - text_zh: 保存更改
+                        text_en: 保存更改
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\works\preview_mode_config.dart
+                        line: 16
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_62
+                      - text_zh: 框选工具
+                        text_en: 框选工具
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\works\preview_mode_config.dart
+                        line: 35
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_63
+                      - text_zh: 多选工具
+                        text_en: 多选工具
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\works\preview_mode_config.dart
+                        line: 40
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_64
+                      - text_zh: 删除选中区域
+                        text_en: 删除选中区域
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\works\preview_mode_config.dart
+                        line: 45
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_mappings_65
+                      - text_zh: 点击添加或拖放图片
+                        text_en: 点击添加或拖放图片
+                        pattern_type: enum_mappings
+                        file: presentation\widgets\works\preview_mode_config.dart
+                        line: 69
+                        detection_type: enum_pattern
+                        approved: false
+              - - enum_when_expressions
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_pattern_enum_when_expressions_1
+                      - text_zh: 跟随系统
+                        text_en: 跟随系统
+                        pattern_type: enum_when_expressions
+                        file: domain\enums\app_theme_mode.dart
+                        line: 17
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_when_expressions_2
+                      - text_zh: 浅色模式
+                        text_en: 浅色模式
+                        pattern_type: enum_when_expressions
+                        file: domain\enums\app_theme_mode.dart
+                        line: 18
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_when_expressions_3
+                      - text_zh: 深色模式
+                        text_en: 深色模式
+                        pattern_type: enum_when_expressions
+                        file: domain\enums\app_theme_mode.dart
+                        line: 19
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_when_expressions_4
+                      - text_zh: 最近一年
+                        text_en: 最近一年
+                        pattern_type: enum_when_expressions
+                        file: domain\models\common\date_range_filter.dart
+                        line: 165
+                        detection_type: enum_pattern
+                        approved: false
+                    - - enum_pattern_enum_when_expressions_5
+                      - text_zh: 上月
+                        text_en: 上月
+                        pattern_type: enum_when_expressions
+                        file: domain\models\common\date_range_filter.dart
+                        line: 167
+                        detection_type: enum_pattern
+                        approved: false
+              - - enum_extensions
+                - !!python/object/apply:collections.OrderedDict
+                  - - - enum_pattern_enum_extensions_1
+                      - text_zh: '文件名不能包含以下字符: \\ / : * ? \'
+                        text_en: '文件名不能包含以下字符: \\ / : * ? \'
+                        pattern_type: enum_extensions
+                        file: l10n\app_localizations_zh.dart
+                        line: 1143
+                        detection_type: enum_pattern
+                        approved: false

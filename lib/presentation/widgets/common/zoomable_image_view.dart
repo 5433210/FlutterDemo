@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../image/cached_image.dart';
 
 /// A widget that displays an image with zoom and pan capabilities
@@ -69,6 +70,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Stack(
       fit: StackFit.expand,
@@ -100,7 +102,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
             bottom: 16,
             child: FloatingActionButton.small(
               onPressed: _resetZoom,
-              tooltip: '重置缩放',
+              tooltip: l10n.resetZoom,
               child: const Icon(Icons.zoom_out_map),
             ),
           ),
@@ -119,6 +121,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
     final path = widget.imagePath;
     final extension = path.toLowerCase().split('.').last;
     final isSvg = extension == 'svg';
+    final l10n = AppLocalizations.of(context);
 
     if (isSvg) {
       // SVG rendering
@@ -151,7 +154,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '无法加载图片',
+                        l10n.imageLoadError(error.toString()),
                         style: TextStyle(
                           color: theme.colorScheme.error,
                         ),

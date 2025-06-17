@@ -208,9 +208,9 @@ class _M3BackgroundTexturePanelState
           value: textureFillMode,
           isExpanded: true,
           items: [
-            const DropdownMenuItem(
+            DropdownMenuItem(
               value: 'stretch',
-              child: Text('Stretch'), // Use English fallback for stretch
+              child: Text(l10n.stretch), // Use English fallback for stretch
             ),
             DropdownMenuItem(
               value: 'repeat',

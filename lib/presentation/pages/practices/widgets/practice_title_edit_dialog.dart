@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../l10n/app_localizations.dart';
+
 /// Dialog for editing practice title
 class PracticeTitleEditDialog extends StatefulWidget {
   final String? initialTitle;
@@ -36,11 +38,12 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         }
       },
       child: AlertDialog(
-        title: const Text('Edit Practice Title'),
+        title: Text(
+            '${AppLocalizations.of(context).edit} ${AppLocalizations.of(context).title}'),
         content: TextField(
           controller: _controller,
           decoration: InputDecoration(
-            labelText: 'Title',
+            labelText: AppLocalizations.of(context).title,
             errorText: _errorText,
             enabled: !_isChecking,
           ),
@@ -50,7 +53,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           TextButton(
             onPressed:
@@ -61,7 +64,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text(AppLocalizations.of(context).save),
           ),
         ],
       ),
@@ -83,7 +86,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   Future<void> _validateAndSubmit(String value) async {
     if (value.isEmpty) {
       setState(() {
-        _errorText = 'Title cannot be empty';
+        _errorText = AppLocalizations.of(context).titleCannotBeEmpty;
       });
       return;
     }
@@ -98,7 +101,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
       final exists = await widget.checkTitleExists(value);
       if (exists) {
         setState(() {
-          _errorText = 'A practice with this title already exists';
+          _errorText = AppLocalizations.of(context).titleExists;
           _isChecking = false;
         });
         return;

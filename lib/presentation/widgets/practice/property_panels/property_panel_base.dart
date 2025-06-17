@@ -253,6 +253,7 @@ class ColorPropertyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 简单的预设颜色
     final presetColors = [
       Colors.black,
@@ -289,7 +290,7 @@ class ColorPropertyRow extends StatelessWidget {
             '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
         const Spacer(),
         PopupMenuButton<Color>(
-          tooltip: '选择颜色',
+          tooltip: l10n.colorPicker,
           icon: const Icon(Icons.colorize),
           itemBuilder: (context) {
             return presetColors.map((presetColor) {

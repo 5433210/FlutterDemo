@@ -9,7 +9,8 @@ import 'undo_operations.dart';
 import 'undo_redo_manager.dart';
 
 /// 图层管理功能 Mixin
-mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationMixin {
+mixin LayerManagementMixin on ChangeNotifier
+    implements IntelligentNotificationMixin {
   // 抽象接口
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
@@ -18,13 +19,13 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 添加图层
   void addLayer() {
     checkDisposed();
-    
+
     // 确保有当前页面
     if (state.currentPage == null) return;
-    
+
     final newLayer = {
       'id': 'layer_${uuid.v4()}',
-      'name': '图层 ${state.layers.length + 1}',
+      'name': 'Layer ${state.layers.length + 1}',
       'isVisible': true,
       'isLocked': false,
       'opacity': 1.0,
@@ -43,7 +44,8 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
         state.selectedLayerId ??= layer['id'] as String;
       },
       removeLayer: (layerId) {
-        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('layers')) {
           final layers = state.currentPage!['layers'] as List<dynamic>;
           layers.removeWhere((l) => l['id'] == layerId);
           if (state.selectedLayerId == layerId) {
@@ -58,7 +60,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    
+
     // 🚀 使用智能状态分发器通知图层添加
     intelligentNotify(
       changeType: 'layer_add',
@@ -78,6 +80,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 添加新图层 - addLayer的别名，用于UI回调
   void addNewLayer() => addLayer();
 
+  @override
   void checkDisposed();
 
   /// 删除所有图层
@@ -104,7 +107,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    
+
     // 🚀 使用智能状态分发器通知所有图层删除
     intelligentNotify(
       changeType: 'layer_delete_all',
@@ -122,10 +125,11 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 删除图层
   void deleteLayer(String layerId) {
     checkDisposed();
-    
+
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
-    
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+      return;
+
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex == -1) return;
@@ -142,27 +146,30 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
       layerIndex: layerIndex,
       elementsOnLayer: elementsOnLayer,
       insertLayer: (layer, index) {
-        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('layers')) {
           final currentLayers = state.currentPage!['layers'] as List<dynamic>;
           currentLayers.insert(index, layer);
         }
       },
       removeLayer: (id) {
-        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('layers')) {
           final currentLayers = state.currentPage!['layers'] as List<dynamic>;
           currentLayers.removeWhere((l) => l['id'] == id);
-          
+
           // 删除该图层上的所有元素
           if (state.currentPage!.containsKey('elements')) {
             final elements = state.currentPage!['elements'] as List<dynamic>;
             elements.removeWhere((e) => e['layerId'] == id);
           }
-          
+
           if (state.selectedLayerId == id) {
             final remainingLayers = state.layers;
             if (remainingLayers.isNotEmpty) {
               // 选择上一个图层，如果没有则选择第一个
-              final newIndex = (layerIndex - 1).clamp(0, remainingLayers.length - 1);
+              final newIndex =
+                  (layerIndex - 1).clamp(0, remainingLayers.length - 1);
               state.selectedLayerId = remainingLayers[newIndex]['id'] as String;
             } else {
               state.selectedLayerId = null;
@@ -171,7 +178,8 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
         }
       },
       addElements: (elements) {
-        if (state.currentPage != null && state.currentPage!.containsKey('elements')) {
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('elements')) {
           final pageElements = state.currentPage!['elements'] as List<dynamic>;
           pageElements.addAll(elements);
         }
@@ -180,7 +188,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    
+
     // 🚀 使用智能状态分发器通知图层删除
     intelligentNotify(
       changeType: 'layer_delete',
@@ -299,7 +307,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     );
 
     undoRedoManager.addOperation(operation);
-    
+
     // 🚀 使用智能状态分发器通知图层复制
     intelligentNotify(
       changeType: 'layer_duplicate',
@@ -325,10 +333,11 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 移动图层顺序
   void moveLayer(String layerId, int newIndex) {
     checkDisposed();
-    
+
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
-    
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+      return;
+
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final currentIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (currentIndex == -1 || newIndex == currentIndex) return;
@@ -340,7 +349,8 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
       oldIndex: currentIndex,
       newIndex: newIndex,
       reorderLayer: (fromIndex, toIndex) {
-        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('layers')) {
           final currentLayers = state.currentPage!['layers'] as List<dynamic>;
           final layer = currentLayers.removeAt(fromIndex);
           currentLayers.insert(toIndex.clamp(0, currentLayers.length), layer);
@@ -350,7 +360,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
 
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    
+
     // 🚀 使用智能状态分发器通知图层移动
     intelligentNotify(
       changeType: 'layer_reorder',
@@ -399,7 +409,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     }
 
     state.hasUnsavedChanges = true;
-    
+
     // 🚀 使用智能状态分发器通知图层重排序
     intelligentNotify(
       changeType: 'layer_reorder',
@@ -454,7 +464,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     );
 
     undoRedoManager.addOperation(operation);
-    
+
     // 🚀 使用智能状态分发器通知图层重排序
     intelligentNotify(
       changeType: 'layer_reorder',
@@ -473,15 +483,16 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 选择图层
   void selectLayer(String layerId) {
     checkDisposed();
-    
+
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) return;
-    
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+      return;
+
     final layers = state.currentPage!['layers'] as List<dynamic>;
     if (layers.any((l) => l['id'] == layerId)) {
       final oldSelectedLayerId = state.selectedLayerId;
       state.selectedLayerId = layerId;
-      
+
       // 🚀 使用智能状态分发器通知图层选择
       intelligentNotify(
         changeType: 'layer_select',
@@ -585,7 +596,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     if (layerIndex >= 0) {
       layers[layerIndex]['isLocked'] = isLocked;
       state.hasUnsavedChanges = true;
-      
+
       // 🚀 使用智能状态分发器通知图层锁定状态切换
       intelligentNotify(
         changeType: 'layer_update',
@@ -613,7 +624,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     if (layerIndex >= 0) {
       layers[layerIndex]['isVisible'] = isVisible;
       state.hasUnsavedChanges = true;
-      
+
       // 🚀 使用智能状态分发器通知图层可见性切换
       intelligentNotify(
         changeType: 'layer_update',
@@ -633,17 +644,19 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
   /// 更新图层属性
   void updateLayerProperties(String layerId, Map<String, dynamic> properties) {
     checkDisposed();
-    
-    EditPageLogger.controllerDebug('🔧 LayerManagementMixin: updateLayerProperties called');
+
+    EditPageLogger.controllerDebug(
+        '🔧 LayerManagementMixin: updateLayerProperties called');
     EditPageLogger.controllerDebug('  - layerId: $layerId');
     EditPageLogger.controllerDebug('  - properties: $properties');
-    
+
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('layers')) {
       EditPageLogger.controllerDebug('  ❌ No current page or layers');
       return;
     }
-    
+
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex == -1) {
@@ -653,7 +666,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
 
     final oldProperties = <String, dynamic>{};
     final layer = layers[layerIndex] as Map<String, dynamic>;
-    
+
     EditPageLogger.controllerDebug('  - Layer found at index: $layerIndex');
     EditPageLogger.controllerDebug('  - Current layer data: $layer');
 
@@ -663,7 +676,7 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
         oldProperties[key] = layer[key];
       }
     }
-    
+
     EditPageLogger.controllerDebug('  - Old properties: $oldProperties');
 
     final operation = UpdateLayerPropertyOperation(
@@ -674,24 +687,29 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
         EditPageLogger.controllerDebug('🔄 Executing layer property update');
         EditPageLogger.controllerDebug('  - layerId: $id');
         EditPageLogger.controllerDebug('  - props: $props');
-        
-        if (state.currentPage != null && state.currentPage!.containsKey('layers')) {
+
+        if (state.currentPage != null &&
+            state.currentPage!.containsKey('layers')) {
           final currentLayers = state.currentPage!['layers'] as List<dynamic>;
           final index = currentLayers.indexWhere((l) => l['id'] == id);
           if (index >= 0) {
             final targetLayer = currentLayers[index] as Map<String, dynamic>;
-            EditPageLogger.controllerDebug('  - Updating layer at index $index: $targetLayer');
-            
+            EditPageLogger.controllerDebug(
+                '  - Updating layer at index $index: $targetLayer');
+
             props.forEach((key, value) {
               final oldValue = targetLayer[key];
               targetLayer[key] = value;
-              EditPageLogger.controllerDebug('    ✅ Updated $key: $oldValue -> $value');
+              EditPageLogger.controllerDebug(
+                  '    ✅ Updated $key: $oldValue -> $value');
             });
-            
-            EditPageLogger.controllerDebug('  - Layer after update: $targetLayer');
+
+            EditPageLogger.controllerDebug(
+                '  - Layer after update: $targetLayer');
             state.hasUnsavedChanges = true;
           } else {
-            EditPageLogger.controllerDebug('  ❌ Layer not found during update with id: $id');
+            EditPageLogger.controllerDebug(
+                '  ❌ Layer not found during update with id: $id');
           }
         } else {
           EditPageLogger.controllerDebug('  ❌ No current page during update');
@@ -700,15 +718,17 @@ mixin LayerManagementMixin on ChangeNotifier implements IntelligentNotificationM
     );
 
     // 立即执行操作
-    EditPageLogger.controllerDebug('🚀 Executing layer update operation immediately');
+    EditPageLogger.controllerDebug(
+        '🚀 Executing layer update operation immediately');
     operation.execute();
-    
+
     // 然后添加到撤销管理器
     undoRedoManager.addOperation(operation);
     markUnsaved();
-    
-    EditPageLogger.controllerDebug('🔚 LayerManagementMixin: updateLayerProperties completed');
-    
+
+    EditPageLogger.controllerDebug(
+        '🔚 LayerManagementMixin: updateLayerProperties completed');
+
     // 🚀 使用智能状态分发器通知图层属性更新
     intelligentNotify(
       changeType: 'layer_update',

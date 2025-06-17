@@ -1,0 +1,32 @@
+# 演示用映射文件 - 简化格式
+# 请审核以下内容，修改英文翻译，并将 approved 设置为 true
+
+ui_text_mappings:
+  ui_text_widget:
+    demo_text_示例文本:
+      text_zh: "示例文本"
+      text_en: "Sample Text"
+      file: "demo_file.dart"
+      line: 10
+      context_type: "ui_text_widget"
+      detection_type: "ui_text"
+      approved: true  # 已审核
+
+    demo_text_测试按钮:
+      text_zh: "测试按钮"
+      text_en: "Test Button"
+      file: "demo_file.dart"
+      line: 15
+      context_type: "ui_text_widget"
+      detection_type: "ui_text"
+      approved: true  # 已审核
+
+  ui_properties:
+    demo_hint_请输入内容:
+      text_zh: "请输入内容"
+      text_en: "Please enter content"
+      file: "demo_file.dart"
+      line: 20
+      context_type: "ui_properties"
+      detection_type: "ui_text"
+      approved: true  # 已审核

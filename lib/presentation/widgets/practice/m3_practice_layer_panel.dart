@@ -299,7 +299,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                             style: IconButton.styleFrom(
                               padding: EdgeInsets.zero,
                             ),
-                            tooltip: 'Rename Layer',
+                            tooltip: AppLocalizations.of(context)!.renameLayer,
                           ),
                         ),
 

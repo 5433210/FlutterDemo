@@ -1,0 +1,437 @@
+=== 枚举模式检测报告 ===
+生成时间: 2025-06-17 01:45:25
+
+模式匹配总数: 71
+
+=== ENUM_MAPPINGS (65 个) ===
+文件: application\repositories\practice_repository_impl.dart
+行号: 54
+文本: "${practice.title} (副本)"
+上下文: title: '${practice.title} (副本)',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: application\repositories\practice_repository_impl.dart
+行号: 346
+文本: "非列表格式"
+上下文: '标题: ${json['title']}, 页面数: ${json['pages'] is List ? (json['pages'] as List).length : '非列表格式'}');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: application\repositories\practice_repository_impl.dart
+行号: 346
+文本: "title']}, 页面数: ${json["
+上下文: '标题: ${json['title']}, 页面数: ${json['pages'] is List ? (json['pages'] as List).length : '非列表格式'}');
+匹配模式: \[\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"].*?\]
+------------------------------
+文件: domain\factories\element_factory.dart
+行号: 27
+文本: "图片 ${Random().nextInt(1000)}"
+上下文: 'name': name.isNotEmpty ? name : '图片 ${Random().nextInt(1000)}', // 设置默认名称
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\factories\element_factory.dart
+行号: 64
+文本: "文本 ${Random().nextInt(1000)}"
+上下文: 'name': name.isNotEmpty ? name : '文本 ${Random().nextInt(1000)}', // 设置默认名称
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\factories\element_factory.dart
+行号: 100
+文本: "集字 ${Random().nextInt(1000)}"
+上下文: 'name': name.isNotEmpty ? name : '集字 ${Random().nextInt(1000)}', // 设置默认名称
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: l10n\app_localizations_zh.dart
+行号: 563
+文本: "$count天"
+上下文: other: '$count天',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: l10n\app_localizations_zh.dart
+行号: 564
+文本: "1天"
+上下文: one: '1天',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: l10n\app_localizations_zh.dart
+行号: 994
+文本: "$count小时"
+上下文: other: '$count小时',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: l10n\app_localizations_zh.dart
+行号: 995
+文本: "1小时"
+上下文: one: '1小时',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+行号: 260
+文本: "snapshotCount']} 个快照, ${snapshotStats["
+上下文: '📊 快照性能: ${snapshotStats['snapshotCount']} 个快照, ${snapshotStats['memoryEstimateKB']} KB');
+匹配模式: \[\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"].*?\]
+------------------------------
+文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+行号: 319
+文本: "snapshotCount']}个快照, ${stats["
+上下文: '📊 快照统计: ${stats['snapshotCount']}个快照, ${stats['widgetCacheCount']}个缓存组件');
+匹配模式: \[\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"].*?\]
+------------------------------
+文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+行号: 400
+文本: "PreDrag阶段异常: $e"
+上下文: reason: 'PreDrag阶段异常: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\pages\practices\widgets\m3_practice_edit_canvas.dart
+行号: 1643
+文本: "UI组件没有注册监听器"
+上下文: // 这解决了参考线UI显示问题: "UI组件没有注册监听器" (component: canvas)
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\pages\works\components\content\items\m3_work_list_item.dart
+行号: 330
+文本: "编辑标签"
+上下文: tooltip: '编辑标签',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\works_providers.dart
+行号: 35
+文本: "应用恢复"
+上下文: const RefreshInfo(reason: '应用恢复', priority: 1);
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\works_providers.dart
+行号: 38
+文本: "数据变更"
+上下文: const RefreshInfo(reason: '数据变更', priority: 10, force: true);
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\works_providers.dart
+行号: 41
+文本: "导入完成"
+上下文: const RefreshInfo(reason: '导入完成', priority: 9, force: true);
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\works_providers.dart
+行号: 44
+文本: "用户请求"
+上下文: const RefreshInfo(reason: '用户请求', priority: 8, force: true);
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_detail_provider.dart
+行号: 62
+文本: "操作失败: $e"
+上下文: error: '操作失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_detail_provider.dart
+行号: 254
+文本: "操作失败: $e"
+上下文: error: '操作失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 55
+文本: "选择图片 (可按住Ctrl多选)"
+上下文: dialogTitle: '选择图片 (可按住Ctrl多选)',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 152
+文本: "已添加 $successCount 张图片，$errorCount 张图片无法处理"
+上下文: error: '已添加 $successCount 张图片，$errorCount 张图片无法处理');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 154
+文本: "无法处理所选图片"
+上下文: state = state.copyWith(error: '无法处理所选图片');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 157
+文本: "无法添加所选图片"
+上下文: state = state.copyWith(isProcessing: false, error: '无法添加所选图片');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 165
+文本: "添加图片失败: ${e.toString()}"
+上下文: error: '添加图片失败: ${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 246
+文本: "删除图片失败: ${e.toString()}"
+上下文: error: '删除图片失败: ${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 368
+文本: "重排序图片失败: $e"
+上下文: state = state.copyWith(error: '重排序图片失败: $e');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 444
+文本: "保存图片更改失败: $e"
+上下文: error: '保存图片更改失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\work_image_editor_provider.dart
+行号: 485
+文本: "图片排序失败: $e"
+上下文: error: '图片排序失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_collection_provider.dart
+行号: 204
+文本: "创建选区失败: ${e.toString()}"
+上下文: error: '创建选区失败: ${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_collection_provider.dart
+行号: 544
+文本: "加载选区数据失败: ${e.toString()}"
+上下文: error: '加载选区数据失败: ${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_collection_provider.dart
+行号: 629
+文本: "刷新区域数据失败: ${e.toString()}"
+上下文: error: '刷新区域数据失败: ${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_management_provider.dart
+行号: 141
+文本: "删除字符失败：${e.toString()}"
+上下文: errorMessage: '删除字符失败：${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_management_provider.dart
+行号: 168
+文本: "删除字符失败：${e.toString()}"
+上下文: errorMessage: '删除字符失败：${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\character\character_management_provider.dart
+行号: 204
+文本: "加载字符数据失败：${e.toString()}"
+上下文: errorMessage: '加载字符数据失败：${e.toString()}',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\navigation\global_navigation_provider.dart
+行号: 22
+文本: "作品浏览"
+上下文: 0: '作品浏览',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\navigation\global_navigation_provider.dart
+行号: 23
+文本: "字符管理"
+上下文: 1: '字符管理',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\navigation\global_navigation_provider.dart
+行号: 24
+文本: "字帖列表"
+上下文: 2: '字帖列表',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\providers\navigation\global_navigation_provider.dart
+行号: 25
+文本: "图库管理"
+上下文: 3: '图库管理',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\viewmodels\work_import_view_model.dart
+行号: 65
+文本: "添加图片失败: $e"
+上下文: error: '添加图片失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\viewmodels\work_import_view_model.dart
+行号: 121
+文本: "从图库添加图片失败: $e"
+上下文: error: '从图库添加图片失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\viewmodels\work_import_view_model.dart
+行号: 161
+文本: "导入失败: $e"
+上下文: error: '导入失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\viewmodels\work_import_view_model.dart
+行号: 185
+文本: "初始化图片失败: $e"
+上下文: error: '初始化图片失败: $e',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\common\m3_color_picker.dart
+行号: 165
+文本: "调节"
+上下文: Tab(icon: Icon(Icons.tune), text: '调节'),
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\common\m3_color_picker.dart
+行号: 166
+文本: "代码"
+上下文: Tab(icon: Icon(Icons.code), text: '代码'),
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\batch_update_mixin.dart
+行号: 204
+文本: "批量更新${updatedElementIds.length}个元素"
+上下文: operationDescription: '批量更新${updatedElementIds.length}个元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\element_management_mixin.dart
+行号: 508
+文本: "删除${operations.length}个元素"
+上下文: operationDescription: '删除${operations.length}个元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\element_management_mixin.dart
+行号: 1082
+文本: "批量更新${updatedElementIds.length}个元素"
+上下文: operationDescription: '批量更新${updatedElementIds.length}个元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\element_operations_mixin.dart
+行号: 191
+文本: "对齐${operations.length}个元素"
+上下文: operationDescription: '对齐${operations.length}个元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\element_operations_mixin.dart
+行号: 489
+文本: "均匀分布元素"
+上下文: description: '均匀分布元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\file_operations.dart
+行号: 289
+文本: "未命名字帖"
+上下文: //       documentName: documentName.isNotEmpty ? documentName : '未命名字帖',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\layer_management_mixin.dart
+行号: 295
+文本: "添加复制图层中的元素"
+上下文: description: '添加复制图层中的元素',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\layer_management_mixin.dart
+行号: 298
+文本: "复制图层"
+上下文: operationDescription: '复制图层',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\layer_management_mixin.dart
+行号: 558
+文本: "显示所有图层"
+上下文: operationDescription: '显示所有图层',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\optimization_metrics_collector.dart
+行号: 338
+文本: "averageFPS'].toStringAsFixed(1)} (目标: ${frame["
+上下文: print('   平均FPS: ${frame['averageFPS'].toStringAsFixed(1)} (目标: ${frame['targetFPS']})');
+匹配模式: \[\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"].*?\]
+------------------------------
+文件: presentation\widgets\practice\optimized_save_service.dart
+行号: 165
+文本: "字帖"
+上下文: message: '字帖 "$saveTitle" 保存成功',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\page_operations.dart
+行号: 230
+文本: "name'] = '页面 ${pages[i]["
+上下文: pages[i]['name'] = '页面 ${pages[i]['index'] + 1}';
+匹配模式: \[\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"].*?\]
+------------------------------
+文件: presentation\widgets\practice\text_renderer.dart
+行号: 244
+文本: "最终"
+上下文: _logTextStyle(style, prefix: '最终');
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\practice\property_panels\property_panel_base.dart
+行号: 22
+文本: "基础属性"
+上下文: const PropertyGroupTitle(title: '基础属性'),
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\works\preview_mode_config.dart
+行号: 16
+文本: "保存更改"
+上下文: tooltip: '保存更改',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\works\preview_mode_config.dart
+行号: 35
+文本: "框选工具"
+上下文: tooltip: '框选工具',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\works\preview_mode_config.dart
+行号: 40
+文本: "多选工具"
+上下文: tooltip: '多选工具',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\works\preview_mode_config.dart
+行号: 45
+文本: "删除选中区域"
+上下文: tooltip: '删除选中区域',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: presentation\widgets\works\preview_mode_config.dart
+行号: 69
+文本: "点击添加或拖放图片"
+上下文: emptyStateMessage: '点击添加或拖放图片',
+匹配模式: \w+\s*:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+
+=== ENUM_WHEN_EXPRESSIONS (5 个) ===
+文件: domain\enums\app_theme_mode.dart
+行号: 17
+文本: "跟随系统"
+上下文: AppThemeMode.system => '跟随系统',
+匹配模式: \w+\.\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\enums\app_theme_mode.dart
+行号: 18
+文本: "浅色模式"
+上下文: AppThemeMode.light => '浅色模式',
+匹配模式: \w+\.\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\enums\app_theme_mode.dart
+行号: 19
+文本: "深色模式"
+上下文: AppThemeMode.dark => '深色模式',
+匹配模式: \w+\.\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\models\common\date_range_filter.dart
+行号: 165
+文本: "最近一年"
+上下文: DateRangePreset.last365Days => '最近一年',
+匹配模式: \w+\.\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+文件: domain\models\common\date_range_filter.dart
+行号: 167
+文本: "上月"
+上下文: DateRangePreset.lastMonth => '上月',
+匹配模式: \w+\.\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+
+=== ENUM_EXTENSIONS (1 个) ===
+文件: l10n\app_localizations_zh.dart
+行号: 1143
+文本: "文件名不能包含以下字符: \\ / : * ? \"
+上下文: String get invalidFilename => '文件名不能包含以下字符: \\ / : * ? \" < > |';
+匹配模式: String\s+get\s+\w+\s*=>\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+------------------------------
+

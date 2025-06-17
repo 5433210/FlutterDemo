@@ -131,8 +131,8 @@ class _ResizableImagePreviewPanelState
   /// Builds the main content area with the image preview
   Widget _buildPreviewContent() {
     if (widget.selectedItem?.thumbnail == null) {
-      return const Center(
-        child: Text('No preview available'),
+      return Center(
+        child: Text(AppLocalizations.of(context).noPreviewAvailable),
       );
     }
 

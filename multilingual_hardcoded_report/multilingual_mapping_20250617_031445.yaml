@@ -1,0 +1,7 @@
+# 多语言硬编码文本映射文件
+# 包含中文和英文硬编码检测结果
+# 请审核新建条目，修改翻译，并将 approved 设置为 true
+# 复用条目已自动批准
+
+!!python/object/apply:collections.OrderedDict
+- []

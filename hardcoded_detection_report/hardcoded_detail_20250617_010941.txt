@@ -1,0 +1,4196 @@
+=== 硬编码文本详细报告 ===
+
+
+=== ERROR_MESSAGES (457 个) ===
+
+1. 文件: main.dart
+   行号: 109
+   文本: "严重错误：应用启动失败: $e"
+   建议键名: common_error_严重错误应用启动失败
+   代码行: debugPrint('严重错误：应用启动失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+2. 文件: application\providers\service_providers.dart
+   行号: 89
+   文本: "正在创建 PracticeStorageService 实例..."
+   建议键名: common_error_正在创建实例
+   代码行: debugPrint('正在创建 PracticeStorageService 实例...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+3. 文件: application\providers\service_providers.dart
+   行号: 91
+   文本: "PracticeStorageService 实例创建成功"
+   建议键名: common_error_实例创建成功
+   代码行: debugPrint('PracticeStorageService 实例创建成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+4. 文件: application\providers\service_providers.dart
+   行号: 105
+   文本: "正在创建 PracticeService 实例"
+   建议键名: common_error_正在创建实例
+   代码行: debugPrint('正在创建 PracticeService 实例');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+5. 文件: application\repositories\practice_repository_impl.dart
+   行号: 48
+   文本: "练习不存在"
+   建议键名: common_error_练习不存在
+   代码行: throw ArgumentError('练习不存在');
+   匹配模式: throw\s+\w*Error\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+6. 文件: application\repositories\practice_repository_impl.dart
+   行号: 77
+   文本: "获取练习失败: $e"
+   建议键名: common_error_获取练习失败
+   代码行: debugPrint('获取练习失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+7. 文件: application\repositories\practice_repository_impl.dart
+   行号: 97
+   文本: "处理单个练习实体失败: $e"
+   建议键名: common_error_处理单个练习实体失败
+   代码行: debugPrint('处理单个练习实体失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+8. 文件: application\repositories\practice_repository_impl.dart
+   行号: 104
+   文本: "获取所有练习失败: $e"
+   建议键名: common_error_获取所有练习失败
+   代码行: debugPrint('获取所有练习失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+9. 文件: application\repositories\practice_repository_impl.dart
+   行号: 124
+   文本: "处理单个练习实体标签失败: $e"
+   建议键名: common_error_处理单个练习实体标签
+   代码行: debugPrint('处理单个练习实体标签失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+10. 文件: application\repositories\practice_repository_impl.dart
+   行号: 131
+   文本: "获取所有标签失败: $e"
+   建议键名: common_error_获取所有标签失败
+   代码行: debugPrint('获取所有标签失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+11. 文件: application\repositories\practice_repository_impl.dart
+   行号: 147
+   文本: "检查标题是否存在: $title, 排除ID: $excludeId"
+   建议键名: common_error_检查标题是否存在排除
+   代码行: debugPrint('检查标题是否存在: $title, 排除ID: $excludeId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+12. 文件: application\repositories\practice_repository_impl.dart
+   行号: 159
+   文本: "标题"
+   建议键名: common_error_标题
+   代码行: debugPrint('标题 "$title" ${exists ? "已存在" : "不存在"}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+13. 文件: application\repositories\practice_repository_impl.dart
+   行号: 163
+   文本: "检查标题是否存在失败: $e"
+   建议键名: common_error_检查标题是否存在失败
+   代码行: debugPrint('检查标题是否存在失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+14. 文件: application\repositories\practice_repository_impl.dart
+   行号: 204
+   文本: "成功解析页面数据：${pages.length} 个页面"
+   建议键名: common_error_成功解析页面数据个页
+   代码行: debugPrint('成功解析页面数据：${pages.length} 个页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+15. 文件: application\repositories\practice_repository_impl.dart
+   行号: 206
+   文本: "解析pages字段失败：不是有效的列表"
+   建议键名: common_error_解析字段失败不是有效
+   代码行: debugPrint('解析pages字段失败：不是有效的列表');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+16. 文件: application\repositories\practice_repository_impl.dart
+   行号: 209
+   文本: "解析pages字段失败: $e"
+   建议键名: common_error_解析字段失败
+   代码行: debugPrint('解析pages字段失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+17. 文件: application\repositories\practice_repository_impl.dart
+   行号: 231
+   文本: "成功解析页面数据：${pages.length} 个页面"
+   建议键名: common_error_成功解析页面数据个页
+   代码行: debugPrint('成功解析页面数据：${pages.length} 个页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+18. 文件: application\repositories\practice_repository_impl.dart
+   行号: 255
+   文本: "加载字帖失败: $e"
+   建议键名: common_error_加载字帖失败
+   代码行: debugPrint('加载字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+19. 文件: application\repositories\practice_repository_impl.dart
+   行号: 266
+   文本: "生成查询参数: $queryParams"
+   建议键名: common_error_生成查询参数
+   代码行: debugPrint('生成查询参数: $queryParams');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+20. 文件: application\repositories\practice_repository_impl.dart
+   行号: 269
+   文本: "查询结果数量: ${list.length}"
+   建议键名: common_error_查询结果数量
+   代码行: debugPrint('查询结果数量: ${list.length}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+21. 文件: application\repositories\practice_repository_impl.dart
+   行号: 274
+   文本: "数据库中总共有 $totalCount 条练习记录"
+   建议键名: common_error_数据库中总共有条练习
+   代码行: debugPrint('数据库中总共有 $totalCount 条练习记录');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+22. 文件: application\repositories\practice_repository_impl.dart
+   行号: 276
+   文本: "⚠️ 警告: 数据库中没有任何练习记录，请先创建练习"
+   建议键名: common_error_警告数据库中没有任何
+   代码行: debugPrint('⚠️ 警告: 数据库中没有任何练习记录，请先创建练习');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+23. 文件: application\repositories\practice_repository_impl.dart
+   行号: 278
+   文本: "⚠️ 警告: 数据库中有记录，但当前过滤条件没有匹配的结果"
+   建议键名: common_error_警告数据库中有记录但
+   代码行: debugPrint('⚠️ 警告: 数据库中有记录，但当前过滤条件没有匹配的结果');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+24. 文件: application\repositories\practice_repository_impl.dart
+   行号: 293
+   文本: "处理查询结果中的单个练习实体失败: $e"
+   建议键名: common_error_处理查询结果中的单个
+   代码行: debugPrint('处理查询结果中的单个练习实体失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+25. 文件: application\repositories\practice_repository_impl.dart
+   行号: 300
+   文本: "查询练习失败: $e"
+   建议键名: common_error_查询练习失败
+   代码行: debugPrint('查询练习失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+26. 文件: application\repositories\practice_repository_impl.dart
+   行号: 312
+   文本: "查询字帖: $field $operator $value"
+   建议键名: common_error_查询字帖
+   代码行: debugPrint('查询字帖: $field $operator $value');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+27. 文件: application\repositories\practice_repository_impl.dart
+   行号: 326
+   文本: "查询结果: ${results.length} 条记录"
+   建议键名: common_error_查询结果条记录
+   代码行: debugPrint('查询结果: ${results.length} 条记录');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+28. 文件: application\repositories\practice_repository_impl.dart
+   行号: 330
+   文本: "查询字帖失败: $e"
+   建议键名: common_error_查询字帖失败
+   代码行: debugPrint('查询字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+29. 文件: application\repositories\practice_repository_impl.dart
+   行号: 339
+   文本: "=== PracticeRepositoryImpl.save 开始 === [ID=${practice.id}]"
+   建议键名: common_error_开始
+   代码行: debugPrint('=== PracticeRepositoryImpl.save 开始 === [ID=${practice.id}]');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+30. 文件: application\repositories\practice_repository_impl.dart
+   行号: 340
+   文本: "调用堆栈: ${StackTrace.current}"
+   建议键名: common_error_调用堆栈
+   代码行: debugPrint('调用堆栈: ${StackTrace.current}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+31. 文件: application\repositories\practice_repository_impl.dart
+   行号: 344
+   文本: "转换为JSON成功, JSON包含 ${json.length} 个字段"
+   建议键名: common_error_转换为成功包含个字段
+   代码行: debugPrint('转换为JSON成功, JSON包含 ${json.length} 个字段');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+32. 文件: application\repositories\practice_repository_impl.dart
+   行号: 350
+   文本: "数据准备完成，字段: ${preparedData.keys.join("
+   建议键名: common_error_数据准备完成字段
+   代码行: debugPrint('数据准备完成，字段: ${preparedData.keys.join(', ')}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+33. 文件: application\repositories\practice_repository_impl.dart
+   行号: 352
+   文本: "开始调用 _db.save($_table, ${practice.id}, ...)"
+   建议键名: common_error_开始调用
+   代码行: debugPrint('开始调用 _db.save($_table, ${practice.id}, ...)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+34. 文件: application\repositories\practice_repository_impl.dart
+   行号: 354
+   文本: "调用 _db.save 成功"
+   建议键名: common_error_调用成功
+   代码行: debugPrint('调用 _db.save 成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+35. 文件: application\repositories\practice_repository_impl.dart
+   行号: 363
+   文本: "验证成功，数据已保存到数据库: ${savedData["
+   建议键名: common_error_验证成功数据已保存到
+   代码行: debugPrint('验证成功，数据已保存到数据库: ${savedData['title']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+36. 文件: application\repositories\practice_repository_impl.dart
+   行号: 365
+   文本: "=== PracticeRepositoryImpl.save 完成 === [ID=${practice.id}]"
+   建议键名: common_error_完成
+   代码行: debugPrint('=== PracticeRepositoryImpl.save 完成 === [ID=${practice.id}]');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+37. 文件: application\repositories\practice_repository_impl.dart
+   行号: 368
+   文本: "错误: 保存实体失败: $e"
+   建议键名: common_error_错误保存实体失败
+   代码行: debugPrint('错误: 保存实体失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+38. 文件: application\repositories\practice_repository_impl.dart
+   行号: 369
+   文本: "错误堆栈: ${e is Error ? e.stackTrace :"
+   建议键名: common_error_错误堆栈
+   代码行: debugPrint('错误堆栈: ${e is Error ? e.stackTrace : ''}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+39. 文件: application\repositories\practice_repository_impl.dart
+   行号: 377
+   文本: "saveMany: 开始保存 ${practices.length} 个实体"
+   建议键名: common_error_开始保存个实体
+   代码行: debugPrint('saveMany: 开始保存 ${practices.length} 个实体');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+40. 文件: application\repositories\practice_repository_impl.dart
+   行号: 382
+   文本: "saveMany: 处理ID=${p.id}的实体"
+   建议键名: common_error_处理的实体
+   代码行: debugPrint('saveMany: 处理ID=${p.id}的实体');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+41. 文件: application\repositories\practice_repository_impl.dart
+   行号: 387
+   文本: "saveMany: 批量保存成功"
+   建议键名: common_error_批量保存成功
+   代码行: debugPrint('saveMany: 批量保存成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+42. 文件: application\repositories\practice_repository_impl.dart
+   行号: 390
+   文本: "saveMany失败: $e"
+   建议键名: common_error_失败
+   代码行: debugPrint('saveMany失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+43. 文件: application\repositories\practice_repository_impl.dart
+   行号: 417
+   文本: "缩略图数据: ${thumbnail != null ?"
+   建议键名: common_error_缩略图数据
+   代码行: debugPrint('缩略图数据: ${thumbnail != null ? '已生成' : '无缩略图'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+44. 文件: application\repositories\practice_repository_impl.dart
+   行号: 422
+   文本: "新建字帖，设置 createTime=$now"
+   建议键名: common_error_新建字帖设置
+   代码行: debugPrint('新建字帖，设置 createTime=$now');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+45. 文件: application\repositories\practice_repository_impl.dart
+   行号: 425
+   文本: "现有字帖，尝试获取原有 createTime..."
+   建议键名: common_error_现有字帖尝试获取原有
+   代码行: debugPrint('现有字帖，尝试获取原有 createTime...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+46. 文件: application\repositories\practice_repository_impl.dart
+   行号: 428
+   文本: "警告: 无法获取现有字帖数据 [ID=$id]"
+   建议键名: common_error_警告无法获取现有字帖
+   代码行: debugPrint('警告: 无法获取现有字帖数据 [ID=$id]');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+47. 文件: application\repositories\practice_repository_impl.dart
+   行号: 434
+   文本: "使用原有的 createTime: ${existingPractice["
+   建议键名: common_error_使用原有的
+   代码行: debugPrint('使用原有的 createTime: ${existingPractice['createTime']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+48. 文件: application\repositories\practice_repository_impl.dart
+   行号: 438
+   文本: "无法获取原有createTime，使用当前时间作为fallback: $now"
+   建议键名: common_error_无法获取原有使用当前
+   代码行: debugPrint('无法获取原有createTime，使用当前时间作为fallback: $now');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+49. 文件: application\repositories\practice_repository_impl.dart
+   行号: 443
+   文本: "=== savePracticeRaw 开始调用 _db.set 方法 ==="
+   建议键名: common_error_开始调用方法
+   代码行: debugPrint('=== savePracticeRaw 开始调用 _db.set 方法 ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+50. 文件: application\repositories\practice_repository_impl.dart
+   行号: 444
+   文本: "参数: _table=$_table, practiceId=$practiceId"
+   建议键名: common_error_参数
+   代码行: debugPrint('参数: _table=$_table, practiceId=$practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+51. 文件: application\repositories\practice_repository_impl.dart
+   行号: 445
+   文本: "数据内容: ${data.keys.join("
+   建议键名: common_error_数据内容
+   代码行: debugPrint('数据内容: ${data.keys.join(', ')}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+52. 文件: application\repositories\practice_repository_impl.dart
+   行号: 448
+   文本: "_db.set 调用成功"
+   建议键名: common_error_调用成功
+   代码行: debugPrint('_db.set 调用成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+53. 文件: application\repositories\practice_repository_impl.dart
+   行号: 450
+   文本: "错误: _db.set 调用失败: $e"
+   建议键名: common_error_错误调用失败
+   代码行: debugPrint('错误: _db.set 调用失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+54. 文件: application\repositories\practice_repository_impl.dart
+   行号: 451
+   文本: "错误堆栈: ${e is Error ? e.stackTrace :"
+   建议键名: common_error_错误堆栈
+   代码行: debugPrint('错误堆栈: ${e is Error ? e.stackTrace : ''}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+55. 文件: application\repositories\practice_repository_impl.dart
+   行号: 454
+   文本: "savePracticeRaw: 已保存数据到数据库，ID=$practiceId"
+   建议键名: common_error_已保存数据到数据库
+   代码行: debugPrint('savePracticeRaw: 已保存数据到数据库，ID=$practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+56. 文件: application\repositories\practice_repository_impl.dart
+   行号: 457
+   文本: "开始验证数据是否已保存..."
+   建议键名: common_error_开始验证数据是否已保
+   代码行: debugPrint('开始验证数据是否已保存...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+57. 文件: application\repositories\practice_repository_impl.dart
+   行号: 462
+   文本: "数据保存失败，无法在数据库中找到记录: $practiceId"
+   建议键名: common_error_数据保存失败无法在数
+   代码行: throw Exception('数据保存失败，无法在数据库中找到记录: $practiceId');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+58. 文件: application\repositories\practice_repository_impl.dart
+   行号: 464
+   文本: "数据保存验证成功: ${savedData["
+   建议键名: common_error_数据保存验证成功
+   代码行: debugPrint('数据保存验证成功: ${savedData['title']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+59. 文件: application\repositories\practice_repository_impl.dart
+   行号: 477
+   文本: "保存字帖失败: $e"
+   建议键名: common_error_保存字帖失败
+   代码行: debugPrint('保存字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+60. 文件: application\repositories\practice_repository_impl.dart
+   行号: 508
+   文本: "updateFavoriteStatus: 找不到ID=$id的记录"
+   建议键名: common_error_找不到的记录
+   代码行: debugPrint('updateFavoriteStatus: 找不到ID=$id的记录');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+61. 文件: application\repositories\practice_repository_impl.dart
+   行号: 520
+   文本: "updateFavoriteStatus: 成功更新收藏状态"
+   建议键名: common_error_成功更新收藏状态
+   代码行: debugPrint('updateFavoriteStatus: 成功更新收藏状态');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+62. 文件: application\repositories\practice_repository_impl.dart
+   行号: 523
+   文本: "updateFavoriteStatus失败: $e"
+   建议键名: common_error_失败
+   代码行: debugPrint('updateFavoriteStatus失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+63. 文件: application\repositories\practice_repository_impl.dart
+   行号: 539
+   文本: "添加关键词筛选条件: title LIKE %${filter.keyword}%"
+   建议键名: common_error_添加关键词筛选条件
+   代码行: debugPrint('添加关键词筛选条件: title LIKE %${filter.keyword}%');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+64. 文件: application\repositories\practice_repository_impl.dart
+   行号: 547
+   文本: "添加标签筛选条件: tags LIKE %$tag%"
+   建议键名: common_error_添加标签筛选条件
+   代码行: debugPrint('添加标签筛选条件: tags LIKE %$tag%');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+65. 文件: application\repositories\practice_repository_impl.dart
+   行号: 554
+   文本: "添加状态筛选条件: status=${filter.status}"
+   建议键名: common_error_添加状态筛选条件
+   代码行: debugPrint('添加状态筛选条件: status=${filter.status}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+66. 文件: application\repositories\practice_repository_impl.dart
+   行号: 579
+   文本: "添加收藏筛选条件: isFavorite=1 (使用条件格式)"
+   建议键名: common_error_添加收藏筛选条件使用
+   代码行: debugPrint('添加收藏筛选条件: isFavorite=1 (使用条件格式)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+67. 文件: application\repositories\practice_repository_impl.dart
+   行号: 580
+   文本: "⚠️ 注意: 如果没有收藏的练习，带有isFavorite=1条件的查询将不返回结果"
+   建议键名: common_error_注意如果没有收藏的练
+   代码行: debugPrint('⚠️ 注意: 如果没有收藏的练习，带有isFavorite=1条件的查询将不返回结果');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+68. 文件: application\repositories\practice_repository_impl.dart
+   行号: 591
+   文本: "设置排序: ${query["
+   建议键名: common_error_设置排序
+   代码行: debugPrint('设置排序: ${query['orderBy']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+69. 文件: application\repositories\practice_repository_impl.dart
+   行号: 598
+   文本: "最终查询参数: $query"
+   建议键名: common_error_最终查询参数
+   代码行: debugPrint('最终查询参数: $query');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+70. 文件: application\repositories\practice_repository_impl.dart
+   行号: 611
+   文本: "_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段"
+   建议键名: common_error_开始处理数据共个字段
+   代码行: debugPrint('_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+71. 文件: application\repositories\practice_repository_impl.dart
+   行号: 617
+   文本: "_prepareForSave: 移除status字段，数据库中不存在该列"
+   建议键名: common_error_移除字段数据库中不存
+   代码行: debugPrint('_prepareForSave: 移除status字段，数据库中不存在该列');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+72. 文件: application\repositories\practice_repository_impl.dart
+   行号: 628
+   文本: "_prepareForSave: isFavorite字段不存在，设为默认值0"
+   建议键名: common_error_字段不存在设为默认值
+   代码行: debugPrint('_prepareForSave: isFavorite字段不存在，设为默认值0');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+73. 文件: application\repositories\practice_repository_impl.dart
+   行号: 640
+   文本: "_prepareForSave: tags字段已经是字符串"
+   建议键名: common_error_字段已经是字符串
+   代码行: debugPrint('_prepareForSave: tags字段已经是字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+74. 文件: application\repositories\practice_repository_impl.dart
+   行号: 643
+   文本: "_prepareForSave: tags字段类型未知，设为空字符串"
+   建议键名: common_error_字段类型未知设为空字
+   代码行: debugPrint('_prepareForSave: tags字段类型未知，设为空字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+75. 文件: application\repositories\practice_repository_impl.dart
+   行号: 647
+   文本: "_prepareForSave: 转换tags字段失败: $e，设为空字符串"
+   建议键名: common_error_转换字段失败设为空字
+   代码行: debugPrint('_prepareForSave: 转换tags字段失败: $e，设为空字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+76. 文件: application\repositories\practice_repository_impl.dart
+   行号: 653
+   文本: "_prepareForSave: tags字段不存在，设为空列表"
+   建议键名: common_error_字段不存在设为空列表
+   代码行: debugPrint('_prepareForSave: tags字段不存在，设为空列表');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+77. 文件: application\repositories\practice_repository_impl.dart
+   行号: 665
+   文本: "_prepareForSave: pages字段已经是字符串"
+   建议键名: common_error_字段已经是字符串
+   代码行: debugPrint('_prepareForSave: pages字段已经是字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+78. 文件: application\repositories\practice_repository_impl.dart
+   行号: 668
+   文本: "_prepareForSave: pages字段类型未知，设为空字符串"
+   建议键名: common_error_字段类型未知设为空字
+   代码行: debugPrint('_prepareForSave: pages字段类型未知，设为空字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+79. 文件: application\repositories\practice_repository_impl.dart
+   行号: 672
+   文本: "_prepareForSave: 转换pages字段失败: $e，设为空字符串"
+   建议键名: common_error_转换字段失败设为空字
+   代码行: debugPrint('_prepareForSave: 转换pages字段失败: $e，设为空字符串');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+80. 文件: application\repositories\practice_repository_impl.dart
+   行号: 678
+   文本: "_prepareForSave: pages字段不存在，设为空列表"
+   建议键名: common_error_字段不存在设为空列表
+   代码行: debugPrint('_prepareForSave: pages字段不存在，设为空列表');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+81. 文件: application\repositories\practice_repository_impl.dart
+   行号: 705
+   文本: "解析tags字段失败: $e"
+   建议键名: common_error_解析字段失败
+   代码行: debugPrint('解析tags字段失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+82. 文件: application\repositories\practice_repository_impl.dart
+   行号: 731
+   文本: "解析pages字段失败: $e"
+   建议键名: common_error_解析字段失败
+   代码行: debugPrint('解析pages字段失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+83. 文件: application\repositories\practice_repository_impl.dart
+   行号: 748
+   文本: "_processDbData: isFavorite字段不存在，设为默认值false"
+   建议键名: common_error_字段不存在设为默认值
+   代码行: debugPrint('_processDbData: isFavorite字段不存在，设为默认值false');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+84. 文件: application\repositories\practice_repository_impl.dart
+   行号: 754
+   文本: "_processDbData: status字段不存在于数据库，设为默认值active"
+   建议键名: common_error_字段不存在于数据库设
+   代码行: debugPrint('_processDbData: status字段不存在于数据库，设为默认值active');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+85. 文件: application\services\library_import_service.dart
+   行号: 32
+   文本: "目录不存在：$dirPath"
+   建议键名: common_error_目录不存在
+   代码行: throw Exception('目录不存在：$dirPath');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+86. 文件: application\services\library_import_service.dart
+   行号: 75
+   文本: "文件不存在：$filePath"
+   建议键名: common_error_文件不存在
+   代码行: throw Exception('文件不存在：$filePath');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+87. 文件: application\services\library_import_service.dart
+   行号: 87
+   文本: "不支持的文件类型：$mimeType"
+   建议键名: common_error_不支持的文件类型
+   代码行: throw Exception('不支持的文件类型：$mimeType');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+88. 文件: application\services\library_import_service.dart
+   行号: 106
+   文本: "生成缩略图失败"
+   建议键名: common_error_生成缩略图失败
+   代码行: throw Exception('生成缩略图失败');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+89. 文件: application\services\library_service.dart
+   行号: 57
+   文本: "项目不存在：$id"
+   建议键名: common_error_项目不存在
+   代码行: throw Exception('项目不存在：$id');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+90. 文件: application\services\character\character_service.dart
+   行号: 611
+   文本: "保存图像文件失败: $e"
+   建议键名: common_error_保存图像文件失败
+   代码行: throw Exception('保存图像文件失败: $e');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+91. 文件: application\services\character\character_service.dart
+   行号: 641
+   文本: "更新字符失败: $e"
+   建议键名: common_error_更新字符失败
+   代码行: throw Exception('更新字符失败: $e');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+92. 文件: application\services\image\character_image_processor.dart
+   行号: 93
+   文本: "预览区域无效"
+   建议键名: common_error_预览区域无效
+   代码行: throw ImageProcessingException('预览区域无效');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+93. 文件: application\services\image\character_image_processor.dart
+   行号: 99
+   文本: "图像解码失败"
+   建议键名: common_error_图像解码失败
+   代码行: throw ImageProcessingException('图像解码失败');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+94. 文件: application\services\image\character_image_processor.dart
+   行号: 180
+   文本: "处理区域无效"
+   建议键名: common_error_处理区域无效
+   代码行: throw ImageProcessingException('处理区域无效');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+95. 文件: application\services\image\character_image_processor.dart
+   行号: 188
+   文本: "图像解码失败"
+   建议键名: common_error_图像解码失败
+   代码行: throw ImageProcessingException('图像解码失败');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+96. 文件: application\services\image\character_image_processor.dart
+   行号: 559
+   文本: "没有轮廓点"
+   建议键名: common_error_没有轮廓点
+   代码行: throw Exception('没有轮廓点');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+97. 文件: application\services\image\character_image_processor.dart
+   行号: 579
+   文本: "无法计算有效的轮廓边界"
+   建议键名: common_error_无法计算有效的轮廓边
+   代码行: throw Exception('无法计算有效的轮廓边界');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+98. 文件: application\services\practice\practice_service.dart
+   行号: 36
+   文本: "=== PracticeService.createPractice 开始 ==="
+   建议键名: common_error_开始
+   代码行: debugPrint('=== PracticeService.createPractice 开始 ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+99. 文件: application\services\practice\practice_service.dart
+   行号: 37
+   文本: "参数: title=$title, tags=$tags, status=$status"
+   建议键名: common_error_参数
+   代码行: debugPrint('参数: title=$title, tags=$tags, status=$status');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+100. 文件: application\services\practice\practice_service.dart
+   行号: 44
+   文本: "已创建实体，生成的ID=${practice.id}, 准备调用 _repository.save..."
+   建议键名: common_error_已创建实体生成的准备
+   代码行: debugPrint('已创建实体，生成的ID=${practice.id}, 准备调用 _repository.save...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+101. 文件: application\services\practice\practice_service.dart
+   行号: 48
+   文本: "_repository.save 调用成功，返回ID=${result.id}"
+   建议键名: common_error_调用成功返回
+   代码行: debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+102. 文件: application\services\practice\practice_service.dart
+   行号: 49
+   文本: "=== PracticeService.createPractice 完成 ==="
+   建议键名: common_error_完成
+   代码行: debugPrint('=== PracticeService.createPractice 完成 ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+103. 文件: application\services\practice\practice_service.dart
+   行号: 52
+   文本: "错误: createPractice 失败 - $e"
+   建议键名: common_error_错误失败
+   代码行: debugPrint('错误: createPractice 失败 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+104. 文件: application\services\practice\practice_service.dart
+   行号: 121
+   文本: "=== PracticeService.savePractice 开始 ==="
+   建议键名: common_error_开始
+   代码行: debugPrint('=== PracticeService.savePractice 开始 ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+105. 文件: application\services\practice\practice_service.dart
+   行号: 127
+   文本: "检测到空 ID，将创建新字帖"
+   建议键名: common_error_检测到空将创建新字帖
+   代码行: debugPrint('检测到空 ID，将创建新字帖');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+106. 文件: application\services\practice\practice_service.dart
+   行号: 132
+   文本: "创建完成，新ID=${newPractice.id}"
+   建议键名: common_error_创建完成新
+   代码行: debugPrint('创建完成，新ID=${newPractice.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+107. 文件: application\services\practice\practice_service.dart
+   行号: 136
+   文本: "检测到页面数据，将更新页面"
+   建议键名: common_error_检测到页面数据将更新
+   代码行: debugPrint('检测到页面数据，将更新页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+108. 文件: application\services\practice\practice_service.dart
+   行号: 138
+   文本: "准备保存更新后的实体，调用 _repository.save..."
+   建议键名: common_error_准备保存更新后的实体
+   代码行: debugPrint('准备保存更新后的实体，调用 _repository.save...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+109. 文件: application\services\practice\practice_service.dart
+   行号: 140
+   文本: "_repository.save 调用成功，返回ID=${result.id}"
+   建议键名: common_error_调用成功返回
+   代码行: debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+110. 文件: application\services\practice\practice_service.dart
+   行号: 144
+   文本: "准备保存缩略图, 大小=${thumbnail.length} 字节"
+   建议键名: common_error_准备保存缩略图大小字
+   代码行: debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+111. 文件: application\services\practice\practice_service.dart
+   行号: 146
+   文本: "压缩后缩略图大小=${compressedThumbnail.length} 字节"
+   建议键名: common_error_压缩后缩略图大小字节
+   代码行: debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+112. 文件: application\services\practice\practice_service.dart
+   行号: 149
+   文本: "已保存新字帖缩略图到文件系统: ${result.id}"
+   建议键名: common_error_已保存新字帖缩略图到
+   代码行: debugPrint('已保存新字帖缩略图到文件系统: ${result.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+113. 文件: application\services\practice\practice_service.dart
+   行号: 152
+   文本: "=== PracticeService.savePractice 完成(更新页面分支) ==="
+   建议键名: common_error_完成更新页面分支
+   代码行: debugPrint('=== PracticeService.savePractice 完成(更新页面分支) ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+114. 文件: application\services\practice\practice_service.dart
+   行号: 158
+   文本: "准备保存缩略图, 大小=${thumbnail.length} 字节"
+   建议键名: common_error_准备保存缩略图大小字
+   代码行: debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+115. 文件: application\services\practice\practice_service.dart
+   行号: 160
+   文本: "压缩后缩略图大小=${compressedThumbnail.length} 字节"
+   建议键名: common_error_压缩后缩略图大小字节
+   代码行: debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+116. 文件: application\services\practice\practice_service.dart
+   行号: 163
+   文本: "已保存新字帖缩略图到文件系统: ${newPractice.id}"
+   建议键名: common_error_已保存新字帖缩略图到
+   代码行: debugPrint('已保存新字帖缩略图到文件系统: ${newPractice.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+117. 文件: application\services\practice\practice_service.dart
+   行号: 166
+   文本: "=== PracticeService.savePractice 完成(无页面分支) ==="
+   建议键名: common_error_完成无页面分支
+   代码行: debugPrint('=== PracticeService.savePractice 完成(无页面分支) ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+118. 文件: application\services\practice\practice_service.dart
+   行号: 171
+   文本: "检测到现有ID=$id，将更新字帖"
+   建议键名: common_error_检测到现有将更新字帖
+   代码行: debugPrint('检测到现有ID=$id，将更新字帖');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+119. 文件: application\services\practice\practice_service.dart
+   行号: 174
+   文本: "错误: 无法找到ID=$id的字帖"
+   建议键名: common_error_错误无法找到的字帖
+   代码行: debugPrint('错误: 无法找到ID=$id的字帖');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+120. 文件: application\services\practice\practice_service.dart
+   行号: 175
+   文本: "无法找到指定的字帖: $id"
+   建议键名: common_error_无法找到指定的字帖
+   代码行: throw Exception('无法找到指定的字帖: $id');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+121. 文件: application\services\practice\practice_service.dart
+   行号: 187
+   文本: "创建了更新后的实体, 准备调用 _repository.save..."
+   建议键名: common_error_创建了更新后的实体准
+   代码行: debugPrint('创建了更新后的实体, 准备调用 _repository.save...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+122. 文件: application\services\practice\practice_service.dart
+   行号: 191
+   文本: "_repository.save 调用成功，返回ID=${result.id}"
+   建议键名: common_error_调用成功返回
+   代码行: debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+123. 文件: application\services\practice\practice_service.dart
+   行号: 195
+   文本: "准备保存缩略图, 大小=${thumbnail.length} 字节"
+   建议键名: common_error_准备保存缩略图大小字
+   代码行: debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+124. 文件: application\services\practice\practice_service.dart
+   行号: 197
+   文本: "压缩后缩略图大小=${compressedThumbnail.length} 字节"
+   建议键名: common_error_压缩后缩略图大小字节
+   代码行: debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+125. 文件: application\services\practice\practice_service.dart
+   行号: 199
+   文本: "已保存现有字帖缩略图到文件系统: ${result.id}"
+   建议键名: common_error_已保存现有字帖缩略图
+   代码行: debugPrint('已保存现有字帖缩略图到文件系统: ${result.id}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+126. 文件: application\services\practice\practice_service.dart
+   行号: 202
+   文本: "=== PracticeService.savePractice 完成(更新字帖分支) ==="
+   建议键名: common_error_完成更新字帖分支
+   代码行: debugPrint('=== PracticeService.savePractice 完成(更新字帖分支) ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+127. 文件: application\services\practice\practice_service.dart
+   行号: 234
+   文本: "已保存缩略图到文件系统: $practiceId"
+   建议键名: common_error_已保存缩略图到文件系
+   代码行: debugPrint('已保存缩略图到文件系统: $practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+128. 文件: application\services\practice\practice_service.dart
+   行号: 253
+   文本: "PracticeService.toggleFavorite 开始: ID=$id"
+   建议键名: common_error_开始
+   代码行: debugPrint('PracticeService.toggleFavorite 开始: ID=$id');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+129. 文件: application\services\practice\practice_service.dart
+   行号: 256
+   文本: "获取字帖结果: ${practice != null ?"
+   建议键名: common_error_获取字帖结果
+   代码行: debugPrint('获取字帖结果: ${practice != null ? '成功' : '未找到字帖'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+130. 文件: application\services\practice\practice_service.dart
+   行号: 260
+   文本: "当前收藏状态: ${practice.isFavorite}"
+   建议键名: common_error_当前收藏状态
+   代码行: debugPrint('当前收藏状态: ${practice.isFavorite}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+131. 文件: application\services\practice\practice_service.dart
+   行号: 264
+   文本: "新的收藏状态: $newFavoriteStatus"
+   建议键名: common_error_新的收藏状态
+   代码行: debugPrint('新的收藏状态: $newFavoriteStatus');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+132. 文件: application\services\practice\practice_service.dart
+   行号: 272
+   文本: "使用轻量级方法更新收藏状态成功"
+   建议键名: common_error_使用轻量级方法更新收
+   代码行: debugPrint('使用轻量级方法更新收藏状态成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+133. 文件: application\services\practice\practice_service.dart
+   行号: 276
+   文本: "轻量级方法失败，尝试完整保存"
+   建议键名: common_error_轻量级方法失败尝试完
+   代码行: debugPrint('轻量级方法失败，尝试完整保存');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+134. 文件: application\services\practice\practice_service.dart
+   行号: 281
+   文本: "保存结果: 成功"
+   建议键名: common_error_保存结果成功
+   代码行: debugPrint('保存结果: 成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+135. 文件: application\services\practice\practice_service.dart
+   行号: 313
+   文本: "警告: 无法解码缩略图，将使用原始数据"
+   建议键名: common_error_警告无法解码缩略图将
+   代码行: debugPrint('警告: 无法解码缩略图，将使用原始数据');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+136. 文件: application\services\practice\practice_service.dart
+   行号: 346
+   文本: "文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节"
+   建议键名: common_error_文件大小字节
+   代码行: debugPrint('文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+137. 文件: application\services\storage\work_storage_service.dart
+   行号: 118
+   文本: "文件不存在"
+   建议键名: common_error_文件不存在
+   代码行: throw FileSystemException('文件不存在', path);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+138. 文件: application\services\storage\work_storage_service.dart
+   行号: 127
+   文本: "文件不存在"
+   建议键名: common_error_文件不存在
+   代码行: throw FileSystemException('文件不存在', path);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+139. 文件: application\services\storage\work_storage_service.dart
+   行号: 198
+   文本: "封面导入图保存失败"
+   建议键名: common_error_封面导入图保存失败
+   代码行: throw FileSystemException('封面导入图保存失败', targetPath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+140. 文件: application\services\storage\work_storage_service.dart
+   行号: 242
+   文本: "封面缩略图保存失败"
+   建议键名: common_error_封面缩略图保存失败
+   代码行: throw FileSystemException('封面缩略图保存失败', targetPath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+141. 文件: application\services\work\work_image_service.dart
+   行号: 255
+   文本: "源文件不存在"
+   建议键名: common_error_源文件不存在
+   代码行: throw FileSystemException('源文件不存在', file.path);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+142. 文件: application\services\work\work_image_service.dart
+   行号: 469
+   文本: "源文件不存在"
+   建议键名: common_error_源文件不存在
+   代码行: throw FileSystemException('源文件不存在', image.path);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+143. 文件: application\services\work\work_image_service.dart
+   行号: 669
+   文本: "源图片不存在"
+   建议键名: common_error_源图片不存在
+   代码行: throw FileSystemException('源图片不存在', importedPath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+144. 文件: application\services\work\work_service.dart
+   行号: 132
+   文本: "图片文件不能为空"
+   建议键名: common_error_图片文件不能为空
+   代码行: if (files.isEmpty) throw ArgumentError('图片文件不能为空');
+   匹配模式: throw\s+\w*Error\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+145. 文件: application\services\work\work_service.dart
+   行号: 267
+   文本: "作品不存在: $workId"
+   建议键名: common_error_作品不存在
+   代码行: throw Exception('作品不存在: $workId');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+146. 文件: domain\enums\app_language.dart
+   行号: 55
+   文本: "AppLanguage.fromString: 从字符串"
+   建议键名: common_error_从字符串
+   代码行: debugPrint('AppLanguage.fromString: 从字符串 "$value" 解析语言设置');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+147. 文件: domain\enums\app_language.dart
+   行号: 62
+   文本: "AppLanguage.fromString: 解析结果: $result"
+   建议键名: common_error_解析结果
+   代码行: debugPrint('AppLanguage.fromString: 解析结果: $result');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+148. 文件: domain\models\character\processing_result.dart
+   行号: 123
+   文本: "处理结果反序列化失败: $e"
+   建议键名: common_error_处理结果反序列化失败
+   代码行: debugPrint('处理结果反序列化失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+149. 文件: infrastructure\backup\backup_service.dart
+   行号: 372
+   文本: "备份文件不存在: $backupPath"
+   建议键名: common_error_备份文件不存在
+   代码行: throw Exception('备份文件不存在: $backupPath');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+150. 文件: infrastructure\backup\backup_service.dart
+   行号: 787
+   文本: "备份中未找到应用数据目录"
+   建议键名: common_error_备份中未找到应用数据
+   代码行: throw Exception('备份中未找到应用数据目录');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+151. 文件: infrastructure\backup\backup_service.dart
+   行号: 865
+   文本: "备份中未找到数据库目录"
+   建议键名: common_error_备份中未找到数据库目
+   代码行: throw Exception('备份中未找到数据库目录');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+152. 文件: infrastructure\backup\backup_service.dart
+   行号: 877
+   文本: "备份中未找到数据库文件"
+   建议键名: common_error_备份中未找到数据库文
+   代码行: orElse: () => throw Exception('备份中未找到数据库文件'),
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+153. 文件: infrastructure\backup\backup_service.dart
+   行号: 928
+   文本: "数据库恢复需要重启应用"
+   建议键名: common_error_数据库恢复需要重启应
+   代码行: throw NeedsRestartException('数据库恢复需要重启应用');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+154. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 84
+   文本: "初始化磁盘缓存失败: $e"
+   建议键名: common_error_初始化磁盘缓存失败
+   代码行: debugPrint('初始化磁盘缓存失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+155. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 119
+   文本: "读取缓存文件失败: $e"
+   建议键名: common_error_读取缓存文件失败
+   代码行: debugPrint('读取缓存文件失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+156. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 154
+   文本: "写入缓存文件失败: $e"
+   建议键名: common_error_写入缓存文件失败
+   代码行: debugPrint('写入缓存文件失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+157. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 171
+   文本: "删除缓存文件失败: $e"
+   建议键名: common_error_删除缓存文件失败
+   代码行: debugPrint('删除缓存文件失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+158. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 189
+   文本: "清空缓存目录失败: $e"
+   建议键名: common_error_清空缓存目录失败
+   代码行: debugPrint('清空缓存目录失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+159. 文件: infrastructure\cache\implementations\disk_cache.dart
+   行号: 273
+   文本: "清理缓存失败: $e"
+   建议键名: common_error_清理缓存失败
+   代码行: debugPrint('清理缓存失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+160. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 25
+   文本: "已清除所有缓存"
+   建议键名: common_error_已清除所有缓存
+   代码行: debugPrint('已清除所有缓存');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+161. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 38
+   文本: "已启动缓存监控，间隔: ${interval.inMinutes}分钟"
+   建议键名: common_error_已启动缓存监控间隔分
+   代码行: debugPrint('已启动缓存监控，间隔: ${interval.inMinutes}分钟');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+162. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 52
+   文本: "当前缓存总大小: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB"
+   建议键名: common_error_当前缓存总大小
+   代码行: debugPrint('当前缓存总大小: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+163. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 57
+   文本: "缓存大小超过阈值，开始清理"
+   建议键名: common_error_缓存大小超过阈值开始
+   代码行: debugPrint('缓存大小超过阈值，开始清理');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+164. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 61
+   文本: "检查内存使用失败: $e"
+   建议键名: common_error_检查内存使用失败
+   代码行: debugPrint('检查内存使用失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+165. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 78
+   文本: "已清理缓存: $cache"
+   建议键名: common_error_已清理缓存
+   代码行: debugPrint('已清理缓存: $cache');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+166. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 81
+   文本: "清理缓存失败: $e"
+   建议键名: common_error_清理缓存失败
+   代码行: debugPrint('清理缓存失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+167. 文件: infrastructure\cache\services\cache_manager.dart
+   行号: 93
+   文本: "获取缓存大小失败: $e"
+   建议键名: common_error_获取缓存大小失败
+   代码行: debugPrint('获取缓存大小失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+168. 文件: infrastructure\logging\edit_page_logger_extension.dart
+   行号: 245
+   文本: "EditPageLogger.fileOpsError: 日志记录失败: $e, 原始消息: $message"
+   建议键名: common_error_日志记录失败原始消息
+   代码行: debugPrint('EditPageLogger.fileOpsError: 日志记录失败: $e, 原始消息: $message');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+169. 文件: infrastructure\persistence\sqlite\database_restore_handler.dart
+   行号: 148
+   文本: "无法恢复数据库文件: $e, $renameError, $storageError"
+   建议键名: common_error_无法恢复数据库文件
+   代码行: throw Exception('无法恢复数据库文件: $e, $renameError, $storageError');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+170. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 64
+   文本: "统计查询失败: $e"
+   建议键名: common_error_统计查询失败
+   代码行: debugPrint('统计查询失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+171. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 161
+   文本: "查询失败: $e"
+   建议键名: common_error_查询失败
+   代码行: debugPrint('查询失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+172. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 186
+   文本: "SQLiteDatabase.save: 开始保存数据到 $table, id=$id"
+   建议键名: common_error_开始保存数据到
+   代码行: debugPrint('SQLiteDatabase.save: 开始保存数据到 $table, id=$id');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+173. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 199
+   文本: "SQLiteDatabase.save: 记录已存在，执行更新"
+   建议键名: common_error_记录已存在执行更新
+   代码行: debugPrint('SQLiteDatabase.save: 记录已存在，执行更新');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+174. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 206
+   文本: "SQLiteDatabase.save: 更新完成，影响行数: $updateCount"
+   建议键名: common_error_更新完成影响行数
+   代码行: debugPrint('SQLiteDatabase.save: 更新完成，影响行数: $updateCount');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+175. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 209
+   文本: "SQLiteDatabase.save: 记录不存在，执行插入"
+   建议键名: common_error_记录不存在执行插入
+   代码行: debugPrint('SQLiteDatabase.save: 记录不存在，执行插入');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+176. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 215
+   文本: "SQLiteDatabase.save: 插入完成"
+   建议键名: common_error_插入完成
+   代码行: debugPrint('SQLiteDatabase.save: 插入完成');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+177. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 227
+   文本: "SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id"
+   建议键名: common_error_保存后无法验证数据记
+   代码行: throw Exception('SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+178. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 229
+   文本: "SQLiteDatabase.save: 数据保存成功，已验证 $table.$id"
+   建议键名: common_error_数据保存成功已验证
+   代码行: debugPrint('SQLiteDatabase.save: 数据保存成功，已验证 $table.$id');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+179. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 231
+   文本: "SQLiteDatabase.save: 保存失败: $e"
+   建议键名: common_error_保存失败
+   代码行: debugPrint('SQLiteDatabase.save: 保存失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+180. 文件: infrastructure\persistence\sqlite\sqlite_database.dart
+   行号: 559
+   文本: "数据库降级不支持"
+   建议键名: common_error_数据库降级不支持
+   代码行: throw Exception('数据库降级不支持'),
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+181. 文件: infrastructure\storage\local_storage.dart
+   行号: 32
+   文本: "源文件不存在"
+   建议键名: common_error_源文件不存在
+   代码行: throw FileSystemException('源文件不存在', sourcePath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+182. 文件: infrastructure\storage\local_storage.dart
+   行号: 183
+   文本: "文件不存在"
+   建议键名: common_error_文件不存在
+   代码行: throw FileSystemException('文件不存在', filePath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+183. 文件: infrastructure\storage\local_storage.dart
+   行号: 204
+   文本: "文件不存在"
+   建议键名: common_error_文件不存在
+   代码行: throw FileSystemException('文件不存在', filePath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+184. 文件: infrastructure\storage\local_storage.dart
+   行号: 265
+   文本: "源文件不存在"
+   建议键名: common_error_源文件不存在
+   代码行: throw FileSystemException('源文件不存在', sourcePath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+185. 文件: infrastructure\storage\local_storage.dart
+   行号: 297
+   文本: "文件不存在"
+   建议键名: common_error_文件不存在
+   代码行: throw FileSystemException('文件不存在', filePath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+186. 文件: infrastructure\storage\local_storage.dart
+   行号: 320
+   文本: "源文件不存在"
+   建议键名: common_error_源文件不存在
+   代码行: throw FileSystemException('源文件不存在', oldPath);
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+187. 文件: presentation\app.dart
+   行号: 47
+   文本: "【系统语言】操作系统语言检测: $platformLocale"
+   建议键名: common_error_系统语言操作系统语言
+   代码行: debugPrint('【系统语言】操作系统语言检测: $platformLocale');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+188. 文件: presentation\app.dart
+   行号: 55
+   文本: "【系统语言】检测到中文系统语言，设置为: zh"
+   建议键名: common_error_系统语言检测到中文系
+   代码行: debugPrint('【系统语言】检测到中文系统语言，设置为: zh');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+189. 文件: presentation\app.dart
+   行号: 58
+   文本: "【系统语言】检测到英文系统语言，设置为: en"
+   建议键名: common_error_系统语言检测到英文系
+   代码行: debugPrint('【系统语言】检测到英文系统语言，设置为: en');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+190. 文件: presentation\app.dart
+   行号: 62
+   文本: "【系统语言】未检测到支持的系统语言，默认使用中文"
+   建议键名: common_error_系统语言未检测到支持
+   代码行: debugPrint('【系统语言】未检测到支持的系统语言，默认使用中文');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+191. 文件: presentation\app.dart
+   行号: 85
+   文本: "【系统语言】当前用户语言设置: $userLanguage"
+   建议键名: common_error_系统语言当前用户语言
+   代码行: debugPrint('【系统语言】当前用户语言设置: $userLanguage');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+192. 文件: presentation\app.dart
+   行号: 92
+   文本: "【系统语言】最终使用的语言: ${finalLocale?.languageCode ??"
+   建议键名: common_error_系统语言最终使用的语
+   代码行: debugPrint('【系统语言】最终使用的语言: ${finalLocale?.languageCode ?? "null"}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+193. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 10
+   文本: "开始复制选中元素..."
+   建议键名: practices_error_开始复制选中元素
+   代码行: debugPrint('开始复制选中元素...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+194. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 12
+   文本: "复制结果: ${clipboardElement != null ?"
+   建议键名: practices_error_复制结果
+   代码行: debugPrint('复制结果: ${clipboardElement != null ? '成功' : '失败'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+195. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 15
+   文本: "复制的元素类型: ${clipboardElement["
+   建议键名: practices_error_复制的元素类型
+   代码行: debugPrint('复制的元素类型: ${clipboardElement['type']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+196. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 29
+   文本: "======= 剪贴板详细检查 ======="
+   建议键名: practices_error_剪贴板详细检查
+   代码行: debugPrint('======= 剪贴板详细检查 =======');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+197. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 33
+   文本: "内部剪贴板内容类型: ${clipboardElement["
+   建议键名: practices_error_内部剪贴板内容类型
+   代码行: debugPrint('内部剪贴板内容类型: ${clipboardElement['type']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+198. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 38
+   文本: "字符IDs: ${clipboardElement["
+   建议键名: practices_error_字符
+   代码行: debugPrint('字符IDs: ${clipboardElement['characterIds']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+199. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 42
+   文本: "字符ID: ${clipboardElement["
+   建议键名: practices_error_字符
+   代码行: debugPrint('字符ID: ${clipboardElement['data']['characterId']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+200. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 46
+   文本: "图库项目IDs: ${clipboardElement["
+   建议键名: practices_error_图库项目
+   代码行: debugPrint('图库项目IDs: ${clipboardElement['itemIds']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+201. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 48
+   文本: "图片URL: ${clipboardElement["
+   建议键名: practices_error_图片
+   代码行: debugPrint('图片URL: ${clipboardElement['imageUrl']}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+202. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 53
+   文本: "内部剪贴板完整内容: $clipboardElement"
+   建议键名: practices_error_内部剪贴板完整内容
+   代码行: debugPrint('内部剪贴板完整内容: $clipboardElement');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+203. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 56
+   文本: "内部剪贴板为空"
+   建议键名: practices_error_内部剪贴板为空
+   代码行: debugPrint('内部剪贴板为空');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+204. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 59
+   文本: "======= 剪贴板检查结束 ======="
+   建议键名: practices_error_剪贴板检查结束
+   代码行: debugPrint('======= 剪贴板检查结束 =======');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+205. 文件: presentation\pages\practices\clipboard_enhancements.dart
+   行号: 83
+   文本: "剪贴板监控错误: $e"
+   建议键名: practices_error_剪贴板监控错误
+   代码行: debugPrint('剪贴板监控错误: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+206. 文件: presentation\pages\practices\m3_practice_edit_page.dart
+   行号: 2895
+   文本: "🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}"
+   建议键名: practices_error_网格显示切换
+   代码行: debugPrint('🎨 网格显示切换: $oldValue → ${_controller.state.gridVisible}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+207. 文件: presentation\pages\practices\m3_practice_edit_page.dart
+   行号: 2896
+   文本: "🎨 网格大小: ${_controller.state.gridSize}"
+   建议键名: practices_error_网格大小
+   代码行: debugPrint('🎨 网格大小: ${_controller.state.gridSize}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+208. 文件: presentation\pages\practices\m3_practice_edit_page.dart
+   行号: 2901
+   文本: "🎨 调用 triggerGridSettingsChange()"
+   建议键名: practices_error_调用
+   代码行: debugPrint('🎨 调用 triggerGridSettingsChange()');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+209. 文件: presentation\pages\practices\m3_practice_edit_page.dart
+   行号: 2905
+   文本: "🎨 调用 setState() 强制重建UI"
+   建议键名: practices_error_调用强制重建
+   代码行: debugPrint('🎨 调用 setState() 强制重建UI');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+210. 文件: presentation\pages\practices\m3_practice_edit_page.dart
+   行号: 2908
+   文本: "🎨 网格切换完成"
+   建议键名: practices_error_网格切换完成
+   代码行: debugPrint('🎨 网格切换完成');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+211. 文件: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+   行号: 540
+   文本: "【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！"
+   建议键名: practices_error_平移警告偏移量包含值
+   代码行: debugPrint('【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+212. 文件: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+   行号: 557
+   文本: "【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition"
+   建议键名: practices_error_平移回调后偏移量
+   代码行: debugPrint('【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+213. 文件: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+   行号: 686
+   文本: "【选择】handleTapUp: 点击已选中元素，取消选中: $id"
+   建议键名: practices_error_选择点击已选中元素取
+   代码行: debugPrint('【选择】handleTapUp: 点击已选中元素，取消选中: $id');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+214. 文件: presentation\pages\practices\widgets\canvas_gesture_handler.dart
+   行号: 737
+   文本: "【选择】handleTapUp: 点击空白区域，清除选择"
+   建议键名: practices_error_选择点击空白区域清除
+   代码行: debugPrint('【选择】handleTapUp: 点击空白区域，清除选择');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+215. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 52
+   文本: "📡 CanvasStructureListener: 层级处理器错误 - $type: $e"
+   建议键名: practices_error_层级处理器错误
+   代码行: debugPrint('📡 CanvasStructureListener: 层级处理器错误 - $type: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+216. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 87
+   文本: "📟 CanvasStructureListener: 已释放资源"
+   建议键名: practices_error_已释放资源
+   代码行: debugPrint('📟 CanvasStructureListener: 已释放资源');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+217. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 99
+   文本: "📡 CanvasStructureListener: 注册层级处理器 - $type"
+   建议键名: practices_error_注册层级处理器
+   代码行: debugPrint('📡 CanvasStructureListener: 注册层级处理器 - $type');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+218. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 105
+   文本: "📡 CanvasStructureListener: 取消注册层级处理器 - $type"
+   建议键名: practices_error_取消注册层级处理器
+   代码行: debugPrint('📡 CanvasStructureListener: 取消注册层级处理器 - $type');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+219. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 161
+   文本: "📡 StaticBackground: 处理页面背景变化"
+   建议键名: practices_error_处理页面背景变化
+   代码行: debugPrint('📡 StaticBackground: 处理页面背景变化');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+220. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 163
+   文本: "📡 StaticBackground: 处理网格设置变化"
+   建议键名: practices_error_处理网格设置变化
+   代码行: debugPrint('📡 StaticBackground: 处理网格设置变化');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+221. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 170
+   文本: "📡 Content: 处理元素变化 - ${event.elements.length} 个元素"
+   建议键名: practices_error_处理元素变化个元素
+   代码行: debugPrint('📡 Content: 处理元素变化 - ${event.elements.length} 个元素');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+222. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 172
+   文本: "📡 Content: 处理图层可见性变化"
+   建议键名: practices_error_处理图层可见性变化
+   代码行: debugPrint('📡 Content: 处理图层可见性变化');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+223. 文件: presentation\pages\practices\widgets\canvas_structure_listener.dart
+   行号: 190
+   文本: "📡 Interaction: 处理工具变化 - ${event.newTool}"
+   建议键名: practices_error_处理工具变化
+   代码行: debugPrint('📡 Interaction: 处理工具变化 - ${event.newTool}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+224. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 106
+   文本: "取消通知计时器失败: $e"
+   建议键名: practices_error_取消通知计时器失败
+   代码行: debugPrint('取消通知计时器失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+225. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 112
+   文本: "关闭stream controller失败: $e"
+   建议键名: practices_error_关闭失败
+   代码行: debugPrint('关闭stream controller失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+226. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 118
+   文本: "dispose dirty tracker失败: $e"
+   建议键名: practices_error_失败
+   代码行: debugPrint('dispose dirty tracker失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+227. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 124
+   文本: "dispose rebuild manager失败: $e"
+   建议键名: practices_error_失败
+   代码行: debugPrint('dispose rebuild manager失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+228. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 131
+   文本: "移除拖拽状态监听器失败: $e"
+   建议键名: practices_error_移除拖拽状态监听器失
+   代码行: debugPrint('移除拖拽状态监听器失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+229. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 134
+   文本: "ContentRenderController dispose过程中发生异常: $e"
+   建议键名: practices_error_过程中发生异常
+   代码行: debugPrint('ContentRenderController dispose过程中发生异常: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+230. 文件: presentation\pages\practices\widgets\content_render_controller.dart
+   行号: 160
+   文本: "警告：ContentRenderController super.dispose()可能未能成功调用"
+   建议键名: practices_error_警告可能未能成功调用
+   代码行: debugPrint('警告：ContentRenderController super.dispose()可能未能成功调用');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+231. 文件: presentation\pages\practices\widgets\content_render_layer.dart
+   行号: 237
+   文本: "dispose cache manager失败: $e"
+   建议键名: practices_error_失败
+   代码行: debugPrint('dispose cache manager失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+232. 文件: presentation\pages\practices\widgets\content_render_layer.dart
+   行号: 240
+   文本: "ContentRenderLayer dispose过程中发生异常: $e"
+   建议键名: practices_error_过程中发生异常
+   代码行: debugPrint('ContentRenderLayer dispose过程中发生异常: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+233. 文件: presentation\pages\practices\widgets\content_render_layer.dart
+   行号: 248
+   文本: "ContentRenderLayer super.dispose()调用失败: $disposeError"
+   建议键名: practices_error_调用失败
+   代码行: debugPrint('ContentRenderLayer super.dispose()调用失败: $disposeError');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+234. 文件: presentation\pages\practices\widgets\content_render_layer.dart
+   行号: 254
+   文本: "ContentRenderLayer 最终super.dispose()调用失败: $finalError"
+   建议键名: practices_error_最终调用失败
+   代码行: debugPrint('ContentRenderLayer 最终super.dispose()调用失败: $finalError');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+235. 文件: presentation\pages\practices\widgets\content_render_layer.dart
+   行号: 264
+   文本: "警告：ContentRenderLayer super.dispose()可能未能成功调用"
+   建议键名: practices_error_警告可能未能成功调用
+   代码行: debugPrint('警告：ContentRenderLayer super.dispose()可能未能成功调用');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+236. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 69
+   文本: "🎯 DragOperationManager: 取消拖拽操作"
+   建议键名: practices_error_取消拖拽操作
+   代码行: debugPrint('🎯 DragOperationManager: 取消拖拽操作');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+237. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 98
+   文本: "🎯 DragOperationManager: 拖拽取消处理失败 - $e"
+   建议键名: practices_error_拖拽取消处理失败
+   代码行: debugPrint('🎯 DragOperationManager: 拖拽取消处理失败 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+238. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 117
+   文本: "🎯 DragOperationManager: 已释放资源"
+   建议键名: practices_error_已释放资源
+   代码行: debugPrint('🎯 DragOperationManager: 已释放资源');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+239. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 128
+   文本: "🎯 DragOperationManager: 结束拖拽操作"
+   建议键名: practices_error_结束拖拽操作
+   代码行: debugPrint('🎯 DragOperationManager: 结束拖拽操作');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+240. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 134
+   文本: "🎯 DragOperationManager: 拖拽结束处理失败 - $e"
+   建议键名: practices_error_拖拽结束处理失败
+   代码行: debugPrint('🎯 DragOperationManager: 拖拽结束处理失败 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+241. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 157
+   文本: "🎯 DragOperationManager: 开始拖拽操作"
+   建议键名: practices_error_开始拖拽操作
+   代码行: debugPrint('🎯 DragOperationManager: 开始拖拽操作');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+242. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 174
+   文本: "🎯 DragOperationManager: 拖拽操作启动失败 - $e"
+   建议键名: practices_error_拖拽操作启动失败
+   代码行: debugPrint('🎯 DragOperationManager: 拖拽操作启动失败 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+243. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 217
+   文本: "🎯 DragOperationManager: 拖拽更新失败 - $e"
+   建议键名: practices_error_拖拽更新失败
+   代码行: debugPrint('🎯 DragOperationManager: 拖拽更新失败 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+244. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 223
+   文本: "🎯 DragOperationManager: 应用最终位置"
+   建议键名: practices_error_应用最终位置
+   代码行: debugPrint('🎯 DragOperationManager: 应用最终位置');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+245. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 288
+   文本: "🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)"
+   建议键名: practices_error_网格吸附从到
+   代码行: debugPrint('🎯 网格吸附: $elementId 从 ($x, $y) 到 ($snappedX, $snappedY)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+246. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 299
+   文本: "🎯 DragOperationManager: 创建撤销/重做操作"
+   建议键名: practices_error_创建撤销重做操作
+   代码行: debugPrint('🎯 DragOperationManager: 创建撤销/重做操作');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+247. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 307
+   文本: "🎯 DragOperationManager: 执行Dragging阶段"
+   建议键名: practices_error_执行阶段
+   代码行: debugPrint('🎯 DragOperationManager: 执行Dragging阶段');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+248. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 326
+   文本: "🎯 DragOperationManager: 执行PostDrag阶段"
+   建议键名: practices_error_执行阶段
+   代码行: debugPrint('🎯 DragOperationManager: 执行PostDrag阶段');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+249. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 352
+   文本: "🎯 DragOperationManager: PostDrag阶段异常 - $e"
+   建议键名: practices_error_阶段异常
+   代码行: debugPrint('🎯 DragOperationManager: PostDrag阶段异常 - $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+250. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 360
+   文本: "🎯 DragOperationManager: 执行PreDrag阶段"
+   建议键名: practices_error_执行阶段
+   代码行: debugPrint('🎯 DragOperationManager: 执行PreDrag阶段');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+251. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 407
+   文本: "🎯 DragOperationManager: 初始化完成"
+   建议键名: practices_error_初始化完成
+   代码行: debugPrint('🎯 DragOperationManager: 初始化完成');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+252. 文件: presentation\pages\practices\widgets\drag_operation_manager.dart
+   行号: 431
+   文本: "🎯 DragOperationManager: 已创建 ${elementsList.length} 个元素快照"
+   建议键名: practices_error_已创建个元素快照
+   代码行: debugPrint('🎯 DragOperationManager: 已创建 ${elementsList.length} 个元素快照');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+253. 文件: presentation\providers\character\character_collection_provider.dart
+   行号: 142
+   文本: "当前页面ID未设置，无法创建选区"
+   建议键名: common_error_当前页面未设置无法创
+   代码行: throw Exception('当前页面ID未设置，无法创建选区');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+254. 文件: presentation\providers\character\character_collection_provider.dart
+   行号: 145
+   文本: "当前页面图像未设置，无法创建选区"
+   建议键名: common_error_当前页面图像未设置无
+   代码行: throw Exception('当前页面图像未设置，无法创建选区');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+255. 文件: presentation\providers\character\character_collection_provider.dart
+   行号: 148
+   文本: "选区尺寸过小，最小尺寸为20x20"
+   建议键名: common_error_选区尺寸过小最小尺寸
+   代码行: throw Exception('选区尺寸过小，最小尺寸为20x20');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+256. 文件: presentation\providers\character\character_collection_provider.dart
+   行号: 451
+   文本: "页面图像未设置，无法加载选区数据"
+   建议键名: common_error_页面图像未设置无法加
+   代码行: throw Exception('页面图像未设置，无法加载选区数据');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+257. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 148
+   文本: "PracticeListViewModel: 已经在加载中，跳过"
+   建议键名: viewmodel_error_已经在加载中跳过
+   代码行: debugPrint('PracticeListViewModel: 已经在加载中，跳过');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+258. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 152
+   文本: "PracticeListViewModel: 开始加载练习数据，设置isLoading=true"
+   建议键名: viewmodel_error_开始加载练习数据设置
+   代码行: debugPrint('PracticeListViewModel: 开始加载练习数据，设置isLoading=true');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+259. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 167
+   文本: "PracticeListViewModel: 调用 _practiceService.queryPractices"
+   建议键名: viewmodel_error_调用
+   代码行: debugPrint('PracticeListViewModel: 调用 _practiceService.queryPractices');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+260. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 168
+   文本: "PracticeListViewModel: 详细过滤条件: ${filter.toJson()}"
+   建议键名: viewmodel_error_详细过滤条件
+   代码行: debugPrint('PracticeListViewModel: 详细过滤条件: ${filter.toJson()}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+261. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 170
+   文本: "PracticeListViewModel: 查询结果数量: ${practicesResult.length}"
+   建议键名: viewmodel_error_查询结果数量
+   代码行: debugPrint('PracticeListViewModel: 查询结果数量: ${practicesResult.length}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+262. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 172
+   文本: "PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库"
+   建议键名: viewmodel_error_没有找到匹配的练习数
+   代码行: debugPrint('PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+263. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 176
+   文本: "PracticeListViewModel: 调用 _practiceService.count"
+   建议键名: viewmodel_error_调用
+   代码行: debugPrint('PracticeListViewModel: 调用 _practiceService.count');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+264. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 178
+   文本: "PracticeListViewModel: 总记录数: $totalCount"
+   建议键名: viewmodel_error_总记录数
+   代码行: debugPrint('PracticeListViewModel: 总记录数: $totalCount');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+265. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 200
+   文本: "PracticeListViewModel: 转换练习实体失败: $e"
+   建议键名: viewmodel_error_转换练习实体失败
+   代码行: debugPrint('PracticeListViewModel: 转换练习实体失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+266. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 201
+   文本: "PracticeListViewModel: 错误堆栈: $stack"
+   建议键名: viewmodel_error_错误堆栈
+   代码行: debugPrint('PracticeListViewModel: 错误堆栈: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+267. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 210
+   文本: "PracticeListViewModel: ⚠️ 没有找到收藏的练习数据，考虑关闭收藏过滤器"
+   建议键名: viewmodel_error_没有找到收藏的练习数
+   代码行: debugPrint('PracticeListViewModel: ⚠️ 没有找到收藏的练习数据，考虑关闭收藏过滤器');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+268. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 220
+   文本: "PracticeListViewModel: 持久化当前状态"
+   建议键名: viewmodel_error_持久化当前状态
+   代码行: debugPrint('PracticeListViewModel: 持久化当前状态');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+269. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 223
+   文本: "PracticeListViewModel: 加载练习失败: $e"
+   建议键名: viewmodel_error_加载练习失败
+   代码行: debugPrint('PracticeListViewModel: 加载练习失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+270. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 224
+   文本: "PracticeListViewModel: 错误堆栈: $stackTrace"
+   建议键名: viewmodel_error_错误堆栈
+   代码行: debugPrint('PracticeListViewModel: 错误堆栈: $stackTrace');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+271. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 237
+   文本: "PracticeListViewModel: 重置过滤器"
+   建议键名: viewmodel_error_重置过滤器
+   代码行: debugPrint('PracticeListViewModel: 重置过滤器');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+272. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 341
+   文本: "PracticeListViewModel: 过滤器未变更，跳过更新"
+   建议键名: viewmodel_error_过滤器未变更跳过更新
+   代码行: debugPrint('PracticeListViewModel: 过滤器未变更，跳过更新');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+273. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 491
+   文本: "PracticeListViewModel: 开始初始化数据..."
+   建议键名: viewmodel_error_开始初始化数据
+   代码行: debugPrint('PracticeListViewModel: 开始初始化数据...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+274. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 495
+   文本: "PracticeListViewModel: 已恢复状态，过滤条件：${savedState.filter}"
+   建议键名: viewmodel_error_已恢复状态过滤条件
+   代码行: debugPrint('PracticeListViewModel: 已恢复状态，过滤条件：${savedState.filter}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+275. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 513
+   文本: "PracticeListViewModel: 开始加载练习数据（强制刷新）"
+   建议键名: viewmodel_error_开始加载练习数据强制
+   代码行: debugPrint('PracticeListViewModel: 开始加载练习数据（强制刷新）');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+276. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 516
+   文本: "PracticeListViewModel: 初始化失败: $e"
+   建议键名: viewmodel_error_初始化失败
+   代码行: debugPrint('PracticeListViewModel: 初始化失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+277. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 517
+   文本: "PracticeListViewModel: 错误堆栈: $stack"
+   建议键名: viewmodel_error_错误堆栈
+   代码行: debugPrint('PracticeListViewModel: 错误堆栈: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+278. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 529
+   文本: "PracticeListViewModel: 尝试重新加载练习数据"
+   建议键名: viewmodel_error_尝试重新加载练习数据
+   代码行: debugPrint('PracticeListViewModel: 尝试重新加载练习数据');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+279. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 532
+   文本: "PracticeListViewModel: 重试加载失败: $loadError"
+   建议键名: viewmodel_error_重试加载失败
+   代码行: debugPrint('PracticeListViewModel: 重试加载失败: $loadError');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+280. 文件: presentation\viewmodels\practice_list_view_model.dart
+   行号: 533
+   文本: "PracticeListViewModel: 错误堆栈: $loadStack"
+   建议键名: viewmodel_error_错误堆栈
+   代码行: debugPrint('PracticeListViewModel: 错误堆栈: $loadStack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+281. 文件: presentation\viewmodels\work_import_view_model.dart
+   行号: 101
+   文本: "没有找到有效的图片文件"
+   建议键名: viewmodel_error_没有找到有效的图片文
+   代码行: throw Exception('没有找到有效的图片文件');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+282. 文件: presentation\widgets\character_collection\regions_painter.dart
+   行号: 82
+   文本: "区域绘制失败: ${region.id}, error: $e\n$stack"
+   建议键名: widget_error_区域绘制失败
+   代码行: debugPrint('区域绘制失败: ${region.id}, error: $e\n$stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+283. 文件: presentation\widgets\character_collection\regions_painter.dart
+   行号: 86
+   文本: "RegionsPainter绘制失败: $e\n$stack"
+   建议键名: widget_error_绘制失败
+   代码行: debugPrint('RegionsPainter绘制失败: $e\n$stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+284. 文件: presentation\widgets\image\cached_image.dart
+   行号: 102
+   文本: "缓存图像数据失败: $e"
+   建议键名: widget_error_缓存图像数据失败
+   代码行: debugPrint('缓存图像数据失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+285. 文件: presentation\widgets\library\m3_library_browsing_panel.dart
+   行号: 615
+   文本: "文件不存在或无法访问: $filePath"
+   建议键名: widget_error_文件不存在或无法访问
+   代码行: throw Exception('文件不存在或无法访问: $filePath');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+286. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 107
+   文本: "绘制异常：$e"
+   建议键名: widget_error_绘制异常
+   代码行: debugPrint('绘制异常：$e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+287. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 186
+   文本: "🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}"
+   建议键名: widget_error_绘制字符背景色
+   代码行: debugPrint('🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+288. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 336
+   文本: "没有字符图像数据"
+   建议键名: widget_error_没有字符图像数据
+   代码行: debugPrint('没有字符图像数据');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+289. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 351
+   文本: "尝试查找索引键1: $index"
+   建议键名: widget_error_尝试查找索引键
+   代码行: debugPrint('尝试查找索引键1: $index');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+290. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 380
+   文本: "找到characterImages子键: $characterImages"
+   建议键名: widget_error_找到子键
+   代码行: debugPrint('找到characterImages子键: $characterImages');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+291. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 389
+   文本: "没有找到字符"
+   建议键名: widget_error_没有找到字符
+   代码行: debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+292. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 392
+   文本: "获取字符图像失败: $e"
+   建议键名: widget_error_获取字符图像失败
+   代码行: debugPrint('获取字符图像失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+293. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 401
+   文本: "🔄 开始加载纹理: $path (缓存键: $cacheKey)"
+   建议键名: widget_error_开始加载纹理缓存键
+   代码行: debugPrint('🔄 开始加载纹理: $path (缓存键: $cacheKey)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+294. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 436
+   文本: "✅ 纹理加载成功并缓存: $cacheKey (${image.width}x${image.height})"
+   建议键名: widget_error_纹理加载成功并缓存
+   代码行: debugPrint('✅ 纹理加载成功并缓存: $cacheKey (${image.width}x${image.height})');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+295. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 440
+   文本: "❌ 加载纹理失败: $e, 路径: $path"
+   建议键名: widget_error_加载纹理失败路径
+   代码行: debugPrint('❌ 加载纹理失败: $e, 路径: $path');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+296. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 488
+   文本: "加载字符图像失败: $e"
+   建议键名: widget_error_加载字符图像失败
+   代码行: debugPrint('加载字符图像失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+297. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 516
+   文本: "🔑 生成纹理缓存键: $cacheKey"
+   建议键名: widget_error_生成纹理缓存键
+   代码行: debugPrint('🔑 生成纹理缓存键: $cacheKey');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+298. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 532
+   文本: "⚠️ 同步获取纹理缓存图像时出错: $e"
+   建议键名: widget_error_同步获取纹理缓存图像
+   代码行: debugPrint('⚠️ 同步获取纹理缓存图像时出错: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+299. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 561
+   文本: "❌ 纹理绘制错误: $e\n$stack"
+   建议键名: widget_error_纹理绘制错误
+   代码行: debugPrint('❌ 纹理绘制错误: $e\n$stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+300. 文件: presentation\widgets\practice\collection_painter.dart
+   行号: 603
+   文本: "从内存缓存中找到图像: $cacheKey"
+   建议键名: widget_error_从内存缓存中找到图像
+   代码行: debugPrint('从内存缓存中找到图像: $cacheKey');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+301. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 42
+   文本: "显示导出对话框"
+   建议键名: widget_error_显示导出对话框
+   代码行: debugPrint('显示导出对话框');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+302. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 72
+   文本: "导出对话框返回结果: $result"
+   建议键名: widget_error_导出对话框返回结果
+   代码行: debugPrint('导出对话框返回结果: $result');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+303. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 78
+   文本: "错误: 导出对话框返回的结果缺少必要的键"
+   建议键名: widget_error_错误导出对话框返回的
+   代码行: debugPrint('错误: 导出对话框返回的结果缺少必要的键');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+304. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 113
+   文本: "开始导出PDF"
+   建议键名: widget_error_开始导出
+   代码行: debugPrint('开始导出PDF');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+305. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 119
+   文本: "导出PDF的额外参数: $extraParams"
+   建议键名: widget_error_导出的额外参数
+   代码行: debugPrint('导出PDF的额外参数: $extraParams');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+306. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 129
+   文本: "PDF导出结果: ${pdfPath != null ?"
+   建议键名: widget_error_导出结果
+   代码行: debugPrint('PDF导出结果: ${pdfPath != null ? "成功" : "失败"}, 路径: $pdfPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+307. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 135
+   文本: "检查导出的PDF文件是否存在: $exists"
+   建议键名: widget_error_检查导出的文件是否存
+   代码行: debugPrint('检查导出的PDF文件是否存在: $exists');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+308. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 139
+   文本: "导出的PDF文件大小: $fileSize 字节"
+   建议键名: widget_error_导出的文件大小字节
+   代码行: debugPrint('导出的PDF文件大小: $fileSize 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+309. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 173
+   文本: "开始导出图片, 格式: ${exportType.name}"
+   建议键名: widget_error_开始导出图片格式
+   代码行: debugPrint('开始导出图片, 格式: ${exportType.name}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+310. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 186
+   文本: "导出的图片 ${i + 1}: ${imagePaths[i]}"
+   建议键名: widget_error_导出的图片
+   代码行: debugPrint('导出的图片 ${i + 1}: ${imagePaths[i]}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+311. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 195
+   文本: "检查导出的第一个图片文件是否存在: $exists"
+   建议键名: widget_error_检查导出的第一个图片
+   代码行: debugPrint('检查导出的第一个图片文件是否存在: $exists');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+312. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 199
+   文本: "导出的第一个图片文件大小: $fileSize 字节"
+   建议键名: widget_error_导出的第一个图片文件
+   代码行: debugPrint('导出的第一个图片文件大小: $fileSize 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+313. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 228
+   文本: "导出过程中发生异常: $e"
+   建议键名: widget_error_导出过程中发生异常
+   代码行: debugPrint('导出过程中发生异常: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+314. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 229
+   文本: "异常堆栈: $stack"
+   建议键名: widget_error_异常堆栈
+   代码行: debugPrint('异常堆栈: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+315. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 237
+   文本: "=== 导出字帖过程结束 ==="
+   建议键名: widget_error_导出字帖过程结束
+   代码行: debugPrint('=== 导出字帖过程结束 ===');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+316. 文件: presentation\widgets\practice\file_operations.dart
+   行号: 268
+   文本: "渲染进度: $current/$total"
+   建议键名: widget_error_渲染进度
+   代码行: debugPrint('渲染进度: $current/$total');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+317. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 37
+   文本: "检查标题是否存在时出错: $e"
+   建议键名: widget_error_检查标题是否存在时出
+   代码行: debugPrint('检查标题是否存在时出错: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+318. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 90
+   文本: "加载字帖失败: $e"
+   建议键名: widget_error_加载字帖失败
+   代码行: debugPrint('加载字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+319. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 117
+   文本: "开始保存字帖: $saveTitle, ID: $practiceId"
+   建议键名: widget_error_开始保存字帖
+   代码行: debugPrint('开始保存字帖: $saveTitle, ID: $practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+320. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 120
+   文本: "缩略图生成完成: ${thumbnail != null ?"
+   建议键名: widget_error_缩略图生成完成
+   代码行: debugPrint('缩略图生成完成: ${thumbnail != null ? '${thumbnail.length} 字节' : '无缩略图'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+321. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 174
+   文本: "字帖保存成功: $saveTitle, ID: $practiceId"
+   建议键名: widget_error_字帖保存成功
+   代码行: debugPrint('字帖保存成功: $saveTitle, ID: $practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+322. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 177
+   文本: "保存字帖失败: $e"
+   建议键名: widget_error_保存字帖失败
+   代码行: debugPrint('保存字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+323. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 199
+   文本: "开始另存为新字帖: $title"
+   建议键名: widget_error_开始另存为新字帖
+   代码行: debugPrint('开始另存为新字帖: $title');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+324. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 202
+   文本: "缩略图生成完成: ${thumbnail != null ?"
+   建议键名: widget_error_缩略图生成完成
+   代码行: debugPrint('缩略图生成完成: ${thumbnail != null ? '${thumbnail.length} 字节' : '无缩略图'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+325. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 256
+   文本: "字帖另存为成功: $title, ID: $practiceId"
+   建议键名: widget_error_字帖另存为成功
+   代码行: debugPrint('字帖另存为成功: $title, ID: $practiceId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+326. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 259
+   文本: "另存为字帖失败: $e"
+   建议键名: widget_error_另存为字帖失败
+   代码行: debugPrint('另存为字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+327. 文件: presentation\widgets\practice\file_operations_mixin.dart
+   行号: 349
+   文本: "生成缩略图失败: $e"
+   建议键名: widget_error_生成缩略图失败
+   代码行: debugPrint('生成缩略图失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+328. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 41
+   文本: "无法获取渲染对象"
+   建议键名: widget_error_无法获取渲染对象
+   代码行: debugPrint('无法获取渲染对象');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+329. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 61
+   文本: "无法将图像转换为字节数据"
+   建议键名: widget_error_无法将图像转换为字节
+   代码行: debugPrint('无法将图像转换为字节数据');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+330. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 64
+   文本: "从 RepaintBoundary 捕获图像失败: $e"
+   建议键名: widget_error_从捕获图像失败
+   代码行: debugPrint('从 RepaintBoundary 捕获图像失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+331. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 65
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+332. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 84
+   文本: "检查标题是否存在时出错: $e"
+   建议键名: widget_error_检查标题是否存在时出
+   代码行: debugPrint('检查标题是否存在时出错: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+333. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 119
+   文本: "加载字帖失败: $e"
+   建议键名: widget_error_加载字帖失败
+   代码行: debugPrint('加载字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+334. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 150
+   文本: "开始另存为新字帖: $title"
+   建议键名: widget_error_开始另存为新字帖
+   代码行: debugPrint('开始另存为新字帖: $title');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+335. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 176
+   文本: "字帖另存为成功: $title, ID: $currentPracticeId"
+   建议键名: widget_error_字帖另存为成功
+   代码行: debugPrint('字帖另存为成功: $title, ID: $currentPracticeId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+336. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 179
+   文本: "另存为字帖失败: $e"
+   建议键名: widget_error_另存为字帖失败
+   代码行: debugPrint('另存为字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+337. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 217
+   文本: "开始保存字帖: $saveTitle, ID: $currentPracticeId"
+   建议键名: widget_error_开始保存字帖
+   代码行: debugPrint('开始保存字帖: $saveTitle, ID: $currentPracticeId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+338. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 243
+   文本: "字帖保存成功: $saveTitle, ID: $currentPracticeId"
+   建议键名: widget_error_字帖保存成功
+   代码行: debugPrint('字帖保存成功: $saveTitle, ID: $currentPracticeId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+339. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 246
+   文本: "保存字帖失败: $e"
+   建议键名: widget_error_保存字帖失败
+   代码行: debugPrint('保存字帖失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+340. 文件: presentation\widgets\practice\practice_persistence_mixin.dart
+   行号: 328
+   文本: "生成缩略图失败: $e"
+   建议键名: widget_error_生成缩略图失败
+   代码行: debugPrint('生成缩略图失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+341. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 33
+   文本: "📊 纹理缓存统计信息"
+   建议键名: widget_error_纹理缓存统计信息
+   代码行: debugPrint('📊 纹理缓存统计信息');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+342. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 57
+   文本: "❌ 纹理路径为空"
+   建议键名: widget_error_纹理路径为空
+   代码行: debugPrint('❌ 纹理路径为空');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+343. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 69
+   文本: "✅ 从缓存加载纹理: $fileId"
+   建议键名: widget_error_从缓存加载纹理
+   代码行: debugPrint('✅ 从缓存加载纹理: $fileId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+344. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 75
+   文本: "⏳ 纹理正在加载中: $fileId"
+   建议键名: widget_error_纹理正在加载中
+   代码行: debugPrint('⏳ 纹理正在加载中: $fileId');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+345. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 103
+   文本: "✅ 从文件系统加载纹理成功: $fileId (${image.width}x${image.height})"
+   建议键名: widget_error_从文件系统加载纹理成
+   代码行: debugPrint('✅ 从文件系统加载纹理成功: $fileId (${image.width}x${image.height})');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+346. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 107
+   文本: "❌ 从文件系统加载纹理失败: $e"
+   建议键名: widget_error_从文件系统加载纹理失
+   代码行: debugPrint('❌ 从文件系统加载纹理失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+347. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 142
+   文本: "✅ 从存储服务加载纹理成功: $fileId (${image.width}x${image.height})"
+   建议键名: widget_error_从存储服务加载纹理成
+   代码行: debugPrint('✅ 从存储服务加载纹理成功: $fileId (${image.width}x${image.height})');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+348. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 150
+   文本: "❌ 使用服务加载纹理失败: $e"
+   建议键名: widget_error_使用服务加载纹理失败
+   代码行: debugPrint('❌ 使用服务加载纹理失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+349. 文件: presentation\widgets\practice\texture_manager.dart
+   行号: 154
+   文本: "❌ 无法加载纹理: $path"
+   建议键名: widget_error_无法加载纹理
+   代码行: debugPrint('❌ 无法加载纹理: $path');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+350. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 30
+   文本: "页面背景颜色: $bgColorStr"
+   建议键名: widget_error_页面背景颜色
+   代码行: debugPrint('页面背景颜色: $bgColorStr');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+351. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 37
+   文本: "页面元素数量: ${elements.length}"
+   建议键名: widget_error_页面元素数量
+   代码行: debugPrint('页面元素数量: ${elements.length}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+352. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 45
+   文本: "缩放比例: $scale (原始尺寸: ${pageWidth}x$pageHeight)"
+   建议键名: widget_error_缩放比例原始尺寸
+   代码行: debugPrint('缩放比例: $scale (原始尺寸: ${pageWidth}x$pageHeight)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+353. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 134
+   文本: "绘制标题: $title"
+   建议键名: widget_error_绘制标题
+   代码行: debugPrint('绘制标题: $title');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+354. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 200
+   文本: "集字元素字符数量: ${characters.length}"
+   建议键名: widget_error_集字元素字符数量
+   代码行: debugPrint('集字元素字符数量: ${characters.length}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+355. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 211
+   文本: "集字元素尺寸: ${width}x$height, 字体大小: $fontSize, 字体颜色: $fontColor"
+   建议键名: widget_error_集字元素尺寸字体大小
+   代码行: debugPrint('集字元素尺寸: ${width}x$height, 字体大小: $fontSize, 字体颜色: $fontColor');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+356. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 232
+   文本: "集字元素文本: $text"
+   建议键名: widget_error_集字元素文本
+   代码行: debugPrint('集字元素文本: $text');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+357. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 279
+   文本: "绘制集字元素失败: $e"
+   建议键名: widget_error_绘制集字元素失败
+   代码行: debugPrint('绘制集字元素失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+358. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 280
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+359. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 323
+   文本: "绘制组合元素失败: $e"
+   建议键名: widget_error_绘制组合元素失败
+   代码行: debugPrint('绘制组合元素失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+360. 文件: presentation\widgets\practice\thumbnail_generator.dart
+   行号: 414
+   文本: "绘制文本元素失败: $e"
+   建议键名: widget_error_绘制文本元素失败
+   代码行: debugPrint('绘制文本元素失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+361. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 987
+   文本: "ExportDialog: 开始导出文件"
+   建议键名: widget_error_开始导出文件
+   代码行: debugPrint('ExportDialog: 开始导出文件');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+362. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 990
+   文本: "ExportDialog: 错误 - 未选择导出位置"
+   建议键名: widget_error_错误未选择导出位置
+   代码行: debugPrint('ExportDialog: 错误 - 未选择导出位置');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+363. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 998
+   文本: "ExportDialog: 用户输入的文件名:"
+   建议键名: widget_error_用户输入的文件名
+   代码行: debugPrint('ExportDialog: 用户输入的文件名: "$fileName"');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+364. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1001
+   文本: "ExportDialog: 错误 - 文件名为空"
+   建议键名: widget_error_错误文件名为空
+   代码行: debugPrint('ExportDialog: 错误 - 文件名为空');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+365. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1011
+   文本: "ExportDialog: 错误 - 文件名包含非法字符"
+   建议键名: widget_error_错误文件名包含非法字
+   代码行: debugPrint('ExportDialog: 错误 - 文件名包含非法字符');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+366. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1021
+   文本: "ExportDialog: 导出目录不存在，尝试创建: $_outputPath"
+   建议键名: widget_error_导出目录不存在尝试创
+   代码行: debugPrint('ExportDialog: 导出目录不存在，尝试创建: $_outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+367. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1024
+   文本: "ExportDialog: 成功创建导出目录"
+   建议键名: widget_error_成功创建导出目录
+   代码行: debugPrint('ExportDialog: 成功创建导出目录');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+368. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1026
+   文本: "ExportDialog: 创建导出目录失败: $e"
+   建议键名: widget_error_创建导出目录失败
+   代码行: debugPrint('ExportDialog: 创建导出目录失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+369. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1065
+   文本: "ExportDialog: 导出回调返回值: $result"
+   建议键名: widget_error_导出回调返回值
+   代码行: debugPrint('ExportDialog: 导出回调返回值: $result');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+370. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1066
+   文本: "ExportDialog: 关闭导出对话框并返回结果"
+   建议键名: widget_error_关闭导出对话框并返回
+   代码行: debugPrint('ExportDialog: 关闭导出对话框并返回结果');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+371. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1131
+   文本: "预览生成失败: $e"
+   建议键名: widget_error_预览生成失败
+   代码行: debugPrint('预览生成失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+372. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1187
+   文本: "ExportDialog: 开始初始化默认导出路径"
+   建议键名: widget_error_开始初始化默认导出路
+   代码行: debugPrint('ExportDialog: 开始初始化默认导出路径');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+373. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1193
+   文本: "ExportDialog: 获取Downloads目录失败: $e"
+   建议键名: widget_error_获取目录失败
+   代码行: debugPrint('ExportDialog: 获取Downloads目录失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+374. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1198
+   文本: "ExportDialog: 获取Documents目录也失败: $e2"
+   建议键名: widget_error_获取目录也失败
+   代码行: debugPrint('ExportDialog: 获取Documents目录也失败: $e2');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+375. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1203
+   文本: "ExportDialog: 获取临时目录也失败: $e3"
+   建议键名: widget_error_获取临时目录也失败
+   代码行: debugPrint('ExportDialog: 获取临时目录也失败: $e3');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+376. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1211
+   文本: "ExportDialog: 无法获取任何默认路径，用户需要手动选择"
+   建议键名: widget_error_无法获取任何默认路径
+   代码行: debugPrint('ExportDialog: 无法获取任何默认路径，用户需要手动选择');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+377. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1215
+   文本: "ExportDialog: 获取到默认路径: ${directory.path}"
+   建议键名: widget_error_获取到默认路径
+   代码行: debugPrint('ExportDialog: 获取到默认路径: ${directory.path}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+378. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1219
+   文本: "ExportDialog: 目录是否存在: $exists"
+   建议键名: widget_error_目录是否存在
+   代码行: debugPrint('ExportDialog: 目录是否存在: $exists');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+379. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1225
+   文本: "ExportDialog: 目录写入权限测试成功"
+   建议键名: widget_error_目录写入权限测试成功
+   代码行: debugPrint('ExportDialog: 目录写入权限测试成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+380. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1227
+   文本: "ExportDialog: 测试文件已删除"
+   建议键名: widget_error_测试文件已删除
+   代码行: debugPrint('ExportDialog: 测试文件已删除');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+381. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1229
+   文本: "ExportDialog: 目录写入权限测试失败: $e"
+   建议键名: widget_error_目录写入权限测试失败
+   代码行: debugPrint('ExportDialog: 目录写入权限测试失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+382. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1238
+   文本: "ExportDialog: 获取默认路径失败: $e"
+   建议键名: widget_error_获取默认路径失败
+   代码行: debugPrint('ExportDialog: 获取默认路径失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+383. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1239
+   文本: "ExportDialog: 堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('ExportDialog: 堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+384. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1246
+   文本: "ExportDialog: 开始选择导出目录"
+   建议键名: widget_error_开始选择导出目录
+   代码行: debugPrint('ExportDialog: 开始选择导出目录');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+385. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1248
+   文本: "ExportDialog: 用户选择的目录: $selectedDirectory"
+   建议键名: widget_error_用户选择的目录
+   代码行: debugPrint('ExportDialog: 用户选择的目录: $selectedDirectory');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+386. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1253
+   文本: "ExportDialog: 选择的目录是否存在: $exists"
+   建议键名: widget_error_选择的目录是否存在
+   代码行: debugPrint('ExportDialog: 选择的目录是否存在: $exists');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+387. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1259
+   文本: "ExportDialog: 选择的目录写入权限测试成功"
+   建议键名: widget_error_选择的目录写入权限测
+   代码行: debugPrint('ExportDialog: 选择的目录写入权限测试成功');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+388. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1261
+   文本: "ExportDialog: 测试文件已删除"
+   建议键名: widget_error_测试文件已删除
+   代码行: debugPrint('ExportDialog: 测试文件已删除');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+389. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1263
+   文本: "ExportDialog: 选择的目录写入权限测试失败: $e"
+   建议键名: widget_error_选择的目录写入权限测
+   代码行: debugPrint('ExportDialog: 选择的目录写入权限测试失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+390. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1270
+   文本: "ExportDialog: 用户取消了目录选择"
+   建议键名: widget_error_用户取消了目录选择
+   代码行: debugPrint('ExportDialog: 用户取消了目录选择');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+391. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1273
+   文本: "ExportDialog: 选择目录失败: $e"
+   建议键名: widget_error_选择目录失败
+   代码行: debugPrint('ExportDialog: 选择目录失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+392. 文件: presentation\widgets\practice\export\export_dialog.dart
+   行号: 1274
+   文本: "ExportDialog: 堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('ExportDialog: 堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+393. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 27
+   文本: "错误: 输出路径为空"
+   建议键名: widget_error_错误输出路径为空
+   代码行: debugPrint('错误: 输出路径为空');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+394. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 33
+   文本: "检查文件系统权限..."
+   建议键名: widget_error_检查文件系统权限
+   代码行: debugPrint('检查文件系统权限...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+395. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 37
+   文本: "文件系统权限检查通过"
+   建议键名: widget_error_文件系统权限检查通过
+   代码行: debugPrint('文件系统权限检查通过');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+396. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 39
+   文本: "文件系统权限检查失败: $e"
+   建议键名: widget_error_文件系统权限检查失败
+   代码行: debugPrint('文件系统权限检查失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+397. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 40
+   文本: "尝试创建目录并再次检查权限..."
+   建议键名: widget_error_尝试创建目录并再次检
+   代码行: debugPrint('尝试创建目录并再次检查权限...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+398. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 46
+   文本: "创建目录: $outputPath"
+   建议键名: widget_error_创建目录
+   代码行: debugPrint('创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+399. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 52
+   文本: "错误: 无法创建目录: $outputPath"
+   建议键名: widget_error_错误无法创建目录
+   代码行: debugPrint('错误: 无法创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+400. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 56
+   文本: "目录已准备好: $outputPath"
+   建议键名: widget_error_目录已准备好
+   代码行: debugPrint('目录已准备好: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+401. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 64
+   文本: "渲染进度: $current/$total"
+   建议键名: widget_error_渲染进度
+   代码行: debugPrint('渲染进度: $current/$total');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+402. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 70
+   文本: "错误: 未能渲染任何页面"
+   建议键名: widget_error_错误未能渲染任何页面
+   代码行: debugPrint('错误: 未能渲染任何页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+403. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 74
+   文本: "成功渲染 ${pageImages.length} 个页面"
+   建议键名: widget_error_成功渲染个页面
+   代码行: debugPrint('成功渲染 ${pageImages.length} 个页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+404. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 88
+   文本: "保存图片文件到: $filePath"
+   建议键名: widget_error_保存图片文件到
+   代码行: debugPrint('保存图片文件到: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+405. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 95
+   文本: "文件已存在，先删除: $filePath"
+   建议键名: widget_error_文件已存在先删除
+   代码行: debugPrint('文件已存在，先删除: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+406. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 100
+   文本: "开始写入图片文件: $filePath"
+   建议键名: widget_error_开始写入图片文件
+   代码行: debugPrint('开始写入图片文件: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+407. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 106
+   文本: "图片文件保存成功: $filePath (大小: $fileSize 字节)"
+   建议键名: widget_error_图片文件保存成功大小
+   代码行: debugPrint('图片文件保存成功: $filePath (大小: $fileSize 字节)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+408. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 111
+   文本: "文件读取测试成功: ${readTest.length} 字节"
+   建议键名: widget_error_文件读取测试成功字节
+   代码行: debugPrint('文件读取测试成功: ${readTest.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+409. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 113
+   文本: "文件读取测试失败: $e"
+   建议键名: widget_error_文件读取测试失败
+   代码行: debugPrint('文件读取测试失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+410. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 118
+   文本: "错误: 文件写入后不存在: $filePath"
+   建议键名: widget_error_错误文件写入后不存在
+   代码行: debugPrint('错误: 文件写入后不存在: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+411. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 121
+   文本: "保存图片文件失败: $e"
+   建议键名: widget_error_保存图片文件失败
+   代码行: debugPrint('保存图片文件失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+412. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 122
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+413. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 126
+   文本: "导出完成，成功导出 ${exportedFiles.length} 个文件"
+   建议键名: widget_error_导出完成成功导出个文
+   代码行: debugPrint('导出完成，成功导出 ${exportedFiles.length} 个文件');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+414. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 129
+   文本: "导出图片失败: $e"
+   建议键名: widget_error_导出图片失败
+   代码行: debugPrint('导出图片失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+415. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 130
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+416. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 146
+   文本: "错误: 输出路径为空"
+   建议键名: widget_error_错误输出路径为空
+   代码行: debugPrint('错误: 输出路径为空');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+417. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 152
+   文本: "检查文件系统权限..."
+   建议键名: widget_error_检查文件系统权限
+   代码行: debugPrint('检查文件系统权限...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+418. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 156
+   文本: "文件系统权限检查通过"
+   建议键名: widget_error_文件系统权限检查通过
+   代码行: debugPrint('文件系统权限检查通过');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+419. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 158
+   文本: "文件系统权限检查失败: $e"
+   建议键名: widget_error_文件系统权限检查失败
+   代码行: debugPrint('文件系统权限检查失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+420. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 159
+   文本: "尝试创建目录并再次检查权限..."
+   建议键名: widget_error_尝试创建目录并再次检
+   代码行: debugPrint('尝试创建目录并再次检查权限...');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+421. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 165
+   文本: "创建目录: $outputPath"
+   建议键名: widget_error_创建目录
+   代码行: debugPrint('创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+422. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 171
+   文本: "错误: 无法创建目录: $outputPath"
+   建议键名: widget_error_错误无法创建目录
+   代码行: debugPrint('错误: 无法创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+423. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 175
+   文本: "目录已准备好: $outputPath"
+   建议键名: widget_error_目录已准备好
+   代码行: debugPrint('目录已准备好: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+424. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 186
+   文本: "使用页面格式: $pageFormat, 朝向: ${isLandscape ?"
+   建议键名: widget_error_使用页面格式朝向
+   代码行: debugPrint('使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+425. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 196
+   文本: "导出所有页面: ${pageIndices.length}页"
+   建议键名: widget_error_导出所有页面页
+   代码行: debugPrint('导出所有页面: ${pageIndices.length}页');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+426. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 203
+   文本: "只导出当前页面: 第${currentPage + 1}页"
+   建议键名: widget_error_只导出当前页面第页
+   代码行: debugPrint('只导出当前页面: 第${currentPage + 1}页');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+427. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 210
+   文本: "导出自定义范围页面: $pageRange => ${pageIndices.length}页"
+   建议键名: widget_error_导出自定义范围页面页
+   代码行: debugPrint('导出自定义范围页面: $pageRange => ${pageIndices.length}页');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+428. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 221
+   文本: "警告: 未指定有效页面范围，默认使用第一页"
+   建议键名: widget_error_警告未指定有效页面范
+   代码行: debugPrint('警告: 未指定有效页面范围，默认使用第一页');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+429. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 241
+   文本: "适配策略: $fitPolicy"
+   建议键名: widget_error_适配策略
+   代码行: debugPrint('适配策略: $fitPolicy');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+430. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 247
+   文本: "警告: 跳过无效的页面索引: $pageIndex (超出范围)"
+   建议键名: widget_error_警告跳过无效的页面索
+   代码行: debugPrint('警告: 跳过无效的页面索引: $pageIndex (超出范围)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+431. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 258
+   文本: "成功渲染第 ${pageIndex + 1} 页"
+   建议键名: widget_error_成功渲染第页
+   代码行: debugPrint('成功渲染第 ${pageIndex + 1} 页');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+432. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 260
+   文本: "警告: 未能渲染第 ${pageIndex + 1} 页，跳过"
+   建议键名: widget_error_警告未能渲染第页跳过
+   代码行: debugPrint('警告: 未能渲染第 ${pageIndex + 1} 页，跳过');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+433. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 265
+   文本: "错误: 未能渲染任何页面"
+   建议键名: widget_error_错误未能渲染任何页面
+   代码行: debugPrint('错误: 未能渲染任何页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+434. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 269
+   文本: "成功渲染 ${pageImages.length} 个页面"
+   建议键名: widget_error_成功渲染个页面
+   代码行: debugPrint('成功渲染 ${pageImages.length} 个页面');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+435. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 279
+   文本: "添加第 ${pageIndex + 1} 页到PDF: ${image.length} 字节"
+   建议键名: widget_error_添加第页到字节
+   代码行: debugPrint('添加第 ${pageIndex + 1} 页到PDF: ${image.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+436. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 303
+   文本: "应用适配策略: $fitPolicy"
+   建议键名: widget_error_应用适配策略
+   代码行: debugPrint('应用适配策略: $fitPolicy');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+437. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 340
+   文本: "创建目录: $outputPath"
+   建议键名: widget_error_创建目录
+   代码行: debugPrint('创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+438. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 346
+   文本: "错误: 无法创建目录: $outputPath"
+   建议键名: widget_error_错误无法创建目录
+   代码行: debugPrint('错误: 无法创建目录: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+439. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 350
+   文本: "目录已准备好: $outputPath"
+   建议键名: widget_error_目录已准备好
+   代码行: debugPrint('目录已准备好: $outputPath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+440. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 354
+   文本: "保存PDF文件到: $filePath"
+   建议键名: widget_error_保存文件到
+   代码行: debugPrint('保存PDF文件到: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+441. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 361
+   文本: "PDF生成完成: ${pdfBytes.length} 字节"
+   建议键名: widget_error_生成完成字节
+   代码行: debugPrint('PDF生成完成: ${pdfBytes.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+442. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 365
+   文本: "文件已存在，先删除: $filePath"
+   建议键名: widget_error_文件已存在先删除
+   代码行: debugPrint('文件已存在，先删除: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+443. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 370
+   文本: "开始写入PDF文件: $filePath"
+   建议键名: widget_error_开始写入文件
+   代码行: debugPrint('开始写入PDF文件: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+444. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 376
+   文本: "PDF文件保存成功: $filePath (大小: $fileSize 字节)"
+   建议键名: widget_error_文件保存成功大小字节
+   代码行: debugPrint('PDF文件保存成功: $filePath (大小: $fileSize 字节)');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+445. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 381
+   文本: "文件读取测试成功: ${readTest.length} 字节"
+   建议键名: widget_error_文件读取测试成功字节
+   代码行: debugPrint('文件读取测试成功: ${readTest.length} 字节');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+446. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 383
+   文本: "文件读取测试失败: $e"
+   建议键名: widget_error_文件读取测试失败
+   代码行: debugPrint('文件读取测试失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+447. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 388
+   文本: "错误: PDF文件写入后不存在: $filePath"
+   建议键名: widget_error_错误文件写入后不存在
+   代码行: debugPrint('错误: PDF文件写入后不存在: $filePath');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+448. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 392
+   文本: "保存PDF文件失败: $e"
+   建议键名: widget_error_保存文件失败
+   代码行: debugPrint('保存PDF文件失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+449. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 393
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+450. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 397
+   文本: "导出PDF失败: $e"
+   建议键名: widget_error_导出失败
+   代码行: debugPrint('导出PDF失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+451. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 398
+   文本: "堆栈跟踪: $stack"
+   建议键名: widget_error_堆栈跟踪
+   代码行: debugPrint('堆栈跟踪: $stack');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+452. 文件: presentation\widgets\practice\export\export_service.dart
+   行号: 448
+   文本: "解析页面范围失败: $e"
+   建议键名: widget_error_解析页面范围失败
+   代码行: debugPrint('解析页面范围失败: $e');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+453. 文件: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+   行号: 812
+   文本: "图片文件为空"
+   建议键名: widget_error_图片文件为空
+   代码行: throw Exception('图片文件为空');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+454. 文件: presentation\widgets\practice\property_panels\collection_panels\m3_background_texture_panel.dart
+   行号: 824
+   文本: "无法加载纹理图片: $e"
+   建议键名: widget_error_无法加载纹理图片
+   代码行: throw Exception('无法加载纹理图片: $e');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+455. 文件: utils\focus\focus_persistence.dart
+   行号: 38
+   文本: "已恢复优先级焦点到: ${node.debugLabel ??"
+   建议键名: common_error_已恢复优先级焦点到
+   代码行: debugPrint('已恢复优先级焦点到: ${node.debugLabel ?? '未命名节点'}');
+   匹配模式: debugPrint\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+456. 文件: widgets\character_edit\character_edit_canvas.dart
+   行号: 709
+   文本: "轮廓处理超时"
+   建议键名: widget_error_轮廓处理超时
+   代码行: throw Exception('轮廓处理超时');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+457. 文件: widgets\character_edit\character_edit_canvas.dart
+   行号: 731
+   文本: "无法将图像转换为字节数组"
+   建议键名: widget_error_无法将图像转换为字节
+   代码行: throw Exception('无法将图像转换为字节数组');
+   匹配模式: throw\s+\w*Exception\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+=== UI_PROPERTIES (7 个) ===
+
+1. 文件: application\repositories\practice_repository_impl.dart
+   行号: 54
+   文本: "${practice.title} (副本)"
+   建议键名: common_hint_副本
+   代码行: title: '${practice.title} (副本)',
+   匹配模式: title:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+2. 文件: presentation\pages\works\components\content\items\m3_work_list_item.dart
+   行号: 330
+   文本: "编辑标签"
+   建议键名: works_hint_编辑标签
+   代码行: tooltip: '编辑标签',
+   匹配模式: tooltip:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+3. 文件: presentation\widgets\practice\property_panels\property_panel_base.dart
+   行号: 22
+   文本: "基础属性"
+   建议键名: widget_hint_基础属性
+   代码行: const PropertyGroupTitle(title: '基础属性'),
+   匹配模式: title:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+4. 文件: presentation\widgets\works\preview_mode_config.dart
+   行号: 16
+   文本: "保存更改"
+   建议键名: widget_hint_保存更改
+   代码行: tooltip: '保存更改',
+   匹配模式: tooltip:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+5. 文件: presentation\widgets\works\preview_mode_config.dart
+   行号: 35
+   文本: "框选工具"
+   建议键名: widget_hint_框选工具
+   代码行: tooltip: '框选工具',
+   匹配模式: tooltip:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+6. 文件: presentation\widgets\works\preview_mode_config.dart
+   行号: 40
+   文本: "多选工具"
+   建议键名: widget_hint_多选工具
+   代码行: tooltip: '多选工具',
+   匹配模式: tooltip:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+7. 文件: presentation\widgets\works\preview_mode_config.dart
+   行号: 45
+   文本: "删除选中区域"
+   建议键名: widget_hint_删除选中区域
+   代码行: tooltip: '删除选中区域',
+   匹配模式: tooltip:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+=== UI_TEXT_WIDGET (20 个) ===
+
+1. 文件: presentation\pages\home_page.dart
+   行号: 24
+   文本: "字体测试工具"
+   建议键名: home_pagedart_text_字体测试工具
+   代码行: child: const Text('字体测试工具'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+2. 文件: presentation\pages\home_page.dart
+   行号: 31
+   文本: "字体粗细测试工具"
+   建议键名: home_pagedart_text_字体粗细测试工具
+   代码行: child: const Text('字体粗细测试工具'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+3. 文件: presentation\widgets\font_tester.dart
+   行号: 11
+   文本: "字体测试工具"
+   建议键名: widget_text_字体测试工具
+   代码行: title: const Text('字体测试工具'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+4. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 11
+   文本: "字体粗细测试工具"
+   建议键名: widget_text_字体粗细测试工具
+   代码行: title: const Text('字体粗细测试工具'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+5. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 136
+   文本: "思源黑体 (SourceHanSans):"
+   建议键名: widget_text_思源黑体
+   代码行: Text('思源黑体 (SourceHanSans):'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+6. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 137
+   文本: "- 文件: assets/fonts/chinese/SourceHanSansCN-VF.otf"
+   建议键名: widget_text_文件
+   代码行: Text('- 文件: assets/fonts/chinese/SourceHanSansCN-VF.otf'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+7. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 138
+   文本: "- 类型: 可变字体 (Variable Font)"
+   建议键名: widget_text_类型可变字体
+   代码行: Text('- 类型: 可变字体 (Variable Font)'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+8. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 139
+   文本: "- 字重轴: wght (100-900)"
+   建议键名: widget_text_字重轴
+   代码行: Text('- 字重轴: wght (100-900)'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+9. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 141
+   文本: "思源宋体 (SourceHanSerif):"
+   建议键名: widget_text_思源宋体
+   代码行: Text('思源宋体 (SourceHanSerif):'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+10. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 142
+   文本: "- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf"
+   建议键名: widget_text_文件
+   代码行: Text('- 文件: assets/fonts/chinese/SourceHanSerifCN-VF.otf'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+11. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 143
+   文本: "- 类型: 可变字体 (Variable Font)"
+   建议键名: widget_text_类型可变字体
+   代码行: Text('- 类型: 可变字体 (Variable Font)'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+12. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 144
+   文本: "- 字重轴: wght (100-900)"
+   建议键名: widget_text_字重轴
+   代码行: Text('- 字重轴: wght (100-900)'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+13. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 150
+   文本: "1. Flutter引擎对可变字体的支持不完整"
+   建议键名: widget_text_引擎对可变字体的支持
+   代码行: Text('1. Flutter引擎对可变字体的支持不完整'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+14. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 151
+   文本: "2. 字体文件的字重轴未被正确识别"
+   建议键名: widget_text_字体文件的字重轴未被
+   代码行: Text('2. 字体文件的字重轴未被正确识别'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+15. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 152
+   文本: "3. 字体注册方式不正确"
+   建议键名: widget_text_字体注册方式不正确
+   代码行: Text('3. 字体注册方式不正确'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+16. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 153
+   文本: "4. 平台特定的字体渲染限制"
+   建议键名: widget_text_平台特定的字体渲染限
+   代码行: Text('4. 平台特定的字体渲染限制'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+17. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 159
+   文本: "1. 使用不同的字体家族名称注册同一字体文件的不同字重"
+   建议键名: widget_text_使用不同的字体家族名
+   代码行: Text('1. 使用不同的字体家族名称注册同一字体文件的不同字重'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+18. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 160
+   文本: "2. 使用非可变字体的多个字重文件"
+   建议键名: widget_text_使用非可变字体的多个
+   代码行: Text('2. 使用非可变字体的多个字重文件'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+19. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 161
+   文本: "3. 使用fontVariations属性直接设置字重轴的值"
+   建议键名: widget_text_使用属性直接设置字重
+   代码行: Text('3. 使用fontVariations属性直接设置字重轴的值'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+20. 文件: presentation\widgets\font_weight_tester.dart
+   行号: 162
+   文本: "4. 在应用中提供字体粗细预览，帮助用户选择合适的字重"
+   建议键名: widget_text_在应用中提供字体粗细
+   代码行: Text('4. 在应用中提供字体粗细预览，帮助用户选择合适的字重'),
+   匹配模式: Text\(\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"](?:\s*[,)])
+   ----------------------------------------
+
+=== UI_APPBAR_NAVIGATION (2 个) ===
+
+1. 文件: presentation\widgets\common\m3_color_picker.dart
+   行号: 165
+   文本: "调节"
+   建议键名: widget_nav_调节
+   代码行: Tab(icon: Icon(Icons.tune), text: '调节'),
+   匹配模式: Tab.*?text:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+2. 文件: presentation\widgets\common\m3_color_picker.dart
+   行号: 166
+   文本: "代码"
+   建议键名: widget_nav_代码
+   代码行: Tab(icon: Icon(Icons.code), text: '代码'),
+   匹配模式: Tab.*?text:\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+=== STRING_CONSTANTS (37 个) ===
+
+1. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 20
+   文本: "添加元素"
+   建议键名: widget_str_添加元素
+   代码行: final String description = '添加元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+2. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 20
+   文本: "添加元素"
+   建议键名: widget_str_添加元素
+   代码行: final String description = '添加元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+3. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 61
+   文本: "删除元素"
+   建议键名: widget_str_删除元素
+   代码行: final String description = '删除元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+4. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 61
+   文本: "删除元素"
+   建议键名: widget_str_删除元素
+   代码行: final String description = '删除元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+5. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 103
+   文本: "更新元素属性"
+   建议键名: widget_str_更新元素属性
+   代码行: final String description = '更新元素属性';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+6. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 103
+   文本: "更新元素属性"
+   建议键名: widget_str_更新元素属性
+   代码行: final String description = '更新元素属性';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+7. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 194
+   文本: "移动元素"
+   建议键名: widget_str_移动元素
+   代码行: final String description = '移动元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+8. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 194
+   文本: "移动元素"
+   建议键名: widget_str_移动元素
+   代码行: final String description = '移动元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+9. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 260
+   文本: "调整元素大小"
+   建议键名: widget_str_调整元素大小
+   代码行: final String description = '调整元素大小';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+10. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 260
+   文本: "调整元素大小"
+   建议键名: widget_str_调整元素大小
+   代码行: final String description = '调整元素大小';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+11. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 326
+   文本: "旋转元素"
+   建议键名: widget_str_旋转元素
+   代码行: final String description = '旋转元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+12. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 326
+   文本: "旋转元素"
+   建议键名: widget_str_旋转元素
+   代码行: final String description = '旋转元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+13. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 378
+   文本: "旋转组合元素"
+   建议键名: widget_str_旋转组合元素
+   代码行: final String description = '旋转组合元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+14. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 378
+   文本: "旋转组合元素"
+   建议键名: widget_str_旋转组合元素
+   代码行: final String description = '旋转组合元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+15. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 526
+   文本: "更新图层属性"
+   建议键名: widget_str_更新图层属性
+   代码行: final String description = '更新图层属性';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+16. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 526
+   文本: "更新图层属性"
+   建议键名: widget_str_更新图层属性
+   代码行: final String description = '更新图层属性';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+17. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 553
+   文本: "重新排序图层"
+   建议键名: widget_str_重新排序图层
+   代码行: final String description = '重新排序图层';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+18. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 553
+   文本: "重新排序图层"
+   建议键名: widget_str_重新排序图层
+   代码行: final String description = '重新排序图层';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+19. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 579
+   文本: "添加页面"
+   建议键名: widget_str_添加页面
+   代码行: final String description = '添加页面';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+20. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 579
+   文本: "添加页面"
+   建议键名: widget_str_添加页面
+   代码行: final String description = '添加页面';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+21. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 605
+   文本: "重新排序页面"
+   建议键名: widget_str_重新排序页面
+   代码行: final String description = '重新排序页面';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+22. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 605
+   文本: "重新排序页面"
+   建议键名: widget_str_重新排序页面
+   代码行: final String description = '重新排序页面';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+23. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 632
+   文本: "更新页面属性"
+   建议键名: widget_str_更新页面属性
+   代码行: final String description = '更新页面属性';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+24. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 632
+   文本: "更新页面属性"
+   建议键名: widget_str_更新页面属性
+   代码行: final String description = '更新页面属性';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+25. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 721
+   文本: "取消组合元素"
+   建议键名: widget_str_取消组合元素
+   代码行: final String description = '取消组合元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+26. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 721
+   文本: "取消组合元素"
+   建议键名: widget_str_取消组合元素
+   代码行: final String description = '取消组合元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+27. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 780
+   文本: "应用格式刷"
+   建议键名: widget_str_应用格式刷
+   代码行: final String description = '应用格式刷';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+28. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 780
+   文本: "应用格式刷"
+   建议键名: widget_str_应用格式刷
+   代码行: final String description = '应用格式刷';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+29. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 886
+   文本: "上移一层"
+   建议键名: widget_str_上移一层
+   代码行: final String description = '上移一层';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+30. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 886
+   文本: "上移一层"
+   建议键名: widget_str_上移一层
+   代码行: final String description = '上移一层';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+31. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 914
+   文本: "下移一层"
+   建议键名: widget_str_下移一层
+   代码行: final String description = '下移一层';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+32. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 914
+   文本: "下移一层"
+   建议键名: widget_str_下移一层
+   代码行: final String description = '下移一层';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+33. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 941
+   文本: "粘贴元素"
+   建议键名: widget_str_粘贴元素
+   代码行: final String description = '粘贴元素';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+34. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 941
+   文本: "粘贴元素"
+   建议键名: widget_str_粘贴元素
+   代码行: final String description = '粘贴元素';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+35. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 985
+   文本: "删除所有图层"
+   建议键名: widget_str_删除所有图层
+   代码行: final String description = '删除所有图层';
+   匹配模式: final\s+String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+36. 文件: presentation\widgets\practice\undo_operations.dart
+   行号: 985
+   文本: "删除所有图层"
+   建议键名: widget_str_删除所有图层
+   代码行: final String description = '删除所有图层';
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------
+
+37. 文件: presentation\widgets\practice\guideline_alignment\guideline_manager.dart
+   行号: 220
+   文本: "translate', // 'translate' 或"
+   建议键名: widget_str_或
+   代码行: String operationType = 'translate', // 'translate' 或 'resize'
+   匹配模式: String\s+\w+\s*=\s*[\'\"](.*?[\u4e00-\u9fff].*?)[\'\"]
+   ----------------------------------------

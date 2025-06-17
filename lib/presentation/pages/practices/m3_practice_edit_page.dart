@@ -940,7 +940,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                 panel = const Center(child: Text('Unsupported element type'));
             }
           } else {
-            panel = const Center(child: Text('Selected element not found'));
+            panel = Center(
+                child:
+                    Text(AppLocalizations.of(context).selectedElementNotFound));
           }
         } else {
           // Show multi-selection properties when multiple elements are selected

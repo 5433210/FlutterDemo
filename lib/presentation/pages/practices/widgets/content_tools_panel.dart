@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 
 /// Widget for content tools panel
@@ -35,13 +36,13 @@ class ContentToolsPanel extends StatelessWidget {
             children: [
               _buildDraggableToolButton(
                 icon: Icons.text_fields,
-                label: 'Text',
+                label: AppLocalizations.of(context).text,
                 toolName: 'text',
                 elementType: 'text',
               ),
               _buildDraggableToolButton(
                 icon: Icons.image,
-                label: 'Image',
+                label: AppLocalizations.of(context).image,
                 toolName: 'image',
                 elementType: 'image',
               ),
@@ -53,7 +54,7 @@ class ContentToolsPanel extends StatelessWidget {
               ),
               _buildToolButton(
                 icon: Icons.select_all,
-                label: 'Select',
+                label: AppLocalizations.of(context).select,
                 toolName: 'select',
                 onPressed: () {
                   onToolSelected('select');

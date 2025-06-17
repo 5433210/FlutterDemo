@@ -2237,4 +2237,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yesterday => '昨天';
+
+  @override
+  String get boxTool => '框选工具';
+
+  @override
+  String get multiSelectTool => '多选工具';
+
+  @override
+  String get deleteSelectedArea => '删除选中区域';
+
+  @override
+  String get adjust => '调节';
+
+  @override
+  String get code => '代码';
+
+  @override
+  String get noPreviewAvailable => '无有效预览';
+
+  @override
+  String get pageNotImplemented => '页面未实现';
+
+  @override
+  String get selectedElementNotFound => '选中的元素未找到';
+
+  @override
+  String get sansSerif => 'Sans Serif';
+
+  @override
+  String get serif => 'Serif';
+
+  @override
+  String get monospace => 'Monospace';
+
+  @override
+  String get stretch => '拉伸';
+
+  @override
+  String get firstPage => '第一页';
+
+  @override
+  String get lastPage => '最后一页';
+
+  @override
+  String get renameLayer => '重命名图层';
+
+  @override
+  String get implementationComingSoon => '此功能正在开发中，敬请期待！';
 }

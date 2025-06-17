@@ -1,0 +1,28 @@
+=== 多语言硬编码文本检测汇总报告 ===
+检测时间: 2025-06-17 03:18:19
+
+=== 中文硬编码检测结果 ===
+检测总数: 36
+复用ARB键: 9
+新建键: 27
+
+中文硬编码按类型分布:
+  - ui_properties: 13
+  - ui_text_widget: 20
+  - ui_appbar_navigation: 3
+
+=== 英文硬编码检测结果 ===
+检测总数: 57
+复用ARB键: 21
+新建键: 36
+
+英文硬编码按类型分布:
+  - ui_text_widget: 24
+  - ui_appbar_navigation: 12
+  - ui_buttons_labels: 14
+  - ui_properties: 7
+
+=== 总体统计 ===
+硬编码文本总数: 93
+ARB键复用总数: 30
+新建键总数: 63

@@ -1,0 +1,258 @@
+=== 最终硬编码文本详细报告 ===
+
+--- UI_TEXT (61 个) ---
+文件: lib\main.dart, 行: 123
+硬编码文本: "应用启动失败: $e"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\pages\home_page.dart, 行: 24
+硬编码文本: "字体测试工具"
+代码行: child: const Text('字体测试工具'),
+----------------------------------------
+文件: lib\presentation\pages\home_page.dart, 行: 31
+硬编码文本: "字体粗细测试工具"
+代码行: child: const Text('字体粗细测试工具'),
+----------------------------------------
+文件: lib\presentation\pages\library\m3_library_management_page.dart, 行: 148
+硬编码文本: "${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)} 已复制到剪贴板"
+相似ARB键: elementCopied (相似度: 0.875)
+代码行: content: Text(
+----------------------------------------
+文件: lib\presentation\pages\library\m3_library_management_page.dart, 行: 169
+硬编码文本: "${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)} 已剪切到剪贴板"
+代码行: content: Text(
+----------------------------------------
+文件: lib\presentation\pages\library\components\library_category_panel.dart, 行: 217
+硬编码文本: "已将${state.selectedItems.length}个项目添加到"
+代码行: content: Text(
+----------------------------------------
+文件: lib\presentation\pages\practices\m3_practice_edit_page.dart, 行: 703
+硬编码文本: "剪贴板状态: ${hasContent ? "
+代码行: //               content: Text('剪贴板状态: ${hasContent ? '有内容' : '无内容'}')),
+----------------------------------------
+文件: lib\presentation\pages\practices\m3_practice_edit_page.dart, 行: 707
+硬编码文本: "调试：检查剪贴板"
+代码行: //     child: const Text('调试：检查剪贴板'),
+----------------------------------------
+文件: lib\presentation\pages\practices\widgets\m3_practice_edit_canvas.dart, 行: 1009
+硬编码文本: "当前工具: ${widget.controller.state.currentTool}"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\pages\practices\widgets\m3_practice_edit_canvas.dart, 行: 1036
+硬编码文本: "选择模式"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\pages\works\components\content\items\m3_work_list_item.dart, 行: 330
+硬编码文本: "编辑标签"
+代码行: tooltip: '编辑标签',
+----------------------------------------
+文件: lib\presentation\widgets\date_range_picker.dart, 行: 181
+硬编码文本: "快捷选择"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 11
+硬编码文本: "字体测试工具"
+代码行: title: const Text('字体测试工具'),
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 23
+硬编码文本: "这个工具用于测试不同字体的显示效果。每种字体都会显示相同的文本，包括英文、数字和中文。特别测试了字重从w100到w900的完整范围，以验证字体是否正确响应字重变化。"
+代码行: const Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 38
+硬编码文本: "注意事项:"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 43
+硬编码文本: "1. 思源黑体和思源宋体是可变字体，理论上支持w100-w900的全部字重。"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 46
+硬编码文本: "2. 如果字重变化不明显，可能是因为字体文件未正确注册或Flutter对可变字体的支持有限制。"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 49
+硬编码文本: "3. 系统默认字体通常只支持有限的字重变化（如normal和bold）。"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_tester.dart, 行: 117
+硬编码文本: "字重范围测试 (w100-w900)"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 11
+硬编码文本: "字体粗细测试工具"
+代码行: title: const Text('字体粗细测试工具'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 23
+硬编码文本: "这个工具专门用于测试思源黑体和思源宋体的字重变化。我们测试了不同的字重注册方式和渲染方式，以找出为什么只有两种粗细变化生效。"
+代码行: const Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 122
+硬编码文本: "字体文件信息"
+代码行: const Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 136
+硬编码文本: "思源黑体 (SourceHanSans):"
+相似ARB键: sourceHanSansFont (相似度: 0.947)
+代码行: Text('思源黑体 (SourceHanSans):'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 138
+硬编码文本: "- 类型: 可变字体 (Variable Font)"
+代码行: Text('- 类型: 可变字体 (Variable Font)'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 139
+硬编码文本: "- 字重轴: wght (100-900)"
+代码行: Text('- 字重轴: wght (100-900)'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 141
+硬编码文本: "思源宋体 (SourceHanSerif):"
+相似ARB键: sourceHanSerifFont (相似度: 0.950)
+代码行: Text('思源宋体 (SourceHanSerif):'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 146
+硬编码文本: "注意: Flutter对可变字体的支持可能有限制。如果字重变化不明显，可能是因为:"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 150
+硬编码文本: "1. Flutter引擎对可变字体的支持不完整"
+代码行: Text('1. Flutter引擎对可变字体的支持不完整'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 151
+硬编码文本: "2. 字体文件的字重轴未被正确识别"
+代码行: Text('2. 字体文件的字重轴未被正确识别'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 152
+硬编码文本: "3. 字体注册方式不正确"
+代码行: Text('3. 字体注册方式不正确'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 153
+硬编码文本: "4. 平台特定的字体渲染限制"
+代码行: Text('4. 平台特定的字体渲染限制'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 155
+硬编码文本: "可能的解决方案:"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 159
+硬编码文本: "1. 使用不同的字体家族名称注册同一字体文件的不同字重"
+代码行: Text('1. 使用不同的字体家族名称注册同一字体文件的不同字重'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 160
+硬编码文本: "2. 使用非可变字体的多个字重文件"
+代码行: Text('2. 使用非可变字体的多个字重文件'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 161
+硬编码文本: "3. 使用fontVariations属性直接设置字重轴的值"
+代码行: Text('3. 使用fontVariations属性直接设置字重轴的值'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 162
+硬编码文本: "4. 在应用中提供字体粗细预览，帮助用户选择合适的字重"
+代码行: Text('4. 在应用中提供字体粗细预览，帮助用户选择合适的字重'),
+----------------------------------------
+文件: lib\presentation\widgets\font_weight_tester.dart, 行: 210
+硬编码文本: "永曰月明清风 ABC 123"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\common\zoomable_image_view.dart, 行: 153
+硬编码文本: "无法加载图片"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\common\zoomable_image_view.dart, 行: 103
+硬编码文本: "重置缩放"
+相似ARB键: resetZoom (相似度: 1.000)
+代码行: tooltip: '重置缩放',
+----------------------------------------
+文件: lib\presentation\widgets\forms\work_form.dart, 行: 385
+硬编码文本: "键盘快捷键:"
+相似ARB键: shortcuts (相似度: 1.000)
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\forms\work_form.dart, 行: 390
+硬编码文本: "Ctrl+T: 标题  Ctrl+A: 作者  Ctrl+R: 备注\n"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 665
+硬编码文本: "拖拽帧率: ${currentFps.toString()} FPS"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 673
+硬编码文本: "平均帧率: ${avgFps.toStringAsFixed(1)} FPS"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 680
+硬编码文本: "更新次数: $updateCount (批量: $batchUpdateCount)"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 684
+硬编码文本: "平均更新时间: ${avgUpdateTime.toStringAsFixed(2)}ms"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 688
+硬编码文本: "拖拽元素: $elementCount"
+代码行: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\performance_monitor.dart, 行: 693
+硬编码文本: "⚠️ 性能警告: 帧率过低"
+代码行: const Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\text_renderer.dart, 行: 961
+硬编码文本: "暂无内容"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\m3_practice_property_panel_text.dart, 行: 598
+硬编码文本: "思源字体支持更精确的字重变化"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 29
+硬编码文本: "位置"
+相似ARB键: location (相似度: 1.000)
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 139
+硬编码文本: "旋转角度"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 171
+硬编码文本: "透明度"
+相似ARB键: opacity (相似度: 0.857)
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 226
+硬编码文本: "所属图层"
+代码行: child: Text(
+----------------------------------------
+文件: lib\presentation\widgets\practice\property_panels\property_panel_base.dart, 行: 292
+硬编码文本: "选择颜色"
+相似ARB键: colorPicker (相似度: 1.000)
+代码行: tooltip: '选择颜色',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 11
+硬编码文本: "添加图片"
+相似ARB键: addImage (相似度: 1.000)
+代码行: tooltip: '添加图片',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 16
+硬编码文本: "保存更改"
+代码行: tooltip: '保存更改',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 22
+硬编码文本: "删除图片"
+相似ARB键: deleteImage (相似度: 1.000)
+代码行: tooltip: '删除图片',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 35
+硬编码文本: "框选工具"
+代码行: tooltip: '框选工具',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 40
+硬编码文本: "多选工具"
+代码行: tooltip: '多选工具',
+----------------------------------------
+文件: lib\presentation\widgets\works\preview_mode_config.dart, 行: 45
+硬编码文本: "删除选中区域"
+代码行: tooltip: '删除选中区域',
+----------------------------------------
+文件: lib\widgets\character_edit\m3_character_edit_panel.dart, 行: 1811
+硬编码文本: "笔刷大小已根据图像尺寸自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}"
+代码行: content: Text(
+----------------------------------------
+

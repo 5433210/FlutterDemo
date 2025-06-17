@@ -151,8 +151,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 尺寸设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.dimensions),
+        M3PanelStyles.buildSectionTitle(context, l10n.dimensions),
         Row(
           children: [
             Expanded(
@@ -281,19 +280,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 文本内容
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.textContent),
+        M3PanelStyles.buildSectionTitle(context, l10n.textContent),
         _buildTextContentField(text, context),
 
         const SizedBox(height: 16.0),
 
         // 字体设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.fontFamily),
+        M3PanelStyles.buildSectionTitle(context, l10n.fontFamily),
 
         // 字号设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.fontSize),
+        M3PanelStyles.buildSectionTitle(context, l10n.fontSize),
         Row(
           children: [
             Expanded(
@@ -459,11 +455,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 isExpanded: true,
                 items: [
                   // System fonts
-                  const DropdownMenuItem(
-                      value: 'sans-serif', child: Text('Sans Serif')),
-                  const DropdownMenuItem(value: 'serif', child: Text('Serif')),
-                  const DropdownMenuItem(
-                      value: 'monospace', child: Text('Monospace')),
+                  DropdownMenuItem(
+                      value: 'sans-serif', child: Text(l10n.sansSerif)),
+                  DropdownMenuItem(value: 'serif', child: Text(l10n.serif)),
+                  DropdownMenuItem(
+                      value: 'monospace', child: Text(l10n.monospace)),
                   // Chinese fonts (Free for Commercial Use)
                   DropdownMenuItem(
                       value: 'SourceHanSans',
@@ -487,8 +483,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 字重设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.fontWeight),
+        M3PanelStyles.buildSectionTitle(context, l10n.fontWeight),
 
         // 字重滑块（针对思源字体优化）
         Column(
@@ -612,8 +607,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 字体样式
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.fontStyle),
+        M3PanelStyles.buildSectionTitle(context, l10n.fontStyle),
         Row(
           children: [
             // 斜体按钮
@@ -842,8 +836,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 书写方向
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.writingMode),
+        M3PanelStyles.buildSectionTitle(context, l10n.writingMode),
         Card(
           elevation: 0,
           color: colorScheme.surfaceContainerHighest,
@@ -915,8 +908,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 字间距设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.letterSpacing),
+        M3PanelStyles.buildSectionTitle(context, l10n.letterSpacing),
         Row(
           children: [
             Expanded(
@@ -956,8 +948,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 行间距设置
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.lineHeight),
+        M3PanelStyles.buildSectionTitle(context, l10n.lineHeight),
         Row(
           children: [
             Expanded(

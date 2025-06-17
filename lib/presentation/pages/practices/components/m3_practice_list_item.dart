@@ -385,36 +385,38 @@ class M3PracticeListItem extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return Dialog(
           child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Edit Tags', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            // We'll implement a proper tag editor later
-            const Text('Tag editing functionality will be implemented later'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    onTagsEdited!(practiceId, currentTags);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Save'),
+                Text(l10n.edit, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 16),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        onTagsEdited!(practiceId, currentTags);
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(l10n.save),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      )),
+          ),
+        );
+      },
     );
   }
 }

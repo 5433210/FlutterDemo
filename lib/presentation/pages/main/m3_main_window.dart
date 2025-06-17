@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/logger.dart';
-
+import '../../../l10n/app_localizations.dart';
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
 import '../../../presentation/pages/settings/m3_settings_page.dart';
@@ -89,7 +88,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
           onPopInvokedWithResult: (bool didPop, dynamic result) async {
             // 如果系统已处理了弹出操作，不需要进一步处理
             if (didPop) return;
-            
+
             // 如果正在导航过渡中，不处理返回
             if (navState.isNavigating) return;
 
@@ -176,19 +175,22 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                               children: List.generate(5, (index) {
                                 // 检查当前索引是否应该被初始化
                                 final shouldInitialize = index == selectedIndex;
-                                final isInitialized = _initializedSections.contains(index);
-                                
+                                final isInitialized =
+                                    _initializedSections.contains(index);
+
                                 // 如果当前索引应该被初始化但还未初始化，延迟初始化
                                 if (shouldInitialize && !isInitialized) {
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted && !_initializedSections.contains(index)) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    if (mounted &&
+                                        !_initializedSections.contains(index)) {
                                       setState(() {
                                         _initializedSections.add(index);
                                       });
                                     }
                                   });
                                 }
-                                
+
                                 // 仅当当前选中或已初始化时才创建导航器
                                 if (index == selectedIndex && isInitialized) {
                                   // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
@@ -196,7 +198,8 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                                     key: ValueKey('navigator_$index'),
                                     child: _buildNavigator(index),
                                   );
-                                } else if (isInitialized && index != selectedIndex) {
+                                } else if (isInitialized &&
+                                    index != selectedIndex) {
                                   // 已初始化但非当前选中的功能区隐藏显示
                                   return Offstage(
                                     offstage: true,
@@ -254,10 +257,10 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   void dispose() {
     // 取消定时器
     _memoryCleanupTimer?.cancel();
-    
+
     // 移除生命周期观察者
     WidgetsBinding.instance.removeObserver(this);
-    
+
     // 清理所有导航器的GlobalKey引用，确保没有遗留的依赖项
     for (final navigatorKey in _navigatorKeys.values) {
       // 尝试通过导航器的currentState访问来触发任何未完成的清理
@@ -275,10 +278,10 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
         );
       }
     }
-    
+
     // 清空初始化集合
     _initializedSections.clear();
-    
+
     super.dispose();
   }
 
@@ -396,11 +399,10 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
             return MaterialPageRoute(
               builder: (context) => const M3SettingsPage(),
             );
-
           default:
             return MaterialPageRoute(
-              builder: (context) =>
-                  const Center(child: Text('Page not implemented')),
+              builder: (context) => Center(
+                  child: Text(AppLocalizations.of(context).pageNotImplemented)),
             );
         }
       },
@@ -410,30 +412,30 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   void _cleanupUnusedSections() {
     final currentIndex = ref.read(globalNavigationProvider).currentSectionIndex;
     final lastIndex = _lastSelectedIndex;
-    
+
     // 使用WidgetsBinding.instance.addPostFrameCallback代替Future.microtask
     // 这样可以确保在正确的Widget生命周期时机执行
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      
+
       // 找出可以被清理的功能区（除了当前选中的和最后访问的）
       final sectionsToRemove = <int>{};
       for (final index in _initializedSections) {
         // 始终保留当前选中的功能区和最后访问的功能区（提升导航返回体验）
         if (index == currentIndex || index == lastIndex) continue;
-        
+
         // 使用更可靠的清理策略
         if (_shouldCleanupSection(index)) {
           sectionsToRemove.add(index);
         }
       }
-      
+
       // 只有当组件仍然挂载在树上时才进行状态更新
       if (mounted && sectionsToRemove.isNotEmpty) {
         setState(() {
           _initializedSections.removeAll(sectionsToRemove);
         });
-        
+
         // 添加日志以追踪清理行为
         AppLogger.info(
           '清理未使用的功能区',
@@ -454,10 +456,10 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     // 1. 不清理低索引值的主要功能区（0和1始终保留）
     // 2. 只清理索引值大于1的功能区
     // 3. 避免随机清理，使用更确定性的方法
-    
+
     // 保留主要功能区
     if (index <= 1) return false;
-    
+
     // 其他功能区根据应用的内存状况和使用模式决定是否清理
     // 这里可以基于具体业务逻辑进一步完善
     return true;

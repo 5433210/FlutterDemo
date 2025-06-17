@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'enhanced_ondemand_resource_loader.dart';
@@ -78,7 +76,8 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
   Timer? _notificationTimer;
   bool _hasPendingUpdate = false;
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 16); // 60 FPS
 
   MemoryEfficientElementRepresentation({
     required MemoryManager memoryManager,
@@ -105,7 +104,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
     _representations.clear();
     _compressedData.clear();
     _loadingElements.clear();
-    
+
     // 🚀 使用节流通知替代直接notifyListeners
     _throttledNotifyListeners(
       operation: 'clear_all_representations',
@@ -147,7 +146,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
           await _generateRepresentation(elementId, elementData, mode);
       if (representation != null) {
         _representations[elementId] = representation;
-        
+
         // 🚀 使用节流通知替代直接notifyListeners
         _throttledNotifyListeners(
           operation: 'create_representation',
@@ -207,7 +206,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
     final representation = _representations.remove(elementId);
     if (representation != null) {
       _compressedData.remove(elementId);
-      
+
       // 🚀 使用节流通知替代直接notifyListeners
       _throttledNotifyListeners(
         operation: 'remove_representation',
@@ -675,7 +674,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
       _lastNotificationTime = now;
-      
+
       EditPageLogger.performanceInfo(
         '内存高效表示管理器通知',
         data: {
@@ -685,7 +684,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
           ...?data,
         },
       );
-      
+
       super.notifyListeners();
     } else {
       // 缓存待处理的更新
@@ -694,7 +693,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
         _notificationTimer?.cancel();
         _notificationTimer = Timer(_notificationThrottle, () {
           _hasPendingUpdate = false;
-          
+
           EditPageLogger.performanceInfo(
             '内存高效表示管理器延迟通知',
             data: {
@@ -704,7 +703,7 @@ class MemoryEfficientElementRepresentation with ChangeNotifier {
               ...?data,
             },
           );
-          
+
           super.notifyListeners();
         });
       }

@@ -4342,6 +4342,102 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'昨天'**
   String get yesterday;
+
+  /// No description provided for @boxTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'框选工具'**
+  String get boxTool;
+
+  /// No description provided for @multiSelectTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'多选工具'**
+  String get multiSelectTool;
+
+  /// No description provided for @deleteSelectedArea.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除选中区域'**
+  String get deleteSelectedArea;
+
+  /// No description provided for @adjust.
+  ///
+  /// In zh, this message translates to:
+  /// **'调节'**
+  String get adjust;
+
+  /// No description provided for @code.
+  ///
+  /// In zh, this message translates to:
+  /// **'代码'**
+  String get code;
+
+  /// No description provided for @noPreviewAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'无有效预览'**
+  String get noPreviewAvailable;
+
+  /// No description provided for @pageNotImplemented.
+  ///
+  /// In zh, this message translates to:
+  /// **'页面未实现'**
+  String get pageNotImplemented;
+
+  /// No description provided for @selectedElementNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'选中的元素未找到'**
+  String get selectedElementNotFound;
+
+  /// No description provided for @sansSerif.
+  ///
+  /// In zh, this message translates to:
+  /// **'Sans Serif'**
+  String get sansSerif;
+
+  /// No description provided for @serif.
+  ///
+  /// In zh, this message translates to:
+  /// **'Serif'**
+  String get serif;
+
+  /// No description provided for @monospace.
+  ///
+  /// In zh, this message translates to:
+  /// **'Monospace'**
+  String get monospace;
+
+  /// No description provided for @stretch.
+  ///
+  /// In zh, this message translates to:
+  /// **'拉伸'**
+  String get stretch;
+
+  /// No description provided for @firstPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'第一页'**
+  String get firstPage;
+
+  /// No description provided for @lastPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后一页'**
+  String get lastPage;
+
+  /// No description provided for @renameLayer.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名图层'**
+  String get renameLayer;
+
+  /// No description provided for @implementationComingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'此功能正在开发中，敬请期待！'**
+  String get implementationComingSoon;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
