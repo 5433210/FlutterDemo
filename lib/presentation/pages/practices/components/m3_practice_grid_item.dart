@@ -131,7 +131,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                           ),
                           padding: const EdgeInsets.all(AppSizes.xs),
                           onPressed: onToggleFavorite,
-                          tooltip: l10n.favoritesOnly,
+                          tooltip: l10n.favorite,
                         ),
                       ),
                     ),
