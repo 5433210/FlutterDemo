@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
+// Note: style and tool are now String types instead of enums
 
 /// 作品导入状态
 class WorkImportState {
@@ -9,9 +8,8 @@ class WorkImportState {
   final File? selectedImage;
   final String title;
   final String? author;
-  final WorkStyle? style;
-  final WorkTool? tool;
-  final DateTime? creationDate;
+  final String? style;
+  final String? tool;
   final String? remark;
   final bool isProcessing;
   final String? error;
@@ -29,7 +27,6 @@ class WorkImportState {
     this.author = '',
     this.style,
     this.tool,
-    this.creationDate,
     this.remark = '',
     this.isProcessing = false,
     this.error,
@@ -50,14 +47,11 @@ class WorkImportState {
       error: null,
       imageRotations: const {},
     );
-  }
-
-  factory WorkImportState.initial() {
+  }  factory WorkImportState.initial() {
     return WorkImportState(
       // 设置默认值
-      style: WorkStyle.regular,
-      tool: WorkTool.brush,
-      creationDate: DateTime.now(), // 直接设置当前日期作为默认值
+      style: 'regular',
+      tool: 'brush',
       author: '', // 提供空字符串而不是 null
       remark: '', // 提供空字符串而不是 null
       optimizeImages: true,
@@ -73,15 +67,13 @@ class WorkImportState {
 
   bool get isDirty =>
       hasImages || title.isNotEmpty || author?.isNotEmpty == true;
-
   WorkImportState copyWith({
     List<File>? images,
     File? selectedImage,
     String? title,
     String? author,
-    WorkStyle? style,
-    WorkTool? tool,
-    DateTime? creationDate,
+    String? style,
+    String? tool,
     String? remark,
     bool? isProcessing,
     String? error,
@@ -99,7 +91,6 @@ class WorkImportState {
       author: author ?? this.author,
       style: style ?? this.style,
       tool: tool ?? this.tool,
-      creationDate: creationDate ?? this.creationDate,
       remark: remark ?? this.remark,
       isProcessing: isProcessing ?? this.isProcessing,
       error: error,

@@ -52,7 +52,6 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
             initialAuthor: widget.state.author,
             initialStyle: widget.state.style,
             initialTool: widget.state.tool,
-            initialCreationDate: widget.state.creationDate,
             initialRemark: widget.state.remark,
             isProcessing: isProcessing,
             error: widget.state.error,
@@ -60,7 +59,6 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
             onAuthorChanged: widget.viewModel.setAuthor,
             onStyleChanged: widget.viewModel.setStyle,
             onToolChanged: widget.viewModel.setTool,
-            onCreationDateChanged: _handleDateChange,
             onRemarkChanged: widget.viewModel.setRemark,
             requiredFields: const {WorkFormField.title},
             visibleFields: WorkFormPresets.importFields,
@@ -70,22 +68,6 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
         ),
       ),
     );
-  }
-
-  void _handleDateChange(DateTime? date) {
-    final l10n = AppLocalizations.of(context);
-    if (date != null) {
-      if (date.isAfter(DateTime.now())) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.creationDate),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      widget.viewModel.setCreationDate(date);
-    }
   }
 
   void _handleKeyPress(KeyEvent event) {

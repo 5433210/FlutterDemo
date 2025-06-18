@@ -137,12 +137,10 @@ class _M3UnifiedWorkDetailPanelState
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
-        _buildInfoRow(l10n.imageCount,
-            (widget.work.imageCount ?? 0).toString()),
         _buildInfoRow(
-            l10n.createTime, _formatDateTime(widget.work.createTime)),
-        _buildInfoRow(
-            l10n.updateTime, _formatDateTime(widget.work.updateTime)),
+            l10n.imageCount, (widget.work.imageCount ?? 0).toString()),
+        _buildInfoRow(l10n.createTime, _formatDateTime(widget.work.createTime)),
+        _buildInfoRow(l10n.updateTime, _formatDateTime(widget.work.updateTime)),
       ],
     );
   }
@@ -178,9 +176,9 @@ class _M3UnifiedWorkDetailPanelState
           title: AppLocalizations.of(context).basicInfo,
           initialTitle: widget.work.title,
           initialAuthor: widget.work.author,
-          initialStyle: widget.work.style,
-          initialTool: widget.work.tool,
-          initialCreationDate: widget.work.creationDate,
+          // TODO: Update M3WorkForm to use String instead of enums
+          // initialStyle: widget.work.style,
+          // initialTool: widget.work.tool,
           initialRemark: widget.work.remark,
           isProcessing: false,
           // Only enable editing in edit mode
@@ -190,15 +188,12 @@ class _M3UnifiedWorkDetailPanelState
           onAuthorChanged: widget.isEditing
               ? (value) => _updateWorkField('author', value)
               : null,
-          onStyleChanged: widget.isEditing
-              ? (value) => _updateWorkField('style', value)
-              : null,
-          onToolChanged: widget.isEditing
-              ? (value) => _updateWorkField('tool', value)
-              : null,
-          onCreationDateChanged: widget.isEditing
-              ? (value) => _updateWorkField('creationDate', value)
-              : null,
+          // TODO: Restore after updating M3WorkForm to use String instead of enums
+          // onStyleChanged: widget.isEditing
+          //     ? (value) => _updateWorkField('style', value)          //     : null,
+          // onToolChanged: widget.isEditing
+          //     ? (value) => _updateWorkField('tool', value)
+          //     : null,
           onRemarkChanged: widget.isEditing
               ? (value) => _updateWorkField('remark', value)
               : null,
@@ -396,8 +391,9 @@ class _M3UnifiedWorkDetailPanelState
         return widget.work.style;
       case 'tool':
         return widget.work.tool;
-      case 'creationDate':
-        return widget.work.creationDate;
+      // TODO: Restore creationDate handling after removing from model
+      // case 'creationDate':
+      //   return widget.work.creationDate;
       case 'remark':
         return widget.work.remark;
       case 'tags':
@@ -442,9 +438,10 @@ class _M3UnifiedWorkDetailPanelState
         case 'tool':
           notifier.updateWorkBasicInfo(tool: value);
           break;
-        case 'creationDate':
-          notifier.updateWorkBasicInfo(creationDate: value);
-          break;
+        // TODO: Restore creationDate handling after removing from model
+        // case 'creationDate':
+        //   notifier.updateWorkBasicInfo(creationDate: value);
+        //   break;
         case 'remark':
           notifier.updateWorkBasicInfo(remark: value);
           break;
@@ -462,8 +459,8 @@ class _M3UnifiedWorkDetailPanelState
           data: {
             'editingWorkTitle': updatedState.editingWork?.title,
             'editingWorkAuthor': updatedState.editingWork?.author,
-            'editingWorkStyle': updatedState.editingWork?.style.value,
-            'editingWorkTool': updatedState.editingWork?.tool.value,
+            'editingWorkStyle': updatedState.editingWork?.style,
+            'editingWorkTool': updatedState.editingWork?.tool,
             'editingWorkTagCount': updatedState.editingWork?.tags.length,
             'editingWorkTags': updatedState.editingWork?.tags,
             'hasChanges': updatedState.hasChanges,

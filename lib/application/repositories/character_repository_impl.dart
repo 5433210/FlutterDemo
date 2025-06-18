@@ -246,14 +246,12 @@ class CharacterRepositoryImpl implements CharacterRepository {
         operator: '=',
         value: filter.isFavorite! ? 1 : 0,
       ));
-    }
-
-    // 风格过滤
+    }    // 风格过滤
     if (filter.style != null) {
       conditions.add(DatabaseQueryCondition(
         field: 'style',
         operator: '=',
-        value: filter.style!.value,
+        value: filter.style!,
       ));
     }
 
@@ -262,7 +260,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
       conditions.add(DatabaseQueryCondition(
         field: 'tool',
         operator: '=',
-        value: filter.tool!.value,
+        value: filter.tool!,
       ));
     }
 

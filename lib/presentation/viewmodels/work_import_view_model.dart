@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../application/services/work/work_service.dart';
-import '../../domain/enums/work_style.dart';
-import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../widgets/library/m3_library_picker_dialog.dart';
@@ -141,9 +139,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         id: const Uuid().v4(),
         title: state.title.trim(),
         author: state.author?.trim() ?? '',
-        style: state.style ?? WorkStyle.other,
-        tool: state.tool ?? WorkTool.other,
-        creationDate: state.creationDate ?? DateTime.now(),
+        style: state.style ?? 'other', // Use default string value
+        tool: state.tool ?? 'other', // Use default string value
         remark: state.remark?.trim(),
         createTime: DateTime.now(),
         updateTime: DateTime.now(),
@@ -246,31 +243,20 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     state = state.copyWith(author: author?.trim() ?? '');
   }
 
-  /// 设置创作日期
-  void setCreationDate(DateTime? date) {
-    state = state.copyWith(creationDate: date);
-  }
-
   /// 设置备注
   void setRemark(String? remark) {
     state = state.copyWith(remark: remark?.trim() ?? '');
   }
 
   /// 设置画风
-  void setStyle(WorkStyle? style) {
+  void setStyle(String? style) {
     if (style == null) return;
     state = state.copyWith(style: style);
   }
 
   /// 设置画风 (string version for compatibility)
   void setStyleByString(String? styleStr) {
-    if (styleStr == null) return;
-
-    final style = WorkStyle.values.firstWhere(
-      (s) => s.value == styleStr,
-      orElse: () => WorkStyle.other,
-    );
-    state = state.copyWith(style: style);
+    setStyle(styleStr); // Now just use the main method
   }
 
   /// 设置标题
@@ -279,20 +265,14 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 设置创作工具
-  void setTool(WorkTool? tool) {
+  void setTool(String? tool) {
     if (tool == null) return;
     state = state.copyWith(tool: tool);
   }
 
   /// 设置创作工具 (string version for compatibility)
   void setToolByString(String? toolStr) {
-    if (toolStr == null) return;
-
-    final tool = WorkTool.values.firstWhere(
-      (t) => t.value == toolStr,
-      orElse: () => WorkTool.other,
-    );
-    state = state.copyWith(tool: tool);
+    setTool(toolStr); // Now just use the main method
   }
 
   /// 计算新的选中索引

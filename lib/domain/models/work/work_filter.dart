@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../enums/work_style.dart';
-import '../../enums/work_tool.dart';
 import '../common/date_range_filter.dart';
 import '../common/sort_option.dart';
 
@@ -38,36 +36,34 @@ Map<String, dynamic>? _dateRangeToJson(DateTimeRange? range) {
 }
 
 // 处理可空的风格值
-WorkStyle? _workStyleFilterFromJson(dynamic value) {
+String? _workStyleFilterFromJson(dynamic value) {
   if (value == null || value.toString().isEmpty) return null;
-  return WorkStyle.fromValue(value);
+  return value.toString();
 }
 
 /// 枚举序列化辅助方法
-String? _workStyleToJson(WorkStyle? style) => style?.value;
+String? _workStyleToJson(String? style) => style;
 
 // 处理可空的工具值
-WorkTool? _workToolFilterFromJson(dynamic value) {
+String? _workToolFilterFromJson(dynamic value) {
   if (value == null || value.toString().isEmpty) return null;
-  return WorkTool.fromValue(value);
+  return value.toString();
 }
 
-String? _workToolToJson(WorkTool? tool) => tool?.value;
+String? _workToolToJson(String? tool) => tool;
 
 /// 作品筛选条件
 @freezed
 class WorkFilter with _$WorkFilter {
   const factory WorkFilter({
     /// 搜索关键字
-    String? keyword,
-
-    /// 作品风格
+    String? keyword,    /// 作品风格
     @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-    WorkStyle? style,
+    String? style,
 
     /// 创作工具
     @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-    WorkTool? tool,
+    String? tool,
 
     /// 标签
     @Default([]) List<String> tags,

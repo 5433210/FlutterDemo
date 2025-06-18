@@ -107,6 +107,24 @@ abstract class AppLocalizations {
   /// **'A5 (148×210mm)'**
   String get a5Size;
 
+  /// No description provided for @activated.
+  ///
+  /// In zh, this message translates to:
+  /// **'激活'**
+  String get activated;
+
+  /// No description provided for @activatedDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'激活 - 在选择器中显示'**
+  String get activatedDescription;
+
+  /// No description provided for @activeStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'激活状态'**
+  String get activeStatus;
+
   /// No description provided for @add.
   ///
   /// In zh, this message translates to:
@@ -119,11 +137,23 @@ abstract class AppLocalizations {
   /// **'添加分类'**
   String get addCategory;
 
-  /// No description provided for @addedToCategory.
+  /// No description provided for @addCategoryItem.
   ///
   /// In zh, this message translates to:
-  /// **'已添加到分类'**
-  String get addedToCategory;
+  /// **'添加{category}'**
+  String addCategoryItem(Object category);
+
+  /// No description provided for @addConfigItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加配置项'**
+  String get addConfigItem;
+
+  /// No description provided for @addConfigItemHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击右下角的按钮添加{category}配置项'**
+  String addConfigItemHint(Object category);
 
   /// No description provided for @addFavorite.
   ///
@@ -167,6 +197,18 @@ abstract class AppLocalizations {
   /// **'添加标签'**
   String get addTag;
 
+  /// No description provided for @addedToCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'已添加到分类'**
+  String get addedToCategory;
+
+  /// No description provided for @adjust.
+  ///
+  /// In zh, this message translates to:
+  /// **'调节'**
+  String get adjust;
+
   /// No description provided for @adjustGridSize.
   ///
   /// In zh, this message translates to:
@@ -203,6 +245,30 @@ abstract class AppLocalizations {
   /// **'左对齐'**
   String get alignLeft;
 
+  /// No description provided for @alignMiddle.
+  ///
+  /// In zh, this message translates to:
+  /// **'居中'**
+  String get alignMiddle;
+
+  /// No description provided for @alignRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'右对齐'**
+  String get alignRight;
+
+  /// No description provided for @alignTop.
+  ///
+  /// In zh, this message translates to:
+  /// **'顶对齐'**
+  String get alignTop;
+
+  /// No description provided for @alignVerticalCenter.
+  ///
+  /// In zh, this message translates to:
+  /// **'垂直居中'**
+  String get alignVerticalCenter;
+
   /// No description provided for @alignmentAssist.
   ///
   /// In zh, this message translates to:
@@ -232,30 +298,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'对齐操作'**
   String get alignmentOperations;
-
-  /// No description provided for @alignMiddle.
-  ///
-  /// In zh, this message translates to:
-  /// **'居中'**
-  String get alignMiddle;
-
-  /// No description provided for @alignRight.
-  ///
-  /// In zh, this message translates to:
-  /// **'右对齐'**
-  String get alignRight;
-
-  /// No description provided for @alignTop.
-  ///
-  /// In zh, this message translates to:
-  /// **'顶对齐'**
-  String get alignTop;
-
-  /// No description provided for @alignVerticalCenter.
-  ///
-  /// In zh, this message translates to:
-  /// **'垂直居中'**
-  String get alignVerticalCenter;
 
   /// No description provided for @all.
   ///
@@ -287,24 +329,6 @@ abstract class AppLocalizations {
   /// **'所有类型'**
   String get allTypes;
 
-  /// No description provided for @apply.
-  ///
-  /// In zh, this message translates to:
-  /// **'应用'**
-  String get apply;
-
-  /// No description provided for @applyFormatBrush.
-  ///
-  /// In zh, this message translates to:
-  /// **'应用格式刷 (Alt+W)'**
-  String get applyFormatBrush;
-
-  /// No description provided for @applyTransform.
-  ///
-  /// In zh, this message translates to:
-  /// **'应用变换'**
-  String get applyTransform;
-
   /// No description provided for @appRestartFailed.
   ///
   /// In zh, this message translates to:
@@ -328,6 +352,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'字字珠玑'**
   String get appTitle;
+
+  /// No description provided for @apply.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get apply;
+
+  /// No description provided for @applyFormatBrush.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用格式刷 (Alt+W)'**
+  String get applyFormatBrush;
+
+  /// No description provided for @applyTransform.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用变换'**
+  String get applyTransform;
 
   /// No description provided for @ascending.
   ///
@@ -527,6 +569,12 @@ abstract class AppLocalizations {
   /// **'请在预览区域框选字符'**
   String get boxRegion;
 
+  /// No description provided for @boxTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'框选工具'**
+  String get boxTool;
+
   /// No description provided for @bringLayerToFront.
   ///
   /// In zh, this message translates to:
@@ -575,6 +623,18 @@ abstract class AppLocalizations {
   /// **'书法风格'**
   String get calligraphyStyle;
 
+  /// No description provided for @calligraphyStyleText.
+  ///
+  /// In zh, this message translates to:
+  /// **'书法风格'**
+  String get calligraphyStyleText;
+
+  /// No description provided for @canNotPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法生成预览'**
+  String get canNotPreview;
+
   /// No description provided for @cancel.
   ///
   /// In zh, this message translates to:
@@ -604,12 +664,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'无法删除唯一的页面'**
   String get cannotDeleteOnlyPage;
-
-  /// No description provided for @canNotPreview.
-  ///
-  /// In zh, this message translates to:
-  /// **'无法生成预览'**
-  String get canNotPreview;
 
   /// No description provided for @cannotSaveMissingController.
   ///
@@ -839,17 +893,17 @@ abstract class AppLocalizations {
   /// **'确认保存「{character}」？'**
   String characterEditSaveConfirmMessage(Object character);
 
-  /// No description provided for @charactersSelected.
-  ///
-  /// In zh, this message translates to:
-  /// **'已选择 {count} 个字符'**
-  String charactersSelected(Object count);
-
   /// No description provided for @characterUpdated.
   ///
   /// In zh, this message translates to:
   /// **'字符已更新'**
   String get characterUpdated;
+
+  /// No description provided for @charactersSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择 {count} 个字符'**
+  String charactersSelected(Object count);
 
   /// No description provided for @clearCache.
   ///
@@ -868,6 +922,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'关闭'**
   String get close;
+
+  /// No description provided for @code.
+  ///
+  /// In zh, this message translates to:
+  /// **'代码'**
+  String get code;
 
   /// No description provided for @collapse.
   ///
@@ -946,6 +1006,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'完成保存...'**
   String get completingSave;
+
+  /// No description provided for @configKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置键'**
+  String get configKey;
+
+  /// No description provided for @configManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置管理'**
+  String get configManagement;
 
   /// No description provided for @confirm.
   ///
@@ -1037,12 +1109,6 @@ abstract class AppLocalizations {
   /// **'创建新的数据备份'**
   String get createBackupDescription;
 
-  /// No description provided for @createdAt.
-  ///
-  /// In zh, this message translates to:
-  /// **'创建时间'**
-  String get createdAt;
-
   /// No description provided for @createExportDirectoryFailed.
   ///
   /// In zh, this message translates to:
@@ -1054,6 +1120,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'创建时间'**
   String get createTime;
+
+  /// No description provided for @createdAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建时间'**
+  String get createdAt;
 
   /// No description provided for @creatingBackup.
   ///
@@ -1079,18 +1151,6 @@ abstract class AppLocalizations {
   /// **'左侧裁剪'**
   String get cropLeft;
 
-  /// No description provided for @cropping.
-  ///
-  /// In zh, this message translates to:
-  /// **'裁剪'**
-  String get cropping;
-
-  /// No description provided for @croppingApplied.
-  ///
-  /// In zh, this message translates to:
-  /// **'(裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)'**
-  String croppingApplied(Object bottom, Object left, Object right, Object top);
-
   /// No description provided for @cropRight.
   ///
   /// In zh, this message translates to:
@@ -1102,6 +1162,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'顶部裁剪'**
   String get cropTop;
+
+  /// No description provided for @cropping.
+  ///
+  /// In zh, this message translates to:
+  /// **'裁剪'**
+  String get cropping;
+
+  /// No description provided for @croppingApplied.
+  ///
+  /// In zh, this message translates to:
+  /// **'(裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)'**
+  String croppingApplied(Object bottom, Object left, Object right, Object top);
 
   /// No description provided for @currentCharInversion.
   ///
@@ -1199,6 +1271,18 @@ abstract class AppLocalizations {
   /// **'删除分类及文件'**
   String get deleteCategoryWithFiles;
 
+  /// No description provided for @deleteConfigItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除配置项'**
+  String get deleteConfigItem;
+
+  /// No description provided for @deleteConfigItemMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除这个配置项吗？此操作不可撤销。'**
+  String get deleteConfigItemMessage;
+
   /// No description provided for @deleteConfirm.
   ///
   /// In zh, this message translates to:
@@ -1283,11 +1367,23 @@ abstract class AppLocalizations {
   /// **'删除所选'**
   String get deleteSelected;
 
+  /// No description provided for @deleteSelectedArea.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除选中区域'**
+  String get deleteSelectedArea;
+
   /// No description provided for @deleteSuccess.
   ///
   /// In zh, this message translates to:
   /// **'备份删除成功'**
   String get deleteSuccess;
+
+  /// No description provided for @deleteText.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get deleteText;
 
   /// No description provided for @deleting.
   ///
@@ -1325,6 +1421,12 @@ abstract class AppLocalizations {
   /// **'已禁用'**
   String get disabled;
 
+  /// No description provided for @disabledDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'禁用 - 在选择器中隐藏'**
+  String get disabledDescription;
+
   /// No description provided for @diskCacheSize.
   ///
   /// In zh, this message translates to:
@@ -1354,6 +1456,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'显示模式'**
   String get displayMode;
+
+  /// No description provided for @displayName.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示名称'**
+  String get displayName;
+
+  /// No description provided for @displayNameCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示名称不能为空'**
+  String get displayNameCannotBeEmpty;
+
+  /// No description provided for @displayNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户界面中显示的名称'**
+  String get displayNameHint;
+
+  /// No description provided for @displayNameMaxLength.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示名称最多100个字符'**
+  String get displayNameMaxLength;
+
+  /// No description provided for @displayNameRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入显示名称'**
+  String get displayNameRequired;
 
   /// No description provided for @distributeHorizontally.
   ///
@@ -1396,6 +1528,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'编辑'**
   String get edit;
+
+  /// No description provided for @editConfigItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑配置项'**
+  String get editConfigItem;
 
   /// No description provided for @editField.
   ///
@@ -1457,12 +1595,6 @@ abstract class AppLocalizations {
   /// **'元素ID'**
   String get elementId;
 
-  /// No description provided for @elements.
-  ///
-  /// In zh, this message translates to:
-  /// **'元素'**
-  String get elements;
-
   /// No description provided for @elementSize.
   ///
   /// In zh, this message translates to:
@@ -1474,6 +1606,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'宽'**
   String get elementWidth;
+
+  /// No description provided for @elements.
+  ///
+  /// In zh, this message translates to:
+  /// **'元素'**
+  String get elements;
 
   /// No description provided for @empty.
   ///
@@ -1589,11 +1727,11 @@ abstract class AppLocalizations {
   /// **'导出备份'**
   String get exportBackup;
 
-  /// No description provided for @exportDimensions.
+  /// No description provided for @exportConfig.
   ///
   /// In zh, this message translates to:
-  /// **'{width}厘米 × {height}厘米 ({orientation})'**
-  String exportDimensions(Object height, Object orientation, Object width);
+  /// **'导出配置'**
+  String get exportConfig;
 
   /// No description provided for @exportDialogRangeExample.
   ///
@@ -1601,23 +1739,23 @@ abstract class AppLocalizations {
   /// **'例如: 1-3,5,7-9'**
   String get exportDialogRangeExample;
 
+  /// No description provided for @exportDimensions.
+  ///
+  /// In zh, this message translates to:
+  /// **'{width}厘米 × {height}厘米 ({orientation})'**
+  String exportDimensions(Object height, Object orientation, Object width);
+
   /// No description provided for @exportFailure.
   ///
   /// In zh, this message translates to:
   /// **'备份导出失败'**
   String get exportFailure;
 
-  /// No description provided for @exporting.
+  /// No description provided for @exportNotImplemented.
   ///
   /// In zh, this message translates to:
-  /// **'正在导出，请稍候...'**
-  String get exporting;
-
-  /// No description provided for @exportingBackup.
-  ///
-  /// In zh, this message translates to:
-  /// **'导出备份中...'**
-  String get exportingBackup;
+  /// **'配置导出功能待实现'**
+  String get exportNotImplemented;
 
   /// No description provided for @exportSuccess.
   ///
@@ -1630,6 +1768,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'导出格式'**
   String get exportType;
+
+  /// No description provided for @exporting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出，请稍候...'**
+  String get exporting;
+
+  /// No description provided for @exportingBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出备份中...'**
+  String get exportingBackup;
 
   /// No description provided for @extract.
   ///
@@ -1667,12 +1817,6 @@ abstract class AppLocalizations {
   /// **'文件名称'**
   String get fileName;
 
-  /// No description provided for @filenamePrefix.
-  ///
-  /// In zh, this message translates to:
-  /// **'输入文件名前缀（将自动添加页码）'**
-  String get filenamePrefix;
-
   /// No description provided for @fileNotExist.
   ///
   /// In zh, this message translates to:
@@ -1685,12 +1829,6 @@ abstract class AppLocalizations {
   /// **'图片已从图库中恢复'**
   String get fileRestored;
 
-  /// No description provided for @files.
-  ///
-  /// In zh, this message translates to:
-  /// **'文件数量'**
-  String get files;
-
   /// No description provided for @fileSize.
   ///
   /// In zh, this message translates to:
@@ -1702,6 +1840,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'文件修改时间'**
   String get fileUpdatedAt;
+
+  /// No description provided for @filenamePrefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入文件名前缀（将自动添加页码）'**
+  String get filenamePrefix;
+
+  /// No description provided for @files.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件数量'**
+  String get files;
 
   /// No description provided for @filter.
   ///
@@ -1720,6 +1870,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'清除'**
   String get filterClear;
+
+  /// No description provided for @firstPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'第一页'**
+  String get firstPage;
 
   /// No description provided for @fitContain.
   ///
@@ -2123,6 +2279,12 @@ abstract class AppLocalizations {
   /// **'图片已更新'**
   String get imageUpdated;
 
+  /// No description provided for @implementationComingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'此功能正在开发中，敬请期待！'**
+  String get implementationComingSoon;
+
   /// No description provided for @import.
   ///
   /// In zh, this message translates to:
@@ -2134,6 +2296,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'导入备份'**
   String get importBackup;
+
+  /// No description provided for @importConfig.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入配置'**
+  String get importConfig;
 
   /// No description provided for @importFailed.
   ///
@@ -2147,17 +2315,17 @@ abstract class AppLocalizations {
   /// **'备份导入失败'**
   String get importFailure;
 
-  /// No description provided for @importFiles.
-  ///
-  /// In zh, this message translates to:
-  /// **'导入文件'**
-  String get importFiles;
-
   /// No description provided for @importFileSuccess.
   ///
   /// In zh, this message translates to:
   /// **'成功导入文件'**
   String get importFileSuccess;
+
+  /// No description provided for @importFiles.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入文件'**
+  String get importFiles;
 
   /// No description provided for @importFolder.
   ///
@@ -2165,11 +2333,11 @@ abstract class AppLocalizations {
   /// **'导入文件夹'**
   String get importFolder;
 
-  /// No description provided for @importing.
+  /// No description provided for @importNotImplemented.
   ///
   /// In zh, this message translates to:
-  /// **'导入中...'**
-  String get importing;
+  /// **'配置导入功能待实现'**
+  String get importNotImplemented;
 
   /// No description provided for @importSuccess.
   ///
@@ -2182,6 +2350,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'成功导入 {count} 个文件'**
   String importSuccessMessage(Object count);
+
+  /// No description provided for @importing.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入中...'**
+  String get importing;
 
   /// No description provided for @initializationFailed.
   ///
@@ -2243,11 +2417,23 @@ abstract class AppLocalizations {
   /// **'文件名不能包含以下字符: \\ / : * ? \" < > |'**
   String get invalidFilename;
 
+  /// No description provided for @invalidNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的数字'**
+  String get invalidNumber;
+
   /// No description provided for @invertMode.
   ///
   /// In zh, this message translates to:
   /// **'反转模式'**
   String get invertMode;
+
+  /// No description provided for @isActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'是否激活'**
+  String get isActive;
 
   /// No description provided for @itemsPerPage.
   ///
@@ -2266,6 +2452,60 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'删除旧备份前保留的备份数量'**
   String get keepBackupCountDescription;
+
+  /// No description provided for @key.
+  ///
+  /// In zh, this message translates to:
+  /// **'键'**
+  String get key;
+
+  /// No description provided for @keyCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'键不能为空'**
+  String get keyCannotBeEmpty;
+
+  /// No description provided for @keyExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置键已存在'**
+  String get keyExists;
+
+  /// No description provided for @keyHelperText.
+  ///
+  /// In zh, this message translates to:
+  /// **'只能包含字母、数字、下划线和连字符'**
+  String get keyHelperText;
+
+  /// No description provided for @keyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置项的唯一标识符'**
+  String get keyHint;
+
+  /// No description provided for @keyInvalidCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'键只能包含字母、数字、下划线和连字符'**
+  String get keyInvalidCharacters;
+
+  /// No description provided for @keyMaxLength.
+  ///
+  /// In zh, this message translates to:
+  /// **'键最多50个字符'**
+  String get keyMaxLength;
+
+  /// No description provided for @keyMinLength.
+  ///
+  /// In zh, this message translates to:
+  /// **'键至少需要2个字符'**
+  String get keyMinLength;
+
+  /// No description provided for @keyRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入配置键'**
+  String get keyRequired;
 
   /// No description provided for @landscape.
   ///
@@ -2332,6 +2572,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'上个月'**
   String get lastMonth;
+
+  /// No description provided for @lastPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后一页'**
+  String get lastPage;
 
   /// No description provided for @lastWeek.
   ///
@@ -2429,11 +2675,23 @@ abstract class AppLocalizations {
   /// **'列表视图'**
   String get listView;
 
+  /// No description provided for @loadConfigFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载配置失败'**
+  String get loadConfigFailed;
+
   /// No description provided for @loadFailed.
   ///
   /// In zh, this message translates to:
   /// **'加载失败'**
   String get loadFailed;
+
+  /// No description provided for @loadPracticeSheetFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载字帖失败'**
+  String get loadPracticeSheetFailed;
 
   /// No description provided for @loading.
   ///
@@ -2447,12 +2705,6 @@ abstract class AppLocalizations {
   /// **'加载图像中...'**
   String get loadingImage;
 
-  /// No description provided for @loadPracticeSheetFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'加载字帖失败'**
-  String get loadPracticeSheetFailed;
-
   /// No description provided for @location.
   ///
   /// In zh, this message translates to:
@@ -2464,12 +2716,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'锁定'**
   String get lock;
-
-  /// No description provided for @locked.
-  ///
-  /// In zh, this message translates to:
-  /// **'已锁定'**
-  String get locked;
 
   /// No description provided for @lockElement.
   ///
@@ -2488,6 +2734,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'锁定/解锁所有元素'**
   String get lockUnlockAllElements;
+
+  /// No description provided for @locked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已锁定'**
+  String get locked;
 
   /// No description provided for @marginBottom.
   ///
@@ -2555,6 +2807,12 @@ abstract class AppLocalizations {
   /// **'最小'**
   String get min;
 
+  /// No description provided for @monospace.
+  ///
+  /// In zh, this message translates to:
+  /// **'Monospace'**
+  String get monospace;
+
   /// No description provided for @moveDown.
   ///
   /// In zh, this message translates to:
@@ -2578,6 +2836,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'上移 (Ctrl+Shift+T)'**
   String get moveUp;
+
+  /// No description provided for @multiSelectTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'多选工具'**
+  String get multiSelectTool;
 
   /// No description provided for @multipleFilesNote.
   ///
@@ -2627,6 +2891,12 @@ abstract class AppLocalizations {
   /// **'您想返回到以下哪个页面？'**
   String get navigationSelectPage;
 
+  /// No description provided for @newConfigItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增配置项'**
+  String get newConfigItem;
+
   /// No description provided for @newItem.
   ///
   /// In zh, this message translates to:
@@ -2675,6 +2945,12 @@ abstract class AppLocalizations {
   /// **'未找到匹配的字符'**
   String get noCharactersFound;
 
+  /// No description provided for @noConfigItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无{category}配置'**
+  String noConfigItems(Object category);
+
   /// No description provided for @noCropping.
   ///
   /// In zh, this message translates to:
@@ -2699,23 +2975,17 @@ abstract class AppLocalizations {
   /// **'未选择元素'**
   String get noElementsSelected;
 
-  /// No description provided for @noImages.
-  ///
-  /// In zh, this message translates to:
-  /// **'没有图片'**
-  String get noImages;
-
   /// No description provided for @noImageSelected.
   ///
   /// In zh, this message translates to:
   /// **'未选择图片'**
   String get noImageSelected;
 
-  /// No description provided for @noiseReduction.
+  /// No description provided for @noImages.
   ///
   /// In zh, this message translates to:
-  /// **'降噪'**
-  String get noiseReduction;
+  /// **'没有图片'**
+  String get noImages;
 
   /// No description provided for @noLayers.
   ///
@@ -2723,11 +2993,11 @@ abstract class AppLocalizations {
   /// **'无图层，请添加图层'**
   String get noLayers;
 
-  /// No description provided for @none.
+  /// No description provided for @noMatchingConfigItems.
   ///
   /// In zh, this message translates to:
-  /// **'无'**
-  String get none;
+  /// **'未找到匹配的配置项'**
+  String get noMatchingConfigItems;
 
   /// No description provided for @noPageSelected.
   ///
@@ -2746,6 +3016,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'没有可打印的页面'**
   String get noPagesToPrint;
+
+  /// No description provided for @noPreviewAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'无有效预览'**
+  String get noPreviewAvailable;
 
   /// No description provided for @noRegionBoxed.
   ///
@@ -2794,6 +3070,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'尝试导入新作品或更改筛选条件'**
   String get noWorksHint;
+
+  /// No description provided for @noiseReduction.
+  ///
+  /// In zh, this message translates to:
+  /// **'降噪'**
+  String get noiseReduction;
+
+  /// No description provided for @none.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get none;
 
   /// No description provided for @ok.
   ///
@@ -2885,6 +3173,12 @@ abstract class AppLocalizations {
   /// **'页面边距 (厘米)'**
   String get pageMargins;
 
+  /// No description provided for @pageNotImplemented.
+  ///
+  /// In zh, this message translates to:
+  /// **'页面未实现'**
+  String get pageNotImplemented;
+
   /// No description provided for @pageOrientation.
   ///
   /// In zh, this message translates to:
@@ -2903,17 +3197,17 @@ abstract class AppLocalizations {
   /// **'页面范围'**
   String get pageRange;
 
-  /// No description provided for @pages.
-  ///
-  /// In zh, this message translates to:
-  /// **'页'**
-  String get pages;
-
   /// No description provided for @pageSize.
   ///
   /// In zh, this message translates to:
   /// **'页面大小'**
   String get pageSize;
+
+  /// No description provided for @pages.
+  ///
+  /// In zh, this message translates to:
+  /// **'页'**
+  String get pages;
 
   /// No description provided for @parentCategory.
   ///
@@ -3017,12 +3311,6 @@ abstract class AppLocalizations {
   /// **'字帖'**
   String get practiceListTitle;
 
-  /// No description provided for @practices.
-  ///
-  /// In zh, this message translates to:
-  /// **'字帖'**
-  String get practices;
-
   /// No description provided for @practiceSheetNotExists.
   ///
   /// In zh, this message translates to:
@@ -3034,6 +3322,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'字帖 \"{title}\" 已保存'**
   String practiceSheetSaved(Object title);
+
+  /// No description provided for @practices.
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖'**
+  String get practices;
 
   /// No description provided for @preparingPrint.
   ///
@@ -3047,17 +3341,17 @@ abstract class AppLocalizations {
   /// **'准备保存...'**
   String get preparingSave;
 
-  /// No description provided for @presets.
-  ///
-  /// In zh, this message translates to:
-  /// **'预设'**
-  String get presets;
-
   /// No description provided for @presetSize.
   ///
   /// In zh, this message translates to:
   /// **'预设大小'**
   String get presetSize;
+
+  /// No description provided for @presets.
+  ///
+  /// In zh, this message translates to:
+  /// **'预设'**
+  String get presets;
 
   /// No description provided for @preview.
   ///
@@ -3191,6 +3485,12 @@ abstract class AppLocalizations {
   /// **'重命名'**
   String get rename;
 
+  /// No description provided for @renameLayer.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名图层'**
+  String get renameLayer;
+
   /// No description provided for @renderFailed.
   ///
   /// In zh, this message translates to:
@@ -3203,6 +3503,18 @@ abstract class AppLocalizations {
   /// **'重置'**
   String get reset;
 
+  /// No description provided for @resetCategoryConfig.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置{category}配置'**
+  String resetCategoryConfig(Object category);
+
+  /// No description provided for @resetCategoryConfigMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要将{category}配置重置为默认设置吗？此操作不可撤销。'**
+  String resetCategoryConfigMessage(Object category);
+
   /// No description provided for @resetSettingsConfirmMessage.
   ///
   /// In zh, this message translates to:
@@ -3214,6 +3526,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'重置设置'**
   String get resetSettingsConfirmTitle;
+
+  /// No description provided for @resetToDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置为默认'**
+  String get resetToDefault;
 
   /// No description provided for @resetToDefaults.
   ///
@@ -3305,6 +3623,12 @@ abstract class AppLocalizations {
   /// **'旋转'**
   String get rotation;
 
+  /// No description provided for @sansSerif.
+  ///
+  /// In zh, this message translates to:
+  /// **'Sans Serif'**
+  String get sansSerif;
+
   /// No description provided for @save.
   ///
   /// In zh, this message translates to:
@@ -3383,6 +3707,24 @@ abstract class AppLocalizations {
   /// **'搜索分类...'**
   String get searchCategories;
 
+  /// No description provided for @searchConfigDialogTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索配置项'**
+  String get searchConfigDialogTitle;
+
+  /// No description provided for @searchConfigHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入配置项名称或键'**
+  String get searchConfigHint;
+
+  /// No description provided for @searchConfigItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索配置项'**
+  String get searchConfigItems;
+
   /// No description provided for @searching.
   ///
   /// In zh, this message translates to:
@@ -3431,24 +3773,6 @@ abstract class AppLocalizations {
   /// **'选择日期'**
   String get selectDate;
 
-  /// No description provided for @selected.
-  ///
-  /// In zh, this message translates to:
-  /// **'已选择'**
-  String get selected;
-
-  /// No description provided for @selectedCharacter.
-  ///
-  /// In zh, this message translates to:
-  /// **'已选字符'**
-  String get selectedCharacter;
-
-  /// No description provided for @selectedCount.
-  ///
-  /// In zh, this message translates to:
-  /// **'已选择{count}个'**
-  String selectedCount(Object count);
-
   /// No description provided for @selectExportLocation.
   ///
   /// In zh, this message translates to:
@@ -3479,11 +3803,41 @@ abstract class AppLocalizations {
   /// **'选择目标图层'**
   String get selectTargetLayer;
 
+  /// No description provided for @selected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择'**
+  String get selected;
+
+  /// No description provided for @selectedCharacter.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选字符'**
+  String get selectedCharacter;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择{count}个'**
+  String selectedCount(Object count);
+
+  /// No description provided for @selectedElementNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'选中的元素未找到'**
+  String get selectedElementNotFound;
+
   /// No description provided for @sendToBack.
   ///
   /// In zh, this message translates to:
   /// **'置于底层'**
   String get sendToBack;
+
+  /// No description provided for @serif.
+  ///
+  /// In zh, this message translates to:
+  /// **'Serif'**
+  String get serif;
 
   /// No description provided for @setCategory.
   ///
@@ -3581,6 +3935,48 @@ abstract class AppLocalizations {
   /// **'按更新时间排序'**
   String get sortByUpdateTime;
 
+  /// No description provided for @sortOrder.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序'**
+  String get sortOrder;
+
+  /// No description provided for @sortOrderCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序顺序不能为空'**
+  String get sortOrderCannotBeEmpty;
+
+  /// No description provided for @sortOrderHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'数字越小排序越靠前'**
+  String get sortOrderHint;
+
+  /// No description provided for @sortOrderLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序顺序'**
+  String get sortOrderLabel;
+
+  /// No description provided for @sortOrderNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序值必须是数字'**
+  String get sortOrderNumber;
+
+  /// No description provided for @sortOrderRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序顺序必须在1-999之间'**
+  String get sortOrderRange;
+
+  /// No description provided for @sortOrderRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入排序值'**
+  String get sortOrderRequired;
+
   /// No description provided for @sourceHanSansFont.
   ///
   /// In zh, this message translates to:
@@ -3611,6 +4007,12 @@ abstract class AppLocalizations {
   /// **'状态与显示'**
   String get stateAndDisplay;
 
+  /// No description provided for @status.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get status;
+
   /// No description provided for @storageDetails.
   ///
   /// In zh, this message translates to:
@@ -3635,6 +4037,12 @@ abstract class AppLocalizations {
   /// **'已使用存储'**
   String get storageUsed;
 
+  /// No description provided for @stretch.
+  ///
+  /// In zh, this message translates to:
+  /// **'拉伸'**
+  String get stretch;
+
   /// No description provided for @strokeCount.
   ///
   /// In zh, this message translates to:
@@ -3658,6 +4066,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'正在切换到字符页面...'**
   String get switchingPage;
+
+  /// No description provided for @systemConfig.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统配置'**
+  String get systemConfig;
+
+  /// No description provided for @systemConfigItemNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'这是系统配置项，键值不可修改'**
+  String get systemConfigItemNote;
 
   /// No description provided for @tabToNextField.
   ///
@@ -3929,6 +4349,12 @@ abstract class AppLocalizations {
   /// **'变换已应用'**
   String get transformApplied;
 
+  /// No description provided for @tryOtherKeywords.
+  ///
+  /// In zh, this message translates to:
+  /// **'尝试使用其他关键词搜索'**
+  String get tryOtherKeywords;
+
   /// No description provided for @type.
   ///
   /// In zh, this message translates to:
@@ -3989,17 +4415,17 @@ abstract class AppLocalizations {
   /// **'未知错误'**
   String get unknownError;
 
-  /// No description provided for @unlocked.
-  ///
-  /// In zh, this message translates to:
-  /// **'未锁定'**
-  String get unlocked;
-
   /// No description provided for @unlockElement.
   ///
   /// In zh, this message translates to:
   /// **'解锁元素'**
   String get unlockElement;
+
+  /// No description provided for @unlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'未锁定'**
+  String get unlocked;
 
   /// No description provided for @unnamedElement.
   ///
@@ -4025,17 +4451,23 @@ abstract class AppLocalizations {
   /// **'有未保存的更改'**
   String get unsavedChanges;
 
+  /// No description provided for @updateTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新时间'**
+  String get updateTime;
+
   /// No description provided for @updatedAt.
   ///
   /// In zh, this message translates to:
   /// **'更新时间'**
   String get updatedAt;
 
-  /// No description provided for @updateTime.
+  /// No description provided for @userConfig.
   ///
   /// In zh, this message translates to:
-  /// **'更新时间'**
-  String get updateTime;
+  /// **'用户配置'**
+  String get userConfig;
 
   /// No description provided for @validChineseCharacter.
   ///
@@ -4331,6 +4763,12 @@ abstract class AppLocalizations {
   /// **'书写工具'**
   String get writingTool;
 
+  /// No description provided for @writingToolText.
+  ///
+  /// In zh, this message translates to:
+  /// **'书写工具'**
+  String get writingToolText;
+
   /// No description provided for @yes.
   ///
   /// In zh, this message translates to:
@@ -4342,102 +4780,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'昨天'**
   String get yesterday;
-
-  /// No description provided for @boxTool.
-  ///
-  /// In zh, this message translates to:
-  /// **'框选工具'**
-  String get boxTool;
-
-  /// No description provided for @multiSelectTool.
-  ///
-  /// In zh, this message translates to:
-  /// **'多选工具'**
-  String get multiSelectTool;
-
-  /// No description provided for @deleteSelectedArea.
-  ///
-  /// In zh, this message translates to:
-  /// **'删除选中区域'**
-  String get deleteSelectedArea;
-
-  /// No description provided for @adjust.
-  ///
-  /// In zh, this message translates to:
-  /// **'调节'**
-  String get adjust;
-
-  /// No description provided for @code.
-  ///
-  /// In zh, this message translates to:
-  /// **'代码'**
-  String get code;
-
-  /// No description provided for @noPreviewAvailable.
-  ///
-  /// In zh, this message translates to:
-  /// **'无有效预览'**
-  String get noPreviewAvailable;
-
-  /// No description provided for @pageNotImplemented.
-  ///
-  /// In zh, this message translates to:
-  /// **'页面未实现'**
-  String get pageNotImplemented;
-
-  /// No description provided for @selectedElementNotFound.
-  ///
-  /// In zh, this message translates to:
-  /// **'选中的元素未找到'**
-  String get selectedElementNotFound;
-
-  /// No description provided for @sansSerif.
-  ///
-  /// In zh, this message translates to:
-  /// **'Sans Serif'**
-  String get sansSerif;
-
-  /// No description provided for @serif.
-  ///
-  /// In zh, this message translates to:
-  /// **'Serif'**
-  String get serif;
-
-  /// No description provided for @monospace.
-  ///
-  /// In zh, this message translates to:
-  /// **'Monospace'**
-  String get monospace;
-
-  /// No description provided for @stretch.
-  ///
-  /// In zh, this message translates to:
-  /// **'拉伸'**
-  String get stretch;
-
-  /// No description provided for @firstPage.
-  ///
-  /// In zh, this message translates to:
-  /// **'第一页'**
-  String get firstPage;
-
-  /// No description provided for @lastPage.
-  ///
-  /// In zh, this message translates to:
-  /// **'最后一页'**
-  String get lastPage;
-
-  /// No description provided for @renameLayer.
-  ///
-  /// In zh, this message translates to:
-  /// **'重命名图层'**
-  String get renameLayer;
-
-  /// No description provided for @implementationComingSoon.
-  ///
-  /// In zh, this message translates to:
-  /// **'此功能正在开发中，敬请期待！'**
-  String get implementationComingSoon;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

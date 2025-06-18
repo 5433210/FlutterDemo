@@ -233,9 +233,8 @@ class StateRestorationService {
           '状态恢复成功',
           tag: 'StateRestorationService',
           data: {
-            'filter': {
-              'style': restoredState.filter.style?.name,
-              'tool': restoredState.filter.tool?.name,
+            'filter': {              'style': restoredState.filter.style,
+              'tool': restoredState.filter.tool,
             }
           },
         );
@@ -324,9 +323,8 @@ class StateRestorationService {
         '准备保存状态',
         tag: 'StateRestorationService',
         data: {
-          'filter': {
-            'style': state.filter.style?.name,
-            'tool': state.filter.tool?.name,
+          'filter': {            'style': state.filter.style,
+            'tool': state.filter.tool,
           }
         },
       );

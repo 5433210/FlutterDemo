@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../domain/enums/work_tool.dart';
+import '../../../../../infrastructure/providers/config_providers.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
 import 'work_filter_section.dart';
 
-class ToolSection extends StatelessWidget {
+class ToolSection extends ConsumerWidget {
   final WorkFilter filter;
   final ValueChanged<WorkFilter> onFilterChanged;
 
@@ -16,41 +17,42 @@ class ToolSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return WorkFilterSection(
       title: l10n.writingTool,
-      child: _buildToolChips(context),
+      child: _buildToolChips(context, ref),
     );
   }
-
-  Widget _buildToolChips(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: WorkTool.values.map((tool) {
-        final selected = filter.tool?.value == tool.value;
-        return FilterChip(
-          label: Text(_getToolLabel(tool, l10n)),
-          selected: selected,
-          onSelected: (value) {
-            // 如果是取消选择或者点击当前已选中的项，则清除选择
-            final newTool = selected ? null : WorkTool.fromValue(tool.value);
-            onFilterChanged(
-              filter.copyWith(tool: newTool),
+  Widget _buildToolChips(BuildContext context, WidgetRef ref) {
+    final toolsAsync = ref.watch(activeToolItemsProvider);
+    final displayNamesAsync = ref.watch(toolDisplayNamesProvider);
+    
+    return toolsAsync.when(
+      data: (tools) => displayNamesAsync.when(
+        data: (displayNames) => Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: tools.map((toolItem) {
+            final selected = filter.tool == toolItem.key;
+            final displayName = displayNames[toolItem.key] ?? toolItem.displayName;
+            return FilterChip(
+              label: Text(displayName),
+              selected: selected,
+              onSelected: (value) {
+                final newTool = selected ? null : toolItem.key;
+                onFilterChanged(
+                  filter.copyWith(tool: newTool),
+                );
+              },
             );
-          },
-        );
-      }).toList(),
+          }).toList(),
+        ),
+        loading: () => const SizedBox.shrink(),
+        error: (_, __) => const SizedBox.shrink(),
+      ),
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
-  }
-  
-  String _getToolLabel(WorkTool tool, AppLocalizations l10n) {
-    return switch (tool) {
-      WorkTool.brush => l10n.workToolBrush,
-      WorkTool.hardPen => l10n.workToolHardPen,
-      WorkTool.other => l10n.workToolOther,
-    };
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
+import '../../../../../../infrastructure/providers/config_providers.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
@@ -152,21 +153,35 @@ class M3WorkListItem extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSizes.xs),
-                      ],
-
-                      // 风格和工具
+                      ],                      // 风格和工具
                       Row(
                         children: [
-                          _buildInfoChip(
-                            context,
-                            Icons.brush_outlined,
-                            work.style.label,
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final styleDisplayName = ref.watch(styleDisplayNamesProvider).maybeWhen(
+                                data: (names) => names[work.style] ?? work.style,
+                                orElse: () => work.style,
+                              );
+                              return _buildInfoChip(
+                                context,
+                                Icons.brush_outlined,
+                                styleDisplayName,
+                              );
+                            },
                           ),
                           const SizedBox(width: AppSizes.s),
-                          _buildInfoChip(
-                            context,
-                            Icons.construction_outlined,
-                            work.tool.label,
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final toolDisplayName = ref.watch(toolDisplayNamesProvider).maybeWhen(
+                                data: (names) => names[work.tool] ?? work.tool,
+                                orElse: () => work.tool,
+                              );
+                              return _buildInfoChip(
+                                context,
+                                Icons.construction_outlined,
+                                toolDisplayName,
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -175,15 +190,6 @@ class M3WorkListItem extends ConsumerWidget {
                       // 底部日期和元数据信息
                       Row(
                         children: [
-                          // 创作日期
-                          Flexible(
-                            child: _buildInfoItem(
-                              context,
-                              Icons.palette_outlined,
-                              '创作于 ${DateFormatter.formatCompact(work.creationDate)}',
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.s),
                           // 导入日期
                           Flexible(
                             child: _buildInfoItem(

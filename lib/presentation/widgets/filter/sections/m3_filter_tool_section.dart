@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/enums/work_tool.dart';
+import '../../../../infrastructure/providers/config_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 
 /// 通用的书写工具筛选部分组件
-class M3FilterToolSection extends StatelessWidget {
+class M3FilterToolSection extends ConsumerWidget {
   /// 当前选中的书写工具
-  final WorkTool? selectedTool;
-
-  /// 可用的书写工具列表
-  final List<WorkTool> availableTools;
+  final String? selectedTool;
 
   /// 书写工具变化时的回调
-  final ValueChanged<WorkTool?> onToolChanged;
+  final ValueChanged<String?> onToolChanged;
 
   /// 构造函数
   const M3FilterToolSection({
     super.key,
     required this.selectedTool,
-    required this.availableTools,
     required this.onToolChanged,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    
+    final activeToolItems = ref.watch(activeToolItemsProvider);
+    final toolDisplayNames = ref.watch(toolDisplayNamesProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,33 +36,32 @@ class M3FilterToolSection extends StatelessWidget {
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: availableTools.map((tool) {
-            final isSelected = selectedTool == tool;
-            return FilterChip(
-              label: Text(_getLocalizedToolName(tool, l10n)),
-              selected: isSelected,
-              onSelected: (selected) {
-                onToolChanged(selected ? tool : null);
-              },
-            );
-          }).toList(),
+        activeToolItems.when(
+          data: (tools) => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tools.map((tool) {
+              final isSelected = selectedTool == tool.key;
+              final displayName = toolDisplayNames.maybeWhen(
+                data: (names) => names[tool.key] ?? tool.displayName,
+                orElse: () => tool.displayName,
+              );
+              return FilterChip(
+                label: Text(displayName),
+                selected: isSelected,
+                onSelected: (selected) {
+                  onToolChanged(selected ? tool.key : null);
+                },
+              );
+            }).toList(),
+          ),
+          loading: () => const CircularProgressIndicator(),
+          error: (error, stackTrace) => Text(
+            'Loading error', // TODO: Add proper localization
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
         ),
       ],
     );
-  }
-
-  /// 获取本地化的书写工具名称
-  String _getLocalizedToolName(WorkTool tool, AppLocalizations l10n) {
-    switch (tool) {
-      case WorkTool.brush:
-        return l10n.workToolBrush;
-      case WorkTool.hardPen:
-        return l10n.workToolHardPen;
-      case WorkTool.other:
-        return l10n.workToolOther;
-    }
   }
 }

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/enums/sort_field.dart';
-import '../../../../domain/enums/work_style.dart';
-import '../../../../domain/enums/work_tool.dart';
 import '../../../../domain/models/character/character_filter.dart';
 import '../../../../domain/models/common/date_range_filter.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -154,7 +152,6 @@ class _M3CharacterFilterPanelImplState
       ),
     );
   }
-
   List<Widget> buildFilterSections(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
@@ -166,12 +163,6 @@ class _M3CharacterFilterPanelImplState
       SortField.style,
       SortField.tool,
     ];
-
-    // 获取可用的书法风格
-    final styles = WorkStyle.values.toList();
-
-    // 获取可用的书写工具
-    final tools = WorkTool.values.toList();
 
     return [
       // 搜索框部分
@@ -244,9 +235,9 @@ class _M3CharacterFilterPanelImplState
                   widget.filter.sortOption.copyWith(descending: isDescending),
             );
             widget.onFilterChanged(newFilter);
-          },
-        ),
-      ), // 收藏部分
+          },        ),
+      ),
+      // 收藏部分
       _buildSectionCard(
         context,
         M3FilterFavoriteSection(
@@ -256,56 +247,29 @@ class _M3CharacterFilterPanelImplState
             widget.onFilterChanged(newFilter);
           },
         ),
-      ), // 书写工具部分
+      ),
+      // 书写工具部分
       _buildSectionCard(
         context,
         M3FilterToolSection(
           selectedTool: widget.filter.tool,
-          availableTools: tools,
           onToolChanged: (tool) {
             final newFilter = widget.filter.copyWith(tool: tool);
             widget.onFilterChanged(newFilter);
           },
         ),
-      ), // 书法风格部分
+      ),
+      // 书法风格部分
       _buildSectionCard(
         context,
         M3FilterStyleSection(
           selectedStyle: widget.filter.style,
-          availableStyles: styles,
           onStyleChanged: (style) {
             final newFilter = widget.filter.copyWith(style: style);
             widget.onFilterChanged(newFilter);
-          },
-        ),
-      ), // 创建日期部分
-      _buildSectionCard(
-        context,
-        M3FilterDateRangeSection(
-          title: l10n.creationDate,
-          filter: DateRangeFilter(
-            preset: widget.filter.creationDatePreset,
-            start: widget.filter.creationDateRange?.start,
-            end: widget.filter.creationDateRange?.end,
-          ),
-          onChanged: (dateFilter) {
-            if (dateFilter == null) {
-              // 重置所有相关字段
-              final newFilter = widget.filter.copyWith(
-                creationDatePreset: DateRangePreset.all,
-                creationDateRange: null,
-              );
-              widget.onFilterChanged(newFilter);
-            } else {
-              final newFilter = widget.filter.copyWith(
-                creationDatePreset: dateFilter.preset!,
-                creationDateRange: dateFilter.effectiveRange,
-              );
-              widget.onFilterChanged(newFilter);
-            }
-          },
-        ),
-      ), // 收集日期部分
+          },        ),
+      ),
+      // 收集日期部分
       _buildSectionCard(
         context,
         M3FilterDateRangeSection(

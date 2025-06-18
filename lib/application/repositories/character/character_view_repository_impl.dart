@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import '../../../domain/enums/sort_field.dart';
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
 import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/models/character/character_region.dart'
     show CharacterRegion;
@@ -322,18 +320,16 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     if (filter.workId != null) {
       conditions.add('workId = ?');
       args.add(filter.workId);
-    }
-
-    // Writing tools filter
+    } // Writing tools filter
     if (filter.tool != null) {
       conditions.add('tool = ?');
-      args.add(filter.tool!.value);
+      args.add(filter.tool!);
     }
 
     // Calligraphy styles filter
     if (filter.style != null) {
       conditions.add('style = ?');
-      args.add(filter.style!.value);
+      args.add(filter.style!);
     }
 
     // Creation date filter
@@ -403,7 +399,6 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     final fieldMap = {
       SortField.author: 'author',
       SortField.createTime: 'collectionTime',
-      SortField.creationDate: 'creationTime',
       SortField.title: 'title',
       SortField.updateTime: 'updateTime',
       SortField.style: 'style',
@@ -508,23 +503,7 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
             );
           }
         }
-      }
-
-      // 解析日期时间
-      DateTime? creationTime;
-      if (map['creationTime'] != null) {
-        try {
-          creationTime = DateTime.parse(map['creationTime'] as String);
-        } catch (e) {
-          AppLogger.warning(
-            '创建时间解析失败',
-            tag: 'CharacterViewRepository',
-            error: e,
-            data: {'creationTime': map['creationTime']},
-          );
-        }
-      }
-
+      } // 解析日期时间
       DateTime collectionTime;
       try {
         collectionTime = DateTime.parse(map['collectionTime'] as String);
@@ -552,14 +531,12 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
         );
         region = CharacterRegion.fromJson({});
       }
-
       final view = CharacterView(
         id: id,
         character: character,
         workId: workId,
         title: title,
         author: map['author'] as String?,
-        creationTime: creationTime,
         collectionTime: collectionTime,
         isFavorite: (map['isFavorite'] as int?) == 1,
         tags: tags,
@@ -568,8 +545,8 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
             ? DateTime.parse(map['updateTime'] as String)
             : DateTime.now(),
         region: region,
-        tool: WorkTool.fromString(map['tool'] as String? ?? ''),
-        style: WorkStyle.fromString(map['style'] as String? ?? ''),
+        tool: map['tool'] as String?,
+        style: map['style'] as String?,
       );
 
       AppLogger.debug(

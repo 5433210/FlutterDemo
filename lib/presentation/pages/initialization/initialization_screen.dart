@@ -22,6 +22,7 @@ class InitializationScreen extends ConsumerWidget {
             l10n = AppLocalizations.of(context);
           } catch (e) {
             // 如果本地化资源不可用，我们将使用硬编码字符串
+            l10n = null;
           }
 
           return initState.when(

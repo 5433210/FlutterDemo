@@ -13,12 +13,9 @@ _$CharacterViewImpl _$$CharacterViewImplFromJson(Map<String, dynamic> json) =>
       workId: json['workId'] as String,
       pageId: json['pageId'] as String,
       title: json['title'] as String,
-      tool: $enumDecodeNullable(_$WorkToolEnumMap, json['tool']),
-      style: $enumDecodeNullable(_$WorkStyleEnumMap, json['style']),
+      tool: json['tool'] as String?,
+      style: json['style'] as String?,
       author: json['author'] as String?,
-      creationTime: json['creationTime'] == null
-          ? null
-          : DateTime.parse(json['creationTime'] as String),
       collectionTime: DateTime.parse(json['collectionTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
       isFavorite: json['isFavorite'] as bool? ?? false,
@@ -38,25 +35,9 @@ Map<String, dynamic> _$$CharacterViewImplToJson(_$CharacterViewImpl instance) =>
       'tool': instance.tool,
       'style': instance.style,
       'author': instance.author,
-      'creationTime': instance.creationTime?.toIso8601String(),
       'collectionTime': instance.collectionTime.toIso8601String(),
       'updateTime': instance.updateTime.toIso8601String(),
       'isFavorite': instance.isFavorite,
       'tags': instance.tags,
       'region': instance.region,
     };
-
-const _$WorkToolEnumMap = {
-  WorkTool.brush: 'brush',
-  WorkTool.hardPen: 'hardPen',
-  WorkTool.other: 'other',
-};
-
-const _$WorkStyleEnumMap = {
-  WorkStyle.regular: 'regular',
-  WorkStyle.running: 'running',
-  WorkStyle.cursive: 'cursive',
-  WorkStyle.clerical: 'clerical',
-  WorkStyle.seal: 'seal',
-  WorkStyle.other: 'other',
-};

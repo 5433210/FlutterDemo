@@ -15,13 +15,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get a5Size => 'A5 (148×210mm)';
 
   @override
+  String get activated => 'Activated';
+
+  @override
+  String get activatedDescription => 'Activated - Show in selector';
+
+  @override
+  String get activeStatus => 'Active Status';
+
+  @override
   String get add => 'Add';
 
   @override
   String get addCategory => 'Add Category';
 
   @override
-  String get addedToCategory => 'Added to Category';
+  String addCategoryItem(Object category) {
+    return 'Add $category';
+  }
+
+  @override
+  String get addConfigItem => 'Add Configuration Item';
+
+  @override
+  String addConfigItemHint(Object category) {
+    return 'Tap the button in the bottom right corner to add $category configuration items';
+  }
 
   @override
   String get addFavorite => 'Add to Favorites';
@@ -47,6 +66,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTag => 'Add Tag';
 
   @override
+  String get addedToCategory => 'Added to Category';
+
+  @override
+  String get adjust => 'Adjust';
+
+  @override
   String get adjustGridSize => 'Adjust Grid Size';
 
   @override
@@ -65,6 +90,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alignLeft => 'Align Left';
 
   @override
+  String get alignMiddle => 'Align Middle';
+
+  @override
+  String get alignRight => 'Align Right';
+
+  @override
+  String get alignTop => 'Align Top';
+
+  @override
+  String get alignVerticalCenter => 'Align Vertical Center';
+
+  @override
   String get alignmentAssist => 'Alignment Assist';
 
   @override
@@ -78,18 +115,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alignmentOperations => 'Alignment Operations';
-
-  @override
-  String get alignMiddle => 'Align Middle';
-
-  @override
-  String get alignRight => 'Align Right';
-
-  @override
-  String get alignTop => 'Align Top';
-
-  @override
-  String get alignVerticalCenter => 'Align Vertical Center';
 
   @override
   String get all => 'All';
@@ -107,15 +132,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allTypes => 'All Types';
 
   @override
-  String get apply => 'Apply';
-
-  @override
-  String get applyFormatBrush => 'Apply Format Brush (Alt+W)';
-
-  @override
-  String get applyTransform => 'Apply Transform';
-
-  @override
   String get appRestartFailed => 'App Restart Failed, Please Manually Restart the App';
 
   @override
@@ -126,6 +142,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'Word by Word';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get applyFormatBrush => 'Apply Format Brush (Alt+W)';
+
+  @override
+  String get applyTransform => 'Apply Transform';
 
   @override
   String get ascending => 'Ascending';
@@ -229,6 +254,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get boxRegion => 'Please select characters in the preview area';
 
   @override
+  String get boxTool => 'Box Tool';
+
+  @override
   String get bringLayerToFront => 'Bring Layer to Front';
 
   @override
@@ -253,6 +281,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calligraphyStyle => 'Calligraphy Style';
 
   @override
+  String get calligraphyStyleText => 'Calligraphy Style';
+
+  @override
+  String get canNotPreview => 'Cannot Generate Preview';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
@@ -266,9 +300,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotDeleteOnlyPage => 'Cannot Delete Only Page';
-
-  @override
-  String get canNotPreview => 'Cannot Generate Preview';
 
   @override
   String get cannotSaveMissingController => 'Cannot Save: Missing Controller';
@@ -389,12 +420,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get characterUpdated => 'Character Updated';
+
+  @override
   String charactersSelected(Object count) {
     return 'Selected $count Characters';
   }
-
-  @override
-  String get characterUpdated => 'Character Updated';
 
   @override
   String get clearCache => 'Clear Cache';
@@ -404,6 +435,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get code => 'Code';
 
   @override
   String get collapse => 'Collapse';
@@ -443,6 +477,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completingSave => 'Completing Save...';
+
+  @override
+  String get configKey => 'Configuration Key';
+
+  @override
+  String get configManagement => 'Configuration Management';
 
   @override
   String get confirm => 'Confirm';
@@ -492,15 +532,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createBackupDescription => 'Create a New Data Backup';
 
   @override
-  String get createdAt => 'Created At';
-
-  @override
   String createExportDirectoryFailed(Object error) {
     return 'Failed to Create Export Directory $error';
   }
 
   @override
   String get createTime => 'Creation Time';
+
+  @override
+  String get createdAt => 'Created At';
 
   @override
   String get creatingBackup => 'Creating Backup...';
@@ -515,18 +555,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cropLeft => 'Crop Left';
 
   @override
+  String get cropRight => 'Crop Right';
+
+  @override
+  String get cropTop => 'Crop Top';
+
+  @override
   String get cropping => 'Cropping';
 
   @override
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(Cropping: Left ${left}px, Top ${top}px, Right ${right}px, Bottom ${bottom}px)';
   }
-
-  @override
-  String get cropRight => 'Crop Right';
-
-  @override
-  String get cropTop => 'Crop Top';
 
   @override
   String get currentCharInversion => 'Current Character Inversion';
@@ -585,6 +625,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteCategoryWithFiles => 'Delete Category and Files';
 
   @override
+  String get deleteConfigItem => 'Delete Configuration Item';
+
+  @override
+  String get deleteConfigItemMessage => 'Are you sure you want to delete this configuration item? This action cannot be undone.';
+
+  @override
   String get deleteConfirm => 'Confirm Delete';
 
   @override
@@ -629,7 +675,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteSelected => 'Delete Selected';
 
   @override
+  String get deleteSelectedArea => 'Delete Selected Area';
+
+  @override
   String get deleteSuccess => 'Backup Delete Successful';
+
+  @override
+  String get deleteText => 'Delete';
 
   @override
   String get deleting => 'Deleting...';
@@ -650,6 +702,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disabled => 'Disabled';
 
   @override
+  String get disabledDescription => 'Disabled - Hide in selector';
+
+  @override
   String get diskCacheSize => 'Disk Cache Size';
 
   @override
@@ -663,6 +718,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get displayMode => 'Display Mode';
+
+  @override
+  String get displayName => 'Display Name';
+
+  @override
+  String get displayNameCannotBeEmpty => 'Display name cannot be empty';
+
+  @override
+  String get displayNameHint => 'Name displayed in the user interface';
+
+  @override
+  String get displayNameMaxLength => 'Display name can be at most 100 characters';
+
+  @override
+  String get displayNameRequired => 'Please enter display name';
 
   @override
   String get distributeHorizontally => 'Distribute Horizontally';
@@ -684,6 +754,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get editConfigItem => 'Edit Configuration Item';
 
   @override
   String editField(Object field) {
@@ -720,13 +793,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get elementId => 'Element ID';
 
   @override
-  String get elements => 'Elements';
-
-  @override
   String get elementSize => 'Size';
 
   @override
   String get elementWidth => 'Width';
+
+  @override
+  String get elements => 'Elements';
 
   @override
   String get empty => 'Empty';
@@ -788,27 +861,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportBackup => 'Export Backup';
 
   @override
-  String exportDimensions(Object height, Object orientation, Object width) {
-    return '${width}cm × ${height}cm ($orientation)';
-  }
+  String get exportConfig => 'Export Configuration';
 
   @override
   String get exportDialogRangeExample => 'For Example: 1-3,5,7-9';
 
   @override
+  String exportDimensions(Object height, Object orientation, Object width) {
+    return '${width}cm × ${height}cm ($orientation)';
+  }
+
+  @override
   String get exportFailure => 'Backup Export Failed';
 
   @override
-  String get exporting => 'Exporting, Please Wait...';
-
-  @override
-  String get exportingBackup => 'Exporting Backup...';
+  String get exportNotImplemented => 'Configuration export feature is under development';
 
   @override
   String get exportSuccess => 'Backup Export Successful';
 
   @override
   String get exportType => 'Export Format';
+
+  @override
+  String get exporting => 'Exporting, Please Wait...';
+
+  @override
+  String get exportingBackup => 'Exporting Backup...';
 
   @override
   String get extract => 'Extract';
@@ -829,9 +908,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileName => 'File Name';
 
   @override
-  String get filenamePrefix => 'Enter Filename Prefix (Page Numbers Will Be Added Automatically)';
-
-  @override
   String fileNotExist(Object path) {
     return 'File Not Found: $path';
   }
@@ -840,13 +916,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileRestored => 'Image Restored from Gallery';
 
   @override
-  String get files => 'Number of Files';
-
-  @override
   String get fileSize => 'File Size';
 
   @override
   String get fileUpdatedAt => 'File Modified Time';
+
+  @override
+  String get filenamePrefix => 'Enter Filename Prefix (Page Numbers Will Be Added Automatically)';
+
+  @override
+  String get files => 'Number of Files';
 
   @override
   String get filter => 'Filter';
@@ -856,6 +935,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterClear => 'Clear';
+
+  @override
+  String get firstPage => 'First Page';
 
   @override
   String get fitContain => 'Contain';
@@ -1075,10 +1157,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageUpdated => 'Image Updated';
 
   @override
+  String get implementationComingSoon => 'This feature is under development, please stay tuned!';
+
+  @override
   String get import => 'Import';
 
   @override
   String get importBackup => 'Import Backup';
+
+  @override
+  String get importConfig => 'Import Configuration';
 
   @override
   String importFailed(Object error) {
@@ -1089,16 +1177,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFailure => 'Backup Import Failed';
 
   @override
-  String get importFiles => 'Import Files';
+  String get importFileSuccess => 'Import File Success';
 
   @override
-  String get importFileSuccess => 'Import File Success';
+  String get importFiles => 'Import Files';
 
   @override
   String get importFolder => 'Import Folder';
 
   @override
-  String get importing => 'Importing...';
+  String get importNotImplemented => 'Configuration import feature is under development';
 
   @override
   String get importSuccess => 'Backup Import Success';
@@ -1107,6 +1195,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String importSuccessMessage(Object count) {
     return 'Successfully imported $count files';
   }
+
+  @override
+  String get importing => 'Importing...';
 
   @override
   String initializationFailed(Object error) {
@@ -1143,7 +1234,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidFilename => 'Invalid Filename';
 
   @override
+  String get invalidNumber => 'Please enter a valid number';
+
+  @override
   String get invertMode => 'Invert Mode';
+
+  @override
+  String get isActive => 'Is Active';
 
   @override
   String itemsPerPage(Object count) {
@@ -1155,6 +1252,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keepBackupCountDescription => 'Number of backups to keep before deleting old ones';
+
+  @override
+  String get key => 'Key';
+
+  @override
+  String get keyCannotBeEmpty => 'Key cannot be empty';
+
+  @override
+  String get keyExists => 'Configuration key already exists';
+
+  @override
+  String get keyHelperText => 'Can only contain letters, numbers, underscores and hyphens';
+
+  @override
+  String get keyHint => 'Unique identifier for the configuration item';
+
+  @override
+  String get keyInvalidCharacters => 'Key can only contain letters, numbers, underscores and hyphens';
+
+  @override
+  String get keyMaxLength => 'Key can be at most 50 characters';
+
+  @override
+  String get keyMinLength => 'Key must be at least 2 characters';
+
+  @override
+  String get keyRequired => 'Please enter configuration key';
 
   @override
   String get landscape => 'Landscape';
@@ -1188,6 +1312,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lastMonth => 'Last Month';
+
+  @override
+  String get lastPage => 'Last Page';
 
   @override
   String get lastWeek => 'Last Week';
@@ -1240,7 +1367,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listView => 'List View';
 
   @override
+  String get loadConfigFailed => 'Failed to load configuration';
+
+  @override
   String get loadFailed => 'Load Failed';
+
+  @override
+  String get loadPracticeSheetFailed => 'Load Practice Sheet Failed';
 
   @override
   String get loading => 'Loading...';
@@ -1249,16 +1382,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadingImage => 'Loading Image...';
 
   @override
-  String get loadPracticeSheetFailed => 'Load Practice Sheet Failed';
-
-  @override
   String get location => 'Location';
 
   @override
   String get lock => 'Lock';
-
-  @override
-  String get locked => 'Locked';
 
   @override
   String get lockElement => 'Lock Element';
@@ -1268,6 +1395,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lockUnlockAllElements => 'Lock/Unlock All Elements';
+
+  @override
+  String get locked => 'Locked';
 
   @override
   String get marginBottom => 'Bottom';
@@ -1303,6 +1433,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get min => 'Min';
 
   @override
+  String get monospace => 'Monospace';
+
+  @override
   String get moveDown => 'Move Down (Ctrl+Shift+B)';
 
   @override
@@ -1313,6 +1446,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moveUp => 'Move Up (Ctrl+Shift+T)';
+
+  @override
+  String get multiSelectTool => 'Multi-Select Tool';
 
   @override
   String multipleFilesNote(Object count) {
@@ -1341,6 +1477,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSelectPage => 'Which page do you want to return to?';
 
   @override
+  String get newConfigItem => 'New Configuration Item';
+
+  @override
   String get newItem => 'New';
 
   @override
@@ -1365,6 +1504,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCharactersFound => 'No Matching Characters Found';
 
   @override
+  String noConfigItems(Object category) {
+    return 'No $category configurations';
+  }
+
+  @override
   String get noCropping => '(No Cropping)';
 
   @override
@@ -1377,19 +1521,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noElementsSelected => 'No Elements Selected';
 
   @override
-  String get noImages => 'No Images';
-
-  @override
   String get noImageSelected => 'No Image Selected';
 
   @override
-  String get noiseReduction => 'Noise Reduction';
+  String get noImages => 'No Images';
 
   @override
   String get noLayers => 'No Layers, Please Add a Layer';
 
   @override
-  String get none => 'None';
+  String get noMatchingConfigItems => 'No matching configuration items found';
 
   @override
   String get noPageSelected => 'No Page Selected';
@@ -1399,6 +1540,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPagesToPrint => 'No Pages to Print';
+
+  @override
+  String get noPreviewAvailable => 'No preview available';
 
   @override
   String get noRegionBoxed => 'No Region Selected';
@@ -1423,6 +1567,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noWorksHint => 'Try importing new works or changing the filter criteria';
+
+  @override
+  String get noiseReduction => 'Noise Reduction';
+
+  @override
+  String get none => 'None';
 
   @override
   String get ok => 'OK';
@@ -1476,6 +1626,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pageMargins => 'Page Margins (cm)';
 
   @override
+  String get pageNotImplemented => 'Page not implemented';
+
+  @override
   String get pageOrientation => 'Page Orientation';
 
   @override
@@ -1485,10 +1638,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pageRange => 'Page Range';
 
   @override
-  String get pages => 'Pages';
+  String get pageSize => 'Page Size';
 
   @override
-  String get pageSize => 'Page Size';
+  String get pages => 'Pages';
 
   @override
   String get parentCategory => 'Parent Category (Optional)';
@@ -1546,9 +1699,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListTitle => 'Practice Sheets';
 
   @override
-  String get practices => 'Practice Sheets';
-
-  @override
   String get practiceSheetNotExists => 'Practice Sheet Does Not Exist';
 
   @override
@@ -1557,16 +1707,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get practices => 'Practice Sheets';
+
+  @override
   String get preparingPrint => 'Preparing to Print, Please Wait...';
 
   @override
   String get preparingSave => 'Preparing to Save...';
 
   @override
-  String get presets => 'Presets';
+  String get presetSize => 'Preset Size';
 
   @override
-  String get presetSize => 'Preset Size';
+  String get presets => 'Presets';
 
   @override
   String get preview => 'Preview';
@@ -1639,16 +1792,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rename => 'Rename';
 
   @override
+  String get renameLayer => 'Rename Layer';
+
+  @override
   String get renderFailed => 'Render Failed';
 
   @override
   String get reset => 'Reset';
 
   @override
+  String resetCategoryConfig(Object category) {
+    return 'Reset $category Configuration';
+  }
+
+  @override
+  String resetCategoryConfigMessage(Object category) {
+    return 'Are you sure you want to reset $category configuration to default settings? This action cannot be undone.';
+  }
+
+  @override
   String get resetSettingsConfirmMessage => 'Are you sure you want to reset to default values?';
 
   @override
   String get resetSettingsConfirmTitle => 'Reset Settings';
+
+  @override
+  String get resetToDefault => 'Reset to Default';
 
   @override
   String get resetToDefaults => 'Reset to Defaults';
@@ -1696,6 +1865,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rotation => 'Rotation';
 
   @override
+  String get sansSerif => 'Sans Serif';
+
+  @override
   String get save => 'Save';
 
   @override
@@ -1737,6 +1909,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchCategories => 'Search Categories...';
 
   @override
+  String get searchConfigDialogTitle => 'Search Configuration Items';
+
+  @override
+  String get searchConfigHint => 'Enter configuration item name or key';
+
+  @override
+  String get searchConfigItems => 'Search Configuration Items';
+
+  @override
   String get searching => 'Searching...';
 
   @override
@@ -1763,17 +1944,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDate => 'Select Date';
 
   @override
-  String get selected => 'Selected';
-
-  @override
-  String get selectedCharacter => 'Selected Character';
-
-  @override
-  String selectedCount(Object count) {
-    return 'Selected $count';
-  }
-
-  @override
   String get selectExportLocation => 'Select Export Location';
 
   @override
@@ -1789,7 +1959,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectTargetLayer => 'Select Target Layer';
 
   @override
+  String get selected => 'Selected';
+
+  @override
+  String get selectedCharacter => 'Selected Character';
+
+  @override
+  String selectedCount(Object count) {
+    return 'Selected $count';
+  }
+
+  @override
+  String get selectedElementNotFound => 'Selected element not found';
+
+  @override
   String get sendToBack => 'Send to Back';
+
+  @override
+  String get serif => 'Serif';
 
   @override
   String get setCategory => 'Set Category';
@@ -1842,6 +2029,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortByUpdateTime => 'Sort by Update Time';
 
   @override
+  String get sortOrder => 'Sort Order';
+
+  @override
+  String get sortOrderCannotBeEmpty => 'Sort order cannot be empty';
+
+  @override
+  String get sortOrderHint => 'Smaller numbers appear first';
+
+  @override
+  String get sortOrderLabel => 'Sort Order';
+
+  @override
+  String get sortOrderNumber => 'Sort order must be a number';
+
+  @override
+  String get sortOrderRange => 'Sort order must be between 1-999';
+
+  @override
+  String get sortOrderRequired => 'Please enter sort order value';
+
+  @override
   String get sourceHanSansFont => 'Source Han Sans';
 
   @override
@@ -1857,6 +2065,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stateAndDisplay => 'State and Display';
 
   @override
+  String get status => 'Status';
+
+  @override
   String get storageDetails => 'Storage Details';
 
   @override
@@ -1867,6 +2078,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageUsed => 'Storage Used';
+
+  @override
+  String get stretch => 'Stretch';
 
   @override
   String get strokeCount => 'Stroke Count';
@@ -1881,6 +2095,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get switchingPage => 'Switching to Character Page...';
+
+  @override
+  String get systemConfig => 'System Configuration';
+
+  @override
+  String get systemConfigItemNote => 'This is a system configuration item, key value cannot be modified';
 
   @override
   String get tabToNextField => 'Press Tab to Navigate to Next Field';
@@ -2026,6 +2246,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transformApplied => 'Transform Applied';
 
   @override
+  String get tryOtherKeywords => 'Try searching with other keywords';
+
+  @override
   String get type => 'Type';
 
   @override
@@ -2058,10 +2281,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unknownError => 'Unknown Error';
 
   @override
-  String get unlocked => 'Unlocked';
+  String get unlockElement => 'Unlock Element';
 
   @override
-  String get unlockElement => 'Unlock Element';
+  String get unlocked => 'Unlocked';
 
   @override
   String get unnamedElement => 'Unnamed Element';
@@ -2076,10 +2299,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unsavedChanges => 'Unsaved Changes';
 
   @override
+  String get updateTime => 'Update Time';
+
+  @override
   String get updatedAt => 'Updated At';
 
   @override
-  String get updateTime => 'Update Time';
+  String get userConfig => 'User Configuration';
 
   @override
   String get validChineseCharacter => 'Please Enter Valid Chinese Character';
@@ -2233,56 +2459,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writingTool => 'Writing Tool';
 
   @override
+  String get writingToolText => 'Writing Tool';
+
+  @override
   String get yes => 'Yes';
 
   @override
   String get yesterday => 'Yesterday';
-
-  @override
-  String get boxTool => 'Box Tool';
-
-  @override
-  String get multiSelectTool => 'Multi-Select Tool';
-
-  @override
-  String get deleteSelectedArea => 'Delete Selected Area';
-
-  @override
-  String get adjust => 'Adjust';
-
-  @override
-  String get code => 'Code';
-
-  @override
-  String get noPreviewAvailable => 'No preview available';
-
-  @override
-  String get pageNotImplemented => 'Page not implemented';
-
-  @override
-  String get selectedElementNotFound => 'Selected element not found';
-
-  @override
-  String get sansSerif => 'Sans Serif';
-
-  @override
-  String get serif => 'Serif';
-
-  @override
-  String get monospace => 'Monospace';
-
-  @override
-  String get stretch => 'Stretch';
-
-  @override
-  String get firstPage => 'First Page';
-
-  @override
-  String get lastPage => 'Last Page';
-
-  @override
-  String get renameLayer => 'Rename Layer';
-
-  @override
-  String get implementationComingSoon => 'This feature is under development, please stay tuned!';
 }

@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../domain/enums/sort_field.dart';
-import '../../../../../domain/enums/work_style.dart';
-import '../../../../../domain/enums/work_tool.dart';
-import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
-import '../../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_favorite_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_style_section.dart';
@@ -136,19 +132,12 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
 
     // 获取可用的排序字段
     final sortFields = [
-      SortField.title,
-      SortField.author,
+      SortField.title,      SortField.author,
       SortField.createTime,
       SortField.updateTime,
       SortField.style,
       SortField.tool,
     ];
-
-    // 获取可用的书法风格
-    final styles = WorkStyle.values.toList();
-
-    // 获取可用的书写工具
-    final tools = WorkTool.values.toList();
 
     return [
       // 搜索部分
@@ -246,9 +235,7 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
       // 书法风格部分
       _buildSectionCard(
         context,
-        M3FilterStyleSection(
-          selectedStyle: widget.filter.style,
-          availableStyles: styles,
+        M3FilterStyleSection(          selectedStyle: widget.filter.style,
           onStyleChanged: (style) {
             final newFilter = widget.filter.copyWith(style: style);
             widget.onFilterChanged(newFilter);
@@ -258,42 +245,11 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
 
       // 书写工具部分
       _buildSectionCard(
-        context,
-        M3FilterToolSection(
+        context,        M3FilterToolSection(
           selectedTool: widget.filter.tool,
-          availableTools: tools,
           onToolChanged: (tool) {
             final newFilter = widget.filter.copyWith(tool: tool);
             widget.onFilterChanged(newFilter);
-          },
-        ),
-      ),
-
-      // 创建日期部分
-      _buildSectionCard(
-        context,
-        M3FilterDateRangeSection(
-          title: l10n.createTime,
-          filter: DateRangeFilter(
-            preset: widget.filter.datePreset,
-            start: widget.filter.dateRange?.start,
-            end: widget.filter.dateRange?.end,
-          ),
-          onChanged: (dateFilter) {
-            if (dateFilter == null) {
-              // 重置所有相关字段
-              final newFilter = widget.filter.copyWith(
-                datePreset: DateRangePreset.all,
-                dateRange: null,
-              );
-              widget.onFilterChanged(newFilter);
-            } else {
-              final newFilter = widget.filter.copyWith(
-                datePreset: dateFilter.preset!,
-                dateRange: dateFilter.effectiveRange,
-              );
-              widget.onFilterChanged(newFilter);
-            }
           },
         ),
       ),

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../application/services/character/character_service.dart';
 import '../../../../domain/models/character/character_image_type.dart';
 import '../../../../domain/models/character/character_view.dart';
+import '../../../../infrastructure/providers/config_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/widgets/common/zoomable_image_view.dart';
 import '../../../../routes/app_routes.dart';
@@ -145,18 +146,45 @@ class _M3CharacterDetailPanelState
                           iconData: Icons.text_format,
                         ),
                         if (character.tool != null)
-                          _buildInfoItem(
-                            theme,
-                            title: l10n.writingTool,
-                            content: character.tool?.label ?? l10n.unknown,
-                            iconData: Icons.brush,
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final toolDisplayName =
+                                  ref.watch(toolDisplayNamesProvider).maybeWhen(
+                                        data: (names) =>
+                                            names[character.tool] ??
+                                            character.tool ??
+                                            l10n.unknown,
+                                        orElse: () =>
+                                            character.tool ?? l10n.unknown,
+                                      );
+                              return _buildInfoItem(
+                                theme,
+                                title: l10n.writingTool,
+                                content: toolDisplayName,
+                                iconData: Icons.brush,
+                              );
+                            },
                           ),
                         if (character.style != null)
-                          _buildInfoItem(
-                            theme,
-                            title: l10n.calligraphyStyle,
-                            content: character.style?.label ?? l10n.unknown,
-                            iconData: Icons.style,
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final styleDisplayName = ref
+                                  .watch(styleDisplayNamesProvider)
+                                  .maybeWhen(
+                                    data: (names) =>
+                                        names[character.style] ??
+                                        character.style ??
+                                        l10n.unknown,
+                                    orElse: () =>
+                                        character.style ?? l10n.unknown,
+                                  );
+                              return _buildInfoItem(
+                                theme,
+                                title: l10n.calligraphyStyle,
+                                content: styleDisplayName,
+                                iconData: Icons.style,
+                              );
+                            },
                           ),
                         _buildInfoItem(
                           theme,
@@ -196,13 +224,12 @@ class _M3CharacterDetailPanelState
                             content: character.author ?? l10n.unknown,
                             iconData: Icons.person,
                           ),
-                        if (character.creationTime != null)
-                          _buildInfoItem(
-                            theme,
-                            title: l10n.creationDate,
-                            content: _formatDateTime(character.creationTime!),
-                            iconData: Icons.calendar_today,
-                          ),
+                        _buildInfoItem(
+                          theme,
+                          title: l10n.creationDate,
+                          content: _formatDateTime(character.collectionTime),
+                          iconData: Icons.calendar_today,
+                        ),
                         if (character.tags.isNotEmpty) ...[
                           const Divider(),
                           Text(

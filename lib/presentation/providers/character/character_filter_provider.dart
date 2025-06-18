@@ -3,8 +3,6 @@ import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/enums/sort_field.dart';
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
 import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/models/common/date_range_filter.dart';
 import '../../../domain/models/common/sort_option.dart';
@@ -69,9 +67,8 @@ class CharacterFilterNotifier extends StateNotifier<CharacterFilter> {
     );
     _notifyFilterChange();
   }
-
   /// 更新书法风格筛选
-  void updateCalligraphyStyles(WorkStyle? style) {
+  void updateCalligraphyStyles(String? style) {
     if (style == null) {
       state = state.copyWith(style: null);
     } else if (state.style == style) {
@@ -162,9 +159,8 @@ class CharacterFilterNotifier extends StateNotifier<CharacterFilter> {
     state = state.copyWith(workId: workId);
     _notifyFilterChange();
   }
-
   /// 更新书写工具筛选
-  void updateWritingTools(WorkTool? tool) {
+  void updateWritingTools(String? tool) {
     if (tool == null) {
       state = state.copyWith(tool: null);
     } else if (state.tool == tool) {

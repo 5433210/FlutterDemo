@@ -1,0 +1,147 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../enums/work_status.dart';
+import '../character/character_entity.dart';
+import 'work_image.dart';
+
+part 'work_entity.freezed.dart';
+part 'work_entity.g.dart';
+
+/// 处理可能为null的日期字符串
+DateTime _dateTimeFromJson(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.parse(value);
+  return DateTime.now();
+}
+
+/// 将DateTime转换为ISO8601字符串
+String? _dateTimeToJson(DateTime? value) => value?.toIso8601String();
+
+bool _isFavoriteFromJson(dynamic value) {
+  if (value == null) return false;
+  if (value is bool) return value;
+  if (value is int) return value == 1;
+  return false;
+}
+
+int _isFavoriteToJson(bool value) => value ? 1 : 0;
+
+/// 处理可能为null的字符串，使用默认值替代
+String _nonNullString(String? value, String defaultValue) {
+  return value ?? defaultValue;
+}
+
+/// 作品实体
+@freezed
+class WorkEntity with _$WorkEntity {
+  const factory WorkEntity({
+    /// ID
+    required String id,
+
+    /// 标题
+    required String title,
+
+    /// 作者
+    required String author,
+
+    /// 备注
+    String? remark,
+
+    /// 字体风格 (动态配置)
+    @Default('') String style,
+
+    /// 书写工具 (动态配置)
+    @Default('') String tool,    /// 创建时间
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
+    required DateTime createTime,
+
+    /// 修改时间
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
+    required DateTime updateTime,
+
+    /// 是否收藏
+    @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+    @Default(false)
+    bool isFavorite,
+
+    /// 图片最后更新时间
+    @JsonKey(
+        fromJson: _dateTimeFromJson,
+        toJson: _dateTimeToJson,
+        includeIfNull: false)
+    DateTime? lastImageUpdateTime,
+
+    /// 状态
+    @Default(WorkStatus.draft) WorkStatus status,
+
+    /// 首图ID
+    String? firstImageId,
+
+    /// 图片列表
+    @Default([]) List<WorkImage> images,
+
+    /// 关联字符列表
+
+    @Default([]) List<CharacterEntity> collectedChars,
+
+    /// 标签列表
+    @Default([]) List<String> tags,
+
+    /// 图片数量
+    int? imageCount,
+  }) = _WorkEntity;
+
+  factory WorkEntity.fromJson(Map<String, dynamic> json) {
+    // 预处理JSON，确保style和tool字段不为null
+    final safeJson = Map<String, dynamic>.from(json);
+    safeJson['style'] ??= '';
+    safeJson['tool'] ??= '';
+    return _$WorkEntityFromJson(safeJson);
+  }
+
+  const WorkEntity._();
+
+  /// 获取首图
+  WorkImage? get firstImage => images.isEmpty ? null : images[0];
+
+  /// 获取图片总数量
+  int get totalImages => imageCount ?? images.length;
+
+  /// 添加关联字
+  WorkEntity addCollectedChar(CharacterEntity char) {
+    if (collectedChars.contains(char)) return this;
+    return copyWith(collectedChars: [...collectedChars, char]);
+  }
+
+  /// 添加标签
+  WorkEntity addTag(String tag) {
+    if (tags.contains(tag)) return this;
+    return copyWith(tags: [...tags, tag]);
+  }
+
+  /// 移除关联字
+  WorkEntity removeCollectedChar(CharacterEntity char) {
+    return copyWith(
+        collectedChars: collectedChars.where((c) => c != char).toList());
+  }
+
+  /// 移除标签
+  WorkEntity removeTag(String tag) {
+    return copyWith(tags: tags.where((t) => t != tag).toList());
+  }
+
+  /// 切换收藏状态
+  WorkEntity toggleFavorite() {
+    return copyWith(isFavorite: !isFavorite);
+  }
+
+  /// 更新首图
+  WorkEntity updateFirstImage(String? firstImageId) =>
+      copyWith(firstImageId: firstImageId);
+
+  /// 更新标签
+  WorkEntity updateTags(List<String> newTags) {
+    return copyWith(tags: newTags);
+  }
+}

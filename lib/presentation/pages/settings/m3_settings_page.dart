@@ -7,6 +7,7 @@ import '../../utils/cross_navigation_helper.dart';
 import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
 import 'components/cache_settings.dart';
+import 'components/configuration_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
 import 'components/storage_settings.dart';
@@ -40,11 +41,12 @@ class M3SettingsPage extends ConsumerWidget {
   Widget _buildSettingsContent(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.m),
-      child: ListView(
-        children: const [
+      child: ListView(        children: const [
           AppearanceSettings(),
           Divider(),
           LanguageSettings(),
+          Divider(),
+          ConfigurationSettings(),
           Divider(),
           StorageSettings(),
           Divider(),

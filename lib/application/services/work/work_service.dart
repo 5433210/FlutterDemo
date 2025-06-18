@@ -158,14 +158,13 @@ class WorkService with WorkServiceErrorHandler {
   Future<List<WorkEntity>> queryWorks(WorkFilter filter) async {
     return handleOperation(
       'queryWorks',
-      () async {
-        AppLogger.debug(
+      () async {        AppLogger.debug(
           '开始查询作品',
           tag: 'WorkService',
           data: {
             'filter': {
-              'style': filter.style?.name,
-              'tool': filter.tool?.name,
+              'style': filter.style,
+              'tool': filter.tool,
               'keyword': filter.keyword,
               'tags': filter.tags.toList(),
               'sortOption': {
@@ -198,14 +197,13 @@ class WorkService with WorkServiceErrorHandler {
   }) async {
     return handleOperation(
       'queryWorksPaginated',
-      () async {
-        AppLogger.debug(
+      () async {        AppLogger.debug(
           '开始分页查询作品',
           tag: 'WorkService',
           data: {
             'filter': {
-              'style': filter.style?.name,
-              'tool': filter.tool?.name,
+              'style': filter.style,
+              'tool': filter.tool,
               'keyword': filter.keyword,
               'tags': filter.tags.toList(),
               'sortOption': {

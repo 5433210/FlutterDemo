@@ -1,46 +1,16 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../enums/work_status.dart';
-import '../../enums/work_style.dart';
-import '../../enums/work_tool.dart';
 import '../character/character_entity.dart';
 import 'work_image.dart';
 
 part 'work_entity.freezed.dart';
 part 'work_entity.g.dart';
 
-/// 处理可能为null的日期字符串
-DateTime _dateTimeFromJson(dynamic value) {
-  if (value == null) return DateTime.now();
-  if (value is DateTime) return value;
-  if (value is String) return DateTime.parse(value);
-  return DateTime.now();
-}
-
-/// 将DateTime转换为ISO8601字符串
-String? _dateTimeToJson(DateTime? value) => value?.toIso8601String();
-bool _isFavoriteFromJson(dynamic value) {
-  if (value == null) return false;
-  if (value is bool) return value;
-  if (value is int) return value == 1;
-  return false;
-}
-
-int _isFavoriteToJson(bool value) => value ? 1 : 0;
-
-WorkStyle _workStyleFromJson(dynamic value) => WorkStyle.fromValue(value);
-
-/// 枚举序列化辅助方法
-String _workStyleToJson(WorkStyle style) => style.value;
-
-WorkTool _workToolFromJson(dynamic value) => WorkTool.fromValue(value);
-
-String _workToolToJson(WorkTool tool) => tool.value;
-
 /// 作品实体
 @freezed
 class WorkEntity with _$WorkEntity {
-  const factory WorkEntity({
+  factory WorkEntity({
     /// ID
     required String id,
 
@@ -53,36 +23,22 @@ class WorkEntity with _$WorkEntity {
     /// 备注
     String? remark,
 
-    /// 字体
-    @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-    required WorkStyle style,
+    /// 字体风格 (动态配置)
+    @Default('') String style,
 
-    /// 工具
-    @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-    required WorkTool tool,
-
-    /// 创作日期
-    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
-    required DateTime creationDate,
+    /// 书写工具 (动态配置)
+    @Default('') String tool,
 
     /// 创建时间
-    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime createTime,
 
     /// 修改时间
-    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime updateTime,
 
     /// 是否收藏
-    @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
-    @Default(false)
-    bool isFavorite,
+    @Default(false) bool isFavorite,
 
     /// 图片最后更新时间
-    @JsonKey(
-        fromJson: _dateTimeFromJson,
-        toJson: _dateTimeToJson,
-        includeIfNull: false)
     DateTime? lastImageUpdateTime,
 
     /// 状态
@@ -95,7 +51,6 @@ class WorkEntity with _$WorkEntity {
     @Default([]) List<WorkImage> images,
 
     /// 关联字符列表
-
     @Default([]) List<CharacterEntity> collectedChars,
 
     /// 标签列表

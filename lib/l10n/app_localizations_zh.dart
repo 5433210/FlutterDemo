@@ -15,13 +15,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get a5Size => 'A5 (148×210mm)';
 
   @override
+  String get activated => '激活';
+
+  @override
+  String get activatedDescription => '激活 - 在选择器中显示';
+
+  @override
+  String get activeStatus => '激活状态';
+
+  @override
   String get add => '添加';
 
   @override
   String get addCategory => '添加分类';
 
   @override
-  String get addedToCategory => '已添加到分类';
+  String addCategoryItem(Object category) {
+    return '添加$category';
+  }
+
+  @override
+  String get addConfigItem => '添加配置项';
+
+  @override
+  String addConfigItemHint(Object category) {
+    return '点击右下角的按钮添加$category配置项';
+  }
 
   @override
   String get addFavorite => '添加到收藏';
@@ -47,6 +66,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addTag => '添加标签';
 
   @override
+  String get addedToCategory => '已添加到分类';
+
+  @override
+  String get adjust => '调节';
+
+  @override
   String get adjustGridSize => '调整网格大小';
 
   @override
@@ -65,6 +90,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alignLeft => '左对齐';
 
   @override
+  String get alignMiddle => '居中';
+
+  @override
+  String get alignRight => '右对齐';
+
+  @override
+  String get alignTop => '顶对齐';
+
+  @override
+  String get alignVerticalCenter => '垂直居中';
+
+  @override
   String get alignmentAssist => '对齐辅助';
 
   @override
@@ -78,18 +115,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get alignmentOperations => '对齐操作';
-
-  @override
-  String get alignMiddle => '居中';
-
-  @override
-  String get alignRight => '右对齐';
-
-  @override
-  String get alignTop => '顶对齐';
-
-  @override
-  String get alignVerticalCenter => '垂直居中';
 
   @override
   String get all => '全部';
@@ -107,15 +132,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get allTypes => '所有类型';
 
   @override
-  String get apply => '应用';
-
-  @override
-  String get applyFormatBrush => '应用格式刷 (Alt+W)';
-
-  @override
-  String get applyTransform => '应用变换';
-
-  @override
   String get appRestartFailed => '应用重启失败，请手动重启应用';
 
   @override
@@ -126,6 +142,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get appTitle => '字字珠玑';
+
+  @override
+  String get apply => '应用';
+
+  @override
+  String get applyFormatBrush => '应用格式刷 (Alt+W)';
+
+  @override
+  String get applyTransform => '应用变换';
 
   @override
   String get ascending => '升序';
@@ -229,6 +254,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get boxRegion => '请在预览区域框选字符';
 
   @override
+  String get boxTool => '框选工具';
+
+  @override
   String get bringLayerToFront => '图层置于顶层';
 
   @override
@@ -253,6 +281,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calligraphyStyle => '书法风格';
 
   @override
+  String get calligraphyStyleText => '书法风格';
+
+  @override
+  String get canNotPreview => '无法生成预览';
+
+  @override
   String get cancel => '取消';
 
   @override
@@ -266,9 +300,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cannotDeleteOnlyPage => '无法删除唯一的页面';
-
-  @override
-  String get canNotPreview => '无法生成预览';
 
   @override
   String get cannotSaveMissingController => '无法保存：缺少控制器';
@@ -389,12 +420,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get characterUpdated => '字符已更新';
+
+  @override
   String charactersSelected(Object count) {
     return '已选择 $count 个字符';
   }
-
-  @override
-  String get characterUpdated => '字符已更新';
 
   @override
   String get clearCache => '清除缓存';
@@ -404,6 +435,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get close => '关闭';
+
+  @override
+  String get code => '代码';
 
   @override
   String get collapse => '收起';
@@ -443,6 +477,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get completingSave => '完成保存...';
+
+  @override
+  String get configKey => '配置键';
+
+  @override
+  String get configManagement => '配置管理';
 
   @override
   String get confirm => '确定';
@@ -492,15 +532,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createBackupDescription => '创建新的数据备份';
 
   @override
-  String get createdAt => '创建时间';
-
-  @override
   String createExportDirectoryFailed(Object error) {
     return '创建导出目录失败$error';
   }
 
   @override
   String get createTime => '创建时间';
+
+  @override
+  String get createdAt => '创建时间';
 
   @override
   String get creatingBackup => '正在创建备份...';
@@ -515,18 +555,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cropLeft => '左侧裁剪';
 
   @override
+  String get cropRight => '右侧裁剪';
+
+  @override
+  String get cropTop => '顶部裁剪';
+
+  @override
   String get cropping => '裁剪';
 
   @override
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(裁剪：左${left}px，上${top}px，右${right}px，下${bottom}px)';
   }
-
-  @override
-  String get cropRight => '右侧裁剪';
-
-  @override
-  String get cropTop => '顶部裁剪';
 
   @override
   String get currentCharInversion => '当前字符反转';
@@ -585,6 +625,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteCategoryWithFiles => '删除分类及文件';
 
   @override
+  String get deleteConfigItem => '删除配置项';
+
+  @override
+  String get deleteConfigItemMessage => '确定要删除这个配置项吗？此操作不可撤销。';
+
+  @override
   String get deleteConfirm => '确认删除';
 
   @override
@@ -629,7 +675,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteSelected => '删除所选';
 
   @override
+  String get deleteSelectedArea => '删除选中区域';
+
+  @override
   String get deleteSuccess => '备份删除成功';
+
+  @override
+  String get deleteText => '删除';
 
   @override
   String get deleting => '正在删除...';
@@ -650,6 +702,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disabled => '已禁用';
 
   @override
+  String get disabledDescription => '禁用 - 在选择器中隐藏';
+
+  @override
   String get diskCacheSize => '磁盘缓存大小';
 
   @override
@@ -663,6 +718,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get displayMode => '显示模式';
+
+  @override
+  String get displayName => '显示名称';
+
+  @override
+  String get displayNameCannotBeEmpty => '显示名称不能为空';
+
+  @override
+  String get displayNameHint => '用户界面中显示的名称';
+
+  @override
+  String get displayNameMaxLength => '显示名称最多100个字符';
+
+  @override
+  String get displayNameRequired => '请输入显示名称';
 
   @override
   String get distributeHorizontally => '水平均匀分布';
@@ -684,6 +754,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get edit => '编辑';
+
+  @override
+  String get editConfigItem => '编辑配置项';
 
   @override
   String editField(Object field) {
@@ -720,13 +793,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get elementId => '元素ID';
 
   @override
-  String get elements => '元素';
-
-  @override
   String get elementSize => '大小';
 
   @override
   String get elementWidth => '宽';
+
+  @override
+  String get elements => '元素';
 
   @override
   String get empty => '空';
@@ -788,27 +861,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportBackup => '导出备份';
 
   @override
-  String exportDimensions(Object height, Object orientation, Object width) {
-    return '$width厘米 × $height厘米 ($orientation)';
-  }
+  String get exportConfig => '导出配置';
 
   @override
   String get exportDialogRangeExample => '例如: 1-3,5,7-9';
 
   @override
+  String exportDimensions(Object height, Object orientation, Object width) {
+    return '$width厘米 × $height厘米 ($orientation)';
+  }
+
+  @override
   String get exportFailure => '备份导出失败';
 
   @override
-  String get exporting => '正在导出，请稍候...';
-
-  @override
-  String get exportingBackup => '导出备份中...';
+  String get exportNotImplemented => '配置导出功能待实现';
 
   @override
   String get exportSuccess => '备份导出成功';
 
   @override
   String get exportType => '导出格式';
+
+  @override
+  String get exporting => '正在导出，请稍候...';
+
+  @override
+  String get exportingBackup => '导出备份中...';
 
   @override
   String get extract => '提取';
@@ -829,9 +908,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileName => '文件名称';
 
   @override
-  String get filenamePrefix => '输入文件名前缀（将自动添加页码）';
-
-  @override
   String fileNotExist(Object path) {
     return '文件不存在：$path';
   }
@@ -840,13 +916,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileRestored => '图片已从图库中恢复';
 
   @override
-  String get files => '文件数量';
-
-  @override
   String get fileSize => '文件大小';
 
   @override
   String get fileUpdatedAt => '文件修改时间';
+
+  @override
+  String get filenamePrefix => '输入文件名前缀（将自动添加页码）';
+
+  @override
+  String get files => '文件数量';
 
   @override
   String get filter => '筛选';
@@ -856,6 +935,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get filterClear => '清除';
+
+  @override
+  String get firstPage => '第一页';
 
   @override
   String get fitContain => '包含';
@@ -1075,10 +1157,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imageUpdated => '图片已更新';
 
   @override
+  String get implementationComingSoon => '此功能正在开发中，敬请期待！';
+
+  @override
   String get import => '导入';
 
   @override
   String get importBackup => '导入备份';
+
+  @override
+  String get importConfig => '导入配置';
 
   @override
   String importFailed(Object error) {
@@ -1089,16 +1177,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importFailure => '备份导入失败';
 
   @override
-  String get importFiles => '导入文件';
+  String get importFileSuccess => '成功导入文件';
 
   @override
-  String get importFileSuccess => '成功导入文件';
+  String get importFiles => '导入文件';
 
   @override
   String get importFolder => '导入文件夹';
 
   @override
-  String get importing => '导入中...';
+  String get importNotImplemented => '配置导入功能待实现';
 
   @override
   String get importSuccess => '备份导入成功';
@@ -1107,6 +1195,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String importSuccessMessage(Object count) {
     return '成功导入 $count 个文件';
   }
+
+  @override
+  String get importing => '导入中...';
 
   @override
   String initializationFailed(Object error) {
@@ -1143,7 +1234,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidFilename => '文件名不能包含以下字符: \\ / : * ? \" < > |';
 
   @override
+  String get invalidNumber => '请输入有效的数字';
+
+  @override
   String get invertMode => '反转模式';
+
+  @override
+  String get isActive => '是否激活';
 
   @override
   String itemsPerPage(Object count) {
@@ -1155,6 +1252,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get keepBackupCountDescription => '删除旧备份前保留的备份数量';
+
+  @override
+  String get key => '键';
+
+  @override
+  String get keyCannotBeEmpty => '键不能为空';
+
+  @override
+  String get keyExists => '配置键已存在';
+
+  @override
+  String get keyHelperText => '只能包含字母、数字、下划线和连字符';
+
+  @override
+  String get keyHint => '配置项的唯一标识符';
+
+  @override
+  String get keyInvalidCharacters => '键只能包含字母、数字、下划线和连字符';
+
+  @override
+  String get keyMaxLength => '键最多50个字符';
+
+  @override
+  String get keyMinLength => '键至少需要2个字符';
+
+  @override
+  String get keyRequired => '请输入配置键';
 
   @override
   String get landscape => '横向';
@@ -1188,6 +1312,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lastMonth => '上个月';
+
+  @override
+  String get lastPage => '最后一页';
 
   @override
   String get lastWeek => '上周';
@@ -1240,7 +1367,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get listView => '列表视图';
 
   @override
+  String get loadConfigFailed => '加载配置失败';
+
+  @override
   String get loadFailed => '加载失败';
+
+  @override
+  String get loadPracticeSheetFailed => '加载字帖失败';
 
   @override
   String get loading => '加载中...';
@@ -1249,16 +1382,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loadingImage => '加载图像中...';
 
   @override
-  String get loadPracticeSheetFailed => '加载字帖失败';
-
-  @override
   String get location => '位置';
 
   @override
   String get lock => '锁定';
-
-  @override
-  String get locked => '已锁定';
 
   @override
   String get lockElement => '锁定元素';
@@ -1268,6 +1395,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lockUnlockAllElements => '锁定/解锁所有元素';
+
+  @override
+  String get locked => '已锁定';
 
   @override
   String get marginBottom => '下';
@@ -1303,6 +1433,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get min => '最小';
 
   @override
+  String get monospace => 'Monospace';
+
+  @override
   String get moveDown => '下移 (Ctrl+Shift+B)';
 
   @override
@@ -1313,6 +1446,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moveUp => '上移 (Ctrl+Shift+T)';
+
+  @override
+  String get multiSelectTool => '多选工具';
 
   @override
   String multipleFilesNote(Object count) {
@@ -1341,6 +1477,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationSelectPage => '您想返回到以下哪个页面？';
 
   @override
+  String get newConfigItem => '新增配置项';
+
+  @override
   String get newItem => '新建';
 
   @override
@@ -1365,6 +1504,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noCharactersFound => '未找到匹配的字符';
 
   @override
+  String noConfigItems(Object category) {
+    return '暂无$category配置';
+  }
+
+  @override
   String get noCropping => '（无裁剪）';
 
   @override
@@ -1377,19 +1521,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noElementsSelected => '未选择元素';
 
   @override
-  String get noImages => '没有图片';
-
-  @override
   String get noImageSelected => '未选择图片';
 
   @override
-  String get noiseReduction => '降噪';
+  String get noImages => '没有图片';
 
   @override
   String get noLayers => '无图层，请添加图层';
 
   @override
-  String get none => '无';
+  String get noMatchingConfigItems => '未找到匹配的配置项';
 
   @override
   String get noPageSelected => '未选择页面';
@@ -1399,6 +1540,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noPagesToPrint => '没有可打印的页面';
+
+  @override
+  String get noPreviewAvailable => '无有效预览';
 
   @override
   String get noRegionBoxed => '未选择区域';
@@ -1423,6 +1567,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noWorksHint => '尝试导入新作品或更改筛选条件';
+
+  @override
+  String get noiseReduction => '降噪';
+
+  @override
+  String get none => '无';
 
   @override
   String get ok => '确定';
@@ -1476,6 +1626,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pageMargins => '页面边距 (厘米)';
 
   @override
+  String get pageNotImplemented => '页面未实现';
+
+  @override
   String get pageOrientation => '页面方向';
 
   @override
@@ -1485,10 +1638,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pageRange => '页面范围';
 
   @override
-  String get pages => '页';
+  String get pageSize => '页面大小';
 
   @override
-  String get pageSize => '页面大小';
+  String get pages => '页';
 
   @override
   String get parentCategory => '父分类（可选）';
@@ -1546,9 +1699,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListTitle => '字帖';
 
   @override
-  String get practices => '字帖';
-
-  @override
   String get practiceSheetNotExists => '字帖不存在';
 
   @override
@@ -1557,16 +1707,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get practices => '字帖';
+
+  @override
   String get preparingPrint => '正在准备打印，请稍候...';
 
   @override
   String get preparingSave => '准备保存...';
 
   @override
-  String get presets => '预设';
+  String get presetSize => '预设大小';
 
   @override
-  String get presetSize => '预设大小';
+  String get presets => '预设';
 
   @override
   String get preview => '预览';
@@ -1639,16 +1792,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rename => '重命名';
 
   @override
+  String get renameLayer => '重命名图层';
+
+  @override
   String get renderFailed => '渲染失败';
 
   @override
   String get reset => '重置';
 
   @override
+  String resetCategoryConfig(Object category) {
+    return '重置$category配置';
+  }
+
+  @override
+  String resetCategoryConfigMessage(Object category) {
+    return '确定要将$category配置重置为默认设置吗？此操作不可撤销。';
+  }
+
+  @override
   String get resetSettingsConfirmMessage => '确定重置为默认值吗？';
 
   @override
   String get resetSettingsConfirmTitle => '重置设置';
+
+  @override
+  String get resetToDefault => '重置为默认';
 
   @override
   String get resetToDefaults => '重置为默认值';
@@ -1696,6 +1865,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rotation => '旋转';
 
   @override
+  String get sansSerif => 'Sans Serif';
+
+  @override
   String get save => '保存';
 
   @override
@@ -1737,6 +1909,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchCategories => '搜索分类...';
 
   @override
+  String get searchConfigDialogTitle => '搜索配置项';
+
+  @override
+  String get searchConfigHint => '输入配置项名称或键';
+
+  @override
+  String get searchConfigItems => '搜索配置项';
+
+  @override
   String get searching => '搜索中...';
 
   @override
@@ -1763,17 +1944,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectDate => '选择日期';
 
   @override
-  String get selected => '已选择';
-
-  @override
-  String get selectedCharacter => '已选字符';
-
-  @override
-  String selectedCount(Object count) {
-    return '已选择$count个';
-  }
-
-  @override
   String get selectExportLocation => '选择导出位置';
 
   @override
@@ -1789,7 +1959,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectTargetLayer => '选择目标图层';
 
   @override
+  String get selected => '已选择';
+
+  @override
+  String get selectedCharacter => '已选字符';
+
+  @override
+  String selectedCount(Object count) {
+    return '已选择$count个';
+  }
+
+  @override
+  String get selectedElementNotFound => '选中的元素未找到';
+
+  @override
   String get sendToBack => '置于底层';
+
+  @override
+  String get serif => 'Serif';
 
   @override
   String get setCategory => '设置分类';
@@ -1842,6 +2029,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortByUpdateTime => '按更新时间排序';
 
   @override
+  String get sortOrder => '排序';
+
+  @override
+  String get sortOrderCannotBeEmpty => '排序顺序不能为空';
+
+  @override
+  String get sortOrderHint => '数字越小排序越靠前';
+
+  @override
+  String get sortOrderLabel => '排序顺序';
+
+  @override
+  String get sortOrderNumber => '排序值必须是数字';
+
+  @override
+  String get sortOrderRange => '排序顺序必须在1-999之间';
+
+  @override
+  String get sortOrderRequired => '请输入排序值';
+
+  @override
   String get sourceHanSansFont => '思源黑体 (Source Han Sans)';
 
   @override
@@ -1857,6 +2065,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stateAndDisplay => '状态与显示';
 
   @override
+  String get status => '状态';
+
+  @override
   String get storageDetails => '存储详情';
 
   @override
@@ -1867,6 +2078,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get storageUsed => '已使用存储';
+
+  @override
+  String get stretch => '拉伸';
 
   @override
   String get strokeCount => '笔画';
@@ -1881,6 +2095,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get switchingPage => '正在切换到字符页面...';
+
+  @override
+  String get systemConfig => '系统配置';
+
+  @override
+  String get systemConfigItemNote => '这是系统配置项，键值不可修改';
 
   @override
   String get tabToNextField => '按Tab导航到下一个字段';
@@ -2026,6 +2246,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transformApplied => '变换已应用';
 
   @override
+  String get tryOtherKeywords => '尝试使用其他关键词搜索';
+
+  @override
   String get type => '类型';
 
   @override
@@ -2058,10 +2281,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unknownError => '未知错误';
 
   @override
-  String get unlocked => '未锁定';
+  String get unlockElement => '解锁元素';
 
   @override
-  String get unlockElement => '解锁元素';
+  String get unlocked => '未锁定';
 
   @override
   String get unnamedElement => '未命名元素';
@@ -2076,10 +2299,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unsavedChanges => '有未保存的更改';
 
   @override
+  String get updateTime => '更新时间';
+
+  @override
   String get updatedAt => '更新时间';
 
   @override
-  String get updateTime => '更新时间';
+  String get userConfig => '用户配置';
 
   @override
   String get validChineseCharacter => '请输入有效的汉字';
@@ -2233,56 +2459,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get writingTool => '书写工具';
 
   @override
+  String get writingToolText => '书写工具';
+
+  @override
   String get yes => '是';
 
   @override
   String get yesterday => '昨天';
-
-  @override
-  String get boxTool => '框选工具';
-
-  @override
-  String get multiSelectTool => '多选工具';
-
-  @override
-  String get deleteSelectedArea => '删除选中区域';
-
-  @override
-  String get adjust => '调节';
-
-  @override
-  String get code => '代码';
-
-  @override
-  String get noPreviewAvailable => '无有效预览';
-
-  @override
-  String get pageNotImplemented => '页面未实现';
-
-  @override
-  String get selectedElementNotFound => '选中的元素未找到';
-
-  @override
-  String get sansSerif => 'Sans Serif';
-
-  @override
-  String get serif => 'Serif';
-
-  @override
-  String get monospace => 'Monospace';
-
-  @override
-  String get stretch => '拉伸';
-
-  @override
-  String get firstPage => '第一页';
-
-  @override
-  String get lastPage => '最后一页';
-
-  @override
-  String get renameLayer => '重命名图层';
-
-  @override
-  String get implementationComingSoon => '此功能正在开发中，敬请期待！';
 }

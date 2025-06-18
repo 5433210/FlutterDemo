@@ -3,8 +3,6 @@ import 'dart:ui' show Rect;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../enums/work_style.dart';
-import '../../enums/work_tool.dart';
 import 'character_region.dart';
 import 'processing_options.dart' show ProcessingOptions;
 
@@ -30,14 +28,15 @@ class CharacterView with _$CharacterView {
 
     /// 作品名称
     required String title,
-    WorkTool? tool,
-    WorkStyle? style,
+
+    /// 书写工具 (动态配置)
+    String? tool,
+
+    /// 字体风格 (动态配置)
+    String? style,
 
     /// 作者
     String? author,
-
-    /// 作品创建时间
-    DateTime? creationTime,
 
     /// 字符收集时间
     required DateTime collectionTime,
@@ -93,9 +92,7 @@ class CharacterView with _$CharacterView {
         rect: const Rect.fromLTRB(0, 0, 0, 0),
         options: const ProcessingOptions(),
       );
-    }
-
-    // Create view model combining character and work data
+    } // Create view model combining character and work data
     return CharacterView(
         id: characterMap['id'] as String,
         character: characterMap['character'] as String,
@@ -103,16 +100,13 @@ class CharacterView with _$CharacterView {
         pageId: characterMap['pageId'] as String,
         title: workMap['title'] as String? ?? '未知作品',
         author: workMap['author'] as String?,
-        creationTime: workMap['creationTime'] != null
-            ? DateTime.parse(workMap['creationTime'] as String)
-            : null,
         collectionTime: DateTime.parse(characterMap['createTime'] as String),
         updateTime: DateTime.parse(characterMap['updateTime'] as String),
         isFavorite: (characterMap['isFavorite'] as int) == 1,
         tags: tags,
         region: region,
-        tool: WorkTool.fromString(workMap['tool'] as String),
-        style: WorkStyle.fromString(workMap['style'] as String));
+        tool: workMap['tool'] as String?,
+        style: workMap['style'] as String?);
   }
 
   const CharacterView._(); // Private constructor for getter methods

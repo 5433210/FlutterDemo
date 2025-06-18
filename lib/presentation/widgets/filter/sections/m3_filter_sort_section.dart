@@ -137,10 +137,9 @@ class M3FilterSortSection extends StatelessWidget {
 
   /// 获取本地化的排序字段名称
   String _getLocalizedSortFieldName(SortField field, AppLocalizations l10n) {
-    return switch (field) {
-      SortField.title => l10n.title,
+    return switch (field) {      SortField.title => l10n.title,
       SortField.author => l10n.author,
-      SortField.creationDate => l10n.creationDate,
+      // SortField.creationDate => l10n.creationDate,
       SortField.createTime => l10n.createTime,
       SortField.updateTime => l10n.updateTime,
       SortField.tool => l10n.writingTool,

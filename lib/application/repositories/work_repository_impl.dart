@@ -147,9 +147,8 @@ class WorkRepositoryImpl implements WorkRepository {
       '开始构建查询条件',
       tag: 'WorkRepositoryImpl',
       data: {
-        'hasFilter': filter != null,
-        'style': filter?.style?.name,
-        'tool': filter?.tool?.name,
+        'hasFilter': filter != null,        'style': filter?.style,
+        'tool': filter?.tool,
         'tagsCount': filter?.tags.length ?? 0,
         'hasKeyword': filter?.keyword?.isNotEmpty ?? false,
       },
@@ -165,7 +164,7 @@ class WorkRepositoryImpl implements WorkRepository {
       conditions.add(DatabaseQueryCondition(
         field: 'style',
         operator: '=',
-        value: filter.style?.name,
+        value: filter.style,
       ));
     }
 
@@ -173,7 +172,7 @@ class WorkRepositoryImpl implements WorkRepository {
       conditions.add(DatabaseQueryCondition(
         field: 'tool',
         operator: '=',
-        value: filter.tool?.name,
+        value: filter.tool,
       ));
     }
 
@@ -371,8 +370,7 @@ class WorkRepositoryImpl implements WorkRepository {
   // }
 
   /// 将WorkEntity转换为数据库表字段
-  Map<String, dynamic> _toTableJson(WorkEntity work) {
-    // AppLogger.debug(
+  Map<String, dynamic> _toTableJson(WorkEntity work) {    // AppLogger.debug(
     //   '保存作品数据',
     //   tag: 'WorkRepositoryImpl',
     //   data: {
@@ -386,10 +384,9 @@ class WorkRepositoryImpl implements WorkRepository {
       'id': work.id,
       'title': work.title,
       'author': work.author,
-      'style': work.style.value,
-      'tool': work.tool.value,
+      'style': work.style,
+      'tool': work.tool,
       'remark': work.remark,
-      'creationDate': DateTimeHelper.toStorageFormat(work.creationDate),
       'createTime': DateTimeHelper.toStorageFormat(work.createTime),
       'updateTime': DateTimeHelper.toStorageFormat(work.updateTime),
       'lastImageUpdateTime':

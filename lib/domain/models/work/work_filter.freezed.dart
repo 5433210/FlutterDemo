@@ -25,11 +25,11 @@ mixin _$WorkFilter {
 
   /// 作品风格
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  WorkStyle? get style => throw _privateConstructorUsedError;
+  String? get style => throw _privateConstructorUsedError;
 
   /// 创作工具
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  WorkTool? get tool => throw _privateConstructorUsedError;
+  String? get tool => throw _privateConstructorUsedError;
 
   /// 标签
   List<String> get tags => throw _privateConstructorUsedError;
@@ -81,9 +81,9 @@ abstract class $WorkFilterCopyWith<$Res> {
   $Res call(
       {String? keyword,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      WorkStyle? style,
+      String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      WorkTool? tool,
+      String? tool,
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? dateRange,
@@ -138,11 +138,11 @@ class _$WorkFilterCopyWithImpl<$Res, $Val extends WorkFilter>
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -204,9 +204,9 @@ abstract class _$$WorkFilterImplCopyWith<$Res>
   $Res call(
       {String? keyword,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      WorkStyle? style,
+      String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      WorkTool? tool,
+      String? tool,
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? dateRange,
@@ -260,11 +260,11 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       tags: null == tags
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -341,12 +341,12 @@ class _$WorkFilterImpl extends _WorkFilter {
   /// 作品风格
   @override
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  final WorkStyle? style;
+  final String? style;
 
   /// 创作工具
   @override
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  final WorkTool? tool;
+  final String? tool;
 
   /// 标签
   final List<String> _tags;
@@ -465,9 +465,9 @@ abstract class _WorkFilter extends WorkFilter {
   const factory _WorkFilter(
       {final String? keyword,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      final WorkStyle? style,
+      final String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      final WorkTool? tool,
+      final String? tool,
       final List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       final DateTimeRange? dateRange,
@@ -494,12 +494,12 @@ abstract class _WorkFilter extends WorkFilter {
   /// 作品风格
   @override
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  WorkStyle? get style;
+  String? get style;
 
   /// 创作工具
   @override
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  WorkTool? get tool;
+  String? get tool;
 
   /// 标签
   @override

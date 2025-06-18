@@ -39,7 +39,6 @@ class _WorkImportFormState extends State<WorkImportForm> {
         initialAuthor: widget.state.author,
         initialStyle: widget.state.style,
         initialTool: widget.state.tool,
-        initialCreationDate: widget.state.creationDate,
         initialRemark: widget.state.remark,
         isProcessing: isProcessing,
         error: widget.state.error,
@@ -47,7 +46,6 @@ class _WorkImportFormState extends State<WorkImportForm> {
         onAuthorChanged: widget.viewModel.setAuthor,
         onStyleChanged: widget.viewModel.setStyle,
         onToolChanged: widget.viewModel.setTool,
-        onCreationDateChanged: _handleDateChange,
         onRemarkChanged: widget.viewModel.setRemark,
         requiredFields: const {WorkFormField.title},
         visibleFields: WorkFormPresets.importFields,
@@ -55,23 +53,6 @@ class _WorkImportFormState extends State<WorkImportForm> {
         showKeyboardShortcuts: true,
       ),
     );
-  }
-
-  void _handleDateChange(DateTime? date) {
-    if (date != null) {
-      if (date.isAfter(DateTime.now())) {
-        // 日期不能超过当前日期
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.workFormCreationDateError),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      widget.viewModel.setCreationDate(date);
-    }
   }
 
   void _handleKeyPress(KeyEvent event) {

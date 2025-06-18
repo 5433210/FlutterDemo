@@ -34,14 +34,15 @@ mixin _$CharacterView {
 
   /// 作品名称
   String get title => throw _privateConstructorUsedError;
-  WorkTool? get tool => throw _privateConstructorUsedError;
-  WorkStyle? get style => throw _privateConstructorUsedError;
+
+  /// 书写工具 (动态配置)
+  String? get tool => throw _privateConstructorUsedError;
+
+  /// 字体风格 (动态配置)
+  String? get style => throw _privateConstructorUsedError;
 
   /// 作者
   String? get author => throw _privateConstructorUsedError;
-
-  /// 作品创建时间
-  DateTime? get creationTime => throw _privateConstructorUsedError;
 
   /// 字符收集时间
   DateTime get collectionTime => throw _privateConstructorUsedError;
@@ -80,10 +81,9 @@ abstract class $CharacterViewCopyWith<$Res> {
       String workId,
       String pageId,
       String title,
-      WorkTool? tool,
-      WorkStyle? style,
+      String? tool,
+      String? style,
       String? author,
-      DateTime? creationTime,
       DateTime collectionTime,
       DateTime updateTime,
       bool isFavorite,
@@ -116,7 +116,6 @@ class _$CharacterViewCopyWithImpl<$Res, $Val extends CharacterView>
     Object? tool = freezed,
     Object? style = freezed,
     Object? author = freezed,
-    Object? creationTime = freezed,
     Object? collectionTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -147,19 +146,15 @@ class _$CharacterViewCopyWithImpl<$Res, $Val extends CharacterView>
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       author: freezed == author
           ? _value.author
           : author // ignore: cast_nullable_to_non_nullable
               as String?,
-      creationTime: freezed == creationTime
-          ? _value.creationTime
-          : creationTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
       collectionTime: null == collectionTime
           ? _value.collectionTime
           : collectionTime // ignore: cast_nullable_to_non_nullable
@@ -208,10 +203,9 @@ abstract class _$$CharacterViewImplCopyWith<$Res>
       String workId,
       String pageId,
       String title,
-      WorkTool? tool,
-      WorkStyle? style,
+      String? tool,
+      String? style,
       String? author,
-      DateTime? creationTime,
       DateTime collectionTime,
       DateTime updateTime,
       bool isFavorite,
@@ -243,7 +237,6 @@ class __$$CharacterViewImplCopyWithImpl<$Res>
     Object? tool = freezed,
     Object? style = freezed,
     Object? author = freezed,
-    Object? creationTime = freezed,
     Object? collectionTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -274,19 +267,15 @@ class __$$CharacterViewImplCopyWithImpl<$Res>
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       author: freezed == author
           ? _value.author
           : author // ignore: cast_nullable_to_non_nullable
               as String?,
-      creationTime: freezed == creationTime
-          ? _value.creationTime
-          : creationTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
       collectionTime: null == collectionTime
           ? _value.collectionTime
           : collectionTime // ignore: cast_nullable_to_non_nullable
@@ -323,7 +312,6 @@ class _$CharacterViewImpl extends _CharacterView {
       this.tool,
       this.style,
       this.author,
-      this.creationTime,
       required this.collectionTime,
       required this.updateTime,
       this.isFavorite = false,
@@ -354,18 +342,18 @@ class _$CharacterViewImpl extends _CharacterView {
   /// 作品名称
   @override
   final String title;
+
+  /// 书写工具 (动态配置)
   @override
-  final WorkTool? tool;
+  final String? tool;
+
+  /// 字体风格 (动态配置)
   @override
-  final WorkStyle? style;
+  final String? style;
 
   /// 作者
   @override
   final String? author;
-
-  /// 作品创建时间
-  @override
-  final DateTime? creationTime;
 
   /// 字符收集时间
   @override
@@ -398,7 +386,7 @@ class _$CharacterViewImpl extends _CharacterView {
 
   @override
   String toString() {
-    return 'CharacterView(id: $id, character: $character, workId: $workId, pageId: $pageId, title: $title, tool: $tool, style: $style, author: $author, creationTime: $creationTime, collectionTime: $collectionTime, updateTime: $updateTime, isFavorite: $isFavorite, tags: $tags, region: $region)';
+    return 'CharacterView(id: $id, character: $character, workId: $workId, pageId: $pageId, title: $title, tool: $tool, style: $style, author: $author, collectionTime: $collectionTime, updateTime: $updateTime, isFavorite: $isFavorite, tags: $tags, region: $region)';
   }
 
   @override
@@ -415,8 +403,6 @@ class _$CharacterViewImpl extends _CharacterView {
             (identical(other.tool, tool) || other.tool == tool) &&
             (identical(other.style, style) || other.style == style) &&
             (identical(other.author, author) || other.author == author) &&
-            (identical(other.creationTime, creationTime) ||
-                other.creationTime == creationTime) &&
             (identical(other.collectionTime, collectionTime) ||
                 other.collectionTime == collectionTime) &&
             (identical(other.updateTime, updateTime) ||
@@ -439,7 +425,6 @@ class _$CharacterViewImpl extends _CharacterView {
       tool,
       style,
       author,
-      creationTime,
       collectionTime,
       updateTime,
       isFavorite,
@@ -469,10 +454,9 @@ abstract class _CharacterView extends CharacterView {
       required final String workId,
       required final String pageId,
       required final String title,
-      final WorkTool? tool,
-      final WorkStyle? style,
+      final String? tool,
+      final String? style,
       final String? author,
-      final DateTime? creationTime,
       required final DateTime collectionTime,
       required final DateTime updateTime,
       final bool isFavorite,
@@ -502,18 +486,18 @@ abstract class _CharacterView extends CharacterView {
   /// 作品名称
   @override
   String get title;
+
+  /// 书写工具 (动态配置)
   @override
-  WorkTool? get tool;
+  String? get tool;
+
+  /// 字体风格 (动态配置)
   @override
-  WorkStyle? get style;
+  String? get style;
 
   /// 作者
   @override
   String? get author;
-
-  /// 作品创建时间
-  @override
-  DateTime? get creationTime;
 
   /// 字符收集时间
   @override

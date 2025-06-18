@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
@@ -18,22 +17,22 @@ class AsyncLogger {
   final Queue<LogEntry> _logQueue = Queue<LogEntry>();
   Timer? _batchTimer;
   bool _isProcessing = false;
-  
+
   // 配置参数
   static const int _maxBatchSize = 100;
   static const int _batchIntervalMs = 1000;
   static const int _maxQueueSize = 1000;
   static const int _highFrequencyThresholdMs = 100;
-  
+
   // 高频日志过滤
   final Map<String, DateTime> _lastLogTimes = {};
   final Map<String, int> _logCounts = {};
-  
+
   // 性能统计
   int _totalProcessed = 0;
   int _droppedLogs = 0;
   int _filteredLogs = 0;
-  
+
   /// 初始化异步日志处理器
   void initialize() {
     // 启动批量处理定时器
@@ -58,7 +57,7 @@ class AsyncLogger {
     }
 
     _logQueue.add(entry);
-    
+
     // 如果队列达到批量大小，立即处理
     if (_logQueue.length >= _maxBatchSize) {
       _processBatch();
@@ -69,7 +68,7 @@ class AsyncLogger {
   bool _shouldFilterHighFrequency(LogEntry entry) {
     final key = '${entry.level}:${entry.message}';
     final now = DateTime.now();
-    
+
     final lastTime = _lastLogTimes[key];
     if (lastTime != null) {
       final timeDiff = now.difference(lastTime).inMilliseconds;
@@ -79,9 +78,9 @@ class AsyncLogger {
         return true;
       }
     }
-    
+
     _lastLogTimes[key] = now;
-    
+
     // 如果之前有被过滤的日志，添加汇总信息
     final count = _logCounts[key];
     if (count != null && count > 0) {
@@ -89,7 +88,7 @@ class AsyncLogger {
       entry.data!['filteredCount'] = count;
       _logCounts[key] = 0;
     }
-    
+
     return false;
   }
 
@@ -100,10 +99,10 @@ class AsyncLogger {
     }
 
     _isProcessing = true;
-    
+
     try {
       final batch = <LogEntry>[];
-      
+
       // 收集当前批次的日志
       while (batch.length < _maxBatchSize && _logQueue.isNotEmpty) {
         batch.add(_logQueue.removeFirst());
@@ -127,39 +126,37 @@ class AsyncLogger {
   void _processBatchSync(List<LogEntry> batch) {
     for (final entry in batch) {
       try {
-                 // 使用原有的 AppLogger 输出
-         switch (entry.level) {
-           case LogLevel.debug:
-             AppLogger.debug(entry.message, 
-               data: entry.data, 
-               tag: entry.tags?.first);
-             break;
-           case LogLevel.info:
-             AppLogger.info(entry.message, 
-               data: entry.data, 
-               tag: entry.tags?.first);
-             break;
-           case LogLevel.warning:
-             AppLogger.warning(entry.message, 
-               data: entry.data, 
-               error: entry.error, 
-               stackTrace: entry.stackTrace);
-             break;
-           case LogLevel.error:
-             AppLogger.error(entry.message, 
-               data: entry.data, 
-               error: entry.error, 
-               stackTrace: entry.stackTrace,
-               tag: entry.tags?.first);
-             break;
-           case LogLevel.fatal:
-             AppLogger.fatal(entry.message, 
-               data: entry.data, 
-               error: entry.error, 
-               stackTrace: entry.stackTrace,
-               tag: entry.tags?.first);
-             break;
-         }
+        // 使用原有的 AppLogger 输出
+        switch (entry.level) {
+          case LogLevel.debug:
+            AppLogger.debug(entry.message,
+                data: entry.data, tag: entry.tags?.first);
+            break;
+          case LogLevel.info:
+            AppLogger.info(entry.message,
+                data: entry.data, tag: entry.tags?.first);
+            break;
+          case LogLevel.warning:
+            AppLogger.warning(entry.message,
+                data: entry.data,
+                error: entry.error,
+                stackTrace: entry.stackTrace);
+            break;
+          case LogLevel.error:
+            AppLogger.error(entry.message,
+                data: entry.data,
+                error: entry.error,
+                stackTrace: entry.stackTrace,
+                tag: entry.tags?.first);
+            break;
+          case LogLevel.fatal:
+            AppLogger.fatal(entry.message,
+                data: entry.data,
+                error: entry.error,
+                stackTrace: entry.stackTrace,
+                tag: entry.tags?.first);
+            break;
+        }
       } catch (error) {
         // 单个日志处理错误不影响其他日志
         if (kDebugMode) {
@@ -223,5 +220,3 @@ class LogEntry {
     this.stackTrace,
   }) : timestamp = DateTime.now();
 }
-
- 

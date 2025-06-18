@@ -32,11 +32,11 @@ mixin _$CharacterFilter {
 
   /// 作品风格
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  WorkStyle? get style => throw _privateConstructorUsedError;
+  String? get style => throw _privateConstructorUsedError;
 
   /// 创作工具
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  WorkTool? get tool => throw _privateConstructorUsedError;
+  String? get tool => throw _privateConstructorUsedError;
 
   /// 创作时间筛选预设
   @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
@@ -89,9 +89,9 @@ abstract class $CharacterFilterCopyWith<$Res> {
       String? workId,
       String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      WorkStyle? style,
+      String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      WorkTool? tool,
+      String? tool,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       DateRangePreset creationDatePreset,
@@ -160,11 +160,11 @@ class _$CharacterFilterCopyWithImpl<$Res, $Val extends CharacterFilter>
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       creationDatePreset: null == creationDatePreset
           ? _value.creationDatePreset
           : creationDatePreset // ignore: cast_nullable_to_non_nullable
@@ -225,9 +225,9 @@ abstract class _$$CharacterFilterImplCopyWith<$Res>
       String? workId,
       String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      WorkStyle? style,
+      String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      WorkTool? tool,
+      String? tool,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       DateRangePreset creationDatePreset,
@@ -295,11 +295,11 @@ class __$$CharacterFilterImplCopyWithImpl<$Res>
       style: freezed == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle?,
+              as String?,
       tool: freezed == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool?,
+              as String?,
       creationDatePreset: null == creationDatePreset
           ? _value.creationDatePreset
           : creationDatePreset // ignore: cast_nullable_to_non_nullable
@@ -385,12 +385,12 @@ class _$CharacterFilterImpl extends _CharacterFilter {
   /// 作品风格
   @override
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  final WorkStyle? style;
+  final String? style;
 
   /// 创作工具
   @override
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  final WorkTool? tool;
+  final String? tool;
 
   /// 创作时间筛选预设
   @override
@@ -513,9 +513,9 @@ abstract class _CharacterFilter extends CharacterFilter {
       final String? workId,
       final String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-      final WorkStyle? style,
+      final String? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-      final WorkTool? tool,
+      final String? tool,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       final DateRangePreset creationDatePreset,
@@ -552,12 +552,12 @@ abstract class _CharacterFilter extends CharacterFilter {
   /// 作品风格
   @override
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-  WorkStyle? get style;
+  String? get style;
 
   /// 创作工具
   @override
   @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-  WorkTool? get tool;
+  String? get tool;
 
   /// 创作时间筛选预设
   @override

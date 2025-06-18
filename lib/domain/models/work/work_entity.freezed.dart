@@ -32,16 +32,11 @@ mixin _$WorkEntity {
   /// 备注
   String? get remark => throw _privateConstructorUsedError;
 
-  /// 字体
-  @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-  WorkStyle get style => throw _privateConstructorUsedError;
+  /// 字体风格 (动态配置)
+  String get style => throw _privateConstructorUsedError;
 
-  /// 工具
-  @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-  WorkTool get tool => throw _privateConstructorUsedError;
-
-  /// 创作日期
-  DateTime get creationDate => throw _privateConstructorUsedError;
+  /// 书写工具 (动态配置)
+  String get tool => throw _privateConstructorUsedError;
 
   /// 创建时间
   DateTime get createTime => throw _privateConstructorUsedError;
@@ -50,7 +45,6 @@ mixin _$WorkEntity {
   DateTime get updateTime => throw _privateConstructorUsedError;
 
   /// 是否收藏
-  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
   bool get isFavorite => throw _privateConstructorUsedError;
 
   /// 图片最后更新时间
@@ -96,14 +90,10 @@ abstract class $WorkEntityCopyWith<$Res> {
       String title,
       String author,
       String? remark,
-      @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-      WorkStyle style,
-      @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-      WorkTool tool,
-      DateTime creationDate,
+      String style,
+      String tool,
       DateTime createTime,
       DateTime updateTime,
-      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       bool isFavorite,
       DateTime? lastImageUpdateTime,
       WorkStatus status,
@@ -135,7 +125,6 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
     Object? remark = freezed,
     Object? style = null,
     Object? tool = null,
-    Object? creationDate = null,
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -167,15 +156,11 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
       style: null == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle,
+              as String,
       tool: null == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool,
-      creationDate: null == creationDate
-          ? _value.creationDate
-          : creationDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       createTime: null == createTime
           ? _value.createTime
           : createTime // ignore: cast_nullable_to_non_nullable
@@ -233,14 +218,10 @@ abstract class _$$WorkEntityImplCopyWith<$Res>
       String title,
       String author,
       String? remark,
-      @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-      WorkStyle style,
-      @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-      WorkTool tool,
-      DateTime creationDate,
+      String style,
+      String tool,
       DateTime createTime,
       DateTime updateTime,
-      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       bool isFavorite,
       DateTime? lastImageUpdateTime,
       WorkStatus status,
@@ -270,7 +251,6 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
     Object? remark = freezed,
     Object? style = null,
     Object? tool = null,
-    Object? creationDate = null,
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -302,15 +282,11 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
       style: null == style
           ? _value.style
           : style // ignore: cast_nullable_to_non_nullable
-              as WorkStyle,
+              as String,
       tool: null == tool
           ? _value.tool
           : tool // ignore: cast_nullable_to_non_nullable
-              as WorkTool,
-      creationDate: null == creationDate
-          ? _value.creationDate
-          : creationDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       createTime: null == createTime
           ? _value.createTime
           : createTime // ignore: cast_nullable_to_non_nullable
@@ -358,19 +334,15 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$WorkEntityImpl extends _WorkEntity {
-  const _$WorkEntityImpl(
+  _$WorkEntityImpl(
       {required this.id,
       required this.title,
       required this.author,
       this.remark,
-      @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-      required this.style,
-      @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-      required this.tool,
-      required this.creationDate,
+      this.style = '',
+      this.tool = '',
       required this.createTime,
       required this.updateTime,
-      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       this.isFavorite = false,
       this.lastImageUpdateTime,
       this.status = WorkStatus.draft,
@@ -403,19 +375,15 @@ class _$WorkEntityImpl extends _WorkEntity {
   @override
   final String? remark;
 
-  /// 字体
+  /// 字体风格 (动态配置)
   @override
-  @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-  final WorkStyle style;
+  @JsonKey()
+  final String style;
 
-  /// 工具
+  /// 书写工具 (动态配置)
   @override
-  @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-  final WorkTool tool;
-
-  /// 创作日期
-  @override
-  final DateTime creationDate;
+  @JsonKey()
+  final String tool;
 
   /// 创建时间
   @override
@@ -427,7 +395,7 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   /// 是否收藏
   @override
-  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+  @JsonKey()
   final bool isFavorite;
 
   /// 图片最后更新时间
@@ -485,7 +453,7 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   @override
   String toString() {
-    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, creationDate: $creationDate, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
+    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
   }
 
   @override
@@ -499,8 +467,6 @@ class _$WorkEntityImpl extends _WorkEntity {
             (identical(other.remark, remark) || other.remark == remark) &&
             (identical(other.style, style) || other.style == style) &&
             (identical(other.tool, tool) || other.tool == tool) &&
-            (identical(other.creationDate, creationDate) ||
-                other.creationDate == creationDate) &&
             (identical(other.createTime, createTime) ||
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
@@ -530,7 +496,6 @@ class _$WorkEntityImpl extends _WorkEntity {
       remark,
       style,
       tool,
-      creationDate,
       createTime,
       updateTime,
       isFavorite,
@@ -559,19 +524,15 @@ class _$WorkEntityImpl extends _WorkEntity {
 }
 
 abstract class _WorkEntity extends WorkEntity {
-  const factory _WorkEntity(
+  factory _WorkEntity(
       {required final String id,
       required final String title,
       required final String author,
       final String? remark,
-      @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-      required final WorkStyle style,
-      @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-      required final WorkTool tool,
-      required final DateTime creationDate,
+      final String style,
+      final String tool,
       required final DateTime createTime,
       required final DateTime updateTime,
-      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       final bool isFavorite,
       final DateTime? lastImageUpdateTime,
       final WorkStatus status,
@@ -580,7 +541,7 @@ abstract class _WorkEntity extends WorkEntity {
       final List<CharacterEntity> collectedChars,
       final List<String> tags,
       final int? imageCount}) = _$WorkEntityImpl;
-  const _WorkEntity._() : super._();
+  _WorkEntity._() : super._();
 
   factory _WorkEntity.fromJson(Map<String, dynamic> json) =
       _$WorkEntityImpl.fromJson;
@@ -601,19 +562,13 @@ abstract class _WorkEntity extends WorkEntity {
   @override
   String? get remark;
 
-  /// 字体
+  /// 字体风格 (动态配置)
   @override
-  @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
-  WorkStyle get style;
+  String get style;
 
-  /// 工具
+  /// 书写工具 (动态配置)
   @override
-  @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
-  WorkTool get tool;
-
-  /// 创作日期
-  @override
-  DateTime get creationDate;
+  String get tool;
 
   /// 创建时间
   @override
@@ -625,7 +580,6 @@ abstract class _WorkEntity extends WorkEntity {
 
   /// 是否收藏
   @override
-  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
   bool get isFavorite;
 
   /// 图片最后更新时间

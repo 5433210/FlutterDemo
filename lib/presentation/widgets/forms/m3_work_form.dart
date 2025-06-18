@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
+// Note: style and tool are now String types instead of enums
+import '../../../infrastructure/providers/config_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../common/section_title.dart';
-import '../inputs/date_input_field.dart';
 import '../inputs/dropdown_field.dart';
 
 /// Material 3 version of the unified form component for work entity data entry
 /// Can be used in both import and edit scenarios
 ///
-class M3WorkForm extends StatefulWidget {
+class M3WorkForm extends ConsumerStatefulWidget {
   /// The form title
   final String? title;
 
@@ -22,14 +22,11 @@ class M3WorkForm extends StatefulWidget {
   /// Initial author value
   final String? initialAuthor;
 
-  /// Initial style value
-  final WorkStyle? initialStyle;
+  /// Initial style value (as string key)
+  final String? initialStyle;
 
-  /// Initial tool value
-  final WorkTool? initialTool;
-
-  /// Initial creation date
-  final DateTime? initialCreationDate;
+  /// Initial tool value (as string key)
+  final String? initialTool;
 
   /// Initial remark value
   final String? initialRemark;
@@ -46,14 +43,11 @@ class M3WorkForm extends StatefulWidget {
   /// Callback when author changes
   final ValueChanged<String?>? onAuthorChanged;
 
-  /// Callback when style changes
-  final ValueChanged<WorkStyle?>? onStyleChanged;
+  /// Callback when style changes (string key)
+  final ValueChanged<String?>? onStyleChanged;
 
-  /// Callback when tool changes
-  final ValueChanged<WorkTool?>? onToolChanged;
-
-  /// Callback when creation date changes
-  final ValueChanged<DateTime?>? onCreationDateChanged;
+  /// Callback when tool changes (string key)
+  final ValueChanged<String?>? onToolChanged;
 
   /// Callback when remark changes
   final ValueChanged<String?>? onRemarkChanged;
@@ -86,7 +80,6 @@ class M3WorkForm extends StatefulWidget {
     this.initialAuthor,
     this.initialStyle,
     this.initialTool,
-    this.initialCreationDate,
     this.initialRemark,
     this.isProcessing = false,
     this.error,
@@ -94,7 +87,6 @@ class M3WorkForm extends StatefulWidget {
     this.onAuthorChanged,
     this.onStyleChanged,
     this.onToolChanged,
-    this.onCreationDateChanged,
     this.onRemarkChanged,
     this.requiredFields = const {WorkFormField.title},
     this.visibleFields = const {
@@ -102,7 +94,6 @@ class M3WorkForm extends StatefulWidget {
       WorkFormField.author,
       WorkFormField.style,
       WorkFormField.tool,
-      WorkFormField.creationDate,
       WorkFormField.remark,
     },
     this.showHelp = true,
@@ -111,9 +102,8 @@ class M3WorkForm extends StatefulWidget {
     this.insertPositions = const {},
     this.formKey,
   });
-
   @override
-  State<M3WorkForm> createState() => _M3WorkFormState();
+  ConsumerState<M3WorkForm> createState() => _M3WorkFormState();
 }
 
 /// Fields available in the work form
@@ -122,7 +112,6 @@ enum WorkFormField {
   author,
   style,
   tool,
-  creationDate,
   remark,
 }
 
@@ -134,7 +123,6 @@ class WorkFormPresets {
     WorkFormField.author,
     WorkFormField.style,
     WorkFormField.tool,
-    WorkFormField.creationDate,
     WorkFormField.remark,
   };
 
@@ -144,7 +132,6 @@ class WorkFormPresets {
     WorkFormField.author,
     WorkFormField.style,
     WorkFormField.tool,
-    WorkFormField.creationDate,
     WorkFormField.remark,
   };
 
@@ -269,7 +256,7 @@ class _HelpText extends StatelessWidget {
   }
 }
 
-class _M3WorkFormState extends State<M3WorkForm> {
+class _M3WorkFormState extends ConsumerState<M3WorkForm> {
   final _titleFocus = FocusNode();
   final _authorFocus = FocusNode();
   final _remarkFocus = FocusNode();
@@ -280,7 +267,6 @@ class _M3WorkFormState extends State<M3WorkForm> {
 
   bool _hasInteracted = false;
   late GlobalKey<FormState> _formKey;
-
   // Check if form is in read-only mode based on callback presence
   bool get _isReadOnly {
     return widget.isProcessing ||
@@ -288,7 +274,6 @@ class _M3WorkFormState extends State<M3WorkForm> {
             widget.onAuthorChanged == null &&
             widget.onStyleChanged == null &&
             widget.onToolChanged == null &&
-            widget.onCreationDateChanged == null &&
             widget.onRemarkChanged == null);
   }
 
@@ -348,20 +333,8 @@ class _M3WorkFormState extends State<M3WorkForm> {
               if (widget.visibleFields.contains(WorkFormField.tool)) ...[
                 const SizedBox(height: AppSizes.spacingMedium),
                 _buildToolField(),
-              ],
-
-              // Insert custom fields after tool
+              ], // Insert custom fields after tool
               ..._buildCustomFields(WorkFormField.tool),
-
-              // Creation date field
-              if (widget.visibleFields
-                  .contains(WorkFormField.creationDate)) ...[
-                const SizedBox(height: AppSizes.spacingMedium),
-                _buildDateField(),
-              ],
-
-              // Insert custom fields after creation date
-              ..._buildCustomFields(WorkFormField.creationDate),
 
               // Remark field
               if (widget.visibleFields.contains(WorkFormField.remark)) ...[
@@ -487,26 +460,6 @@ class _M3WorkFormState extends State<M3WorkForm> {
     }).toList();
   }
 
-  Widget _buildDateField() {
-    final l10n = AppLocalizations.of(context);
-    return _buildFieldWithTooltip(
-      shortcut: 'Tab',
-      tooltip: l10n.tabToNextField,
-      helpText: widget.showHelp ? l10n.workFormDateHelp : null,
-      helpIcon: Icons.calendar_today_outlined,
-      child: DateInputField(
-        label: l10n.creationDate,
-        value: widget.initialCreationDate,
-        onChanged: _handleDateChange,
-        textInputAction: TextInputAction.next,
-        onEditingComplete:
-            _isReadOnly ? null : () => _remarkFocus.requestFocus(),
-        enabled: true,
-        readOnly: _isReadOnly,
-      ),
-    );
-  }
-
   Widget _buildFieldWithTooltip({
     required Widget child,
     required String shortcut,
@@ -575,45 +528,92 @@ class _M3WorkFormState extends State<M3WorkForm> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // Read dynamic configuration data
+    final activeStyleItems = ref.watch(activeStyleItemsProvider);
+
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
       tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormStyleHelp : null,
       helpIcon: Icons.palette_outlined,
-      child: DropdownField<String>(
-        label: l10n.calligraphyStyle,
-        value: widget.initialStyle?.value,
-        items: [
-          DropdownMenuItem(
-            value: WorkStyle.regular.value,
-            child: Text(l10n.workStyleRegular),
-          ),
-          DropdownMenuItem(
-            value: WorkStyle.running.value,
-            child: Text(l10n.workStyleRunning),
-          ),
-          DropdownMenuItem(
-            value: WorkStyle.cursive.value,
-            child: Text(l10n.workStyleCursive),
-          ),
-          DropdownMenuItem(
-            value: WorkStyle.clerical.value,
-            child: Text(l10n.workStyleClerical),
-          ),
-          DropdownMenuItem(
-            value: WorkStyle.seal.value,
-            child: Text(l10n.workStyleSeal),
-          ),
-          DropdownMenuItem(
-            value: WorkStyle.other.value,
-            child: Text(l10n.workToolOther),
-          ),
-        ],
-        onChanged: _handleStyleChange,
-        enabled: true,
-        readOnly: _isReadOnly,
-        // Ensure dropdown text uses the same style as other fields
-        textStyle: theme.textTheme.bodyLarge,
+      child: activeStyleItems.when(
+        data: (styleItems) {
+          return DropdownField<String>(
+            label: l10n.calligraphyStyle,
+            value: widget.initialStyle,
+            items: styleItems.map((item) {
+              return DropdownMenuItem(
+                value: item.key,
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final displayName = ref
+                        .watch(styleDisplayNamesProvider)
+                        .maybeWhen(
+                          data: (names) => names[item.key] ?? item.displayName,
+                          orElse: () => item.displayName,
+                        );
+                    return Text(displayName);
+                  },
+                ),
+              );
+            }).toList(),
+            onChanged: _handleStyleChange,
+            enabled: true,
+            readOnly: _isReadOnly,
+            textStyle: theme.textTheme.bodyLarge,
+          );
+        },
+        loading: () => DropdownField<String>(
+          label: l10n.calligraphyStyle,
+          value: widget.initialStyle,
+          items: const [
+            DropdownMenuItem(
+              value: '',
+              child: Text('Loading...'),
+            ),
+          ],
+          onChanged: null,
+          enabled: false,
+          readOnly: true,
+          textStyle: theme.textTheme.bodyLarge,
+        ),
+        error: (error, stackTrace) {
+          // Fallback to hardcoded options on error
+          return DropdownField<String>(
+            label: l10n.calligraphyStyle,
+            value: widget.initialStyle,
+            items: [
+              DropdownMenuItem(
+                value: 'regular',
+                child: Text(l10n.workStyleRegular),
+              ),
+              DropdownMenuItem(
+                value: 'running',
+                child: Text(l10n.workStyleRunning),
+              ),
+              DropdownMenuItem(
+                value: 'cursive',
+                child: Text(l10n.workStyleCursive),
+              ),
+              DropdownMenuItem(
+                value: 'clerical',
+                child: Text(l10n.workStyleClerical),
+              ),
+              DropdownMenuItem(
+                value: 'seal',
+                child: Text(l10n.workStyleSeal),
+              ),
+              DropdownMenuItem(
+                value: 'other',
+                child: Text(l10n.workToolOther),
+              ),
+            ],
+            onChanged: _handleStyleChange,
+            enabled: true,
+            readOnly: _isReadOnly,
+            textStyle: theme.textTheme.bodyLarge,
+          );
+        },
       ),
     );
   }
@@ -664,52 +664,82 @@ class _M3WorkFormState extends State<M3WorkForm> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // Read dynamic configuration data
+    final activeToolItems = ref.watch(activeToolItemsProvider);
+
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
       tooltip: l10n.tabToNextField,
       helpText: widget.showHelp ? l10n.workFormToolHelp : null,
       helpIcon: Icons.brush_outlined,
-      child: DropdownField<String>(
-        label: l10n.writingTool,
-        value: widget.initialTool?.value,
-        items: [
-          DropdownMenuItem(
-            value: WorkTool.brush.value,
-            child: Text(l10n.workToolBrush),
-          ),
-          DropdownMenuItem(
-            value: WorkTool.hardPen.value,
-            child: Text(l10n.workToolHardPen),
-          ),
-          DropdownMenuItem(
-            value: WorkTool.other.value,
-            child: Text(l10n.workToolOther),
-          ),
-        ],
-        onChanged: _handleToolChange,
-        enabled: true,
-        readOnly: _isReadOnly,
-        // Ensure dropdown text uses the same style as other fields
-        textStyle: theme.textTheme.bodyLarge,
+      child: activeToolItems.when(
+        data: (toolItems) {
+          return DropdownField<String>(
+            label: l10n.writingTool,
+            value: widget.initialTool,
+            items: toolItems.map((item) {
+              return DropdownMenuItem(
+                value: item.key,
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final displayName = ref
+                        .watch(toolDisplayNamesProvider)
+                        .maybeWhen(
+                          data: (names) => names[item.key] ?? item.displayName,
+                          orElse: () => item.displayName,
+                        );
+                    return Text(displayName);
+                  },
+                ),
+              );
+            }).toList(),
+            onChanged: _handleToolChange,
+            enabled: true,
+            readOnly: _isReadOnly,
+            textStyle: theme.textTheme.bodyLarge,
+          );
+        },
+        loading: () => DropdownField<String>(
+          label: l10n.writingTool,
+          value: widget.initialTool,
+          items: const [
+            DropdownMenuItem(
+              value: '',
+              child: Text('Loading...'),
+            ),
+          ],
+          onChanged: null,
+          enabled: false,
+          readOnly: true,
+          textStyle: theme.textTheme.bodyLarge,
+        ),
+        error: (error, stackTrace) {
+          // Fallback to hardcoded options on error
+          return DropdownField<String>(
+            label: l10n.writingTool,
+            value: widget.initialTool,
+            items: [
+              DropdownMenuItem(
+                value: 'brush',
+                child: Text(l10n.workToolBrush),
+              ),
+              DropdownMenuItem(
+                value: 'hardPen',
+                child: Text(l10n.workToolHardPen),
+              ),
+              DropdownMenuItem(
+                value: 'other',
+                child: Text(l10n.workToolOther),
+              ),
+            ],
+            onChanged: _handleToolChange,
+            enabled: true,
+            readOnly: _isReadOnly,
+            textStyle: theme.textTheme.bodyLarge,
+          );
+        },
       ),
     );
-  }
-
-  void _handleDateChange(DateTime? date) {
-    final l10n = AppLocalizations.of(context);
-    if (date != null) {
-      if (date.isAfter(DateTime.now())) {
-        // Date cannot be in the future
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.creationDate),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      widget.onCreationDateChanged?.call(date);
-    }
   }
 
   void _handleFocusChange() {
@@ -737,22 +767,14 @@ class _M3WorkFormState extends State<M3WorkForm> {
 
   void _handleStyleChange(String? value) {
     if (value != null && !widget.isProcessing) {
-      final style = WorkStyle.values.firstWhere(
-        (s) => s.value == value,
-        orElse: () => WorkStyle.other,
-      );
-      widget.onStyleChanged?.call(style);
+      widget.onStyleChanged?.call(value);
       FocusScope.of(context).nextFocus();
     }
   }
 
   void _handleToolChange(String? value) {
     if (value != null && !widget.isProcessing) {
-      final tool = WorkTool.values.firstWhere(
-        (t) => t.value == value,
-        orElse: () => WorkTool.other,
-      );
-      widget.onToolChanged?.call(tool);
+      widget.onToolChanged?.call(value);
       FocusScope.of(context).nextFocus();
     }
   }

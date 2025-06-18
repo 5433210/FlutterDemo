@@ -5,7 +5,6 @@ enum SortField {
   fileSize('fileSize', '文件大小'),
   title('title', '标题'),
   author('author', '作者'),
-  creationDate('creationDate', '创作日期'),
   createTime('createTime', '创建时间'),
   updateTime('updateTime', '更新时间'),
   tool('tool', '工具'),

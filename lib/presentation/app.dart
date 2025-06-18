@@ -61,22 +61,34 @@ class MyApp extends ConsumerWidget {
       detectedSystemLocale = const Locale('zh');
       debugPrint('【系统语言】未检测到支持的系统语言，默认使用中文');
     }
-
     return initialization.when(
-      loading: () => const MaterialApp(
-        home: InitializationScreen(),
+      loading: () => MaterialApp(
+        home: const InitializationScreen(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: detectedSystemLocale,
       ),
       error: (error, stack) => MaterialApp(
         home: Scaffold(
           body: Center(
             child: Builder(builder: (context) {
-              final l10n = AppLocalizations.of(context);
-              return Text(l10n.initializationFailed(error.toString()));
+              AppLocalizations? l10n;
+              try {
+                l10n = AppLocalizations.of(context);
+              } catch (e) {
+                l10n = null;
+              }
+              return Text(
+                l10n?.initializationFailed(error.toString()) ??
+                    'Initialization failed: $error',
+                style: const TextStyle(color: Colors.red),
+              );
             }),
           ),
         ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        locale: detectedSystemLocale,
       ),
       data: (_) {
         // 获取用户语言设置

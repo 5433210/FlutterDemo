@@ -399,4 +399,169 @@ const migrations = [
   
   
   ''',
+
+  /// 版本 17: 删除创作日期字段，初始化动态配置
+  '''
+  -- 0. 首先删除所有相关触发器和视图，避免在表重建过程中出错
+  DROP TRIGGER IF EXISTS update_work_image_count_insert;
+  DROP TRIGGER IF EXISTS update_work_image_count_delete;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_insert;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_update;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_delete;
+  
+  -- 删除依赖works表的视图
+  DROP VIEW IF EXISTS CharacterView;
+  
+  -- 1. 创建新的works表（不包含creationDate字段）
+  CREATE TABLE IF NOT EXISTS works_new (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    author TEXT,
+    style TEXT,
+    tool TEXT,
+    remark TEXT,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL,
+    tags TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    imageCount INTEGER DEFAULT 0,
+    firstImageId TEXT,
+    lastImageUpdateTime TEXT,
+    isFavorite INTEGER NOT NULL DEFAULT 0
+  );
+
+  -- 2. 复制数据（排除creationDate字段）
+  INSERT INTO works_new (
+    id, title, author, style, tool, remark, 
+    createTime, updateTime, tags, status, 
+    imageCount, firstImageId, lastImageUpdateTime, isFavorite
+  )
+  SELECT 
+    id, title, author, style, tool, remark, 
+    createTime, updateTime, tags, status, 
+    COALESCE(imageCount, 0), firstImageId, lastImageUpdateTime, COALESCE(isFavorite, 0)
+  FROM works;
+
+  -- 3. 删除旧表
+  DROP TABLE works;
+  -- 4. 重命名新表
+  ALTER TABLE works_new RENAME TO works;
+
+  -- 5. 重新创建索引
+  CREATE INDEX IF NOT EXISTS idx_works_author ON works(author);
+  CREATE INDEX IF NOT EXISTS idx_works_style ON works(style);
+  CREATE INDEX IF NOT EXISTS idx_works_tool ON works(tool);
+  CREATE INDEX IF NOT EXISTS idx_works_status ON works(status);
+  CREATE INDEX IF NOT EXISTS idx_works_createTime ON works(createTime);
+  CREATE INDEX IF NOT EXISTS idx_works_updateTime ON works(updateTime);
+
+  -- 6. 重新创建触发器
+  DROP TRIGGER IF EXISTS update_work_image_count_insert;
+  DROP TRIGGER IF EXISTS update_work_image_count_delete;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_insert;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_update;
+  DROP TRIGGER IF EXISTS update_work_first_image_on_delete;
+
+  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert
+  AFTER INSERT ON work_images
+  BEGIN
+    UPDATE works
+    SET imageCount = (
+      SELECT COUNT(*)
+      FROM work_images
+      WHERE workId = NEW.workId
+    )
+    WHERE id = NEW.workId;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete
+  AFTER DELETE ON work_images
+  BEGIN
+    UPDATE works
+    SET imageCount = (
+      SELECT COUNT(*)
+      FROM work_images
+      WHERE workId = OLD.workId
+    )
+    WHERE id = OLD.workId;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert
+  AFTER INSERT ON work_images
+  BEGIN
+    UPDATE works
+    SET firstImageId = (
+      SELECT id
+      FROM work_images
+      WHERE workId = NEW.workId
+      ORDER BY indexInWork ASC
+      LIMIT 1
+    ),
+    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+    WHERE id = NEW.workId;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update
+  AFTER UPDATE OF indexInWork ON work_images
+  BEGIN
+    UPDATE works
+    SET firstImageId = (
+      SELECT id
+      FROM work_images
+      WHERE workId = NEW.workId
+      ORDER BY indexInWork ASC
+      LIMIT 1
+    ),
+    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+    WHERE id = NEW.workId;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete
+  AFTER DELETE ON work_images
+  BEGIN
+    UPDATE works
+    SET firstImageId = (
+      SELECT id
+      FROM work_images
+      WHERE workId = OLD.workId
+      ORDER BY indexInWork ASC
+      LIMIT 1
+    ),
+    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+    WHERE id = OLD.workId;
+  END;  
+  
+  -- 7. 初始化书法风格配置到settings表
+  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES 
+  ('style_configs', '{"category": "style", "displayName": "书法风格", "updateTime": null, "items": [{"key": "regular", "displayName": "楷书", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Regular Script", "zh": "楷书"}, "createTime": null, "updateTime": null}, {"key": "running", "displayName": "行书", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Running Script", "zh": "行书"}, "createTime": null, "updateTime": null}, {"key": "cursive", "displayName": "草书", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Cursive Script", "zh": "草书"}, "createTime": null, "updateTime": null}, {"key": "clerical", "displayName": "隶书", "sortOrder": 4, "isSystem": true, "isActive": true, "localizedNames": {"en": "Clerical Script", "zh": "隶书"}, "createTime": null, "updateTime": null}, {"key": "seal", "displayName": "篆书", "sortOrder": 5, "isSystem": true, "isActive": true, "localizedNames": {"en": "Seal Script", "zh": "篆书"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 6, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他"}, "createTime": null, "updateTime": null}]}', datetime('now'));
+
+  -- 8. 初始化书写工具配置到settings表
+  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES 
+  ('tool_configs', '{"category": "tool", "displayName": "书写工具", "updateTime": null, "items": [{"key": "brush", "displayName": "毛笔", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Brush", "zh": "毛笔"}, "createTime": null, "updateTime": null}, {"key": "hardPen", "displayName": "硬笔", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Hard Pen", "zh": "硬笔"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他"}, "createTime": null, "updateTime": null}]}', datetime('now'));
+
+  -- 9. 更新CharacterView视图（移除creationTime映射）
+  DROP VIEW IF EXISTS CharacterView;
+  CREATE VIEW IF NOT EXISTS CharacterView AS
+  SELECT 
+    c.id,
+    c.character,
+    c.isFavorite,
+    c.createTime AS collectionTime,
+    c.updateTime,
+    c.pageId,
+    c.workId,
+    c.tags,
+    c.region,
+    c.note,
+    w.style,
+    w.tool,
+    w.title,
+    w.author
+  FROM 
+    characters c
+  LEFT JOIN
+    works w ON c.workId = w.id;
+  
+
+  ''',
 ];

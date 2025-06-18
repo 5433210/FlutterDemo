@@ -456,7 +456,6 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       );
     }
   }
-
   Future<void> _saveChanges() async {
     final l10n = AppLocalizations.of(context);
     final editingWork = ref.read(workDetailProvider).editingWork;
@@ -468,9 +467,9 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
           'workId': editingWork?.id,
           'title': editingWork?.title,
           'author': editingWork?.author,
-          'style': editingWork?.style.value,
-          'tool': editingWork?.tool.value,
-          'creationDate': editingWork?.creationDate.toString(),
+          'style': editingWork?.style,
+          'tool': editingWork?.tool,
+          // 'creationDate': editingWork?.creationDate.toString(),
           'remark': editingWork?.remark,
           'tagCount': editingWork?.tags.length,
           'tags': editingWork?.tags,
@@ -522,13 +521,12 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       final savedWork = ref.read(workDetailProvider).work;
       AppLogger.debug('Complete work state after saving',
           tag: 'M3WorkDetailPage',
-          data: {
-            'workId': savedWork?.id,
+          data: {            'workId': savedWork?.id,
             'title': savedWork?.title,
             'author': savedWork?.author,
-            'style': savedWork?.style.value,
-            'tool': savedWork?.tool.value,
-            'creationDate': savedWork?.creationDate.toString(),
+            'style': savedWork?.style,
+            'tool': savedWork?.tool,
+            // 'creationDate': savedWork?.creationDate.toString(),
             'remark': savedWork?.remark,
             'tagCount': savedWork?.tags.length,
             'tags': savedWork?.tags,

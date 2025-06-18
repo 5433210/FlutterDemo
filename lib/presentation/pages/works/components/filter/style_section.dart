@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../domain/enums/work_style.dart';
+import '../../../../../infrastructure/providers/config_providers.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
 import 'work_filter_section.dart';
 
-class StyleSection extends StatelessWidget {
+class StyleSection extends ConsumerWidget {
   final WorkFilter filter;
   final ValueChanged<WorkFilter> onFilterChanged;
 
@@ -16,44 +17,41 @@ class StyleSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return WorkFilterSection(
       title: l10n.calligraphyStyle,
-      child: _buildStyleChips(context),
+      child: _buildStyleChips(context, ref),
     );
   }
-
-  Widget _buildStyleChips(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: WorkStyle.values.map((style) {
-        final selected = filter.style?.value == style.value;
-        return FilterChip(
-          label: Text(_getStyleLabel(style, l10n)),
-          selected: selected,
-          onSelected: (value) {
-            // 如果是取消选择或者点击当前已选中的项，则清除选择
-            final newStyle = selected ? null : WorkStyle.fromValue(style.value);
-            onFilterChanged(
-              filter.copyWith(style: newStyle),
+  Widget _buildStyleChips(BuildContext context, WidgetRef ref) {
+    final stylesAsync = ref.watch(activeStyleItemsProvider);
+    final displayNamesAsync = ref.watch(styleDisplayNamesProvider);
+    
+    return stylesAsync.when(
+      data: (styles) => displayNamesAsync.when(
+        data: (displayNames) => Wrap(
+          spacing: 8,
+          runSpacing: 8,          children: styles.map((styleItem) {
+            final selected = filter.style == styleItem.key;
+            final displayName = displayNames[styleItem.key] ?? styleItem.displayName;
+            return FilterChip(
+              label: Text(displayName),
+              selected: selected,
+              onSelected: (value) {
+                final newStyle = selected ? null : styleItem.key;
+                onFilterChanged(
+                  filter.copyWith(style: newStyle),
+                );
+              },
             );
-          },
-        );
-      }).toList(),
+          }).toList(),
+        ),
+        loading: () => const SizedBox.shrink(),
+        error: (_, __) => const SizedBox.shrink(),
+      ),
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
-  }
-  
-  String _getStyleLabel(WorkStyle style, AppLocalizations l10n) {
-    return switch (style) {
-      WorkStyle.regular => l10n.workStyleRegular,
-      WorkStyle.running => l10n.workStyleRunning,
-      WorkStyle.cursive => l10n.workStyleCursive,
-      WorkStyle.clerical => l10n.workStyleClerical,
-      WorkStyle.seal => l10n.workStyleSeal,
-      WorkStyle.other => l10n.workToolOther,
-    };
   }
 }

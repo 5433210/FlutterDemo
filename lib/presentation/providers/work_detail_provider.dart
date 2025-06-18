@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
 import '../../application/services/work/work_service.dart';
-import '../../domain/enums/work_style.dart';
-import '../../domain/enums/work_tool.dart';
 import '../../domain/models/character/character_entity.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
@@ -265,38 +263,34 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       // 恢复失败，不处理
     }
   }
-
   void updateWorkBasicInfo({
     String? title,
     String? author,
     String? remark,
-    WorkStyle? style,
-    WorkTool? tool,
-    DateTime? creationDate,
+    String? style,
+    String? tool,
+    // DateTime? creationDate, // Removed as per requirements
   }) {
     if (state.editingWork == null) return;
 
     // Add logs to help with debugging
-    AppLogger.debug('Updating work basic info',
-        tag: 'WorkDetailProvider',
+    AppLogger.debug('Updating work basic info',        tag: 'WorkDetailProvider',
         data: {
           'workId': state.editingWork!.id,
           'title': title ?? '[unchanged]',
           'author': author ?? '[unchanged]',
-          'style': style?.value ?? '[unchanged]',
-          'tool': tool?.value ?? '[unchanged]',
-          'creationDate': creationDate?.toString() ?? '[unchanged]',
+          'style': style ?? '[unchanged]',
+          'tool': tool ?? '[unchanged]',
+          // 'creationDate': creationDate?.toString() ?? '[unchanged]',
           'remark': remark?.toString() ?? '[unchanged]',
-        });
-
-    final updatedWork = WorkEntity(
+        });    final updatedWork = WorkEntity(
       id: state.editingWork!.id,
       title: title ?? state.editingWork!.title,
       author: author ?? state.editingWork!.author,
       remark: remark ?? state.editingWork!.remark,
       style: style ?? state.editingWork!.style,
       tool: tool ?? state.editingWork!.tool,
-      creationDate: creationDate ?? state.editingWork!.creationDate,
+      // creationDate: creationDate ?? state.editingWork!.creationDate, // Removed field
       createTime: state.editingWork!.createTime,
       updateTime: DateTime.now(),
       images: state.editingWork!.images,

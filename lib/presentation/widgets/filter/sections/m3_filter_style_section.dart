@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/enums/work_style.dart';
+import '../../../../infrastructure/providers/config_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 
 /// 通用的书法风格筛选部分组件
-class M3FilterStyleSection extends StatelessWidget {
+class M3FilterStyleSection extends ConsumerWidget {
   /// 当前选中的书法风格
-  final WorkStyle? selectedStyle;
-
-  /// 可用的书法风格列表
-  final List<WorkStyle> availableStyles;
+  final String? selectedStyle;
 
   /// 书法风格变化时的回调
-  final ValueChanged<WorkStyle?> onStyleChanged;
-
+  final ValueChanged<String?> onStyleChanged;
   /// 构造函数
   const M3FilterStyleSection({
     super.key,
     required this.selectedStyle,
-    required this.availableStyles,
     required this.onStyleChanged,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    
+    final activeStyleItems = ref.watch(activeStyleItemsProvider);
+    final styleDisplayNames = ref.watch(styleDisplayNamesProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,39 +35,31 @@ class M3FilterStyleSection extends StatelessWidget {
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: availableStyles.map((style) {
-            final isSelected = selectedStyle == style;
-            return FilterChip(
-              label: Text(_getLocalizedStyleName(style, l10n)),
-              selected: isSelected,
-              onSelected: (selected) {
-                onStyleChanged(selected ? style : null);
-              },
-            );
-          }).toList(),
+        activeStyleItems.when(
+          data: (styles) => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: styles.map((style) {
+              final isSelected = selectedStyle == style.key;
+              final displayName = styleDisplayNames.maybeWhen(
+                data: (names) => names[style.key] ?? style.displayName,
+                orElse: () => style.displayName,
+              );
+              return FilterChip(
+                label: Text(displayName),
+                selected: isSelected,
+                onSelected: (selected) {
+                  onStyleChanged(selected ? style.key : null);
+                },
+              );
+            }).toList(),
+          ),
+          loading: () => const CircularProgressIndicator(),          error: (error, stackTrace) => Text(
+            'Loading error', // TODO: Add proper localization
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
         ),
       ],
     );
-  }
-
-  /// 获取本地化的书法风格名称
-  String _getLocalizedStyleName(WorkStyle style, AppLocalizations l10n) {
-    switch (style) {
-      case WorkStyle.regular:
-        return l10n.workStyleRegular;
-      case WorkStyle.running:
-        return l10n.workStyleRunning;
-      case WorkStyle.cursive:
-        return l10n.workStyleCursive;
-      case WorkStyle.clerical:
-        return l10n.workStyleClerical;
-      case WorkStyle.seal:
-        return l10n.workStyleSeal;
-      case WorkStyle.other:
-        return l10n.workToolOther;
-    }
   }
 }
