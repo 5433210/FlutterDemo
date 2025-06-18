@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/models/config/config_item.dart';
 import '../../domain/services/config_service.dart';
 import '../repositories/config_repository.dart';
@@ -7,10 +9,34 @@ class ConfigServiceImpl implements ConfigService {
   final ConfigRepository _repository;
 
   ConfigServiceImpl(this._repository);
-
   @override
   Future<ConfigCategory?> getConfigCategory(String category) async {
-    return await _repository.getConfigCategory(category);
+    try {
+      debugPrint('🔧 ConfigServiceImpl: 获取配置分类: $category');
+      final result = await _repository.getConfigCategory(category);
+      debugPrint(
+          '🔧 ConfigServiceImpl: 获取结果: ${result != null ? "有数据" : "null"}');
+
+      if (result != null) {
+        debugPrint('🔧 配置项数量: ${result.items.length}');
+        // 验证数据完整性
+        final invalidItems =
+            result.items.where((item) => item.key.isEmpty).toList();
+        if (invalidItems.isNotEmpty) {
+          debugPrint('❌ 发现 ${invalidItems.length} 个无效配置项');
+          for (final item in invalidItems) {
+            debugPrint('❌   - ${item.displayName}: key为空');
+          }
+        }
+      }
+
+      return result;
+    } catch (e, stack) {
+      debugPrint('❌ ConfigServiceImpl: 获取配置分类失败: $category');
+      debugPrint('❌ 错误: $e');
+      debugPrint('❌ 堆栈: $stack');
+      rethrow;
+    }
   }
 
   @override
@@ -81,9 +107,9 @@ class ConfigServiceImpl implements ConfigService {
     }
 
     // 查找并更新配置项
-    final itemIndex = configCategory.items
-        .indexWhere((existing) => existing.key == item.key);
-    
+    final itemIndex =
+        configCategory.items.indexWhere((existing) => existing.key == item.key);
+
     if (itemIndex == -1) {
       throw ConfigException(
         'Configuration item with key "${item.key}" not found',
@@ -94,7 +120,7 @@ class ConfigServiceImpl implements ConfigService {
 
     final updatedItems = [...configCategory.items];
     updatedItems[itemIndex] = item.copyWith(updateTime: DateTime.now());
-    
+
     final updatedCategory = configCategory.copyWith(
       items: updatedItems,
       updateTime: DateTime.now(),
@@ -114,10 +140,9 @@ class ConfigServiceImpl implements ConfigService {
     }
 
     // 查找配置项
-    final itemToDelete = configCategory.items
-        .where((item) => item.key == itemKey)
-        .firstOrNull;
-    
+    final itemToDelete =
+        configCategory.items.where((item) => item.key == itemKey).firstOrNull;
+
     if (itemToDelete == null) {
       throw ConfigException(
         'Configuration item with key "$itemKey" not found',
@@ -136,10 +161,9 @@ class ConfigServiceImpl implements ConfigService {
     }
 
     // 删除配置项
-    final updatedItems = configCategory.items
-        .where((item) => item.key != itemKey)
-        .toList();
-    
+    final updatedItems =
+        configCategory.items.where((item) => item.key != itemKey).toList();
+
     final updatedCategory = configCategory.copyWith(
       items: updatedItems,
       updateTime: DateTime.now(),
@@ -149,7 +173,8 @@ class ConfigServiceImpl implements ConfigService {
   }
 
   @override
-  Future<void> reorderConfigItems(String category, List<String> keyOrder) async {
+  Future<void> reorderConfigItems(
+      String category, List<String> keyOrder) async {
     final configCategory = await _repository.getConfigCategory(category);
     if (configCategory == null) {
       throw ConfigException(
@@ -161,8 +186,8 @@ class ConfigServiceImpl implements ConfigService {
     // 验证所有键是否存在
     final existingKeys = configCategory.items.map((item) => item.key).toSet();
     final providedKeys = keyOrder.toSet();
-    
-    if (!existingKeys.containsAll(providedKeys) || 
+
+    if (!existingKeys.containsAll(providedKeys) ||
         !providedKeys.containsAll(existingKeys)) {
       throw ConfigException(
         'Provided keys do not match existing configuration items',
@@ -172,19 +197,15 @@ class ConfigServiceImpl implements ConfigService {
 
     // 重新排序配置项
     final itemMap = {for (var item in configCategory.items) item.key: item};
-    final reorderedItems = keyOrder
-        .asMap()
-        .entries
-        .map((entry) {
-          final index = entry.key;
-          final key = entry.value;
-          final item = itemMap[key]!;
-          return item.copyWith(
-            sortOrder: index + 1,
-            updateTime: DateTime.now(),
-          );
-        })
-        .toList();
+    final reorderedItems = keyOrder.asMap().entries.map((entry) {
+      final index = entry.key;
+      final key = entry.value;
+      final item = itemMap[key]!;
+      return item.copyWith(
+        sortOrder: index + 1,
+        updateTime: DateTime.now(),
+      );
+    }).toList();
 
     final updatedCategory = configCategory.copyWith(
       items: reorderedItems,
@@ -205,9 +226,9 @@ class ConfigServiceImpl implements ConfigService {
     }
 
     // 查找并切换配置项状态
-    final itemIndex = configCategory.items
-        .indexWhere((item) => item.key == itemKey);
-    
+    final itemIndex =
+        configCategory.items.indexWhere((item) => item.key == itemKey);
+
     if (itemIndex == -1) {
       throw ConfigException(
         'Configuration item with key "$itemKey" not found',
@@ -222,7 +243,7 @@ class ConfigServiceImpl implements ConfigService {
       isActive: !currentItem.isActive,
       updateTime: DateTime.now(),
     );
-    
+
     final updatedCategory = configCategory.copyWith(
       items: updatedItems,
       updateTime: DateTime.now(),
@@ -235,9 +256,10 @@ class ConfigServiceImpl implements ConfigService {
   Future<bool> isConfigItemKeyExists(String category, String key) async {
     final configCategory = await _repository.getConfigCategory(category);
     if (configCategory == null) return false;
-    
+
     return configCategory.items.any((item) => item.key == key);
   }
+
   @override
   Future<void> resetConfigToDefault(String category) async {
     if (category == ConfigCategories.style) {
@@ -260,21 +282,24 @@ class ConfigServiceImpl implements ConfigService {
         'Configuration category not found: $category',
         category: category,
       );
-    }    return {
+    }
+    return {
       'category': configCategory.category,
       'displayName': configCategory.displayName,
       'items': configCategory.items.map((item) => item.toJson()).toList(),
-      'updateTime': configCategory.updateTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'updateTime': configCategory.updateTime?.toIso8601String() ??
+          DateTime.now().toIso8601String(),
       'exportTime': DateTime.now().toIso8601String(),
       'version': '1.0.0',
     };
   }
 
   @override
-  Future<void> importConfig(String category, Map<String, dynamic> config) async {
+  Future<void> importConfig(
+      String category, Map<String, dynamic> config) async {
     try {
       // 验证配置格式
-      if (!config.containsKey('category') || 
+      if (!config.containsKey('category') ||
           !config.containsKey('items') ||
           config['category'] != category) {
         throw ConfigException(
@@ -286,7 +311,8 @@ class ConfigServiceImpl implements ConfigService {
       // 解析配置项
       final itemsList = config['items'] as List;
       final items = itemsList
-          .map((itemJson) => ConfigItem.fromJson(itemJson as Map<String, dynamic>))
+          .map((itemJson) =>
+              ConfigItem.fromJson(itemJson as Map<String, dynamic>))
           .toList();
 
       // 创建新的配置分类
@@ -341,8 +367,7 @@ class ConfigServiceImpl implements ConfigService {
     if (configCategory == null) return {};
 
     return {
-      for (var item in configCategory.activeItems)
-        item.key: item.displayName
+      for (var item in configCategory.activeItems) item.key: item.displayName
     };
   }
 

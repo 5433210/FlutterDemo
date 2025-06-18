@@ -145,15 +145,21 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
             },
             itemBuilder: (context, index) {
               final thumbnail = _buildThumbnail(context, index, theme);
+              final itemKey =
+                  ValueKey(widget.keyResolver(widget.images[index]));
+
               return ReorderableDragStartListener(
-                key: ValueKey(widget.keyResolver(widget.images[index])),
+                key: itemKey,
                 index: index,
                 enabled: !_isDragging,
                 child: MouseRegion(
                   cursor: _isDragging
                       ? SystemMouseCursors.grabbing
                       : SystemMouseCursors.grab,
-                  child: thumbnail,
+                  child: Container(
+                    key: itemKey, // Add key to the root widget of each item
+                    child: thumbnail,
+                  ),
                 ),
               );
             },

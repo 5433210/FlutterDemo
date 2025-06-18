@@ -28,19 +28,52 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _searchQuery = '';
-
   @override
   void initState() {
     super.initState();
+
+    debugPrint(
+        '🔧 ConfigManagementPage initState: category=${widget.category}');
 
     // 如果指定了分类，只显示单个页面；否则显示选项卡
     if (widget.category == null) {
       _tabController = TabController(length: 2, vsync: this);
     }
+
+    // 异步初始化配置数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeConfigData();
+    });
+  }
+
+  /// 初始化配置数据
+  Future<void> _initializeConfigData() async {
+    try {
+      debugPrint('🔧 初始化配置数据...');
+
+      // 确保配置初始化完成
+      await ref.read(configInitializationProvider.future);
+
+      debugPrint('✅ 配置数据初始化完成');
+    } catch (e, stack) {
+      debugPrint('❌ 配置数据初始化失败: $e');
+      debugPrint('❌ 堆栈: $stack');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('配置数据初始化失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
+    debugPrint('🗑️ ConfigManagementPage dispose');
+
     if (widget.category == null) {
       _tabController.dispose();
     }
@@ -52,13 +85,40 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    if (widget.category != null) {
-      // 单个分类页面
-      return _buildSingleCategoryPage(
-          widget.category!, widget.title ?? l10n.configManagement);
-    } else {
-      // 多选项卡页面
-      return _buildMultiCategoryPage();
+    try {
+      if (widget.category != null) {
+        // 单个分类页面
+        return _buildSingleCategoryPage(
+            widget.category!, widget.title ?? l10n.configManagement);
+      } else {
+        // 多选项卡页面
+        return _buildMultiCategoryPage();
+      }
+    } catch (e, stack) {
+      debugPrint('❌ ConfigManagementPage.build 发生错误: $e');
+      debugPrint('❌ 堆栈: $stack');
+
+      // 返回错误页面
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.configManagement)),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('页面构建错误', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 8),
+              Text('$e', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('返回'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
   }
 
@@ -166,11 +226,43 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
         final configState = ref.watch(notifierProvider);
 
         return configState.when(
-          data: (config) => config != null
-              ? _buildConfigItemList(config, category)
-              : _buildEmptyState(category),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => _buildErrorState(error, category),
+          data: (config) {
+            // 增强的null检查和数据验证
+            if (config == null) {
+              debugPrint('⚠️ 配置数据为null: $category');
+              return _buildEmptyState(category);
+            }
+
+            if (config.items.isEmpty) {
+              debugPrint('⚠️ 配置项列表为空: $category');
+              return _buildEmptyState(category);
+            }
+
+            // 检查数据完整性
+            final invalidItems =
+                config.items.where((item) => item.key.isEmpty).toList();
+            if (invalidItems.isNotEmpty) {
+              debugPrint('❌ 发现无效配置项: $category, 数量: ${invalidItems.length}');
+              for (final item in invalidItems) {
+                debugPrint(
+                    '❌   - displayName: ${item.displayName}, key: "${item.key}"');
+              }
+              return _buildErrorState('配置数据不完整，存在无效的配置项', category);
+            }
+
+            debugPrint('✅ 配置数据有效: $category, 配置项数量: ${config.items.length}');
+            return _buildConfigItemList(config, category);
+          },
+          loading: () {
+            debugPrint('🔄 正在加载配置: $category');
+            return const Center(child: CircularProgressIndicator());
+          },
+          error: (error, stack) {
+            debugPrint('❌ 配置加载错误: $category');
+            debugPrint('❌ 错误详情: $error');
+            debugPrint('❌ 堆栈: $stack');
+            return _buildErrorState(error, category);
+          },
         );
       },
     );
@@ -194,14 +286,40 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
       return _buildSearchEmptyState();
     }
 
+    // 确保所有items都有有效的key，并且进行null安全检查
+    if (items.any((item) => item.key.isEmpty)) {
+      debugPrint('❌ 发现配置项中有空的key，这可能会导致ReorderableListView错误');
+      return _buildErrorState('配置数据不完整，存在无效的配置项', category);
+    }
+
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: items.length,
-      onReorder: (oldIndex, newIndex) =>
-          _reorderItems(category, oldIndex, newIndex, items),
+      onReorder: (oldIndex, newIndex) {
+        if (!mounted) return; // 添加mounted检查
+        _reorderItems(category, oldIndex, newIndex, items);
+      },
       itemBuilder: (context, index) {
+        if (index >= items.length) {
+          // 防止索引越界
+          debugPrint(
+              '❌ ReorderableListView itemBuilder 索引越界: $index >= ${items.length}');
+          return Container(key: ValueKey('error_$index'));
+        }
+
         final item = items[index];
-        return _buildConfigItemTile(item, category, index);
+        if (item.key.isEmpty) {
+          // 防止空key导致的问题
+          debugPrint('❌ 配置项 $index 的key为空: ${item.displayName}');
+          return Container(key: ValueKey('empty_key_$index'));
+        }
+
+        // ReorderableListView要求每个item的最外层widget必须有key
+        final uniqueKey = '${category}_${item.key}_$index';
+        return Container(
+          key: ValueKey(uniqueKey), // 最外层必须有key
+          child: _buildConfigItemTile(item, category, index),
+        );
       },
     );
   }
@@ -210,8 +328,8 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
     return Builder(
       builder: (context) {
         final l10n = AppLocalizations.of(context);
+
         return Card(
-          key: ValueKey(item.key),
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: Row(
@@ -237,7 +355,7 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
               ],
             ),
             title: Text(
-              item.displayName,
+              item.displayName.isNotEmpty ? item.displayName : '未命名配置项',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: item.isActive
@@ -248,7 +366,8 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${l10n.configKey}: ${item.key}'),
+                Text(
+                    '${l10n.configKey}: ${item.key.isNotEmpty ? item.key : '无效key'}'),
                 if (item.isSystem)
                   Chip(
                     label: Text(l10n.systemConfig),
@@ -262,11 +381,18 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
               children: [
                 Switch(
                   value: item.isActive,
-                  onChanged: (value) => _toggleItemActive(category, item.key),
+                  onChanged: (value) {
+                    if (mounted) {
+                      _toggleItemActive(category, item.key);
+                    }
+                  },
                 ),
                 PopupMenuButton<String>(
-                  onSelected: (value) =>
-                      _handleItemAction(value, category, item),
+                  onSelected: (value) {
+                    if (mounted) {
+                      _handleItemAction(value, category, item);
+                    }
+                  },
                   itemBuilder: (context) => [
                     PopupMenuItem(
                       value: 'edit',
@@ -610,26 +736,53 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
 
   Future<void> _reorderItems(String category, int oldIndex, int newIndex,
       List<ConfigItem> items) async {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
+    try {
+      debugPrint(
+          '🔄 重新排序配置项: $category, $oldIndex -> $newIndex, 总数: ${items.length}');
+
+      if (oldIndex < 0 ||
+          oldIndex >= items.length ||
+          newIndex < 0 ||
+          newIndex > items.length) {
+        debugPrint(
+            '❌ 重新排序索引无效: oldIndex=$oldIndex, newIndex=$newIndex, length=${items.length}');
+        return;
+      }
+
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+
+      final reorderedItems = List<ConfigItem>.from(items);
+      final item = reorderedItems.removeAt(oldIndex);
+      reorderedItems.insert(newIndex, item);
+
+      final keyOrder = reorderedItems.map((item) => item.key).toList();
+
+      final notifier = ref.read(
+        category == ConfigCategories.style
+            ? styleConfigNotifierProvider.notifier
+            : toolConfigNotifierProvider.notifier,
+      );
+
+      await notifier.reorderItems(keyOrder);
+
+      // 刷新所有相关的配置provider
+      refreshConfigs(ref);
+
+      debugPrint('✅ 配置项重新排序完成');
+    } catch (e, stack) {
+      debugPrint('❌ 重新排序配置项失败: $e');
+      debugPrint('❌ 堆栈: $stack');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('排序失败: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
-
-    final reorderedItems = List<ConfigItem>.from(items);
-    final item = reorderedItems.removeAt(oldIndex);
-    reorderedItems.insert(newIndex, item);
-
-    final keyOrder = reorderedItems.map((item) => item.key).toList();
-
-    final notifier = ref.read(
-      category == ConfigCategories.style
-          ? styleConfigNotifierProvider.notifier
-          : toolConfigNotifierProvider.notifier,
-    );
-
-    await notifier.reorderItems(keyOrder);
-
-    // 刷新所有相关的配置provider
-    refreshConfigs(ref);
   }
 
   void _confirmReset(String category, ConfigNotifier notifier) {

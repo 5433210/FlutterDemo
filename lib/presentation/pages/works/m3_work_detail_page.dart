@@ -64,7 +64,10 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_hasCheckedStateRestoration) {
+    if (state == AppLifecycleState.resumed &&
+        !_hasCheckedStateRestoration &&
+        mounted) {
+      // Add mounted check
       _checkForUnfinishedEditSession();
       _hasCheckedStateRestoration = true;
     }
@@ -246,6 +249,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
   void _checkForUnfinishedEditSession() {
     // Check if there's an unfinished edit session
+    if (!mounted) return; // Add mounted check
+
     final state = ref.read(workDetailProvider);
     if (state.hasChanges && state.isEditing) {
       AppLogger.info(
@@ -380,11 +385,18 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
   Future<void> _loadWorkDetails() async {
     await ref.read(workDetailProvider.notifier).loadWorkDetails(widget.workId);
 
+    // Check if widget is still mounted after async operation
+    if (!mounted) return;
+
     // Verify all work images exist
     final work = ref.read(workDetailProvider).work;
     if (work != null) {
       final storageService = ref.read(workStorageProvider);
       await storageService.verifyWorkImages(widget.workId);
+
+      // Check mounted again after another async operation
+      if (!mounted) return;
+
       if (work.images.isNotEmpty) {
         for (var image in work.images) {
           if (image.id == widget.initialPageId) {
@@ -456,6 +468,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       );
     }
   }
+
   Future<void> _saveChanges() async {
     final l10n = AppLocalizations.of(context);
     final editingWork = ref.read(workDetailProvider).editingWork;
@@ -521,7 +534,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       final savedWork = ref.read(workDetailProvider).work;
       AppLogger.debug('Complete work state after saving',
           tag: 'M3WorkDetailPage',
-          data: {            'workId': savedWork?.id,
+          data: {
+            'workId': savedWork?.id,
             'title': savedWork?.title,
             'author': savedWork?.author,
             'style': savedWork?.style,

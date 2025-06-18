@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/config/config_item.dart';
@@ -86,25 +87,45 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 加载配置
   Future<void> _loadConfig() async {
     try {
+      debugPrint('🔧 ConfigNotifier: 开始加载配置分类: $_category');
       state = const AsyncValue.loading();
+
       final config = await _configService.getConfigCategory(_category);
+      debugPrint(
+          '🔧 ConfigNotifier: 配置加载完成: $_category, 数据: ${config != null ? "有效" : "null"}');
+
+      if (config != null) {
+        debugPrint('🔧 ConfigNotifier: 配置项数量: ${config.items.length}');
+        for (final item in config.items) {
+          debugPrint(
+              '🔧   - ${item.key}: ${item.displayName} (active: ${item.isActive})');
+        }
+      }
+
       state = AsyncValue.data(config);
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 加载配置失败: $_category');
+      debugPrint('❌ 错误: $error');
+      debugPrint('❌ 堆栈: $stackTrace');
       state = AsyncValue.error(error, stackTrace);
     }
   }
 
   /// 重新加载配置
   Future<void> reload() async {
+    debugPrint('🔄 ConfigNotifier: 重新加载配置: $_category');
     await _loadConfig();
   }
 
   /// 添加配置项
   Future<void> addItem(ConfigItem item) async {
     try {
+      debugPrint('➕ ConfigNotifier: 添加配置项: $_category - ${item.key}');
       await _configService.addConfigItem(_category, item);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 添加配置项失败: $_category - ${item.key}');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -112,9 +133,12 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 更新配置项
   Future<void> updateItem(ConfigItem item) async {
     try {
+      debugPrint('✏️ ConfigNotifier: 更新配置项: $_category - ${item.key}');
       await _configService.updateConfigItem(_category, item);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 更新配置项失败: $_category - ${item.key}');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -122,9 +146,12 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 删除配置项
   Future<void> deleteItem(String itemKey) async {
     try {
+      debugPrint('🗑️ ConfigNotifier: 删除配置项: $_category - $itemKey');
       await _configService.deleteConfigItem(_category, itemKey);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 删除配置项失败: $_category - $itemKey');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -132,9 +159,12 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 切换配置项激活状态
   Future<void> toggleItemActive(String itemKey) async {
     try {
+      debugPrint('🔄 ConfigNotifier: 切换配置项状态: $_category - $itemKey');
       await _configService.toggleConfigItemActive(_category, itemKey);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 切换配置项状态失败: $_category - $itemKey');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -142,9 +172,13 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 重新排序配置项
   Future<void> reorderItems(List<String> keyOrder) async {
     try {
+      debugPrint('🔀 ConfigNotifier: 重新排序配置项: $_category');
+      debugPrint('🔀 排序: ${keyOrder.join(", ")}');
       await _configService.reorderConfigItems(_category, keyOrder);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 重新排序配置项失败: $_category');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
@@ -152,9 +186,12 @@ class ConfigNotifier extends StateNotifier<AsyncValue<ConfigCategory?>> {
   /// 重置为默认配置
   Future<void> resetToDefault() async {
     try {
+      debugPrint('♻️ ConfigNotifier: 重置为默认配置: $_category');
       await _configService.resetConfigToDefault(_category);
       await _loadConfig();
     } catch (error, stackTrace) {
+      debugPrint('❌ ConfigNotifier: 重置默认配置失败: $_category');
+      debugPrint('❌ 错误: $error');
       state = AsyncValue.error(error, stackTrace);
     }
   }
