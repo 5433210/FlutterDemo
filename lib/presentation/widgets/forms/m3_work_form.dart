@@ -528,6 +528,22 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // 如果是只读模式，使用简化的显示方式
+    if (_isReadOnly) {
+      return _buildFieldWithTooltip(
+        shortcut: 'Tab',
+        tooltip: l10n.tabToNextField,
+        helpText: widget.showHelp ? l10n.workFormStyleHelp : null,
+        helpIcon: Icons.palette_outlined,
+        child: _buildReadOnlyDropdown(
+          label: l10n.calligraphyStyle,
+          value: widget.initialStyle,
+          displayNamesProvider: ref.watch(styleDisplayNamesProvider),
+          fallbackDisplayName: widget.initialStyle ?? '',
+        ),
+      );
+    }
+
     // Read dynamic configuration data
     final activeStyleItems = ref.watch(activeStyleItemsProvider);
 
@@ -664,6 +680,22 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // 如果是只读模式，使用简化的显示方式
+    if (_isReadOnly) {
+      return _buildFieldWithTooltip(
+        shortcut: 'Tab',
+        tooltip: l10n.tabToNextField,
+        helpText: widget.showHelp ? l10n.workFormToolHelp : null,
+        helpIcon: Icons.brush_outlined,
+        child: _buildReadOnlyDropdown(
+          label: l10n.writingTool,
+          value: widget.initialTool,
+          displayNamesProvider: ref.watch(toolDisplayNamesProvider),
+          fallbackDisplayName: widget.initialTool ?? '',
+        ),
+      );
+    }
+
     // Read dynamic configuration data
     final activeToolItems = ref.watch(activeToolItemsProvider);
 
@@ -738,6 +770,72 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
             textStyle: theme.textTheme.bodyLarge,
           );
         },
+      ),
+    );
+  }
+
+  /// 为只读模式创建简化的下拉字段，直接显示配置项的显示名称
+  Widget _buildReadOnlyDropdown({
+    required String label,
+    required String? value,
+    required AsyncValue<Map<String, String>> displayNamesProvider,
+    required String fallbackDisplayName,
+  }) {
+    final theme = Theme.of(context);
+
+    return displayNamesProvider.when(
+      data: (displayNames) {
+        final displayText =
+            value != null ? displayNames[value] ?? fallbackDisplayName : '';
+
+        return TextFormField(
+          initialValue: displayText,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+            suffixIcon: Icon(
+              Icons.arrow_drop_down,
+              color: theme.disabledColor,
+            ),
+            filled: true,
+            fillColor: theme.disabledColor.withValues(alpha: 0.05),
+          ),
+          enabled: true,
+          readOnly: true,
+          style: theme.textTheme.bodyLarge,
+        );
+      },
+      loading: () => TextFormField(
+        initialValue: 'Loading...',
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          suffixIcon: Icon(
+            Icons.arrow_drop_down,
+            color: theme.disabledColor,
+          ),
+          filled: true,
+          fillColor: theme.disabledColor.withValues(alpha: 0.05),
+        ),
+        enabled: false,
+        readOnly: true,
+        style: theme.textTheme.bodyLarge,
+      ),
+      error: (error, stackTrace) => TextFormField(
+        initialValue: fallbackDisplayName,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          suffixIcon: Icon(
+            Icons.arrow_drop_down,
+            color: theme.disabledColor,
+          ),
+          filled: true,
+          fillColor: theme.disabledColor.withValues(alpha: 0.05),
+        ),
+        enabled: true,
+        readOnly: true,
+        style: theme.textTheme.bodyLarge,
       ),
     );
   }

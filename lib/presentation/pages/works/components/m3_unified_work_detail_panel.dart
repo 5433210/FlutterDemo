@@ -169,16 +169,13 @@ class _M3UnifiedWorkDetailPanelState
                 onPressed: widget.onToggleFavorite,
               ),
             ],
-          ),
-
-        // Use M3WorkForm for both view and edit modes
+          ), // Use M3WorkForm for both view and edit modes
         M3WorkForm(
           title: AppLocalizations.of(context).basicInfo,
           initialTitle: widget.work.title,
           initialAuthor: widget.work.author,
-          // TODO: Update M3WorkForm to use String instead of enums
-          // initialStyle: widget.work.style,
-          // initialTool: widget.work.tool,
+          initialStyle: widget.work.style,
+          initialTool: widget.work.tool,
           initialRemark: widget.work.remark,
           isProcessing: false,
           // Only enable editing in edit mode
@@ -188,12 +185,12 @@ class _M3UnifiedWorkDetailPanelState
           onAuthorChanged: widget.isEditing
               ? (value) => _updateWorkField('author', value)
               : null,
-          // TODO: Restore after updating M3WorkForm to use String instead of enums
-          // onStyleChanged: widget.isEditing
-          //     ? (value) => _updateWorkField('style', value)          //     : null,
-          // onToolChanged: widget.isEditing
-          //     ? (value) => _updateWorkField('tool', value)
-          //     : null,
+          onStyleChanged: widget.isEditing
+              ? (value) => _updateWorkField('style', value)
+              : null,
+          onToolChanged: widget.isEditing
+              ? (value) => _updateWorkField('tool', value)
+              : null,
           onRemarkChanged: widget.isEditing
               ? (value) => _updateWorkField('remark', value)
               : null,

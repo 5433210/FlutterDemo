@@ -63,6 +63,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   final GlobalKey<OptimizedEraseLayerStackState> _layerStackKey = GlobalKey();
 
   bool _isProcessing = false;
+  bool _disposed = false;
 
   // 跟踪Alt键当前状态的变量
   bool _isAltKeyPressed = false;
@@ -145,13 +146,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         AppLogger.debug('检测到强制更新图像标志，更新处理图像');
         _updateOutline(); // Uses internal debouncing mechanism
       }
-    });
-
-    // 监听Alt键状态
+    }); // 监听Alt键状态
     _altKeyNotifier.addListener(() {
-      setState(() {
-        // 当ValueNotifier更新时，强制刷新UI
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          // 当ValueNotifier更新时，强制刷新UI
+        });
+      }
     });
 
     return KeyboardListener(
@@ -232,9 +233,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   @override
   void dispose() {
+    _disposed = true;
+
     // 移除所有键盘事件处理器
     HardwareKeyboard.instance.removeHandler(_handleRawKeyEvent);
     ServicesBinding.instance.keyboard.removeHandler(_handleKeyboardEvent);
+
+    // 取消定时器
+    _updateOutlineDebounceTimer?.cancel();
 
     // 清理ValueNotifier
     _altKeyNotifier.dispose();
@@ -466,13 +472,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       } else {
         return KeyEventResult.ignored;
       }
-
       if (_isAltKeyPressed != isDown &&
           now.difference(_lastAltToggleTime) > _altToggleDebounce) {
-        setState(() {
-          _isAltKeyPressed = isDown;
-          _lastAltToggleTime = now;
-        });
+        if (!_disposed && mounted) {
+          setState(() {
+            _isAltKeyPressed = isDown;
+            _lastAltToggleTime = now;
+          });
+        }
       }
 
       return KeyEventResult.handled;
@@ -492,10 +499,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       // 防止事件重复触发
       if (_isAltKeyPressed != isDown &&
           now.difference(_lastAltToggleTime) > _altToggleDebounce) {
-        setState(() {
-          _isAltKeyPressed = isDown;
-          _lastAltToggleTime = now;
-        });
+        if (!_disposed && mounted) {
+          setState(() {
+            _isAltKeyPressed = isDown;
+            _lastAltToggleTime = now;
+          });
+        }
 
         AppLogger.debug('Alt键状态变化', data: {
           'isDown': isDown,
@@ -535,9 +544,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _onFocusChange() {
     if (!focusNode.hasFocus && _isAltKeyPressed) {
-      setState(() {
-        _isAltKeyPressed = false;
-      });
+      if (!_disposed && mounted) {
+        setState(() {
+          _isAltKeyPressed = false;
+        });
+      }
     }
   }
 
@@ -614,10 +625,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       AppLogger.debug('Alt键状态已更新', data: {
         'isPressed': isPressed,
         'timestamp': now.millisecondsSinceEpoch,
-      });
-
-      // 确保UI更新
-      if (mounted) {
+      }); // 确保UI更新
+      if (!_disposed && mounted) {
         setState(() {});
       }
 
@@ -625,7 +634,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       if (!isPressed) {
         // 延迟50ms后再检查一次，捕获可能的不同步状态
         Future.delayed(const Duration(milliseconds: 50), () {
-          if (mounted && _altKeyNotifier.value != isPressed) {
+          if (!_disposed && mounted && _altKeyNotifier.value != isPressed) {
             _altKeyNotifier.value = isPressed;
             AppLogger.debug('Alt键状态释放后强制同步', data: {
               'isPressed': isPressed,
@@ -718,11 +727,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
 
     // Cancel any previously scheduled debounced updates
-    _updateOutlineDebounceTimer?.cancel();
-
-    // Start a debounce timer to avoid too frequent updates
+    _updateOutlineDebounceTimer
+        ?.cancel(); // Start a debounce timer to avoid too frequent updates
     _updateOutlineDebounceTimer =
         Timer(const Duration(milliseconds: 50), () async {
+      if (_disposed || !mounted) return; // 检查widget是否已被dispose
       setState(() => _isProcessing = true);
 
       try {
@@ -780,8 +789,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
               rotation: 0.0, // 图像内容已经旋转过，不需要再次旋转
             ),
             const Duration(seconds: 5));
-
-        if (mounted) {
+        if (!_disposed && mounted) {
           setState(() {
             _outline = result.outline;
             _isProcessing = false;
@@ -811,10 +819,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           }
         }
       } catch (e, stack) {
-        AppLogger.error('轮廓检测失败', error: e, stackTrace: stack);
-
-        // Make sure to reset state on error
-        if (mounted) {
+        AppLogger.error('轮廓检测失败',
+            error: e, stackTrace: stack); // Make sure to reset state on error
+        if (!_disposed && mounted) {
           setState(() => _isProcessing = false);
         }
       }

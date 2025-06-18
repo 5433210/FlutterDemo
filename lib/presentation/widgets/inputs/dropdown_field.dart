@@ -55,10 +55,10 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
       _textController.text = displayText;
     }
 
-    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
-
-    // 只读模式
+    final readOnlyFillColor =
+        theme.disabledColor.withValues(alpha: 0.05); // 只读模式
     if (widget.readOnly) {
+      _updateTextController(); // 确保文本控制器有正确的值
       return TextFormField(
         controller: _textController,
         decoration: InputDecoration(
@@ -231,8 +231,23 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
       return (selectedItem.child as Text).data ?? '';
     }
 
-    // 否则返回空字符串
-    return '';
+    // 尝试从复杂组件中提取文本
+    // 对于 Consumer<WidgetRef> 或其他包装器，我们需要特殊处理
+    return _extractTextFromWidget(selectedItem.child) ?? '';
+  }
+
+  /// 从复杂的 Widget 树中提取文本内容
+  String? _extractTextFromWidget(Widget child) {
+    // 对于 Consumer，我们无法直接访问其构建的内容
+    // 因为它需要上下文和 ref。作为备选方案，我们使用选中的值
+
+    // 对于简单的 Text widget
+    if (child is Text) {
+      return child.data;
+    }
+
+    // 如果无法提取，返回选中值的字符串表示
+    return widget.value?.toString() ?? '';
   }
 
   void _handleFocusChange() {
