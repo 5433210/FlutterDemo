@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../domain/enums/sort_field.dart';
+import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_favorite_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_style_section.dart';
@@ -132,7 +134,8 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
 
     // 获取可用的排序字段
     final sortFields = [
-      SortField.title,      SortField.author,
+      SortField.title,
+      SortField.author,
       SortField.createTime,
       SortField.updateTime,
       SortField.style,
@@ -235,21 +238,77 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
       // 书法风格部分
       _buildSectionCard(
         context,
-        M3FilterStyleSection(          selectedStyle: widget.filter.style,
+        M3FilterStyleSection(
+          selectedStyle: widget.filter.style,
           onStyleChanged: (style) {
             final newFilter = widget.filter.copyWith(style: style);
             widget.onFilterChanged(newFilter);
           },
         ),
-      ),
-
-      // 书写工具部分
+      ), // 书写工具部分
       _buildSectionCard(
-        context,        M3FilterToolSection(
+        context,
+        M3FilterToolSection(
           selectedTool: widget.filter.tool,
           onToolChanged: (tool) {
             final newFilter = widget.filter.copyWith(tool: tool);
             widget.onFilterChanged(newFilter);
+          },
+        ),
+      ), // 创建日期部分
+      _buildSectionCard(
+        context,
+        M3FilterDateRangeSection(
+          title: l10n.createTime,
+          filter: DateRangeFilter(
+            preset: _getCreateDatePreset(),
+            start: widget.filter.createTimeRange?.start,
+            end: widget.filter.createTimeRange?.end,
+          ),
+          onChanged: (dateFilter) {
+            if (dateFilter == null ||
+                dateFilter.preset == DateRangePreset.all) {
+              // 重置创建日期筛选
+              final newFilter = widget.filter.copyWith(
+                createTimeRange: null,
+                datePreset: DateRangePreset.all,
+              );
+              widget.onFilterChanged(newFilter);
+            } else {
+              final newFilter = widget.filter.copyWith(
+                createTimeRange: dateFilter.effectiveRange,
+                datePreset: dateFilter.preset ?? DateRangePreset.custom,
+              );
+              widget.onFilterChanged(newFilter);
+            }
+          },
+        ),
+      ),
+
+      // 更新日期部分
+      _buildSectionCard(
+        context,
+        M3FilterDateRangeSection(
+          title: l10n.updateTime,
+          filter: DateRangeFilter(
+            preset: _getUpdateDatePreset(),
+            start: widget.filter.updateTimeRange?.start,
+            end: widget.filter.updateTimeRange?.end,
+          ),
+          onChanged: (dateFilter) {
+            if (dateFilter == null ||
+                dateFilter.preset == DateRangePreset.all) {
+              // 重置更新日期筛选
+              final newFilter = widget.filter.copyWith(
+                updateTimeRange: null,
+              );
+              widget.onFilterChanged(newFilter);
+            } else {
+              final newFilter = widget.filter.copyWith(
+                updateTimeRange: dateFilter.effectiveRange,
+              );
+              widget.onFilterChanged(newFilter);
+            }
           },
         ),
       ),
@@ -334,9 +393,7 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
               // 展开/折叠按钮
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
-                  message: widget.isExpanded
-                      ? l10n.collapse
-                      : l10n.expand,
+                  message: widget.isExpanded ? l10n.collapse : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -381,5 +438,52 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
 
   void _resetFilters() {
     widget.onFilterChanged(const WorkFilter());
+  }
+
+  /// 获取创建日期的预设值
+  DateRangePreset _getCreateDatePreset() {
+    // 如果有具体的创建时间范围但没有对应的预设，视为自定义
+    if (widget.filter.createTimeRange != null) {
+      final range = widget.filter.createTimeRange!;
+      // 检查是否匹配某个预设的范围
+      for (final preset in DateRangePreset.values) {
+        if (preset == DateRangePreset.all || preset == DateRangePreset.custom) {
+          continue;
+        }
+        final presetRange = preset.getRange();
+        if (_isDateRangeEqual(range, presetRange)) {
+          return preset;
+        }
+      }
+      return DateRangePreset.custom;
+    }
+    return widget.filter.datePreset;
+  }
+
+  /// 获取更新日期的预设值
+  DateRangePreset _getUpdateDatePreset() {
+    // 如果有具体的更新时间范围，检查是否匹配某个预设
+    if (widget.filter.updateTimeRange != null) {
+      final range = widget.filter.updateTimeRange!;
+      // 检查是否匹配某个预设的范围
+      for (final preset in DateRangePreset.values) {
+        if (preset == DateRangePreset.all || preset == DateRangePreset.custom) {
+          continue;
+        }
+        final presetRange = preset.getRange();
+        if (_isDateRangeEqual(range, presetRange)) {
+          return preset;
+        }
+      }
+      return DateRangePreset.custom;
+    }
+    return DateRangePreset.all;
+  }
+
+  /// 检查两个日期范围是否相等（允许一定的时间误差）
+  bool _isDateRangeEqual(DateTimeRange range1, DateTimeRange range2) {
+    const tolerance = Duration(hours: 1); // 允许1小时的误差
+    return (range1.start.difference(range2.start).abs() < tolerance) &&
+        (range1.end.difference(range2.end).abs() < tolerance);
   }
 }
