@@ -1016,7 +1016,22 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       // if (hasText) ...
       if (hasText) {
         try {
-          final text = clipboardData.text!;
+          final text = clipboardData.text!.trim();
+
+          // 检查文本是否可能是JSON格式（简单预检查）
+          if (!text.startsWith('{') && !text.startsWith('[')) {
+            // 不是JSON格式，按普通文本处理
+            AppLogger.debug(
+              '检查剪贴板: 文本不是JSON格式，按普通文本处理',
+              tag: 'PracticeEdit',
+              data: {
+                'textPreview':
+                    text.length > 50 ? '${text.substring(0, 50)}...' : text
+              },
+            );
+            return true;
+          }
+
           final json = jsonDecode(text);
           if (json is Map<String, dynamic> && json.containsKey('type')) {
             final type = json['type'];
@@ -1057,8 +1072,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             }
           }
         } catch (e) {
-          // Not valid JSON, that's fine for plain text
-          // AppLogger.debug('检查剪贴板: 不是有效的JSON，按纯文本处理', tag: 'PracticeEdit', data: {'error': e.toString()});
+          // JSON解析失败，记录详细信息但不影响功能
+          AppLogger.debug(
+            '检查剪贴板: JSON解析失败，按普通文本处理',
+            tag: 'PracticeEdit',
+            data: {
+              'error': e.toString(),
+              'textLength': clipboardData.text!.length,
+              'textPreview': clipboardData.text!.length > 100
+                  ? '${clipboardData.text!.substring(0, 100)}...'
+                  : clipboardData.text!,
+            },
+          );
         }
         // Plain text can always be pasted
         return true;

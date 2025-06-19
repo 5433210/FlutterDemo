@@ -96,8 +96,8 @@ class AdvancedCollectionPainter extends CustomPainter {
 
       // 保存当前画布状态并设置裁剪区域
       canvas.save();
-      canvas.clipRect(availableRect); 
-      
+      canvas.clipRect(availableRect);
+
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled && textureConfig.data != null) {
         final rect = Offset.zero & size;
@@ -160,7 +160,8 @@ class AdvancedCollectionPainter extends CustomPainter {
         oldDelegate.textureConfig.fitMode != textureConfig.fitMode ||
         oldDelegate.textureConfig.opacity != textureConfig.opacity ||
         oldDelegate.textureConfig.textureWidth != textureConfig.textureWidth ||
-        oldDelegate.textureConfig.textureHeight != textureConfig.textureHeight ||
+        oldDelegate.textureConfig.textureHeight !=
+            textureConfig.textureHeight ||
         !_mapsEqual(oldDelegate.textureConfig.data, textureConfig.data)) {
       textureChanged = true;
     }
@@ -318,18 +319,14 @@ class AdvancedCollectionPainter extends CustomPainter {
       return;
     }
 
+    // 只有在背景色不是透明时才绘制背景
     if (position.backgroundColor != Colors.transparent) {
       final bgPaint = Paint()
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
-    } else {
-      // 绘制默认占位符背景
-      final paint = Paint()
-        ..color = Colors.grey.withAlpha(26) // 约等于 0.1 不透明度
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, paint);
     }
+    // 如果背景色是透明的，什么都不绘制，保持完全透明
   }
 
   /// 绘制普通文本
@@ -583,7 +580,7 @@ class AdvancedCollectionPainter extends CustomPainter {
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
       EditPageLogger.rendererDebug('字符图像服务加载成功', data: {
-        'characterId': characterId, 
+        'characterId': characterId,
         'cacheKey': cacheKey,
         'imageSize': '${image.width}x${image.height}',
       });

@@ -64,10 +64,10 @@ class _M3VisualPropertiesPanelState
                   initialColor: CollectionColorUtils.hexToColor(fontColor),
                   enableAlpha: true,
                   enableColorCode: true,
-                );
-                if (color != null) {
-                  widget.onContentPropertyChanged(
-                      'fontColor', CollectionColorUtils.colorToHex(color));
+                );                if (color != null) {
+                  final hexColor = CollectionColorUtils.colorToHex(color);
+                  print('🎨 [VisualPropertiesPanel] Setting fontColor: $hexColor');
+                  widget.onContentPropertyChanged('fontColor', hexColor);
                 }
               },
               borderRadius: BorderRadius.circular(8),
@@ -97,10 +97,10 @@ class _M3VisualPropertiesPanelState
                       CollectionColorUtils.hexToColor(backgroundColor),
                   enableAlpha: true,
                   enableColorCode: true,
-                );
-                if (color != null) {
-                  widget.onContentPropertyChanged('backgroundColor',
-                      CollectionColorUtils.colorToHex(color));
+                );                if (color != null) {
+                  final hexColor = CollectionColorUtils.colorToHex(color);
+                  print('🎨 [VisualPropertiesPanel] Setting backgroundColor: $hexColor');
+                  widget.onContentPropertyChanged('backgroundColor', hexColor);
                 }
               },
               borderRadius: BorderRadius.circular(8),

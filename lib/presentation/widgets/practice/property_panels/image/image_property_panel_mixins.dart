@@ -1,13 +1,8 @@
-import 'dart:io';
-import 'dart:math' as math;
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
-
 import '../../practice_edit_controller.dart';
 
 /// 图像属性访问器混合类
@@ -83,31 +78,92 @@ mixin ImagePropertyAccessors {
     final backgroundColor = content['backgroundColor'] as String?;
 
     if (backgroundColor != null && backgroundColor.isNotEmpty) {
-      try {
-        final colorStr = backgroundColor.startsWith('#')
-            ? backgroundColor.substring(1)
-            : backgroundColor;
-        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
-        return Color(int.parse(fullColorStr, radix: 16));
-      } catch (e) {
-        final colorStr = backgroundColor.startsWith('#')
-            ? backgroundColor.substring(1)
-            : backgroundColor;
-        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
-        EditPageLogger.propertyPanelError(
-          '解析背景颜色失败',
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
-          error: e,
-          data: {
-            'operation': 'parse_background_color',
-            'backgroundColor': backgroundColor,
-            'colorStr': colorStr,
-            'fullColorStr': fullColorStr,
-          },
-        );
-      }
+      return _parseBackgroundColor(backgroundColor);
     }
     return Colors.transparent;
+  }
+  /// 解析背景颜色，支持16进制颜色和CSS颜色名称
+  Color _parseBackgroundColor(String colorValue) {
+    final trimmedValue = colorValue.trim().toLowerCase();
+
+    // 处理CSS颜色名称
+    switch (trimmedValue) {
+      case 'transparent':
+        return Colors.transparent;
+      case 'white':
+        return Colors.white;
+      case 'black':
+        return Colors.black;
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'orange':
+        return Colors.orange;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'cyan':
+        return Colors.cyan;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'brown':
+        return Colors.brown;
+      case 'magenta':
+        return const Color(0xFFFF00FF);
+      case 'lime':
+        return Colors.lime;
+      case 'indigo':
+        return Colors.indigo;
+      case 'teal':
+        return Colors.teal;
+      case 'amber':
+        return Colors.amber;
+    }
+
+    // 处理16进制颜色
+    try {
+      final colorStr = trimmedValue.startsWith('#')
+          ? trimmedValue.substring(1)
+          : trimmedValue;
+
+      // 支持3位、6位、8位16进制格式
+      String fullColorStr;
+      if (colorStr.length == 3) {
+        // 将 RGB 转换为 RRGGBB
+        fullColorStr =
+            'FF${colorStr[0]}${colorStr[0]}${colorStr[1]}${colorStr[1]}${colorStr[2]}${colorStr[2]}';
+      } else if (colorStr.length == 6) {
+        // 添加Alpha通道 (完全不透明)
+        fullColorStr = 'FF$colorStr';
+      } else if (colorStr.length == 8) {
+        // 已包含Alpha通道
+        fullColorStr = colorStr;
+      } else {
+        throw FormatException('Invalid color format: $colorValue');
+      }
+
+      return Color(int.parse(fullColorStr, radix: 16));
+    } catch (e) {
+      EditPageLogger.propertyPanelError(
+        '解析背景颜色失败',
+        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        error: e,
+        data: {
+          'operation': 'parse_background_color',
+          'backgroundColor': colorValue,
+          'trimmedValue': trimmedValue,
+        },
+      );
+      // 解析失败时返回透明色
+      return Colors.transparent;
+    }
   }
 
   /// 左侧裁剪值
@@ -230,4 +286,4 @@ mixin ImagePropertyUpdaters {
   /// 访问器（需要混合 ImagePropertyAccessors）
   Size? get imageSize;
   Size? get renderSize;
-} 
+}

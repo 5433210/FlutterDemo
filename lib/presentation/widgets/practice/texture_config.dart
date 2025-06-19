@@ -20,29 +20,78 @@ bool mapsEqual(Map<String, dynamic>? map1, Map<String, dynamic>? map2) {
 
 /// 颜色工具函数 - 解析颜色代码
 Color parseColor(String colorCode) {
-  if (colorCode == 'transparent') {
-    return Colors.transparent;
+  if (colorCode.isEmpty) return Colors.black;
+
+  final lowerColorValue = colorCode.toLowerCase().trim();
+
+  // 处理特殊颜色名称
+  switch (lowerColorValue) {
+    case 'transparent':
+      return Colors.transparent;
+    case 'white':
+      return Colors.white;
+    case 'black':
+      return Colors.black;
+    case 'red':
+      return Colors.red;
+    case 'green':
+      return Colors.green;
+    case 'blue':
+      return Colors.blue;
+    case 'yellow':
+      return Colors.yellow;
+    case 'orange':
+      return Colors.orange;
+    case 'purple':
+      return Colors.purple;
+    case 'pink':
+      return Colors.pink;
+    case 'grey':
+    case 'gray':
+      return Colors.grey;
+    case 'cyan':
+      return Colors.cyan;
+    case 'magenta':
+      return const Color(0xFFFF00FF);
+    case 'lime':
+      return Colors.lime;
+    case 'indigo':
+      return Colors.indigo;
+    case 'teal':
+      return Colors.teal;
+    case 'amber':
+      return Colors.amber;
+    case 'brown':
+      return Colors.brown;
   }
 
-  // 检查是否是十六进制颜色代码
-  if (colorCode.startsWith('#')) {
-    // 处理不同长度的颜色代码
-    String hex = colorCode.substring(1);
-    if (hex.length == 3) {
-      // 将短格式转换为长格式 #RGB -> #RRGGBB
-      hex = '${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}';
+  // 处理16进制颜色值
+  try {
+    final colorStr = lowerColorValue.startsWith('#')
+        ? lowerColorValue.substring(1)
+        : lowerColorValue;
+
+    // 支持3位、6位、8位16进制格式
+    String fullColorStr;
+    if (colorStr.length == 3) {
+      // 将 RGB 转换为 RRGGBB
+      fullColorStr =
+          'FF${colorStr[0]}${colorStr[0]}${colorStr[1]}${colorStr[1]}${colorStr[2]}${colorStr[2]}';
+    } else if (colorStr.length == 6) {
+      // 添加Alpha通道 (完全不透明)
+      fullColorStr = 'FF$colorStr';
+    } else if (colorStr.length == 8) {
+      // 已包含Alpha通道
+      fullColorStr = colorStr;
+    } else {
+      throw FormatException('Invalid color format: $colorCode');
     }
 
-    // 解析十六进制颜色值
-    if (hex.length == 6) {
-      return Color(int.parse('FF$hex', radix: 16));
-    } else if (hex.length == 8) {
-      return Color(int.parse(hex, radix: 16));
-    }
+    return Color(int.parse(fullColorStr, radix: 16));
+  } catch (e) {
+    // 解析失败时返回黑色而不是抛出异常
+    return Colors.black;
   }
-
-  // 默认返回黑色
-  return Colors.black;
 }
 
 /// 纹理配置类，定义如何应用纹理

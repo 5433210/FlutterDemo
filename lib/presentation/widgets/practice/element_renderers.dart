@@ -25,16 +25,43 @@ class ElementRenderers {
       performanceMonitor.recordOperation(
           'collection_element_build_start', Duration.zero);
     }
-
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 24.0;
-    final fontColorStr = content['fontColor'] as String? ?? '#000000';
-    final backgroundColorStr =
-        content['backgroundColor'] as String? ?? '#FFFFFF';
-    final backgroundColor = _parseColor(backgroundColorStr);
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ??
+        24.0; // 修复颜色默认值问题：使用更合理的默认值，避免覆盖调色板设置的颜色
+    final fontColorStr = content['fontColor'] as String?;
+    final backgroundColorStr = content['backgroundColor'] as String?;
+
+    // 调试日志：记录原始颜色值
+    EditPageLogger.rendererDebug(
+      '集字元素颜色解析',
+      data: {
+        'originalFontColor': fontColorStr,
+        'originalBackgroundColor': backgroundColorStr,
+        'element_id': element['id'],
+      },
+    );
+
+    // 安全的颜色解析，只在确实需要时使用默认值
+    final backgroundColor = backgroundColorStr != null
+        ? _parseColor(backgroundColorStr)
+        : Colors.transparent;
+
+    // 对于字体颜色，使用黑色作为最后的默认值
+    final safeFontColorStr = fontColorStr ?? '#000000';
+    final safeBackgroundColorStr = backgroundColorStr ?? 'transparent';
+
+    // 调试日志：记录最终使用的颜色值
+    EditPageLogger.rendererDebug(
+      '集字元素颜色最终',
+      data: {
+        'finalFontColor': safeFontColorStr,
+        'finalBackgroundColor': safeBackgroundColorStr,
+        'element_id': element['id'],
+      },
+    );
     final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
@@ -110,14 +137,15 @@ class ElementRenderers {
         'optimization': 'element_build',
       },
     );
-
     final result = Opacity(
         opacity: opacity,
         child: Container(
           width: double.infinity,
           height: double.infinity,
-          // 移除背景图片装饰，改为完全由CollectionElementRenderer处理纹理
-          decoration: BoxDecoration(color: backgroundColor),
+          // 只有在背景颜色不为透明时才添加装饰
+          decoration: backgroundColor != Colors.transparent
+              ? BoxDecoration(color: backgroundColor)
+              : null,
           child: LayoutBuilder(
             builder: (context, constraints) {
               // 记录集字布局构建参数
@@ -135,8 +163,7 @@ class ElementRenderers {
               );
 
               return CollectionElementRenderer.buildCollectionLayout(
-                context: context,
-                characters: characters,
+                context: context, characters: characters,
                 writingMode: writingMode,
                 fontSize: fontSize,
                 letterSpacing: letterSpacing,
@@ -146,8 +173,8 @@ class ElementRenderers {
                 characterImages: content, // 传递完整的 content 以包含所有纹理相关设置
                 constraints: constraints,
                 padding: padding,
-                fontColor: fontColorStr,
-                backgroundColor: backgroundColorStr,
+                fontColor: safeFontColorStr,
+                backgroundColor: safeBackgroundColorStr,
                 enableSoftLineBreak: enableSoftLineBreak,
                 // 传递纹理设置
                 hasCharacterTexture: hasBackgroundTexture,
@@ -325,22 +352,11 @@ class ElementRenderers {
       transformedImageData = rawTransformedData;
     } else if (rawTransformedData is List<int>) {
       transformedImageData = Uint8List.fromList(rawTransformedData);
-    }
-
-    // 解析背景颜色
+    } // 解析背景颜色
     Color? bgColor;
     if (backgroundColor != null && backgroundColor.isNotEmpty) {
       try {
-        // 处理带#前缀的颜色代码
-        final colorStr = backgroundColor.startsWith('#')
-            ? backgroundColor.substring(1)
-            : backgroundColor;
-
-        // 添加FF前缀表示完全不透明
-        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
-
-        // 解析颜色
-        bgColor = Color(int.parse(fullColorStr, radix: 16));
+        bgColor = _parseBackgroundColor(backgroundColor);
       } catch (e) {
         EditPageLogger.rendererError('解析背景颜色失败', error: e);
       }
@@ -358,13 +374,13 @@ class ElementRenderers {
         color: bgColor ?? Colors.grey.shade200,
         child: const Icon(Icons.image, size: 48, color: Colors.grey),
       );
-    }
-
-    // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
+    } // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
     return Container(
         width: double.infinity,
         height: double.infinity,
-        color: bgColor, // 应用背景颜色
+        // 只有在背景颜色不为透明时才设置颜色
+        color:
+            (bgColor != null && bgColor != Colors.transparent) ? bgColor : null,
         child: Opacity(
           opacity: opacity,
           child: _buildImageWidget(
@@ -431,12 +447,14 @@ class ElementRenderers {
               opacity: opacity,
               child: Container(
                 // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  // 移除非选中状态下的灰色边框
-                  border: null, // 不再显示边框
-                  // 移除圆角
-                ),
+                decoration: backgroundColor != Colors.transparent
+                    ? BoxDecoration(
+                        color: backgroundColor,
+                        // 移除非选中状态下的灰色边框
+                        border: null, // 不再显示边框
+                        // 移除圆角
+                      )
+                    : null, // 透明背景时不使用decoration
                 child: Padding(
                   padding: EdgeInsets.all(padding),
                   child: writingMode.startsWith('vertical')
@@ -641,6 +659,81 @@ class ElementRenderers {
         error: e,
       );
       return Colors.black;
+    }
+  }
+
+  /// 解析背景颜色，支持16进制颜色值和常见CSS颜色名称
+  static Color? _parseBackgroundColor(String colorValue) {
+    if (colorValue.isEmpty) return null;
+
+    final lowerColorValue = colorValue.toLowerCase().trim();
+
+    // 处理特殊颜色名称
+    switch (lowerColorValue) {
+      case 'transparent':
+        return Colors.transparent;
+      case 'white':
+        return Colors.white;
+      case 'black':
+        return Colors.black;
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'orange':
+        return Colors.orange;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'cyan':
+        return Colors.cyan;
+      case 'magenta':
+        return const Color(0xFFFF00FF); // Magenta color
+      case 'lime':
+        return Colors.lime;
+      case 'indigo':
+        return Colors.indigo;
+      case 'teal':
+        return Colors.teal;
+      case 'amber':
+        return Colors.amber;
+      case 'brown':
+        return Colors.brown;
+    }
+
+    // 处理16进制颜色值
+    try {
+      final colorStr = lowerColorValue.startsWith('#')
+          ? lowerColorValue.substring(1)
+          : lowerColorValue;
+
+      // 支持3位、6位、8位16进制格式
+      String fullColorStr;
+      if (colorStr.length == 3) {
+        // 将 RGB 转换为 RRGGBB
+        fullColorStr =
+            'FF${colorStr[0]}${colorStr[0]}${colorStr[1]}${colorStr[1]}${colorStr[2]}${colorStr[2]}';
+      } else if (colorStr.length == 6) {
+        // 添加Alpha通道 (完全不透明)
+        fullColorStr = 'FF$colorStr';
+      } else if (colorStr.length == 8) {
+        // 已包含Alpha通道
+        fullColorStr = colorStr;
+      } else {
+        throw FormatException('Invalid color format: $colorValue');
+      }
+
+      return Color(int.parse(fullColorStr, radix: 16));
+    } catch (e) {
+      throw FormatException('Cannot parse color: $colorValue', e);
     }
   }
 }

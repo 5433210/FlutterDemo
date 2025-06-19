@@ -224,12 +224,6 @@ class _M3CharacterDetailPanelState
                             content: character.author ?? l10n.unknown,
                             iconData: Icons.person,
                           ),
-                        _buildInfoItem(
-                          theme,
-                          title: l10n.creationDate,
-                          content: _formatDateTime(character.collectionTime),
-                          iconData: Icons.calendar_today,
-                        ),
                         if (character.tags.isNotEmpty) ...[
                           const Divider(),
                           Text(
