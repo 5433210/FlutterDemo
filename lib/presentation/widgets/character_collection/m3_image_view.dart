@@ -47,10 +47,10 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   bool _isInSelectionMode = false;
 
-  bool _isPanning = false;
-
-  // Alt键状态跟踪
+  bool _isPanning = false; // Alt键状态跟踪
   bool _isAltKeyPressed = false;
+  // 右键状态跟踪
+  bool _isRightMousePressed = false;
   // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
   late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
   // 添加防抖计时器，避免频繁更新Alt键状态
@@ -281,9 +281,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     _transformationController.addListener(_onTransformationChanged);
 
     // Add focus listener to handle focus changes
-    _focusNode.addListener(_onFocusChange);
-
-    // 添加Alt键状态监听器
+    _focusNode.addListener(_onFocusChange); // 添加Alt键状态监听器
     _altKeyNotifier.addListener(() {
       // 当ValueNotifier更新时，强制刷新UI
       setState(() {});
@@ -604,14 +602,17 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           minScale: 0.1,
           maxScale: 10.0,
           scaleEnabled: true,
-          panEnabled: _altKeyNotifier.value || isPanMode, // 在Alt键按下或平移模式下启用平移
+          panEnabled: _altKeyNotifier.value ||
+              isPanMode ||
+              _isRightMousePressed, // 在Alt键按下、右键按下或平移模式下启用平移
           boundaryMargin: const EdgeInsets.all(double.infinity),
           onInteractionStart: _handleInteractionStart,
           onInteractionUpdate: _handleInteractionUpdate,
           onInteractionEnd: _handleInteractionEnd,
           alignment: Alignment.topLeft,
           child: Listener(
-            // onPointerSignal: _handlePointerSignal,
+            onPointerDown: _handlePointerDown,
+            onPointerUp: _handlePointerUp,
             child: Stack(
               children: [
                 Image.memory(
@@ -628,17 +629,20 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                 if (_transformer != null && regions.isNotEmpty)
                   Positioned.fill(
                     child: GestureDetector(
-                      onTapUp: _onTapUp,
-                      // Always allow selection start, handle adjustment cancellation inside
-                      onPanStart: isPanMode || _isAltKeyPressed
-                          ? _handlePanStart
-                          : _handleSelectionStart,
-                      onPanUpdate: isPanMode || _isAltKeyPressed
-                          ? _handlePanUpdate
-                          : _handleSelectionUpdate,
-                      onPanEnd: isPanMode || _isAltKeyPressed
-                          ? _handlePanEnd
-                          : _handleSelectionEnd,
+                      onTapUp:
+                          _onTapUp, // Always allow selection start, handle adjustment cancellation inside
+                      onPanStart:
+                          isPanMode || _isAltKeyPressed || _isRightMousePressed
+                              ? _handlePanStart
+                              : _handleSelectionStart,
+                      onPanUpdate:
+                          isPanMode || _isAltKeyPressed || _isRightMousePressed
+                              ? _handlePanUpdate
+                              : _handleSelectionUpdate,
+                      onPanEnd:
+                          isPanMode || _isAltKeyPressed || _isRightMousePressed
+                              ? _handlePanEnd
+                              : _handleSelectionEnd,
                       child: CustomPaint(
                         painter: RegionsPainter(
                           regions: regions,
@@ -660,7 +664,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                       valueListenable: _altKeyNotifier,
                       builder: (context, isAltPressed, child) {
                         return MouseRegion(
-                          cursor: isAltPressed
+                          cursor: isAltPressed || _isRightMousePressed
                               ? SystemMouseCursors.move
                               : _getCursor(),
                           onHover: (event) {
@@ -681,13 +685,13 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                             behavior: HitTestBehavior
                                 .opaque, // Capture hits within bounds
                             onTapUp: _onTapUp,
-                            onPanStart: isAltPressed
+                            onPanStart: isAltPressed || _isRightMousePressed
                                 ? _handlePanStart
                                 : _handleAdjustmentPanStart, // Use dedicated handler
-                            onPanUpdate: isAltPressed
+                            onPanUpdate: isAltPressed || _isRightMousePressed
                                 ? _handlePanUpdate
                                 : _handleAdjustmentPanUpdate, // Use dedicated handler
-                            onPanEnd: isAltPressed
+                            onPanEnd: isAltPressed || _isRightMousePressed
                                 ? _handlePanEnd
                                 : _handleAdjustmentPanEnd, // Use dedicated handler
                             child: CustomPaint(
@@ -715,18 +719,18 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                       valueListenable: _altKeyNotifier,
                       builder: (context, isAltPressed, child) {
                         return MouseRegion(
-                          cursor: isAltPressed
+                          cursor: isAltPressed || _isRightMousePressed
                               ? SystemMouseCursors.move
                               : SystemMouseCursors.precise,
                           child: GestureDetector(
                             onTapUp: _onTapUp,
-                            onPanStart: isAltPressed
+                            onPanStart: isAltPressed || _isRightMousePressed
                                 ? _handlePanStart
                                 : _handleSelectionStart,
-                            onPanUpdate: isAltPressed
+                            onPanUpdate: isAltPressed || _isRightMousePressed
                                 ? _handlePanUpdate
                                 : _handleSelectionUpdate,
-                            onPanEnd: isAltPressed
+                            onPanEnd: isAltPressed || _isRightMousePressed
                                 ? _handlePanEnd
                                 : _handleSelectionEnd,
                             child: CustomPaint(
@@ -1000,10 +1004,9 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   /// 获取更新的光标样式
   MouseCursor _getCursor() {
-    final toolMode = ref.read(toolModeProvider);
-
-    // Alt key pressed always shows move cursor regardless of mode
-    if (_isAltKeyPressed) {
+    final toolMode = ref.read(
+        toolModeProvider); // Alt key or right mouse pressed always shows move cursor regardless of mode
+    if (_isAltKeyPressed || _isRightMousePressed) {
       return SystemMouseCursors.move;
     }
 
@@ -1115,8 +1118,8 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanEnd(DragEndDetails details) {
-    // If we were temporarily panning with Alt key, end the pan mode
-    if (_isAltKeyPressed && _isPanning) {
+    // If Alt key or right mouse is pressed and we're panning, end the pan mode
+    if ((_isAltKeyPressed || _isRightMousePressed) && _isPanning) {
       setState(() {
         _isPanning = false;
         _lastPanPosition = null;
@@ -1208,12 +1211,15 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanStart(DragStartDetails details) {
-    if (_isAltKeyPressed || !_isAdjusting || _adjustingRect == null) {
+    if (_isAltKeyPressed ||
+        _isRightMousePressed ||
+        !_isAdjusting ||
+        _adjustingRect == null) {
       return; // Safety check
     }
 
-    // If Alt key is pressed, enable temporary panning even in adjustment mode
-    if (_isAltKeyPressed) {
+    // If Alt key or right mouse is pressed, enable temporary panning even in adjustment mode
+    if (_isAltKeyPressed || _isRightMousePressed) {
       setState(() {
         _isPanning = true;
         _lastPanPosition = details.localPosition;
@@ -1246,12 +1252,12 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanUpdate(DragUpdateDetails details) {
-    if (_isAltKeyPressed || !_isAdjusting) {
+    if (_isAltKeyPressed || _isRightMousePressed || !_isAdjusting) {
       return;
-    }
-
-    // If Alt key is pressed and we're panning, handle the pan
-    if (_isAltKeyPressed && _isPanning && _lastPanPosition != null) {
+    } // If Alt key or right mouse is pressed and we're panning, handle the pan
+    if ((_isAltKeyPressed || _isRightMousePressed) &&
+        _isPanning &&
+        _lastPanPosition != null) {
       final delta = details.localPosition - _lastPanPosition!;
       final matrix = _transformationController.value.clone();
       matrix.translate(delta.dx, delta.dy);
@@ -1485,7 +1491,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     // 允许在Pan模式或Alt键按下时进行平移
     final toolMode = ref.read(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
-    final canPan = isPanMode || _isAltKeyPressed;
+    final canPan = isPanMode || _isAltKeyPressed || _isRightMousePressed;
 
     if (!canPan) return;
 
@@ -1504,11 +1510,9 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   void _handlePanUpdate(DragUpdateDetails details) {
     // 允许在Pan模式或Alt键按下时进行平移
     final toolMode = ref.read(toolModeProvider);
-    final isPanMode = toolMode == Tool.pan;
-
-    // 简化条件判断，只要Alt键被按下或者在Pan模式下，就允许平移
+    final isPanMode = toolMode == Tool.pan; // 简化条件判断，只要Alt键被按下或者在Pan模式下，就允许平移
     // 不再检查_isPanning状态，因为这可能导致平移中断
-    final canPan = isPanMode || _isAltKeyPressed;
+    final canPan = isPanMode || _isAltKeyPressed || _isRightMousePressed;
 
     if (!canPan) return;
 
@@ -2176,4 +2180,34 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           });
     }
   }
+
+  /// 处理鼠标按下事件
+  void _handlePointerDown(PointerDownEvent event) {
+    if (event.buttons == 2) {
+      // 右键按钮
+      // 右键按下
+      setState(() {
+        _isRightMousePressed = true;
+      });
+      AppLogger.debug('右键按下', data: {
+        'position': '${event.localPosition.dx}, ${event.localPosition.dy}',
+        'buttons': event.buttons,
+      });
+    }
+  }
+
+  /// 处理鼠标释放事件
+  void _handlePointerUp(PointerUpEvent event) {
+    if (!event.down && _isRightMousePressed) {
+      // 右键释放
+      setState(() {
+        _isRightMousePressed = false;
+      });
+      AppLogger.debug('右键释放', data: {
+        'position': '${event.localPosition.dx}, ${event.localPosition.dy}',
+      });
+    }
+  }
+
+  // ...existing code...
 }

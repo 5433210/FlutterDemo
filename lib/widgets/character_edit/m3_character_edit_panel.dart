@@ -1586,19 +1586,30 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
           // Synchronously update selection (this operation is fast)
           collectionNotifier.updateSelectedRegion(updatedRegion);
-          saveNotifier.updateProgress(0.4);
-
-          // Execute time-consuming save operation
+          saveNotifier.updateProgress(
+              0.4); // Execute time-consuming save operation with progress tracking
+          AppLogger.debug('保存操作开始，图像处理和数据库操作可能需要较长时间');
           await Future.any([
             Future.sync(() async {
+              AppLogger.debug('开始执行保存操作');
+
+              // Update progress to indicate we're processing
+              saveNotifier.updateProgress(0.5);
+
               await collectionNotifier.saveCurrentRegion(processingOptions);
+              AppLogger.debug('保存操作完成');
               saveNotifier.updateProgress(0.98);
             }),
-            Future.delayed(const Duration(seconds: 30))
-                .then((_) => throw _SaveError(l10n.saveTimeout)),
+            Future.delayed(const Duration(seconds: 60)).then((_) {
+              AppLogger.error('保存操作超时 (60秒) - 可能是图像处理或网络问题');
+              throw _SaveError('${l10n.saveTimeout}\n可能原因：图像处理耗时过长或网络连接问题');
+            }),
           ]);
         } on _SaveError {
-          AppLogger.error('Save timeout');
+          AppLogger.error('保存超时', data: {'timeout': '60秒'});
+          rethrow;
+        } catch (e) {
+          AppLogger.error('保存过程中发生错误', error: e);
           rethrow;
         }
         saveNotifier.updateProgress(0.98);
