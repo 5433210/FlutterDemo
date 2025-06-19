@@ -82,6 +82,7 @@ mixin ImagePropertyAccessors {
     }
     return Colors.transparent;
   }
+
   /// 解析背景颜色，支持16进制颜色和CSS颜色名称
   Color _parseBackgroundColor(String colorValue) {
     final trimmedValue = colorValue.trim().toLowerCase();

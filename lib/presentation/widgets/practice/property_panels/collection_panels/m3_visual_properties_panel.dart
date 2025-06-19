@@ -46,8 +46,7 @@ class _M3VisualPropertiesPanelState
       defaultExpanded: true,
       children: [
         // Color settings
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.colorSettings),
+        M3PanelStyles.buildSectionTitle(context, l10n.colorSettings),
         Row(
           children: [
             Text(
@@ -64,9 +63,11 @@ class _M3VisualPropertiesPanelState
                   initialColor: CollectionColorUtils.hexToColor(fontColor),
                   enableAlpha: true,
                   enableColorCode: true,
-                );                if (color != null) {
+                );
+                if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print('🎨 [VisualPropertiesPanel] Setting fontColor: $hexColor');
+                  print(
+                      '🎨 [VisualPropertiesPanel] Setting fontColor: $hexColor');
                   widget.onContentPropertyChanged('fontColor', hexColor);
                 }
               },
@@ -97,9 +98,11 @@ class _M3VisualPropertiesPanelState
                       CollectionColorUtils.hexToColor(backgroundColor),
                   enableAlpha: true,
                   enableColorCode: true,
-                );                if (color != null) {
+                );
+                if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print('🎨 [VisualPropertiesPanel] Setting backgroundColor: $hexColor');
+                  print(
+                      '🎨 [VisualPropertiesPanel] Setting backgroundColor: $hexColor');
                   widget.onContentPropertyChanged('backgroundColor', hexColor);
                 }
               },
