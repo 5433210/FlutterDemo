@@ -66,15 +66,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   bool _disposed = false;
   // 跟踪Alt键当前状态的变量
   bool _isAltKeyPressed = false;
-  
+
   // 跟踪右键按下状态的变量
   bool _isRightMousePressed = false;
 
   // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
   late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
-  
+
   // 为右键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
-  late final ValueNotifier<bool> _rightMouseNotifier = ValueNotifier<bool>(false);
+  late final ValueNotifier<bool> _rightMouseNotifier =
+      ValueNotifier<bool>(false);
 
   // 用于延迟更新轮廓的计时器，防止频繁刷新
   Timer? _updateOutlineDebounceTimer;
@@ -158,7 +159,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           // 当ValueNotifier更新时，强制刷新UI
         });
       }
-    });    return KeyboardListener(
+    });
+    return KeyboardListener(
       focusNode: focusNode,
       autofocus: true,
       onKeyEvent: (KeyEvent event) {
@@ -176,15 +178,15 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
       },
       child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (!focusNode.hasFocus) focusNode.requestFocus();
-          },
-          child: Listener(
-            onPointerDown: _handlePointerDown,
-            onPointerUp: _handlePointerUp,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (!focusNode.hasFocus) focusNode.requestFocus();
+        },
+        child: Listener(
+          onPointerDown: _handlePointerDown,
+          onPointerUp: _handlePointerUp,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
               _updateTransformer(constraints.biggest);
 
               return InteractiveViewer(
@@ -192,7 +194,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                 constrained: false,
                 boundaryMargin: const EdgeInsets.all(double.infinity),
                 minScale: 0.1,
-                maxScale: 10.0,                // Enable panning when Alt key or right mouse button is pressed
+                maxScale:
+                    10.0, // Enable panning when Alt key or right mouse button is pressed
                 panEnabled: _altKeyNotifier.value || _rightMouseNotifier.value,
                 onInteractionUpdate: (details) {
                   _updateTransformer(constraints.biggest);
@@ -206,13 +209,17 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                     transformationController: _transformationController,
                     onEraseStart: _handleEraseStart,
                     onEraseUpdate: _handleEraseUpdate,
-                    onEraseEnd: _handleEraseEnd,                    onPan: (delta) {
+                    onEraseEnd: _handleEraseEnd,
+                    onPan: (delta) {
                       if (_altKeyNotifier.value || _rightMouseNotifier.value) {
                         _transformationController.value
                             .translate(delta.dx, delta.dy);
                       }
-                    },                    onTap: _handleTap,
-                    altKeyPressed: _altKeyNotifier.value || _rightMouseNotifier.value, // Pass both Alt key and right mouse state
+                    },
+                    onTap: _handleTap,
+                    altKeyPressed: _altKeyNotifier.value ||
+                        _rightMouseNotifier
+                            .value, // Pass both Alt key and right mouse state
                   ),
                 ),
               );
@@ -238,7 +245,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     ServicesBinding.instance.keyboard.removeHandler(_handleKeyboardEvent);
 
     // 取消定时器
-    _updateOutlineDebounceTimer?.cancel();    // 清理ValueNotifier
+    _updateOutlineDebounceTimer?.cancel(); // 清理ValueNotifier
     _altKeyNotifier.dispose();
     _rightMouseNotifier.dispose();
 
@@ -445,6 +452,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       }
     }
   }
+
   // 键盘事件全局处理器
   bool _handleKeyboardEvent(KeyEvent event) {
     // 使用统一的处理逻辑
@@ -735,7 +743,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             final points = _extractPointsFromPath(p.path);
             return {
               'brushSize': p.brushSize,
-              'brushColor': p.brushColor.toString(),
+              'brushColor': p.brushColor
+                  .toARGB32(), // Use toARGB32() instead of deprecated .value
               'points': points,
               'pathId': p.hashCode.toString(),
             };
@@ -812,13 +821,15 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     } catch (e, stack) {
       AppLogger.error('更新坐标转换器失败', error: e, stackTrace: stack, data: {
         'imageSize': '${widget.image.width}x${widget.image.height}',
-        'viewportSize': '${viewportSize.width}x${viewportSize.height}',      });
+        'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+      });
     }
   }
 
   /// 处理鼠标按下事件
   void _handlePointerDown(PointerDownEvent event) {
-    if (event.buttons == 2) { // 右键按钮
+    if (event.buttons == 2) {
+      // 右键按钮
       setState(() {
         _isRightMousePressed = true;
         _rightMouseNotifier.value = true;
@@ -830,7 +841,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  /// 处理鼠标释放事件  
+  /// 处理鼠标释放事件
   void _handlePointerUp(PointerUpEvent event) {
     if (!event.down && _isRightMousePressed) {
       setState(() {

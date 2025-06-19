@@ -327,10 +327,27 @@ class CharacterImageProcessor {
 
       // 确保最小有效半径，解决小笔刷被忽略的问题
       // 对于小于2.0的笔刷，使用1.0作为最小有效半径
-      final effectiveRadius = math.max(brushSize / 2, 1.0);
+      final effectiveRadius = math.max(brushSize / 2, 1.0); // 获取路径的颜色，默认为白色
+      // 支持 int 类型和 String 类型的 brushColor
+      final brushColorRaw = pathData['brushColor'];
+      int? brushColorValue;
 
-      // 获取路径的颜色，默认为白色
-      final brushColorValue = pathData['brushColor'] as int?;
+      if (brushColorRaw is int) {
+        brushColorValue = brushColorRaw;
+      } else if (brushColorRaw is String) {
+        // 如果是字符串，尝试解析为整数
+        try {
+          // 移除可能的前缀和后缀，如 "Color(0xff000000)" -> "0xff000000"
+          String colorStr = brushColorRaw;
+          if (colorStr.startsWith('Color(') && colorStr.endsWith(')')) {
+            colorStr = colorStr.substring(6, colorStr.length - 1);
+          }
+          brushColorValue = int.tryParse(colorStr);
+        } catch (e) {
+          brushColorValue = null;
+        }
+      }
+
       final brushColor = brushColorValue != null
           ? img.ColorRgb8((brushColorValue >> 16) & 0xFF,
               (brushColorValue >> 8) & 0xFF, brushColorValue & 0xFF)

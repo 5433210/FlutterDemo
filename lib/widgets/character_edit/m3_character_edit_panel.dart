@@ -252,6 +252,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   @override
   void dispose() {
     try {
+      // Cancel progress timer if still running
+      _progressTimer?.cancel();
+
       // Remove keyboard handler
       ServicesBinding.instance.keyboard.removeHandler(_handleKeyboardEvent);
 
@@ -1582,34 +1585,74 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         // Optimize save process, reduce perceived delay
         try {
           // Immediately update UI feedback
-          saveNotifier.updateProgress(0.3);
-
-          // Synchronously update selection (this operation is fast)
-          collectionNotifier.updateSelectedRegion(updatedRegion);
           saveNotifier.updateProgress(
-              0.4); // Execute time-consuming save operation with progress tracking
+              0.3); // Synchronously update selection (this operation is fast)
+          collectionNotifier.updateSelectedRegion(updatedRegion);
+          saveNotifier.updateProgress(0.4);
+
+          // Execute time-consuming save operation with timeout tracking
           AppLogger.debug('保存操作开始，图像处理和数据库操作可能需要较长时间');
-          await Future.any([
-            Future.sync(() async {
-              AppLogger.debug('开始执行保存操作');
 
-              // Update progress to indicate we're processing
-              saveNotifier.updateProgress(0.5);
+          // Create a cancellable timeout timer
+          Timer? saveTimeoutTimer;
+          final Completer<void> saveCompleter = Completer<void>();
 
-              await collectionNotifier.saveCurrentRegion(processingOptions);
-              AppLogger.debug('保存操作完成');
-              saveNotifier.updateProgress(0.98);
-            }),
-            Future.delayed(const Duration(seconds: 60)).then((_) {
-              AppLogger.error('保存操作超时 (60秒) - 可能是图像处理或网络问题');
-              throw _SaveError('${l10n.saveTimeout}\n可能原因：图像处理耗时过长或网络连接问题');
-            }),
-          ]);
+          try {
+            // Set up the timeout timer
+            saveTimeoutTimer = Timer(const Duration(seconds: 60), () {
+              if (!saveCompleter.isCompleted) {
+                AppLogger.error('保存操作超时 (60秒) - 可能是图像处理或网络问题');
+                saveCompleter.completeError(
+                    _SaveError('${l10n.saveTimeout}\n可能原因：图像处理耗时过长或网络连接问题'));
+              }
+            });
+
+            // Execute the actual save operation
+            AppLogger.debug('开始执行保存操作');
+            saveNotifier.updateProgress(0.5);
+
+            await collectionNotifier.saveCurrentRegion(processingOptions);
+            // Cancel the timeout timer immediately after successful completion
+            saveTimeoutTimer.cancel();
+            saveTimeoutTimer = null;
+
+            AppLogger.debug('保存操作完成');
+            saveNotifier.updateProgress(0.98);
+
+            // Complete the completer if not already completed
+            if (!saveCompleter.isCompleted) {
+              saveCompleter.complete();
+            }
+
+            // Wait for completion (this should return immediately)
+            await saveCompleter.future;
+          } catch (e) {
+            // Cancel the timeout timer on any error
+            if (saveTimeoutTimer != null) {
+              saveTimeoutTimer.cancel();
+              saveTimeoutTimer = null;
+            }
+
+            // Complete with error if not already completed
+            if (!saveCompleter.isCompleted) {
+              saveCompleter.completeError(e);
+            }
+
+            // Re-throw the original error
+            rethrow;
+          }
+
+          // Cancel progress timer immediately after save operation completes
+          _progressTimer?.cancel();
         } on _SaveError {
           AppLogger.error('保存超时', data: {'timeout': '60秒'});
+          // Cancel progress timer when save times out
+          _progressTimer?.cancel();
           rethrow;
         } catch (e) {
           AppLogger.error('保存过程中发生错误', error: e);
+          // Cancel progress timer when save fails
+          _progressTimer?.cancel();
           rethrow;
         }
         saveNotifier.updateProgress(0.98);
