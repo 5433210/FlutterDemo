@@ -29,6 +29,9 @@ class M3PracticeFilterPanel extends StatelessWidget {
   /// 展开/折叠状态变化时的回调
   final VoidCallback? onToggleExpand;
 
+  /// 刷新回调
+  final VoidCallback? onRefresh;
+
   /// 构造函数
   const M3PracticeFilterPanel({
     super.key,
@@ -40,6 +43,7 @@ class M3PracticeFilterPanel extends StatelessWidget {
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
+    this.onRefresh,
   });
   @override
   Widget build(BuildContext context) {
@@ -52,6 +56,7 @@ class M3PracticeFilterPanel extends StatelessWidget {
       onToggleExpand: onToggleExpand,
       initialSearchValue: initialSearchValue,
       searchController: searchController,
+      onRefresh: onRefresh,
     );
   }
 }
@@ -82,6 +87,8 @@ class _M3PracticeFilterPanelImpl extends StatefulWidget {
   /// 展开/折叠状态变化时的回调
   final VoidCallback? onToggleExpand;
 
+  /// 刷新回调
+  final VoidCallback? onRefresh;
   const _M3PracticeFilterPanelImpl({
     required this.filter,
     required this.onFilterChanged,
@@ -91,6 +98,7 @@ class _M3PracticeFilterPanelImpl extends StatefulWidget {
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
+    this.onRefresh,
   });
 
   @override
@@ -409,6 +417,18 @@ class _M3PracticeFilterPanelImplState
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 刷新按钮
+              if (widget.onRefresh != null)
+                Tooltip(
+                  message: l10n.refresh,
+                  child: IconButton(
+                    onPressed: widget.onRefresh,
+                    icon: const Icon(Icons.sync),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+
               // 重置按钮
               Tooltip(
                 message: l10n.reset,
@@ -423,9 +443,7 @@ class _M3PracticeFilterPanelImplState
               // 展开/折叠按钮
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
-                  message: widget.isExpanded
-                      ? l10n.collapse
-                      : l10n.expand,
+                  message: widget.isExpanded ? l10n.collapse : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -468,7 +486,10 @@ class _M3PracticeFilterPanelImplState
   }
 
   void _resetFilters() {
+    // 重置过滤器
     widget.onFilterChanged(const PracticeFilter());
+    // 清空搜索框和搜索内容
+    _searchController.clear();
     widget.onSearch('');
   }
 }

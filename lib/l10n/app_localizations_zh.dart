@@ -1766,6 +1766,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get redo => '重做';
 
   @override
+  String get refresh => '刷新';
+
+  @override
   String refreshDataFailed(Object error) {
     return '刷新数据失败: $error';
   }

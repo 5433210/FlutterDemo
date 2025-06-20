@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
 import '../../dialogs/work_import/m3_work_import_dialog.dart';
-import '../../providers/optimized_refresh_provider.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../utils/cross_navigation_helper.dart';
@@ -21,8 +21,6 @@ import 'components/content/m3_work_list_view.dart';
 import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
 import 'components/m3_work_browse_navigation_bar.dart';
-import '../../../application/providers/service_providers.dart';
-import '../../../infrastructure/monitoring/performance_monitor.dart';
 
 class M3WorkBrowsePage extends ConsumerStatefulWidget {
   const M3WorkBrowsePage({super.key});
@@ -35,7 +33,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     with WidgetsBindingObserver {
   // Store provider reference during initialization to avoid accessing it during lifecycle changes
   StateController<RefreshInfo?>? _refreshNotifier;
-  
+
   // 🚀 优化的刷新管理器
   // OptimizedRefreshManager? _refreshManager;
 
@@ -135,6 +133,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                           onToggleExpand: () => viewModel.toggleSidebar(),
                           searchController: state.searchController,
                           initialSearchValue: state.searchQuery,
+                          onRefresh: () => viewModel.refresh(),
                         ),
                       );
                     },
@@ -182,13 +181,13 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     // 🚀 使用性能监控记录应用生命周期变化
     final performanceMonitor = ref.read(performanceMonitorProvider);
-    
+
     if (state == AppLifecycleState.resumed) {
       performanceMonitor.recordOperation('app_resumed', Duration.zero);
-      
+
       AppLogger.info(
         '应用恢复前台，延迟刷新作品列表',
         tag: 'WorkBrowsePage',
@@ -197,7 +196,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           'delay': '1000ms',
         },
       );
-      
+
       // 🚀 延迟刷新，避免应用恢复时的性能冲击
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) {
@@ -241,7 +240,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     // 🚀 启动性能监控
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final performanceMonitor = ref.read(performanceMonitorProvider);
-      performanceMonitor.recordOperation('work_browse_page_init', Duration.zero);
+      performanceMonitor.recordOperation(
+          'work_browse_page_init', Duration.zero);
     });
   }
 
@@ -472,10 +472,10 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   Future<void> _refreshWithOptimization() async {
     final startTime = DateTime.now();
     final performanceMonitor = ref.read(performanceMonitorProvider);
-    
+
     try {
       performanceMonitor.recordOperation('work_refresh_start', Duration.zero);
-      
+
       AppLogger.info(
         '开始优化刷新作品列表',
         tag: 'WorkBrowsePage',
@@ -483,16 +483,16 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           'optimization': 'optimized_refresh_start',
         },
       );
-      
+
       // 使用低优先级刷新，避免阻塞UI
       await Future.delayed(const Duration(milliseconds: 50));
-      
-             if (mounted) {
-         ref.invalidate(worksProvider);
-        
+
+      if (mounted) {
+        ref.invalidate(worksProvider);
+
         final duration = DateTime.now().difference(startTime);
         performanceMonitor.recordOperation('work_refresh_complete', duration);
-        
+
         AppLogger.info(
           '作品列表刷新完成',
           tag: 'WorkBrowsePage',
@@ -504,8 +504,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       }
     } catch (e) {
       final duration = DateTime.now().difference(startTime);
-      performanceMonitor.recordOperation('work_refresh_error', duration, isSuccess: false);
-      
+      performanceMonitor.recordOperation('work_refresh_error', duration,
+          isSuccess: false);
+
       AppLogger.error(
         '作品列表刷新失败',
         tag: 'WorkBrowsePage',

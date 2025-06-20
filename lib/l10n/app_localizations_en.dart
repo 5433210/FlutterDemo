@@ -1766,6 +1766,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get redo => 'Redo';
 
   @override
+  String get refresh => 'Refresh';
+
+  @override
   String refreshDataFailed(Object error) {
     return 'Refresh Data Failed: $error';
   }

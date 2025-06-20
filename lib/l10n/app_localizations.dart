@@ -3437,6 +3437,12 @@ abstract class AppLocalizations {
   /// **'重做'**
   String get redo;
 
+  /// No description provided for @refresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新'**
+  String get refresh;
+
   /// No description provided for @refreshDataFailed.
   ///
   /// In zh, this message translates to:

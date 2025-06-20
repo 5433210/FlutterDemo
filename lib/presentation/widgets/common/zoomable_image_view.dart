@@ -122,21 +122,9 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
     final extension = path.toLowerCase().split('.').last;
     final isSvg = extension == 'svg';
     final l10n = AppLocalizations.of(context);
-
     if (isSvg) {
-      // SVG rendering
-      return SvgPicture.file(
-        File(path),
-        fit: BoxFit.contain,
-        placeholderBuilder: (context) =>
-            widget.loadingBuilder?.call(context) ??
-            Container(
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-      );
+      // SVG rendering with error handling
+      return _buildSvgImageSafe(path, theme);
     } else {
       // Regular image rendering
       return CachedImage(
@@ -163,6 +151,45 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
                   ),
                 ),
       );
+    }
+  }
+
+  Widget _buildSvgImageSafe(String path, ThemeData theme) {
+    try {
+      // Check if file exists before trying to load it
+      final file = File(path);
+      if (!file.existsSync()) {
+        return widget.errorBuilder?.call(context, 'File not found', null) ??
+            Container(
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: const Center(
+                child: Icon(Icons.broken_image),
+              ),
+            );
+      }
+
+      return SvgPicture.file(
+        file,
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) =>
+            widget.loadingBuilder?.call(context) ??
+            Container(
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+        key: ValueKey(path), // Add key to help with rebuilds
+      );
+    } catch (e) {
+      // If any error occurs during SVG loading, use error builder or fallback
+      return widget.errorBuilder?.call(context, e.toString(), null) ??
+          Container(
+            color: theme.colorScheme.surfaceContainerHighest,
+            child: const Center(
+              child: Icon(Icons.broken_image),
+            ),
+          );
     }
   }
 

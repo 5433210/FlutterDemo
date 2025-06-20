@@ -477,9 +477,40 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           // 如果存在characters，恢复原来的值
           if (originalCharacters != null) {
             content['characters'] = originalCharacters;
+          } // 更新元素的content属性，但保留原有的characters
+          newProperties['content'] = content;
+        }
+      } else if (elementType == 'group') {
+        // 组合元素样式处理 - 主要是透明度和基本属性
+        // 组合元素通常只应用基本的变换属性，已在通用样式部分处理
+
+        // 应用content中的样式属性（如果存在）
+        if (newProperties.containsKey('content') &&
+            newProperties['content'] is Map) {
+          Map<String, dynamic> content =
+              Map<String, dynamic>.from(newProperties['content'] as Map);
+
+          // 应用组合元素可能的样式属性
+          final propertiesToApply = [
+            'backgroundColor',
+            'borderColor',
+            'borderWidth',
+            'cornerRadius',
+            'shadowColor',
+            'shadowOpacity',
+            'shadowOffset',
+            'shadowBlur',
+          ];
+
+          // 应用所有指定的样式属性
+          for (final property in propertiesToApply) {
+            final brushKey = 'content_$property';
+            if (_formatBrushStyles!.containsKey(brushKey)) {
+              content[property] = _formatBrushStyles![brushKey];
+            }
           }
 
-          // 更新元素的content属性，但保留原有的characters
+          // 更新元素的content属性
           newProperties['content'] = content;
         }
       }
@@ -1245,9 +1276,44 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           if (content.containsKey(property)) {
             _formatBrushStyles!['content_$property'] = content[property];
           }
-        }
+        } // 不复制characters属性，因为这是内容而非样式
+      }
+    } else if (element['type'] == 'group') {
+      // 组合元素样式 - 主要是透明度属性
+      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['rotation'] = element['rotation'];
 
-        // 不复制characters属性，因为这是内容而非样式
+      // 组合元素的其他可能样式属性
+      if (element.containsKey('width')) {
+        _formatBrushStyles!['width'] = element['width'];
+      }
+      if (element.containsKey('height')) {
+        _formatBrushStyles!['height'] = element['height'];
+      }
+
+      // 复制content中的样式属性（如果存在）
+      if (element.containsKey('content') &&
+          element['content'] is Map<String, dynamic>) {
+        final content = element['content'] as Map<String, dynamic>;
+
+        // 组合元素可能的样式属性
+        final propertiesToCopy = [
+          'backgroundColor',
+          'borderColor',
+          'borderWidth',
+          'cornerRadius',
+          'shadowColor',
+          'shadowOpacity',
+          'shadowOffset',
+          'shadowBlur',
+        ];
+
+        // 复制所有指定的样式属性
+        for (final property in propertiesToCopy) {
+          if (content.containsKey(property)) {
+            _formatBrushStyles!['content_$property'] = content[property];
+          }
+        }
       }
     }
 

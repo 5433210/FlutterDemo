@@ -111,6 +111,10 @@ class _M3CharacterBrowsePanelState
                   isLeftPanel: true,
                   child: M3CharacterFilterPanel(
                     onToggleExpand: _toggleFilterPanel,
+                    onRefresh: () {
+                      // 触发集字数据刷新
+                      ref.read(characterManagementProvider.notifier).refresh();
+                    },
                   ),
                 ),
 

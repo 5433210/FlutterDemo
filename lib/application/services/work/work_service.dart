@@ -7,6 +7,7 @@ import '../../../domain/repositories/character_repository.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../domain/repositories/work_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../character/character_service.dart';
 import './service_errors.dart';
 import './work_image_service.dart';
 
@@ -14,6 +15,7 @@ import './work_image_service.dart';
 class WorkService with WorkServiceErrorHandler {
   final WorkRepository _repository;
   final WorkImageService _imageService;
+  final CharacterService _characterService;
 
   final WorkImageRepository _workImageRepository;
   final CharacterRepository _characterRepository;
@@ -21,10 +23,12 @@ class WorkService with WorkServiceErrorHandler {
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
+    required CharacterService characterService,
     required WorkImageRepository workImageRepository,
     required CharacterRepository characterRepository,
   })  : _repository = repository,
         _imageService = imageService,
+        _characterService = characterService,
         _workImageRepository = workImageRepository,
         _characterRepository = characterRepository;
 
@@ -42,9 +46,66 @@ class WorkService with WorkServiceErrorHandler {
     return handleOperation(
       'deleteWork',
       () async {
-        // 删除作品及图片
+        AppLogger.debug(
+          '开始删除作品及关联数据',
+          tag: 'WorkService',
+          data: {'workId': workId},
+        );
+
+        // 1. 先查找并删除所有关联的集字数据
+        try {
+          final characters = await _characterRepository.findByWorkId(workId);
+          if (characters.isNotEmpty) {
+            final characterIds = characters.map((c) => c.id).toList();
+            AppLogger.debug(
+              '删除作品关联的集字数据',
+              tag: 'WorkService',
+              data: {
+                'workId': workId,
+                'characterCount': characters.length,
+                'characterIds': characterIds,
+              },
+            );
+
+            // 批量删除集字数据（包括数据库记录、图片文件和缓存）
+            await _characterService.deleteBatchCharacters(characterIds);
+
+            AppLogger.info(
+              '成功删除作品关联的集字数据',
+              tag: 'WorkService',
+              data: {
+                'workId': workId,
+                'deletedCharacterCount': characters.length,
+              },
+            );
+          } else {
+            AppLogger.debug(
+              '作品无关联集字数据',
+              tag: 'WorkService',
+              data: {'workId': workId},
+            );
+          }
+        } catch (e) {
+          AppLogger.error(
+            '删除作品关联集字数据失败',
+            tag: 'WorkService',
+            error: e,
+            data: {'workId': workId},
+          );
+          // 继续执行作品删除，不因集字删除失败而中断
+        }
+
+        // 2. 删除作品数据库记录
         await _repository.delete(workId);
+
+        // 3. 清理作品图片文件
         await _imageService.cleanupWorkImages(workId);
+
+        AppLogger.info(
+          '成功删除作品及所有关联数据',
+          tag: 'WorkService',
+          data: {'workId': workId},
+        );
       },
       data: {'workId': workId},
     );
@@ -118,14 +179,22 @@ class WorkService with WorkServiceErrorHandler {
   }
 
   /// 导入作品
-  Future<WorkEntity> importWork(List<File> files, WorkEntity work) async {
+  Future<WorkEntity> importWork(
+    List<File> files,
+    WorkEntity work, {
+    Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+  }) async {
     return handleOperation(
       'importWork',
       () async {
         AppLogger.debug(
           '导入作品',
           tag: 'WorkService',
-          data: {'fileCount': files.length, 'work': work.toJson()},
+          data: {
+            'fileCount': files.length,
+            'work': work.toJson(),
+            'libraryItemIdsCount': libraryItemIds?.length ?? 0,
+          },
         );
 
         // 验证输入
@@ -141,9 +210,12 @@ class WorkService with WorkServiceErrorHandler {
         // 保存到数据库
         final savedWork = await _repository.create(updatedWork);
 
-        // 处理图片导入（包括生成封面）
-        final imagesImported =
-            await _imageService.processImport(work.id, files);
+        // 处理图片导入（包括生成封面），传递libraryItemIds映射
+        final imagesImported = await _imageService.processImport(
+          work.id,
+          files,
+          libraryItemIds: libraryItemIds,
+        );
 
         // 注意：不需要在这里显式调用updateCover，
         // processImport内部的saveChanges已经处理了封面生成
@@ -158,7 +230,8 @@ class WorkService with WorkServiceErrorHandler {
   Future<List<WorkEntity>> queryWorks(WorkFilter filter) async {
     return handleOperation(
       'queryWorks',
-      () async {        AppLogger.debug(
+      () async {
+        AppLogger.debug(
           '开始查询作品',
           tag: 'WorkService',
           data: {
@@ -197,7 +270,8 @@ class WorkService with WorkServiceErrorHandler {
   }) async {
     return handleOperation(
       'queryWorksPaginated',
-      () async {        AppLogger.debug(
+      () async {
+        AppLogger.debug(
           '开始分页查询作品',
           tag: 'WorkService',
           data: {

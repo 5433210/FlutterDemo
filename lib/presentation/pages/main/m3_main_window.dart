@@ -372,15 +372,13 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
             return MaterialPageRoute(
               builder: (context) => const M3CharacterManagementPage(),
             );
-
           case 2: // 字帖列表
             if (settings.name == AppRoutes.practiceEdit) {
               String practiceId = '';
               if (settings.arguments != null) {
                 practiceId = settings.arguments as String;
               }
-
-              return MaterialPageRoute<bool>(
+              return MaterialPageRoute<dynamic>(
                 builder: (context) => M3PracticeEditPage(
                   practiceId: practiceId.isNotEmpty ? practiceId : null,
                 ),

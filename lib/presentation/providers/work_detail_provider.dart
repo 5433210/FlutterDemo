@@ -6,19 +6,22 @@ import '../../domain/models/character/character_entity.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
 import '../../infrastructure/logging/logger.dart';
+import 'events/work_events_provider.dart';
 
 /// 作品详情提供器
 final workDetailProvider =
     StateNotifierProvider<WorkDetailNotifier, WorkDetailState>((ref) {
   final workService = ref.watch(workServiceProvider);
-  return WorkDetailNotifier(workService);
+  return WorkDetailNotifier(workService, ref);
 });
 
 /// 作品详情通知器
 class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   final WorkService _workService;
+  final Ref _ref;
 
-  WorkDetailNotifier(this._workService) : super(const WorkDetailState());
+  WorkDetailNotifier(this._workService, this._ref)
+      : super(const WorkDetailState());
 
   /// 将字符添加到作品关联字符列表
   /// 添加单个字符到作品关联字符列表
@@ -97,6 +100,14 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       state = state.copyWith(isSaving: true, error: null);
 
       await _workService.deleteWork(workId);
+
+      // 发送删除事件通知
+      _ref.read(workDeletedNotifierProvider.notifier).state = workId;
+
+      // 清空删除事件通知状态
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _ref.read(workDeletedNotifierProvider.notifier).state = null;
+      });
 
       state = state.copyWith(isSaving: false);
       return true;
@@ -263,6 +274,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       // 恢复失败，不处理
     }
   }
+
   void updateWorkBasicInfo({
     String? title,
     String? author,
@@ -274,7 +286,8 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     if (state.editingWork == null) return;
 
     // Add logs to help with debugging
-    AppLogger.debug('Updating work basic info',        tag: 'WorkDetailProvider',
+    AppLogger.debug('Updating work basic info',
+        tag: 'WorkDetailProvider',
         data: {
           'workId': state.editingWork!.id,
           'title': title ?? '[unchanged]',
@@ -283,7 +296,8 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
           'tool': tool ?? '[unchanged]',
           // 'creationDate': creationDate?.toString() ?? '[unchanged]',
           'remark': remark?.toString() ?? '[unchanged]',
-        });    final updatedWork = WorkEntity(
+        });
+    final updatedWork = WorkEntity(
       id: state.editingWork!.id,
       title: title ?? state.editingWork!.title,
       author: author ?? state.editingWork!.author,

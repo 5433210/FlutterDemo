@@ -18,10 +18,14 @@ class M3LibraryFilterPanel extends ConsumerStatefulWidget {
   /// 搜索回调
   final Function(String)? onSearch;
 
+  /// 刷新回调
+  final VoidCallback? onRefresh;
+
   const M3LibraryFilterPanel({
     super.key,
     this.searchController,
     this.onSearch,
+    this.onRefresh,
   });
 
   @override
@@ -101,6 +105,16 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                       style: theme.textTheme.titleMedium,
                     ),
                   ),
+                  // 刷新按钮
+                  if (widget.onRefresh != null)
+                    IconButton(
+                      icon: const Icon(Icons.sync),
+                      iconSize: AppSizes.iconSizeMedium,
+                      visualDensity: VisualDensity.compact,
+                      onPressed: widget.onRefresh,
+                      tooltip: l10n.refresh,
+                    ),
+                  // 重置按钮
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     iconSize: AppSizes.iconSizeMedium,
@@ -362,9 +376,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
 
   Widget _buildDateRangeSection({required bool isCreationDate}) {
     return _buildCollapsibleSection(
-      title: isCreationDate
-          ? l10n.createdAt
-          : l10n.updatedAt,
+      title: isCreationDate ? l10n.createdAt : l10n.updatedAt,
       isExpanded:
           isCreationDate ? _isCreationDateExpanded : _isUpdateDateExpanded,
       onToggle: () => setState(() {
@@ -375,9 +387,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
         }
       }),
       child: M3FilterDateRangeSection(
-        title: isCreationDate
-            ? l10n.createdAt
-            : l10n.updatedAt,
+        title: isCreationDate ? l10n.createdAt : l10n.updatedAt,
         filter: isCreationDate ? _creationDateFilter : _updateDateFilter,
         onChanged: (newFilter) {
           if (isCreationDate) {

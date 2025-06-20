@@ -26,6 +26,9 @@ mixin _$WorkImage {
   /// 关联的作品ID
   String get workId => throw _privateConstructorUsedError;
 
+  /// 关联的图库项目ID（如果图片来自图库）
+  String? get libraryItemId => throw _privateConstructorUsedError;
+
   /// 导入时的原始路径
   String get originalPath => throw _privateConstructorUsedError;
 
@@ -74,6 +77,7 @@ abstract class $WorkImageCopyWith<$Res> {
   $Res call(
       {String id,
       String workId,
+      String? libraryItemId,
       String originalPath,
       String path,
       String thumbnailPath,
@@ -103,6 +107,7 @@ class _$WorkImageCopyWithImpl<$Res, $Val extends WorkImage>
   $Res call({
     Object? id = null,
     Object? workId = null,
+    Object? libraryItemId = freezed,
     Object? originalPath = null,
     Object? path = null,
     Object? thumbnailPath = null,
@@ -123,6 +128,10 @@ class _$WorkImageCopyWithImpl<$Res, $Val extends WorkImage>
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
               as String,
+      libraryItemId: freezed == libraryItemId
+          ? _value.libraryItemId
+          : libraryItemId // ignore: cast_nullable_to_non_nullable
+              as String?,
       originalPath: null == originalPath
           ? _value.originalPath
           : originalPath // ignore: cast_nullable_to_non_nullable
@@ -178,6 +187,7 @@ abstract class _$$WorkImageImplCopyWith<$Res>
   $Res call(
       {String id,
       String workId,
+      String? libraryItemId,
       String originalPath,
       String path,
       String thumbnailPath,
@@ -205,6 +215,7 @@ class __$$WorkImageImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? workId = null,
+    Object? libraryItemId = freezed,
     Object? originalPath = null,
     Object? path = null,
     Object? thumbnailPath = null,
@@ -225,6 +236,10 @@ class __$$WorkImageImplCopyWithImpl<$Res>
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
               as String,
+      libraryItemId: freezed == libraryItemId
+          ? _value.libraryItemId
+          : libraryItemId // ignore: cast_nullable_to_non_nullable
+              as String?,
       originalPath: null == originalPath
           ? _value.originalPath
           : originalPath // ignore: cast_nullable_to_non_nullable
@@ -275,6 +290,7 @@ class _$WorkImageImpl extends _WorkImage {
   _$WorkImageImpl(
       {required this.id,
       required this.workId,
+      this.libraryItemId,
       required this.originalPath,
       required this.path,
       required this.thumbnailPath,
@@ -297,6 +313,10 @@ class _$WorkImageImpl extends _WorkImage {
   /// 关联的作品ID
   @override
   final String workId;
+
+  /// 关联的图库项目ID（如果图片来自图库）
+  @override
+  final String? libraryItemId;
 
   /// 导入时的原始路径
   @override
@@ -340,7 +360,7 @@ class _$WorkImageImpl extends _WorkImage {
 
   @override
   String toString() {
-    return 'WorkImage(id: $id, workId: $workId, originalPath: $originalPath, path: $path, thumbnailPath: $thumbnailPath, index: $index, width: $width, height: $height, format: $format, size: $size, createTime: $createTime, updateTime: $updateTime)';
+    return 'WorkImage(id: $id, workId: $workId, libraryItemId: $libraryItemId, originalPath: $originalPath, path: $path, thumbnailPath: $thumbnailPath, index: $index, width: $width, height: $height, format: $format, size: $size, createTime: $createTime, updateTime: $updateTime)';
   }
 
   @override
@@ -350,6 +370,8 @@ class _$WorkImageImpl extends _WorkImage {
             other is _$WorkImageImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.workId, workId) || other.workId == workId) &&
+            (identical(other.libraryItemId, libraryItemId) ||
+                other.libraryItemId == libraryItemId) &&
             (identical(other.originalPath, originalPath) ||
                 other.originalPath == originalPath) &&
             (identical(other.path, path) || other.path == path) &&
@@ -372,6 +394,7 @@ class _$WorkImageImpl extends _WorkImage {
       runtimeType,
       id,
       workId,
+      libraryItemId,
       originalPath,
       path,
       thumbnailPath,
@@ -403,6 +426,7 @@ abstract class _WorkImage extends WorkImage {
   factory _WorkImage(
       {required final String id,
       required final String workId,
+      final String? libraryItemId,
       required final String originalPath,
       required final String path,
       required final String thumbnailPath,
@@ -425,6 +449,10 @@ abstract class _WorkImage extends WorkImage {
   /// 关联的作品ID
   @override
   String get workId;
+
+  /// 关联的图库项目ID（如果图片来自图库）
+  @override
+  String? get libraryItemId;
 
   /// 导入时的原始路径
   @override

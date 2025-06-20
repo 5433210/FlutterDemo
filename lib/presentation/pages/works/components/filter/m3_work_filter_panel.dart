@@ -34,6 +34,9 @@ class M3WorkFilterPanel extends ConsumerWidget {
   /// 初始搜索值
   final String? initialSearchValue;
 
+  /// 刷新回调
+  final VoidCallback? onRefresh;
+
   /// 构造函数
   const M3WorkFilterPanel({
     super.key,
@@ -44,8 +47,8 @@ class M3WorkFilterPanel extends ConsumerWidget {
     this.onToggleExpand,
     this.searchController,
     this.initialSearchValue,
+    this.onRefresh,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _M3WorkFilterPanelImpl(
@@ -56,6 +59,7 @@ class M3WorkFilterPanel extends ConsumerWidget {
       onToggleExpand: onToggleExpand,
       searchController: searchController,
       initialSearchValue: initialSearchValue,
+      onRefresh: onRefresh,
     );
   }
 }
@@ -69,6 +73,7 @@ class _M3WorkFilterPanelImpl extends StatefulWidget {
   final VoidCallback? onToggleExpand;
   final TextEditingController? searchController;
   final String? initialSearchValue;
+  final VoidCallback? onRefresh;
 
   const _M3WorkFilterPanelImpl({
     required this.filter,
@@ -78,6 +83,7 @@ class _M3WorkFilterPanelImpl extends StatefulWidget {
     this.onToggleExpand,
     this.searchController,
     this.initialSearchValue,
+    this.onRefresh,
   });
 
   @override
@@ -379,6 +385,18 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 刷新按钮
+              if (widget.onRefresh != null)
+                Tooltip(
+                  message: l10n.refresh,
+                  child: IconButton(
+                    onPressed: widget.onRefresh,
+                    icon: const Icon(Icons.sync),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+
               // 重置按钮
               Tooltip(
                 message: l10n.reset,
@@ -437,7 +455,10 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
   }
 
   void _resetFilters() {
+    // 重置过滤器
     widget.onFilterChanged(const WorkFilter());
+    // 清空搜索框
+    _searchController.clear();
   }
 
   /// 获取创建日期的预设值

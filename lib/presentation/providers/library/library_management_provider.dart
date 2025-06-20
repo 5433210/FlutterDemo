@@ -189,6 +189,12 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     }
   }
 
+  /// 刷新数据（按当前筛选条件重新查询）
+  Future<void> refresh() async {
+    await loadData();
+    await loadCategoryItemCounts();
+  }
+
   /// 切换页面
   void changePage(int page) {
     state = state.copyWith(currentPage: page);

@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,7 +31,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
         'operation': 'view_model_init',
       },
     );
-    
+
     Future.microtask(() => _initializeData());
     _setupRefreshListener();
   }
@@ -140,6 +138,11 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
       AppLogger.debug('Toggle favorite failed: $e');
       state = state.copyWith(error: 'Toggle favorite failed: $e');
     }
+  }
+
+  /// 刷新数据（按当前筛选条件重新查询）
+  Future<void> refresh() async {
+    await loadPractices(forceRefresh: true);
   }
 
   // 加载练习数据
@@ -374,14 +377,14 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
 
       // 1. 清理Flutter图像缓存
       final imageCache = PaintingBinding.instance.imageCache;
-      
+
       // 2. 强制清理Live Images
       imageCache.clearLiveImages();
-      
+
       // 3. 完全清理整个图像缓存以确保缩略图更新
       // 注意：这会影响性能，但确保缩略图问题被彻底解决
       imageCache.clear();
-      
+
       AppLogger.debug(
         '已清理所有图像缓存',
         data: {
@@ -403,7 +406,6 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
           'practicesCount': state.practices.length,
         },
       );
-
     } catch (e) {
       AppLogger.debug(
         '强制刷新失败',
@@ -412,7 +414,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
           'error': e.toString(),
         },
       );
-      
+
       // 即使缓存清理失败，也尝试重新加载列表
       await loadPractices(forceRefresh: true);
     }
@@ -427,7 +429,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
         'operation': 'setup_refresh_listener',
       },
     );
-    
+
     _refreshSubscription = _refreshService.refreshStream.listen((event) {
       AppLogger.debug(
         '收到字帖列表刷新事件',
@@ -475,7 +477,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
           break;
       }
     });
-    
+
     AppLogger.debug(
       '字帖列表刷新监听器设置完成',
       data: {

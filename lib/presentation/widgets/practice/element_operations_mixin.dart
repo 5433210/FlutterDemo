@@ -1296,7 +1296,12 @@ mixin ElementOperationsMixin on ChangeNotifier
       );
 
       // 🔧 修复：对于组合元素的完整状态更新，直接替换整个元素
-      if (element['type'] == 'group' && properties.containsKey('content')) {
+      // 只有当properties包含足够的完整元素数据时才进行完整替换
+      if (element['type'] == 'group' &&
+          properties.containsKey('content') &&
+          properties.containsKey('id') &&
+          properties.length > 5) {
+        // 确保是完整的元素数据，不是简单的属性更新
         EditPageLogger.controllerInfo(
           '🔧 检测到组合元素完整状态更新',
           data: {

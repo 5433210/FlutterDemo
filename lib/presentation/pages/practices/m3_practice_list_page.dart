@@ -83,6 +83,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                       onToggleExpand: () => viewModel.toggleFilterPanel(),
                       initialSearchValue: state.searchQuery,
                       searchController: state.searchController,
+                      onRefresh: () => viewModel.refresh(),
                     ),
                   ), // 过滤面板切换按钮
                 PersistentSidebarToggle(

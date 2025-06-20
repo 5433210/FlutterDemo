@@ -239,7 +239,11 @@ class WorkImageService with WorkServiceErrorHandler {
   }
 
   /// 导入新图片（返回临时状态，不立即保存）
-  Future<WorkImage> importImage(String workId, File file) async {
+  Future<WorkImage> importImage(
+    String workId,
+    File file, {
+    String? libraryItemId,
+  }) async {
     return handleOperation(
       'importImage',
       () async {
@@ -249,6 +253,7 @@ class WorkImageService with WorkServiceErrorHandler {
           'workId': workId,
           'imageId': imageId,
           'filePath': file.path,
+          'libraryItemId': libraryItemId,
         });
 
         if (!await file.exists()) {
@@ -260,6 +265,7 @@ class WorkImageService with WorkServiceErrorHandler {
         final tempImage = WorkImage(
           id: imageId,
           workId: workId,
+          libraryItemId: libraryItemId,
           path: file.path,
           originalPath: file.path,
           thumbnailPath: file.path,
@@ -275,22 +281,32 @@ class WorkImageService with WorkServiceErrorHandler {
         AppLogger.debug('创建临时图片对象', tag: 'WorkImageService', data: {
           'imageId': imageId,
           'index': nextIndex,
+          'libraryItemId': libraryItemId,
         });
 
         return tempImage;
       },
-      data: {'workId': workId, 'file': file.path},
+      data: {
+        'workId': workId,
+        'file': file.path,
+        'libraryItemId': libraryItemId
+      },
     );
   }
 
   /// 批量导入图片（不立即保存）
-  Future<List<WorkImage>> importImages(String workId, List<File> files) async {
+  Future<List<WorkImage>> importImages(
+    String workId,
+    List<File> files, {
+    Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+  }) async {
     return handleOperation(
       'importImages',
       () async {
         AppLogger.info('开始批量导入图片', tag: 'WorkImageService', data: {
           'workId': workId,
           'fileCount': files.length,
+          'libraryItemIdsCount': libraryItemIds?.length ?? 0,
         });
 
         final images = <WorkImage>[];
@@ -305,7 +321,9 @@ class WorkImageService with WorkServiceErrorHandler {
         });
 
         for (final file in uniqueFiles) {
-          final image = await importImage(workId, file);
+          final libraryItemId = libraryItemIds?[file.path];
+          final image =
+              await importImage(workId, file, libraryItemId: libraryItemId);
           images.add(image);
         }
 
@@ -316,20 +334,26 @@ class WorkImageService with WorkServiceErrorHandler {
   }
 
   /// 处理完整的图片导入流程
-  Future<List<WorkImage>> processImport(String workId, List<File> files) async {
+  Future<List<WorkImage>> processImport(
+    String workId,
+    List<File> files, {
+    Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+  }) async {
     return handleOperation(
       'processImport',
       () async {
         AppLogger.info('开始处理图片导入', tag: 'WorkImageService', data: {
           'workId': workId,
           'fileCount': files.length,
+          'libraryItemIdsCount': libraryItemIds?.length ?? 0,
         });
 
         // 1. 确保作品目录结构
         await _storage.ensureWorkDirectoryExists(workId);
 
         // 2. 导入所有图片
-        final tempImages = await importImages(workId, files);
+        final tempImages =
+            await importImages(workId, files, libraryItemIds: libraryItemIds);
 
         // 3. 处理并保存图片
         final savedImages = await saveChanges(workId, tempImages);

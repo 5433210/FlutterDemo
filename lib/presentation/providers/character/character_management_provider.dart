@@ -180,6 +180,11 @@ class CharacterManagementNotifier
     }
   }
 
+  /// 刷新数据（按当前筛选条件重新查询）
+  Future<void> refresh() async {
+    await loadCharacters();
+  }
+
   /// Reload character data
   Future<void> loadCharacters() async {
     try {

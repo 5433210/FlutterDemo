@@ -103,6 +103,12 @@ class _M3LibraryBrowsingPanelState
                         child: M3LibraryFilterPanel(
                           searchController: _searchController,
                           onSearch: _handleSearch,
+                          onRefresh: () {
+                            // 触发图库数据刷新
+                            ref
+                                .read(libraryManagementProvider.notifier)
+                                .refresh();
+                          },
                         ),
                       ),
                     ],
@@ -647,8 +653,8 @@ class _M3LibraryBrowsingPanelState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                AppLocalizations.of(context).importFailed(e.toString())),
+            content:
+                Text(AppLocalizations.of(context).importFailed(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

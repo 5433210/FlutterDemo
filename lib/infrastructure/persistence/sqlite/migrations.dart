@@ -546,8 +546,7 @@ const migrations = [
     c.id,
     c.character,
     c.isFavorite,
-    c.createTime AS collectionTime,
-    c.updateTime,
+    c.createTime AS collectionTime,    c.updateTime,
     c.pageId,
     c.workId,
     c.tags,
@@ -563,5 +562,19 @@ const migrations = [
     works w ON c.workId = w.id;
   
 
+  ''',
+
+  // 版本 18: 为work_images表添加libraryItemId字段
+  '''
+  
+  -- 添加libraryItemId字段，关联到library_items表
+  ALTER TABLE work_images ADD COLUMN libraryItemId TEXT;
+  
+  -- 创建索引以提高查询性能
+  CREATE INDEX IF NOT EXISTS idx_work_images_library_item ON work_images(libraryItemId);
+  
+  -- 添加外键约束（如果library_items表存在）
+  -- 注意：SQLite的ALTER TABLE不支持直接添加外键，但我们可以在应用层处理关联关系
+  
   ''',
 ];

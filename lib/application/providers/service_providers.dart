@@ -2,19 +2,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
+import '../../infrastructure/cache/services/optimized_image_cache_service.dart';
 import '../../infrastructure/image/image_processor.dart';
 import '../../infrastructure/image/image_processor_impl.dart';
+import '../../infrastructure/monitoring/performance_monitor.dart';
 import '../../infrastructure/providers/cache_providers.dart' as cache;
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../infrastructure/services/character_image_service.dart';
 import '../../infrastructure/services/character_image_service_impl.dart';
-import '../../infrastructure/monitoring/performance_monitor.dart';
 import '../../infrastructure/storage/library_storage.dart';
 import '../../infrastructure/storage/library_storage_service.dart';
+import '../../presentation/services/practice_list_refresh_service.dart';
 import '../../presentation/widgets/practice/collection_element_renderer_optimized.dart';
-import '../../infrastructure/cache/services/optimized_image_cache_service.dart';
 import '../repositories/library_repository_impl.dart';
+import '../services/character/character_service.dart';
 import '../services/library_import_service.dart';
 import '../services/library_service.dart';
 import '../services/practice/practice_service.dart';
@@ -24,7 +26,6 @@ import '../services/storage/practice_storage_service.dart';
 import '../services/storage/work_storage_service.dart';
 import '../services/work/work_image_service.dart';
 import '../services/work/work_service.dart';
-import '../../presentation/services/practice_list_refresh_service.dart';
 import 'repository_providers.dart';
 
 /// 集字图片服务提供者
@@ -93,7 +94,8 @@ final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
 });
 
 /// Practice List Refresh Service Provider
-final practiceListRefreshServiceProvider = Provider<PracticeListRefreshService>((ref) {
+final practiceListRefreshServiceProvider =
+    Provider<PracticeListRefreshService>((ref) {
   return PracticeListRefreshService();
 });
 
@@ -128,6 +130,7 @@ final workServiceProvider = Provider<WorkService>((ref) {
   return WorkService(
     repository: ref.watch(workRepositoryProvider),
     imageService: ref.watch(workImageServiceProvider),
+    characterService: ref.watch(characterServiceProvider),
     workImageRepository: ref.watch(workImageRepositoryProvider),
     characterRepository: ref.watch(characterRepositoryProvider),
   );
@@ -145,16 +148,18 @@ final performanceMonitorProvider = Provider<PerformanceMonitor>((ref) {
 });
 
 /// 🚀 优化的图像缓存服务Provider
-final optimizedImageCacheServiceProvider = Provider<OptimizedImageCacheService>((ref) {
+final optimizedImageCacheServiceProvider =
+    Provider<OptimizedImageCacheService>((ref) {
   final performanceMonitor = ref.watch(performanceMonitorProvider);
   return OptimizedImageCacheService(performanceMonitor);
 });
 
 /// 🚀 优化的集字渲染器Provider
-final optimizedCollectionRendererProvider = Provider<OptimizedCollectionElementRenderer>((ref) {
+final optimizedCollectionRendererProvider =
+    Provider<OptimizedCollectionElementRenderer>((ref) {
   final characterImageService = ref.watch(characterImageServiceProvider);
   final optimizedCache = ref.watch(optimizedImageCacheServiceProvider);
-  
+
   return OptimizedCollectionElementRenderer(
     characterImageService,
     optimizedCache,

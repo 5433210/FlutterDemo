@@ -223,6 +223,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   Map<String, dynamic> _mapToRow(WorkImage image, String workId) {
     final row = {
       'workId': workId,
+      'libraryItemId': image.libraryItemId,
       'path': image.path,
       'original_path': image.originalPath,
       'thumbnail_path': image.thumbnailPath,
@@ -251,6 +252,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     return WorkImage(
       id: row['id'] as String,
       workId: row['workId'] as String,
+      libraryItemId: row['libraryItemId'] as String?,
       path: row['path'] as String,
       originalPath: row['original_path'] as String,
       thumbnailPath: row['thumbnail_path'] as String,

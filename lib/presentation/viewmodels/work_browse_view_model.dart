@@ -8,17 +8,19 @@ import '../../domain/models/common/date_range_filter.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../utils/throttle_helper.dart';
+import '../providers/events/work_events_provider.dart';
 import 'states/work_browse_state.dart';
 
 /// 作品浏览视图模型
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   final WorkService _workService;
+  final Ref _ref;
   Timer? _searchDebounce;
   final ThrottleHelper _loadThrottler = ThrottleHelper(
     minInterval: const Duration(milliseconds: 500),
   );
 
-  WorkBrowseViewModel(this._workService)
+  WorkBrowseViewModel(this._workService, this._ref)
       : super(WorkBrowseState(
           isLoading: false,
           filter: const WorkFilter(),
@@ -43,22 +45,35 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     try {
       state = state.copyWith(isLoading: true);
 
+      // 记录要删除的作品ID
+      final deletedWorkIds = Set<String>.from(state.selectedWorks);
+
       // 1. 执行删除操作
       await Future.wait(
           state.selectedWorks.map((id) => _workService.deleteWork(id)));
 
       AppLogger.debug('删除完成，准备刷新列表', tag: 'WorkBrowseViewModel');
 
-      // 2. 重新加载作品列表
+      // 2. 发送删除事件通知
+      for (final workId in deletedWorkIds) {
+        _ref.read(workDeletedNotifierProvider.notifier).state = workId;
+      }
+
+      // 3. 重新加载作品列表
       final works = await _workService.queryWorks(state.filter);
 
-      // 3. 更新状态
+      // 4. 更新状态
       state = state.copyWith(
         isLoading: false,
         works: works,
         batchMode: false, // 删除后退出批量模式
         selectedWorks: {}, // 清空选择
       );
+
+      // 5. 清空删除事件通知状态
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _ref.read(workDeletedNotifierProvider.notifier).state = null;
+      });
     } catch (e, stack) {
       AppLogger.error('批量删除失败',
           tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
@@ -75,6 +90,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     _searchDebounce?.cancel();
     _loadThrottler.cancel();
     super.dispose();
+  }
+
+  /// 刷新数据（按当前筛选条件重新查询）
+  Future<void> refresh() async {
+    await loadWorks(forceRefresh: true);
   }
 
   // 加载相关方法

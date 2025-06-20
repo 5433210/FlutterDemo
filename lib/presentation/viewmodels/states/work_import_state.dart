@@ -20,6 +20,11 @@ class WorkImportState {
   final double rotation;
   final int selectedImageIndex;
 
+  /// 跟踪图片来源：如果为true表示来自图库，false表示来自本地文件
+  final List<bool> imageFromGallery;
+
+  /// 当前处理状态消息（用于向用户显示进度）
+  final String? statusMessage;
   const WorkImportState({
     this.images = const [],
     this.selectedImage,
@@ -36,6 +41,8 @@ class WorkImportState {
     this.scale = 1.0,
     this.rotation = 0.0,
     this.selectedImageIndex = 0,
+    this.imageFromGallery = const [],
+    this.statusMessage,
   });
 
   /// 获取干净的初始状态
@@ -46,9 +53,11 @@ class WorkImportState {
       title: '',
       error: null,
       imageRotations: const {},
+      imageFromGallery: const [],
     );
-  }  factory WorkImportState.initial() {
-    return WorkImportState(
+  }
+  factory WorkImportState.initial() {
+    return const WorkImportState(
       // 设置默认值
       style: 'regular',
       tool: 'brush',
@@ -83,6 +92,8 @@ class WorkImportState {
     double? scale,
     double? rotation,
     int? selectedImageIndex,
+    List<bool>? imageFromGallery,
+    String? statusMessage,
   }) {
     return WorkImportState(
       images: images ?? this.images,
@@ -100,6 +111,8 @@ class WorkImportState {
       scale: scale ?? this.scale,
       rotation: rotation ?? this.rotation,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
+      imageFromGallery: imageFromGallery ?? this.imageFromGallery,
+      statusMessage: statusMessage,
     );
   }
 }

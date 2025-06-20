@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../application/services/library_import_service.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -14,8 +15,10 @@ import 'states/work_import_state.dart';
 /// 作品导入视图模型
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
+  final LibraryImportService _libraryImportService;
 
-  WorkImportViewModel(this._workService) : super(WorkImportState.initial());
+  WorkImportViewModel(this._workService, this._libraryImportService)
+      : super(WorkImportState.initial());
 
   /// 判断是否可以保存
   bool get canSubmit {
@@ -52,9 +55,12 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         isProcessing: true,
         error: null,
       );
-
       state = state.copyWith(
         images: [...state.images, ...files],
+        imageFromGallery: [
+          ...state.imageFromGallery,
+          ...List.filled(files.length, false)
+        ], // 标记为本地文件
         isProcessing: false,
       );
     } catch (e) {
@@ -105,11 +111,13 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       AppLogger.debug('从图库添加图片', data: {
         'selectedCount': selectedFiles.length,
         'totalCount': updatedImages.length
-      });
-
-      // 更新状态，设置选中索引为第一张新图片
+      }); // 更新状态，设置选中索引为第一张新图片
       state = state.copyWith(
         images: updatedImages,
+        imageFromGallery: [
+          ...state.imageFromGallery,
+          ...List.filled(selectedFiles.length, true)
+        ], // 标记为图库文件
         isProcessing: false,
         selectedImageIndex: state.images.length,
       );
@@ -132,9 +140,83 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     if (!canSubmit) return false;
 
     try {
-      state = state.copyWith(isProcessing: true, error: null);
+      state =
+          state.copyWith(isProcessing: true, error: null, statusMessage: null);
 
-      // 创建新的作品实体
+      // 1. 先将本地选择的图片添加到图库
+      final localImageIndexes = <int>[];
+      for (int i = 0; i < state.images.length; i++) {
+        if (i < state.imageFromGallery.length && !state.imageFromGallery[i]) {
+          localImageIndexes.add(i);
+        }
+      }
+
+      AppLogger.debug('检测到需要添加到图库的本地图片', data: {
+        'totalImages': state.images.length,
+        'localImageCount': localImageIndexes.length,
+        'localIndexes': localImageIndexes,
+      }); // 如果有本地图片需要添加到图库，提示用户
+      if (localImageIndexes.isNotEmpty) {
+        state = state.copyWith(
+          statusMessage: '正在将 ${localImageIndexes.length} 张本地图片添加到图库...',
+        );
+
+        // 让用户有时间看到提示信息
+        await Future.delayed(const Duration(milliseconds: 800));
+      } // 将本地图片添加到图库
+      final libraryItemIds = <String, String>{}; // filePath -> libraryItemId 映射
+
+      for (int i = 0; i < localImageIndexes.length; i++) {
+        final index = localImageIndexes[i];
+        try {
+          final file = state.images[index];
+
+          // 更新进度提示
+          state = state.copyWith(
+            statusMessage:
+                '正在添加第 ${i + 1}/${localImageIndexes.length} 张图片到图库...',
+          );
+
+          // 让用户看到每个步骤的进度
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          AppLogger.debug('正在将图片添加到图库', data: {
+            'index': index,
+            'filePath': file.path,
+          });
+
+          final libraryItem = await _libraryImportService.importFile(file.path);
+
+          // 记录图片文件路径与图库项目ID的映射关系
+          if (libraryItem != null) {
+            libraryItemIds[file.path] = libraryItem.id;
+            AppLogger.debug('图片已成功添加到图库并记录映射', data: {
+              'index': index,
+              'filePath': file.path,
+              'libraryItemId': libraryItem.id,
+            });
+          }
+
+          // 添加完成后稍作停顿
+          await Future.delayed(const Duration(milliseconds: 300));
+        } catch (e) {
+          AppLogger.warning('添加图片到图库失败，继续处理', error: e, data: {
+            'index': index,
+            'filePath': state.images[index].path,
+          });
+          // 不抛出错误，继续处理后续图片
+        }
+      }
+
+      // 更新状态提示
+      state = state.copyWith(
+        statusMessage: '正在导入作品...',
+      );
+
+      // 让用户看到导入作品的提示
+      await Future.delayed(const Duration(milliseconds: 600));
+
+      // 2. 创建新的作品实体
       final work = WorkEntity(
         id: const Uuid().v4(),
         title: state.title.trim(),
@@ -144,10 +226,12 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         remark: state.remark?.trim(),
         createTime: DateTime.now(),
         updateTime: DateTime.now(),
+      ); // 3. 执行导入操作，传递libraryItemIds映射
+      await _workService.importWork(
+        state.images,
+        work,
+        libraryItemIds: libraryItemIds.isNotEmpty ? libraryItemIds : null,
       );
-
-      // 执行导入操作
-      await _workService.importWork(state.images, work);
 
       // 导入成功后重置状态
       reset();
@@ -168,6 +252,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     try {
       state = state.copyWith(
         images: images,
+        imageFromGallery: List.filled(images.length, true), // 假设初始化的图片都来自图库
         isProcessing: true,
         error: null,
       );
@@ -191,6 +276,12 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     final newImages = List<File>.from(state.images);
     newImages.removeAt(index);
 
+    // 同时删除对应的来源标记
+    final newImageFromGallery = List<bool>.from(state.imageFromGallery);
+    if (index < newImageFromGallery.length) {
+      newImageFromGallery.removeAt(index);
+    }
+
     // 如果删除的是当前选中项，需要更新选中索引
     final newSelectedIndex = _calculateNewSelectedIndex(
       oldIndex: index,
@@ -199,6 +290,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
     state = state.copyWith(
       images: newImages,
+      imageFromGallery: newImageFromGallery,
       selectedImageIndex: newSelectedIndex,
     );
   }
@@ -213,12 +305,25 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     }
 
     final images = List<File>.from(state.images);
+    final imageFromGallery = List<bool>.from(state.imageFromGallery);
+
     final item = images.removeAt(oldIndex);
     final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
     images.insert(adjustedNewIndex, item);
 
+    // 同时重新排序图片来源标记
+    if (oldIndex < imageFromGallery.length) {
+      final galleryFlag = imageFromGallery.removeAt(oldIndex);
+      if (adjustedNewIndex < imageFromGallery.length) {
+        imageFromGallery.insert(adjustedNewIndex, galleryFlag);
+      } else {
+        imageFromGallery.add(galleryFlag);
+      }
+    }
+
     state = state.copyWith(
       images: images,
+      imageFromGallery: imageFromGallery,
       selectedImageIndex: _calculateNewSelectedIndex(
         oldIndex: oldIndex,
         newIndex: adjustedNewIndex,

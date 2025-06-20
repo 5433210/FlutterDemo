@@ -10,6 +10,7 @@ _$WorkImageImpl _$$WorkImageImplFromJson(Map<String, dynamic> json) =>
     _$WorkImageImpl(
       id: json['id'] as String,
       workId: json['workId'] as String,
+      libraryItemId: json['libraryItemId'] as String?,
       originalPath: json['originalPath'] as String,
       path: json['path'] as String,
       thumbnailPath: json['thumbnailPath'] as String,
@@ -26,6 +27,7 @@ Map<String, dynamic> _$$WorkImageImplToJson(_$WorkImageImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'workId': instance.workId,
+      'libraryItemId': instance.libraryItemId,
       'originalPath': instance.originalPath,
       'path': instance.path,
       'thumbnailPath': instance.thumbnailPath,

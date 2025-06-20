@@ -5,13 +5,32 @@ import '../../../application/providers/service_providers.dart';
 import '../../../application/services/storage/character_storage_service.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../viewmodels/states/character_grid_state.dart';
+import '../events/work_events_provider.dart';
 
 final characterGridProvider = StateNotifierProvider.family<
     CharacterGridNotifier, CharacterGridState, String>((ref, workId) {
   final repository = ref.watch(characterRepositoryProvider);
   final storageService = ref.watch(characterStorageServiceProvider);
 
-  return CharacterGridNotifier(repository, workId, storageService);
+  final notifier = CharacterGridNotifier(repository, workId, storageService);
+
+  // 监听作品删除事件
+  ref.listen(workDeletedNotifierProvider, (previous, current) {
+    if (current == workId) {
+      // 当前作品被删除，清空数据
+      notifier.clearAfterWorkDeletion();
+    }
+  });
+
+  // 监听字符数据刷新事件
+  ref.listen(characterDataRefreshNotifierProvider, (previous, current) {
+    if (current != null && previous != current) {
+      // 刷新字符数据
+      notifier.refresh();
+    }
+  });
+
+  return notifier;
 });
 
 class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
@@ -44,6 +63,23 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
         .where((c) => c.isSelected)
         .map((c) => c.id)
         .toList();
+  }
+
+  /// 作品删除后清空数据
+  void clearAfterWorkDeletion() {
+    state = const CharacterGridState(
+      characters: [],
+      filteredCharacters: [],
+      totalPages: 1,
+      currentPage: 1,
+      loading: false,
+      isInitialLoad: false,
+    );
+  }
+
+  /// 刷新数据（用于其他场景）
+  Future<void> refresh() async {
+    await loadCharacters();
   }
 
   Future<void> loadCharacters() async {

@@ -23,12 +23,16 @@ class M3CharacterFilterPanel extends ConsumerWidget {
   /// 展开/折叠状态变化时的回调
   final VoidCallback? onToggleExpand;
 
+  /// 刷新回调
+  final VoidCallback? onRefresh;
+
   /// 构造函数
   const M3CharacterFilterPanel({
     super.key,
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
+    this.onRefresh,
   });
 
   @override
@@ -82,6 +86,7 @@ class M3CharacterFilterPanel extends ConsumerWidget {
       collapsible: collapsible,
       isExpanded: isExpanded,
       onToggleExpand: onToggleExpand,
+      onRefresh: onRefresh,
     );
   }
 }
@@ -93,6 +98,7 @@ class _M3CharacterFilterPanelImpl extends StatefulWidget {
   final bool collapsible;
   final bool isExpanded;
   final VoidCallback? onToggleExpand;
+  final VoidCallback? onRefresh;
 
   const _M3CharacterFilterPanelImpl({
     required this.filter,
@@ -100,6 +106,7 @@ class _M3CharacterFilterPanelImpl extends StatefulWidget {
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
+    this.onRefresh,
   });
 
   @override
@@ -152,6 +159,7 @@ class _M3CharacterFilterPanelImplState
       ),
     );
   }
+
   List<Widget> buildFilterSections(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
@@ -235,7 +243,8 @@ class _M3CharacterFilterPanelImplState
                   widget.filter.sortOption.copyWith(descending: isDescending),
             );
             widget.onFilterChanged(newFilter);
-          },        ),
+          },
+        ),
       ),
       // 收藏部分
       _buildSectionCard(
@@ -267,7 +276,8 @@ class _M3CharacterFilterPanelImplState
           onStyleChanged: (style) {
             final newFilter = widget.filter.copyWith(style: style);
             widget.onFilterChanged(newFilter);
-          },        ),
+          },
+        ),
       ),
       // 收集日期部分
       _buildSectionCard(
@@ -360,6 +370,18 @@ class _M3CharacterFilterPanelImplState
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 刷新按钮
+              if (widget.onRefresh != null)
+                Tooltip(
+                  message: l10n.refresh,
+                  child: IconButton(
+                    onPressed: widget.onRefresh,
+                    icon: const Icon(Icons.sync),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+
               // 重置按钮
               Tooltip(
                 message: l10n.reset,
@@ -374,9 +396,7 @@ class _M3CharacterFilterPanelImplState
               // 展开/折叠按钮
               if (widget.collapsible && widget.onToggleExpand != null)
                 Tooltip(
-                  message: widget.isExpanded
-                      ? l10n.collapse
-                      : l10n.expand,
+                  message: widget.isExpanded ? l10n.collapse : l10n.expand,
                   child: IconButton(
                     onPressed: widget.onToggleExpand,
                     icon: Icon(
@@ -420,6 +440,9 @@ class _M3CharacterFilterPanelImplState
   }
 
   void _resetFilters() {
+    // 重置过滤器
     widget.onFilterChanged(const CharacterFilter());
+    // 清空搜索框
+    _searchController.clear();
   }
 }

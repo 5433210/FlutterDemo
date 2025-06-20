@@ -88,8 +88,7 @@ class WorkImportDialog extends ConsumerWidget {
                       viewModel,
                     ),
                   ),
-                ),
-                // Show processing indicator when importing
+                ), // Show processing indicator when importing
                 if (state.isProcessing)
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -99,7 +98,7 @@ class WorkImportDialog extends ConsumerWidget {
                         const LinearProgressIndicator(),
                         const SizedBox(height: 8),
                         Text(
-                          l10n.processing,
+                          state.statusMessage ?? l10n.processing,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],

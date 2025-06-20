@@ -14,6 +14,9 @@ class WorkImage with _$WorkImage {
     /// 关联的作品ID
     required String workId,
 
+    /// 关联的图库项目ID（如果图片来自图库）
+    String? libraryItemId,
+
     /// 导入时的原始路径
     required String originalPath,
 

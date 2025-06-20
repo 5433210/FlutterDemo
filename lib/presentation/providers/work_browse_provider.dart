@@ -8,5 +8,5 @@ final workBrowseProvider =
     StateNotifierProvider<WorkBrowseViewModel, WorkBrowseState>((ref) {
   final workService = ref.watch(workServiceProvider);
 
-  return WorkBrowseViewModel(workService);
+  return WorkBrowseViewModel(workService, ref);
 });
