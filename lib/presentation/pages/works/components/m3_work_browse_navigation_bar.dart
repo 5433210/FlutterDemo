@@ -7,6 +7,7 @@ import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/batch_selection_provider.dart';
+import '../../../providers/works_providers.dart';
 import '../../../viewmodels/states/work_browse_state.dart';
 import '../../../widgets/batch_operations/export_dialog.dart';
 import '../../../widgets/batch_operations/import_dialog.dart';
@@ -288,6 +289,9 @@ class _M3WorkBrowseNavigationBarState
       builder: (context) => ImportDialog(
         pageType: PageType.works,
         onImport: (options, filePath) async {
+          // 保存Navigator状态，用于后续对话框显示
+          final navigatorState = Navigator.of(context);
+          
           // 显示进度对话框
           final progressController = ProgressDialogController();
           
@@ -338,69 +342,55 @@ class _M3WorkBrowseNavigationBarState
               sourceFilePath: filePath,
             );
             
+            AppLogger.info(
+              '导入结果检查',
+              data: {
+                'success': importResult.success,
+                'importedWorks': importResult.importedWorks,
+                'importedCharacters': importResult.importedCharacters,
+                'importedImages': importResult.importedImages,
+                'skippedItems': importResult.skippedItems,
+                'errors': importResult.errors,
+                'warnings': importResult.warnings,
+              },
+              tag: 'work_browse_navigation',
+            );
+            
             if (!importResult.success) {
               throw Exception(importResult.errors.join(', '));
             }
             
-            // 完成
-            progressController.complete(l10n.importSuccess);
+                        AppLogger.info(
+              '作品导入成功完成',
+              data: {
+                'filePath': filePath,
+                'importedWorks': importResult.importedWorks,
+                'importedCharacters': importResult.importedCharacters,
+                'importedImages': importResult.importedImages,
+                'skippedItems': importResult.skippedItems,
+              },
+              tag: 'work_browse_navigation',
+            );
             
-                         AppLogger.info(
-               '作品导入成功完成',
-               data: {
-                 'filePath': filePath,
-                 'importedWorks': importResult.importedWorks,
-                 'importedCharacters': importResult.importedCharacters,
-                 'importedImages': importResult.importedImages,
-                 'skippedItems': importResult.skippedItems,
-               },
-               tag: 'work_browse_navigation',
-             );
+            // 在进度对话框中显示导入结果
+            progressController.showImportResult(importResult, filePath);
+            
+            AppLogger.info(
+              '已在进度对话框中显示导入结果',
+              tag: 'work_browse_navigation',
+            );
             
             // 等待进度对话框关闭
             await progressFuture;
             
-            // 使用延迟检查确保组件仍然活跃
-            if (mounted && context.mounted) {
-              try {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.importSuccess),
-                    backgroundColor: Colors.green,
-                    action: SnackBarAction(
-                      label: '查看结果',
-                      onPressed: () {
-                        AppLogger.info(
-                          '用户请求查看导入结果',
-                          data: {'filePath': filePath},
-                          tag: 'work_browse_navigation',
-                        );
-                      },
-                    ),
-                  ),
-                );
-                
-                // 触发页面刷新
-                widget.onImport();
-              } catch (e) {
-                // 如果显示SnackBar失败，记录日志但不重新抛出异常
-                AppLogger.warning(
-                  '显示导入成功消息失败，可能是因为页面已关闭',
-                  data: {'error': e.toString()},
-                  tag: 'work_browse_navigation',
-                );
-                
-                // 即使SnackBar显示失败，仍然尝试触发页面刷新
-                try {
-                  widget.onImport();
-                } catch (refreshError) {
-                  AppLogger.warning(
-                    '触发页面刷新失败',
-                    data: {'error': refreshError.toString()},
-                    tag: 'work_browse_navigation',
-                  );
-                }
-              }
+            // 进度对话框关闭后刷新页面数据
+            if (mounted) {
+              ref.read(worksNeedsRefreshProvider.notifier).state = RefreshInfo.importCompleted();
+              
+              AppLogger.info(
+                '导入完成，已触发作品列表刷新',
+                tag: 'work_browse_navigation',
+              );
             }
           } catch (e, stackTrace) {
             // 显示错误

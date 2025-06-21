@@ -53,7 +53,13 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         break;
     }
     
-    _exportFormat = ExportFormat.json;
+    // 默认使用ZIP格式
+    _exportFormat = ExportFormat.zip;
+    
+    // 导出选项全选且固定
+    _includeImages = true;
+    _includeMetadata = true;
+    _compressData = true;
     
     AppLogger.info(
       '打开导出对话框',
@@ -61,6 +67,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         'pageType': widget.pageType.name,
         'selectedCount': widget.selectedIds.length,
         'defaultExportType': _exportType.name,
+        'defaultFormat': _exportFormat.name,
       },
       tag: 'export_dialog',
     );
@@ -90,12 +97,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
               
               const SizedBox(height: 16),
               
-              // 导出格式选择
-              _buildExportFormatSection(l10n),
-              
-              const SizedBox(height: 16),
-              
-              // 导出选项
+              // 导出选项（固定为全选，仅显示不可修改）
               _buildExportOptionsSection(l10n),
               
               const SizedBox(height: 16),
@@ -173,55 +175,6 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
     );
   }
 
-  /// 构建导出格式选择区域
-  Widget _buildExportFormatSection(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.exportFormat,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<ExportFormat>(
-          value: _exportFormat,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          items: ExportFormat.values.map((format) {
-            return DropdownMenuItem(
-              value: format,
-              child: Row(
-                children: [
-                  Icon(_getFormatIcon(format)),
-                  const SizedBox(width: 8),
-                  Text(_getFormatLabel(format)),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _exportFormat = value;
-              });
-              
-              AppLogger.debug(
-                '切换导出格式',
-                data: {
-                  'oldFormat': _exportFormat.name,
-                  'newFormat': value.name,
-                },
-                tag: 'export_dialog',
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-
   /// 构建导出选项区域
   Widget _buildExportOptionsSection(AppLocalizations l10n) {
     return Column(
@@ -232,35 +185,91 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        CheckboxListTile(
-          title: Text(l10n.includeImages),
-          subtitle: Text(l10n.includeImagesDescription),
-          value: _includeImages,
-          onChanged: (value) {
-            setState(() {
-              _includeImages = value ?? true;
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: Text(l10n.includeMetadata),
-          subtitle: Text(l10n.includeMetadataDescription),
-          value: _includeMetadata,
-          onChanged: (value) {
-            setState(() {
-              _includeMetadata = value ?? true;
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: Text(l10n.compressData),
-          subtitle: Text(l10n.compressDataDescription),
-          value: _compressData,
-          onChanged: (value) {
-            setState(() {
-              _compressData = value ?? true;
-            });
-          },
+        // 显示导出选项但设为只读（全选且固定）
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.check_circle, 
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.includeImages),
+                        Text(
+                          l10n.includeImagesDescription,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.check_circle, 
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.includeMetadata),
+                        Text(
+                          l10n.includeMetadataDescription,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.check_circle, 
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l10n.compressData),
+                        Text(
+                          l10n.compressDataDescription,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -319,7 +328,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
           const SizedBox(height: 8),
           _buildSummaryRow(l10n.selectedItems, '${widget.selectedIds.length} 个${_getItemTypeName()}'),
           _buildSummaryRow(l10n.exportType, _getExportTypeLabel(l10n, _exportType)),
-          _buildSummaryRow(l10n.exportFormat, _getFormatLabel(_exportFormat)),
+          _buildSummaryRow('导出格式', 'ZIP 压缩包'),
           if (_targetPath.isNotEmpty)
             _buildSummaryRow(l10n.exportLocation, _targetPath),
         ],
@@ -396,31 +405,6 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
     }
   }
 
-  /// 获取格式图标
-  IconData _getFormatIcon(ExportFormat format) {
-    switch (format) {
-      case ExportFormat.json:
-        return Icons.code;
-      case ExportFormat.zip:
-        return Icons.archive;
-      case ExportFormat.backup:
-        return Icons.backup;
-    }
-  }
-
-  /// 获取格式标签
-  String _getFormatLabel(ExportFormat format) {
-    final l10n = AppLocalizations.of(context)!;
-    switch (format) {
-      case ExportFormat.json:
-        return l10n.jsonFile;
-      case ExportFormat.zip:
-        return l10n.zipFile;
-      case ExportFormat.backup:
-        return l10n.backupFile;
-    }
-  }
-
   /// 获取项目类型名称
   String _getItemTypeName() {
     final l10n = AppLocalizations.of(context)!;
@@ -437,40 +421,19 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
     try {
       final filePickerService = FilePickerServiceImpl();
       
-      // 根据导出格式选择文件或目录
-      String? selectedPath;
-      if (_exportFormat == ExportFormat.zip || _exportFormat == ExportFormat.json || _exportFormat == ExportFormat.backup) {
-        // 选择保存文件路径
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        String extension;
-        switch (_exportFormat) {
-          case ExportFormat.json:
-            extension = 'json';
-            break;
-          case ExportFormat.zip:
-            extension = 'zip';
-            break;
-          case ExportFormat.backup:
-            extension = 'bak';
-            break;
-        }
-        final suggestedName = 'export_${widget.pageType.name}_$timestamp.$extension';
-        
-        selectedPath = await filePickerService.pickSaveFile(
-          dialogTitle: 'Select Export Location',
-          suggestedName: suggestedName,
-          allowedExtensions: [extension],
-        );
-      } else {
-        // 选择目录
-        selectedPath = await filePickerService.pickDirectory(
-          dialogTitle: 'Select Export Directory',
-        );
-      }
+      // 固定选择ZIP文件保存路径
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final suggestedName = 'export_${widget.pageType.name}_$timestamp.zip';
+      
+      final selectedPath = await filePickerService.pickSaveFile(
+        dialogTitle: 'Select Export Location',
+        suggestedName: suggestedName,
+        allowedExtensions: ['zip'],
+      );
       
       if (selectedPath != null) {
         setState(() {
-          _targetPath = selectedPath!;
+          _targetPath = selectedPath;
           _pathController.text = selectedPath;
         });
         
@@ -479,7 +442,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
           data: {
             'targetPath': selectedPath,
             'pageType': widget.pageType.name,
-            'exportFormat': _exportFormat.name,
+            'exportFormat': 'zip',
           },
           tag: 'export_dialog',
         );

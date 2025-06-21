@@ -333,7 +333,7 @@ class ExportServiceImpl implements ExportService {
 
   @override
   List<String> getSupportedFormats() {
-    return ['zip', 'json', 'backup'];
+    return ['zip', 'backup'];
   }
 
   @override

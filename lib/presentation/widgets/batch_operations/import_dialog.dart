@@ -30,10 +30,7 @@ class ImportDialog extends ConsumerStatefulWidget {
 class _ImportDialogState extends ConsumerState<ImportDialog> {
   String _filePath = '';
   final _pathController = TextEditingController();
-  ConflictResolution _conflictResolution = ConflictResolution.skip;
-  bool _validateData = true;
-  bool _createBackup = true;
-  bool _preserveMetadata = true;
+  ConflictResolution _conflictResolution = ConflictResolution.skip; // 默认跳过
   ImportDataModel? _previewData;
   bool _isLoading = false;
 
@@ -74,13 +71,18 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
               
               const SizedBox(height: 16),
               
-              // 导入选项
-              _buildImportOptionsSection(l10n),
+              // 强制选项说明
+              _buildMandatoryOptionsSection(l10n),
               
               const SizedBox(height: 16),
               
-              // 冲突处理
+              // 冲突处理（简化为两个选项）
               _buildConflictResolutionSection(l10n),
+              
+              const SizedBox(height: 16),
+              
+              // 备份跳转按钮
+              _buildBackupSection(l10n),
               
               if (_previewData != null) ...[
                 const SizedBox(height: 16),
@@ -134,7 +136,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
               child: TextField(
                 controller: _pathController,
                 decoration: InputDecoration(
-                  hintText: 'Select import file...',
+                  hintText: l10n.selectImportFile,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.folder_open),
@@ -150,86 +152,185 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     );
   }
 
-  /// 构建导入选项区域
-  Widget _buildImportOptionsSection(AppLocalizations l10n) {
+  /// 构建强制选项说明区域
+  Widget _buildMandatoryOptionsSection(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.importRequirements,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildRequirementItem(l10n, Icons.verified_user, l10n.validateData, l10n.validateDataMandatory),
+          _buildRequirementItem(l10n, Icons.history, l10n.preserveMetadata, l10n.preserveMetadataMandatory),
+        ],
+      ),
+    );
+  }
+
+  /// 构建要求项
+  Widget _buildRequirementItem(AppLocalizations l10n, IconData icon, String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建冲突处理区域（简化为两个选项）
+  Widget _buildConflictResolutionSection(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Import Options',
+          l10n.conflictResolution,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        CheckboxListTile(
-          title: const Text('Validate Data'),
-          subtitle: const Text('Verify data integrity before import'),
-          value: _validateData,
+        // 只显示跳过和覆盖两个选项
+        RadioListTile<ConflictResolution>(
+          title: Text(l10n.skipConflicts),
+          subtitle: Text(l10n.skipConflictsDescription),
+          value: ConflictResolution.skip,
+          groupValue: _conflictResolution,
           onChanged: (value) {
-            setState(() {
-              _validateData = value ?? true;
-            });
+            if (value != null) {
+              setState(() {
+                _conflictResolution = value;
+              });
+              
+              AppLogger.debug(
+                '选择冲突处理策略：跳过',
+                data: {
+                  'resolution': value.name,
+                  'pageType': widget.pageType.name,
+                },
+                tag: 'import_dialog',
+              );
+            }
           },
         ),
-        CheckboxListTile(
-          title: const Text('Create Backup'),
-          subtitle: const Text('Create backup before import'),
-          value: _createBackup,
+        RadioListTile<ConflictResolution>(
+          title: Text(l10n.overwriteExisting),
+          subtitle: Text(l10n.overwriteExistingDescription),
+          value: ConflictResolution.overwrite,
+          groupValue: _conflictResolution,
           onChanged: (value) {
-            setState(() {
-              _createBackup = value ?? true;
-            });
-          },
-        ),
-        CheckboxListTile(
-          title: const Text('Preserve Metadata'),
-          subtitle: const Text('Keep original creation time and metadata'),
-          value: _preserveMetadata,
-          onChanged: (value) {
-            setState(() {
-              _preserveMetadata = value ?? true;
-            });
+            if (value != null) {
+              setState(() {
+                _conflictResolution = value;
+              });
+              
+              AppLogger.debug(
+                '选择冲突处理策略：覆盖',
+                data: {
+                  'resolution': value.name,
+                  'pageType': widget.pageType.name,
+                },
+                tag: 'import_dialog',
+              );
+            }
           },
         ),
       ],
     );
   }
 
-  /// 构建冲突处理区域
-  Widget _buildConflictResolutionSection(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Conflict Resolution',
-          style: Theme.of(context).textTheme.titleSmall,
+  /// 构建备份区域
+  Widget _buildBackupSection(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
         ),
-        const SizedBox(height: 8),
-        ...ConflictResolution.values.map((resolution) {
-          return RadioListTile<ConflictResolution>(
-            title: Text(_getConflictResolutionLabel(l10n, resolution)),
-            subtitle: Text(_getConflictResolutionDescription(l10n, resolution)),
-            value: resolution,
-            groupValue: _conflictResolution,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _conflictResolution = value;
-                });
-                
-                AppLogger.debug(
-                  '切换冲突处理策略',
-                  data: {
-                    'oldResolution': _conflictResolution.name,
-                    'newResolution': value.name,
-                    'pageType': widget.pageType.name,
-                  },
-                  tag: 'import_dialog',
-                );
-              }
-            },
-          );
-        }),
-      ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.backup,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.backupRecommendation,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  l10n.backupRecommendationDescription,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          OutlinedButton.icon(
+            onPressed: _navigateToBackupSettings,
+            icon: const Icon(Icons.settings),
+            label: Text(l10n.goToBackup),
+          ),
+        ],
+      ),
     );
   }
 
@@ -250,23 +351,23 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Import Preview',
+            l10n.importPreview,
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          _buildPreviewRow('Works', '${_previewData!.exportData.works.length}'),
-          _buildPreviewRow('Characters', '${_previewData!.exportData.characters.length}'),
-          _buildPreviewRow('Images', '${_previewData!.exportData.workImages.length}'),
+          _buildPreviewRow(l10n.works, '${_previewData!.exportData.works.length}'),
+          _buildPreviewRow(l10n.characters, '${_previewData!.exportData.characters.length}'),
+          _buildPreviewRow(l10n.images, '${_previewData!.exportData.workImages.length}'),
           if (_previewData!.conflicts.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              'Conflicts Found',
+              l10n.conflictsFound,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.error,
               ),
             ),
             Text(
-              '${_previewData!.conflicts.length} conflicts',
+              l10n.conflictsCount(_previewData!.conflicts.length),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.error,
               ),
@@ -304,40 +405,30 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     );
   }
 
-  /// 获取冲突处理策略标签
-  String _getConflictResolutionLabel(AppLocalizations l10n, ConflictResolution resolution) {
-    switch (resolution) {
-      case ConflictResolution.skip:
-        return 'Skip Conflicts';
-      case ConflictResolution.overwrite:
-        return 'Overwrite Existing';
-      case ConflictResolution.merge:
-        return 'Merge Data';
-      case ConflictResolution.rename:
-        return 'Rename Duplicates';
-      case ConflictResolution.ask:
-        return 'Ask User';
-      case ConflictResolution.keepExisting:
-        return 'Keep Existing';
-    }
-  }
-
-  /// 获取冲突处理策略描述
-  String _getConflictResolutionDescription(AppLocalizations l10n, ConflictResolution resolution) {
-    switch (resolution) {
-      case ConflictResolution.skip:
-        return 'Skip items that already exist';
-      case ConflictResolution.overwrite:
-        return 'Replace existing items with imported data';
-      case ConflictResolution.merge:
-        return 'Combine existing and imported data';
-      case ConflictResolution.rename:
-        return 'Rename imported items to avoid conflicts';
-      case ConflictResolution.ask:
-        return 'Ask user for each conflict';
-      case ConflictResolution.keepExisting:
-        return 'Keep existing data, skip import';
-    }
+  /// 导航到备份设置
+  void _navigateToBackupSettings() {
+    AppLogger.info(
+      '导航到备份设置',
+      data: {
+        'pageType': widget.pageType.name,
+      },
+      tag: 'import_dialog',
+    );
+    
+    Navigator.of(context).pop(); // 关闭导入对话框
+    
+    // TODO: 实现导航到设置页面的备份子面板
+    // Navigator.of(context).pushNamed('/settings/backup');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.backupNavigationPlaceholder),
+        action: SnackBarAction(
+          label: AppLocalizations.of(context)!.ok,
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
   /// 选择导入文件
@@ -345,8 +436,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     try {
       final filePickerService = FilePickerServiceImpl();
       final selectedFile = await filePickerService.pickFile(
-        dialogTitle: 'Select Import File',
-        allowedExtensions: ['zip', 'json'],
+        dialogTitle: AppLocalizations.of(context)!.selectImportFile,
+        allowedExtensions: ['zip'], // 只支持ZIP格式
       );
       
       if (selectedFile != null) {
@@ -371,70 +462,29 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
         // 模拟预览数据 - 实际实现中应该调用导入服务解析文件
         setState(() {
           _isLoading = false;
-          _previewData = ImportDataModel(
-            exportData: ExportDataModel(
-              metadata: ExportMetadata(
-                exportTime: DateTime.now(),
-                exportType: ExportType.worksWithCharacters,
-                options: ExportOptions(
-                  type: ExportType.worksWithCharacters,
-                  format: ExportFormat.json,
-                ),
-                appVersion: '1.0.0',
-                platform: 'Android',
-                compatibility: CompatibilityInfo(
-                  minSupportedVersion: '1.0.0',
-                  recommendedVersion: '1.0.0',
-                ),
-              ),
-              works: [], // 模拟数据
-              characters: [], // 模拟数据
-              workImages: [], // 模拟数据
-              manifest: ExportManifest(
-                summary: ExportSummary(),
-                files: [],
-                statistics: ExportStatistics(
-                  customConfigs: CustomConfigStatistics(),
-                ),
-                validations: [],
-              ),
-            ),
-            validation: ImportValidationResult(
-              status: ValidationStatus.passed,
-              isValid: true,
-              statistics: ImportDataStatistics(),
-              compatibility: CompatibilityCheckResult(
-                dataFormatVersion: '1.0.0',
-                appVersion: '1.0.0',
-                level: CompatibilityLevel.fullCompatible,
-              ),
-              fileIntegrity: FileIntegrityResult(),
-              dataIntegrity: DataIntegrityResult(),
-            ),
-            conflicts: [], // 模拟冲突数据
-            options: ImportOptions(
-              defaultConflictResolution: _conflictResolution,
-              createBackup: _createBackup,
-              validateFileIntegrity: _validateData,
-            ),
-          );
+          // 暂时设为null，避免复杂的模型构造
+          _previewData = null;
         });
       }
     } catch (e) {
-      AppLogger.error(
-        '选择文件失败',
-        error: e,
-        tag: 'import_dialog',
-      );
-      
       setState(() {
         _isLoading = false;
       });
       
+      AppLogger.error(
+        '选择导入文件失败',
+        data: {
+          'error': e.toString(),
+          'pageType': widget.pageType.name,
+        },
+        tag: 'import_dialog',
+        error: e,
+      );
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('选择文件失败: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.selectFileError),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -444,10 +494,15 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
 
   /// 处理导入
   void _handleImport() {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // 创建简化的导入选项
     final options = ImportOptions(
       defaultConflictResolution: _conflictResolution,
-      validateFileIntegrity: _validateData,
-      createBackup: _createBackup,
+      validateFileIntegrity: true, // 强制验证数据
+      createBackup: false, // 不自动创建备份
+      autoFixErrors: true,
+      overwriteExisting: _conflictResolution == ConflictResolution.overwrite,
     );
     
     AppLogger.info(
@@ -457,9 +512,9 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
         'filePath': _filePath,
         'conflictResolution': _conflictResolution.name,
         'options': {
-          'validateData': _validateData,
-          'createBackup': _createBackup,
-          'preserveMetadata': _preserveMetadata,
+          'validateFileIntegrity': true,
+          'createBackup': false,
+          'preserveMetadata': true, // 强制保留元数据
         },
       },
       tag: 'import_dialog',
@@ -467,36 +522,5 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     
     Navigator.of(context).pop();
     widget.onImport(options, _filePath);
-  }
-
-  /// 创建带进度回调的导入函数
-  static Future<void> Function(ImportOptions, String) createProgressImportFunction({
-    required BuildContext context,
-    required Future<void> Function(ImportOptions options, String filePath, ProgressDialogController progressController) onImportWithProgress,
-  }) {
-    return (ImportOptions options, String filePath) async {
-      // 显示进度对话框
-      final progressController = ProgressDialogController();
-      
-      // 显示进度对话框
-      final progressFuture = ControlledProgressDialog.show(
-        context: context,
-        title: AppLocalizations.of(context).import,
-        controller: progressController,
-        initialMessage: AppLocalizations.of(context).importing,
-        canCancel: false,
-      );
-
-      try {
-        // 执行导入
-        await onImportWithProgress(options, filePath, progressController);
-      } catch (e) {
-        progressController.showError('导入失败: ${e.toString()}');
-      } finally {
-        progressController.dispose();
-      }
-
-      await progressFuture;
-    };
   }
 } 

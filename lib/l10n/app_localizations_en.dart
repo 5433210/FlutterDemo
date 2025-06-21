@@ -225,6 +225,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupSuccess => 'Backup Created Successfully';
 
   @override
+  String get backupRecommendation => 'Recommend creating backup before import';
+
+  @override
+  String get backupRecommendationDescription => 'For data safety, it\'s recommended to manually create a backup before importing';
+
+  @override
+  String get goToBackup => 'Go to Backup';
+
+  @override
+  String get backupNavigationPlaceholder => 'Backup settings page is under development';
+
+  @override
   String get basicInfo => 'Basic Information';
 
   @override
@@ -540,7 +552,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createBackup => 'Create Backup';
 
   @override
-  String get createBackupDescription => 'Create a New Data Backup';
+  String get createBackupDescription => 'Create backup before import';
 
   @override
   String createExportDirectoryFailed(Object error) {
@@ -1290,12 +1302,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importNotImplemented => 'Configuration import feature is under development';
 
   @override
+  String get importPreview => 'Import Preview';
+
+  @override
+  String get importRequirements => 'Import Requirements';
+
+  @override
   String get importSuccess => 'Backup Import Success';
 
   @override
   String importSuccessMessage(Object count) {
     return 'Successfully imported $count files';
   }
+
+  @override
+  String get importResultTitle => 'Import Result';
+
+  @override
+  String get importedWorks => 'Imported Works';
+
+  @override
+  String get importedCharacters => 'Imported Characters';
+
+  @override
+  String get importedImages => 'Imported Images';
+
+  @override
+  String get importedFile => 'Imported File';
+
+  @override
+  String get importStatistics => 'Import Statistics';
+
+  @override
+  String get processingDetails => 'Processing Details';
+
+  @override
+  String get skippedItems => 'Skipped Items';
+
+  @override
+  String get overwrittenItems => 'Overwritten Items';
+
+  @override
+  String get detailedReport => 'Detailed Report';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get warnings => 'Warnings';
+
+  @override
+  String get errors => 'Errors';
 
   @override
   String get importing => 'Importing...';
@@ -1676,6 +1733,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String worksCount(Object count) {
     return '$count works';
   }
+
+  @override
+  String get works => 'Works';
+
+  @override
+  String get characters => 'Characters';
+
+  @override
+  String get images => 'Images';
 
   @override
   String get noiseReduction => 'Noise Reduction';
@@ -2060,6 +2126,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectImportFile => 'Select Backup File';
+
+  @override
+  String get selectFileError => 'Failed to select file';
 
   @override
   String get selectParentCategory => 'Select Parent Category';
@@ -2578,4 +2647,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterday => 'Yesterday';
+
+  @override
+  String get importOptions => 'Import Options';
+
+  @override
+  String get validateData => 'Validate Data';
+
+  @override
+  String get validateDataDescription => 'Verify data integrity before import';
+
+  @override
+  String get validateDataMandatory => 'Mandatory validation of import file integrity and format to ensure data security';
+
+  @override
+  String get preserveMetadata => 'Preserve Metadata';
+
+  @override
+  String get preserveMetadataDescription => 'Keep original creation time and metadata';
+
+  @override
+  String get preserveMetadataMandatory => 'Mandatory preservation of original creation time, author information and other metadata to ensure data consistency';
+
+  @override
+  String get conflictResolution => 'Conflict Resolution';
+
+  @override
+  String get skipConflicts => 'Skip Conflicts';
+
+  @override
+  String get skipConflictsDescription => 'Skip items that already exist';
+
+  @override
+  String get overwriteExisting => 'Overwrite Existing';
+
+  @override
+  String get overwriteExistingDescription => 'Replace existing items with imported data';
+
+  @override
+  String get conflictsFound => 'Conflicts Found';
+
+  @override
+  String conflictsCount(Object count) {
+    return 'Found $count conflicts';
+  }
+
+  @override
+  String get mergeData => 'Merge Data';
+
+  @override
+  String get mergeDataDescription => 'Combine existing and imported data';
+
+  @override
+  String get renameDuplicates => 'Rename Duplicates';
+
+  @override
+  String get renameDuplicatesDescription => 'Rename imported items to avoid conflicts';
+
+  @override
+  String get askUser => 'Ask User';
+
+  @override
+  String get askUserDescription => 'Ask user for each conflict';
+
+  @override
+  String get keepExisting => 'Keep Existing';
+
+  @override
+  String get keepExistingDescription => 'Keep existing data, skip import';
+
+  @override
+  String get conflictDetailsTitle => 'Conflict Resolution Details';
+
+  @override
+  String get skippedWorks => 'Skipped Works';
+
+  @override
+  String get overwrittenWorks => 'Overwritten Works';
+
+  @override
+  String get skippedCharacters => 'Skipped Characters';
+
+  @override
+  String get overwrittenCharacters => 'Overwritten Characters';
+
+  @override
+  String get conflictReason => 'Conflict Reason';
+
+  @override
+  String get existingItem => 'Existing Item';
 }

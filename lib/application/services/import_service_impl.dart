@@ -189,9 +189,115 @@ class ImportServiceImpl implements ImportService {
       tag: 'import',
     );
 
-    // 简化实现：暂时返回空列表，表示无冲突
-    // TODO: 实现实际的冲突检测逻辑
-    return [];
+    final conflicts = <ImportConflictInfo>[];
+
+    try {
+      // 检查作品ID冲突
+      for (final work in importData.exportData.works) {
+        if (_workRepository != null) {
+          try {
+            final existingWork = await _workRepository!.get(work.id);
+            if (existingWork != null) {
+              conflicts.add(ImportConflictInfo(
+                type: ConflictType.idConflict,
+                entityType: EntityType.work,
+                entityId: work.id,
+                description: '作品ID已存在: ${work.id} (标题: ${work.title})',
+                existingData: {
+                  'id': existingWork.id,
+                  'title': existingWork.title,
+                  'createTime': existingWork.createTime.toIso8601String(),
+                  'updateTime': existingWork.updateTime.toIso8601String(),
+                },
+                importData: {
+                  'id': work.id,
+                  'title': work.title,
+                  'createTime': work.createTime.toIso8601String(),
+                  'updateTime': work.updateTime.toIso8601String(),
+                },
+                resolution: null, // 用户尚未选择解决方案
+              ));
+            }
+          } catch (e) {
+            // get失败不一定表示不存在，可能是其他错误
+            AppLogger.warning(
+              '检查作品冲突时出错',
+              data: {
+                'workId': work.id,
+                'error': e.toString(),
+              },
+              tag: 'import',
+            );
+          }
+        }
+      }
+
+      // 检查集字ID冲突
+      for (final character in importData.exportData.characters) {
+        if (_characterRepository != null) {
+          try {
+            final existingCharacter = await _characterRepository!.get(character.id);
+            if (existingCharacter != null) {
+              conflicts.add(ImportConflictInfo(
+                type: ConflictType.idConflict,
+                entityType: EntityType.character,
+                entityId: character.id,
+                description: '集字ID已存在: ${character.id} (字符: ${character.character})',
+                existingData: {
+                  'id': existingCharacter.id,
+                  'character': existingCharacter.character,
+                  'createTime': existingCharacter.createTime.toIso8601String(),
+                  'updateTime': existingCharacter.updateTime.toIso8601String(),
+                },
+                importData: {
+                  'id': character.id,
+                  'character': character.character,
+                  'createTime': character.createTime.toIso8601String(),
+                  'updateTime': character.updateTime.toIso8601String(),
+                },
+                resolution: null,
+              ));
+            }
+          } catch (e) {
+            AppLogger.warning(
+              '检查集字冲突时出错',
+              data: {
+                'characterId': character.id,
+                'error': e.toString(),
+              },
+              tag: 'import',
+            );
+          }
+        }
+      }
+
+      AppLogger.info(
+        '冲突检查完成',
+        data: {
+          'totalConflicts': conflicts.length,
+          'workConflicts': conflicts.where((c) => c.entityType == EntityType.work).length,
+          'characterConflicts': conflicts.where((c) => c.entityType == EntityType.character).length,
+          'operation': 'check_conflicts_completed',
+        },
+        tag: 'import',
+      );
+
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        '冲突检查失败',
+        error: e,
+        stackTrace: stackTrace,
+        data: {
+          'workCount': importData.exportData.works.length,
+          'characterCount': importData.exportData.characters.length,
+          'operation': 'check_conflicts_failed',
+        },
+        tag: 'import',
+      );
+      throw ImportException('冲突检查失败: ${e.toString()}', 'CONFLICT_CHECK_FAILED');
+    }
+
+    return conflicts;
   }
 
   @override
@@ -210,57 +316,275 @@ class ImportServiceImpl implements ImportService {
         'workCount': importData.exportData.works.length,
         'characterCount': importData.exportData.characters.length,
         'sourceFilePath': sourceFilePath,
+        'conflictResolution': importData.options.defaultConflictResolution.name,
         'operation': 'perform_import',
       },
       tag: 'import',
     );
 
     final startTime = DateTime.now();
+    int skippedItems = 0;
     
     try {
       // 步骤1：准备导入
-      progressCallback?.call(0.1, '准备导入...', {'step': 'preparing'});
+      progressCallback?.call(0.05, '准备导入...', {'step': 'preparing'});
       await Future.delayed(const Duration(milliseconds: 100));
       
-      // 步骤2：导入作品数据
-      progressCallback?.call(0.3, '导入作品数据...', {'step': 'importing_works'});
-      final worksImported = await _importWorks(importData.exportData.works);
-      await Future.delayed(const Duration(milliseconds: 200));
+      // 步骤2：检查冲突
+      progressCallback?.call(0.1, '检查数据冲突...', {'step': 'checking_conflicts'});
+      final conflicts = await checkConflicts(importData);
       
-      // 步骤3：导入集字数据
-      progressCallback?.call(0.6, '导入集字数据...', {'step': 'importing_characters'});
-      final charactersImported = await _importCharacters(importData.exportData.characters);
-      await Future.delayed(const Duration(milliseconds: 200));
+      if (conflicts.isNotEmpty) {
+        AppLogger.info(
+          '发现数据冲突',
+          data: {
+            'conflictCount': conflicts.length,
+            'conflictResolution': importData.options.defaultConflictResolution.name,
+          },
+          tag: 'import',
+        );
+      }
       
-      // 步骤4：导入图片数据（需要原始文件路径来提取图片文件）
-      progressCallback?.call(0.7, '导入图片数据...', {'step': 'importing_images'});
-      final imagesImported = await _importImages(importData.exportData.workImages, sourceFilePath);
+      // 步骤3：根据冲突解决策略过滤数据
+      progressCallback?.call(0.15, '处理数据冲突...', {'step': 'resolving_conflicts'});
+      final filteredWorks = <WorkEntity>[];
+      final filteredCharacters = <CharacterEntity>[];
       
-      // 步骤4.1：保存WorkImage数据到数据库
-      if (imagesImported > 0 && _workImageRepository != null) {
-        progressCallback?.call(0.75, '保存图片数据到数据库...', {'step': 'saving_image_data'});
-        await _saveWorkImagesToDatabase(importData.exportData.workImages);
+      // 收集冲突处理详情
+      final conflictDetails = <String, dynamic>{
+        'skippedWorks': <Map<String, dynamic>>[],
+        'overwrittenWorks': <Map<String, dynamic>>[],
+        'skippedCharacters': <Map<String, dynamic>>[],
+        'overwrittenCharacters': <Map<String, dynamic>>[],
+      };
+      
+      // 处理作品冲突
+      for (final work in importData.exportData.works) {
+        final conflict = conflicts.cast<ImportConflictInfo?>().firstWhere(
+          (c) => c?.entityType == EntityType.work && c?.entityId == work.id,
+          orElse: () => null,
+        );
+        
+        if (conflict == null) {
+          // 无冲突，直接导入
+          filteredWorks.add(work);
+        } else {
+          // 有冲突，根据策略处理
+          switch (importData.options.defaultConflictResolution) {
+            case ConflictResolution.skip:
+              AppLogger.info(
+                '跳过冲突作品',
+                data: {
+                  'workId': work.id,
+                  'title': work.title,
+                },
+                tag: 'import',
+              );
+              
+              // 记录跳过的作品详情
+              (conflictDetails['skippedWorks'] as List<Map<String, dynamic>>).add({
+                'id': work.id,
+                'title': work.title,
+                'author': work.author,
+                'createTime': work.createTime.toIso8601String(),
+                'reason': '作品ID已存在',
+                'existingTitle': conflict.existingData['title'],
+              });
+              
+              skippedItems++;
+              break;
+            case ConflictResolution.overwrite:
+              AppLogger.info(
+                '覆盖现有作品',
+                data: {
+                  'workId': work.id,
+                  'title': work.title,
+                },
+                tag: 'import',
+              );
+              
+              // 记录覆盖的作品详情
+              (conflictDetails['overwrittenWorks'] as List<Map<String, dynamic>>).add({
+                'id': work.id,
+                'title': work.title,
+                'author': work.author,
+                'createTime': work.createTime.toIso8601String(),
+                'existingTitle': conflict.existingData['title'],
+                'existingCreateTime': conflict.existingData['createTime'],
+              });
+              
+              filteredWorks.add(work);
+              break;
+            default:
+              // 其他策略暂时按跳过处理
+              AppLogger.warning(
+                '不支持的冲突解决策略，按跳过处理',
+                data: {
+                  'strategy': importData.options.defaultConflictResolution.name,
+                  'workId': work.id,
+                },
+                tag: 'import',
+              );
+              
+              (conflictDetails['skippedWorks'] as List<Map<String, dynamic>>).add({
+                'id': work.id,
+                'title': work.title,
+                'author': work.author,
+                'createTime': work.createTime.toIso8601String(),
+                'reason': '不支持的冲突解决策略',
+                'existingTitle': conflict.existingData['title'],
+              });
+              
+              skippedItems++;
+              break;
+          }
+        }
+      }
+      
+      // 处理集字冲突
+      for (final character in importData.exportData.characters) {
+        final conflict = conflicts.cast<ImportConflictInfo?>().firstWhere(
+          (c) => c?.entityType == EntityType.character && c?.entityId == character.id,
+          orElse: () => null,
+        );
+        
+        if (conflict == null) {
+          // 无冲突，直接导入
+          filteredCharacters.add(character);
+        } else {
+          // 有冲突，根据策略处理
+          switch (importData.options.defaultConflictResolution) {
+            case ConflictResolution.skip:
+              AppLogger.info(
+                '跳过冲突集字',
+                data: {
+                  'characterId': character.id,
+                  'character': character.character,
+                },
+                tag: 'import',
+              );
+              
+              // 记录跳过的集字详情
+              (conflictDetails['skippedCharacters'] as List<Map<String, dynamic>>).add({
+                'id': character.id,
+                'character': character.character,
+                'workTitle': _getWorkTitle(character.workId, importData.exportData.works),
+                'createTime': character.createTime.toIso8601String(),
+                'reason': '集字ID已存在',
+                'existingCharacter': conflict.existingData['character'],
+              });
+              
+              skippedItems++;
+              break;
+            case ConflictResolution.overwrite:
+              AppLogger.info(
+                '覆盖现有集字',
+                data: {
+                  'characterId': character.id,
+                  'character': character.character,
+                },
+                tag: 'import',
+              );
+              
+              // 记录覆盖的集字详情
+              (conflictDetails['overwrittenCharacters'] as List<Map<String, dynamic>>).add({
+                'id': character.id,
+                'character': character.character,
+                'workTitle': _getWorkTitle(character.workId, importData.exportData.works),
+                'createTime': character.createTime.toIso8601String(),
+                'existingCharacter': conflict.existingData['character'],
+                'existingCreateTime': conflict.existingData['createTime'],
+              });
+              
+              filteredCharacters.add(character);
+              break;
+            default:
+              // 其他策略暂时按跳过处理
+              AppLogger.warning(
+                '不支持的冲突解决策略，按跳过处理',
+                data: {
+                  'strategy': importData.options.defaultConflictResolution.name,
+                  'characterId': character.id,
+                },
+                tag: 'import',
+              );
+              
+              (conflictDetails['skippedCharacters'] as List<Map<String, dynamic>>).add({
+                'id': character.id,
+                'character': character.character,
+                'workTitle': _getWorkTitle(character.workId, importData.exportData.works),
+                'createTime': character.createTime.toIso8601String(),
+                'reason': '不支持的冲突解决策略',
+                'existingCharacter': conflict.existingData['character'],
+              });
+              
+              skippedItems++;
+              break;
+          }
+        }
       }
       
       await Future.delayed(const Duration(milliseconds: 200));
       
-      // 步骤5：导入集字图片数据
-      progressCallback?.call(0.85, '导入集字图片...', {'step': 'importing_character_images'});
-      final characterImagesImported = await _importCharacterImages(importData.exportData.characters, sourceFilePath);
+      // 步骤4：导入作品数据
+      progressCallback?.call(0.3, '导入作品数据...', {'step': 'importing_works'});
+      final worksImported = await _importWorks(filteredWorks);
       await Future.delayed(const Duration(milliseconds: 200));
       
-      // 步骤6：验证封面文件（如果导入的ZIP文件包含封面，则无需重新生成）
+      // 步骤5：导入集字数据
+      progressCallback?.call(0.6, '导入集字数据...', {'step': 'importing_characters'});
+      final charactersImported = await _importCharacters(filteredCharacters);
+      await Future.delayed(const Duration(milliseconds: 200));
+      
+      // 步骤6：导入图片数据（只导入实际成功导入的作品的图片）
+      progressCallback?.call(0.7, '导入图片数据...', {'step': 'importing_images'});
+      
+      // 过滤图片数据：只保留实际导入的作品的图片
+      final filteredWorkImages = <WorkImage>[];
+      final importedWorkIds = filteredWorks.map((w) => w.id).toSet();
+      
+      for (final workImage in importData.exportData.workImages) {
+        if (importedWorkIds.contains(workImage.workId)) {
+          filteredWorkImages.add(workImage);
+        } else {
+          AppLogger.info(
+            '跳过图片导入（对应作品被跳过）',
+            data: {
+              'imageId': workImage.id,
+              'workId': workImage.workId,
+            },
+            tag: 'import',
+          );
+        }
+      }
+      
+      final imagesImported = await _importImages(filteredWorkImages, sourceFilePath, importData.options.defaultConflictResolution);
+      
+      // 步骤6.1：保存WorkImage数据到数据库（只保存过滤后的图片数据）
+      if (imagesImported > 0 && _workImageRepository != null) {
+        progressCallback?.call(0.75, '保存图片数据到数据库...', {'step': 'saving_image_data'});
+        await _saveWorkImagesToDatabase(filteredWorkImages, importData.options.defaultConflictResolution);
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 200));
+      
+      // 步骤7：导入集字图片数据（只导入实际成功导入的集字的图片）
+      progressCallback?.call(0.85, '导入集字图片...', {'step': 'importing_character_images'});
+      final characterImagesImported = await _importCharacterImages(filteredCharacters, sourceFilePath);
+      await Future.delayed(const Duration(milliseconds: 200));
+      
+      // 步骤8：验证封面文件（只验证实际导入的作品的封面）
       progressCallback?.call(0.9, '验证作品封面...', {'step': 'verifying_covers'});
-      await _verifyWorkCovers(importData.exportData.works, importData.exportData.workImages);
+      await _verifyWorkCovers(filteredWorks, filteredWorkImages);
       await Future.delayed(const Duration(milliseconds: 200));
       
       // 处理自定义字段
       await _processCustomFields(
-        importData.exportData.works,
-        importData.exportData.characters,
+        filteredWorks,
+        filteredCharacters,
       );
       
-      // 步骤6：完成导入
+      // 步骤9：完成导入
       progressCallback?.call(1.0, '导入完成', {'step': 'completed'});
       
       final duration = DateTime.now().difference(startTime).inMilliseconds;
@@ -271,7 +595,14 @@ class ImportServiceImpl implements ImportService {
         importedWorks: worksImported,
         importedCharacters: charactersImported,
         importedImages: imagesImported,
+        skippedItems: skippedItems,
         duration: duration,
+        details: {
+          'conflictResolution': importData.options.defaultConflictResolution.name,
+          'conflictDetails': conflictDetails,
+          'totalConflicts': conflicts.length,
+          'importedCharacterImages': characterImagesImported,
+        },
       );
       
       AppLogger.info(
@@ -281,6 +612,7 @@ class ImportServiceImpl implements ImportService {
           'importedWorks': worksImported,
           'importedCharacters': charactersImported,
           'importedImages': imagesImported,
+          'skippedItems': skippedItems,
           'importedCharacterImages': characterImagesImported,
           'duration': duration,
           'operation': 'perform_import_completed',
@@ -309,6 +641,7 @@ class ImportServiceImpl implements ImportService {
         success: false,
         transactionId: transactionId,
         errors: [e.toString()],
+        skippedItems: skippedItems,
         duration: duration,
       );
     }
@@ -645,11 +978,12 @@ class ImportServiceImpl implements ImportService {
   // Private Helper Methods
   // ===================
 
-  Future<int> _importWorks(List<WorkEntity> works) async {
+  Future<int> _importWorks(List<WorkEntity> works, [ConflictResolution strategy = ConflictResolution.skip]) async {
     AppLogger.debug(
       '导入作品',
       data: {
         'count': works.length,
+        'strategy': strategy.name,
         'operation': 'import_works',
       },
       tag: 'import',
@@ -662,7 +996,13 @@ class ImportServiceImpl implements ImportService {
         try {
           // 如果有WorkRepository，使用实际的数据库操作
           if (_workRepository != null) {
-            await _workRepository!.create(work);
+            if (strategy == ConflictResolution.overwrite) {
+              // 覆盖策略：使用save方法（会更新现有记录或创建新记录）
+              await _workRepository!.save(work);
+            } else {
+              // 其他策略：使用create方法（只创建新记录）
+              await _workRepository!.create(work);
+            }
             importedCount++;
           } else {
             // 模拟导入（用于测试）
@@ -671,6 +1011,7 @@ class ImportServiceImpl implements ImportService {
               data: {
                 'workId': work.id,
                 'title': work.title,
+                'strategy': strategy.name,
                 'operation': 'mock_import_work',
               },
               tag: 'import',
@@ -683,6 +1024,7 @@ class ImportServiceImpl implements ImportService {
             data: {
               'workId': work.id,
               'title': work.title,
+              'strategy': strategy.name,
               'error': e.toString(),
               'operation': 'import_single_work_failed',
             },
@@ -696,6 +1038,7 @@ class ImportServiceImpl implements ImportService {
         data: {
           'totalWorks': works.length,
           'importedCount': importedCount,
+          'strategy': strategy.name,
           'operation': 'import_works_completed',
         },
         tag: 'import',
@@ -709,6 +1052,7 @@ class ImportServiceImpl implements ImportService {
         data: {
           'totalWorks': works.length,
           'importedCount': importedCount,
+          'strategy': strategy.name,
           'operation': 'import_works_failed',
         },
         tag: 'import',
@@ -718,11 +1062,12 @@ class ImportServiceImpl implements ImportService {
     return importedCount;
   }
 
-  Future<int> _importCharacters(List<CharacterEntity> characters) async {
+  Future<int> _importCharacters(List<CharacterEntity> characters, [ConflictResolution strategy = ConflictResolution.skip]) async {
     AppLogger.debug(
       '导入集字',
       data: {
         'count': characters.length,
+        'strategy': strategy.name,
         'operation': 'import_characters',
       },
       tag: 'import',
@@ -735,7 +1080,13 @@ class ImportServiceImpl implements ImportService {
         try {
           // 如果有CharacterRepository，使用实际的数据库操作
           if (_characterRepository != null) {
-            await _characterRepository!.create(character);
+            if (strategy == ConflictResolution.overwrite) {
+              // 覆盖策略：使用save方法（会更新现有记录或创建新记录）
+              await _characterRepository!.save(character);
+            } else {
+              // 其他策略：使用create方法（只创建新记录）
+              await _characterRepository!.create(character);
+            }
             importedCount++;
           } else {
             // 模拟导入（用于测试）
@@ -744,6 +1095,7 @@ class ImportServiceImpl implements ImportService {
               data: {
                 'characterId': character.id,
                 'character': character.character,
+                'strategy': strategy.name,
                 'operation': 'mock_import_character',
               },
               tag: 'import',
@@ -756,6 +1108,7 @@ class ImportServiceImpl implements ImportService {
             data: {
               'characterId': character.id,
               'character': character.character,
+              'strategy': strategy.name,
               'error': e.toString(),
               'operation': 'import_single_character_failed',
             },
@@ -769,6 +1122,7 @@ class ImportServiceImpl implements ImportService {
         data: {
           'totalCharacters': characters.length,
           'importedCount': importedCount,
+          'strategy': strategy.name,
           'operation': 'import_characters_completed',
         },
         tag: 'import',
@@ -782,6 +1136,7 @@ class ImportServiceImpl implements ImportService {
         data: {
           'totalCharacters': characters.length,
           'importedCount': importedCount,
+          'strategy': strategy.name,
           'operation': 'import_characters_failed',
         },
         tag: 'import',
@@ -1026,7 +1381,7 @@ class ImportServiceImpl implements ImportService {
   }
 
   /// 导入图片数据
-  Future<int> _importImages(List<WorkImage> workImages, String? sourceFilePath) async {
+  Future<int> _importImages(List<WorkImage> workImages, String? sourceFilePath, [ConflictResolution strategy = ConflictResolution.skip]) async {
     if (sourceFilePath == null) {
       AppLogger.warning(
         '源文件路径为空，跳过图片导入',
@@ -1043,6 +1398,7 @@ class ImportServiceImpl implements ImportService {
       data: {
         'imageCount': workImages.length,
         'sourceFilePath': sourceFilePath,
+        'strategy': strategy.name,
         'operation': 'import_images',
       },
       tag: 'import',
@@ -1057,6 +1413,11 @@ class ImportServiceImpl implements ImportService {
       
       for (final image in workImages) {
         try {
+          // 如果是覆盖策略，先清理现有的图片文件
+          if (strategy == ConflictResolution.overwrite) {
+            await _cleanupExistingImageFiles(image);
+          }
+          
           // 提取三种类型的图片文件
           final originalExtracted = await _extractImageFile(archive, image, 'original');
           final importedExtracted = await _extractImageFile(archive, image, 'imported');
@@ -1069,6 +1430,7 @@ class ImportServiceImpl implements ImportService {
               data: {
                 'imageId': image.id,
                 'workId': image.workId,
+                'strategy': strategy.name,
                 'operation': 'import_images',
               },
               tag: 'import',
@@ -1082,6 +1444,7 @@ class ImportServiceImpl implements ImportService {
                 'originalExtracted': originalExtracted,
                 'importedExtracted': importedExtracted,
                 'thumbnailExtracted': thumbnailExtracted,
+                'strategy': strategy.name,
                 'operation': 'import_images',
               },
               tag: 'import',
@@ -1095,6 +1458,7 @@ class ImportServiceImpl implements ImportService {
             data: {
               'imageId': image.id,
               'workId': image.workId,
+              'strategy': strategy.name,
               'operation': 'import_images',
             },
             tag: 'import',
@@ -1103,13 +1467,14 @@ class ImportServiceImpl implements ImportService {
       }
       
       // 提取作品封面文件
-      await _extractWorkCoverFiles(archive, workImages);
+      await _extractWorkCoverFiles(archive, workImages, strategy);
       
       AppLogger.info(
         '图片导入完成',
         data: {
           'totalImages': workImages.length,
           'importedCount': importedCount,
+          'strategy': strategy.name,
           'operation': 'import_images',
         },
         tag: 'import',
@@ -1123,6 +1488,7 @@ class ImportServiceImpl implements ImportService {
         error: e,
         data: {
           'sourceFilePath': sourceFilePath,
+          'strategy': strategy.name,
           'operation': 'import_images',
         },
         tag: 'import',
@@ -1132,7 +1498,7 @@ class ImportServiceImpl implements ImportService {
   }
 
   /// 提取作品封面文件
-  Future<void> _extractWorkCoverFiles(Archive archive, List<WorkImage> workImages) async {
+  Future<void> _extractWorkCoverFiles(Archive archive, List<WorkImage> workImages, [ConflictResolution strategy = ConflictResolution.skip]) async {
     // 按作品分组图片
     final workIds = <String>{};
     for (final image in workImages) {
@@ -1143,6 +1509,7 @@ class ImportServiceImpl implements ImportService {
       '开始提取作品封面文件',
       data: {
         'workCount': workIds.length,
+        'strategy': strategy.name,
         'operation': 'extract_work_cover_files',
       },
       tag: 'import',
@@ -1152,6 +1519,11 @@ class ImportServiceImpl implements ImportService {
     
     for (final workId in workIds) {
       try {
+        // 如果是覆盖策略，先清理现有的封面文件
+        if (strategy == ConflictResolution.overwrite) {
+          await _cleanupExistingWorkCoverFiles(workId);
+        }
+        
         // 提取封面导入图
         final coverImportedExtracted = await _extractWorkCoverFile(archive, workId, 'imported');
         
@@ -1164,6 +1536,7 @@ class ImportServiceImpl implements ImportService {
             '作品封面文件提取成功',
             data: {
               'workId': workId,
+              'strategy': strategy.name,
               'operation': 'extract_work_cover_files',
             },
             tag: 'import',
@@ -1175,6 +1548,7 @@ class ImportServiceImpl implements ImportService {
               'workId': workId,
               'coverImportedExtracted': coverImportedExtracted,
               'coverThumbnailExtracted': coverThumbnailExtracted,
+              'strategy': strategy.name,
               'operation': 'extract_work_cover_files',
             },
             tag: 'import',
@@ -1187,6 +1561,7 @@ class ImportServiceImpl implements ImportService {
           error: e,
           data: {
             'workId': workId,
+            'strategy': strategy.name,
             'operation': 'extract_work_cover_files',
           },
           tag: 'import',
@@ -1199,10 +1574,79 @@ class ImportServiceImpl implements ImportService {
       data: {
         'totalWorks': workIds.length,
         'extractedCovers': extractedCovers,
+        'strategy': strategy.name,
         'operation': 'extract_work_cover_files',
       },
       tag: 'import',
     );
+  }
+
+  /// 清理现有的图片文件（覆盖策略时使用）
+  Future<void> _cleanupExistingImageFiles(WorkImage image) async {
+    if (_storageBasePath == null) return;
+    
+    try {
+      final workImageDir = path.join(_storageBasePath!, 'works', image.workId, 'images', image.id);
+      final directory = Directory(workImageDir);
+      
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+        AppLogger.debug(
+          '清理现有图片文件',
+          data: {
+            'imageId': image.id,
+            'workId': image.workId,
+            'path': workImageDir,
+            'operation': 'cleanup_existing_image_files',
+          },
+          tag: 'import',
+        );
+      }
+    } catch (e) {
+      AppLogger.warning(
+        '清理现有图片文件失败',
+        error: e,
+        data: {
+          'imageId': image.id,
+          'workId': image.workId,
+          'operation': 'cleanup_existing_image_files',
+        },
+        tag: 'import',
+      );
+    }
+  }
+
+  /// 清理现有的作品封面文件（覆盖策略时使用）
+  Future<void> _cleanupExistingWorkCoverFiles(String workId) async {
+    if (_storageBasePath == null) return;
+    
+    try {
+      final coverDir = path.join(_storageBasePath!, 'covers', workId);
+      final directory = Directory(coverDir);
+      
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+        AppLogger.debug(
+          '清理现有封面文件',
+          data: {
+            'workId': workId,
+            'path': coverDir,
+            'operation': 'cleanup_existing_work_cover_files',
+          },
+          tag: 'import',
+        );
+      }
+    } catch (e) {
+      AppLogger.warning(
+        '清理现有封面文件失败',
+        error: e,
+        data: {
+          'workId': workId,
+          'operation': 'cleanup_existing_work_cover_files',
+        },
+        tag: 'import',
+      );
+    }
   }
 
   /// 提取单个作品封面文件
@@ -2337,12 +2781,13 @@ class ImportServiceImpl implements ImportService {
   }
 
   /// 保存WorkImage数据到数据库
-  Future<void> _saveWorkImagesToDatabase(List<WorkImage> workImages) async {
+  Future<void> _saveWorkImagesToDatabase(List<WorkImage> workImages, [ConflictResolution strategy = ConflictResolution.skip]) async {
     if (_workImageRepository == null) {
       AppLogger.warning(
         'WorkImageRepository未提供，跳过图片数据保存',
         data: {
           'imageCount': workImages.length,
+          'strategy': strategy.name,
           'operation': 'save_work_images_to_database',
         },
         tag: 'import',
@@ -2354,6 +2799,7 @@ class ImportServiceImpl implements ImportService {
       '开始保存WorkImage数据到数据库',
       data: {
         'imageCount': workImages.length,
+        'strategy': strategy.name,
         'operation': 'save_work_images_to_database',
       },
       tag: 'import',
@@ -2374,6 +2820,38 @@ class ImportServiceImpl implements ImportService {
         final images = entry.value;
         
         try {
+          // 如果是覆盖策略，先删除现有的图片数据
+          if (strategy == ConflictResolution.overwrite) {
+            try {
+              final existingImages = await _workImageRepository!.getAllByWorkId(workId);
+              if (existingImages.isNotEmpty) {
+                final imageIds = existingImages.map((img) => img.id).toList();
+                await _workImageRepository!.deleteMany(workId, imageIds);
+                AppLogger.debug(
+                  '删除现有图片数据',
+                  data: {
+                    'workId': workId,
+                    'deletedCount': existingImages.length,
+                    'strategy': strategy.name,
+                    'operation': 'save_work_images_to_database',
+                  },
+                  tag: 'import',
+                );
+              }
+            } catch (e) {
+              AppLogger.warning(
+                '删除现有图片数据失败',
+                error: e,
+                data: {
+                  'workId': workId,
+                  'strategy': strategy.name,
+                  'operation': 'save_work_images_to_database',
+                },
+                tag: 'import',
+              );
+            }
+          }
+          
           // 按索引排序图片
           images.sort((a, b) => a.index.compareTo(b.index));
           
@@ -2386,6 +2864,7 @@ class ImportServiceImpl implements ImportService {
             data: {
               'workId': workId,
               'imageCount': images.length,
+              'strategy': strategy.name,
               'operation': 'save_work_images_to_database',
             },
             tag: 'import',
@@ -2398,6 +2877,7 @@ class ImportServiceImpl implements ImportService {
             data: {
               'workId': workId,
               'imageCount': images.length,
+              'strategy': strategy.name,
               'operation': 'save_work_images_to_database',
             },
             tag: 'import',
@@ -2412,6 +2892,7 @@ class ImportServiceImpl implements ImportService {
           'totalImages': workImages.length,
           'savedCount': savedCount,
           'workCount': imagesByWork.length,
+          'strategy': strategy.name,
           'operation': 'save_work_images_to_database',
         },
         tag: 'import',
@@ -2424,11 +2905,21 @@ class ImportServiceImpl implements ImportService {
         stackTrace: stackTrace,
         data: {
           'imageCount': workImages.length,
+          'strategy': strategy.name,
           'operation': 'save_work_images_to_database',
         },
         tag: 'import',
       );
       throw e;
     }
+  }
+
+  String _getWorkTitle(String workId, List<WorkEntity> works) {
+    for (final work in works) {
+      if (work.id == workId) {
+        return work.title;
+      }
+    }
+    throw Exception('找不到对应的作品');
   }
 } 

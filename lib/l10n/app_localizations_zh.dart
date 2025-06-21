@@ -225,6 +225,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupSuccess => '备份创建成功';
 
   @override
+  String get backupRecommendation => '建议导入前创建备份';
+
+  @override
+  String get backupRecommendationDescription => '为确保数据安全，建议在导入前手动创建备份';
+
+  @override
+  String get goToBackup => '前往备份';
+
+  @override
+  String get backupNavigationPlaceholder => '备份设置页面开发中，敬请期待';
+
+  @override
   String get basicInfo => '基本信息';
 
   @override
@@ -540,7 +552,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createBackup => '创建备份';
 
   @override
-  String get createBackupDescription => '创建新的数据备份';
+  String get createBackupDescription => '导入前创建备份';
 
   @override
   String createExportDirectoryFailed(Object error) {
@@ -1290,12 +1302,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importNotImplemented => '配置导入功能待实现';
 
   @override
+  String get importPreview => '导入预览';
+
+  @override
+  String get importRequirements => '导入要求';
+
+  @override
   String get importSuccess => '备份导入成功';
 
   @override
   String importSuccessMessage(Object count) {
     return '成功导入 $count 个文件';
   }
+
+  @override
+  String get importResultTitle => '导入结果';
+
+  @override
+  String get importedWorks => '导入作品';
+
+  @override
+  String get importedCharacters => '导入集字';
+
+  @override
+  String get importedImages => '导入图片';
+
+  @override
+  String get importedFile => '导入文件';
+
+  @override
+  String get importStatistics => '导入统计';
+
+  @override
+  String get processingDetails => '处理详情';
+
+  @override
+  String get skippedItems => '跳过的项目';
+
+  @override
+  String get overwrittenItems => '覆盖的项目';
+
+  @override
+  String get detailedReport => '详细报告';
+
+  @override
+  String get viewDetails => '查看详情';
+
+  @override
+  String get warnings => '警告';
+
+  @override
+  String get errors => '错误';
 
   @override
   String get importing => '导入中...';
@@ -1676,6 +1733,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String worksCount(Object count) {
     return '$count 个作品';
   }
+
+  @override
+  String get works => '作品';
+
+  @override
+  String get characters => '集字';
+
+  @override
+  String get images => '图片';
 
   @override
   String get noiseReduction => '降噪';
@@ -2060,6 +2126,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get selectImportFile => '选择备份文件';
+
+  @override
+  String get selectFileError => '选择文件失败';
 
   @override
   String get selectParentCategory => '选择父分类';
@@ -2578,4 +2647,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yesterday => '昨天';
+
+  @override
+  String get importOptions => '导入选项';
+
+  @override
+  String get validateData => '验证数据';
+
+  @override
+  String get validateDataDescription => '导入前验证数据完整性';
+
+  @override
+  String get validateDataMandatory => '强制验证导入文件的完整性和格式，确保数据安全';
+
+  @override
+  String get preserveMetadata => '保留元数据';
+
+  @override
+  String get preserveMetadataDescription => '保留原始创建时间和元数据';
+
+  @override
+  String get preserveMetadataMandatory => '强制保留原始的创建时间、作者信息等元数据，确保数据一致性';
+
+  @override
+  String get conflictResolution => '冲突解决';
+
+  @override
+  String get skipConflicts => '跳过冲突';
+
+  @override
+  String get skipConflictsDescription => '跳过已存在的项目';
+
+  @override
+  String get overwriteExisting => '覆盖现有';
+
+  @override
+  String get overwriteExistingDescription => '用导入数据替换现有项目';
+
+  @override
+  String get conflictsFound => '发现冲突';
+
+  @override
+  String conflictsCount(Object count) {
+    return '发现 $count 个冲突';
+  }
+
+  @override
+  String get mergeData => '合并数据';
+
+  @override
+  String get mergeDataDescription => '合并现有数据和导入数据';
+
+  @override
+  String get renameDuplicates => '重命名重复项';
+
+  @override
+  String get renameDuplicatesDescription => '重命名导入项目以避免冲突';
+
+  @override
+  String get askUser => '询问用户';
+
+  @override
+  String get askUserDescription => '对每个冲突询问用户';
+
+  @override
+  String get keepExisting => '保留现有';
+
+  @override
+  String get keepExistingDescription => '保留现有数据，跳过导入';
+
+  @override
+  String get conflictDetailsTitle => '冲突处理明细';
+
+  @override
+  String get skippedWorks => '跳过的作品';
+
+  @override
+  String get overwrittenWorks => '覆盖的作品';
+
+  @override
+  String get skippedCharacters => '跳过的集字';
+
+  @override
+  String get overwrittenCharacters => '覆盖的集字';
+
+  @override
+  String get conflictReason => '冲突原因';
+
+  @override
+  String get existingItem => '现有项目';
 }

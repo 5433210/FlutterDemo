@@ -515,6 +515,30 @@ abstract class AppLocalizations {
   /// **'备份创建成功'**
   String get backupSuccess;
 
+  /// No description provided for @backupRecommendation.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议导入前创建备份'**
+  String get backupRecommendation;
+
+  /// No description provided for @backupRecommendationDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'为确保数据安全，建议在导入前手动创建备份'**
+  String get backupRecommendationDescription;
+
+  /// No description provided for @goToBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'前往备份'**
+  String get goToBackup;
+
+  /// No description provided for @backupNavigationPlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份设置页面开发中，敬请期待'**
+  String get backupNavigationPlaceholder;
+
   /// No description provided for @basicInfo.
   ///
   /// In zh, this message translates to:
@@ -1124,7 +1148,7 @@ abstract class AppLocalizations {
   /// No description provided for @createBackupDescription.
   ///
   /// In zh, this message translates to:
-  /// **'创建新的数据备份'**
+  /// **'导入前创建备份'**
   String get createBackupDescription;
 
   /// No description provided for @createExportDirectoryFailed.
@@ -2537,6 +2561,18 @@ abstract class AppLocalizations {
   /// **'配置导入功能待实现'**
   String get importNotImplemented;
 
+  /// No description provided for @importPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入预览'**
+  String get importPreview;
+
+  /// No description provided for @importRequirements.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入要求'**
+  String get importRequirements;
+
   /// No description provided for @importSuccess.
   ///
   /// In zh, this message translates to:
@@ -2548,6 +2584,84 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'成功导入 {count} 个文件'**
   String importSuccessMessage(Object count);
+
+  /// No description provided for @importResultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入结果'**
+  String get importResultTitle;
+
+  /// No description provided for @importedWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入作品'**
+  String get importedWorks;
+
+  /// No description provided for @importedCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入集字'**
+  String get importedCharacters;
+
+  /// No description provided for @importedImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入图片'**
+  String get importedImages;
+
+  /// No description provided for @importedFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入文件'**
+  String get importedFile;
+
+  /// No description provided for @importStatistics.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入统计'**
+  String get importStatistics;
+
+  /// No description provided for @processingDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理详情'**
+  String get processingDetails;
+
+  /// No description provided for @skippedItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过的项目'**
+  String get skippedItems;
+
+  /// No description provided for @overwrittenItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖的项目'**
+  String get overwrittenItems;
+
+  /// No description provided for @detailedReport.
+  ///
+  /// In zh, this message translates to:
+  /// **'详细报告'**
+  String get detailedReport;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看详情'**
+  String get viewDetails;
+
+  /// No description provided for @warnings.
+  ///
+  /// In zh, this message translates to:
+  /// **'警告'**
+  String get warnings;
+
+  /// No description provided for @errors.
+  ///
+  /// In zh, this message translates to:
+  /// **'错误'**
+  String get errors;
 
   /// No description provided for @importing.
   ///
@@ -3281,6 +3395,24 @@ abstract class AppLocalizations {
   /// **'{count} 个作品'**
   String worksCount(Object count);
 
+  /// No description provided for @works.
+  ///
+  /// In zh, this message translates to:
+  /// **'作品'**
+  String get works;
+
+  /// No description provided for @characters.
+  ///
+  /// In zh, this message translates to:
+  /// **'集字'**
+  String get characters;
+
+  /// No description provided for @images.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片'**
+  String get images;
+
   /// No description provided for @noiseReduction.
   ///
   /// In zh, this message translates to:
@@ -4000,6 +4132,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'选择备份文件'**
   String get selectImportFile;
+
+  /// No description provided for @selectFileError.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文件失败'**
+  String get selectFileError;
 
   /// No description provided for @selectParentCategory.
   ///
@@ -4996,6 +5134,180 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'昨天'**
   String get yesterday;
+
+  /// No description provided for @importOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入选项'**
+  String get importOptions;
+
+  /// No description provided for @validateData.
+  ///
+  /// In zh, this message translates to:
+  /// **'验证数据'**
+  String get validateData;
+
+  /// No description provided for @validateDataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入前验证数据完整性'**
+  String get validateDataDescription;
+
+  /// No description provided for @validateDataMandatory.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制验证导入文件的完整性和格式，确保数据安全'**
+  String get validateDataMandatory;
+
+  /// No description provided for @preserveMetadata.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留元数据'**
+  String get preserveMetadata;
+
+  /// No description provided for @preserveMetadataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留原始创建时间和元数据'**
+  String get preserveMetadataDescription;
+
+  /// No description provided for @preserveMetadataMandatory.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制保留原始的创建时间、作者信息等元数据，确保数据一致性'**
+  String get preserveMetadataMandatory;
+
+  /// No description provided for @conflictResolution.
+  ///
+  /// In zh, this message translates to:
+  /// **'冲突解决'**
+  String get conflictResolution;
+
+  /// No description provided for @skipConflicts.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过冲突'**
+  String get skipConflicts;
+
+  /// No description provided for @skipConflictsDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过已存在的项目'**
+  String get skipConflictsDescription;
+
+  /// No description provided for @overwriteExisting.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖现有'**
+  String get overwriteExisting;
+
+  /// No description provided for @overwriteExistingDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'用导入数据替换现有项目'**
+  String get overwriteExistingDescription;
+
+  /// No description provided for @conflictsFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现冲突'**
+  String get conflictsFound;
+
+  /// No description provided for @conflictsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现 {count} 个冲突'**
+  String conflictsCount(Object count);
+
+  /// No description provided for @mergeData.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并数据'**
+  String get mergeData;
+
+  /// No description provided for @mergeDataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并现有数据和导入数据'**
+  String get mergeDataDescription;
+
+  /// No description provided for @renameDuplicates.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名重复项'**
+  String get renameDuplicates;
+
+  /// No description provided for @renameDuplicatesDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名导入项目以避免冲突'**
+  String get renameDuplicatesDescription;
+
+  /// No description provided for @askUser.
+  ///
+  /// In zh, this message translates to:
+  /// **'询问用户'**
+  String get askUser;
+
+  /// No description provided for @askUserDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'对每个冲突询问用户'**
+  String get askUserDescription;
+
+  /// No description provided for @keepExisting.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留现有'**
+  String get keepExisting;
+
+  /// No description provided for @keepExistingDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留现有数据，跳过导入'**
+  String get keepExistingDescription;
+
+  /// No description provided for @conflictDetailsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'冲突处理明细'**
+  String get conflictDetailsTitle;
+
+  /// No description provided for @skippedWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过的作品'**
+  String get skippedWorks;
+
+  /// No description provided for @overwrittenWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖的作品'**
+  String get overwrittenWorks;
+
+  /// No description provided for @skippedCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过的集字'**
+  String get skippedCharacters;
+
+  /// No description provided for @overwrittenCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖的集字'**
+  String get overwrittenCharacters;
+
+  /// No description provided for @conflictReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'冲突原因'**
+  String get conflictReason;
+
+  /// No description provided for @existingItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'现有项目'**
+  String get existingItem;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
