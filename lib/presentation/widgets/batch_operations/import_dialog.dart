@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 
 import '../../providers/batch_selection_provider.dart';
+import '../../providers/navigation/global_navigation_provider.dart';
 import '../../../application/services/file_picker_service.dart';
 import '../../../domain/models/import_export/import_data_model.dart';
 import '../../../domain/models/import_export/export_data_model.dart';
@@ -417,16 +418,16 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     
     Navigator.of(context).pop(); // 关闭导入对话框
     
-    // TODO: 实现导航到设置页面的备份子面板
-    // Navigator.of(context).pushNamed('/settings/backup');
+    // 导航到设置功能区（索引为4）
+    final ref = ProviderScope.containerOf(context).read;
+    ref(globalNavigationProvider.notifier).navigateToSection(4);
     
+    // 显示成功导航的提示
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(context)!.backupNavigationPlaceholder),
-        action: SnackBarAction(
-          label: AppLocalizations.of(context)!.ok,
-          onPressed: () {},
-        ),
+        content: Text(AppLocalizations.of(context)!.navigatedToBackupSettings),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
       ),
     );
   }

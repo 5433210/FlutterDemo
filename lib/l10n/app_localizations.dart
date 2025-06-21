@@ -533,11 +533,11 @@ abstract class AppLocalizations {
   /// **'前往备份'**
   String get goToBackup;
 
-  /// No description provided for @backupNavigationPlaceholder.
+  /// No description provided for @navigatedToBackupSettings.
   ///
   /// In zh, this message translates to:
-  /// **'备份设置页面开发中，敬请期待'**
-  String get backupNavigationPlaceholder;
+  /// **'已跳转到备份设置页面'**
+  String get navigatedToBackupSettings;
 
   /// No description provided for @basicInfo.
   ///

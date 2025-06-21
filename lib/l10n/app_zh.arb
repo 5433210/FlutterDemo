@@ -72,7 +72,7 @@
   "backupRecommendation": "建议导入前创建备份",
   "backupRecommendationDescription": "为确保数据安全，建议在导入前手动创建备份",
   "goToBackup": "前往备份",
-  "backupNavigationPlaceholder": "备份设置页面开发中，敬请期待",
+  "navigatedToBackupSettings": "已跳转到备份设置页面",
   "basicInfo": "基本信息",
   "batchDeleteMessage": "即将删除{count}项，此操作无法撤消。",
   "batchMode": "批量模式",

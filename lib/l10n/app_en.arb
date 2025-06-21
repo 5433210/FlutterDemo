@@ -72,7 +72,7 @@
   "backupRecommendation": "Recommend creating backup before import",
   "backupRecommendationDescription": "For data safety, it's recommended to manually create a backup before importing",
   "goToBackup": "Go to Backup",
-  "backupNavigationPlaceholder": "Backup settings page is under development",
+  "navigatedToBackupSettings": "Navigated to backup settings page",
   "basicInfo": "Basic Information",
   "batchDeleteMessage": "About to delete {count} items. This action cannot be undone.",
   "batchMode": "Batch Mode",

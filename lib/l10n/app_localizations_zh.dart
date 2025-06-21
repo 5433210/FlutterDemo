@@ -234,7 +234,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get goToBackup => '前往备份';
 
   @override
-  String get backupNavigationPlaceholder => '备份设置页面开发中，敬请期待';
+  String get navigatedToBackupSettings => '已跳转到备份设置页面';
 
   @override
   String get basicInfo => '基本信息';

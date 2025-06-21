@@ -234,7 +234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goToBackup => 'Go to Backup';
 
   @override
-  String get backupNavigationPlaceholder => 'Backup settings page is under development';
+  String get navigatedToBackupSettings => 'Navigated to backup settings page';
 
   @override
   String get basicInfo => 'Basic Information';
