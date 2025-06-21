@@ -35,6 +35,17 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(selectedWorks: {});
   }
 
+  /// 全选所有作品
+  void selectAll() {
+    final allWorkIds = state.works.map((work) => work.id).toSet();
+    
+    AppLogger.debug('全选作品',
+        tag: 'WorkBrowseViewModel',
+        data: {'totalCount': allWorkIds.length});
+
+    state = state.copyWith(selectedWorks: allWorkIds);
+  }
+
   Future<void> deleteSelected() async {
     if (state.selectedWorks.isEmpty) return;
 

@@ -539,6 +539,12 @@ abstract class AppLocalizations {
   /// **'批量操作'**
   String get batchOperations;
 
+  /// No description provided for @batchImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'批量导入'**
+  String get batchImport;
+
   /// No description provided for @beforeDate.
   ///
   /// In zh, this message translates to:
@@ -905,11 +911,23 @@ abstract class AppLocalizations {
   /// **'已选择 {count} 个字符'**
   String charactersSelected(Object count);
 
+  /// No description provided for @charactersCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个集字'**
+  String charactersCount(Object count);
+
   /// No description provided for @clearCache.
   ///
   /// In zh, this message translates to:
   /// **'清除缓存'**
   String get clearCache;
+
+  /// No description provided for @clearSelection.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消选择'**
+  String get clearSelection;
 
   /// No description provided for @clearCacheConfirmMessage.
   ///
@@ -1768,6 +1786,186 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'导出格式'**
   String get exportType;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出格式'**
+  String get exportFormat;
+
+  /// No description provided for @exportOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出选项'**
+  String get exportOptions;
+
+  /// No description provided for @exportSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出摘要'**
+  String get exportSummary;
+
+  /// No description provided for @selectedItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'选中项目'**
+  String get selectedItems;
+
+  /// No description provided for @exportLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出位置'**
+  String get exportLocation;
+
+  /// No description provided for @selectExportLocationHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择导出位置...'**
+  String get selectExportLocationHint;
+
+  /// No description provided for @includeImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含图片'**
+  String get includeImages;
+
+  /// No description provided for @includeImagesDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出相关的图片文件'**
+  String get includeImagesDescription;
+
+  /// No description provided for @includeMetadata.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含元数据'**
+  String get includeMetadata;
+
+  /// No description provided for @includeMetadataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出创建时间、标签等元数据'**
+  String get includeMetadataDescription;
+
+  /// No description provided for @compressData.
+  ///
+  /// In zh, this message translates to:
+  /// **'压缩数据'**
+  String get compressData;
+
+  /// No description provided for @compressDataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'减小导出文件大小'**
+  String get compressDataDescription;
+
+  /// No description provided for @exportWorksOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅导出作品'**
+  String get exportWorksOnly;
+
+  /// No description provided for @exportWorksWithCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出作品和关联集字（推荐）'**
+  String get exportWorksWithCharacters;
+
+  /// No description provided for @exportCharactersOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅导出集字'**
+  String get exportCharactersOnly;
+
+  /// No description provided for @exportCharactersWithWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出集字和来源作品（推荐）'**
+  String get exportCharactersWithWorks;
+
+  /// No description provided for @exportFullData.
+  ///
+  /// In zh, this message translates to:
+  /// **'完整数据导出'**
+  String get exportFullData;
+
+  /// No description provided for @exportWorksOnlyDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅包含选中的作品数据'**
+  String get exportWorksOnlyDescription;
+
+  /// No description provided for @exportWorksWithCharactersDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含作品及其相关的集字数据'**
+  String get exportWorksWithCharactersDescription;
+
+  /// No description provided for @exportCharactersOnlyDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅包含选中的集字数据'**
+  String get exportCharactersOnlyDescription;
+
+  /// No description provided for @exportCharactersWithWorksDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含集字及其来源作品数据'**
+  String get exportCharactersWithWorksDescription;
+
+  /// No description provided for @exportFullDataDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含所有相关数据'**
+  String get exportFullDataDescription;
+
+  /// No description provided for @jsonFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'JSON 文件'**
+  String get jsonFile;
+
+  /// No description provided for @zipFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'ZIP 压缩包'**
+  String get zipFile;
+
+  /// No description provided for @backupFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件'**
+  String get backupFile;
+
+  /// No description provided for @hideDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏详情'**
+  String get hideDetails;
+
+  /// No description provided for @showDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示详情'**
+  String get showDetails;
+
+  /// No description provided for @exportingDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出数据，请稍候...'**
+  String get exportingDescription;
+
+  /// No description provided for @importingDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入数据，请稍候...'**
+  String get importingDescription;
+
+  /// No description provided for @processing.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理中...'**
+  String get processing;
 
   /// No description provided for @exporting.
   ///
@@ -2981,6 +3179,12 @@ abstract class AppLocalizations {
   /// **'未选择图片'**
   String get noImageSelected;
 
+  /// No description provided for @noItemsSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'未选择项目'**
+  String get noItemsSelected;
+
   /// No description provided for @noImages.
   ///
   /// In zh, this message translates to:
@@ -3070,6 +3274,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'尝试导入新作品或更改筛选条件'**
   String get noWorksHint;
+
+  /// No description provided for @worksCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个作品'**
+  String worksCount(Object count);
 
   /// No description provided for @noiseReduction.
   ///
@@ -3382,12 +3592,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'上一页'**
   String get previousPage;
-
-  /// No description provided for @processing.
-  ///
-  /// In zh, this message translates to:
-  /// **'处理中...'**
-  String get processing;
 
   /// No description provided for @processingEraseData.
   ///
@@ -4570,6 +4774,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'作品'**
   String get work;
+
+  /// No description provided for @character.
+  ///
+  /// In zh, this message translates to:
+  /// **'集字'**
+  String get character;
 
   /// No description provided for @workBrowseSearch.
   ///

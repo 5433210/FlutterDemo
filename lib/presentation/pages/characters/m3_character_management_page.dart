@@ -37,6 +37,7 @@ class _M3CharacterManagementPageState
         isBatchMode: state.isBatchMode,
         onToggleBatchMode: _toggleBatchMode,
         selectedCount: state.selectedCharacters.length,
+        selectedCharacterIds: state.selectedCharacters, // 传递实际选中的集字ID
         onDeleteSelected: state.selectedCharacters.isNotEmpty
             ? _handleDeleteSelectedCharacters
             : null,
@@ -55,6 +56,10 @@ class _M3CharacterManagementPageState
         searchController: _searchController,
         onBackPressed: () {
           CrossNavigationHelper.handleBackNavigation(context, ref);
+        },
+        onImport: () {
+          // 导入完成后刷新数据
+          ref.read(characterManagementProvider.notifier).refresh();
         },
       ),
       body: ConstrainedBox(

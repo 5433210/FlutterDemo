@@ -239,6 +239,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batchOperations => 'Batch Operations';
 
   @override
+  String get batchImport => 'Batch Import';
+
+  @override
   String get beforeDate => 'Before a Certain Date';
 
   @override
@@ -428,7 +431,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String charactersCount(Object count) {
+    return '$count characters';
+  }
+
+  @override
   String get clearCache => 'Clear Cache';
+
+  @override
+  String get clearSelection => 'Clear Selection';
 
   @override
   String get clearCacheConfirmMessage => 'Are you sure you want to clear all cache data? This will free up disk space but may temporarily slow down the application.';
@@ -882,6 +893,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportType => 'Export Format';
+
+  @override
+  String get exportFormat => 'Export Format';
+
+  @override
+  String get exportOptions => 'Export Options';
+
+  @override
+  String get exportSummary => 'Export Summary';
+
+  @override
+  String get selectedItems => 'Selected Items';
+
+  @override
+  String get exportLocation => 'Export Location';
+
+  @override
+  String get selectExportLocationHint => 'Select export location...';
+
+  @override
+  String get includeImages => 'Include Images';
+
+  @override
+  String get includeImagesDescription => 'Export related image files';
+
+  @override
+  String get includeMetadata => 'Include Metadata';
+
+  @override
+  String get includeMetadataDescription => 'Export creation time, tags and other metadata';
+
+  @override
+  String get compressData => 'Compress Data';
+
+  @override
+  String get compressDataDescription => 'Reduce export file size';
+
+  @override
+  String get exportWorksOnly => 'Export Works Only';
+
+  @override
+  String get exportWorksWithCharacters => 'Export Works with Characters (Recommended)';
+
+  @override
+  String get exportCharactersOnly => 'Export Characters Only';
+
+  @override
+  String get exportCharactersWithWorks => 'Export Characters with Works (Recommended)';
+
+  @override
+  String get exportFullData => 'Full Data Export';
+
+  @override
+  String get exportWorksOnlyDescription => 'Contains only selected works data';
+
+  @override
+  String get exportWorksWithCharactersDescription => 'Contains works and their related character data';
+
+  @override
+  String get exportCharactersOnlyDescription => 'Contains only selected character data';
+
+  @override
+  String get exportCharactersWithWorksDescription => 'Contains characters and their source works data';
+
+  @override
+  String get exportFullDataDescription => 'Contains all related data';
+
+  @override
+  String get jsonFile => 'JSON File';
+
+  @override
+  String get zipFile => 'ZIP Archive';
+
+  @override
+  String get backupFile => 'Backup File';
+
+  @override
+  String get hideDetails => 'Hide Details';
+
+  @override
+  String get showDetails => 'Show Details';
+
+  @override
+  String get exportingDescription => 'Exporting data, please wait...';
+
+  @override
+  String get importingDescription => 'Importing data, please wait...';
+
+  @override
+  String get processing => 'Processing...';
 
   @override
   String get exporting => 'Exporting, Please Wait...';
@@ -1524,6 +1625,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noImageSelected => 'No Image Selected';
 
   @override
+  String get noItemsSelected => 'No Items Selected';
+
+  @override
   String get noImages => 'No Images';
 
   @override
@@ -1567,6 +1671,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noWorksHint => 'Try importing new works or changing the filter criteria';
+
+  @override
+  String worksCount(Object count) {
+    return '$count works';
+  }
 
   @override
   String get noiseReduction => 'Noise Reduction';
@@ -1737,9 +1846,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get previousPage => 'Previous Page';
-
-  @override
-  String get processing => 'Processing...';
 
   @override
   String get processingEraseData => 'Processing Erase Data...';
@@ -2361,6 +2467,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get work => 'Work';
+
+  @override
+  String get character => 'Character';
 
   @override
   String get workBrowseSearch => 'Search Works...';

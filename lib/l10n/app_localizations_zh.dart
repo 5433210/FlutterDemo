@@ -239,6 +239,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get batchOperations => '批量操作';
 
   @override
+  String get batchImport => '批量导入';
+
+  @override
   String get beforeDate => '某个日期之前';
 
   @override
@@ -428,7 +431,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String charactersCount(Object count) {
+    return '$count 个集字';
+  }
+
+  @override
   String get clearCache => '清除缓存';
+
+  @override
+  String get clearSelection => '取消选择';
 
   @override
   String get clearCacheConfirmMessage => '确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。';
@@ -882,6 +893,96 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get exportType => '导出格式';
+
+  @override
+  String get exportFormat => '导出格式';
+
+  @override
+  String get exportOptions => '导出选项';
+
+  @override
+  String get exportSummary => '导出摘要';
+
+  @override
+  String get selectedItems => '选中项目';
+
+  @override
+  String get exportLocation => '导出位置';
+
+  @override
+  String get selectExportLocationHint => '选择导出位置...';
+
+  @override
+  String get includeImages => '包含图片';
+
+  @override
+  String get includeImagesDescription => '导出相关的图片文件';
+
+  @override
+  String get includeMetadata => '包含元数据';
+
+  @override
+  String get includeMetadataDescription => '导出创建时间、标签等元数据';
+
+  @override
+  String get compressData => '压缩数据';
+
+  @override
+  String get compressDataDescription => '减小导出文件大小';
+
+  @override
+  String get exportWorksOnly => '仅导出作品';
+
+  @override
+  String get exportWorksWithCharacters => '导出作品和关联集字（推荐）';
+
+  @override
+  String get exportCharactersOnly => '仅导出集字';
+
+  @override
+  String get exportCharactersWithWorks => '导出集字和来源作品（推荐）';
+
+  @override
+  String get exportFullData => '完整数据导出';
+
+  @override
+  String get exportWorksOnlyDescription => '仅包含选中的作品数据';
+
+  @override
+  String get exportWorksWithCharactersDescription => '包含作品及其相关的集字数据';
+
+  @override
+  String get exportCharactersOnlyDescription => '仅包含选中的集字数据';
+
+  @override
+  String get exportCharactersWithWorksDescription => '包含集字及其来源作品数据';
+
+  @override
+  String get exportFullDataDescription => '包含所有相关数据';
+
+  @override
+  String get jsonFile => 'JSON 文件';
+
+  @override
+  String get zipFile => 'ZIP 压缩包';
+
+  @override
+  String get backupFile => '备份文件';
+
+  @override
+  String get hideDetails => '隐藏详情';
+
+  @override
+  String get showDetails => '显示详情';
+
+  @override
+  String get exportingDescription => '正在导出数据，请稍候...';
+
+  @override
+  String get importingDescription => '正在导入数据，请稍候...';
+
+  @override
+  String get processing => '处理中...';
 
   @override
   String get exporting => '正在导出，请稍候...';
@@ -1524,6 +1625,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noImageSelected => '未选择图片';
 
   @override
+  String get noItemsSelected => '未选择项目';
+
+  @override
   String get noImages => '没有图片';
 
   @override
@@ -1567,6 +1671,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noWorksHint => '尝试导入新作品或更改筛选条件';
+
+  @override
+  String worksCount(Object count) {
+    return '$count 个作品';
+  }
 
   @override
   String get noiseReduction => '降噪';
@@ -1737,9 +1846,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get previousPage => '上一页';
-
-  @override
-  String get processing => '处理中...';
 
   @override
   String get processingEraseData => '处理擦除数据...';
@@ -2361,6 +2467,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get work => '作品';
+
+  @override
+  String get character => '集字';
 
   @override
   String get workBrowseSearch => '搜索作品...';

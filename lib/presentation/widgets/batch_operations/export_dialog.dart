@@ -1,0 +1,556 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/app_localizations.dart';
+
+import '../../providers/batch_selection_provider.dart';
+import '../../../application/services/file_picker_service.dart';
+import '../../../domain/models/import_export/export_data_model.dart';
+import '../../../infrastructure/logging/logger.dart';
+import 'progress_dialog.dart';
+
+/// 导出对话框
+class ExportDialog extends ConsumerStatefulWidget {
+  /// 页面类型
+  final PageType pageType;
+  
+  /// 选中的项目ID列表
+  final List<String> selectedIds;
+  
+  /// 导出回调
+  final Function(ExportOptions options, String targetPath) onExport;
+
+  const ExportDialog({
+    super.key,
+    required this.pageType,
+    required this.selectedIds,
+    required this.onExport,
+  });
+
+  @override
+  ConsumerState<ExportDialog> createState() => _ExportDialogState();
+}
+
+class _ExportDialogState extends ConsumerState<ExportDialog> {
+  late ExportType _exportType;
+  late ExportFormat _exportFormat;
+  bool _includeImages = true;
+  bool _includeMetadata = true;
+  bool _compressData = true;
+  String _targetPath = '';
+  final _pathController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // 根据页面类型设置默认导出类型
+    switch (widget.pageType) {
+      case PageType.works:
+        _exportType = ExportType.worksWithCharacters;
+        break;
+      case PageType.characters:
+        _exportType = ExportType.charactersWithWorks;
+        break;
+    }
+    
+    _exportFormat = ExportFormat.json;
+    
+    AppLogger.info(
+      '打开导出对话框',
+      data: {
+        'pageType': widget.pageType.name,
+        'selectedCount': widget.selectedIds.length,
+        'defaultExportType': _exportType.name,
+      },
+      tag: 'export_dialog',
+    );
+  }
+
+  @override
+  void dispose() {
+    _pathController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return AlertDialog(
+      title: Text(l10n.export),
+      content: SizedBox(
+        width: 500,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 导出类型选择
+              _buildExportTypeSection(l10n),
+              
+              const SizedBox(height: 16),
+              
+              // 导出格式选择
+              _buildExportFormatSection(l10n),
+              
+              const SizedBox(height: 16),
+              
+              // 导出选项
+              _buildExportOptionsSection(l10n),
+              
+              const SizedBox(height: 16),
+              
+              // 目标路径选择
+              _buildTargetPathSection(l10n),
+              
+              const SizedBox(height: 16),
+              
+              // 导出摘要
+              _buildExportSummary(l10n),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            AppLogger.debug(
+              '取消导出',
+              data: {
+                'pageType': widget.pageType.name,
+                'selectedCount': widget.selectedIds.length,
+              },
+              tag: 'export_dialog',
+            );
+            Navigator.of(context).pop();
+          },
+          child: Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: _targetPath.isNotEmpty ? _handleExport : null,
+          child: Text(l10n.export),
+        ),
+      ],
+    );
+  }
+
+  /// 构建导出类型选择区域
+  Widget _buildExportTypeSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.exportType,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        ...ExportType.values.where(_isExportTypeAvailable).map((type) {
+          return RadioListTile<ExportType>(
+            title: Text(_getExportTypeLabel(l10n, type)),
+            subtitle: Text(_getExportTypeDescription(l10n, type)),
+            value: type,
+            groupValue: _exportType,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _exportType = value;
+                });
+                
+                AppLogger.debug(
+                  '切换导出类型',
+                  data: {
+                    'oldType': _exportType.name,
+                    'newType': value.name,
+                    'pageType': widget.pageType.name,
+                  },
+                  tag: 'export_dialog',
+                );
+              }
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  /// 构建导出格式选择区域
+  Widget _buildExportFormatSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.exportFormat,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<ExportFormat>(
+          value: _exportFormat,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          items: ExportFormat.values.map((format) {
+            return DropdownMenuItem(
+              value: format,
+              child: Row(
+                children: [
+                  Icon(_getFormatIcon(format)),
+                  const SizedBox(width: 8),
+                  Text(_getFormatLabel(format)),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _exportFormat = value;
+              });
+              
+              AppLogger.debug(
+                '切换导出格式',
+                data: {
+                  'oldFormat': _exportFormat.name,
+                  'newFormat': value.name,
+                },
+                tag: 'export_dialog',
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 构建导出选项区域
+  Widget _buildExportOptionsSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.exportOptions,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        CheckboxListTile(
+          title: Text(l10n.includeImages),
+          subtitle: Text(l10n.includeImagesDescription),
+          value: _includeImages,
+          onChanged: (value) {
+            setState(() {
+              _includeImages = value ?? true;
+            });
+          },
+        ),
+        CheckboxListTile(
+          title: Text(l10n.includeMetadata),
+          subtitle: Text(l10n.includeMetadataDescription),
+          value: _includeMetadata,
+          onChanged: (value) {
+            setState(() {
+              _includeMetadata = value ?? true;
+            });
+          },
+        ),
+        CheckboxListTile(
+          title: Text(l10n.compressData),
+          subtitle: Text(l10n.compressDataDescription),
+          value: _compressData,
+          onChanged: (value) {
+            setState(() {
+              _compressData = value ?? true;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 构建目标路径选择区域
+  Widget _buildTargetPathSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.selectExportLocation,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child:               TextField(
+                controller: _pathController,
+                decoration: InputDecoration(
+                  hintText: l10n.selectExportLocationHint,
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.folder_open),
+                    onPressed: _selectTargetPath,
+                  ),
+                ),
+                readOnly: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// 构建导出摘要区域
+  Widget _buildExportSummary(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.exportSummary,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          _buildSummaryRow(l10n.selectedItems, '${widget.selectedIds.length} 个${_getItemTypeName()}'),
+          _buildSummaryRow(l10n.exportType, _getExportTypeLabel(l10n, _exportType)),
+          _buildSummaryRow(l10n.exportFormat, _getFormatLabel(_exportFormat)),
+          if (_targetPath.isNotEmpty)
+            _buildSummaryRow(l10n.exportLocation, _targetPath),
+        ],
+      ),
+    );
+  }
+
+  /// 构建摘要行
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 检查导出类型是否可用
+  bool _isExportTypeAvailable(ExportType type) {
+    switch (widget.pageType) {
+      case PageType.works:
+        return type == ExportType.worksOnly || type == ExportType.worksWithCharacters;
+      case PageType.characters:
+        return type == ExportType.charactersOnly || type == ExportType.charactersWithWorks;
+    }
+  }
+
+  /// 获取导出类型标签
+  String _getExportTypeLabel(AppLocalizations l10n, ExportType type) {
+    switch (type) {
+      case ExportType.worksOnly:
+        return l10n.exportWorksOnly;
+      case ExportType.worksWithCharacters:
+        return l10n.exportWorksWithCharacters;
+      case ExportType.charactersOnly:
+        return l10n.exportCharactersOnly;
+      case ExportType.charactersWithWorks:
+        return l10n.exportCharactersWithWorks;
+      case ExportType.fullData:
+        return l10n.exportFullData;
+    }
+  }
+
+  /// 获取导出类型描述
+  String _getExportTypeDescription(AppLocalizations l10n, ExportType type) {
+    switch (type) {
+      case ExportType.worksOnly:
+        return l10n.exportWorksOnlyDescription;
+      case ExportType.worksWithCharacters:
+        return l10n.exportWorksWithCharactersDescription;
+      case ExportType.charactersOnly:
+        return l10n.exportCharactersOnlyDescription;
+      case ExportType.charactersWithWorks:
+        return l10n.exportCharactersWithWorksDescription;
+      case ExportType.fullData:
+        return l10n.exportFullDataDescription;
+    }
+  }
+
+  /// 获取格式图标
+  IconData _getFormatIcon(ExportFormat format) {
+    switch (format) {
+      case ExportFormat.json:
+        return Icons.code;
+      case ExportFormat.zip:
+        return Icons.archive;
+      case ExportFormat.backup:
+        return Icons.backup;
+    }
+  }
+
+  /// 获取格式标签
+  String _getFormatLabel(ExportFormat format) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (format) {
+      case ExportFormat.json:
+        return l10n.jsonFile;
+      case ExportFormat.zip:
+        return l10n.zipFile;
+      case ExportFormat.backup:
+        return l10n.backupFile;
+    }
+  }
+
+  /// 获取项目类型名称
+  String _getItemTypeName() {
+    final l10n = AppLocalizations.of(context)!;
+    switch (widget.pageType) {
+      case PageType.works:
+        return l10n.work;
+      case PageType.characters:
+        return l10n.character;
+    }
+  }
+
+  /// 选择目标路径
+  Future<void> _selectTargetPath() async {
+    try {
+      final filePickerService = FilePickerServiceImpl();
+      
+      // 根据导出格式选择文件或目录
+      String? selectedPath;
+      if (_exportFormat == ExportFormat.zip || _exportFormat == ExportFormat.json) {
+        // 选择保存文件路径
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final extension = _exportFormat == ExportFormat.zip ? 'zip' : 'json';
+        final suggestedName = 'export_${widget.pageType.name}_$timestamp.$extension';
+        
+        selectedPath = await filePickerService.pickSaveFile(
+          dialogTitle: 'Select Export Location',
+          suggestedName: suggestedName,
+          allowedExtensions: [extension],
+        );
+      } else {
+        // 选择目录
+        selectedPath = await filePickerService.pickDirectory(
+          dialogTitle: 'Select Export Directory',
+        );
+      }
+      
+      if (selectedPath != null) {
+        setState(() {
+          _targetPath = selectedPath!;
+          _pathController.text = selectedPath;
+        });
+        
+        AppLogger.info(
+          '选择导出路径',
+          data: {
+            'targetPath': selectedPath,
+            'pageType': widget.pageType.name,
+            'exportFormat': _exportFormat.name,
+          },
+          tag: 'export_dialog',
+        );
+      }
+    } catch (e) {
+      AppLogger.error(
+        '选择导出路径失败',
+        error: e,
+        tag: 'export_dialog',
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('选择路径失败: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// 处理导出
+  void _handleExport() {
+    final options = ExportOptions(
+      type: _exportType,
+      format: _exportFormat,
+      includeImages: _includeImages,
+      includeMetadata: _includeMetadata,
+      compressData: _compressData,
+      version: '1.0',
+    );
+    
+    AppLogger.info(
+      '开始导出',
+      data: {
+        'pageType': widget.pageType.name,
+        'selectedCount': widget.selectedIds.length,
+        'exportType': _exportType.name,
+        'exportFormat': _exportFormat.name,
+        'targetPath': _targetPath,
+        'options': {
+          'includeImages': _includeImages,
+          'includeMetadata': _includeMetadata,
+          'compressData': _compressData,
+        },
+      },
+      tag: 'export_dialog',
+    );
+    
+    Navigator.of(context).pop();
+    widget.onExport(options, _targetPath);
+  }
+
+    /// 创建带进度回调的导出函数
+  static Future<void> Function(ExportOptions, String) createProgressExportFunction({
+    required BuildContext context,
+    required Future<void> Function(ExportOptions options, String targetPath, ProgressDialogController progressController) onExportWithProgress,
+  }) {
+    return (ExportOptions options, String targetPath) async {
+      // 显示进度对话框
+      final progressController = ProgressDialogController();
+      
+      // 显示进度对话框
+      final progressFuture = ControlledProgressDialog.show(
+        context: context,
+        title: AppLocalizations.of(context).export,
+        controller: progressController,
+        initialMessage: AppLocalizations.of(context).exporting,
+        canCancel: false,
+      );
+
+      try {
+        // 执行导出
+        await onExportWithProgress(options, targetPath, progressController);
+      } catch (e) {
+        progressController.showError('导出失败: ${e.toString()}');
+      } finally {
+        progressController.dispose();
+      }
+
+      await progressFuture;
+    };
+  }
+} 

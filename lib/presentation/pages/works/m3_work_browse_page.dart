@@ -95,6 +95,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         batchMode: state.batchMode,
         onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
         selectedCount: state.selectedWorks.length,
+        selectedWorkIds: state.selectedWorks, // 传递实际选中的作品ID
         onDeleteSelected: () {
           // Use a method instead of an inline callback to handle deletion
           _handleDeleteSelected(context);
@@ -102,6 +103,10 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         onBackPressed: () {
           CrossNavigationHelper.handleBackNavigation(context, ref);
         },
+        onAddWork: () => _showWorkImportDialog(context),
+        allWorkIds: state.works.map((w) => w.id).toList(),
+        onSelectAll: () => _handleSelectAll(),
+        onClearSelection: () => _handleClearSelection(),
       ),
       body: Column(
         children: [
@@ -517,5 +522,39 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         },
       );
     }
+  }
+
+  Future<void> _showWorkImportDialog(BuildContext context) async {
+    final result = await M3WorkImportDialog.show(context);
+
+    if (result == true) {
+      AppLogger.debug('Import completed, preparing to refresh list',
+          tag: 'WorkBrowsePage');
+
+      if (!mounted) return;
+      ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
+        reason: 'Import completed',
+        force: true,
+        priority: 10,
+      );
+    }
+  }
+
+  void _handleSelectAll() {
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    viewModel.selectAll();
+    
+    AppLogger.debug('用户触发全选操作',
+        tag: 'WorkBrowsePage',
+        data: {'totalWorks': ref.read(workBrowseProvider).works.length});
+  }
+
+  void _handleClearSelection() {
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    viewModel.clearSelection();
+    
+    AppLogger.debug('用户触发取消选择操作',
+        tag: 'WorkBrowsePage',
+        data: {'previousSelectedCount': ref.read(workBrowseProvider).selectedWorks.length});
   }
 }
