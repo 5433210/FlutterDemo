@@ -10,6 +10,7 @@ import '../services/export_service_impl.dart';
 import '../services/import_service_impl.dart';
 import '../services/service_locator.dart';
 import 'repository_providers.dart';
+import '../../infrastructure/providers/storage_providers.dart';
 
 /// 导出服务Provider - 使用实际的Repository依赖
 final exportServiceProvider = Provider<ExportService>((ref) {
@@ -17,18 +18,33 @@ final exportServiceProvider = Provider<ExportService>((ref) {
   final workImageRepository = ref.watch(workImageRepositoryProvider);
   final characterRepository = ref.watch(characterRepositoryProvider);
   final practiceRepository = ref.watch(practiceRepositoryProvider);
+  final storage = ref.watch(initializedStorageProvider);
   
   return ExportServiceImpl(
     workRepository: workRepository,
     workImageRepository: workImageRepository,
     characterRepository: characterRepository,
     practiceRepository: practiceRepository,
+    storage: storage,
   );
 });
 
 /// 导入服务Provider
 final importServiceProvider = Provider<ImportService>((ref) {
-  return ImportServiceImpl();
+  final workImageRepository = ref.watch(workImageRepositoryProvider);
+  final workRepository = ref.watch(workRepositoryProvider);
+  final characterRepository = ref.watch(characterRepositoryProvider);
+  
+  // 获取存储基础路径 - 从存储服务获取
+  final storage = ref.watch(initializedStorageProvider);
+  final storageBasePath = storage.getAppDataPath();
+  
+  return ImportServiceImpl(
+    workImageRepository: workImageRepository,
+    workRepository: workRepository,
+    characterRepository: characterRepository,
+    storageBasePath: storageBasePath,
+  );
 });
 
 /// ServiceLocator Provider - 集成所有Repository
@@ -41,6 +57,7 @@ final serviceLocatorProvider = Provider<ServiceLocator>((ref) {
     workImageRepository: ref.watch(workImageRepositoryProvider),
     characterRepository: ref.watch(characterRepositoryProvider),
     practiceRepository: ref.watch(practiceRepositoryProvider),
+    storage: ref.watch(initializedStorageProvider),
   );
   
   return serviceLocator;

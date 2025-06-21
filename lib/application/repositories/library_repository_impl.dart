@@ -7,21 +7,30 @@ import '../../infrastructure/cache/services/image_cache_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/persistence/database_interface.dart';
 import '../../infrastructure/persistence/models/database_query.dart';
+import '../../utils/path_privacy_helper.dart';
 
 /// 图库仓库实现
 class LibraryRepositoryImpl implements ILibraryRepository {
   final DatabaseInterface _db;
   final ImageCacheService _imageCache;
+  final String? _storageBasePath;
   final String _table = 'library_items';
   final String _categoryTable = 'library_categories';
 
   /// 构造函数
-  LibraryRepositoryImpl(this._db, this._imageCache);
+  LibraryRepositoryImpl(this._db, this._imageCache, {String? storageBasePath})
+      : _storageBasePath = storageBasePath;
+
   @override
   Future<void> add(LibraryItem item) async {
     try {
       // Convert the item to JSON and process complex types
       final Map<String, dynamic> itemData = item.toJson();
+      
+      // 转换路径为相对路径存储
+      if (itemData.containsKey('path')) {
+        itemData['path'] = _toRelativePath(item.path);
+      }
 
       // Convert List<String> to JSON string
       if (itemData.containsKey('tags')) {
@@ -57,7 +66,14 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       }
 
       await _db.set(_table, item.id, itemData);
-      AppLogger.debug('添加图库项目成功', data: {'itemId': item.id});
+      
+      AppLogger.debug(
+        '添加图库项目成功',
+        data: {
+          'itemId': item.id,
+          'path': _sanitizePathForLogging(item.path),
+        },
+      );
     } catch (e, stackTrace) {
       AppLogger.error('添加图库项目失败', error: e, stackTrace: stackTrace);
       rethrow;
@@ -262,6 +278,12 @@ class LibraryRepositoryImpl implements ILibraryRepository {
         if (mutableRow.containsKey('isFavorite')) {
           mutableRow['isFavorite'] = mutableRow['isFavorite'] == 1;
         }
+
+        // 转换相对路径为绝对路径
+        if (mutableRow.containsKey('path')) {
+          mutableRow['path'] = _toAbsolutePath(mutableRow['path'] as String);
+        }
+
         return LibraryItem.fromJson(mutableRow);
       }).toList();
 
@@ -353,6 +375,11 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       // Process isFavorite from integer to boolean
       if (mutableData.containsKey('isFavorite')) {
         mutableData['isFavorite'] = mutableData['isFavorite'] == 1;
+      }
+
+      // 转换相对路径为绝对路径
+      if (mutableData.containsKey('path')) {
+        mutableData['path'] = _toAbsolutePath(mutableData['path'] as String);
       }
 
       return LibraryItem.fromJson(mutableData);
@@ -605,6 +632,11 @@ class LibraryRepositoryImpl implements ILibraryRepository {
     try {
       // Convert the item to JSON and process complex types
       final Map<String, dynamic> itemData = item.toJson();
+      
+      // 转换路径为相对路径存储
+      if (itemData.containsKey('path')) {
+        itemData['path'] = _toRelativePath(item.path);
+      }
 
       // Convert List<String> to JSON string
       if (itemData.containsKey('tags')) {
@@ -634,7 +666,14 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       itemData['updateTime'] = DateTime.now().toIso8601String();
 
       await _db.save(_table, item.id, itemData);
-      AppLogger.debug('更新图库项目成功', data: {'itemId': item.id});
+      
+      AppLogger.debug(
+        '更新图库项目成功',
+        data: {
+          'itemId': item.id,
+          'path': _sanitizePathForLogging(item.path),
+        },
+      );
     } catch (e, stackTrace) {
       AppLogger.error('更新图库项目失败', error: e, stackTrace: stackTrace);
       rethrow;
@@ -715,5 +754,24 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       pairs.add('$key:$valueStr');
     });
     return pairs.join(',');
+  }
+
+  /// 将绝对路径转换为相对路径存储
+  String _toRelativePath(String absolutePath) {
+    return PathPrivacyHelper.toRelativePath(absolutePath);
+  }
+
+  /// 将相对路径转换为绝对路径
+  String _toAbsolutePath(String relativePath) {
+    if (_storageBasePath == null) {
+      // 如果没有存储基础路径，返回原路径
+      return relativePath;
+    }
+    return PathPrivacyHelper.toAbsolutePath(relativePath, _storageBasePath!);
+  }
+
+  /// 清理路径用于日志记录
+  String _sanitizePathForLogging(String path) {
+    return PathPrivacyHelper.sanitizePathForLogging(path);
   }
 }

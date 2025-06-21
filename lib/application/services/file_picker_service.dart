@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 /// 文件选择器服务
 abstract class FilePickerService {
@@ -40,9 +43,24 @@ class FilePickerServiceImpl implements FilePickerService {
     List<String>? allowedExtensions,
     String? initialDirectory,
   }) async {
-    // 简化实现：返回一个测试文件路径
-    // 实际实现需要使用 file_picker 包或平台特定的文件选择器
-    return 'test_import_file.zip';
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: dialogTitle,
+        type: allowedExtensions != null ? FileType.custom : FileType.any,
+        allowedExtensions: allowedExtensions,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        return file.path;
+      }
+      
+      return null;
+    } catch (e) {
+      // 如果文件选择器出错，返回null
+      return null;
+    }
   }
 
   @override
@@ -51,8 +69,26 @@ class FilePickerServiceImpl implements FilePickerService {
     List<String>? allowedExtensions,
     String? initialDirectory,
   }) async {
-    // 简化实现
-    return ['test_import_file1.zip', 'test_import_file2.zip'];
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: dialogTitle,
+        type: allowedExtensions != null ? FileType.custom : FileType.any,
+        allowedExtensions: allowedExtensions,
+        allowMultiple: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        return result.files
+            .where((file) => file.path != null)
+            .map((file) => file.path!)
+            .toList();
+      }
+      
+      return null;
+    } catch (e) {
+      // 如果文件选择器出错，返回null
+      return null;
+    }
   }
 
   @override
@@ -62,10 +98,43 @@ class FilePickerServiceImpl implements FilePickerService {
     List<String>? allowedExtensions,
     String? initialDirectory,
   }) async {
-    // 简化实现：返回一个测试保存路径
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = suggestedName ?? 'export_$timestamp.zip';
-    return 'Downloads/$fileName';
+    try {
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: dialogTitle,
+        fileName: suggestedName,
+        type: allowedExtensions != null ? FileType.custom : FileType.any,
+        allowedExtensions: allowedExtensions,
+      );
+
+      return result;
+    } catch (e) {
+      // 如果文件选择器出错，尝试使用默认路径
+      try {
+        Directory? defaultDir;
+        try {
+          defaultDir = await getDownloadsDirectory();
+        } catch (e) {
+          try {
+            defaultDir = await getApplicationDocumentsDirectory();
+          } catch (e2) {
+            defaultDir = await getTemporaryDirectory();
+          }
+        }
+        
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = suggestedName ?? 'export_$timestamp.zip';
+        
+        if (defaultDir != null) {
+          return path.join(defaultDir.path, fileName);
+        } else {
+          return 'Downloads/$fileName';
+        }
+      } catch (e) {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = suggestedName ?? 'export_$timestamp.zip';
+        return 'Downloads/$fileName';
+      }
+    }
   }
 
   @override
@@ -73,7 +142,30 @@ class FilePickerServiceImpl implements FilePickerService {
     String? dialogTitle,
     String? initialDirectory,
   }) async {
-    // 简化实现
-    return 'Downloads';
+    try {
+      final result = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: dialogTitle,
+      );
+
+      return result;
+    } catch (e) {
+      // 如果文件选择器出错，尝试返回默认目录
+      try {
+        Directory? defaultDir;
+        try {
+          defaultDir = await getDownloadsDirectory();
+        } catch (e) {
+          try {
+            defaultDir = await getApplicationDocumentsDirectory();
+          } catch (e2) {
+            defaultDir = await getTemporaryDirectory();
+          }
+        }
+        
+        return defaultDir?.path ?? 'Downloads';
+      } catch (e) {
+        return 'Downloads';
+      }
+    }
   }
 } 

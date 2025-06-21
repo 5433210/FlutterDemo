@@ -4,6 +4,7 @@ import '../../domain/repositories/work_image_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../domain/services/export_service.dart';
 import '../../domain/services/import_service.dart';
+import '../../infrastructure/storage/storage_interface.dart';
 import 'export_service_impl.dart';
 import 'file_picker_service.dart';
 import 'import_service_impl.dart';
@@ -36,26 +37,34 @@ class ServiceLocator {
     required WorkImageRepository workImageRepository,
     required CharacterRepository characterRepository,
     required PracticeRepository practiceRepository,
+    required IStorage storage,
   }) {
     // 注册Repository实例
     register<WorkRepository>(workRepository);
     register<WorkImageRepository>(workImageRepository);
     register<CharacterRepository>(characterRepository);
     register<PracticeRepository>(practiceRepository);
+    register<IStorage>(storage);
     
     // 注册文件选择器服务
     register<FilePickerService>(FilePickerServiceImpl());
     
-    // 注册导出服务 (使用实际的Repository)
+    // 注册导出服务 (使用实际的Repository和存储)
     register<ExportService>(ExportServiceImpl(
       workRepository: workRepository,
       workImageRepository: workImageRepository,
       characterRepository: characterRepository,
       practiceRepository: practiceRepository,
+      storage: storage,
     ));
     
     // 注册导入服务
-    register<ImportService>(ImportServiceImpl());
+    register<ImportService>(ImportServiceImpl(
+      workImageRepository: workImageRepository,
+      workRepository: workRepository,
+      characterRepository: characterRepository,
+      storageBasePath: storage.getAppDataPath(),
+    ));
   }
 
   /// 基础初始化（不需要Repository的情况）

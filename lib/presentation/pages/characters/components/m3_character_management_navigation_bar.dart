@@ -154,23 +154,33 @@ class _M3CharacterManagementNavigationBarState
             
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.exportSuccess),
-                  backgroundColor: Colors.green,
-                  action: SnackBarAction(
-                    label: '查看文件',
-                    onPressed: () {
-                      AppLogger.info(
-                        '用户请求查看导出文件',
-                        data: {'targetPath': targetPath},
-                        tag: 'character_management_navigation',
-                      );
-                    },
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.exportSuccess),
+                    backgroundColor: Colors.green,
+                    action: SnackBarAction(
+                      label: '查看文件',
+                      onPressed: () {
+                        AppLogger.info(
+                          '用户请求查看导出文件',
+                          data: {'targetPath': targetPath},
+                          tag: 'character_management_navigation',
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (e) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导出成功消息失败，可能是因为页面已关闭',
+                  data: {'error': e.toString()},
+                  tag: 'character_management_navigation',
+                );
+              }
             }
           } catch (e, stackTrace) {
             progressController.showError('导出失败: ${e.toString()}');
@@ -188,17 +198,27 @@ class _M3CharacterManagementNavigationBarState
             
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('导出失败: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                  action: SnackBarAction(
-                    label: '重试',
-                    onPressed: () => _showExportDialog(),
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('导出失败: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    action: SnackBarAction(
+                      label: '重试',
+                      onPressed: () => _showExportDialog(),
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (snackBarError) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导出失败消息失败，可能是因为页面已关闭',
+                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  tag: 'character_management_navigation',
+                );
+              }
             }
           } finally {
             progressController.dispose();
@@ -282,7 +302,10 @@ class _M3CharacterManagementNavigationBarState
               'characterCount': importData.exportData.characters.length,
             });
             
-            final importResult = await importService.performImport(importData);
+            final importResult = await importService.performImport(
+              importData,
+              sourceFilePath: filePath,
+            );
             
             if (!importResult.success) {
               throw Exception(importResult.errors.join(', '));
@@ -305,26 +328,47 @@ class _M3CharacterManagementNavigationBarState
             
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.importSuccess),
-                  backgroundColor: Colors.green,
-                  action: SnackBarAction(
-                    label: '查看结果',
-                    onPressed: () {
-                      AppLogger.info(
-                        '用户请求查看导入结果',
-                        data: {'filePath': filePath},
-                        tag: 'character_management_navigation',
-                      );
-                    },
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.importSuccess),
+                    backgroundColor: Colors.green,
+                    action: SnackBarAction(
+                      label: '查看结果',
+                      onPressed: () {
+                        AppLogger.info(
+                          '用户请求查看导入结果',
+                          data: {'filePath': filePath},
+                          tag: 'character_management_navigation',
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
-              
-              // 触发页面刷新
-              widget.onImport?.call();
+                );
+                
+                // 触发页面刷新
+                widget.onImport?.call();
+              } catch (e) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导入成功消息失败，可能是因为页面已关闭',
+                  data: {'error': e.toString()},
+                  tag: 'character_management_navigation',
+                );
+                
+                // 即使SnackBar显示失败，仍然尝试触发页面刷新
+                try {
+                  widget.onImport?.call();
+                } catch (refreshError) {
+                  AppLogger.warning(
+                    '触发页面刷新失败',
+                    data: {'error': refreshError.toString()},
+                    tag: 'character_management_navigation',
+                  );
+                }
+              }
             }
           } catch (e, stackTrace) {
             progressController.showError('导入失败: ${e.toString()}');
@@ -341,17 +385,27 @@ class _M3CharacterManagementNavigationBarState
             
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('导入失败: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                  action: SnackBarAction(
-                    label: '重试',
-                    onPressed: () => _showImportDialog(),
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('导入失败: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    action: SnackBarAction(
+                      label: '重试',
+                      onPressed: () => _showImportDialog(),
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (snackBarError) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导入失败消息失败，可能是因为页面已关闭',
+                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  tag: 'character_management_navigation',
+                );
+              }
             }
           } finally {
             progressController.dispose();

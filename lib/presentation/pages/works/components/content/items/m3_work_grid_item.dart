@@ -6,6 +6,7 @@ import '../../../../../../domain/models/work/work_entity.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../widgets/image/cached_image.dart';
+import '../../../../../../l10n/app_localizations.dart';
 
 class M3WorkGridItem extends ConsumerWidget {
   final WorkEntity work;
@@ -33,9 +34,11 @@ class M3WorkGridItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Card(
-      elevation: isSelected ? 3 : 1,
+      key: ValueKey('work_item_${work.id}'),
+      elevation: isSelected ? 4 : 1,
       surfaceTintColor: isSelected ? colorScheme.primaryContainer : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),

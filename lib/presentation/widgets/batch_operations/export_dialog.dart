@@ -439,10 +439,21 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       
       // 根据导出格式选择文件或目录
       String? selectedPath;
-      if (_exportFormat == ExportFormat.zip || _exportFormat == ExportFormat.json) {
+      if (_exportFormat == ExportFormat.zip || _exportFormat == ExportFormat.json || _exportFormat == ExportFormat.backup) {
         // 选择保存文件路径
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final extension = _exportFormat == ExportFormat.zip ? 'zip' : 'json';
+        String extension;
+        switch (_exportFormat) {
+          case ExportFormat.json:
+            extension = 'json';
+            break;
+          case ExportFormat.zip:
+            extension = 'zip';
+            break;
+          case ExportFormat.backup:
+            extension = 'bak';
+            break;
+        }
         final suggestedName = 'export_${widget.pageType.name}_$timestamp.$extension';
         
         selectedPath = await filePickerService.pickSaveFile(

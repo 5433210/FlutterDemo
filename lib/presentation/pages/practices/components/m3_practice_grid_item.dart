@@ -48,7 +48,17 @@ class M3PracticeGridItem extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
 
+    final String practiceId = practice['id'] as String;
+    final String title = practice['title'] as String? ?? l10n.unknown;
+    final int pageCount = practice['pageCount'] as int? ?? 0;
+    final bool isFavorite = practice['isFavorite'] as bool? ?? false;
+    final List<String> tags = (practice['tags'] as List<dynamic>?)
+            ?.map((tag) => tag.toString())
+            .toList() ??
+        [];
+
     return Card(
+      key: ValueKey('practice_item_$practiceId'),
       elevation: isSelected ? 3 : 1,
       surfaceTintColor: isSelected ? colorScheme.primaryContainer : null,
       shape: RoundedRectangleBorder(
@@ -117,10 +127,10 @@ class M3PracticeGridItem extends ConsumerWidget {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            practice['isFavorite'] == true
+                            isFavorite
                                 ? Icons.favorite
                                 : Icons.favorite_border,
-                            color: practice['isFavorite'] == true
+                            color: isFavorite
                                 ? colorScheme.error
                                 : colorScheme.onSurfaceVariant,
                           ),
@@ -146,7 +156,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    practice['title'] ?? '',
+                    title,
                     style: theme.textTheme.titleMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -162,7 +172,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '${practice['pageCount'] ?? 0}${l10n.pages}',
+                        '${pageCount}${l10n.pages}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -170,9 +180,8 @@ class M3PracticeGridItem extends ConsumerWidget {
                     ],
                   ),
                   // 标签和编辑按钮
-                  if ((practice['tags'] != null &&
-                          practice['tags'].isNotEmpty) ||
-                      onTagsEdited != null)
+                  if ((tags.isNotEmpty) ||
+                      (onTagsEdited != null))
                     Container(
                       margin: const EdgeInsets.only(top: AppSizes.s),
                       child: Row(

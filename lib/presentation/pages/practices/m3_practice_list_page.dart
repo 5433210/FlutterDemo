@@ -14,6 +14,7 @@ import 'components/m3_practice_filter_panel.dart';
 import 'components/m3_practice_grid_view.dart';
 import 'components/m3_practice_list_navigation_bar.dart';
 import 'components/m3_practice_list_view.dart';
+import 'components/m3_practice_content_area.dart';
 
 /// Material 3 practice list page
 class M3PracticeListPage extends ConsumerStatefulWidget {
@@ -62,6 +63,9 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         onBackPressed: () {
           CrossNavigationHelper.handleBackNavigation(context, ref);
         },
+        onSelectAll: () => _handleSelectAll(),
+        onClearSelection: state.selectedPractices.isNotEmpty ? () => _handleClearSelection() : null,
+        allPracticeIds: state.practices.map((p) => p['id'] as String).toList(),
       ),
       body: Column(
         children: [
@@ -96,38 +100,36 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                 // 主内容区域
                 Expanded(
                   child: state.isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: theme.colorScheme.primary,
-                          ),
-                        )
-                      : (state.viewMode == PracticeViewMode.grid
-                          ? M3PracticeGridView(
-                              practices: state.practices,
-                              isBatchMode: state.batchMode,
-                              selectedPractices: state.selectedPractices,
-                              onPracticeTap: _handlePracticeTap,
-                              onPracticeLongPress: _handlePracticeLongPress,
-                              onToggleFavorite: (id) =>
-                                  viewModel.handleToggleFavorite(id),
-                              onTagsEdited: (id, tags) =>
-                                  viewModel.handleTagEdited(id, tags),
-                              isLoading: false,
-                              errorMessage: null,
-                            )
-                          : M3PracticeListView(
-                              practices: state.practices,
-                              isBatchMode: state.batchMode,
-                              selectedPractices: state.selectedPractices,
-                              onPracticeTap: _handlePracticeTap,
-                              onPracticeLongPress: _handlePracticeLongPress,
-                              onToggleFavorite: (id) =>
-                                  viewModel.handleToggleFavorite(id),
-                              onTagsEdited: (id, tags) =>
-                                  viewModel.handleTagEdited(id, tags),
-                              isLoading: false,
-                              errorMessage: null,
-                            )),
+                      ? const Center(child: CircularProgressIndicator())
+                      : M3PracticeContentArea(
+                          practices: state.practices,
+                          viewMode: state.viewMode,
+                          isBatchMode: state.batchMode,
+                          selectedPractices: state.selectedPractices,
+                          onPracticeTap: _handlePracticeTap,
+                          onPracticeLongPress: (practiceId) {
+                            if (!state.batchMode) {
+                              ref
+                                  .read(practiceListProvider.notifier)
+                                  .toggleBatchMode();
+                            }
+                            ref
+                                .read(practiceListProvider.notifier)
+                                .togglePracticeSelection(practiceId);
+                          },
+                          onToggleFavorite: (practiceId) {
+                            ref
+                                .read(practiceListProvider.notifier)
+                                .handleToggleFavorite(practiceId);
+                          },
+                          onTagsEdited: (practiceId, tags) {
+                            ref
+                                .read(practiceListProvider.notifier)
+                                .handleTagEdited(practiceId, tags);
+                          },
+                          isLoading: state.isLoading,
+                          errorMessage: state.error,
+                        ),
                 ),
               ],
             ),
@@ -222,5 +224,29 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   void _searchPractices(String query) {
     // This is now handled within the provider
     ref.read(practiceListProvider.notifier).setSearchQuery(query);
+  }
+
+  void _handleSelectAll() {
+    final viewModel = ref.read(practiceListProvider.notifier);
+    final state = ref.read(practiceListProvider);
+
+    for (var practice in state.practices) {
+      final practiceId = practice['id'] as String;
+      if (!state.selectedPractices.contains(practiceId)) {
+        viewModel.togglePracticeSelection(practiceId);
+      }
+    }
+  }
+
+  void _handleClearSelection() {
+    final viewModel = ref.read(practiceListProvider.notifier);
+    final state = ref.read(practiceListProvider);
+
+    for (var practice in state.practices) {
+      final practiceId = practice['id'] as String;
+      if (state.selectedPractices.contains(practiceId)) {
+        viewModel.togglePracticeSelection(practiceId);
+      }
+    }
   }
 }

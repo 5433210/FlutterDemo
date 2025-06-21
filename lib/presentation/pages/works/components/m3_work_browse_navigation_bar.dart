@@ -180,24 +180,34 @@ class _M3WorkBrowseNavigationBarState
             // 等待进度对话框关闭，然后显示成功消息
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.exportSuccess),
-                  backgroundColor: Colors.green,
-                  action: SnackBarAction(
-                    label: '查看文件',
-                    onPressed: () {
-                      // 这里可以添加打开文件位置的功能
-                      AppLogger.info(
-                        '用户请求查看导出文件',
-                        data: {'targetPath': targetPath},
-                        tag: 'work_browse_navigation',
-                      );
-                    },
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.exportSuccess),
+                    backgroundColor: Colors.green,
+                    action: SnackBarAction(
+                      label: '查看文件',
+                      onPressed: () {
+                        // 这里可以添加打开文件位置的功能
+                        AppLogger.info(
+                          '用户请求查看导出文件',
+                          data: {'targetPath': targetPath},
+                          tag: 'work_browse_navigation',
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (e) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导出成功消息失败，可能是因为页面已关闭',
+                  data: {'error': e.toString()},
+                  tag: 'work_browse_navigation',
+                );
+              }
             }
           } catch (e, stackTrace) {
             // 显示错误
@@ -217,17 +227,27 @@ class _M3WorkBrowseNavigationBarState
             // 等待错误对话框关闭
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('导出失败: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                  action: SnackBarAction(
-                    label: '重试',
-                    onPressed: () => _showExportDialog(),
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('导出失败: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    action: SnackBarAction(
+                      label: '重试',
+                      onPressed: () => _showExportDialog(),
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (snackBarError) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导出失败消息失败，可能是因为页面已关闭',
+                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  tag: 'work_browse_navigation',
+                );
+              }
             }
           } finally {
             progressController.dispose();
@@ -313,7 +333,10 @@ class _M3WorkBrowseNavigationBarState
               'itemCount': importData.exportData.works.length,
             });
             
-            final importResult = await importService.performImport(importData);
+            final importResult = await importService.performImport(
+              importData,
+              sourceFilePath: filePath,
+            );
             
             if (!importResult.success) {
               throw Exception(importResult.errors.join(', '));
@@ -337,26 +360,47 @@ class _M3WorkBrowseNavigationBarState
             // 等待进度对话框关闭
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.importSuccess),
-                  backgroundColor: Colors.green,
-                  action: SnackBarAction(
-                    label: '查看结果',
-                    onPressed: () {
-                      AppLogger.info(
-                        '用户请求查看导入结果',
-                        data: {'filePath': filePath},
-                        tag: 'work_browse_navigation',
-                      );
-                    },
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.importSuccess),
+                    backgroundColor: Colors.green,
+                    action: SnackBarAction(
+                      label: '查看结果',
+                      onPressed: () {
+                        AppLogger.info(
+                          '用户请求查看导入结果',
+                          data: {'filePath': filePath},
+                          tag: 'work_browse_navigation',
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
-              
-              // 触发页面刷新
-              widget.onImport();
+                );
+                
+                // 触发页面刷新
+                widget.onImport();
+              } catch (e) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导入成功消息失败，可能是因为页面已关闭',
+                  data: {'error': e.toString()},
+                  tag: 'work_browse_navigation',
+                );
+                
+                // 即使SnackBar显示失败，仍然尝试触发页面刷新
+                try {
+                  widget.onImport();
+                } catch (refreshError) {
+                  AppLogger.warning(
+                    '触发页面刷新失败',
+                    data: {'error': refreshError.toString()},
+                    tag: 'work_browse_navigation',
+                  );
+                }
+              }
             }
           } catch (e, stackTrace) {
             // 显示错误
@@ -375,17 +419,85 @@ class _M3WorkBrowseNavigationBarState
             // 等待错误对话框关闭
             await progressFuture;
             
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('导入失败: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                  action: SnackBarAction(
-                    label: '重试',
-                    onPressed: () => _showImportDialog(),
+            // 使用延迟检查确保组件仍然活跃
+            if (mounted && context.mounted) {
+              try {
+                // 根据错误类型提供更友好的消息
+                String userFriendlyMessage;
+                String actionLabel = '重试';
+                VoidCallback? actionCallback = () => _showImportDialog();
+                
+                if (e.toString().contains('Missing extension byte') || 
+                    e.toString().contains('UTF-8') ||
+                    e.toString().contains('字符编码')) {
+                  userFriendlyMessage = '导入文件包含损坏的字符数据，可能是由于字符编码问题导致的。建议重新导出文件后再试。';
+                  actionLabel = '了解更多';
+                  actionCallback = () {
+                    showDialog(
+                      context: context,
+                                             builder: (context) => AlertDialog(
+                         title: Text('导入错误'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('该问题通常由以下原因引起：'),
+                            const SizedBox(height: 8),
+                            Text('• 导出时存在特殊字符编码问题'),
+                            Text('• 文件在传输过程中损坏'),
+                            Text('• 使用了不兼容的字符集'),
+                            const SizedBox(height: 16),
+                            Text('建议解决方案：'),
+                            const SizedBox(height: 8),
+                            Text('• 重新导出该作品'),
+                            Text('• 检查作品标题是否包含特殊字符'),
+                            Text('• 确保文件完整传输'),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(l10n.close),
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _showImportDialog();
+                            },
+                            child: Text('重新选择文件'),
+                          ),
+                        ],
+                      ),
+                    );
+                  };
+                } else if (e.toString().contains('找不到导出数据文件') ||
+                          e.toString().contains('ZIP文件格式无效')) {
+                  userFriendlyMessage = '导入文件格式不正确或文件已损坏，请确保选择的是有效的导出文件。';
+                } else if (e.toString().contains('缺少')) {
+                  userFriendlyMessage = '导入文件不完整，缺少必要的数据文件。请重新导出完整的文件。';
+                } else {
+                  userFriendlyMessage = '导入失败: ${e.toString()}';
+                }
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(userFriendlyMessage),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 6), // 给用户更多时间阅读
+                    action: SnackBarAction(
+                      label: actionLabel,
+                      onPressed: actionCallback,
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (snackBarError) {
+                // 如果显示SnackBar失败，记录日志但不重新抛出异常
+                AppLogger.warning(
+                  '显示导入失败消息失败，可能是因为页面已关闭',
+                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  tag: 'work_browse_navigation',
+                );
+              }
             }
           } finally {
             progressController.dispose();

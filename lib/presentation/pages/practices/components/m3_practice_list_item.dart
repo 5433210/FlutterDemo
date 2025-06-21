@@ -47,9 +47,19 @@ class M3PracticeListItem extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
 
+    final String practiceId = practice['id'] as String;
+    final String title = practice['title'] as String? ?? l10n.unknown;
+    final int pageCount = practice['pageCount'] as int? ?? 0;
+    final bool isFavorite = practice['isFavorite'] as bool? ?? false;
+    final List<String> tags = (practice['tags'] as List<dynamic>?)
+            ?.map((tag) => tag.toString())
+            .toList() ??
+        [];
+
     return Card(
-      elevation:
-          isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
+      key: ValueKey('practice_item_$practiceId'),
+      elevation: isSelected ? 2 : 1,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         side: isSelected
@@ -119,7 +129,7 @@ class M3PracticeListItem extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              practice['title'] ?? '',
+                              title,
                               style: theme.textTheme.titleMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -129,10 +139,10 @@ class M3PracticeListItem extends ConsumerWidget {
                             IconButton(
                               onPressed: onToggleFavorite,
                               icon: Icon(
-                                practice['isFavorite'] == true
+                                isFavorite
                                     ? Icons.favorite
                                     : Icons.favorite_border,
-                                color: practice['isFavorite'] == true
+                                color: isFavorite
                                     ? colorScheme.error
                                     : colorScheme.onSurfaceVariant,
                               ),
@@ -161,7 +171,7 @@ class M3PracticeListItem extends ConsumerWidget {
                           _buildInfoChip(
                             context,
                             Icons.article_outlined,
-                            '${practice['pageCount'] ?? 0}${l10n.pages}',
+                            '$pageCount${l10n.pages}',
                           ),
                         ],
                       ),

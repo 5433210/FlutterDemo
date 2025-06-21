@@ -21,6 +21,11 @@ class M3PracticeListNavigationBar extends StatefulWidget
   final VoidCallback onSortOrderChanged;
 
   final VoidCallback? onBackPressed;
+  
+  // 新增：全选和取消选择功能
+  final VoidCallback? onSelectAll;
+  final VoidCallback? onClearSelection;
+  final List<String>? allPracticeIds; // 所有字帖ID列表，用于全选
 
   const M3PracticeListNavigationBar({
     super.key,
@@ -37,6 +42,9 @@ class M3PracticeListNavigationBar extends StatefulWidget
     required this.onSortFieldChanged,
     required this.onSortOrderChanged,
     this.onBackPressed,
+    this.onSelectAll, // 新增参数
+    this.onClearSelection, // 新增参数
+    this.allPracticeIds, // 新增参数
   });
 
   @override
@@ -70,18 +78,39 @@ class _M3PracticeListNavigationBarState
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (widget.isBatchMode && widget.selectedCount > 0)
-              IconButton(
-                icon: const Icon(Icons.delete),
-                tooltip: l10n.deleteSelected,
-                onPressed: widget.onDeleteSelected,
-              )
-            else if (!widget.isBatchMode)
+            if (widget.isBatchMode) ...[
+              // 批量模式下的操作按钮
+              if (widget.selectedCount > 0) ...[
+                // 删除选中项按钮
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: l10n.deleteSelected,
+                  onPressed: widget.onDeleteSelected,
+                ),
+                // 取消选择按钮
+                if (widget.onClearSelection != null)
+                  IconButton(
+                    icon: const Icon(Icons.deselect),
+                    tooltip: l10n.deselectAll,
+                    onPressed: widget.onClearSelection,
+                  ),
+              ] else ...[
+                // 无选择时显示全选按钮
+                if (widget.onSelectAll != null)
+                  IconButton(
+                    icon: const Icon(Icons.select_all),
+                    tooltip: l10n.selectAll,
+                    onPressed: widget.onSelectAll,
+                  ),
+              ],
+            ] else ...[
+              // 非批量模式下的新建按钮
               FilledButton.icon(
                 icon: const Icon(Icons.add),
                 label: Text(l10n.newItem),
                 onPressed: widget.onNewPractice,
               ),
+            ],
           ],
         ),
 

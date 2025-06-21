@@ -21,6 +21,7 @@ import 'components/content/m3_work_list_view.dart';
 import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
 import 'components/m3_work_browse_navigation_bar.dart';
+import 'components/content/m3_work_content_area.dart';
 
 class M3WorkBrowsePage extends ConsumerStatefulWidget {
   const M3WorkBrowsePage({super.key});
@@ -149,9 +150,29 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                   onToggle: (isOpen) => viewModel.toggleSidebar(),
                   alignRight: false,
                 ),
-                // 移除了可能导致深色阴影的分隔线
+                // Content area with batch selection support
                 Expanded(
-                  child: _buildMainContent(),
+                  child: M3WorkContentArea(
+                    works: state.works,
+                    viewMode: state.viewMode,
+                    batchMode: state.batchMode,
+                    selectedWorks: state.selectedWorks,
+                    onSelectionChanged: (workId, selected) {
+                      viewModel.toggleSelection(workId);
+                    },
+                    onItemTap: (workId) {
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.workDetail,
+                        arguments: workId,
+                      );
+                    },
+                    onToggleFavorite: (workId) {
+                      viewModel.toggleFavorite(workId);
+                    },
+                    onTagsEdited: (workId) {
+                      // TODO: Implement tags editing
+                    },
+                  ),
                 ),
               ],
             ),

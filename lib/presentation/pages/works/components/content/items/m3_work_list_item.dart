@@ -37,8 +37,9 @@ class M3WorkListItem extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: isSelected ? 3 : 1,
-      surfaceTintColor: isSelected ? colorScheme.primaryContainer : null,
+      key: ValueKey('work_item_${work.id}'),
+      elevation: isSelected ? 2 : 1,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         side: isSelected

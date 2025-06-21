@@ -48,12 +48,14 @@ abstract class ImportService {
   /// 执行导入操作
   /// 
   /// [importData] 导入数据模型
+  /// [sourceFilePath] 源文件路径（用于提取图片文件）
   /// [progressCallback] 进度回调
   /// [conflictCallback] 冲突解决回调
   /// 
   /// 返回导入结果
   Future<ImportResult> performImport(
     ImportDataModel importData, {
+    String? sourceFilePath,
     ImportProgressCallback? progressCallback,
     ConflictResolutionCallback? conflictCallback,
   });

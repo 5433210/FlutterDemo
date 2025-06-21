@@ -3,11 +3,13 @@ import '../../domain/repositories/repositories.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/persistence/database_interface.dart';
 import '../../utils/date_time_helper.dart';
+import '../../utils/path_privacy_helper.dart';
 
 class WorkImageRepositoryImpl implements WorkImageRepository {
   final DatabaseInterface _db;
+  final String? _storageBasePath;
 
-  WorkImageRepositoryImpl(this._db);
+  WorkImageRepositoryImpl(this._db, [this._storageBasePath]);
 
   @override
   Future<WorkImage> create(String workId, WorkImage image) async {
@@ -15,14 +17,14 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     final existing = await _db.query('work_images', {
       'where': [
         {'field': 'workId', 'op': '=', 'val': workId},
-        {'field': 'original_path', 'op': '=', 'val': image.originalPath},
+        {'field': 'original_path', 'op': '=', 'val': _toRelativePath(image.originalPath)},
       ],
       'limit': 1,
     });
 
     AppLogger.info('检查图片是否已存在', tag: 'WorkImageRepository', data: {
       'workId': workId,
-      'originalPath': image.originalPath,
+      'originalPath': image.originalPath.sanitizedForLogging,
       'exists': existing.isNotEmpty,
       'createTime': DateTimeHelper.toStorageFormat(image.createTime),
       'updateTime': DateTimeHelper.toStorageFormat(image.updateTime),
@@ -39,7 +41,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     // 创建新记录
     final row = _mapToRow(image, workId);
     AppLogger.debug('准备保存新图片', tag: 'WorkImageRepository', data: {
-      'row': row,
+      'row': _sanitizeRowForLogging(row),
     });
 
     await _db.set('work_images', image.id, row);
@@ -122,14 +124,8 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   @override
   Future<WorkImage?> get(String imageId) async {
     final result = await _db.get('work_images', imageId);
-    if (result != null) {
-      AppLogger.debug('获取单个图片', tag: 'WorkImageRepository', data: {
-        'imageId': imageId,
-        'createTime': result['createTime'],
-        'updateTime': result['updateTime'],
-      });
-    }
-    return result != null ? _mapToWorkImage(result) : null;
+    if (result == null) return null;
+    return _mapToWorkImage(result);
   }
 
   @override
@@ -141,17 +137,9 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
       'orderBy': 'indexInWork ASC',
     });
 
-    AppLogger.debug('获取作品所有图片', tag: 'WorkImageRepository', data: {
+    AppLogger.debug('获取作品图片列表', tag: 'WorkImageRepository', data: {
       'workId': workId,
       'count': results.length,
-      'records': results
-          .map((row) => {
-                'id': row['id'],
-                'originalPath': row['original_path'],
-                'createTime': row['createTime'],
-                'updateTime': row['updateTime'],
-              })
-          .toList(),
     });
 
     return results.map((row) => _mapToWorkImage(row)).toList();
@@ -166,7 +154,9 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
       'orderBy': 'indexInWork ASC',
       'limit': 1,
     });
-    return results.isNotEmpty ? _mapToWorkImage(results.first) : null;
+
+    if (results.isEmpty) return null;
+    return _mapToWorkImage(results.first);
   }
 
   @override
@@ -220,13 +210,163 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     });
   }
 
+  @override
+  Future<List<WorkImage>> batchCreate(String workId, List<WorkImage> images) async {
+    final results = <WorkImage>[];
+
+    for (final image in images) {
+      try {
+        final result = await create(workId, image);
+        results.add(result);
+      } catch (e, stack) {
+        AppLogger.error('批量创建图片失败',
+            error: e,
+            stackTrace: stack,
+            tag: 'WorkImageRepository',
+            data: {
+              'workId': workId,
+              'imageId': image.id,
+              'originalPath': image.originalPath.sanitizedForLogging,
+            });
+        rethrow;
+      }
+    }
+
+    AppLogger.info('批量创建图片完成', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'successCount': results.length,
+      'totalCount': images.length,
+    });
+
+    return results;
+  }
+
+  @override
+  Future<List<WorkImage>> batchUpdate(String workId, List<WorkImage> images) async {
+    final results = <WorkImage>[];
+
+    for (final image in images) {
+      try {
+        final updated = await update(image);
+        results.add(updated);
+      } catch (e, stack) {
+        AppLogger.error('批量更新图片失败',
+            error: e,
+            stackTrace: stack,
+            tag: 'WorkImageRepository',
+            data: {
+              'workId': workId,
+              'imageId': image.id,
+              'originalPath': image.originalPath.sanitizedForLogging,
+            });
+        rethrow;
+      }
+    }
+
+    AppLogger.info('批量更新图片完成', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'successCount': results.length,
+      'totalCount': images.length,
+    });
+
+    return results;
+  }
+
+  @override
+  Future<WorkImage> update(WorkImage image) async {
+    final row = _mapToRow(image, image.workId);
+    AppLogger.debug('更新图片记录', tag: 'WorkImageRepository', data: {
+      'imageId': image.id,
+      'row': _sanitizeRowForLogging(row),
+    });
+
+    await _db.set('work_images', image.id, row);
+    return image;
+  }
+
+  @override
+  Future<void> deleteAllByWorkId(String workId) async {
+    // 首先获取所有图片ID
+    final images = await getAllByWorkId(workId);
+    final imageIds = images.map((img) => img.id).toList();
+
+    // 批量删除
+    await deleteMany(workId, imageIds);
+
+    AppLogger.info('删除作品所有图片记录', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'deletedCount': imageIds.length,
+    });
+  }
+
+  @override
+  Future<int> getCountByWorkId(String workId) async {
+    final results = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId}
+      ],
+    });
+    return results.length;
+  }
+
+  @override
+  Future<List<WorkImage>> getByWorkIds(List<String> workIds) async {
+    if (workIds.isEmpty) return [];
+
+    final results = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': 'in', 'val': workIds}
+      ],
+      'orderBy': 'workId ASC, indexInWork ASC',
+    });
+
+    AppLogger.debug('批量获取作品图片', tag: 'WorkImageRepository', data: {
+      'workIdCount': workIds.length,
+      'imageCount': results.length,
+    });
+
+    return results.map((row) => _mapToWorkImage(row)).toList();
+  }
+
+  /// 将路径转换为相对路径存储
+  String _toRelativePath(String absolutePath) {
+    return PathPrivacyHelper.toRelativePath(absolutePath);
+  }
+
+  /// 将相对路径转换为绝对路径
+  String _toAbsolutePath(String relativePath) {
+    if (_storageBasePath == null) {
+      // 如果没有存储基础路径，返回原路径
+      return relativePath;
+    }
+    return PathPrivacyHelper.toAbsolutePath(relativePath, _storageBasePath!);
+  }
+
+  /// 清理行数据用于日志记录
+  Map<String, dynamic> _sanitizeRowForLogging(Map<String, dynamic> row) {
+    final sanitized = Map<String, dynamic>.from(row);
+    
+    // 清理路径字段
+    if (sanitized.containsKey('path')) {
+      sanitized['path'] = (sanitized['path'] as String).sanitizedForLogging;
+    }
+    if (sanitized.containsKey('original_path')) {
+      sanitized['original_path'] = (sanitized['original_path'] as String).sanitizedForLogging;
+    }
+    if (sanitized.containsKey('thumbnail_path')) {
+      sanitized['thumbnail_path'] = (sanitized['thumbnail_path'] as String).sanitizedForLogging;
+    }
+    
+    return sanitized;
+  }
+
   Map<String, dynamic> _mapToRow(WorkImage image, String workId) {
     final row = {
       'workId': workId,
       'libraryItemId': image.libraryItemId,
-      'path': image.path,
-      'original_path': image.originalPath,
-      'thumbnail_path': image.thumbnailPath,
+      'path': _toRelativePath(image.path),
+      'original_path': _toRelativePath(image.originalPath),
+      'thumbnail_path': _toRelativePath(image.thumbnailPath),
       'format': image.format,
       'size': image.size,
       'width': image.width,
@@ -238,7 +378,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
 
     AppLogger.debug('转换为数据库行', tag: 'WorkImageRepository', data: {
       'imageId': image.id,
-      'row': row,
+      'row': _sanitizeRowForLogging(row),
     });
 
     return row;
@@ -246,16 +386,16 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
 
   WorkImage _mapToWorkImage(Map<String, dynamic> row) {
     AppLogger.debug('映射数据库记录', tag: 'WorkImageRepository', data: {
-      'record': row,
+      'record': _sanitizeRowForLogging(row),
     });
 
     return WorkImage(
       id: row['id'] as String,
       workId: row['workId'] as String,
       libraryItemId: row['libraryItemId'] as String?,
-      path: row['path'] as String,
-      originalPath: row['original_path'] as String,
-      thumbnailPath: row['thumbnail_path'] as String,
+      path: _toAbsolutePath(row['path'] as String),
+      originalPath: _toAbsolutePath(row['original_path'] as String),
+      thumbnailPath: _toAbsolutePath(row['thumbnail_path'] as String),
       format: row['format'] as String,
       size: row['size'] as int,
       width: row['width'] as int,
