@@ -2,7 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as p;
 
 import '../../../../infrastructure/backup/backup_service.dart';
 import '../../../../infrastructure/logging/logger.dart';
@@ -26,56 +26,7 @@ class BackupSettings extends ConsumerWidget {
       title: l10n.backupSettings,
       icon: Icons.backup_outlined,
       children: [
-        // 自动备份开关
-        SwitchListTile(
-          title: Text(l10n.autoBackup),
-          subtitle: Text(l10n.autoBackupDescription),
-          value: backupSettings.autoBackupEnabled,
-          onChanged: (value) {
-            ref
-                .read(backupSettingsProvider.notifier)
-                .setAutoBackupEnabled(value);
-          },
-        ),
 
-        // 自动备份间隔（仅在自动备份启用时显示）
-        if (backupSettings.autoBackupEnabled)
-          ListTile(
-            title: Text(l10n.autoBackupInterval),
-            subtitle: Text(l10n.autoBackupIntervalDescription),
-            trailing: DropdownButton<int>(
-              value: backupSettings.autoBackupIntervalDays,
-              items: [
-                DropdownMenuItem(
-                  value: 1,
-                  child: Text(l10n.days(1)),
-                ),
-                DropdownMenuItem(
-                  value: 3,
-                  child: Text(l10n.days(3)),
-                ),
-                DropdownMenuItem(
-                  value: 7,
-                  child: Text(l10n.days(7)),
-                ),
-                DropdownMenuItem(
-                  value: 14,
-                  child: Text(l10n.days(14)),
-                ),
-                DropdownMenuItem(
-                  value: 30,
-                  child: Text(l10n.days(30)),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  ref
-                      .read(backupSettingsProvider.notifier)
-                      .setAutoBackupIntervalDays(value);
-                }
-              },
-            ),
-          ),
 
         // 保留备份数量
         ListTile(
@@ -156,6 +107,7 @@ class BackupSettings extends ConsumerWidget {
                 await _showExportBackupDialog(context, ref);
               },
             ),
+
           ],
         ),
 
@@ -348,7 +300,7 @@ class BackupSettings extends ConsumerWidget {
       );
 
       // 导出备份
-      final exportPath = path.join(outputDirectory, backup.fileName);
+              final exportPath = p.join(outputDirectory, backup.fileName);
       final success = await ref
           .read(backupSettingsProvider.notifier)
           .exportBackup(backup.path, exportPath);
@@ -466,39 +418,238 @@ class BackupSettings extends ConsumerWidget {
 
     if (description != null && context.mounted) {
       // 显示加载对话框
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: AppSizes.p16),
-              Text(l10n.creatingBackup),
-            ],
-          ),
-        ),
-      );
-
-      // 创建备份
-      final backupPath = await ref
-          .read(backupSettingsProvider.notifier)
-          .createBackup(
-              description: description.isNotEmpty ? description : null);
-
-      // 关闭加载对话框
-      if (context.mounted) {
-        Navigator.of(context).pop();
-
-        // 显示结果
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              backupPath != null ? l10n.backupSuccess : l10n.backupFailure,
+      bool dialogShown = false;
+      NavigatorState? navigatorState;
+      try {
+        AppLogger.info('准备显示加载对话框', tag: 'BackupSettings');
+        navigatorState = Navigator.of(context);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSizes.p16),
+                Text(l10n.creatingBackup),
+                const SizedBox(height: AppSizes.p8),
+                Text(
+                  '这可能需要几分钟时间，请耐心等待...',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
         );
+        dialogShown = true;
+        AppLogger.info('加载对话框已显示', tag: 'BackupSettings');
+      } catch (e) {
+        AppLogger.error('显示加载对话框失败', tag: 'BackupSettings', error: e, data: {
+          'error': e.toString(),
+          'contextMounted': context.mounted,
+        });
+        // 如果无法显示对话框，直接返回
+        return;
+      }
+
+      try {
+        AppLogger.info('开始创建备份UI流程', tag: 'BackupSettings', data: {
+          'description': description,
+        });
+        
+        // 执行备份操作
+        final backupPath = await ref.read(backupSettingsProvider.notifier).createBackup(
+            description: description.isNotEmpty ? description : null);
+
+        AppLogger.info('备份操作完成', tag: 'BackupSettings', data: {
+          'backupPath': backupPath,
+          'success': backupPath != null,
+        });
+
+        // 关闭加载对话框
+        if (context.mounted && dialogShown) {
+          AppLogger.info('准备关闭加载对话框', tag: 'BackupSettings', data: {
+            'dialogShown': dialogShown,
+            'contextMounted': context.mounted,
+            'navigatorMounted': navigatorState?.mounted,
+          });
+          
+          // 尝试多种方式关闭对话框
+          bool dialogClosed = false;
+          
+          // 方法1：使用保存的NavigatorState
+          if (navigatorState != null && navigatorState.mounted) {
+            try {
+              if (navigatorState.canPop()) {
+                navigatorState.pop();
+                dialogClosed = true;
+                AppLogger.info('使用保存的NavigatorState关闭对话框成功', tag: 'BackupSettings');
+              } else {
+                AppLogger.warning('保存的NavigatorState无法执行pop操作', tag: 'BackupSettings');
+              }
+            } catch (e) {
+              AppLogger.warning('使用保存的NavigatorState关闭对话框失败', tag: 'BackupSettings', error: e);
+            }
+          }
+          
+          // 方法2：如果方法1失败，尝试使用当前context的Navigator
+          if (!dialogClosed) {
+            try {
+              final currentNavigator = Navigator.of(context);
+              if (currentNavigator.canPop()) {
+                currentNavigator.pop();
+                dialogClosed = true;
+                AppLogger.info('使用当前Navigator关闭对话框成功', tag: 'BackupSettings');
+              } else {
+                AppLogger.warning('当前Navigator无法执行pop操作', tag: 'BackupSettings');
+              }
+            } catch (e) {
+              AppLogger.warning('使用当前Navigator关闭对话框失败', tag: 'BackupSettings', error: e);
+            }
+          }
+          
+          // 方法3：如果前两种方法都失败，尝试强制关闭
+          if (!dialogClosed) {
+            try {
+              Navigator.of(context, rootNavigator: true).pop();
+              dialogClosed = true;
+              AppLogger.info('使用rootNavigator关闭对话框成功', tag: 'BackupSettings');
+            } catch (e) {
+              AppLogger.error('所有方法都无法关闭对话框', tag: 'BackupSettings', error: e);
+            }
+          }
+          
+          if (!dialogClosed) {
+            AppLogger.error('无法关闭加载对话框，所有方法都失败了', tag: 'BackupSettings');
+          }
+        }
+
+        // 显示结果
+        if (context.mounted) {
+          if (backupPath != null) {
+            AppLogger.info('显示备份成功消息', tag: 'BackupSettings');
+            try {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.backupSuccess),
+                  backgroundColor: Colors.green,
+                  action: SnackBarAction(
+                    label: '查看',
+                    onPressed: () {
+                      // 可以添加查看备份文件的功能
+                    },
+                  ),
+                ),
+              );
+              AppLogger.info('备份成功消息已显示', tag: 'BackupSettings');
+            } catch (e) {
+              AppLogger.error('显示备份成功消息失败', tag: 'BackupSettings', error: e);
+            }
+          } else {
+            AppLogger.warning('备份路径为null，显示失败消息', tag: 'BackupSettings');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('备份创建超时或失败，请检查存储空间是否足够'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: '重试',
+                  onPressed: () => _showCreateBackupDialog(context, ref),
+                ),
+              ),
+            );
+          }
+        }
+      } catch (e, stackTrace) {
+        AppLogger.error('备份操作异常', tag: 'BackupSettings', error: e, stackTrace: stackTrace);
+        
+        // 关闭加载对话框
+        if (context.mounted && dialogShown) {
+          AppLogger.info('异常处理：准备关闭加载对话框', tag: 'BackupSettings', data: {
+            'dialogShown': dialogShown,
+            'contextMounted': context.mounted,
+            'navigatorMounted': navigatorState?.mounted,
+          });
+          
+          // 尝试多种方式关闭对话框
+          bool dialogClosed = false;
+          
+          // 方法1：使用保存的NavigatorState
+          if (navigatorState != null && navigatorState.mounted) {
+            try {
+              if (navigatorState.canPop()) {
+                navigatorState.pop();
+                dialogClosed = true;
+                AppLogger.info('异常处理：使用保存的NavigatorState关闭对话框成功', tag: 'BackupSettings');
+              } else {
+                AppLogger.warning('异常处理：保存的NavigatorState无法执行pop操作', tag: 'BackupSettings');
+              }
+            } catch (navError) {
+              AppLogger.warning('异常处理：使用保存的NavigatorState关闭对话框失败', tag: 'BackupSettings', error: navError);
+            }
+          }
+          
+          // 方法2：如果方法1失败，尝试使用当前context的Navigator
+          if (!dialogClosed) {
+            try {
+              final currentNavigator = Navigator.of(context);
+              if (currentNavigator.canPop()) {
+                currentNavigator.pop();
+                dialogClosed = true;
+                AppLogger.info('异常处理：使用当前Navigator关闭对话框成功', tag: 'BackupSettings');
+              } else {
+                AppLogger.warning('异常处理：当前Navigator无法执行pop操作', tag: 'BackupSettings');
+              }
+            } catch (navError) {
+              AppLogger.warning('异常处理：使用当前Navigator关闭对话框失败', tag: 'BackupSettings', error: navError);
+            }
+          }
+          
+          // 方法3：如果前两种方法都失败，尝试强制关闭
+          if (!dialogClosed) {
+            try {
+              Navigator.of(context, rootNavigator: true).pop();
+              dialogClosed = true;
+              AppLogger.info('异常处理：使用rootNavigator关闭对话框成功', tag: 'BackupSettings');
+            } catch (navError) {
+              AppLogger.error('异常处理：所有方法都无法关闭对话框', tag: 'BackupSettings', error: navError);
+            }
+          }
+          
+          if (!dialogClosed) {
+            AppLogger.error('异常处理：无法关闭加载对话框，所有方法都失败了', tag: 'BackupSettings', data: {
+              'originalError': e.toString(),
+            });
+          }
+
+          // 显示详细的错误信息
+          String errorMessage;
+          if (e.toString().contains('Permission denied') || 
+              e.toString().contains('Access is denied')) {
+            errorMessage = '备份失败：没有足够的文件访问权限';
+          } else if (e.toString().contains('No space left') || 
+                    e.toString().contains('Disk full')) {
+            errorMessage = '备份失败：存储空间不足';
+          } else if (e.toString().contains('timeout') || 
+                    e.toString().contains('TimeoutException')) {
+            errorMessage = '备份失败：操作超时，可能是因为数据量过大';
+          } else {
+            errorMessage = '备份失败: ${e.toString()}';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 8),
+              action: SnackBarAction(
+                label: '重试',
+                onPressed: () => _showCreateBackupDialog(context, ref),
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -742,6 +893,8 @@ class BackupSettings extends ConsumerWidget {
       ),
     );
   }
+
+
 }
 
 /// 恢复确认对话框结果

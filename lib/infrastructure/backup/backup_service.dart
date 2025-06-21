@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:archive/archive.dart';
 import 'package:intl/intl.dart';
@@ -36,6 +38,12 @@ class BackupInfo {
   /// 从文件创建备份信息
   static Future<BackupInfo> fromFile(File file, {IStorage? storage}) async {
     final filePath = file.path;
+    
+    // 首先检查文件是否存在
+    if (!await file.exists()) {
+      throw Exception('备份文件不存在: $filePath');
+    }
+    
     String? description;
 
     // 尝试从备份文件中提取描述信息
@@ -98,37 +106,82 @@ class BackupService {
   /// 清理旧备份
   Future<int> cleanupOldBackups(int keepCount) async {
     try {
-      AppLogger.info('清理旧备份',
+      AppLogger.info('开始清理旧备份',
           tag: 'BackupService', data: {'keepCount': keepCount});
 
-      // 获取所有备份
-      final backups = await getBackups();
-
-      // 如果备份数量小于等于保留数量，不需要清理
-      if (backups.length <= keepCount) {
-        return 0;
+      // 为整个清理过程添加30秒超时
+      final cleanupResult = await Future.any([
+        _performCleanup(keepCount),
+        Future.delayed(const Duration(seconds: 30), () => -1), // 超时返回-1
+      ]);
+      
+      if (cleanupResult == -1) {
+        AppLogger.warning('清理旧备份超时，但这不影响备份创建成功',
+            tag: 'BackupService', data: {'keepCount': keepCount});
+        return 0; // 超时时返回0，表示没有清理但不是错误
       }
-
-      // 获取需要删除的备份
-      final backupsToDelete = backups.sublist(keepCount);
-
-      // 删除旧备份
-      int deletedCount = 0;
-      for (final backup in backupsToDelete) {
-        final success = await deleteBackup(backup.path);
-        if (success) {
-          deletedCount++;
-        }
-      }
-
+      
       AppLogger.info('清理旧备份完成',
-          tag: 'BackupService', data: {'deletedCount': deletedCount});
-      return deletedCount;
+          tag: 'BackupService', data: {'deletedCount': cleanupResult});
+      return cleanupResult;
     } catch (e, stack) {
-      AppLogger.error('清理旧备份失败',
+      AppLogger.warning('清理旧备份失败，但这不影响备份创建成功',
           error: e, stackTrace: stack, tag: 'BackupService');
+      return 0; // 清理失败不应该影响备份创建的成功
+    }
+  }
+  
+  /// 执行实际的清理操作
+  Future<int> _performCleanup(int keepCount) async {
+    // 获取所有备份
+    final backups = await getBackups();
+
+    // 如果备份数量小于等于保留数量，不需要清理
+    if (backups.length <= keepCount) {
+      AppLogger.info('备份数量未超过保留数量，无需清理',
+          tag: 'BackupService', data: {
+        'currentCount': backups.length,
+        'keepCount': keepCount,
+      });
       return 0;
     }
+
+    // 获取需要删除的备份
+    final backupsToDelete = backups.sublist(keepCount);
+    AppLogger.info('准备删除旧备份',
+        tag: 'BackupService', data: {
+      'totalBackups': backups.length,
+      'toDeleteCount': backupsToDelete.length,
+    });
+
+    // 删除旧备份，为每个删除操作添加超时
+    int deletedCount = 0;
+    for (final backup in backupsToDelete) {
+      try {
+        // 为每个删除操作添加10秒超时
+        final deleteResult = await Future.any([
+          deleteBackup(backup.path),
+          Future.delayed(const Duration(seconds: 10), () => false),
+        ]);
+        
+        if (deleteResult) {
+          deletedCount++;
+          AppLogger.debug('成功删除备份文件',
+              tag: 'BackupService', data: {'path': backup.path});
+        } else {
+          AppLogger.warning('删除备份文件超时或失败',
+              tag: 'BackupService', data: {'path': backup.path});
+        }
+      } catch (e) {
+        AppLogger.warning('删除单个备份文件时出错',
+            tag: 'BackupService', data: {
+          'path': backup.path,
+          'error': e.toString(),
+        });
+      }
+    }
+
+    return deletedCount;
   }
 
   /// 创建备份
@@ -141,34 +194,80 @@ class BackupService {
       final backupFileName = 'backup_$timestamp.zip';
       final backupPath = p.join(_backupDir, backupFileName);
 
-      // 创建临时目录
-      final tempDir = await _storage.createTempDirectory();
-      final tempPath = tempDir.path;
-
-      // 备份数据库
-      await _backupDatabase(tempPath);
-
-      // 备份应用数据
-      await _backupAppData(tempPath);
-
-      // 创建备份描述文件
-      if (description != null) {
-        await _createBackupInfo(tempPath, description);
-      }
-
-      // 创建ZIP文件
-      await _createZipArchive(tempPath, backupPath);
-
-      // 清理临时目录
-      await _storage.deleteDirectory(tempPath);
-
-      AppLogger.info('备份创建成功',
-          tag: 'BackupService', data: {'path': backupPath});
-      return backupPath;
+      // 为整个备份过程添加超时机制
+      return await Future.any([
+        _performBackup(backupPath, description),
+        Future.delayed(const Duration(minutes: 15), () {
+          throw TimeoutException('备份操作超时', const Duration(minutes: 15));
+        }),
+      ]);
     } catch (e, stack) {
       AppLogger.error('创建备份失败',
           error: e, stackTrace: stack, tag: 'BackupService');
       rethrow;
+    }
+  }
+  
+  /// 执行实际的备份操作
+  Future<String> _performBackup(String backupPath, String? description) async {
+    String? tempPath;
+    try {
+      // 创建临时目录
+      AppLogger.info('创建临时目录', tag: 'BackupService');
+      final tempDir = await _storage.createTempDirectory();
+      tempPath = tempDir.path;
+
+      // 备份数据库
+      AppLogger.info('开始备份数据库', tag: 'BackupService');
+      await _backupDatabase(tempPath);
+      AppLogger.info('数据库备份完成', tag: 'BackupService');
+
+      // 备份应用数据
+      AppLogger.info('开始备份应用数据', tag: 'BackupService');
+      await _backupAppData(tempPath);
+      AppLogger.info('应用数据备份完成', tag: 'BackupService');
+
+      // 创建备份描述文件
+      if (description != null) {
+        AppLogger.info('创建备份描述文件', tag: 'BackupService');
+        await _createBackupInfo(tempPath, description);
+      }
+
+      // 创建ZIP文件
+      AppLogger.info('开始创建ZIP文件', tag: 'BackupService', data: {
+        'targetPath': backupPath,
+      });
+      await _createZipArchive(tempPath, backupPath);
+      AppLogger.info('ZIP文件创建完成', tag: 'BackupService');
+
+      // 检查最终文件大小
+      final backupFile = File(backupPath);
+      if (await backupFile.exists()) {
+        final fileSize = await backupFile.length();
+        AppLogger.info('备份文件信息', tag: 'BackupService', data: {
+          'path': backupPath,
+          'size': fileSize,
+          'sizeFormatted': '${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
+        });
+      }
+
+      AppLogger.info('备份创建成功',
+          tag: 'BackupService', data: {'path': backupPath});
+      return backupPath;
+    } finally {
+      // 清理临时目录
+      if (tempPath != null) {
+        try {
+          AppLogger.info('清理临时目录', tag: 'BackupService');
+          await _storage.deleteDirectory(tempPath);
+          AppLogger.info('临时目录清理完成', tag: 'BackupService');
+        } catch (e) {
+          AppLogger.warning('清理临时目录失败', tag: 'BackupService', data: {
+            'error': e.toString(),
+            'tempPath': tempPath,
+          });
+        }
+      }
     }
   }
 
@@ -261,12 +360,86 @@ class BackupService {
       for (final file in zipFiles) {
         try {
           final backupFile = File(file);
-          final backupInfo =
-              await BackupInfo.fromFile(backupFile, storage: _storage);
-          backups.add(backupInfo);
+          
+          // 首先检查文件是否真的存在
+          if (!await backupFile.exists()) {
+            AppLogger.warning('备份文件已不存在，跳过', tag: 'BackupService', data: {
+              'fileName': p.basename(file),
+              'path': file,
+            });
+            continue;
+          }
+          
+          // 为每个文件的信息获取添加超时
+          BackupInfo? backupInfo;
+          try {
+            backupInfo = await Future.any([
+              BackupInfo.fromFile(backupFile, storage: _storage),
+              Future.delayed(const Duration(seconds: 5), () async {
+                // 超时时检查文件是否存在，如果不存在则返回null
+                if (!await backupFile.exists()) {
+                  AppLogger.info('超时检查发现文件已被删除', tag: 'BackupService', data: {
+                    'fileName': p.basename(file),
+                  });
+                  return null;
+                }
+                return BackupInfo(
+                  path: file,
+                  creationTime: await backupFile.lastModified(),
+                  size: await backupFile.length(),
+                  description: p.basename(file),
+                );
+              }),
+            ]);
+          } catch (timeoutError) {
+            AppLogger.warning('获取备份文件信息时发生错误', tag: 'BackupService', data: {
+              'fileName': p.basename(file),
+              'error': timeoutError.toString(),
+            });
+            backupInfo = null;
+          }
+          
+          // 只有当backupInfo不为null时才添加到列表
+          if (backupInfo != null) {
+            backups.add(backupInfo);
+          } else {
+            AppLogger.info('备份文件信息获取失败或文件已被删除，跳过', tag: 'BackupService', data: {
+              'fileName': p.basename(file),
+            });
+          }
         } catch (e) {
-          AppLogger.warning('无法读取备份文件信息',
-              tag: 'BackupService', data: {'file': file, 'error': e});
+          AppLogger.warning('无法读取备份文件信息，跳过',
+              tag: 'BackupService', data: {
+            'file': file, 
+            'error': e.toString(),
+          });
+          
+          // 即使读取失败，也尝试创建基本的备份信息
+          try {
+            final backupFile = File(file);
+            if (await backupFile.exists()) {
+              final basicBackupInfo = BackupInfo(
+                path: file,
+                creationTime: await backupFile.lastModified(),
+                size: await backupFile.length(),
+                description: p.basename(file),
+              );
+              backups.add(basicBackupInfo);
+              AppLogger.info('使用基本信息创建备份条目', tag: 'BackupService', data: {
+                'fileName': p.basename(file),
+              });
+            } else {
+              AppLogger.info('备份文件已不存在，跳过创建基本信息', tag: 'BackupService', data: {
+                'fileName': p.basename(file),
+              });
+            }
+          } catch (basicError) {
+            AppLogger.warning('创建基本备份信息也失败，可能文件已被删除', tag: 'BackupService', data: {
+              'file': file,
+              'error': basicError.toString(),
+            });
+            // 文件可能在处理过程中被删除，这是正常情况，不需要特殊处理
+          }
         }
       }
 
@@ -379,6 +552,9 @@ class BackupService {
       // 解压备份文件
       await _extractZipArchive(backupPath, tempPath);
 
+      // 检查备份兼容性
+      await _validateBackupCompatibility(tempPath);
+
       // 先恢复应用数据，再恢复数据库
       await _restoreAppData(tempPath);
 
@@ -448,7 +624,16 @@ class BackupService {
       final dir = Directory(dirPath);
       final entities = await dir.list().toList();
 
+      AppLogger.info('处理目录到归档', tag: 'BackupService', data: {
+        'dirPath': dirPath,
+        'archivePath': archivePath,
+        'entityCount': entities.length,
+      });
+
       // 添加每个文件到归档
+      int fileCount = 0;
+      int totalSize = 0;
+      
       for (final entity in entities) {
         final relativePath = p.relative(entity.path, from: dirPath);
         final archiveFilePath = p.join(archivePath, relativePath);
@@ -456,6 +641,8 @@ class BackupService {
         if (entity is File) {
           // 读取文件内容
           final bytes = await entity.readAsBytes();
+          totalSize += bytes.length;
+          fileCount++;
 
           // 创建归档文件
           final archiveFile = ArchiveFile(
@@ -466,6 +653,16 @@ class BackupService {
 
           // 添加到归档
           archive.addFile(archiveFile);
+          
+          // 每处理10个文件记录一次进度
+          if (fileCount % 10 == 0) {
+            AppLogger.info('归档进度', tag: 'BackupService', data: {
+              'processedFiles': fileCount,
+              'totalFiles': entities.where((e) => e is File).length,
+              'currentDir': p.basename(dirPath),
+              'totalSizeMB': (totalSize / 1024 / 1024).toStringAsFixed(2),
+            });
+          }
         } else if (entity is Directory) {
           // 递归添加子目录
           await _addDirectoryToArchive(
@@ -475,6 +672,12 @@ class BackupService {
           );
         }
       }
+      
+      AppLogger.info('目录归档完成', tag: 'BackupService', data: {
+        'dirPath': dirPath,
+        'fileCount': fileCount,
+        'totalSizeMB': (totalSize / 1024 / 1024).toStringAsFixed(2),
+      });
     } catch (e, stack) {
       AppLogger.error('将目录添加到归档失败',
           error: e, stackTrace: stack, tag: 'BackupService');
@@ -487,12 +690,19 @@ class BackupService {
     try {
       final appDataPath = _storage.getAppDataPath();
 
-      // 需要备份的目录
+      // 需要备份的目录（排除临时文件和缓存）
       final dirsToBackup = [
-        'works',
-        'characters',
-        'practices',
-        'library', // 添加图库目录
+        'works',     // 作品数据
+        'characters', // 集字数据  
+        'practices',  // 字帖数据
+        'library',   // 图库数据
+        'database',  // 数据库文件（单独处理）
+      ];
+      
+      // 排除的目录（临时文件和缓存不需要备份）
+      final dirsToExclude = [
+        'temp',      // 临时文件目录
+        'cache',     // 缓存目录
       ];
 
       // 创建应用数据备份目录
@@ -501,6 +711,9 @@ class BackupService {
 
       // 备份每个目录
       for (final dir in dirsToBackup) {
+        // 跳过数据库目录，因为数据库有单独的备份逻辑
+        if (dir == 'database') continue;
+        
         final sourcePath = p.join(appDataPath, dir);
         final targetPath = p.join(dataBackupDir, dir);
 
@@ -509,14 +722,18 @@ class BackupService {
           // 创建目标目录
           await _storage.createDirectory(targetPath);
 
-          // 复制目录内容
-          await _copyDirectory(sourcePath, targetPath);
+          // 复制目录内容，排除不需要的子目录
+          await _copyDirectorySelective(sourcePath, targetPath, dirsToExclude);
 
-          // 记录特定目录的备份情况
-          if (dir == 'library') {
-            AppLogger.info('图库数据备份完成',
-                tag: 'BackupService', data: {'path': sourcePath});
-          }
+          AppLogger.info('数据目录备份完成', tag: 'BackupService', data: {
+            'directory': dir,
+            'sourcePath': sourcePath,
+          });
+        } else {
+          AppLogger.info('数据目录不存在，跳过备份', tag: 'BackupService', data: {
+            'directory': dir,
+            'sourcePath': sourcePath,
+          });
         }
       }
     } catch (e, stack) {
@@ -546,6 +763,55 @@ class BackupService {
     } catch (e, stack) {
       AppLogger.error('备份数据库失败',
           error: e, stackTrace: stack, tag: 'BackupService');
+      rethrow;
+    }
+  }
+
+  /// 选择性复制目录（排除指定的子目录）
+  Future<void> _copyDirectorySelective(String sourcePath, String targetPath, List<String> excludeDirs) async {
+    try {
+      // 确保目标目录存在
+      await _storage.ensureDirectoryExists(targetPath);
+
+      // 获取源目录中的所有文件和目录
+      final entities = await Directory(sourcePath).list().toList();
+
+      AppLogger.debug('选择性复制目录', tag: 'BackupService', data: {
+        'source': sourcePath,
+        'target': targetPath,
+        'itemCount': entities.length,
+        'excludeDirs': excludeDirs,
+      });
+
+      // 复制每个文件和目录
+      for (final entity in entities) {
+        final fileName = p.basename(entity.path);
+        final targetFilePath = p.join(targetPath, fileName);
+
+        // 如果是目录，检查是否需要排除
+        if (entity is Directory) {
+          if (excludeDirs.contains(fileName)) {
+            AppLogger.debug('跳过排除目录', tag: 'BackupService', data: {
+              'directory': fileName,
+              'path': entity.path,
+            });
+            continue;
+          }
+          
+          final targetSubDir = p.join(targetPath, fileName);
+          await _storage.ensureDirectoryExists(targetSubDir);
+          await _copyDirectorySelective(entity.path, targetSubDir, excludeDirs);
+        } else if (entity is File) {
+          // 复制文件，添加重试机制
+          await _copyFileWithRetry(entity.path, targetFilePath);
+        }
+      }
+    } catch (e, stack) {
+      AppLogger.error('选择性复制目录失败',
+          error: e,
+          stackTrace: stack,
+          tag: 'BackupService',
+          data: {'source': sourcePath, 'target': targetPath, 'excludeDirs': excludeDirs});
       rethrow;
     }
   }
@@ -632,10 +898,25 @@ class BackupService {
       final info = {
         'timestamp': DateTime.now().toIso8601String(),
         'description': description,
-        'version': '1.0',
+        'backupVersion': '1.1', // 备份格式版本
+        'appVersion': '1.0.0',  // 应用版本
+        'platform': Platform.operatingSystem,
+        'compatibility': {
+          'minAppVersion': '1.0.0',     // 最低支持的应用版本
+          'maxAppVersion': '2.0.0',     // 最高支持的应用版本
+          'dataFormat': 'v1',           // 数据格式版本
+        },
+        'excludedDirectories': ['temp', 'cache'], // 记录排除的目录
+        'includedDirectories': ['works', 'characters', 'practices', 'library', 'database'],
       };
 
       await _storage.writeFile(infoPath, utf8.encode(jsonEncode(info)));
+      
+      AppLogger.info('备份信息文件创建完成', tag: 'BackupService', data: {
+        'backupVersion': info['backupVersion'],
+        'appVersion': info['appVersion'],
+        'platform': info['platform'],
+      });
     } catch (e, stack) {
       AppLogger.error('创建备份信息文件失败',
           error: e, stackTrace: stack, tag: 'BackupService');
@@ -770,6 +1051,99 @@ class BackupService {
       AppLogger.error('验证备份文件失败', tag: 'BackupService', error: e);
       return false;
     }
+  }
+
+  /// 验证备份兼容性
+  Future<void> _validateBackupCompatibility(String tempPath) async {
+    try {
+      final infoPath = p.join(tempPath, 'backup_info.json');
+      
+      // 检查备份信息文件是否存在
+      if (!await _storage.fileExists(infoPath)) {
+        AppLogger.warning('备份信息文件不存在，跳过兼容性检查', tag: 'BackupService');
+        return;
+      }
+
+      // 读取备份信息
+      final infoBytes = await _storage.readFile(infoPath);
+      final infoJson = jsonDecode(utf8.decode(infoBytes)) as Map<String, dynamic>;
+      
+      final backupVersion = infoJson['backupVersion'] as String?;
+      final appVersion = infoJson['appVersion'] as String?;
+      final platform = infoJson['platform'] as String?;
+      final compatibility = infoJson['compatibility'] as Map<String, dynamic>?;
+      
+      AppLogger.info('检查备份兼容性', tag: 'BackupService', data: {
+        'backupVersion': backupVersion,
+        'backupAppVersion': appVersion,
+        'backupPlatform': platform,
+        'currentPlatform': Platform.operatingSystem,
+      });
+
+      // 检查平台兼容性（警告级别）
+      if (platform != null && platform != Platform.operatingSystem) {
+        AppLogger.warning('备份来自不同平台，可能存在兼容性问题', tag: 'BackupService', data: {
+          'backupPlatform': platform,
+          'currentPlatform': Platform.operatingSystem,
+        });
+      }
+
+      // 检查应用版本兼容性
+      if (compatibility != null) {
+        final minAppVersion = compatibility['minAppVersion'] as String?;
+        final maxAppVersion = compatibility['maxAppVersion'] as String?;
+        const currentAppVersion = '1.0.0'; // 当前应用版本
+        
+        if (minAppVersion != null && _compareVersions(currentAppVersion, minAppVersion) < 0) {
+          throw Exception('当前应用版本($currentAppVersion)低于备份要求的最低版本($minAppVersion)，无法恢复此备份');
+        }
+        
+        if (maxAppVersion != null && _compareVersions(currentAppVersion, maxAppVersion) > 0) {
+          AppLogger.warning('当前应用版本可能高于备份兼容的最高版本，恢复后可能需要数据迁移', tag: 'BackupService', data: {
+            'currentVersion': currentAppVersion,
+            'maxSupportedVersion': maxAppVersion,
+          });
+        }
+      }
+
+      // 检查备份格式版本
+      if (backupVersion != null) {
+        const supportedBackupVersions = ['1.0', '1.1'];
+        if (!supportedBackupVersions.contains(backupVersion)) {
+          throw Exception('不支持的备份格式版本: $backupVersion');
+        }
+      }
+
+      AppLogger.info('备份兼容性检查通过', tag: 'BackupService');
+    } catch (e, stack) {
+      if (e.toString().contains('不支持') || e.toString().contains('无法恢复')) {
+        AppLogger.error('备份兼容性检查失败', error: e, tag: 'BackupService');
+        rethrow;
+      } else {
+        AppLogger.warning('备份兼容性检查出现问题，但继续恢复', tag: 'BackupService', data: {
+          'error': e.toString(),
+        });
+      }
+    }
+  }
+
+  /// 比较版本号（简单实现）
+  /// 返回值：-1表示v1 < v2，0表示相等，1表示v1 > v2
+  int _compareVersions(String v1, String v2) {
+    final parts1 = v1.split('.').map(int.parse).toList();
+    final parts2 = v2.split('.').map(int.parse).toList();
+    
+    final maxLength = math.max(parts1.length, parts2.length);
+    
+    for (int i = 0; i < maxLength; i++) {
+      final part1 = i < parts1.length ? parts1[i] : 0;
+      final part2 = i < parts2.length ? parts2[i] : 0;
+      
+      if (part1 < part2) return -1;
+      if (part1 > part2) return 1;
+    }
+    
+    return 0;
   }
 
   /// 恢复应用数据

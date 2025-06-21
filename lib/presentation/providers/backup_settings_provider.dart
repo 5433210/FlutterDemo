@@ -38,12 +38,6 @@ final backupSettingsProvider =
 
 /// 备份设置状态
 class BackupSettings {
-  /// 是否启用自动备份
-  final bool autoBackupEnabled;
-
-  /// 自动备份间隔（天）
-  final int autoBackupIntervalDays;
-
   /// 保留的备份数量
   final int keepBackupCount;
 
@@ -51,23 +45,16 @@ class BackupSettings {
   final DateTime? lastBackupTime;
 
   const BackupSettings({
-    this.autoBackupEnabled = false,
-    this.autoBackupIntervalDays = 7,
     this.keepBackupCount = 5,
     this.lastBackupTime,
   });
 
   /// 创建新的备份设置实例
   BackupSettings copyWith({
-    bool? autoBackupEnabled,
-    int? autoBackupIntervalDays,
     int? keepBackupCount,
     DateTime? lastBackupTime,
   }) {
     return BackupSettings(
-      autoBackupEnabled: autoBackupEnabled ?? this.autoBackupEnabled,
-      autoBackupIntervalDays:
-          autoBackupIntervalDays ?? this.autoBackupIntervalDays,
       keepBackupCount: keepBackupCount ?? this.keepBackupCount,
       lastBackupTime: lastBackupTime ?? this.lastBackupTime,
     );
@@ -85,23 +72,67 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
   /// 创建备份
   Future<String?> createBackup({String? description}) async {
     try {
+      AppLogger.info('开始创建备份', tag: 'BackupSettingsNotifier', data: {
+        'description': description,
+        'keepBackupCount': state.keepBackupCount,
+      });
+
       final backupService = ref.read(backupServiceProvider);
       final backupPath =
           await backupService.createBackup(description: description);
 
-      // 更新上次备份时间
-      await updateLastBackupTime(DateTime.now());
+      AppLogger.info('备份文件创建完成', tag: 'BackupSettingsNotifier', data: {
+        'backupPath': backupPath,
+      });
 
-      // 清理旧备份
-      if (state.autoBackupEnabled) {
-        await backupService.cleanupOldBackups(state.keepBackupCount);
+      // 更新上次备份时间
+      try {
+        await updateLastBackupTime(DateTime.now());
+        AppLogger.info('上次备份时间更新完成', tag: 'BackupSettingsNotifier');
+      } catch (e) {
+        AppLogger.warning('更新备份时间失败', tag: 'BackupSettingsNotifier', data: {
+          'error': e.toString(),
+        });
+        // 继续执行，不影响备份结果
       }
 
+      // 清理旧备份
+      try {
+        AppLogger.info('开始清理旧备份', tag: 'BackupSettingsNotifier', data: {
+          'keepCount': state.keepBackupCount,
+        });
+        
+        final deletedCount = await backupService.cleanupOldBackups(state.keepBackupCount);
+        AppLogger.info('清理旧备份完成', tag: 'BackupSettingsNotifier', data: {
+          'deletedCount': deletedCount,
+        });
+      } catch (e) {
+        AppLogger.warning('清理旧备份失败，但不影响备份成功', tag: 'BackupSettingsNotifier', data: {
+          'error': e.toString(),
+        });
+        // 清理失败不影响备份成功
+      }
+      
       // 刷新备份列表
-      ref.invalidate(backupListProvider);
+      try {
+        ref.invalidate(backupListProvider);
+        AppLogger.info('备份列表已刷新', tag: 'BackupSettingsNotifier');
+      } catch (e) {
+        AppLogger.warning('刷新备份列表失败', tag: 'BackupSettingsNotifier', data: {
+          'error': e.toString(),
+        });
+      }
+
+      AppLogger.info('备份操作全部完成', tag: 'BackupSettingsNotifier', data: {
+        'backupPath': backupPath,
+      });
 
       return backupPath;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('创建备份失败', tag: 'BackupSettingsNotifier', 
+          error: e, stackTrace: stackTrace, data: {
+        'description': description,
+      });
       return null;
     }
   }
@@ -225,19 +256,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
     }
   }
 
-  /// 设置自动备份启用状态
-  Future<void> setAutoBackupEnabled(bool enabled) async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setBool('auto_backup_enabled', enabled);
-    state = state.copyWith(autoBackupEnabled: enabled);
-  }
 
-  /// 设置自动备份间隔天数
-  Future<void> setAutoBackupIntervalDays(int days) async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setInt('auto_backup_interval_days', days);
-    state = state.copyWith(autoBackupIntervalDays: days);
-  }
 
   /// 设置保留的备份数量
   Future<void> setKeepBackupCount(int count) async {
@@ -246,10 +265,8 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
     state = state.copyWith(keepBackupCount: count);
 
     // 如果减少了保留数量，清理多余的备份
-    if (state.autoBackupEnabled) {
-      final backupService = ref.read(backupServiceProvider);
-      await backupService.cleanupOldBackups(count);
-    }
+    final backupService = ref.read(backupServiceProvider);
+    await backupService.cleanupOldBackups(count);
   }
 
   /// 更新上次备份时间
@@ -263,9 +280,6 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
   Future<void> _loadSettings() async {
     final prefs = ref.read(sharedPreferencesProvider);
 
-    final autoBackupEnabled = prefs.getBool('auto_backup_enabled') ?? false;
-    final autoBackupIntervalDays =
-        prefs.getInt('auto_backup_interval_days') ?? 7;
     final keepBackupCount = prefs.getInt('keep_backup_count') ?? 5;
 
     DateTime? lastBackupTime;
@@ -279,8 +293,6 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
     }
 
     state = BackupSettings(
-      autoBackupEnabled: autoBackupEnabled,
-      autoBackupIntervalDays: autoBackupIntervalDays,
       keepBackupCount: keepBackupCount,
       lastBackupTime: lastBackupTime,
     );
