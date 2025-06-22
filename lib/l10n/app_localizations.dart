@@ -197,6 +197,12 @@ abstract class AppLocalizations {
   /// **'添加标签'**
   String get addTag;
 
+  /// No description provided for @addWork.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加作品'**
+  String get addWork;
+
   /// No description provided for @addedToCategory.
   ///
   /// In zh, this message translates to:
@@ -1682,7 +1688,7 @@ abstract class AppLocalizations {
   /// No description provided for @emptyStateNoPractices.
   ///
   /// In zh, this message translates to:
-  /// **'没有练习，点击添加按钮创建新练习'**
+  /// **'没有字帖，点击添加按钮创建新字帖'**
   String get emptyStateNoPractices;
 
   /// No description provided for @emptyStateNoResults.
@@ -2210,7 +2216,7 @@ abstract class AppLocalizations {
   /// No description provided for @fromGallery.
   ///
   /// In zh, this message translates to:
-  /// **'从图库'**
+  /// **'从图库选择'**
   String get fromGallery;
 
   /// No description provided for @fromLocal.

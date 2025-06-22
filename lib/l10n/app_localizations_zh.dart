@@ -66,6 +66,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addTag => '添加标签';
 
   @override
+  String get addWork => '添加作品';
+
+  @override
   String get addedToCategory => '已添加到分类';
 
   @override
@@ -837,7 +840,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get emptyStateNoCharacters => '没有字形,从作品中提取字形后可在此查看';
 
   @override
-  String get emptyStateNoPractices => '没有练习，点击添加按钮创建新练习';
+  String get emptyStateNoPractices => '没有字帖，点击添加按钮创建新字帖';
 
   @override
   String get emptyStateNoResults => '没有找到匹配的结果,尝试更改搜索条件';
@@ -1107,7 +1110,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formatType => '格式类型';
 
   @override
-  String get fromGallery => '从图库';
+  String get fromGallery => '从图库选择';
 
   @override
   String get fromLocal => '从本地选择';

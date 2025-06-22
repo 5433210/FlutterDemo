@@ -106,8 +106,8 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                                   onPressed: handleAdd,
                                   icon: const Icon(Icons.add_photo_alternate),
                                   label: isSmallWidth
-                                      ? Text(l10n.import)
-                                      : Text(l10n.addImage),
+                                      ? Text(l10n.fromLocal)
+                                      : Text(l10n.fromLocal),
                                 ),
                                 const SizedBox(width: 8),
                                 OutlinedButton.icon(
@@ -208,7 +208,7 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
               FilledButton.tonalIcon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_photo_alternate),
-                label: Text(l10n.addImage),
+                label: Text(l10n.fromLocal),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(

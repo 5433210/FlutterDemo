@@ -66,6 +66,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTag => 'Add Tag';
 
   @override
+  String get addWork => 'Add Work';
+
+  @override
   String get addedToCategory => 'Added to Category';
 
   @override

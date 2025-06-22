@@ -32,7 +32,7 @@ class M3WorkImportNavigationBar extends StatelessWidget
     final theme = Theme.of(context);
 
     return M3PageNavigationBar(
-      title: l10n.import,
+      title: l10n.addWork,
       titleActions: isProcessing
           ? [
               const SizedBox(width: AppSizes.m),
@@ -58,7 +58,7 @@ class M3WorkImportNavigationBar extends StatelessWidget
             else
               FilledButton(
                 onPressed: onStart,
-                child: Text(l10n.import),
+                child: Text(l10n.add),
               ),
             const SizedBox(width: AppSizes.m),
             IconButton(
