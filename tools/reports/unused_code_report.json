@@ -1,0 +1,1080 @@
+{
+  "summary": {
+    "total_dart_files": 637,
+    "used_files": 254,
+    "unused_files": 106,
+    "usage_rate": "39.9%"
+  },
+  "unused_files": [
+    {
+      "path": "lib/domain/enums/work_style.dart",
+      "size_kb": 1.0,
+      "lines": 36
+    },
+    {
+      "path": "lib/domain/enums/work_tool.dart",
+      "size_kb": 0.8,
+      "lines": 32
+    },
+    {
+      "path": "lib/domain/factories/element_factory.dart",
+      "size_kb": 2.8,
+      "lines": 108
+    },
+    {
+      "path": "lib/domain/models/character/character_usage.dart",
+      "size_kb": 0.6,
+      "lines": 32
+    },
+    {
+      "path": "lib/domain/services/import_transaction_manager.dart",
+      "size_kb": 18.2,
+      "lines": 674
+    },
+    {
+      "path": "lib/extensions/color_extensions.dart",
+      "size_kb": 0.4,
+      "lines": 14
+    },
+    {
+      "path": "lib/infrastructure/json/character_region_converter.dart",
+      "size_kb": 0.5,
+      "lines": 19
+    },
+    {
+      "path": "lib/infrastructure/json/offset_converter.dart",
+      "size_kb": 1.6,
+      "lines": 63
+    },
+    {
+      "path": "lib/infrastructure/logging/async_logger.dart",
+      "size_kb": 5.7,
+      "lines": 222
+    },
+    {
+      "path": "lib/infrastructure/logging/log_category.dart",
+      "size_kb": 0.3,
+      "lines": 9
+    },
+    {
+      "path": "lib/infrastructure/services/config_data_initializer.dart",
+      "size_kb": 5.1,
+      "lines": 167
+    },
+    {
+      "path": "lib/infrastructure/storage/library_file_storage.dart",
+      "size_kb": 1.9,
+      "lines": 61
+    },
+    {
+      "path": "lib/presentation/dialogs/practice_overwrite_confirm_dialog.dart",
+      "size_kb": 1.4,
+      "lines": 47
+    },
+    {
+      "path": "lib/presentation/pages/characters/components/character_card.dart",
+      "size_kb": 8.4,
+      "lines": 237
+    },
+    {
+      "path": "lib/presentation/pages/library/components/category_dialog_new.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/library/components/library_category_list_panel.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/clipboard_enhancements.dart",
+      "size_kb": 3.6,
+      "lines": 100
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/clipboard_operations_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/file_operations_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/format_brush_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_clipboard_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_state_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_ui_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/panel_management_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/preview_mode_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/mixins/ui_building_mixin.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/practices/widgets/canvas/mixins/canvas_state_mixin.dart",
+      "size_kb": 7.8,
+      "lines": 251
+    },
+    {
+      "path": "lib/presentation/pages/practices/widgets/content_tools_panel.dart",
+      "size_kb": 5.7,
+      "lines": 192
+    },
+    {
+      "path": "lib/presentation/pages/practices/widgets/layers/layer_implementations.dart",
+      "size_kb": 8.9,
+      "lines": 332
+    },
+    {
+      "path": "lib/presentation/pages/practices/widgets/m3_content_tools_panel.dart",
+      "size_kb": 8.3,
+      "lines": 266
+    },
+    {
+      "path": "lib/presentation/pages/practices/widgets/selection_box_painter.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/pages/works/components/filter/date_section.dart",
+      "size_kb": 1.6,
+      "lines": 51
+    },
+    {
+      "path": "lib/presentation/pages/works/components/filter/filter_chip_group.dart",
+      "size_kb": 1.0,
+      "lines": 38
+    },
+    {
+      "path": "lib/presentation/pages/works/components/m3_work_browse_toolbar.dart",
+      "size_kb": 5.4,
+      "lines": 172
+    },
+    {
+      "path": "lib/presentation/providers/library_provider.dart",
+      "size_kb": 7.6,
+      "lines": 289
+    },
+    {
+      "path": "lib/presentation/providers/navigation_history_provider.dart",
+      "size_kb": 2.0,
+      "lines": 80
+    },
+    {
+      "path": "lib/presentation/providers/optimized_refresh_provider.dart",
+      "size_kb": 0.0,
+      "lines": 1
+    },
+    {
+      "path": "lib/presentation/providers/window_title_updater.dart",
+      "size_kb": 1.1,
+      "lines": 36
+    },
+    {
+      "path": "lib/presentation/router/app_router.dart",
+      "size_kb": 0.0,
+      "lines": 1
+    },
+    {
+      "path": "lib/presentation/utils/keyboard_shortcuts.dart",
+      "size_kb": 2.2,
+      "lines": 67
+    },
+    {
+      "path": "lib/presentation/utils/navigation_utils.dart",
+      "size_kb": 1.5,
+      "lines": 45
+    },
+    {
+      "path": "lib/presentation/viewmodels/states/character_detail_state.dart",
+      "size_kb": 1.8,
+      "lines": 63
+    },
+    {
+      "path": "lib/presentation/viewmodels/states/edit_panel_state.dart",
+      "size_kb": 2.1,
+      "lines": 82
+    },
+    {
+      "path": "lib/presentation/viewmodels/states/library_management_state_persistence.dart",
+      "size_kb": 4.4,
+      "lines": 130
+    },
+    {
+      "path": "lib/presentation/widgets/batch_operations/batch_operations_example.dart",
+      "size_kb": 14.6,
+      "lines": 476
+    },
+    {
+      "path": "lib/presentation/widgets/batch_operations/import_result_dialog.dart",
+      "size_kb": 9.5,
+      "lines": 310
+    },
+    {
+      "path": "lib/presentation/widgets/character/character_detail_view.dart",
+      "size_kb": 3.6,
+      "lines": 114
+    },
+    {
+      "path": "lib/presentation/widgets/character_collection/batch_action_bar.dart",
+      "size_kb": 3.7,
+      "lines": 142
+    },
+    {
+      "path": "lib/presentation/widgets/common/base_card.dart",
+      "size_kb": 0.7,
+      "lines": 29
+    },
+    {
+      "path": "lib/presentation/widgets/common/base_image_preview.dart",
+      "size_kb": 6.6,
+      "lines": 210
+    },
+    {
+      "path": "lib/presentation/widgets/common/color_palette_widget.dart",
+      "size_kb": 8.3,
+      "lines": 284
+    },
+    {
+      "path": "lib/presentation/widgets/common/color_picker_dialog.dart",
+      "size_kb": 8.1,
+      "lines": 261
+    },
+    {
+      "path": "lib/presentation/widgets/common/confirm_dialog.dart",
+      "size_kb": 1.7,
+      "lines": 65
+    },
+    {
+      "path": "lib/presentation/widgets/common/data_list.dart",
+      "size_kb": 1.0,
+      "lines": 41
+    },
+    {
+      "path": "lib/presentation/widgets/common/detail_toolbar.dart",
+      "size_kb": 3.0,
+      "lines": 115
+    },
+    {
+      "path": "lib/presentation/widgets/common/error_view.dart",
+      "size_kb": 1.6,
+      "lines": 63
+    },
+    {
+      "path": "lib/presentation/widgets/common/grid_placeholder.dart",
+      "size_kb": 2.5,
+      "lines": 76
+    },
+    {
+      "path": "lib/presentation/widgets/common/loading_view.dart",
+      "size_kb": 1.2,
+      "lines": 53
+    },
+    {
+      "path": "lib/presentation/widgets/common/optimized_text_field.dart",
+      "size_kb": 3.5,
+      "lines": 128
+    },
+    {
+      "path": "lib/presentation/widgets/common/toolbar_action_button.dart",
+      "size_kb": 2.3,
+      "lines": 77
+    },
+    {
+      "path": "lib/presentation/widgets/date_range_picker.dart",
+      "size_kb": 8.1,
+      "lines": 292
+    },
+    {
+      "path": "lib/presentation/widgets/dialog_container.dart",
+      "size_kb": 1.7,
+      "lines": 66
+    },
+    {
+      "path": "lib/presentation/widgets/displays/error_text.dart",
+      "size_kb": 0.7,
+      "lines": 32
+    },
+    {
+      "path": "lib/presentation/widgets/filter/m3_filter_panel_base.dart",
+      "size_kb": 4.8,
+      "lines": 177
+    },
+    {
+      "path": "lib/presentation/widgets/filter/sections/m3_filter_tags_section.dart",
+      "size_kb": 3.9,
+      "lines": 146
+    },
+    {
+      "path": "lib/presentation/widgets/forms/date_picker_field.dart",
+      "size_kb": 1.4,
+      "lines": 54
+    },
+    {
+      "path": "lib/presentation/widgets/forms/form_field_wrapper.dart",
+      "size_kb": 1.4,
+      "lines": 58
+    },
+    {
+      "path": "lib/presentation/widgets/indicators/button_progress_indicator.dart",
+      "size_kb": 0.6,
+      "lines": 28
+    },
+    {
+      "path": "lib/presentation/widgets/info_card.dart",
+      "size_kb": 1.7,
+      "lines": 64
+    },
+    {
+      "path": "lib/presentation/widgets/inputs/date_input_field.dart",
+      "size_kb": 2.9,
+      "lines": 94
+    },
+    {
+      "path": "lib/presentation/widgets/layouts/sidebar_page.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/widgets/layouts/work_layout.dart",
+      "size_kb": 0.0,
+      "lines": 0
+    },
+    {
+      "path": "lib/presentation/widgets/list/grouped_list_view.dart",
+      "size_kb": 2.4,
+      "lines": 93
+    },
+    {
+      "path": "lib/presentation/widgets/list/selectable_list_item.dart",
+      "size_kb": 2.6,
+      "lines": 85
+    },
+    {
+      "path": "lib/presentation/widgets/loading/loading_overlay.dart",
+      "size_kb": 1.1,
+      "lines": 44
+    },
+    {
+      "path": "lib/presentation/widgets/loading_overlay.dart",
+      "size_kb": 0.3,
+      "lines": 15
+    },
+    {
+      "path": "lib/presentation/widgets/message_bar.dart",
+      "size_kb": 1.6,
+      "lines": 61
+    },
+    {
+      "path": "lib/presentation/widgets/navigation/m3_navigation_drawer.dart",
+      "size_kb": 1.2,
+      "lines": 42
+    },
+    {
+      "path": "lib/presentation/widgets/page_bar.dart",
+      "size_kb": 1.4,
+      "lines": 56
+    },
+    {
+      "path": "lib/presentation/widgets/page_toolbar.dart",
+      "size_kb": 1.0,
+      "lines": 43
+    },
+    {
+      "path": "lib/presentation/widgets/practice/adaptive_cache_manager.dart",
+      "size_kb": 18.0,
+      "lines": 554
+    },
+    {
+      "path": "lib/presentation/widgets/practice/blend_mode_helper.dart",
+      "size_kb": 0.8,
+      "lines": 21
+    },
+    {
+      "path": "lib/presentation/widgets/practice/canvas_rebuild_optimizer.dart",
+      "size_kb": 9.8,
+      "lines": 315
+    },
+    {
+      "path": "lib/presentation/widgets/practice/file_operations_mixin.dart",
+      "size_kb": 10.2,
+      "lines": 353
+    },
+    {
+      "path": "lib/presentation/widgets/practice/guideline_alignment/guideline_overlay.dart",
+      "size_kb": 6.7,
+      "lines": 266
+    },
+    {
+      "path": "lib/presentation/widgets/practice/guideline_alignment/guideline_simple_painter.dart",
+      "size_kb": 0.9,
+      "lines": 37
+    },
+    {
+      "path": "lib/presentation/widgets/practice/large_element_handler.dart",
+      "size_kb": 16.2,
+      "lines": 546
+    },
+    {
+      "path": "lib/presentation/widgets/practice/memory_efficient_element_representation.dart",
+      "size_kb": 24.0,
+      "lines": 748
+    },
+    {
+      "path": "lib/presentation/widgets/practice/optimization_metrics_collector.dart",
+      "size_kb": 14.2,
+      "lines": 444
+    },
+    {
+      "path": "lib/presentation/widgets/practice/property_panels/image/image_property_panel_export.dart",
+      "size_kb": 0.0,
+      "lines": 1
+    },
+    {
+      "path": "lib/presentation/widgets/practice/property_panels/vertically_justified_text.dart",
+      "size_kb": 5.7,
+      "lines": 182
+    },
+    {
+      "path": "lib/presentation/widgets/practice/texture_manager.dart",
+      "size_kb": 5.3,
+      "lines": 161
+    },
+    {
+      "path": "lib/presentation/widgets/responsive_builder.dart",
+      "size_kb": 0.9,
+      "lines": 31
+    },
+    {
+      "path": "lib/presentation/widgets/scroll/scrollable_container.dart",
+      "size_kb": 0.8,
+      "lines": 36
+    },
+    {
+      "path": "lib/presentation/widgets/search/search_box.dart",
+      "size_kb": 1.0,
+      "lines": 43
+    },
+    {
+      "path": "lib/presentation/widgets/section_header.dart",
+      "size_kb": 0.7,
+      "lines": 32
+    },
+    {
+      "path": "lib/presentation/widgets/skeleton_loader.dart",
+      "size_kb": 1.4,
+      "lines": 57
+    },
+    {
+      "path": "lib/presentation/widgets/tag_list.dart",
+      "size_kb": 1.6,
+      "lines": 67
+    },
+    {
+      "path": "lib/presentation/widgets/workbench/workbench_container.dart",
+      "size_kb": 1.5,
+      "lines": 62
+    },
+    {
+      "path": "lib/presentation/widgets/workbench/workbench_toolbar.dart",
+      "size_kb": 1.0,
+      "lines": 41
+    },
+    {
+      "path": "lib/presentation/widgets/works/preview_mode_config.dart",
+      "size_kb": 4.5,
+      "lines": 149
+    },
+    {
+      "path": "lib/providers/character/contour_state_provider.dart",
+      "size_kb": 0.4,
+      "lines": 19
+    },
+    {
+      "path": "lib/scripts/fix_config_data.dart",
+      "size_kb": 4.6,
+      "lines": 169
+    },
+    {
+      "path": "lib/scripts/migrate_paths_to_relative.dart",
+      "size_kb": 11.1,
+      "lines": 370
+    },
+    {
+      "path": "lib/utils/layout_utils.dart",
+      "size_kb": 4.5,
+      "lines": 150
+    },
+    {
+      "path": "lib/widgets/character_edit/layers/events/layer_event.dart",
+      "size_kb": 0.9,
+      "lines": 45
+    }
+  ],
+  "categories": {
+    "presentation": [],
+    "domain": [],
+    "infrastructure": [],
+    "application": [],
+    "utils": [],
+    "widgets": [],
+    "other": [
+      {
+        "path": "lib/domain/enums/work_style.dart",
+        "size_kb": 1.0,
+        "lines": 36
+      },
+      {
+        "path": "lib/domain/enums/work_tool.dart",
+        "size_kb": 0.8,
+        "lines": 32
+      },
+      {
+        "path": "lib/domain/factories/element_factory.dart",
+        "size_kb": 2.8,
+        "lines": 108
+      },
+      {
+        "path": "lib/domain/models/character/character_usage.dart",
+        "size_kb": 0.6,
+        "lines": 32
+      },
+      {
+        "path": "lib/domain/services/import_transaction_manager.dart",
+        "size_kb": 18.2,
+        "lines": 674
+      },
+      {
+        "path": "lib/extensions/color_extensions.dart",
+        "size_kb": 0.4,
+        "lines": 14
+      },
+      {
+        "path": "lib/infrastructure/json/character_region_converter.dart",
+        "size_kb": 0.5,
+        "lines": 19
+      },
+      {
+        "path": "lib/infrastructure/json/offset_converter.dart",
+        "size_kb": 1.6,
+        "lines": 63
+      },
+      {
+        "path": "lib/infrastructure/logging/async_logger.dart",
+        "size_kb": 5.7,
+        "lines": 222
+      },
+      {
+        "path": "lib/infrastructure/logging/log_category.dart",
+        "size_kb": 0.3,
+        "lines": 9
+      },
+      {
+        "path": "lib/infrastructure/services/config_data_initializer.dart",
+        "size_kb": 5.1,
+        "lines": 167
+      },
+      {
+        "path": "lib/infrastructure/storage/library_file_storage.dart",
+        "size_kb": 1.9,
+        "lines": 61
+      },
+      {
+        "path": "lib/presentation/dialogs/practice_overwrite_confirm_dialog.dart",
+        "size_kb": 1.4,
+        "lines": 47
+      },
+      {
+        "path": "lib/presentation/pages/characters/components/character_card.dart",
+        "size_kb": 8.4,
+        "lines": 237
+      },
+      {
+        "path": "lib/presentation/pages/library/components/category_dialog_new.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/library/components/library_category_list_panel.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/clipboard_enhancements.dart",
+        "size_kb": 3.6,
+        "lines": 100
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/clipboard_operations_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/file_operations_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/format_brush_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_clipboard_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_state_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/m3_practice_edit_ui_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/panel_management_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/preview_mode_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/mixins/ui_building_mixin.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/practices/widgets/canvas/mixins/canvas_state_mixin.dart",
+        "size_kb": 7.8,
+        "lines": 251
+      },
+      {
+        "path": "lib/presentation/pages/practices/widgets/content_tools_panel.dart",
+        "size_kb": 5.7,
+        "lines": 192
+      },
+      {
+        "path": "lib/presentation/pages/practices/widgets/layers/layer_implementations.dart",
+        "size_kb": 8.9,
+        "lines": 332
+      },
+      {
+        "path": "lib/presentation/pages/practices/widgets/m3_content_tools_panel.dart",
+        "size_kb": 8.3,
+        "lines": 266
+      },
+      {
+        "path": "lib/presentation/pages/practices/widgets/selection_box_painter.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/pages/works/components/filter/date_section.dart",
+        "size_kb": 1.6,
+        "lines": 51
+      },
+      {
+        "path": "lib/presentation/pages/works/components/filter/filter_chip_group.dart",
+        "size_kb": 1.0,
+        "lines": 38
+      },
+      {
+        "path": "lib/presentation/pages/works/components/m3_work_browse_toolbar.dart",
+        "size_kb": 5.4,
+        "lines": 172
+      },
+      {
+        "path": "lib/presentation/providers/library_provider.dart",
+        "size_kb": 7.6,
+        "lines": 289
+      },
+      {
+        "path": "lib/presentation/providers/navigation_history_provider.dart",
+        "size_kb": 2.0,
+        "lines": 80
+      },
+      {
+        "path": "lib/presentation/providers/optimized_refresh_provider.dart",
+        "size_kb": 0.0,
+        "lines": 1
+      },
+      {
+        "path": "lib/presentation/providers/window_title_updater.dart",
+        "size_kb": 1.1,
+        "lines": 36
+      },
+      {
+        "path": "lib/presentation/router/app_router.dart",
+        "size_kb": 0.0,
+        "lines": 1
+      },
+      {
+        "path": "lib/presentation/utils/keyboard_shortcuts.dart",
+        "size_kb": 2.2,
+        "lines": 67
+      },
+      {
+        "path": "lib/presentation/utils/navigation_utils.dart",
+        "size_kb": 1.5,
+        "lines": 45
+      },
+      {
+        "path": "lib/presentation/viewmodels/states/character_detail_state.dart",
+        "size_kb": 1.8,
+        "lines": 63
+      },
+      {
+        "path": "lib/presentation/viewmodels/states/edit_panel_state.dart",
+        "size_kb": 2.1,
+        "lines": 82
+      },
+      {
+        "path": "lib/presentation/viewmodels/states/library_management_state_persistence.dart",
+        "size_kb": 4.4,
+        "lines": 130
+      },
+      {
+        "path": "lib/presentation/widgets/batch_operations/batch_operations_example.dart",
+        "size_kb": 14.6,
+        "lines": 476
+      },
+      {
+        "path": "lib/presentation/widgets/batch_operations/import_result_dialog.dart",
+        "size_kb": 9.5,
+        "lines": 310
+      },
+      {
+        "path": "lib/presentation/widgets/character/character_detail_view.dart",
+        "size_kb": 3.6,
+        "lines": 114
+      },
+      {
+        "path": "lib/presentation/widgets/character_collection/batch_action_bar.dart",
+        "size_kb": 3.7,
+        "lines": 142
+      },
+      {
+        "path": "lib/presentation/widgets/common/base_card.dart",
+        "size_kb": 0.7,
+        "lines": 29
+      },
+      {
+        "path": "lib/presentation/widgets/common/base_image_preview.dart",
+        "size_kb": 6.6,
+        "lines": 210
+      },
+      {
+        "path": "lib/presentation/widgets/common/color_palette_widget.dart",
+        "size_kb": 8.3,
+        "lines": 284
+      },
+      {
+        "path": "lib/presentation/widgets/common/color_picker_dialog.dart",
+        "size_kb": 8.1,
+        "lines": 261
+      },
+      {
+        "path": "lib/presentation/widgets/common/confirm_dialog.dart",
+        "size_kb": 1.7,
+        "lines": 65
+      },
+      {
+        "path": "lib/presentation/widgets/common/data_list.dart",
+        "size_kb": 1.0,
+        "lines": 41
+      },
+      {
+        "path": "lib/presentation/widgets/common/detail_toolbar.dart",
+        "size_kb": 3.0,
+        "lines": 115
+      },
+      {
+        "path": "lib/presentation/widgets/common/error_view.dart",
+        "size_kb": 1.6,
+        "lines": 63
+      },
+      {
+        "path": "lib/presentation/widgets/common/grid_placeholder.dart",
+        "size_kb": 2.5,
+        "lines": 76
+      },
+      {
+        "path": "lib/presentation/widgets/common/loading_view.dart",
+        "size_kb": 1.2,
+        "lines": 53
+      },
+      {
+        "path": "lib/presentation/widgets/common/optimized_text_field.dart",
+        "size_kb": 3.5,
+        "lines": 128
+      },
+      {
+        "path": "lib/presentation/widgets/common/toolbar_action_button.dart",
+        "size_kb": 2.3,
+        "lines": 77
+      },
+      {
+        "path": "lib/presentation/widgets/date_range_picker.dart",
+        "size_kb": 8.1,
+        "lines": 292
+      },
+      {
+        "path": "lib/presentation/widgets/dialog_container.dart",
+        "size_kb": 1.7,
+        "lines": 66
+      },
+      {
+        "path": "lib/presentation/widgets/displays/error_text.dart",
+        "size_kb": 0.7,
+        "lines": 32
+      },
+      {
+        "path": "lib/presentation/widgets/filter/m3_filter_panel_base.dart",
+        "size_kb": 4.8,
+        "lines": 177
+      },
+      {
+        "path": "lib/presentation/widgets/filter/sections/m3_filter_tags_section.dart",
+        "size_kb": 3.9,
+        "lines": 146
+      },
+      {
+        "path": "lib/presentation/widgets/forms/date_picker_field.dart",
+        "size_kb": 1.4,
+        "lines": 54
+      },
+      {
+        "path": "lib/presentation/widgets/forms/form_field_wrapper.dart",
+        "size_kb": 1.4,
+        "lines": 58
+      },
+      {
+        "path": "lib/presentation/widgets/indicators/button_progress_indicator.dart",
+        "size_kb": 0.6,
+        "lines": 28
+      },
+      {
+        "path": "lib/presentation/widgets/info_card.dart",
+        "size_kb": 1.7,
+        "lines": 64
+      },
+      {
+        "path": "lib/presentation/widgets/inputs/date_input_field.dart",
+        "size_kb": 2.9,
+        "lines": 94
+      },
+      {
+        "path": "lib/presentation/widgets/layouts/sidebar_page.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/widgets/layouts/work_layout.dart",
+        "size_kb": 0.0,
+        "lines": 0
+      },
+      {
+        "path": "lib/presentation/widgets/list/grouped_list_view.dart",
+        "size_kb": 2.4,
+        "lines": 93
+      },
+      {
+        "path": "lib/presentation/widgets/list/selectable_list_item.dart",
+        "size_kb": 2.6,
+        "lines": 85
+      },
+      {
+        "path": "lib/presentation/widgets/loading/loading_overlay.dart",
+        "size_kb": 1.1,
+        "lines": 44
+      },
+      {
+        "path": "lib/presentation/widgets/loading_overlay.dart",
+        "size_kb": 0.3,
+        "lines": 15
+      },
+      {
+        "path": "lib/presentation/widgets/message_bar.dart",
+        "size_kb": 1.6,
+        "lines": 61
+      },
+      {
+        "path": "lib/presentation/widgets/navigation/m3_navigation_drawer.dart",
+        "size_kb": 1.2,
+        "lines": 42
+      },
+      {
+        "path": "lib/presentation/widgets/page_bar.dart",
+        "size_kb": 1.4,
+        "lines": 56
+      },
+      {
+        "path": "lib/presentation/widgets/page_toolbar.dart",
+        "size_kb": 1.0,
+        "lines": 43
+      },
+      {
+        "path": "lib/presentation/widgets/practice/adaptive_cache_manager.dart",
+        "size_kb": 18.0,
+        "lines": 554
+      },
+      {
+        "path": "lib/presentation/widgets/practice/blend_mode_helper.dart",
+        "size_kb": 0.8,
+        "lines": 21
+      },
+      {
+        "path": "lib/presentation/widgets/practice/canvas_rebuild_optimizer.dart",
+        "size_kb": 9.8,
+        "lines": 315
+      },
+      {
+        "path": "lib/presentation/widgets/practice/file_operations_mixin.dart",
+        "size_kb": 10.2,
+        "lines": 353
+      },
+      {
+        "path": "lib/presentation/widgets/practice/guideline_alignment/guideline_overlay.dart",
+        "size_kb": 6.7,
+        "lines": 266
+      },
+      {
+        "path": "lib/presentation/widgets/practice/guideline_alignment/guideline_simple_painter.dart",
+        "size_kb": 0.9,
+        "lines": 37
+      },
+      {
+        "path": "lib/presentation/widgets/practice/large_element_handler.dart",
+        "size_kb": 16.2,
+        "lines": 546
+      },
+      {
+        "path": "lib/presentation/widgets/practice/memory_efficient_element_representation.dart",
+        "size_kb": 24.0,
+        "lines": 748
+      },
+      {
+        "path": "lib/presentation/widgets/practice/optimization_metrics_collector.dart",
+        "size_kb": 14.2,
+        "lines": 444
+      },
+      {
+        "path": "lib/presentation/widgets/practice/property_panels/image/image_property_panel_export.dart",
+        "size_kb": 0.0,
+        "lines": 1
+      },
+      {
+        "path": "lib/presentation/widgets/practice/property_panels/vertically_justified_text.dart",
+        "size_kb": 5.7,
+        "lines": 182
+      },
+      {
+        "path": "lib/presentation/widgets/practice/texture_manager.dart",
+        "size_kb": 5.3,
+        "lines": 161
+      },
+      {
+        "path": "lib/presentation/widgets/responsive_builder.dart",
+        "size_kb": 0.9,
+        "lines": 31
+      },
+      {
+        "path": "lib/presentation/widgets/scroll/scrollable_container.dart",
+        "size_kb": 0.8,
+        "lines": 36
+      },
+      {
+        "path": "lib/presentation/widgets/search/search_box.dart",
+        "size_kb": 1.0,
+        "lines": 43
+      },
+      {
+        "path": "lib/presentation/widgets/section_header.dart",
+        "size_kb": 0.7,
+        "lines": 32
+      },
+      {
+        "path": "lib/presentation/widgets/skeleton_loader.dart",
+        "size_kb": 1.4,
+        "lines": 57
+      },
+      {
+        "path": "lib/presentation/widgets/tag_list.dart",
+        "size_kb": 1.6,
+        "lines": 67
+      },
+      {
+        "path": "lib/presentation/widgets/workbench/workbench_container.dart",
+        "size_kb": 1.5,
+        "lines": 62
+      },
+      {
+        "path": "lib/presentation/widgets/workbench/workbench_toolbar.dart",
+        "size_kb": 1.0,
+        "lines": 41
+      },
+      {
+        "path": "lib/presentation/widgets/works/preview_mode_config.dart",
+        "size_kb": 4.5,
+        "lines": 149
+      },
+      {
+        "path": "lib/providers/character/contour_state_provider.dart",
+        "size_kb": 0.4,
+        "lines": 19
+      },
+      {
+        "path": "lib/scripts/fix_config_data.dart",
+        "size_kb": 4.6,
+        "lines": 169
+      },
+      {
+        "path": "lib/scripts/migrate_paths_to_relative.dart",
+        "size_kb": 11.1,
+        "lines": 370
+      },
+      {
+        "path": "lib/utils/layout_utils.dart",
+        "size_kb": 4.5,
+        "lines": 150
+      },
+      {
+        "path": "lib/widgets/character_edit/layers/events/layer_event.dart",
+        "size_kb": 0.9,
+        "lines": 45
+      }
+    ]
+  }
+}

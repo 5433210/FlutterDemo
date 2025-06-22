@@ -1,0 +1,34 @@
+======================================================================
+📊 最终精确分析报告
+======================================================================
+
+📈 统计结果:
+   lib文件总数: 602
+   已使用文件: 311 (51.7%)
+   报告未使用: 291
+   可能误报: 206
+   实际未使用: 85 (14.1%)
+
+🔬 验证结果:
+   确认未使用: 85
+   可能使用: 206
+   准确率: 29.2%
+
+📂 分类结果:
+   空文件: 6个
+   安全删除: 16个
+   需要审查: 63个
+   可能误报: 206个
+
+🎯 操作建议:
+   ✅ 立即删除空文件: 6个
+   ⚠️  谨慎删除小文件: 16个
+   🔍 人工审查: 63个
+
+🗑️  空文件列表:
+   - lib/presentation/pages/practices/widgets/selection_box_painter.dart
+   - lib/presentation/pages/library/components/category_dialog_new.dart
+   - lib/presentation/pages/library/components/library_category_list_panel.dart
+   - lib/presentation/widgets/layouts/sidebar_page.dart
+   - lib/presentation/widgets/practice/property_panels/image/image_property_panel_export.dart
+   - lib/presentation/widgets/layouts/work_layout.dart

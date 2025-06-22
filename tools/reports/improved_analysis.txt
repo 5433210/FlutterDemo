@@ -1,0 +1,48 @@
+======================================================================
+📊 改进版未使用文件分析报告
+======================================================================
+
+📈 总体统计:
+   lib文件总数: 602
+   已使用文件: 303 (50.3%)
+   未使用文件: 299 (49.7%)
+
+🔬 交叉验证结果:
+   验证样本: 25个
+   确认未使用: 16个
+   误报: 9个
+   准确率估计: 64.0%
+
+📂 文件分类:
+   空文件: 6个 (0.0KB)
+   安全删除: 28个 (17.9KB)
+   需要审查: 265个 (2923.1KB)
+
+🎯 建议操作:
+   ✅ 立即删除空文件: 6个
+   ⚠️  谨慎删除小文件: 28个
+   🔍 人工审查大文件: 265个
+
+📋 空文件 (前5个):
+   - lib/presentation/pages/practices/widgets/selection_box_painter.dart (0.0KB)
+   - lib/presentation/widgets/layouts/sidebar_page.dart (0.0KB)
+   - lib/presentation/pages/library/components/library_category_list_panel.dart (0.0KB)
+   - lib/presentation/pages/library/components/category_dialog_new.dart (0.0KB)
+   - lib/presentation/widgets/layouts/work_layout.dart (0.0KB)
+   ... 还有1个
+
+📋 安全删除 (前5个):
+   - lib/widgets/character_edit/layers/base_layer.dart (0.8KB)
+   - lib/presentation/pages/works/components/filter/filter_chip_group.dart (1.0KB)
+   - lib/presentation/pages/library/components/library_drag_data.dart (0.3KB)
+   - lib/presentation/widgets/scroll/scrollable_container.dart (0.8KB)
+   - lib/presentation/widgets/responsive_builder.dart (0.9KB)
+   ... 还有23个
+
+📋 需要审查 (前5个):
+   - lib/utils/coordinate_transformer.dart (14.6KB)
+   - lib/presentation/pages/works/components/filter/date_section.dart (1.6KB)
+   - lib/presentation/dialogs/work_import/components/preview/preview_toolbar.dart (3.8KB)
+   - lib/presentation/widgets/practice/performance_dashboard.dart (30.0KB)
+   - lib/presentation/pages/library/components/grid_size_selector.dart (1.5KB)
+   ... 还有260个
