@@ -14,8 +14,6 @@ import '../presentation/pages/main/m3_main_window.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
 import '../presentation/pages/works/m3_work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
-import '../presentation/widgets/font_tester.dart';
-import '../presentation/widgets/font_weight_tester.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/characters/m3_character_management_page.dart';
@@ -202,16 +200,6 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.settings:
         return MaterialPageRoute(
           builder: (context) => const M3SettingsPage(),
-        );
-
-      case AppRoutes.fontTester:
-        return MaterialPageRoute(
-          builder: (context) => const FontTester(),
-        );
-
-      case AppRoutes.fontWeightTester:
-        return MaterialPageRoute(
-          builder: (context) => const FontWeightTester(),
         );
     }
 
