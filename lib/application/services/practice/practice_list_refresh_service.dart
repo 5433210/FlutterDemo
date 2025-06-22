@@ -1,19 +1,21 @@
 import 'dart:async';
 
-import '../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// 字帖列表刷新服务
 /// 提供全局的字帖列表刷新通知机制
 class PracticeListRefreshService {
-  static final PracticeListRefreshService _instance = PracticeListRefreshService._internal();
+  static final PracticeListRefreshService _instance =
+      PracticeListRefreshService._internal();
   factory PracticeListRefreshService() => _instance;
   PracticeListRefreshService._internal();
 
-  final StreamController<PracticeListRefreshEvent> _refreshController = 
+  final StreamController<PracticeListRefreshEvent> _refreshController =
       StreamController<PracticeListRefreshEvent>.broadcast();
 
   /// 刷新事件流
-  Stream<PracticeListRefreshEvent> get refreshStream => _refreshController.stream;
+  Stream<PracticeListRefreshEvent> get refreshStream =>
+      _refreshController.stream;
 
   /// 通知字帖列表刷新
   void notifyPracticeListRefresh({
@@ -41,7 +43,7 @@ class PracticeListRefreshService {
 
     try {
       _refreshController.add(event);
-      
+
       EditPageLogger.performanceInfo(
         '字帖列表刷新事件发送成功',
         data: {
@@ -86,7 +88,8 @@ class PracticeListRefreshService {
   }
 
   /// 通知字帖更新
-  void notifyPracticeUpdated(String practiceId, {Map<String, dynamic>? changes}) {
+  void notifyPracticeUpdated(String practiceId,
+      {Map<String, dynamic>? changes}) {
     notifyPracticeListRefresh(
       practiceId: practiceId,
       reason: PracticeRefreshReason.updated,
@@ -127,10 +130,13 @@ class PracticeListRefreshEvent {
 enum PracticeRefreshReason {
   /// 字帖已保存
   saved,
+
   /// 字帖已删除
   deleted,
+
   /// 字帖已更新
   updated,
+
   /// 批量操作
   batchOperation,
-} 
+}

@@ -8,11 +8,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
+import '../../../application/services/character_image_service.dart';
 import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/providers/cache_providers.dart'
     as cache_providers;
 import '../../../infrastructure/providers/storage_providers.dart';
-import '../../../infrastructure/services/character_image_service.dart';
 import 'character_position.dart';
 import 'texture_config.dart';
 

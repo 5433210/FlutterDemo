@@ -7,9 +7,9 @@ import 'package:archive/archive.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
-import '../logging/logger.dart';
-import '../persistence/database_interface.dart';
-import '../storage/storage_interface.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../infrastructure/persistence/database_interface.dart';
+import '../../infrastructure/storage/storage_interface.dart';
 
 /// 备份信息
 class BackupInfo {
@@ -38,12 +38,12 @@ class BackupInfo {
   /// 从文件创建备份信息
   static Future<BackupInfo> fromFile(File file, {IStorage? storage}) async {
     final filePath = file.path;
-    
+
     // 首先检查文件是否存在
     if (!await file.exists()) {
       throw Exception('备份文件不存在: $filePath');
     }
-    
+
     String? description;
 
     // 尝试从备份文件中提取描述信息
@@ -114,13 +114,13 @@ class BackupService {
         _performCleanup(keepCount),
         Future.delayed(const Duration(seconds: 30), () => -1), // 超时返回-1
       ]);
-      
+
       if (cleanupResult == -1) {
         AppLogger.warning('清理旧备份超时，但这不影响备份创建成功',
             tag: 'BackupService', data: {'keepCount': keepCount});
         return 0; // 超时时返回0，表示没有清理但不是错误
       }
-      
+
       AppLogger.info('清理旧备份完成',
           tag: 'BackupService', data: {'deletedCount': cleanupResult});
       return cleanupResult;
@@ -130,7 +130,7 @@ class BackupService {
       return 0; // 清理失败不应该影响备份创建的成功
     }
   }
-  
+
   /// 执行实际的清理操作
   Future<int> _performCleanup(int keepCount) async {
     // 获取所有备份
@@ -138,8 +138,7 @@ class BackupService {
 
     // 如果备份数量小于等于保留数量，不需要清理
     if (backups.length <= keepCount) {
-      AppLogger.info('备份数量未超过保留数量，无需清理',
-          tag: 'BackupService', data: {
+      AppLogger.info('备份数量未超过保留数量，无需清理', tag: 'BackupService', data: {
         'currentCount': backups.length,
         'keepCount': keepCount,
       });
@@ -148,8 +147,7 @@ class BackupService {
 
     // 获取需要删除的备份
     final backupsToDelete = backups.sublist(keepCount);
-    AppLogger.info('准备删除旧备份',
-        tag: 'BackupService', data: {
+    AppLogger.info('准备删除旧备份', tag: 'BackupService', data: {
       'totalBackups': backups.length,
       'toDeleteCount': backupsToDelete.length,
     });
@@ -163,7 +161,7 @@ class BackupService {
           deleteBackup(backup.path),
           Future.delayed(const Duration(seconds: 10), () => false),
         ]);
-        
+
         if (deleteResult) {
           deletedCount++;
           AppLogger.debug('成功删除备份文件',
@@ -173,8 +171,7 @@ class BackupService {
               tag: 'BackupService', data: {'path': backup.path});
         }
       } catch (e) {
-        AppLogger.warning('删除单个备份文件时出错',
-            tag: 'BackupService', data: {
+        AppLogger.warning('删除单个备份文件时出错', tag: 'BackupService', data: {
           'path': backup.path,
           'error': e.toString(),
         });
@@ -207,7 +204,7 @@ class BackupService {
       rethrow;
     }
   }
-  
+
   /// 执行实际的备份操作
   Future<String> _performBackup(String backupPath, String? description) async {
     String? tempPath;
@@ -360,7 +357,7 @@ class BackupService {
       for (final file in zipFiles) {
         try {
           final backupFile = File(file);
-          
+
           // 首先检查文件是否真的存在
           if (!await backupFile.exists()) {
             AppLogger.warning('备份文件已不存在，跳过', tag: 'BackupService', data: {
@@ -369,7 +366,7 @@ class BackupService {
             });
             continue;
           }
-          
+
           // 为每个文件的信息获取添加超时
           BackupInfo? backupInfo;
           try {
@@ -398,7 +395,7 @@ class BackupService {
             });
             backupInfo = null;
           }
-          
+
           // 只有当backupInfo不为null时才添加到列表
           if (backupInfo != null) {
             backups.add(backupInfo);
@@ -408,12 +405,11 @@ class BackupService {
             });
           }
         } catch (e) {
-          AppLogger.warning('无法读取备份文件信息，跳过',
-              tag: 'BackupService', data: {
-            'file': file, 
+          AppLogger.warning('无法读取备份文件信息，跳过', tag: 'BackupService', data: {
+            'file': file,
             'error': e.toString(),
           });
-          
+
           // 即使读取失败，也尝试创建基本的备份信息
           try {
             final backupFile = File(file);
@@ -434,10 +430,12 @@ class BackupService {
               });
             }
           } catch (basicError) {
-            AppLogger.warning('创建基本备份信息也失败，可能文件已被删除', tag: 'BackupService', data: {
-              'file': file,
-              'error': basicError.toString(),
-            });
+            AppLogger.warning('创建基本备份信息也失败，可能文件已被删除',
+                tag: 'BackupService',
+                data: {
+                  'file': file,
+                  'error': basicError.toString(),
+                });
             // 文件可能在处理过程中被删除，这是正常情况，不需要特殊处理
           }
         }
@@ -633,7 +631,7 @@ class BackupService {
       // 添加每个文件到归档
       int fileCount = 0;
       int totalSize = 0;
-      
+
       for (final entity in entities) {
         final relativePath = p.relative(entity.path, from: dirPath);
         final archiveFilePath = p.join(archivePath, relativePath);
@@ -653,12 +651,12 @@ class BackupService {
 
           // 添加到归档
           archive.addFile(archiveFile);
-          
+
           // 每处理10个文件记录一次进度
           if (fileCount % 10 == 0) {
             AppLogger.info('归档进度', tag: 'BackupService', data: {
               'processedFiles': fileCount,
-              'totalFiles': entities.where((e) => e is File).length,
+              'totalFiles': entities.whereType<File>().length,
               'currentDir': p.basename(dirPath),
               'totalSizeMB': (totalSize / 1024 / 1024).toStringAsFixed(2),
             });
@@ -672,7 +670,7 @@ class BackupService {
           );
         }
       }
-      
+
       AppLogger.info('目录归档完成', tag: 'BackupService', data: {
         'dirPath': dirPath,
         'fileCount': fileCount,
@@ -692,17 +690,17 @@ class BackupService {
 
       // 需要备份的目录（排除临时文件和缓存）
       final dirsToBackup = [
-        'works',     // 作品数据
-        'characters', // 集字数据  
-        'practices',  // 字帖数据
-        'library',   // 图库数据
-        'database',  // 数据库文件（单独处理）
+        'works', // 作品数据
+        'characters', // 集字数据
+        'practices', // 字帖数据
+        'library', // 图库数据
+        'database', // 数据库文件（单独处理）
       ];
-      
+
       // 排除的目录（临时文件和缓存不需要备份）
       final dirsToExclude = [
-        'temp',      // 临时文件目录
-        'cache',     // 缓存目录
+        'temp', // 临时文件目录
+        'cache', // 缓存目录
       ];
 
       // 创建应用数据备份目录
@@ -713,7 +711,7 @@ class BackupService {
       for (final dir in dirsToBackup) {
         // 跳过数据库目录，因为数据库有单独的备份逻辑
         if (dir == 'database') continue;
-        
+
         final sourcePath = p.join(appDataPath, dir);
         final targetPath = p.join(dataBackupDir, dir);
 
@@ -768,7 +766,8 @@ class BackupService {
   }
 
   /// 选择性复制目录（排除指定的子目录）
-  Future<void> _copyDirectorySelective(String sourcePath, String targetPath, List<String> excludeDirs) async {
+  Future<void> _copyDirectorySelective(
+      String sourcePath, String targetPath, List<String> excludeDirs) async {
     try {
       // 确保目标目录存在
       await _storage.ensureDirectoryExists(targetPath);
@@ -797,7 +796,7 @@ class BackupService {
             });
             continue;
           }
-          
+
           final targetSubDir = p.join(targetPath, fileName);
           await _storage.ensureDirectoryExists(targetSubDir);
           await _copyDirectorySelective(entity.path, targetSubDir, excludeDirs);
@@ -811,7 +810,11 @@ class BackupService {
           error: e,
           stackTrace: stack,
           tag: 'BackupService',
-          data: {'source': sourcePath, 'target': targetPath, 'excludeDirs': excludeDirs});
+          data: {
+            'source': sourcePath,
+            'target': targetPath,
+            'excludeDirs': excludeDirs
+          });
       rethrow;
     }
   }
@@ -899,19 +902,25 @@ class BackupService {
         'timestamp': DateTime.now().toIso8601String(),
         'description': description,
         'backupVersion': '1.1', // 备份格式版本
-        'appVersion': '1.0.0',  // 应用版本
+        'appVersion': '1.0.0', // 应用版本
         'platform': Platform.operatingSystem,
         'compatibility': {
-          'minAppVersion': '1.0.0',     // 最低支持的应用版本
-          'maxAppVersion': '2.0.0',     // 最高支持的应用版本
-          'dataFormat': 'v1',           // 数据格式版本
+          'minAppVersion': '1.0.0', // 最低支持的应用版本
+          'maxAppVersion': '2.0.0', // 最高支持的应用版本
+          'dataFormat': 'v1', // 数据格式版本
         },
         'excludedDirectories': ['temp', 'cache'], // 记录排除的目录
-        'includedDirectories': ['works', 'characters', 'practices', 'library', 'database'],
+        'includedDirectories': [
+          'works',
+          'characters',
+          'practices',
+          'library',
+          'database'
+        ],
       };
 
       await _storage.writeFile(infoPath, utf8.encode(jsonEncode(info)));
-      
+
       AppLogger.info('备份信息文件创建完成', tag: 'BackupService', data: {
         'backupVersion': info['backupVersion'],
         'appVersion': info['appVersion'],
@@ -1057,7 +1066,7 @@ class BackupService {
   Future<void> _validateBackupCompatibility(String tempPath) async {
     try {
       final infoPath = p.join(tempPath, 'backup_info.json');
-      
+
       // 检查备份信息文件是否存在
       if (!await _storage.fileExists(infoPath)) {
         AppLogger.warning('备份信息文件不存在，跳过兼容性检查', tag: 'BackupService');
@@ -1066,13 +1075,14 @@ class BackupService {
 
       // 读取备份信息
       final infoBytes = await _storage.readFile(infoPath);
-      final infoJson = jsonDecode(utf8.decode(infoBytes)) as Map<String, dynamic>;
-      
+      final infoJson =
+          jsonDecode(utf8.decode(infoBytes)) as Map<String, dynamic>;
+
       final backupVersion = infoJson['backupVersion'] as String?;
       final appVersion = infoJson['appVersion'] as String?;
       final platform = infoJson['platform'] as String?;
       final compatibility = infoJson['compatibility'] as Map<String, dynamic>?;
-      
+
       AppLogger.info('检查备份兼容性', tag: 'BackupService', data: {
         'backupVersion': backupVersion,
         'backupAppVersion': appVersion,
@@ -1093,16 +1103,21 @@ class BackupService {
         final minAppVersion = compatibility['minAppVersion'] as String?;
         final maxAppVersion = compatibility['maxAppVersion'] as String?;
         const currentAppVersion = '1.0.0'; // 当前应用版本
-        
-        if (minAppVersion != null && _compareVersions(currentAppVersion, minAppVersion) < 0) {
-          throw Exception('当前应用版本($currentAppVersion)低于备份要求的最低版本($minAppVersion)，无法恢复此备份');
+
+        if (minAppVersion != null &&
+            _compareVersions(currentAppVersion, minAppVersion) < 0) {
+          throw Exception(
+              '当前应用版本($currentAppVersion)低于备份要求的最低版本($minAppVersion)，无法恢复此备份');
         }
-        
-        if (maxAppVersion != null && _compareVersions(currentAppVersion, maxAppVersion) > 0) {
-          AppLogger.warning('当前应用版本可能高于备份兼容的最高版本，恢复后可能需要数据迁移', tag: 'BackupService', data: {
-            'currentVersion': currentAppVersion,
-            'maxSupportedVersion': maxAppVersion,
-          });
+
+        if (maxAppVersion != null &&
+            _compareVersions(currentAppVersion, maxAppVersion) > 0) {
+          AppLogger.warning('当前应用版本可能高于备份兼容的最高版本，恢复后可能需要数据迁移',
+              tag: 'BackupService',
+              data: {
+                'currentVersion': currentAppVersion,
+                'maxSupportedVersion': maxAppVersion,
+              });
         }
       }
 
@@ -1132,17 +1147,17 @@ class BackupService {
   int _compareVersions(String v1, String v2) {
     final parts1 = v1.split('.').map(int.parse).toList();
     final parts2 = v2.split('.').map(int.parse).toList();
-    
+
     final maxLength = math.max(parts1.length, parts2.length);
-    
+
     for (int i = 0; i < maxLength; i++) {
       final part1 = i < parts1.length ? parts1[i] : 0;
       final part2 = i < parts2.length ? parts2[i] : 0;
-      
+
       if (part1 < part2) return -1;
       if (part1 > part2) return 1;
     }
-    
+
     return 0;
   }
 

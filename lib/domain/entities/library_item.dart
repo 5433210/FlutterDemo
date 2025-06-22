@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../infrastructure/json/uint8list_converter.dart';
+import '../../infrastructure/utils/json_converters.dart';
 
 part 'library_item.freezed.dart';
 part 'library_item.g.dart';

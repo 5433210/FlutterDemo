@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/models/character/path_info.dart';
-import '../../../infrastructure/logging/logger.dart';
+import '../../../../domain/models/character/path_info.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import 'base_layer.dart';
 
 /// 预览图层，显示擦除预览效果

@@ -8,12 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/repository_providers.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../application/services/character_image_service.dart';
 import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/repositories/character/character_view_repository.dart';
 import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart' as cache;
-import '../../../infrastructure/services/character_image_service.dart';
 import '../../viewmodels/states/character_management_state.dart';
 
 /// Provider for character management state

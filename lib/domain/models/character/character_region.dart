@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../infrastructure/json/rect_converter.dart';
+import '../../../infrastructure/utils/json_converters.dart';
 import 'processing_options.dart';
 
 part 'character_region.freezed.dart';

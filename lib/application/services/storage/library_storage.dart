@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../infrastructure/storage/storage_interface.dart';
 import 'library_storage_interface.dart';
-import 'storage_interface.dart';
 
 /// 图库存储实现
 class LibraryStorage implements ILibraryStorage {

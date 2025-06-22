@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import '../../domain/models/config/config_item.dart';
 import '../../domain/services/config_service.dart';
-import '../persistence/database_interface.dart';
+import '../../infrastructure/persistence/database_interface.dart';
 
 /// 配置仓储实现
 class ConfigRepository {
@@ -30,11 +30,12 @@ class ConfigRepository {
       );
     }
   }
+
   /// 保存配置分类
   Future<void> saveConfigCategory(ConfigCategory category) async {
     try {
       final configJson = jsonEncode(category.toJson());
-      
+
       await _database.rawUpdate(
         'INSERT OR REPLACE INTO settings (key, value, updateTime) VALUES (?, ?, ?)',
         [
@@ -51,6 +52,7 @@ class ConfigRepository {
       );
     }
   }
+
   /// 删除配置分类
   Future<void> deleteConfigCategory(String category) async {
     try {
@@ -66,6 +68,7 @@ class ConfigRepository {
       );
     }
   }
+
   /// 获取所有配置分类
   Future<List<ConfigCategory>> getAllConfigCategories() async {
     try {
@@ -93,14 +96,16 @@ class ConfigRepository {
       );
     }
   }
+
   /// 初始化默认配置（用于首次启动或重置）
   Future<void> initializeDefaultConfigs() async {
     // 初始化书法风格配置
     await initializeStyleConfigs();
-    
+
     // 初始化书写工具配置
     await initializeToolConfigs();
   }
+
   /// 初始化书法风格默认配置
   Future<void> initializeStyleConfigs() async {
     final styleConfig = ConfigCategory(
@@ -173,6 +178,7 @@ class ConfigRepository {
 
     await saveConfigCategory(styleConfig);
   }
+
   /// 初始化书写工具默认配置
   Future<void> initializeToolConfigs() async {
     final toolConfig = ConfigCategory(
@@ -286,10 +292,10 @@ class ConfigRepository {
   Future<void> cleanupInvalidConfigs() async {
     try {
       final categories = await getAllConfigCategories();
-      
+
       for (final category in categories) {
         final validationResult = await validateConfig(category.category);
-          if (!validationResult.isValid) {
+        if (!validationResult.isValid) {
           // 如果配置完全无效，重置为默认配置
           if (category.category == ConfigCategories.style) {
             await initializeStyleConfigs();

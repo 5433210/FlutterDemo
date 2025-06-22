@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../application/services/library_import_service.dart';
+import '../../application/services/library/library_import_service.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';

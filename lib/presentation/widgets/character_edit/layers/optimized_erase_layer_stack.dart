@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/models/character/detected_outline.dart';
-import '../../../infrastructure/logging/logger.dart';
-import '../../../presentation/providers/character/erase_providers.dart';
+import '../../../../domain/models/character/detected_outline.dart';
+import '../../../../infrastructure/logging/logger.dart';
+import '../../../providers/character/erase_providers.dart';
 import 'background_layer.dart';
 import 'preview_layer.dart';
 import 'ui_layer.dart';

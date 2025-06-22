@@ -1,12 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../../../application/services/practice/practice_list_refresh_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../services/practice_list_refresh_service.dart';
 import 'canvas_capture.dart';
 import 'practice_edit_controller.dart';
 import 'thumbnail_generator.dart';
@@ -51,7 +51,7 @@ class OptimizedSaveService {
   static const Size _thumbnailSize = Size(300, 400);
 
   /// 优化的保存字帖方法
-  /// 
+  ///
   /// 特点：
   /// 1. 后台生成缩略图，不切换预览模式
   /// 2. 显示保存进度，禁用用户操作
@@ -65,7 +65,7 @@ class OptimizedSaveService {
     GlobalKey? canvasKey,
   }) async {
     final saveStartTime = DateTime.now();
-    
+
     EditPageLogger.performanceInfo(
       '开始优化保存流程',
       data: {
@@ -80,7 +80,7 @@ class OptimizedSaveService {
     try {
       // 1. 准备阶段 (5%)
       onProgress?.call(0.05, '准备保存数据...');
-      
+
       if (controller.state.pages.isEmpty) {
         return SaveResult.error('无法保存：字帖页面为空');
       }
@@ -92,7 +92,9 @@ class OptimizedSaveService {
       }
 
       // 检查标题是否存在
-      if (!forceOverwrite && title != null && title != controller.practiceTitle) {
+      if (!forceOverwrite &&
+          title != null &&
+          title != controller.practiceTitle) {
         onProgress?.call(0.1, '检查标题冲突...');
         final exists = await controller.checkTitleExists(title);
         if (exists) {
@@ -102,7 +104,7 @@ class OptimizedSaveService {
 
       // 2. 生成缩略图阶段 (10% - 40%)
       onProgress?.call(0.1, '生成缩略图...');
-      
+
       final thumbnail = await _generateThumbnailOptimized(
         controller: controller,
         canvasKey: canvasKey,
@@ -116,18 +118,19 @@ class OptimizedSaveService {
         '缩略图生成完成',
         data: {
           'thumbnailSize': thumbnail?.length ?? 0,
-          'generationTimeMs': DateTime.now().difference(saveStartTime).inMilliseconds,
+          'generationTimeMs':
+              DateTime.now().difference(saveStartTime).inMilliseconds,
         },
       );
 
       // 3. 准备数据阶段 (40% - 50%)
       onProgress?.call(0.4, '准备保存数据...');
-      
+
       final pagesToSave = _preparePageDataForSaving(controller);
 
       // 4. 保存到数据库阶段 (50% - 85%)
       onProgress?.call(0.5, '保存到数据库...');
-      
+
       final result = await controller.practiceService.savePractice(
         id: controller.practiceId,
         title: saveTitle,
@@ -149,7 +152,7 @@ class OptimizedSaveService {
       onProgress?.call(1.0, '保存完成');
 
       final totalTime = DateTime.now().difference(saveStartTime);
-      
+
       EditPageLogger.performanceInfo(
         '优化保存流程完成',
         data: {
@@ -165,10 +168,9 @@ class OptimizedSaveService {
         message: '字帖 "$saveTitle" 保存成功',
         practiceId: result.id,
       );
-
     } catch (e, stackTrace) {
       final errorTime = DateTime.now().difference(saveStartTime);
-      
+
       EditPageLogger.fileOpsError(
         '优化保存流程失败',
         error: e,
@@ -198,7 +200,7 @@ class OptimizedSaveService {
       }
 
       final firstPage = controller.state.pages.first;
-      
+
       // 方案1：尝试直接从Canvas捕获（不切换预览模式）
       if (canvasKey != null) {
         onProgress?.call(0.3);
@@ -232,7 +234,7 @@ class OptimizedSaveService {
           width: _thumbnailSize.width,
           height: _thumbnailSize.height,
         );
-        
+
         if (thumbnail != null) {
           onProgress?.call(1.0);
           EditPageLogger.performanceInfo(
@@ -274,7 +276,6 @@ class OptimizedSaveService {
       }
 
       return fallbackThumbnail;
-
     } catch (e, stackTrace) {
       EditPageLogger.fileOpsError(
         '优化缩略图生成失败',
@@ -297,7 +298,7 @@ class OptimizedSaveService {
       // 使用当前状态直接捕获
       final image = await renderObject.toImage(pixelRatio: 2.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      
+
       return byteData?.buffer.asUint8List();
     } catch (e) {
       EditPageLogger.performanceWarning(
@@ -313,36 +314,37 @@ class OptimizedSaveService {
     PracticeEditController controller,
   ) {
     final pagesToSave = <Map<String, dynamic>>[];
-    
+
     for (final page in controller.state.pages) {
       final pageData = Map<String, dynamic>.from(page);
-      
+
       // 确保页面有ID
       if (!pageData.containsKey('id') || pageData['id'] == null) {
         pageData['id'] = DateTime.now().millisecondsSinceEpoch.toString();
       }
-      
+
       // 确保元素数据完整
       final elements = pageData['elements'] as List<dynamic>? ?? [];
       final processedElements = <Map<String, dynamic>>[];
-      
+
       for (final element in elements) {
         if (element is Map<String, dynamic>) {
           final elementData = Map<String, dynamic>.from(element);
-          
+
           // 确保元素有ID
           if (!elementData.containsKey('id') || elementData['id'] == null) {
-            elementData['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+            elementData['id'] =
+                DateTime.now().millisecondsSinceEpoch.toString();
           }
-          
+
           processedElements.add(elementData);
         }
       }
-      
+
       pageData['elements'] = processedElements;
       pagesToSave.add(pageData);
     }
-    
+
     return pagesToSave;
   }
 
@@ -374,7 +376,7 @@ class OptimizedSaveService {
 
       // 3. 使用延迟确保文件系统操作完成
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       EditPageLogger.performanceInfo(
         '字帖列表缓存刷新完成',
         data: {
@@ -407,17 +409,18 @@ class OptimizedSaveService {
 
       // 清理Flutter的内置图像缓存
       final imageCache = PaintingBinding.instance.imageCache;
-      
+
       // 1. 根据实际的缩略图文件路径清理缓存
       try {
         // 根据PracticeStorageService中定义的路径格式
         final appDataPath = Directory.current.path; // 这里可能需要从storage service获取
-        final fullThumbnailPath = '$appDataPath/practices/$practiceId/cover/thumbnail.jpg';
-        
+        final fullThumbnailPath =
+            '$appDataPath/practices/$practiceId/cover/thumbnail.jpg';
+
         // 清理FileImage缓存 - 这是关键步骤
         final provider = FileImage(File(fullThumbnailPath));
         imageCache.evict(provider);
-        
+
         EditPageLogger.performanceInfo(
           '清理FileImage缓存',
           data: {
@@ -473,7 +476,6 @@ class OptimizedSaveService {
           'method': 'clear_all_cache',
         },
       );
-
     } catch (e) {
       EditPageLogger.performanceWarning(
         '清理缩略图缓存失败',
@@ -484,4 +486,4 @@ class OptimizedSaveService {
       );
     }
   }
-} 
+}

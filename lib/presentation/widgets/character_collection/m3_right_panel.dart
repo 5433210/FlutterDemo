@@ -9,12 +9,12 @@ import '../../../domain/models/character/character_region.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../presentation/providers/character/erase_providers.dart'
     as erase;
-import '../../../widgets/character_edit/m3_character_edit_panel.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_grid_provider.dart';
 import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
+import '../character_edit/m3_character_edit_panel.dart';
 import '../common/tab_bar_theme_wrapper.dart';
 import 'm3_character_grid_view.dart';
 

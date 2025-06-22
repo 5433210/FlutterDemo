@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../application/services/practice/practice_list_refresh_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../dialogs/optimized_save_dialog.dart';
 import '../../dialogs/practice_save_dialog.dart';
-import '../../services/practice_list_refresh_service.dart';
 import 'export/export_dialog.dart';
 import 'export/export_service.dart';
 import 'export/page_renderer.dart';

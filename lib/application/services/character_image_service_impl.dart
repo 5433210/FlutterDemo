@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 
-import '../cache/services/image_cache_service.dart';
-import '../image/image_processor.dart';
-import '../logging/logger.dart';
-import '../storage/storage_interface.dart';
+import '../../infrastructure/cache/services/image_cache_service.dart';
+import '../../infrastructure/image/image_processor.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../infrastructure/storage/storage_interface.dart';
 import 'character_image_service.dart';
 
 /// 集字图片服务实现
@@ -12,12 +12,12 @@ class CharacterImageServiceImpl implements CharacterImageService {
   final IStorage _storage;
   final ImageCacheService _imageCacheService;
   final ImageProcessor _imageProcessor;
-  
+
   // 🚀 性能优化：缓存命中率统计
   int _cacheHits = 0;
   int _cacheMisses = 0;
   final Map<String, DateTime> _lastLogTime = {};
-  
+
   // 🚀 性能优化：批量请求去重
   final Map<String, Future<Uint8List?>> _pendingRequests = {};
 
@@ -272,7 +272,8 @@ class CharacterImageServiceImpl implements CharacterImageService {
       }
 
       // 创建请求Future
-      final requestFuture = _loadCharacterImageInternal(id, type, format, imagePath, cacheKey);
+      final requestFuture =
+          _loadCharacterImageInternal(id, type, format, imagePath, cacheKey);
       _pendingRequests[cacheKey] = requestFuture;
 
       try {
@@ -297,18 +298,13 @@ class CharacterImageServiceImpl implements CharacterImageService {
   }
 
   /// 🚀 内部图像加载方法
-  Future<Uint8List?> _loadCharacterImageInternal(
-    String id, 
-    String type, 
-    String format, 
-    String imagePath, 
-    String cacheKey
-  ) async {
+  Future<Uint8List?> _loadCharacterImageInternal(String id, String type,
+      String format, String imagePath, String cacheKey) async {
     // 尝试从缓存获取
     final cachedData = await _imageCacheService.getBinaryImage(cacheKey);
     if (cachedData != null) {
       _cacheHits++;
-      
+
       // 🚀 优化：减少重复日志，每个图像每分钟最多记录一次
       final now = DateTime.now();
       final lastLog = _lastLogTime[cacheKey];
@@ -335,7 +331,7 @@ class CharacterImageServiceImpl implements CharacterImageService {
 
     // 使用IStorage检查文件是否存在
     final fileExists = await _storage.fileExists(imagePath);
-    
+
     if (fileExists) {
       // 使用IStorage读取文件内容
       final bytes = await _storage.readFile(imagePath);

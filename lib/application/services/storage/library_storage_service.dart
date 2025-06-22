@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import '../cache/services/image_cache_service.dart';
-import '../logging/logger.dart';
+import '../../../infrastructure/cache/services/image_cache_service.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'library_storage_interface.dart';
 
 /// 图库存储服务

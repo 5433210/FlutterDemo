@@ -13,8 +13,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/widgets/common/zoomable_image_view.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_sizes.dart';
-import '../../../../widgets/layout/flexible_row.dart';
 import '../../../providers/character/character_detail_provider.dart';
+import '../../../widgets/layout/flexible_row.dart';
 
 /// 图片尺寸信息类
 class ImageDimensions {

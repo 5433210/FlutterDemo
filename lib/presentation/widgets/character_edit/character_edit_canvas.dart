@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../utils/migration/erase_data_migration.dart';
-import '../../application/services/image/character_image_processor.dart';
-import '../../domain/models/character/character_region.dart';
-import '../../domain/models/character/detected_outline.dart';
-import '../../domain/models/character/processing_options.dart';
-import '../../infrastructure/logging/logger.dart';
-import '../../presentation/providers/character/erase_providers.dart';
-import '../../utils/coordinate_transformer.dart';
-import '../../utils/focus/focus_persistence.dart';
-import '../../utils/image/image_utils.dart';
+import '../../../../utils/migration/erase_data_migration.dart';
+import '../../../application/services/image/character_image_processor.dart';
+import '../../../domain/models/character/character_region.dart';
+import '../../../domain/models/character/detected_outline.dart';
+import '../../../domain/models/character/processing_options.dart';
+import '../../../infrastructure/logging/logger.dart';
+import '../../../utils/coordinate_transformer.dart';
+import '../../../utils/focus/focus_persistence.dart';
+import '../../../utils/image/image_utils.dart';
+import '../../providers/character/erase_providers.dart';
 import 'layers/optimized_erase_layer_stack.dart';
 
 /// 编辑画布组件

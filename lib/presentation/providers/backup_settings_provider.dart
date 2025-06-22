@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../infrastructure/backup/backup_service.dart';
+import '../../application/services/backup_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
@@ -101,18 +101,21 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
         AppLogger.info('开始清理旧备份', tag: 'BackupSettingsNotifier', data: {
           'keepCount': state.keepBackupCount,
         });
-        
-        final deletedCount = await backupService.cleanupOldBackups(state.keepBackupCount);
+
+        final deletedCount =
+            await backupService.cleanupOldBackups(state.keepBackupCount);
         AppLogger.info('清理旧备份完成', tag: 'BackupSettingsNotifier', data: {
           'deletedCount': deletedCount,
         });
       } catch (e) {
-        AppLogger.warning('清理旧备份失败，但不影响备份成功', tag: 'BackupSettingsNotifier', data: {
-          'error': e.toString(),
-        });
+        AppLogger.warning('清理旧备份失败，但不影响备份成功',
+            tag: 'BackupSettingsNotifier',
+            data: {
+              'error': e.toString(),
+            });
         // 清理失败不影响备份成功
       }
-      
+
       // 刷新备份列表
       try {
         ref.invalidate(backupListProvider);
@@ -129,10 +132,13 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
 
       return backupPath;
     } catch (e, stackTrace) {
-      AppLogger.error('创建备份失败', tag: 'BackupSettingsNotifier', 
-          error: e, stackTrace: stackTrace, data: {
-        'description': description,
-      });
+      AppLogger.error('创建备份失败',
+          tag: 'BackupSettingsNotifier',
+          error: e,
+          stackTrace: stackTrace,
+          data: {
+            'description': description,
+          });
       return null;
     }
   }
@@ -255,8 +261,6 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
       return false;
     }
   }
-
-
 
   /// 设置保留的备份数量
   Future<void> setKeepBackupCount(int count) async {

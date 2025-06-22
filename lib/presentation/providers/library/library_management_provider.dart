@@ -6,13 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
-import '../../../application/services/library_service.dart';
+import '../../../application/services/character_image_service.dart';
+import '../../../application/services/library/library_service.dart';
 import '../../../domain/entities/library_category.dart';
 import '../../../domain/entities/library_item.dart';
 import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart' as cache;
-import '../../../infrastructure/services/character_image_service.dart';
 import '../../viewmodels/states/library_management_state.dart';
 
 /// 图库管理状态提供者

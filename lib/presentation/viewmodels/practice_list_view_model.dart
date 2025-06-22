@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/services/practice/practice_list_refresh_service.dart';
 import '../../application/services/practice/practice_service.dart';
 import '../../domain/models/practice/practice_filter.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../services/practice_list_refresh_service.dart';
 import 'states/practice_list_state.dart';
 
 class PracticeListViewModel extends StateNotifier<PracticeListState> {

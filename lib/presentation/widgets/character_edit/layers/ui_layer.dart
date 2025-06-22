@@ -1,13 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:charasgem/infrastructure/logging/logger.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/models/character/detected_outline.dart';
-import '../../../presentation/providers/character/erase_providers.dart';
+import '../../../../domain/models/character/detected_outline.dart';
+import '../../../providers/character/erase_providers.dart';
 
 class BrushCursorPainter extends CustomPainter {
   final Offset position;

@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'storage_interface.dart';
+
+import '../../../infrastructure/storage/storage_interface.dart';
 
 /// 图库存储接口
 abstract class ILibraryStorage extends IStorage {

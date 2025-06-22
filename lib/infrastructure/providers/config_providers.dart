@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/repositories/config_repository.dart';
+import '../../application/services/config_service_impl.dart';
 import '../../domain/models/config/config_item.dart';
 import '../../domain/services/config_service.dart';
-import '../repositories/config_repository.dart';
-import '../services/config_service_impl.dart';
 import 'database_providers.dart';
 
 /// 配置刷新触发器 - 用于手动刷新配置数据

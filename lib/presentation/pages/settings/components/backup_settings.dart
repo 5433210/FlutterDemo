@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../../infrastructure/backup/backup_service.dart';
+import '../../../../application/services/backup_service.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
@@ -26,8 +26,6 @@ class BackupSettings extends ConsumerWidget {
       title: l10n.backupSettings,
       icon: Icons.backup_outlined,
       children: [
-
-
         // 保留备份数量
         ListTile(
           title: Text(l10n.keepBackupCount),
@@ -107,7 +105,6 @@ class BackupSettings extends ConsumerWidget {
                 await _showExportBackupDialog(context, ref);
               },
             ),
-
           ],
         ),
 
@@ -300,7 +297,7 @@ class BackupSettings extends ConsumerWidget {
       );
 
       // 导出备份
-              final exportPath = p.join(outputDirectory, backup.fileName);
+      final exportPath = p.join(outputDirectory, backup.fileName);
       final success = await ref
           .read(backupSettingsProvider.notifier)
           .exportBackup(backup.path, exportPath);
@@ -457,10 +454,12 @@ class BackupSettings extends ConsumerWidget {
         AppLogger.info('开始创建备份UI流程', tag: 'BackupSettings', data: {
           'description': description,
         });
-        
+
         // 执行备份操作
-        final backupPath = await ref.read(backupSettingsProvider.notifier).createBackup(
-            description: description.isNotEmpty ? description : null);
+        final backupPath = await ref
+            .read(backupSettingsProvider.notifier)
+            .createBackup(
+                description: description.isNotEmpty ? description : null);
 
         AppLogger.info('备份操作完成', tag: 'BackupSettings', data: {
           'backupPath': backupPath,
@@ -472,27 +471,30 @@ class BackupSettings extends ConsumerWidget {
           AppLogger.info('准备关闭加载对话框', tag: 'BackupSettings', data: {
             'dialogShown': dialogShown,
             'contextMounted': context.mounted,
-            'navigatorMounted': navigatorState?.mounted,
+            'navigatorMounted': navigatorState.mounted,
           });
-          
+
           // 尝试多种方式关闭对话框
           bool dialogClosed = false;
-          
+
           // 方法1：使用保存的NavigatorState
-          if (navigatorState != null && navigatorState.mounted) {
+          if (navigatorState.mounted) {
             try {
               if (navigatorState.canPop()) {
                 navigatorState.pop();
                 dialogClosed = true;
-                AppLogger.info('使用保存的NavigatorState关闭对话框成功', tag: 'BackupSettings');
+                AppLogger.info('使用保存的NavigatorState关闭对话框成功',
+                    tag: 'BackupSettings');
               } else {
-                AppLogger.warning('保存的NavigatorState无法执行pop操作', tag: 'BackupSettings');
+                AppLogger.warning('保存的NavigatorState无法执行pop操作',
+                    tag: 'BackupSettings');
               }
             } catch (e) {
-              AppLogger.warning('使用保存的NavigatorState关闭对话框失败', tag: 'BackupSettings', error: e);
+              AppLogger.warning('使用保存的NavigatorState关闭对话框失败',
+                  tag: 'BackupSettings', error: e);
             }
           }
-          
+
           // 方法2：如果方法1失败，尝试使用当前context的Navigator
           if (!dialogClosed) {
             try {
@@ -502,13 +504,15 @@ class BackupSettings extends ConsumerWidget {
                 dialogClosed = true;
                 AppLogger.info('使用当前Navigator关闭对话框成功', tag: 'BackupSettings');
               } else {
-                AppLogger.warning('当前Navigator无法执行pop操作', tag: 'BackupSettings');
+                AppLogger.warning('当前Navigator无法执行pop操作',
+                    tag: 'BackupSettings');
               }
             } catch (e) {
-              AppLogger.warning('使用当前Navigator关闭对话框失败', tag: 'BackupSettings', error: e);
+              AppLogger.warning('使用当前Navigator关闭对话框失败',
+                  tag: 'BackupSettings', error: e);
             }
           }
-          
+
           // 方法3：如果前两种方法都失败，尝试强制关闭
           if (!dialogClosed) {
             try {
@@ -519,7 +523,7 @@ class BackupSettings extends ConsumerWidget {
               AppLogger.error('所有方法都无法关闭对话框', tag: 'BackupSettings', error: e);
             }
           }
-          
+
           if (!dialogClosed) {
             AppLogger.error('无法关闭加载对话框，所有方法都失败了', tag: 'BackupSettings');
           }
@@ -550,7 +554,7 @@ class BackupSettings extends ConsumerWidget {
             AppLogger.warning('备份路径为null，显示失败消息', tag: 'BackupSettings');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('备份创建超时或失败，请检查存储空间是否足够'),
+                content: const Text('备份创建超时或失败，请检查存储空间是否足够'),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 5),
                 action: SnackBarAction(
@@ -562,34 +566,38 @@ class BackupSettings extends ConsumerWidget {
           }
         }
       } catch (e, stackTrace) {
-        AppLogger.error('备份操作异常', tag: 'BackupSettings', error: e, stackTrace: stackTrace);
-        
+        AppLogger.error('备份操作异常',
+            tag: 'BackupSettings', error: e, stackTrace: stackTrace);
+
         // 关闭加载对话框
         if (context.mounted && dialogShown) {
           AppLogger.info('异常处理：准备关闭加载对话框', tag: 'BackupSettings', data: {
             'dialogShown': dialogShown,
             'contextMounted': context.mounted,
-            'navigatorMounted': navigatorState?.mounted,
+            'navigatorMounted': navigatorState.mounted,
           });
-          
+
           // 尝试多种方式关闭对话框
           bool dialogClosed = false;
-          
+
           // 方法1：使用保存的NavigatorState
-          if (navigatorState != null && navigatorState.mounted) {
+          if (navigatorState.mounted) {
             try {
               if (navigatorState.canPop()) {
                 navigatorState.pop();
                 dialogClosed = true;
-                AppLogger.info('异常处理：使用保存的NavigatorState关闭对话框成功', tag: 'BackupSettings');
+                AppLogger.info('异常处理：使用保存的NavigatorState关闭对话框成功',
+                    tag: 'BackupSettings');
               } else {
-                AppLogger.warning('异常处理：保存的NavigatorState无法执行pop操作', tag: 'BackupSettings');
+                AppLogger.warning('异常处理：保存的NavigatorState无法执行pop操作',
+                    tag: 'BackupSettings');
               }
             } catch (navError) {
-              AppLogger.warning('异常处理：使用保存的NavigatorState关闭对话框失败', tag: 'BackupSettings', error: navError);
+              AppLogger.warning('异常处理：使用保存的NavigatorState关闭对话框失败',
+                  tag: 'BackupSettings', error: navError);
             }
           }
-          
+
           // 方法2：如果方法1失败，尝试使用当前context的Navigator
           if (!dialogClosed) {
             try {
@@ -597,42 +605,49 @@ class BackupSettings extends ConsumerWidget {
               if (currentNavigator.canPop()) {
                 currentNavigator.pop();
                 dialogClosed = true;
-                AppLogger.info('异常处理：使用当前Navigator关闭对话框成功', tag: 'BackupSettings');
+                AppLogger.info('异常处理：使用当前Navigator关闭对话框成功',
+                    tag: 'BackupSettings');
               } else {
-                AppLogger.warning('异常处理：当前Navigator无法执行pop操作', tag: 'BackupSettings');
+                AppLogger.warning('异常处理：当前Navigator无法执行pop操作',
+                    tag: 'BackupSettings');
               }
             } catch (navError) {
-              AppLogger.warning('异常处理：使用当前Navigator关闭对话框失败', tag: 'BackupSettings', error: navError);
+              AppLogger.warning('异常处理：使用当前Navigator关闭对话框失败',
+                  tag: 'BackupSettings', error: navError);
             }
           }
-          
+
           // 方法3：如果前两种方法都失败，尝试强制关闭
           if (!dialogClosed) {
             try {
               Navigator.of(context, rootNavigator: true).pop();
               dialogClosed = true;
-              AppLogger.info('异常处理：使用rootNavigator关闭对话框成功', tag: 'BackupSettings');
+              AppLogger.info('异常处理：使用rootNavigator关闭对话框成功',
+                  tag: 'BackupSettings');
             } catch (navError) {
-              AppLogger.error('异常处理：所有方法都无法关闭对话框', tag: 'BackupSettings', error: navError);
+              AppLogger.error('异常处理：所有方法都无法关闭对话框',
+                  tag: 'BackupSettings', error: navError);
             }
           }
-          
+
           if (!dialogClosed) {
-            AppLogger.error('异常处理：无法关闭加载对话框，所有方法都失败了', tag: 'BackupSettings', data: {
-              'originalError': e.toString(),
-            });
+            AppLogger.error('异常处理：无法关闭加载对话框，所有方法都失败了',
+                tag: 'BackupSettings',
+                data: {
+                  'originalError': e.toString(),
+                });
           }
 
           // 显示详细的错误信息
           String errorMessage;
-          if (e.toString().contains('Permission denied') || 
+          if (e.toString().contains('Permission denied') ||
               e.toString().contains('Access is denied')) {
             errorMessage = '备份失败：没有足够的文件访问权限';
-          } else if (e.toString().contains('No space left') || 
-                    e.toString().contains('Disk full')) {
+          } else if (e.toString().contains('No space left') ||
+              e.toString().contains('Disk full')) {
             errorMessage = '备份失败：存储空间不足';
-          } else if (e.toString().contains('timeout') || 
-                    e.toString().contains('TimeoutException')) {
+          } else if (e.toString().contains('timeout') ||
+              e.toString().contains('TimeoutException')) {
             errorMessage = '备份失败：操作超时，可能是因为数据量过大';
           } else {
             errorMessage = '备份失败: ${e.toString()}';
@@ -893,8 +908,6 @@ class BackupSettings extends ConsumerWidget {
       ),
     );
   }
-
-
 }
 
 /// 恢复确认对话框结果
