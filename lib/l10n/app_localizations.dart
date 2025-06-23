@@ -359,6 +359,12 @@ abstract class AppLocalizations {
   /// **'字字珠玑'**
   String get appTitle;
 
+  /// No description provided for @appVersionInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用版本信息'**
+  String get appVersionInfo;
+
   /// No description provided for @apply.
   ///
   /// In zh, this message translates to:
@@ -1126,6 +1132,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'复制格式 (Alt+Q)'**
   String get copyFormat;
+
+  /// No description provided for @copyVersionInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制版本信息'**
+  String get copyVersionInfo;
 
   /// No description provided for @copySelected.
   ///
@@ -5314,6 +5326,96 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'现有项目'**
   String get existingItem;
+
+  /// No description provided for @versionInfoCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本信息已复制到剪贴板'**
+  String get versionInfoCopied;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用版本'**
+  String get appVersion;
+
+  /// No description provided for @buildNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'构建号'**
+  String get buildNumber;
+
+  /// No description provided for @buildTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'构建时间'**
+  String get buildTime;
+
+  /// No description provided for @buildEnvironment.
+  ///
+  /// In zh, this message translates to:
+  /// **'构建环境'**
+  String get buildEnvironment;
+
+  /// No description provided for @gitCommit.
+  ///
+  /// In zh, this message translates to:
+  /// **'Git提交'**
+  String get gitCommit;
+
+  /// No description provided for @gitBranch.
+  ///
+  /// In zh, this message translates to:
+  /// **'Git分支'**
+  String get gitBranch;
+
+  /// No description provided for @platformInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'平台信息'**
+  String get platformInfo;
+
+  /// No description provided for @operatingSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作系统'**
+  String get operatingSystem;
+
+  /// No description provided for @deviceInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'设备信息'**
+  String get deviceInfo;
+
+  /// No description provided for @flutterVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'Flutter版本'**
+  String get flutterVersion;
+
+  /// No description provided for @dartVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'Dart版本'**
+  String get dartVersion;
+
+  /// No description provided for @versionDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本详情'**
+  String get versionDetails;
+
+  /// No description provided for @systemInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统信息'**
+  String get systemInfo;
+
+  /// No description provided for @about.
+  ///
+  /// In zh, this message translates to:
+  /// **'关于'**
+  String get about;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

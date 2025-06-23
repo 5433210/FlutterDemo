@@ -872,5 +872,22 @@
   "skippedCharacters": "Skipped Characters",
   "overwrittenCharacters": "Overwritten Characters",
   "conflictReason": "Conflict Reason",
-  "existingItem": "Existing Item"
+  "existingItem": "Existing Item",
+  "appVersionInfo": "App Version Info",
+  "copyVersionInfo": "Copy Version Info",
+  "versionInfoCopied": "Version info copied to clipboard",
+  "appVersion": "App Version",
+  "buildNumber": "Build Number", 
+  "buildTime": "Build Time",
+  "buildEnvironment": "Build Environment",
+  "gitCommit": "Git Commit",
+  "gitBranch": "Git Branch",
+  "platformInfo": "Platform Info",
+  "operatingSystem": "Operating System",
+  "deviceInfo": "Device Info",
+  "flutterVersion": "Flutter Version",
+  "dartVersion": "Dart Version",
+  "versionDetails": "Version Details",
+  "systemInfo": "System Info",
+  "about": "About"
 }

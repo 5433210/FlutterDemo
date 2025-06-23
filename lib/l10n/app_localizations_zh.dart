@@ -147,6 +147,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => '字字珠玑';
 
   @override
+  String get appVersionInfo => '应用版本信息';
+
+  @override
   String get apply => '应用';
 
   @override
@@ -541,6 +544,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get copyFormat => '复制格式 (Alt+Q)';
+
+  @override
+  String get copyVersionInfo => '复制版本信息';
 
   @override
   String get copySelected => '复制选中项目';
@@ -2739,4 +2745,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get existingItem => '现有项目';
+
+  @override
+  String get versionInfoCopied => '版本信息已复制到剪贴板';
+
+  @override
+  String get appVersion => '应用版本';
+
+  @override
+  String get buildNumber => '构建号';
+
+  @override
+  String get buildTime => '构建时间';
+
+  @override
+  String get buildEnvironment => '构建环境';
+
+  @override
+  String get gitCommit => 'Git提交';
+
+  @override
+  String get gitBranch => 'Git分支';
+
+  @override
+  String get platformInfo => '平台信息';
+
+  @override
+  String get operatingSystem => '操作系统';
+
+  @override
+  String get deviceInfo => '设备信息';
+
+  @override
+  String get flutterVersion => 'Flutter版本';
+
+  @override
+  String get dartVersion => 'Dart版本';
+
+  @override
+  String get versionDetails => '版本详情';
+
+  @override
+  String get systemInfo => '系统信息';
+
+  @override
+  String get about => '关于';
 }

@@ -147,6 +147,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Word by Word';
 
   @override
+  String get appVersionInfo => 'App Version Info';
+
+  @override
   String get apply => 'Apply';
 
   @override
@@ -541,6 +544,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyFormat => 'Copy Format (Alt+Q)';
+
+  @override
+  String get copyVersionInfo => 'Copy Version Info';
 
   @override
   String get copySelected => 'Copy Selected Items';
@@ -2739,4 +2745,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get existingItem => 'Existing Item';
+
+  @override
+  String get versionInfoCopied => 'Version info copied to clipboard';
+
+  @override
+  String get appVersion => 'App Version';
+
+  @override
+  String get buildNumber => 'Build Number';
+
+  @override
+  String get buildTime => 'Build Time';
+
+  @override
+  String get buildEnvironment => 'Build Environment';
+
+  @override
+  String get gitCommit => 'Git Commit';
+
+  @override
+  String get gitBranch => 'Git Branch';
+
+  @override
+  String get platformInfo => 'Platform Info';
+
+  @override
+  String get operatingSystem => 'Operating System';
+
+  @override
+  String get deviceInfo => 'Device Info';
+
+  @override
+  String get flutterVersion => 'Flutter Version';
+
+  @override
+  String get dartVersion => 'Dart Version';
+
+  @override
+  String get versionDetails => 'Version Details';
+
+  @override
+  String get systemInfo => 'System Info';
+
+  @override
+  String get about => 'About';
 }
