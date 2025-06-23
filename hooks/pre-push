@@ -82,21 +82,27 @@ if [ "$IS_PROTECTED_BRANCH" = true ]; then
         exit 1
     fi
     
-    # 运行Flutter分析
+    # 运行Flutter分析 - 只检查error级别问题
     echo -e "${BLUE}🔍 运行Flutter代码分析...${NC}"
-    ANALYZE_OUTPUT=$(flutter analyze --no-pub 2>&1)
-    ANALYZE_EXIT_CODE=$?
     
-    # 简化的分析：只检查是否有 error 级别的问题
-    if echo "$ANALYZE_OUTPUT" | grep -q " error -"; then
-        echo -e "${RED}❌ Flutter代码分析发现错误${NC}"
-        echo -e "${YELLOW}请修复代码分析错误后重新推送${NC}"
+    # 先检查是否有error级别问题
+    ERROR_CHECK=$(flutter analyze --no-pub 2>&1 | grep " error -" || true)
+    
+    if [ -n "$ERROR_CHECK" ]; then
+        echo -e "${RED}❌ Flutter代码分析发现错误级别问题${NC}"
+        echo "$ERROR_CHECK" | head -5
+        echo -e "${YELLOW}请修复error级别问题后重新推送${NC}"
         exit 1
     else
-        # 允许警告和信息级别的问题通过
-        echo -e "${GREEN}✅ Flutter代码分析通过（仅检查错误级别）${NC}"
-        if echo "$ANALYZE_OUTPUT" | grep -q " warning -\| info -"; then
-            echo -e "${YELLOW}💡 提示: 存在警告或信息级别问题，建议修复以提高代码质量${NC}"
+        echo -e "${GREEN}✅ Flutter代码分析通过（无错误级别问题）${NC}"
+        
+        # 统计其他类型的问题
+        ANALYSIS_SUMMARY=$(flutter analyze --no-pub 2>&1 | tail -1)
+        if echo "$ANALYSIS_SUMMARY" | grep -q "issues found"; then
+            echo -e "${YELLOW}💡 检测到warnings和info级别问题，建议修复以提高代码质量${NC}"
+            echo -e "${YELLOW}💡 但不阻塞推送 - $ANALYSIS_SUMMARY${NC}"
+        else
+            echo -e "${GREEN}✅ 代码分析完全通过${NC}"
         fi
     fi
     
