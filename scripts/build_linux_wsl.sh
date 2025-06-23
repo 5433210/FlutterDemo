@@ -7,10 +7,11 @@ set -e
 echo "🐧 在WSL中构建Flutter Linux版本..."
 
 # 检查是否在WSL环境中
-if ! grep -q Microsoft /proc/version; then
+if ! grep -q -i "microsoft\|wsl" /proc/version 2>/dev/null; then
     echo "❌ 错误: 此脚本需要在WSL环境中运行"
     echo "请使用以下命令进入WSL:"
     echo "wsl -d Arch"
+    echo "当前环境: $(uname -a)"
     exit 1
 fi
 

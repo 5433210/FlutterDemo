@@ -8,8 +8,9 @@ set -e
 echo "🐧 开始设置WSL Flutter Linux构建环境..."
 
 # 检查是否在WSL环境中
-if ! grep -q Microsoft /proc/version; then
+if ! grep -q -i "microsoft\|wsl" /proc/version 2>/dev/null; then
     echo "❌ 错误: 此脚本需要在WSL环境中运行"
+    echo "当前环境: $(uname -a)"
     exit 1
 fi
 
