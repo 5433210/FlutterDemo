@@ -50,7 +50,7 @@ jobs:
     - name: 安装Python依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pyyaml gitpython
+        pip install pyyaml gitpython pytz
         
     - name: 设置Flutter环境
       uses: subosito/flutter-action@v2
@@ -64,17 +64,51 @@ jobs:
     - name: 运行版本一致性检查
       run: |
         echo "🔍 运行版本一致性检查..."
-        python scripts/check_version_consistency.py
+        echo "当前工作目录: $(pwd)"
+        echo "版本配置文件检查:"
+        ls -la version.yaml || echo "版本配置文件不存在"
+        echo "开始执行版本检查脚本..."
+        python scripts/check_version_consistency.py --verbose || {
+          echo "❌ 版本一致性检查失败"
+          echo "脚本内容："
+          cat scripts/check_version_consistency.py
+          echo "Python版本："
+          python --version
+          echo "已安装的包："
+          pip list
+          exit 1
+        }
         
     - name: 生成版本信息
       id: version-info
       run: |
         echo "📋 生成版本信息..."
-        python scripts/generate_version_info.py
+        echo "执行版本信息生成脚本..."
+        python scripts/generate_version_info.py || {
+          echo "❌ 版本信息生成失败"
+          echo "检查脚本和依赖："
+          ls -la scripts/generate_version_info.py
+          python -c "import yaml, json, os, sys; print('依赖检查通过')" || echo "依赖检查失败"
+          exit 1
+        }
+        
+        # 验证生成的文件
+        if [ ! -f "version.json" ]; then
+          echo "❌ version.json文件未生成"
+          exit 1
+        fi
+        
+        echo "✅ version.json文件已生成"
+        cat version.json
         
         # 读取版本信息并设置输出
-        VERSION=$(python -c "import json; print(json.load(open('version.json'))['version']['major'], json.load(open('version.json'))['version']['minor'], json.load(open('version.json'))['version']['patch'], sep='.')")
-        BUILD_NUMBER=$(python -c "import json; print(json.load(open('version.json'))['version']['build'])")
+        VERSION=$(python -c "import json; f=open('version.json'); data=json.load(f); v=data['version']; print(f\"{v['major']}.{v['minor']}.{v['patch']}\"); f.close()")
+        BUILD_NUMBER=$(python -c "import json; f=open('version.json'); data=json.load(f); print(data['version']['build']); f.close()")
+        
+        if [ -z "$VERSION" ] || [ -z "$BUILD_NUMBER" ]; then
+          echo "❌ 无法提取版本信息"
+          exit 1
+        fi
         
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "build-number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
@@ -261,7 +295,7 @@ jobs:
     - name: 安装Python依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pyyaml gitpython
+        pip install pyyaml gitpython pytz
         
     - name: 更新构建号
       run: |
@@ -302,7 +336,7 @@ jobs:
     - name: 安装Python依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pyyaml gitpython
+        pip install pyyaml gitpython pytz
         
     - name: 手动版本递增
       if: github.event.inputs.version_increment != ''

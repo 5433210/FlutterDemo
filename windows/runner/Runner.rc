@@ -73,8 +73,8 @@ IDI_APP_ICON            ICON                    "resources\\app_trans_bg4.ico"
 #endif
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,0,1,0
-PRODUCTVERSION 1,0,1,0
+FILEVERSION 1,0,1,20250623001
+PRODUCTVERSION 1,0,1,20250623001
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -91,12 +91,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
             VALUE "FileDescription", "字字珠玑" "\0"
-            VALUE "FileVersion", "1.0.1.0\0"
+            VALUE "FileVersion", "1.0.1.20250623001"
             VALUE "InternalName", "charasgem" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "charasgem.exe" "\0"
             VALUE "ProductName", "字字珠玑" "\0"
-            VALUE "ProductVersion", "1.0.1.0\0"
+            VALUE "ProductVersion", "1.0.1.20250623001"
         END
     END
     BLOCK "VarFileInfo"
