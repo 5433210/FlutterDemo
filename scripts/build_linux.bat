@@ -25,8 +25,10 @@ if %ERRORLEVEL% neq 0 (
 
 echo [OK] WSL environment check passed
 
-REM Set script permissions and run
-echo [INFO] Setting script permissions...
+REM Set script permissions and fix line endings
+echo [INFO] Setting script permissions and fixing line endings...
+wsl -d Ubuntu -e dos2unix "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_ubuntu_wsl_flutter.sh" >nul 2>&1
+wsl -d Ubuntu -e dos2unix "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_ubuntu_wsl.sh" >nul 2>&1
 wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_ubuntu_wsl_flutter.sh"
 wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_ubuntu_wsl.sh"
 

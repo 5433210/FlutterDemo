@@ -39,26 +39,39 @@ sudo apt install -y \
 
 # 检查Flutter是否已安装
 if ! command -v flutter &> /dev/null; then
-    echo "📱 Flutter未安装，正在下载安装..."
+    echo "📱 Flutter未安装，正在安装..."
     
-    # 创建flutter目录
-    mkdir -p ~/development
-    cd ~/development
-    
-    # 下载Flutter Linux版本
-    echo "📥 下载Flutter SDK..."
-    wget -O flutter_linux.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.16.0-stable.tar.xz
-    
-    # 解压Flutter
-    echo "📂 解压Flutter SDK..."
-    tar xf flutter_linux.tar.xz
-    
-    # 添加Flutter到PATH
-    echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.bashrc
-    export PATH="$PATH:$HOME/development/flutter/bin"
-    
-    # 清理下载文件
-    rm flutter_linux.tar.xz
+    # 方法1: 尝试使用snap安装（推荐）
+    if command -v snap &> /dev/null; then
+        echo "📥 使用snap安装Flutter..."
+        sudo snap install flutter --classic
+        
+        # 添加snap bin到PATH
+        echo 'export PATH="$PATH:/snap/bin"' >> ~/.bashrc
+        export PATH="$PATH:/snap/bin"
+    else
+        # 方法2: 手动下载安装
+        echo "📥 手动下载安装Flutter..."
+        
+        # 创建flutter目录
+        mkdir -p ~/development
+        cd ~/development
+        
+        # 下载Flutter Linux版本
+        echo "📥 下载Flutter SDK..."
+        wget -O flutter_linux.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.16.0-stable.tar.xz
+        
+        # 解压Flutter
+        echo "📂 解压Flutter SDK..."
+        tar xf flutter_linux.tar.xz
+        
+        # 添加Flutter到PATH
+        echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.bashrc
+        export PATH="$PATH:$HOME/development/flutter/bin"
+        
+        # 清理下载文件
+        rm flutter_linux.tar.xz
+    fi
     
     echo "✅ Flutter安装完成"
 else

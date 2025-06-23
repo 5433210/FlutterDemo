@@ -64,14 +64,22 @@ function Test-WSL {
 }
 
 function Set-ScriptPermissions {
-    Write-Info "Setting script permissions..."
+    Write-Info "Setting script permissions and fixing line endings..."
     
     $projectPath = "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo"
     
     try {
+        # Fix line endings for bash scripts
+        Write-Info "Converting line endings to Unix format..."
+        wsl -d Ubuntu -e dos2unix "$projectPath/scripts/setup_ubuntu_wsl_flutter.sh" 2>$null
+        wsl -d Ubuntu -e dos2unix "$projectPath/scripts/build_ubuntu_wsl.sh" 2>$null
+        
+        # Set execute permissions
+        Write-Info "Setting execute permissions..."
         wsl -d Ubuntu -e chmod +x "$projectPath/scripts/setup_ubuntu_wsl_flutter.sh"
         wsl -d Ubuntu -e chmod +x "$projectPath/scripts/build_ubuntu_wsl.sh"
-        Write-Success "Script permissions set successfully"
+        
+        Write-Success "Script permissions and line endings fixed successfully"
         return $true
     }
     catch {
