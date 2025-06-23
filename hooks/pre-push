@@ -100,9 +100,9 @@ if [ "$IS_PROTECTED_BRANCH" = true ]; then
     ANALYZE_EXIT_CODE=$?
     
     # 检查是否有严重错误（error级别）
-    ERROR_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c "error -" || echo "0")
-    WARNING_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c "warning -" || echo "0")
-    INFO_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c "info -" || echo "0")
+    ERROR_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " error " || echo "0")
+    WARNING_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " warning " || echo "0")
+    INFO_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " info " || echo "0")
     
     if [ "$ERROR_COUNT" -gt 0 ]; then
         echo -e "${RED}❌ Flutter代码分析发现 $ERROR_COUNT 个错误${NC}"
