@@ -1,0 +1,61 @@
+{
+  "app": {
+    "bundleName": "com.charasgem.app",
+    "versionCode": 20250623001,
+    "versionName": "1.0.1",
+    "minCompatibleVersionCode": 20250623001,
+    "debug": false,
+    "icon": "$media:icon",
+    "label": "$string:app_name",
+    "description": "$string:app_description",
+    "vendor": "CharasGem",
+    "versionNameResource": "$string:app_name"
+  },
+  "deviceConfig": {
+    "default": {
+      "autoLaunch": false,
+      "directLaunch": true
+    }
+  },
+  "moduleConfig": {
+    "module": {
+      "name": "entry",
+      "type": "entry",
+      "srcEntrance": "./ets/Application/MyAbilityStage.ts",
+      "description": "$string:module_description",
+      "mainElement": "MainAbility",
+      "deviceTypes": [
+        "phone",
+        "tablet",
+        "tv",
+        "wearable",
+        "car"
+      ],
+      "deliveryWithInstall": true,
+      "installationFree": false,
+      "pages": "$profile:main_pages",
+      "uiSyntax": "ets",
+      "abilities": [
+        {
+          "name": "MainAbility",
+          "srcEntrance": "./ets/MainAbility/MainAbility.ts",
+          "description": "$string:main_ability_description",
+          "icon": "$media:icon",
+          "label": "$string:main_ability_label",
+          "visible": true,
+          "launchType": "singleton",
+          "skills": [
+            {
+              "entities": [
+                "entity.system.home"
+              ],
+              "actions": [
+                "action.system.home"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

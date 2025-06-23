@@ -1,35 +1,177 @@
 {
-    "background_color": "#0175C2",
-    "description": "A versatile calligraphy management and practice application.",
-    "display": "standalone",
-    "icons": [
+  "name": "CharasGem",
+  "short_name": "CharasGem",
+  "description": "A versatile calligraphy management and practice application with advanced version management.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0175C2",
+  "theme_color": "#0175C2",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "version": "1.0.1",
+  "version_name": "1.0.1-20250623001",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "scope": "/",
+  "categories": [
+    "productivity",
+    "utilities",
+    "education"
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop view of CharasGem"
+    },
+    {
+      "src": "screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile view of CharasGem"
+    }
+  ],
+  "icons": [
+    {
+      "src": "icons/Icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新建字帖",
+      "short_name": "新建",
+      "description": "创建新的书法字帖",
+      "url": "/new-copybook",
+      "icons": [
         {
-            "sizes": "192x192",
-            "src": "icons/Icon-192.png",
-            "type": "image/png"
-        },
-        {
-            "sizes": "512x512",
-            "src": "icons/Icon-512.png",
-            "type": "image/png"
-        },
-        {
-            "purpose": "maskable",
-            "sizes": "192x192",
-            "src": "icons/Icon-maskable-192.png",
-            "type": "image/png"
-        },
-        {
-            "purpose": "maskable",
-            "sizes": "512x512",
-            "src": "icons/Icon-maskable-512.png",
-            "type": "image/png"
+          "src": "icons/shortcut-new.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
-    ],
-    "name": "CharasGem",
-    "orientation": "portrait-primary",
-    "prefer_related_applications": false,
-    "short_name": "CharasGem",
-    "start_url": ".",
-    "theme_color": "#0175C2"
+      ]
+    },
+    {
+      "name": "练习模式",
+      "short_name": "练习",
+      "description": "进入书法练习模式",
+      "url": "/practice",
+      "icons": [
+        {
+          "src": "icons/shortcut-practice.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "字符收藏",
+      "short_name": "收藏",
+      "description": "查看收藏的字符",
+      "url": "/collection",
+      "icons": [
+        {
+          "src": "icons/shortcut-collection.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": [
+            "image/*",
+            "text/*",
+            ".copybook"
+          ]
+        }
+      ]
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+charasgem",
+      "url": "/handle?url=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/open-file",
+      "accept": {
+        "application/charasgem-copybook": [
+          ".copybook"
+        ],
+        "text/plain": [
+          ".txt"
+        ],
+        "image/*": [
+          ".png",
+          ".jpg",
+          ".jpeg"
+        ]
+      }
+    }
+  ],
+  "build_timestamp": "2025-06-23T12:01:00.276919"
 }

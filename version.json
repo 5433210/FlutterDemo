@@ -1,0 +1,49 @@
+{
+  "version": {
+    "build": "20250623001",
+    "major": 1,
+    "minor": 0,
+    "patch": 1,
+    "prerelease": ""
+  },
+  "git": {
+    "commit": "7ec3784b",
+    "branch": "main",
+    "tag": null,
+    "is_dirty": true
+  },
+  "build_time": "2025-06-23T02:25:39.464757",
+  "platforms": {
+    "android": {
+      "versionName": "1.0.1",
+      "versionCode": 20250623001
+    },
+    "ios": {
+      "CFBundleShortVersionString": "1.0.1",
+      "CFBundleVersion": "20250623001"
+    },
+    "ohos": {
+      "versionName": "1.0.1",
+      "versionCode": 20250623001
+    },
+    "web": {
+      "version": "1.0.1",
+      "version_name": "1.0.1-20250623001"
+    },
+    "windows": {
+      "FileVersion": "1.0.1.20250623001",
+      "ProductVersion": "1.0.1.20250623001"
+    },
+    "macos": {
+      "CFBundleShortVersionString": "1.0.1",
+      "CFBundleVersion": "20250623001"
+    },
+    "linux": {
+      "APP_VERSION_MAJOR": 1,
+      "APP_VERSION_MINOR": 0,
+      "APP_VERSION_PATCH": 1,
+      "APP_BUILD_NUMBER": "20250623001",
+      "APP_VERSION_STRING": "1.0.1-20250623001"
+    }
+  }
+}

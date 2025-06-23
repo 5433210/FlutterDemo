@@ -1,0 +1,24 @@
+# Android应用签名配置
+# 将此文件复制为 key.properties 并填入实际的签名信息
+# 注意：key.properties 文件不应提交到版本控制系统
+
+# Release签名配置
+storePassword=your_keystore_password
+keyPassword=your_key_password
+keyAlias=your_key_alias
+storeFile=../release.keystore
+
+# 可选：上传签名配置（用于Play App Signing）
+# uploadStorePassword=your_upload_keystore_password
+# uploadKeyPassword=your_upload_key_password
+# uploadKeyAlias=your_upload_key_alias
+# uploadStoreFile=../upload.keystore
+
+# Google Play Console配置
+# playConsoleServiceAccountJson=../google-play-service-account.json
+# playConsoleTrack=internal  # internal, alpha, beta, production
+
+# 构建配置
+# enableR8=true
+# enableProguard=true
+# enableShrinkResources=true 

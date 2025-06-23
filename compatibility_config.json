@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "description": "Flutter Demo 应用版本兼容性配置",
+  "lastUpdated": "2025-06-20T10:00:00.000Z",
+  "compatibility": [
+    {
+      "version": "1.0.0",
+      "minCompatibleVersion": "1.0.0",
+      "maxCompatibleVersion": null,
+      "apiCompatibility": "full",
+      "dataCompatibility": "full",
+      "description": "初始发布版本，完全兼容",
+      "incompatibleFeatures": [],
+      "migrationSteps": [],
+      "createdAt": "2025-06-20T10:00:00.000Z",
+      "updatedAt": "2025-06-20T10:00:00.000Z"
+    }
+  ]
+} 

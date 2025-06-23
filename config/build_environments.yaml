@@ -1,0 +1,436 @@
+# 多平台构建环境配置
+# 定义各平台的构建环境要求、工具链和配置
+
+version: "1.0"
+updated: "2025-01-20"
+
+# 通用配置
+common:
+  flutter:
+    min_version: "3.16.0"
+    channels: ["stable", "beta"]
+    required_features:
+      - dart
+      - material_design
+  
+  git:
+    min_version: "2.30.0"
+  
+  python:
+    min_version: "3.8.0"
+    required_packages:
+      - pyyaml
+      - requests
+
+# 平台特定配置
+platforms:
+  android:
+    name: "Android"
+    enabled: true
+    requirements:
+      os: ["windows", "macos", "linux"]
+      flutter_config: "enable-android"
+      
+    tools:
+      android_sdk:
+        min_version: "33"
+        api_levels: [21, 28, 33, 34]
+        build_tools: "34.0.0"
+        
+      java:
+        min_version: "11"
+        max_version: "17"
+        
+      gradle:
+        min_version: "8.0"
+        wrapper_supported: true
+        
+    environment_variables:
+      required:
+        - ANDROID_HOME
+        - JAVA_HOME
+      optional:
+        - ANDROID_SDK_ROOT
+        
+    project_structure:
+      required_files:
+        - "android/app/build.gradle"
+        - "android/build.gradle"
+        - "android/gradle.properties"
+        - "android/settings.gradle"
+      
+    build_outputs:
+      debug:
+        - "build/app/outputs/flutter-apk/app-debug.apk"
+      release:
+        - "build/app/outputs/bundle/release/app-release.aab"
+        - "build/app/outputs/flutter-apk/app-release.apk"
+        
+    signing:
+      debug:
+        keystore: "android/app/debug.keystore"
+        auto_generated: true
+      release:
+        keystore_required: true
+        
+  ios:
+    name: "iOS"
+    enabled: true
+    requirements:
+      os: ["macos"]
+      flutter_config: "enable-ios"
+      
+    tools:
+      xcode:
+        min_version: "14.0"
+        required_components:
+          - "iOS SDK"
+          - "Command Line Tools"
+          
+      cocoapods:
+        min_version: "1.11.0"
+        
+    environment_variables:
+      optional:
+        - DEVELOPER_DIR
+        
+    project_structure:
+      required_files:
+        - "ios/Runner.xcodeproj/project.pbxproj"
+        - "ios/Runner/Info.plist"
+        - "ios/Podfile"
+        
+    build_outputs:
+      debug:
+        - "build/ios/iphoneos/Runner.app"
+      release:
+        - "build/ios/ipa/Runner.ipa"
+        
+    signing:
+      development:
+        certificate_required: true
+        provisioning_profile_required: true
+      distribution:
+        certificate_required: true
+        provisioning_profile_required: true
+        
+  web:
+    name: "Web"
+    enabled: true
+    requirements:
+      os: ["windows", "macos", "linux"]
+      flutter_config: "enable-web"
+      
+    tools:
+      chrome:
+        required_for_debug: true
+        
+    project_structure:
+      required_files:
+        - "web/index.html"
+        - "web/manifest.json"
+        
+    build_outputs:
+      debug:
+        - "build/web/"
+      release:
+        - "build/web/"
+        
+    deployment:
+      static_hosting: true
+      pwa_support: true
+      
+  windows:
+    name: "Windows"
+    enabled: true
+    requirements:
+      os: ["windows"]
+      flutter_config: "enable-windows-desktop"
+      
+    tools:
+      visual_studio:
+        min_version: "2019"
+        required_workloads:
+          - "C++ build tools"
+          - "Windows 10/11 SDK"
+          
+    project_structure:
+      required_files:
+        - "windows/CMakeLists.txt"
+        - "windows/runner/main.cpp"
+        
+    build_outputs:
+      debug:
+        - "build/windows/runner/Debug/"
+      release:
+        - "build/windows/runner/Release/"
+        
+    packaging:
+      msix:
+        supported: true
+        certificate_required: true
+        
+  macos:
+    name: "macOS"
+    enabled: true
+    requirements:
+      os: ["macos"]
+      flutter_config: "enable-macos-desktop"
+      
+    tools:
+      xcode:
+        min_version: "14.0"
+        required_components:
+          - "macOS SDK"
+          - "Command Line Tools"
+          
+    project_structure:
+      required_files:
+        - "macos/Runner.xcodeproj/project.pbxproj"
+        - "macos/Runner/Info.plist"
+        
+    build_outputs:
+      debug:
+        - "build/macos/Build/Products/Debug/demo.app"
+      release:
+        - "build/macos/Build/Products/Release/demo.app"
+        
+    packaging:
+      dmg:
+        supported: true
+      app_store:
+        supported: true
+        certificate_required: true
+        notarization_required: true
+        
+  linux:
+    name: "Linux"
+    enabled: true
+    requirements:
+      os: ["linux"]
+      flutter_config: "enable-linux-desktop"
+      
+    tools:
+      cmake:
+        min_version: "3.16"
+        
+      ninja:
+        required: true
+        
+      gtk:
+        version: "3.0"
+        dev_packages:
+          - "libgtk-3-dev"
+          - "pkg-config"
+          
+    project_structure:
+      required_files:
+        - "linux/CMakeLists.txt"
+        - "linux/main.cc"
+        
+    build_outputs:
+      debug:
+        - "build/linux/debug/bundle/"
+      release:
+        - "build/linux/release/bundle/"
+        
+    packaging:
+      formats:
+        - name: "AppImage"
+          tool: "appimagetool"
+        - name: "Snap"
+          tool: "snapcraft"
+        - name: "DEB"
+          tool: "dpkg-deb"
+        - name: "RPM"
+          tool: "rpmbuild"
+        - name: "Flatpak"
+          tool: "flatpak-builder"
+          
+  harmonyos:
+    name: "HarmonyOS"
+    enabled: true
+    experimental: true
+    requirements:
+      os: ["windows", "macos", "linux"]
+      
+    tools:
+      deveco_studio:
+        min_version: "4.0"
+        
+      nodejs:
+        min_version: "14.0"
+        
+      harmony_sdk:
+        min_version: "4.0"
+        
+    environment_variables:
+      required:
+        - HARMONY_HOME
+        
+    project_structure:
+      required_files:
+        - "ohos/AppScope/app.json5"
+        - "ohos/entry/src/main/module.json5"
+        
+    build_outputs:
+      debug:
+        - "ohos/entry/build/default/outputs/default/entry-default-unsigned.hap"
+      release:
+        - "ohos/entry/build/default/outputs/default/entry-default-signed.hap"
+        
+    deployment:
+      app_gallery:
+        supported: true
+        certificate_required: true
+
+# 构建环境验证配置
+verification:
+  timeout: 30  # 秒
+  
+  checks:
+    flutter:
+      - command: "flutter --version"
+        expect_success: true
+      - command: "flutter doctor --machine"
+        expect_success: true
+        
+    platform_specific:
+      android:
+        - command: "java -version"
+          expect_success: true
+        - env_var: "ANDROID_HOME"
+          expect_exists: true
+          
+      ios:
+        - command: "xcodebuild -version"
+          expect_success: true
+          os_required: "macos"
+          
+      web:
+        - command: "flutter config --list"
+          expect_contains: "enable-web: true"
+          
+      windows:
+        - command: "flutter config --list"
+          expect_contains: "enable-windows-desktop: true"
+          os_required: "windows"
+          
+      macos:
+        - command: "flutter config --list"
+          expect_contains: "enable-macos-desktop: true"
+          os_required: "macos"
+          
+      linux:
+        - command: "flutter config --list"
+          expect_contains: "enable-linux-desktop: true"
+          os_required: "linux"
+        - command: "pkg-config --exists gtk+-3.0"
+          expect_success: true
+          os_required: "linux"
+          
+      harmonyos:
+        - command: "node --version"
+          expect_success: true
+        - env_var: "HARMONY_HOME"
+          expect_exists: false  # 可选
+
+# 构建环境恢复配置
+restoration:
+  flutter:
+    steps:
+      - name: "清理缓存"
+        command: "flutter clean"
+        
+      - name: "更新Flutter"
+        command: "flutter upgrade"
+        optional: true
+        
+      - name: "获取依赖"
+        command: "flutter pub get"
+        
+  platform_creation:
+    android:
+      command: "flutter create --platforms=android ."
+      
+    ios:
+      command: "flutter create --platforms=ios ."
+      os_required: "macos"
+      
+    web:
+      command: "flutter create --platforms=web ."
+      
+    windows:
+      command: "flutter create --platforms=windows ."
+      os_required: "windows"
+      
+    macos:
+      command: "flutter create --platforms=macos ."
+      os_required: "macos"
+      
+    linux:
+      command: "flutter create --platforms=linux ."
+      os_required: "linux"
+
+# 构建脚本配置
+build_scripts:
+  parallel_builds: true
+  max_parallel: 3
+  
+  commands:
+    android:
+      debug: "flutter build apk --debug"
+      release: "flutter build appbundle --release"
+      
+    ios:
+      debug: "flutter build ios --debug --no-codesign"
+      release: "flutter build ipa --release"
+      
+    web:
+      debug: "flutter build web --debug"
+      release: "flutter build web --release"
+      
+    windows:
+      debug: "flutter build windows --debug"
+      release: "flutter build windows --release"
+      
+    macos:
+      debug: "flutter build macos --debug"
+      release: "flutter build macos --release"
+      
+    linux:
+      debug: "flutter build linux --debug"
+      release: "flutter build linux --release"
+
+# CI/CD配置
+ci_cd:
+  github_actions:
+    runners:
+      android: "ubuntu-latest"
+      ios: "macos-latest"
+      web: "ubuntu-latest"
+      windows: "windows-latest"
+      macos: "macos-latest"
+      linux: "ubuntu-latest"
+      harmonyos: "ubuntu-latest"
+      
+    matrix_strategy:
+      flutter_version: ["3.16.x", "3.19.x"]
+      
+  build_artifacts:
+    retention_days: 30
+    
+    patterns:
+      android:
+        - "build/app/outputs/**/*.apk"
+        - "build/app/outputs/**/*.aab"
+      ios:
+        - "build/ios/ipa/*.ipa"
+      web:
+        - "build/web/**"
+      windows:
+        - "build/windows/runner/Release/**"
+      macos:
+        - "build/macos/Build/Products/Release/*.app"
+      linux:
+        - "build/linux/release/bundle/**" 

@@ -9,6 +9,13 @@ set(BINARY_NAME "demo")
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
 set(APPLICATION_ID "com.example.demo")
 
+# Application version information
+set(APP_VERSION_MAJOR 1)
+set(APP_VERSION_MINOR 0)
+set(APP_VERSION_PATCH 1)
+set(APP_BUILD_NUMBER "20250620001")
+set(APP_VERSION_STRING "1.0.1-20250623001")
+
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(SET CMP0063 NEW)

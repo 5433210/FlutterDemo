@@ -1,0 +1,182 @@
+#!/bin/bash
+# Git pre-push hook for version management
+# 在推送前进行版本信息验证和构建测试
+
+set -e
+
+# 颜色输出
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🚀 运行 pre-push 版本验证...${NC}"
+
+# 读取推送信息
+remote="$1"
+url="$2"
+
+# 检查是否在项目根目录
+if [ ! -f "pubspec.yaml" ]; then
+    echo -e "${RED}❌ 错误: 不在Flutter项目根目录${NC}"
+    exit 1
+fi
+
+# 检查Python环境
+if ! command -v python &> /dev/null; then
+    echo -e "${RED}❌ 错误: 未找到Python环境${NC}"
+    exit 1
+fi
+
+# 获取当前分支
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo -e "${BLUE}📋 当前分支: $CURRENT_BRANCH${NC}"
+
+# 检查是否推送到主分支
+PROTECTED_BRANCHES=("main" "master" "develop")
+IS_PROTECTED_BRANCH=false
+
+for branch in "${PROTECTED_BRANCHES[@]}"; do
+    if [[ "$CURRENT_BRANCH" == "$branch" ]]; then
+        IS_PROTECTED_BRANCH=true
+        echo -e "${YELLOW}⚠️ 推送到保护分支: $branch${NC}"
+        break
+    fi
+done
+
+# 运行版本一致性检查
+if [ -f "scripts/check_version_consistency.py" ]; then
+    echo -e "${BLUE}🔍 运行版本一致性检查...${NC}"
+    if python scripts/check_version_consistency.py; then
+        echo -e "${GREEN}✅ 版本一致性检查通过${NC}"
+    else
+        echo -e "${RED}❌ 版本一致性检查失败${NC}"
+        echo -e "${YELLOW}请修复版本不一致问题后重新推送${NC}"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}⚠️ 警告: 版本检查脚本不存在${NC}"
+fi
+
+# 检查版本信息是否最新
+if [ -f "scripts/generate_version_info.py" ]; then
+    echo -e "${BLUE}🔍 检查版本信息是否最新...${NC}"
+    
+    # 生成临时版本信息
+    TEMP_VERSION_FILE=$(mktemp)
+    if python scripts/generate_version_info.py --output "$TEMP_VERSION_FILE" > /dev/null 2>&1; then
+        if [ -f "version.json" ]; then
+            # 比较版本信息是否一致
+            if diff -q "version.json" "$TEMP_VERSION_FILE" > /dev/null; then
+                echo -e "${GREEN}✅ 版本信息是最新的${NC}"
+            else
+                echo -e "${YELLOW}⚠️ 警告: 版本信息可能不是最新的${NC}"
+                echo -e "${BLUE}建议运行: python scripts/generate_version_info.py${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠️ 警告: version.json 文件不存在${NC}"
+        fi
+        rm "$TEMP_VERSION_FILE"
+    else
+        echo -e "${YELLOW}⚠️ 警告: 无法生成版本信息进行比较${NC}"
+    fi
+fi
+
+# 对保护分支进行额外检查
+if [ "$IS_PROTECTED_BRANCH" = true ]; then
+    echo -e "${BLUE}🔒 保护分支额外检查...${NC}"
+    
+    # 检查是否有未提交的更改
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo -e "${RED}❌ 错误: 存在未提交的更改${NC}"
+        echo -e "${YELLOW}请提交所有更改后再推送到保护分支${NC}"
+        exit 1
+    fi
+    
+    # 运行Flutter分析
+    echo -e "${BLUE}🔍 运行Flutter代码分析...${NC}"
+    if flutter analyze --no-pub > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Flutter代码分析通过${NC}"
+    else
+        echo -e "${RED}❌ Flutter代码分析失败${NC}"
+        echo -e "${YELLOW}请修复代码分析问题后重新推送${NC}"
+        exit 1
+    fi
+    
+    # 运行基础构建测试 (仅Android debug构建，速度较快)
+    if command -v flutter &> /dev/null; then
+        echo -e "${BLUE}🔨 运行基础构建测试 (Android Debug)...${NC}"
+        if flutter build apk --debug > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Android Debug构建成功${NC}"
+        else
+            echo -e "${RED}❌ Android Debug构建失败${NC}"
+            echo -e "${YELLOW}请修复构建问题后重新推送${NC}"
+            exit 1
+        fi
+    fi
+    
+    # 检查版本标签 (如果是版本发布)
+    LATEST_COMMIT_MSG=$(git log -1 --pretty=%B)
+    if [[ "$LATEST_COMMIT_MSG" =~ (version|版本|release|发布|v[0-9]+\.[0-9]+\.[0-9]+) ]]; then
+        echo -e "${BLUE}🏷️ 检测到版本相关提交，检查版本标签...${NC}"
+        
+        # 获取当前版本
+        if [ -f "version.json" ]; then
+            CURRENT_VERSION=$(python -c "import json; v=json.load(open('version.json'))['version']; print(f\"v{v['major']}.{v['minor']}.{v['patch']}\")" 2>/dev/null || echo "unknown")
+            
+            if [[ "$CURRENT_VERSION" != "unknown" ]]; then
+                # 检查标签是否已存在
+                if git tag -l | grep -q "^$CURRENT_VERSION$"; then
+                    echo -e "${YELLOW}⚠️ 警告: 版本标签 $CURRENT_VERSION 已存在${NC}"
+                else
+                    echo -e "${BLUE}📋 当前版本: $CURRENT_VERSION (标签未创建)${NC}"
+                    echo -e "${YELLOW}💡 提示: 可以使用以下命令创建版本标签:${NC}"
+                    echo -e "${BLUE}   git tag $CURRENT_VERSION${NC}"
+                    echo -e "${BLUE}   git push origin $CURRENT_VERSION${NC}"
+                fi
+            fi
+        fi
+    fi
+fi
+
+# 检查远程仓库连接
+echo -e "${BLUE}🌐 检查远程仓库连接...${NC}"
+if git ls-remote "$url" HEAD > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ 远程仓库连接正常${NC}"
+else
+    echo -e "${RED}❌ 错误: 无法连接到远程仓库${NC}"
+    echo -e "${YELLOW}请检查网络连接和仓库权限${NC}"
+    exit 1
+fi
+
+# 检查推送大小 (避免推送过大的文件)
+echo -e "${BLUE}📊 检查推送大小...${NC}"
+PUSH_SIZE=$(git diff --stat HEAD~1..HEAD | tail -1 | grep -o '[0-9]\+ insertions\|[0-9]\+ deletions' | awk '{sum += $1} END {print sum}' || echo "0")
+if [ "$PUSH_SIZE" -gt 10000 ]; then
+    echo -e "${YELLOW}⚠️ 警告: 推送包含大量更改 ($PUSH_SIZE 行)${NC}"
+    echo -e "${YELLOW}请确认这是预期的更改${NC}"
+fi
+
+# 生成推送摘要
+echo -e "${BLUE}📋 推送摘要:${NC}"
+echo -e "${BLUE}  - 分支: $CURRENT_BRANCH${NC}"
+echo -e "${BLUE}  - 远程: $remote ($url)${NC}"
+echo -e "${BLUE}  - 提交: $(git log -1 --pretty=format:'%h - %s')${NC}"
+
+# 如果是版本相关推送，显示版本信息
+if [ -f "version.json" ]; then
+    VERSION_INFO=$(python -c "
+import json
+try:
+    with open('version.json') as f:
+        v = json.load(f)['version']
+    print(f\"  - 版本: {v['major']}.{v['minor']}.{v['patch']}+{v['build']}\")
+except:
+    print('  - 版本: 无法读取')
+" 2>/dev/null || echo "  - 版本: 解析失败")
+    echo -e "${BLUE}$VERSION_INFO${NC}"
+fi
+
+echo -e "${GREEN}✅ pre-push 验证完成${NC}"
+exit 0 

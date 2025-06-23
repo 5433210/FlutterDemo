@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "字字珠玑"
+    },
+    {
+      "name": "app_description", 
+      "value": "一款多功能的书法管理和练习应用"
+    },
+    {
+      "name": "module_description",
+      "value": "字字珠玑主模块"
+    },
+    {
+      "name": "main_ability_description",
+      "value": "字字珠玑主能力"
+    },
+    {
+      "name": "main_ability_label",
+      "value": "字字珠玑"
+    }
+  ]
+} 

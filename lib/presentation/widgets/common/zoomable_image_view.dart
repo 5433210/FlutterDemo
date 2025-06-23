@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -155,42 +156,19 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
   }
 
   Widget _buildSvgImageSafe(String path, ThemeData theme) {
-    try {
-      // Check if file exists before trying to load it
-      final file = File(path);
-      if (!file.existsSync()) {
-        return widget.errorBuilder?.call(context, 'File not found', null) ??
-            Container(
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: const Center(
-                child: Icon(Icons.broken_image),
+    // Temporary workaround: Use regular image handling for all platforms
+    // TODO: Implement proper conditional compilation for SVG handling
+    return CachedImage(
+      path: path,
+      fit: BoxFit.contain,
+      errorBuilder: widget.errorBuilder ??
+          (context, error, stackTrace) => Container(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: const Center(
+                  child: Icon(Icons.broken_image),
+                ),
               ),
-            );
-      }
-
-      return SvgPicture.file(
-        file,
-        fit: BoxFit.contain,
-        placeholderBuilder: (context) =>
-            widget.loadingBuilder?.call(context) ??
-            Container(
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-        key: ValueKey(path), // Add key to help with rebuilds
-      );
-    } catch (e) {
-      // If any error occurs during SVG loading, use error builder or fallback
-      return widget.errorBuilder?.call(context, e.toString(), null) ??
-          Container(
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: const Center(
-              child: Icon(Icons.broken_image),
-            ),
-          );
-    }
+    );
   }
 
   void _handleInteractionEnd(ScaleEndDetails details) {

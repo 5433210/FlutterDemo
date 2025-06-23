@@ -1,0 +1,26 @@
+{
+  "name": "demo-harmonyos",
+  "version": "1.0.1",
+  "description": "Flutter Demo HarmonyOS应用",
+  "main": "index.js",
+  "scripts": {
+    "build": "hvigorw assembleHap",
+    "clean": "hvigorw clean"
+  },
+  "dependencies": {
+    "@ohos/hvigor-ohos-plugin": "^3.0.0"
+  },
+  "devDependencies": {
+    "@ohos/hvigor": "^3.0.0"
+  },
+  "keywords": [
+    "harmonyos",
+    "flutter",
+    "demo"
+  ],
+  "author": "Demo Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 

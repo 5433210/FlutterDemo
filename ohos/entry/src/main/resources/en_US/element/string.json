@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "CharasGem"
+    },
+    {
+      "name": "app_description",
+      "value": "A versatile calligraphy management and practice application"
+    },
+    {
+      "name": "module_description",
+      "value": "CharasGem main module"
+    },
+    {
+      "name": "main_ability_description",
+      "value": "CharasGem main ability"
+    },
+    {
+      "name": "main_ability_label",
+      "value": "CharasGem"
+    }
+  ]
+} 

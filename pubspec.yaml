@@ -1,6 +1,6 @@
 name: charasgem
 description: A versatile calligraphy management and practice application.
-version: 1.0.0+1
+version: 1.0.1+20250623001
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -42,6 +42,7 @@ dependencies:
   photo_view: ^0.14.0
   mime: ^2.0.0
   xml: ^6.5.0
+  package_info_plus: ^8.0.0
   
 
 dev_dependencies:

@@ -1,0 +1,45 @@
+build:
+  timezone: Asia/Shanghai
+git:
+  tag_prefix: v
+platforms:
+  android:
+    application_id: com.charasgem.app
+    min_sdk: 21
+    target_sdk: 34
+  ios:
+    bundle_id: com.charasgem.app
+    min_version: '12.0'
+    target_version: '17.0'
+  linux:
+    min_version: Ubuntu 18.04
+  macos:
+    bundle_id: com.charasgem.app
+    min_version: '10.14'
+  ohos:
+    bundle_name: com.charasgem.app
+    min_api: 9
+    target_api: 12
+  web:
+    background_color: '#0175C2'
+    pwa_version: 1.0.0
+    theme_color: '#0175C2'
+  windows:
+    company_name: CharasGem
+    min_version: 10.0.17763.0
+project:
+  description: A versatile calligraphy management and practice application.
+  display_name: 字字珠玑
+  name: charasgem
+release:
+  channels:
+  - production
+  - beta
+  - alpha
+  - dev
+version:
+  build: '20250623001'
+  major: 1
+  minor: 0
+  patch: 1
+  prerelease: ''
