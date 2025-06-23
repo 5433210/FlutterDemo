@@ -156,15 +156,20 @@ If no action is specified, interactive menu will be displayed.
 }
 
 function Show-Menu {
+    Clear-Host
     Write-Host ""
-    Write-Host "=== WSL Flutter Linux Build Tool ===" -ForegroundColor Magenta
+    Write-Host "=========================================" -ForegroundColor Magenta
+    Write-Host "  WSL Flutter Linux Build Tool" -ForegroundColor Magenta
+    Write-Host "=========================================" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "Available options:" -ForegroundColor White
-    Write-Host "1. Setup WSL Flutter environment (first time use)" -ForegroundColor Cyan
-    Write-Host "2. Build Linux version (requires environment setup first)" -ForegroundColor Cyan  
-    Write-Host "3. Show help information" -ForegroundColor Cyan
-    Write-Host "4. Exit" -ForegroundColor Cyan
+    Write-Host "Available options:" -ForegroundColor Yellow
     Write-Host ""
+    Write-Host "  1. Setup WSL Flutter environment (first time use)" -ForegroundColor Green
+    Write-Host "  2. Build Linux version (requires environment setup first)" -ForegroundColor Green  
+    Write-Host "  3. Show help information" -ForegroundColor Green
+    Write-Host "  4. Exit" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "=========================================" -ForegroundColor Magenta
     
     do {
         $choice = Read-Host "Please select operation (1-4)"

@@ -31,10 +31,17 @@ wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/
 wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_ubuntu_wsl.sh"
 
 echo.
+echo =========================================
+echo   WSL Flutter Linux Build Tool
+echo =========================================
+echo.
 echo Available options:
-echo 1. Setup WSL Flutter environment (first time use)
-echo 2. Build Linux version (requires environment setup first)
-echo 3. Exit
+echo.
+echo   1. Setup WSL Flutter environment (first time use)
+echo   2. Build Linux version (requires environment setup first)
+echo   3. Exit
+echo.
+echo =========================================
 echo.
 
 set /p choice="Please select operation (1-3): "
