@@ -1073,6 +1073,42 @@ abstract class AppLocalizations {
   /// **'配置管理'**
   String get configManagement;
 
+  /// No description provided for @configManagementDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理书法风格和书写工具配置'**
+  String get configManagementDescription;
+
+  /// No description provided for @configManagementTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'书法风格管理'**
+  String get configManagementTitle;
+
+  /// No description provided for @configInitializing.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在初始化配置...'**
+  String get configInitializing;
+
+  /// No description provided for @configInitializationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置初始化失败'**
+  String get configInitializationFailed;
+
+  /// No description provided for @itemsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个选项'**
+  String itemsCount(Object count);
+
+  /// No description provided for @writingToolManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'书写工具管理'**
+  String get writingToolManagement;
+
   /// No description provided for @confirm.
   ///
   /// In zh, this message translates to:

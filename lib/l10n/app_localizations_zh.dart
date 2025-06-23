@@ -514,6 +514,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get configManagement => '配置管理';
 
   @override
+  String get configManagementDescription => '管理书法风格和书写工具配置';
+
+  @override
+  String get configManagementTitle => '书法风格管理';
+
+  @override
+  String get configInitializing => '正在初始化配置...';
+
+  @override
+  String get configInitializationFailed => '配置初始化失败';
+
+  @override
+  String itemsCount(Object count) {
+    return '$count 个选项';
+  }
+
+  @override
+  String get writingToolManagement => '书写工具管理';
+
+  @override
   String get confirm => '确定';
 
   @override

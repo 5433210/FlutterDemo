@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../l10n/app_localizations.dart';
 import 'practice_edit_controller.dart';
-import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 
 /// Material 3 layer management panel
 class M3PracticeLayerPanel extends StatefulWidget {
@@ -42,7 +41,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
     final colorScheme = Theme.of(context).colorScheme;
 
     final layers = widget.controller.state.layers;
-    
+
     EditPageLogger.propertyPanelDebug(
       '图层管理面板构建',
       data: {
@@ -84,9 +83,10 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
       final newName = _nameController.text.trim();
       final layerId = _editingLayerId!;
       final layers = widget.controller.state.layers;
-      final layer = layers.firstWhere((l) => l['id'] == layerId, orElse: () => {});
+      final layer =
+          layers.firstWhere((l) => l['id'] == layerId, orElse: () => {});
       final oldName = layer['name'] as String? ?? 'Unknown';
-      
+
       if (newName.isNotEmpty && newName != oldName) {
         EditPageLogger.propertyPanelDebug(
           '图层名称修改',
@@ -97,11 +97,11 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
             'operation': 'layer_rename',
           },
         );
-        
+
         try {
           // Modify layer name
           widget.controller.renameLayer(layerId, newName);
-          
+
           EditPageLogger.propertyPanelDebug(
             '图层名称修改成功',
             data: {
@@ -123,7 +123,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           );
         }
       }
-      
+
       // Reset edit state
       setState(() {
         _editingLayerId = null;
@@ -299,7 +299,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                             style: IconButton.styleFrom(
                               padding: EdgeInsets.zero,
                             ),
-                            tooltip: AppLocalizations.of(context)!.renameLayer,
+                            tooltip: AppLocalizations.of(context).renameLayer,
                           ),
                         ),
 
@@ -392,9 +392,9 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           final actualNewIndex = layers.length -
               1 -
               (newIndex > oldIndex ? newIndex - 1 : newIndex);
-          
+
           final movedLayer = layers[actualOldIndex];
-          
+
           EditPageLogger.propertyPanelDebug(
             '图层重新排序',
             data: {
@@ -406,7 +406,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
               'operation': 'layer_reorder',
             },
           );
-          
+
           widget.onReorderLayer(actualOldIndex, actualNewIndex);
         },
         proxyDecorator: (child, index, animation) {
@@ -437,7 +437,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           FilledButton.icon(
             onPressed: () {
               final currentLayersCount = widget.controller.state.layers.length;
-              
+
               EditPageLogger.propertyPanelDebug(
                 '添加新图层',
                 data: {
@@ -445,15 +445,12 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                   'operation': 'layer_add',
                 },
               );
-              
+
               widget.onAddLayer();
             },
             icon: const Icon(Icons.add, size: 18),
             label: Text(l10n.addLayer),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              textStyle: const TextStyle(fontSize: 14),
-            ),
+            style: FilledButton.styleFrom(),
           ),
         ],
       ),
@@ -515,10 +512,10 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           'operation': 'layer_delete_confirmed',
         },
       );
-      
+
       try {
         widget.onDeleteLayer(layerId);
-        
+
         EditPageLogger.propertyPanelDebug(
           '图层删除成功',
           data: {

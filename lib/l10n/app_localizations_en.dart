@@ -514,6 +514,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configManagement => 'Configuration Management';
 
   @override
+  String get configManagementDescription => 'Manage calligraphy styles and writing tools configuration';
+
+  @override
+  String get configManagementTitle => 'Calligraphy Style Management';
+
+  @override
+  String get configInitializing => 'Initializing configuration...';
+
+  @override
+  String get configInitializationFailed => 'Configuration initialization failed';
+
+  @override
+  String itemsCount(Object count) {
+    return '$count items';
+  }
+
+  @override
+  String get writingToolManagement => 'Writing Tool Management';
+
+  @override
   String get confirm => 'Confirm';
 
   @override
