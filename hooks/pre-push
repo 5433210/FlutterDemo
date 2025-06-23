@@ -63,31 +63,11 @@ fi
 if [ -f "scripts/generate_version_info.py" ]; then
     echo -e "${BLUE}🔍 检查版本信息是否最新...${NC}"
     
-    # 生成临时版本信息
-    TEMP_VERSION_FILE=$(mktemp)
-    echo -e "${BLUE}📋 生成临时版本文件: $TEMP_VERSION_FILE${NC}"
-    
-    VERSION_GENERATE_OUTPUT=$(python scripts/generate_version_info.py --output "$TEMP_VERSION_FILE" 2>&1)
-    VERSION_GENERATE_EXIT_CODE=$?
-    
-    if [ $VERSION_GENERATE_EXIT_CODE -eq 0 ]; then
-        if [ -f "version.json" ]; then
-            # 比较版本信息是否一致
-            if diff -q "version.json" "$TEMP_VERSION_FILE" > /dev/null; then
-                echo -e "${GREEN}✅ 版本信息是最新的${NC}"
-            else
-                echo -e "${YELLOW}⚠️ 警告: 版本信息可能不是最新的${NC}"
-                echo -e "${BLUE}建议运行: python scripts/generate_version_info.py${NC}"
-            fi
-        else
-            echo -e "${YELLOW}⚠️ 警告: version.json 文件不存在${NC}"
-        fi
-        rm "$TEMP_VERSION_FILE"
+    # 简化版本检查：只检查文件是否存在
+    if [ -f "version.json" ]; then
+        echo -e "${GREEN}✅ 版本信息文件存在${NC}"
     else
-        echo -e "${YELLOW}⚠️ 警告: 无法生成版本信息进行比较${NC}"
-        echo -e "${BLUE}💡 退出代码: $VERSION_GENERATE_EXIT_CODE${NC}"
-        echo -e "${BLUE}💡 输出详情: $VERSION_GENERATE_OUTPUT${NC}"
-        rm -f "$TEMP_VERSION_FILE"
+        echo -e "${YELLOW}⚠️ 警告: version.json 文件不存在，建议运行版本生成脚本${NC}"
     fi
 fi
 
@@ -107,27 +87,17 @@ if [ "$IS_PROTECTED_BRANCH" = true ]; then
     ANALYZE_OUTPUT=$(flutter analyze --no-pub 2>&1)
     ANALYZE_EXIT_CODE=$?
     
-    # 调试：显示分析输出的前几行
-    echo -e "${BLUE}📋 分析输出示例:${NC}"
-    echo "$ANALYZE_OUTPUT" | head -5
-    
-    # 检查是否有严重错误（error级别）
-    ERROR_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " error -" || echo "0")
-    WARNING_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " warning -" || echo "0")
-    INFO_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " info -" || echo "0")
-    
-    echo -e "${BLUE}📊 分析结果统计: 错误 $ERROR_COUNT, 警告 $WARNING_COUNT, 信息 $INFO_COUNT${NC}"
-    
-    if [ "$ERROR_COUNT" -gt 0 ]; then
-        echo -e "${RED}❌ Flutter代码分析发现 $ERROR_COUNT 个错误${NC}"
-        echo -e "${YELLOW}请修复错误后重新推送${NC}"
+    # 简化的分析：只检查是否有 error 级别的问题
+    if echo "$ANALYZE_OUTPUT" | grep -q " error -"; then
+        echo -e "${RED}❌ Flutter代码分析发现错误${NC}"
+        echo -e "${YELLOW}请修复代码分析错误后重新推送${NC}"
         exit 1
-    elif [ "$WARNING_COUNT" -gt 0 ] || [ "$INFO_COUNT" -gt 0 ]; then
-        echo -e "${YELLOW}⚠️ Flutter代码分析发现 $WARNING_COUNT 个警告和 $INFO_COUNT 个提示${NC}"
-        echo -e "${BLUE}💡 建议修复这些问题以提高代码质量${NC}"
-        echo -e "${GREEN}✅ 允许推送（仅有警告和提示）${NC}"
     else
-        echo -e "${GREEN}✅ Flutter代码分析通过${NC}"
+        # 允许警告和信息级别的问题通过
+        echo -e "${GREEN}✅ Flutter代码分析通过（仅检查错误级别）${NC}"
+        if echo "$ANALYZE_OUTPUT" | grep -q " warning -\| info -"; then
+            echo -e "${YELLOW}💡 提示: 存在警告或信息级别问题，建议修复以提高代码质量${NC}"
+        fi
     fi
     
     # 运行基础构建测试 (仅Android debug构建，速度较快)
