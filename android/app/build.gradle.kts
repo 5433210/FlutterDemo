@@ -44,18 +44,18 @@ fun getBuildTypeName(): String {
 android {
     namespace = "com.example.demo"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
     
     // 指定 buildToolsVersion 为已安装的版本
     buildToolsVersion = "34.0.0"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 
     // 启用BuildConfig功能
@@ -210,9 +210,9 @@ android {
     }
 
     // 打包配置
-    packagingOptions {
-        pickFirst("**/libc++_shared.so")
-        pickFirst("**/libjsc.so")
+    packaging {
+        jniLibs.pickFirsts.add("**/libc++_shared.so")
+        jniLibs.pickFirsts.add("**/libjsc.so")
     }
 }
 
@@ -245,3 +245,6 @@ tasks.whenTaskAdded {
         }
     }
 }
+
+// 解决多flavor本地化文件任务依赖冲突的简化方案
+// 通过gradle.properties禁用并行构建来解决

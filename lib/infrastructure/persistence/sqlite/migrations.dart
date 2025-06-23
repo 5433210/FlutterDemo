@@ -174,9 +174,51 @@ const migrations = [
   // 版本 5: 添加字符收藏功能
   '''
   
+  -- 确保characters表存在（如果第一个迁移失败）
+  CREATE TABLE IF NOT EXISTS characters (
+    id TEXT PRIMARY KEY,
+    workId TEXT NOT NULL,
+    pageId TEXT NOT NULL,
+    character TEXT NOT NULL,
+    region TEXT NOT NULL,
+    tags TEXT,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL,
+    FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
+  );
   
-  ALTER TABLE characters ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
-  ALTER TABLE characters ADD COLUMN note TEXT;
+  -- 创建characters表的新版本，包含需要的列
+  CREATE TABLE IF NOT EXISTS characters_new (
+    id TEXT PRIMARY KEY,
+    workId TEXT NOT NULL,
+    pageId TEXT NOT NULL,
+    character TEXT NOT NULL,
+    region TEXT NOT NULL,
+    tags TEXT,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL,
+    isFavorite INTEGER NOT NULL DEFAULT 0,
+    note TEXT,
+    FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
+  );
+  
+  -- 迁移现有数据（如果有）
+  INSERT OR IGNORE INTO characters_new (
+    id, workId, pageId, character, region, tags, createTime, updateTime, isFavorite, note
+  )
+  SELECT 
+    id, workId, pageId, character, region, tags, createTime, updateTime, 
+    COALESCE(isFavorite, 0) as isFavorite,
+    note
+  FROM characters;
+  
+  -- 删除旧表并重命名新表
+  DROP TABLE IF EXISTS characters;
+  ALTER TABLE characters_new RENAME TO characters;
+  
+  -- 重新创建索引
+  CREATE INDEX IF NOT EXISTS idx_characters_workId ON characters(workId);
+  CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(character);
   
   
   ''',
