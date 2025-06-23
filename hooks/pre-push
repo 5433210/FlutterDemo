@@ -65,7 +65,7 @@ if [ -f "scripts/generate_version_info.py" ]; then
     
     # 生成临时版本信息
     TEMP_VERSION_FILE=$(mktemp)
-    if python scripts/generate_version_info.py --output "$TEMP_VERSION_FILE" > /dev/null 2>&1; then
+    if python scripts/generate_version_info.py --output "$TEMP_VERSION_FILE" 2>/dev/null; then
         if [ -f "version.json" ]; then
             # 比较版本信息是否一致
             if diff -q "version.json" "$TEMP_VERSION_FILE" > /dev/null; then
@@ -80,6 +80,10 @@ if [ -f "scripts/generate_version_info.py" ]; then
         rm "$TEMP_VERSION_FILE"
     else
         echo -e "${YELLOW}⚠️ 警告: 无法生成版本信息进行比较${NC}"
+        # 尝试获取错误信息以便调试
+        ERROR_OUTPUT=$(python scripts/generate_version_info.py --output "$TEMP_VERSION_FILE" 2>&1 || echo "脚本执行失败")
+        echo -e "${BLUE}💡 错误详情: $ERROR_OUTPUT${NC}"
+        rm -f "$TEMP_VERSION_FILE"
     fi
 fi
 
@@ -100,9 +104,9 @@ if [ "$IS_PROTECTED_BRANCH" = true ]; then
     ANALYZE_EXIT_CODE=$?
     
     # 检查是否有严重错误（error级别）
-    ERROR_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " error " || echo "0")
-    WARNING_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " warning " || echo "0")
-    INFO_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " info " || echo "0")
+    ERROR_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " error -" || echo "0")
+    WARNING_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " warning -" || echo "0")
+    INFO_COUNT=$(echo "$ANALYZE_OUTPUT" | grep -c " info -" || echo "0")
     
     if [ "$ERROR_COUNT" -gt 0 ]; then
         echo -e "${RED}❌ Flutter代码分析发现 $ERROR_COUNT 个错误${NC}"
