@@ -45,17 +45,17 @@ function Test-WSL {
         return $false
     }
     
-    # Check if Arch Linux is available
+    # Check if Ubuntu is available
     try {
-        wsl -d Arch -e echo "WSL Arch Linux available" 2>$null | Out-Null
+        wsl -d Ubuntu -e echo "WSL Ubuntu available" 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0) {
-            Write-Error-Custom "Arch Linux WSL unavailable"
-            Write-Host "Please ensure Arch Linux WSL is installed and running" -ForegroundColor Yellow
+            Write-Error-Custom "Ubuntu WSL unavailable"
+            Write-Host "Please ensure Ubuntu WSL is installed and running" -ForegroundColor Yellow
             return $false
         }
     }
     catch {
-        Write-Error-Custom "Cannot connect to Arch Linux WSL"
+        Write-Error-Custom "Cannot connect to Ubuntu WSL"
         return $false
     }
     
@@ -69,8 +69,8 @@ function Set-ScriptPermissions {
     $projectPath = "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo"
     
     try {
-        wsl -d Arch -e chmod +x "$projectPath/scripts/setup_wsl_flutter.sh"
-        wsl -d Arch -e chmod +x "$projectPath/scripts/build_linux_wsl.sh"
+        wsl -d Ubuntu -e chmod +x "$projectPath/scripts/setup_ubuntu_wsl_flutter.sh"
+        wsl -d Ubuntu -e chmod +x "$projectPath/scripts/build_ubuntu_wsl.sh"
         Write-Success "Script permissions set successfully"
         return $true
     }
@@ -84,10 +84,10 @@ function Invoke-WSLSetup {
     Write-Info "Starting WSL Flutter environment setup..."
     
     $projectPath = "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo"
-    $setupScript = "$projectPath/scripts/setup_wsl_flutter.sh"
+    $setupScript = "$projectPath/scripts/setup_ubuntu_wsl_flutter.sh"
     
     try {
-        wsl -d Arch -e bash $setupScript
+        wsl -d Ubuntu -e bash $setupScript
         if ($LASTEXITCODE -eq 0) {
             Write-Success "WSL Flutter environment setup completed!"
             Write-Host "You can now run build command" -ForegroundColor Cyan
@@ -108,10 +108,10 @@ function Invoke-WSLBuild {
     Write-Info "Starting Linux version build..."
     
     $projectPath = "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo"
-    $buildScript = "$projectPath/scripts/build_linux_wsl.sh"
+    $buildScript = "$projectPath/scripts/build_ubuntu_wsl.sh"
     
     try {
-        wsl -d Arch -e bash $buildScript
+        wsl -d Ubuntu -e bash $buildScript
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Linux version build completed!"
             Write-Info "Build artifacts location: build\linux\x64\release\bundle\"

@@ -14,11 +14,11 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-REM Check if Arch Linux is available  
-wsl -d Arch -e echo "WSL Arch Linux available" >nul 2>&1
+REM Check if Ubuntu is available  
+wsl -d Ubuntu -e echo "WSL Ubuntu available" >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Arch Linux WSL unavailable
-    echo Please ensure Arch Linux WSL is installed and running
+    echo [ERROR] Ubuntu WSL unavailable
+    echo Please ensure Ubuntu WSL is installed and running
     pause
     exit /b 1
 )
@@ -27,8 +27,8 @@ echo [OK] WSL environment check passed
 
 REM Set script permissions and run
 echo [INFO] Setting script permissions...
-wsl -d Arch -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_wsl_flutter.sh"
-wsl -d Arch -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_linux_wsl.sh"
+wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_ubuntu_wsl_flutter.sh"
+wsl -d Ubuntu -e chmod +x "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_ubuntu_wsl.sh"
 
 echo.
 echo Available options:
@@ -42,7 +42,7 @@ set /p choice="Please select operation (1-3): "
 if "%choice%"=="1" (
     echo.
     echo [INFO] Setting up WSL Flutter environment...
-    wsl -d Arch -e bash "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_wsl_flutter.sh"
+    wsl -d Ubuntu -e bash "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/setup_ubuntu_wsl_flutter.sh"
     if %ERRORLEVEL% equ 0 (
         echo.
         echo [SUCCESS] WSL Flutter environment setup completed!
@@ -51,10 +51,10 @@ if "%choice%"=="1" (
         echo.
         echo [ERROR] WSL Flutter environment setup failed
     )
-) else if "%choice%"=="2" (
+ ) else if "%choice%"=="2" (
     echo.
     echo [INFO] Starting Linux version build...
-    wsl -d Arch -e bash "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_linux_wsl.sh"
+    wsl -d Ubuntu -e bash "/mnt/c/Users/wailik/Documents/Code/Flutter/demo/demo/scripts/build_ubuntu_wsl.sh"
     if %ERRORLEVEL% equ 0 (
         echo.
         echo [SUCCESS] Linux version build completed!
