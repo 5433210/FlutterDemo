@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Android平台构建脚本
 支持APK/AAB构建、多渠道打包、签名配置等
@@ -27,36 +28,54 @@ class AndroidBuilder:
         """检查Android构建环境"""
         print("🔍 检查Android构建环境...")
         
-        # 检查Flutter - 简化版本
+        # 检查Flutter - 修复编码问题
         flutter_found = False
         
-        # 直接尝试运行flutter命令
         try:
-            import subprocess
-            import os
+            # 尝试多种方式调用flutter命令
+            flutter_commands = [
+                ['flutter', '--version'],
+                ['flutter.bat', '--version']
+            ]
             
-            # 在Windows上，尝试不同的shell环境
-            if os.name == 'nt':
-                # Windows PowerShell环境
-                result = subprocess.run(['powershell', '-Command', 'flutter --version'], 
-                                      capture_output=True, text=True, timeout=15)
-                if result.returncode == 0 and 'Flutter' in result.stdout:
-                    version_line = result.stdout.split('\n')[0]
-                    if 'Flutter' in version_line and '•' in version_line:
-                        version = version_line.split('Flutter')[1].split('•')[0].strip()
-                        print(f"✅ Flutter: {version}")
-                        flutter_found = True
+            for cmd in flutter_commands:
+                try:
+                    result = subprocess.run(cmd, 
+                                          capture_output=True, text=True, timeout=10,
+                                          encoding='utf-8', errors='ignore')
+                    if result.returncode == 0 and 'Flutter' in result.stdout:
+                        lines = result.stdout.split('\n')
+                        for line in lines:
+                            if 'Flutter' in line and '•' in line:
+                                # 提取版本信息
+                                parts = line.split('•')
+                                if len(parts) >= 2:
+                                    version = parts[0].replace('Flutter', '').strip()
+                                    print(f"✅ Flutter: {version}")
+                                    flutter_found = True
+                                    break
+                        
+                        if not flutter_found and 'Flutter' in result.stdout:
+                            print("✅ Flutter: 已安装")
+                            flutter_found = True
+                        
+                        if flutter_found:
+                            break
+                except:
+                    continue
             
-            # 如果PowerShell方式失败，尝试直接调用
+            # 如果还没找到，尝试shell方式
             if not flutter_found:
-                result = subprocess.run(['flutter', '--version'], 
-                                      capture_output=True, text=True, timeout=10, shell=True)
+                result = subprocess.run('flutter --version', 
+                                      capture_output=True, text=True, timeout=10,
+                                      encoding='utf-8', errors='ignore', shell=True)
                 if result.returncode == 0 and 'Flutter' in result.stdout:
-                    version_line = result.stdout.split('\n')[0]
-                    if 'Flutter' in version_line and '•' in version_line:
-                        version = version_line.split('Flutter')[1].split('•')[0].strip()
-                        print(f"✅ Flutter: {version}")
-                        flutter_found = True
+                    lines = result.stdout.split('\n')
+                    for line in lines:
+                        if 'Flutter' in line:
+                            print(f"✅ Flutter: {line.strip()}")
+                            flutter_found = True
+                            break
                         
         except Exception as e:
             print(f"Flutter检测异常: {e}")
@@ -64,17 +83,17 @@ class AndroidBuilder:
         if not flutter_found:
             print("⚠️ Flutter命令检测失败，但可能仍可构建")
             print("请确保Flutter在PATH中或手动运行构建命令")
-            # 不直接返回False，继续检查其他组件
             
         # 检查Android SDK - 自动检测
         android_home = os.environ.get('ANDROID_HOME') or os.environ.get('ANDROID_SDK_ROOT')
         
         # 如果环境变量没设置，尝试常见路径
         if not android_home:
+            username = os.environ.get('USERNAME', os.environ.get('USER', ''))
             potential_paths = [
                 Path.home() / "AppData" / "Local" / "Android" / "Sdk",
                 Path("C:/Android/Sdk"),
-                Path("C:/Users") / os.environ.get('USERNAME', '') / "AppData" / "Local" / "Android" / "Sdk",
+                Path(f"C:/Users/{username}/AppData/Local/Android/Sdk"),
             ]
             
             for path in potential_paths:
@@ -121,24 +140,32 @@ class AndroidBuilder:
             latest_platform = sorted(platform_versions)[-1]
             print(f"✅ Android Platforms: {latest_platform}")
             
-        # 检查Java - 可选，因为Flutter可能使用内嵌JDK
+        # 检查Java - 使用编码修复
         try:
             result = subprocess.run(['java', '-version'], 
-                                  capture_output=True, text=True, timeout=5)
+                                  capture_output=True, text=True, timeout=5,
+                                  encoding='utf-8', errors='ignore')
             if result.returncode == 0:
-                java_version = result.stderr.split('\n')[0] if result.stderr else "unknown"
-                print(f"✅ Java: {java_version}")
+                # Java版本信息通常在stderr中
+                java_output = result.stderr if result.stderr else result.stdout
+                java_lines = java_output.split('\n')
+                if java_lines:
+                    java_version = java_lines[0].strip()
+                    print(f"✅ Java: {java_version}")
+                else:
+                    print("✅ Java: 已安装")
             else:
                 print("⚠️ Java未在PATH中，但Flutter可能使用内嵌JDK")
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        except Exception as e:
             print("⚠️ Java未在PATH中，但Flutter可能使用内嵌JDK")
             
         # 检查Gradle - 通过Flutter项目检查
         try:
             if (self.android_dir / "gradlew").exists() or (self.android_dir / "gradlew.bat").exists():
-                gradlew_cmd = "./gradlew.bat" if os.name == 'nt' else "./gradlew"
+                gradlew_cmd = "gradlew.bat" if os.name == 'nt' else "./gradlew"
                 result = subprocess.run([gradlew_cmd, '--version'], 
-                                      cwd=self.android_dir, capture_output=True, text=True, timeout=30)
+                                      cwd=self.android_dir, capture_output=True, text=True, timeout=30,
+                                      encoding='utf-8', errors='ignore', shell=True)
                 if result.returncode == 0:
                     gradle_lines = [line for line in result.stdout.split('\n') if 'Gradle' in line]
                     if gradle_lines:
@@ -149,7 +176,7 @@ class AndroidBuilder:
                     print("⚠️ Gradle检查失败，但可能仍能构建")
             else:
                 print("⚠️ Gradle Wrapper未找到")
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        except Exception as e:
             print("⚠️ Gradle检查失败，但可能仍能构建")
             
         print("✅ Android构建环境检查通过")
@@ -159,15 +186,25 @@ class AndroidBuilder:
         """清理构建缓存"""
         print("🧹 清理构建缓存...")
         
-        # Flutter clean
-        subprocess.run(['flutter', 'clean'], cwd=self.project_root)
+        try:
+            # Flutter clean
+            subprocess.run(['flutter', 'clean'], cwd=self.project_root, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️ Flutter clean失败: {e}")
         
-        # Gradle clean
-        subprocess.run(['./gradlew', 'clean'], cwd=self.android_dir)
+        try:
+            # Gradle clean
+            gradlew_cmd = "gradlew.bat" if os.name == 'nt' else "./gradlew"
+            subprocess.run([gradlew_cmd, 'clean'], cwd=self.android_dir, check=True, shell=True)
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️ Gradle clean失败: {e}")
         
         # 删除构建目录
         if self.build_dir.exists():
-            shutil.rmtree(self.build_dir)
+            try:
+                shutil.rmtree(self.build_dir)
+            except Exception as e:
+                print(f"⚠️ 删除构建目录失败: {e}")
             
         print("✅ 构建缓存已清理")
         
@@ -210,13 +247,19 @@ class AndroidBuilder:
         if split_per_abi:
             cmd.append('--split-per-abi')
             
-        # 执行构建
+        # 执行构建 - 优先使用shell方式
         try:
-            result = subprocess.run(cmd, cwd=self.project_root, check=True)
+            # 在Windows上使用shell方式更可靠
+            cmd_str = ' '.join(cmd)
+            result = subprocess.run(cmd_str, cwd=self.project_root, check=True,
+                                  encoding='utf-8', errors='ignore', shell=True)
             print("✅ APK构建成功")
             return True
         except subprocess.CalledProcessError as e:
             print(f"❌ APK构建失败: {e}")
+            return False
+        except FileNotFoundError:
+            print("❌ Flutter命令未找到，请确保Flutter已正确安装并在PATH中")
             return False
             
     def build_aab(self, flavor="", build_type="release"):
@@ -237,13 +280,19 @@ class AndroidBuilder:
         if flavor:
             cmd.extend(['--flavor', flavor])
             
-        # 执行构建
+        # 执行构建 - 优先使用shell方式
         try:
-            result = subprocess.run(cmd, cwd=self.project_root, check=True)
+            # 在Windows上使用shell方式更可靠
+            cmd_str = ' '.join(cmd)
+            result = subprocess.run(cmd_str, cwd=self.project_root, check=True,
+                                  encoding='utf-8', errors='ignore', shell=True)
             print("✅ AAB构建成功")
             return True
         except subprocess.CalledProcessError as e:
             print(f"❌ AAB构建失败: {e}")
+            return False
+        except FileNotFoundError:
+            print("❌ Flutter命令未找到，请确保Flutter已正确安装并在PATH中")
             return False
             
     def organize_outputs(self, flavor="", build_type="release"):

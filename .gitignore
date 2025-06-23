@@ -17,6 +17,7 @@ migrate_working_dir/
 .vs/
 out/
 *.kra~
+*.apk
 
 # OS generated files #
 ######################

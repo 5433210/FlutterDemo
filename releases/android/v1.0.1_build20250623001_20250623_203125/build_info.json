@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1",
+  "build_number": "20250623001",
+  "flavor": "direct",
+  "build_type": "debug",
+  "timestamp": "20250623_203125",
+  "files": [
+    "app-direct-debug.apk",
+    "app-direct-profile.apk",
+    "app-googleplay-debug.apk",
+    "app-huawei-debug.apk",
+    "app-xiaomi-debug.apk"
+  ]
+}
