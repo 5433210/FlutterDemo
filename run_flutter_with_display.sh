@@ -58,4 +58,10 @@ echo "📝 注意: 文件选择器将在虚拟显示器上运行"
 echo "🔧 如果遇到问题，请检查终端输出"
 echo ""
 
+# 设置环境变量以减少GTK警告
+export GDK_BACKEND=x11
+export XCURSOR_THEME=Adwaita
+export XCURSOR_SIZE=24
+export GTK_THEME=Adwaita
+
 flutter run -d linux --debug
