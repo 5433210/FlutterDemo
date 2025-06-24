@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
@@ -24,13 +26,15 @@ class AppTheme {
 
   /// 获取Material 3暗色主题
   static ThemeData darkM3({String? locale}) {
-    // 检查是否为中文环境
+    // 检查是否为中文环境或Linux平台（为了更好的中文字符支持）
     final bool isChineseLocale = locale?.startsWith('zh') ?? false;
+    final bool isLinux = Platform.isLinux;
+    final bool shouldUseChinenseFont = isChineseLocale || isLinux;
 
     return ThemeData(
       useMaterial3: true,
-      // 在中文环境下使用思源宋体作为默认字体
-      fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+      // 在中文环境或Linux平台下使用思源宋体作为默认字体
+      fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
       searchBarTheme: const SearchBarThemeData(
         constraints: BoxConstraints.tightFor(
             width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
@@ -43,9 +47,9 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
-        // 在中文环境下使用思源宋体作为AppBar字体
+        // 在中文环境或Linux平台下使用思源宋体作为AppBar字体
         titleTextStyle: TextStyle(
-          fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+          fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
           fontSize: 20,
           fontWeight: FontWeight.w500,
           color: Colors.white,
@@ -129,13 +133,15 @@ class AppTheme {
 
   /// 获取Material 3亮色主题
   static ThemeData lightM3({String? locale}) {
-    // 检查是否为中文环境
+    // 检查是否为中文环境或Linux平台（为了更好的中文字符支持）
     final bool isChineseLocale = locale?.startsWith('zh') ?? false;
+    final bool isLinux = Platform.isLinux;
+    final bool shouldUseChinenseFont = isChineseLocale || isLinux;
 
     return ThemeData(
       useMaterial3: true,
-      // 在中文环境下使用思源宋体作为默认字体
-      fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+      // 在中文环境或Linux平台下使用思源宋体作为默认字体
+      fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
       searchBarTheme: const SearchBarThemeData(
         constraints: BoxConstraints.tightFor(
             width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
@@ -148,9 +154,9 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
-        // 在中文环境下使用思源宋体作为AppBar字体
+        // 在中文环境或Linux平台下使用思源宋体作为AppBar字体
         titleTextStyle: TextStyle(
-          fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+          fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
           fontSize: 20,
           fontWeight: FontWeight.w500,
         ),

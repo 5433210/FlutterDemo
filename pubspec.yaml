@@ -68,32 +68,10 @@ flutter:
     - assets/fonts/
     - assets/images/
   fonts:
-    - family: CustomIcons
-      fonts:
-        - asset: assets/fonts/custom_icons.ttf
-
-    # Chinese Fonts (Free for Commercial Use)
-    # 使用单一注册方式，依赖FontVariation进行字重控制
     - family: SourceHanSans
-      fonts:
-        - asset: assets/fonts/chinese/SourceHanSansCN-VF.otf
+      fonts:        
+        - asset: assets/fonts/SourceHanSans-VF.otf.ttc
 
     - family: SourceHanSerif
       fonts:
-        - asset: assets/fonts/chinese/SourceHanSerifCN-VF.otf
-
-    # 测试：使用单独的字体家族名称注册不同字重
-    - family: SourceHanSansLight
-      fonts:
-        - asset: assets/fonts/chinese/SourceHanSansCN-VF.otf
-          weight: 300
-
-    - family: SourceHanSansRegular
-      fonts:
-        - asset: assets/fonts/chinese/SourceHanSansCN-VF.otf
-          weight: 400
-
-    - family: SourceHanSansBold
-      fonts:
-        - asset: assets/fonts/chinese/SourceHanSansCN-VF.otf
-          weight: 700
+        - asset: assets/fonts/SourceHanSerif-VF.otf.ttc

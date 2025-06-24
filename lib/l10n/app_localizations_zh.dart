@@ -2895,4 +2895,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String appStartupFailedWith(String error) {
     return '应用启动失败: $error';
   }
+
+  @override
+  String get collectionElement => '集字元素';
+
+  @override
+  String get imageElement => '图片元素';
+
+  @override
+  String get textElement => '文本元素';
+
+  @override
+  String get defaultEditableText => '属性面板编辑文本';
+
+  @override
+  String get defaultLayer => '默认图层';
+
+  @override
+  String get currentTool => '当前工具';
+
+  @override
+  String get selectionMode => '选择模式';
 }

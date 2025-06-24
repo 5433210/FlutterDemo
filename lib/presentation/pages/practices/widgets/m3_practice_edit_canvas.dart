@@ -1007,7 +1007,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '当前工具: ${widget.controller.state.currentTool}',
+                      AppLocalizations.of(context).currentTool,
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onTertiaryContainer,
@@ -1034,7 +1034,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '选择模式',
+                            AppLocalizations.of(context).selectionMode,
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onPrimaryContainer,

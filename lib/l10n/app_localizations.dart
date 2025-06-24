@@ -5614,6 +5614,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'应用启动失败: {error}'**
   String appStartupFailedWith(String error);
+
+  /// No description provided for @collectionElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'集字元素'**
+  String get collectionElement;
+
+  /// No description provided for @imageElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片元素'**
+  String get imageElement;
+
+  /// No description provided for @textElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'文本元素'**
+  String get textElement;
+
+  /// No description provided for @defaultEditableText.
+  ///
+  /// In zh, this message translates to:
+  /// **'属性面板编辑文本'**
+  String get defaultEditableText;
+
+  /// No description provided for @defaultLayer.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认图层'**
+  String get defaultLayer;
+
+  /// No description provided for @currentTool.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前工具'**
+  String get currentTool;
+
+  /// No description provided for @selectionMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择模式'**
+  String get selectionMode;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -98,6 +98,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   @override
   Widget build(BuildContext context) {
+    _controller.l10n = AppLocalizations.of(context); // Set l10n for controller
     // Remove unused l10n variable
     return PopScope(
       canPop: false,

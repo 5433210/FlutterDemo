@@ -2895,4 +2895,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String appStartupFailedWith(String error) {
     return 'App startup failed: $error';
   }
+
+  @override
+  String get collectionElement => 'Collection Element';
+
+  @override
+  String get imageElement => 'Image Element';
+
+  @override
+  String get textElement => 'Text Element';
+
+  @override
+  String get defaultEditableText => 'Editable Text in Property Panel';
+
+  @override
+  String get defaultLayer => 'Default Layer';
+
+  @override
+  String get currentTool => 'Current Tool';
+
+  @override
+  String get selectionMode => 'Selection Mode';
 }

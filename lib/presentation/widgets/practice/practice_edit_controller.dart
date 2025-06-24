@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
 import 'element_management_mixin.dart';
@@ -76,9 +77,15 @@ class PracticeEditController extends ChangeNotifier
   // 字帖ID和标题 - 为 PracticePersistenceMixin 提供实现
   String? _practiceId;
   String? _practiceTitle;
-
   // 服务实例
   final PracticeService _practiceService;
+
+  // 本地化实例
+  AppLocalizations? _l10n;
+
+  /// 获取本地化实例（为ElementManagementMixin提供）
+  @override
+  AppLocalizations get l10n => _l10n!;
 
   // 预览模式下的画布 GlobalKey
   GlobalKey? _canvasKey;
@@ -131,6 +138,9 @@ class PracticeEditController extends ChangeNotifier
   // CanvasManagementMixin接口实现
   @override
   set canvasKey(GlobalKey? key) => _canvasKey = key;
+
+  @override
+  set l10n(AppLocalizations? appLocalizations) => _l10n = appLocalizations;
 
   /// 获取画布缩放值
   double get canvasScale => _state.canvasScale;
@@ -211,13 +221,10 @@ class PracticeEditController extends ChangeNotifier
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
-
     try {
       // 先释放智能分发器资源
-      if (_intelligentDispatcher != null) {
-        EditPageLogger.controllerDebug('销毁智能分发器');
-        _intelligentDispatcher.dispose();
-      }
+      EditPageLogger.controllerDebug('销毁智能分发器');
+      _intelligentDispatcher.dispose();
     } catch (e) {
       EditPageLogger.controllerError(
         '智能分发器销毁失败',
@@ -235,13 +242,10 @@ class PracticeEditController extends ChangeNotifier
         error: e,
       );
     }
-
     try {
       // 释放撤销重做管理器资源
-      if (_undoRedoManager != null) {
-        EditPageLogger.controllerDebug('销毁撤销重做管理器');
-        _undoRedoManager.clearHistory();
-      }
+      EditPageLogger.controllerDebug('销毁撤销重做管理器');
+      _undoRedoManager.clearHistory();
     } catch (e) {
       EditPageLogger.controllerError(
         '撤销重做管理器资源销毁失败',
@@ -264,7 +268,7 @@ class PracticeEditController extends ChangeNotifier
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
-    
+
     // 确保调用完整的dispose链
     try {
       super.dispose();
@@ -434,8 +438,7 @@ class PracticeEditController extends ChangeNotifier
 
       // 设置参考线输出列表同步
       // 🔧 修复：传入回调函数来同步参考线到state
-      GuidelineManager.instance
-          .setActiveGuidelinesOutput((guidelines) {
+      GuidelineManager.instance.setActiveGuidelinesOutput((guidelines) {
         // 更新state中的参考线列表
         _state.activeGuidelines.clear();
         _state.activeGuidelines.addAll(guidelines);

@@ -924,8 +924,7 @@
   "systemInfo": "System Info",
   "about": "About",
   "appStartupFailed": "App Startup Failed",
-  "criticalError": "Critical Error",
-  "appStartupFailedWith": "App startup failed: {error}",
+  "criticalError": "Critical Error",  "appStartupFailedWith": "App startup failed: {error}",
   "@appStartupFailedWith": {
     "placeholders": {
       "error": {
@@ -933,5 +932,11 @@
         "description": "Error message for startup failure"
       }
     }
-  }
+  },
+  "collectionElement": "Collection Element",
+  "imageElement": "Image Element",
+  "textElement": "Text Element",
+  "defaultEditableText": "Editable Text in Property Panel",  "defaultLayer": "Default Layer",
+  "currentTool": "Current Tool",
+  "selectionMode": "Selection Mode"
 }

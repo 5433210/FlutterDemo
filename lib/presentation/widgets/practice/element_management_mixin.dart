@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import 'batch_update_options.dart';
 import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
@@ -14,6 +15,10 @@ mixin ElementManagementMixin on ChangeNotifier
   PracticeEditState get state;
   UndoRedoManager get undoRedoManager;
   Uuid get uuid;
+
+  /// 获取本地化实例 - 需要由实现类提供
+  AppLocalizations? get l10n;
+  set l10n(AppLocalizations? value);
 
   /// 添加集字元素
   void addCollectionElement(String characters) {
@@ -30,7 +35,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '集字元素',
+      'name': l10n!.collectionElement,
       'content': {
         'characters': characters,
         'fontSize': 200.0,
@@ -73,7 +78,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '集字元素',
+      'name': l10n!.collectionElement,
       'isFromCharacterManagement': isFromCharacterManagement,
       'content': {
         'characters': characters,
@@ -110,7 +115,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '集字元素',
+      'name': l10n!.collectionElement,
       'content': {
         'characters': '',
         'fontSize': 200.0,
@@ -146,7 +151,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '图片元素',
+      'name': l10n!.imageElement,
       'content': {
         'imageUrl': '',
         'fit': 'contain',
@@ -172,7 +177,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '图片元素',
+      'name': l10n!.imageElement,
       'content': {
         'imageUrl': imageUrl,
         'fit': 'contain',
@@ -198,7 +203,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '图片元素',
+      'name': l10n!.imageElement,
       'content': {
         'imageUrl': imageUrl,
         'fit': 'contain',
@@ -224,9 +229,9 @@ mixin ElementManagementMixin on ChangeNotifier
       'opacity': 1.0,
       'isLocked': false,
       'isHidden': false,
-      'name': '文本元素',
+      'name': l10n!.textElement,
       'content': {
-        'text': '属性面板编辑文本',
+        'text': l10n!.defaultEditableText,
         'fontSize': 24.0,
         'fontColor': '#000000',
         'backgroundColor': 'transparent',
@@ -251,12 +256,11 @@ mixin ElementManagementMixin on ChangeNotifier
       'height': 100.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
-      'opacity': 1.0,
-      'isLocked': false, // 锁定标志
+      'opacity': 1.0, 'isLocked': false, // 锁定标志
       'isHidden': false, // 隐藏标志
-      'name': '文本元素', // 默认名称
+      'name': l10n!.textElement, // 默认名称
       'content': {
-        'text': '属性面板编辑文本',
+        'text': l10n!.defaultEditableText,
         'fontFamily': 'sans-serif',
         'fontSize': 24.0,
         'fontColor': '#000000', // 修改为fontColor以匹配渲染器
@@ -1122,12 +1126,10 @@ mixin ElementManagementMixin on ChangeNotifier
       // 更新selectedLayerId为有效值
       state.selectedLayerId = firstLayerId;
       return firstLayerId;
-    }
-
-    // 如果没有图层，创建一个默认图层
+    } // 如果没有图层，创建一个默认图层
     final defaultLayer = {
       'id': 'layer_${uuid.v4()}',
-      'name': '默认图层',
+      'name': l10n!.defaultLayer,
       'isVisible': true,
       'isLocked': false,
       'opacity': 1.0,

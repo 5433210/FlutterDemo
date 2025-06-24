@@ -924,8 +924,7 @@
   "systemInfo": "系统信息",
   "about": "关于",
   "appStartupFailed": "应用启动失败",
-  "criticalError": "严重错误",
-  "appStartupFailedWith": "应用启动失败: {error}",
+  "criticalError": "严重错误",  "appStartupFailedWith": "应用启动失败: {error}",
   "@appStartupFailedWith": {
     "placeholders": {
       "error": {
@@ -933,5 +932,11 @@
         "description": "启动失败的错误信息"
       }
     }
-  }
+  },
+  "collectionElement": "集字元素",
+  "imageElement": "图片元素",
+  "textElement": "文本元素",  "defaultEditableText": "属性面板编辑文本",
+  "defaultLayer": "默认图层",
+  "currentTool": "当前工具",
+  "selectionMode": "选择模式"
 }

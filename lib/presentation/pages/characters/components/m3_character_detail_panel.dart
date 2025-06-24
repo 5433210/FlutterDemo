@@ -13,6 +13,7 @@ import '../../../../presentation/widgets/common/zoomable_image_view.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/character/character_detail_provider.dart';
+import '../../../../utils/chinese_font_helper.dart';
 import '../../../widgets/layout/flexible_row.dart';
 
 /// 图片尺寸信息类
@@ -604,7 +605,6 @@ class _M3CharacterDetailPanelState
             ),
     );
   }
-
   Widget _buildInfoItem(
     ThemeData theme, {
     required String title,
@@ -636,8 +636,7 @@ class _M3CharacterDetailPanelState
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   overflow: TextOverflow.ellipsis,
-                ),
-                Text(
+                ),                ChineseFontHelper.createTextWithChineseSupport(
                   content,
                   style: theme.textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
@@ -687,9 +686,8 @@ class _M3CharacterDetailPanelState
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+                  children: [                    Expanded(
+                      child: ChineseFontHelper.createTextWithChineseSupport(
                         content,
                         style: theme.textTheme.bodyMedium,
                         overflow: TextOverflow.ellipsis,
