@@ -12,20 +12,22 @@ class M3FilterStyleSection extends ConsumerWidget {
 
   /// 书法风格变化时的回调
   final ValueChanged<String?> onStyleChanged;
+
   /// 构造函数
   const M3FilterStyleSection({
     super.key,
     required this.selectedStyle,
     required this.onStyleChanged,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    
+    final locale = Localizations.localeOf(context);
+
     final activeStyleItems = ref.watch(activeStyleItemsProvider);
-    final styleDisplayNames = ref.watch(styleDisplayNamesProvider);
+    final styleDisplayNames =
+        ref.watch(styleDisplayNamesWithLocaleProvider(locale.languageCode));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +56,8 @@ class M3FilterStyleSection extends ConsumerWidget {
               );
             }).toList(),
           ),
-          loading: () => const CircularProgressIndicator(),          error: (error, stackTrace) => Text(
+          loading: () => const CircularProgressIndicator(),
+          error: (error, stackTrace) => Text(
             'Loading error', // TODO: Add proper localization
             style: TextStyle(color: theme.colorScheme.error),
           ),

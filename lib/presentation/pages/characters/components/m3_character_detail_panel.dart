@@ -1,9 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../application/services/character/character_service.dart';
@@ -149,15 +147,18 @@ class _M3CharacterDetailPanelState
                         if (character.tool != null)
                           Consumer(
                             builder: (context, ref, child) {
-                              final toolDisplayName =
-                                  ref.watch(toolDisplayNamesProvider).maybeWhen(
-                                        data: (names) =>
-                                            names[character.tool] ??
-                                            character.tool ??
-                                            l10n.unknown,
-                                        orElse: () =>
-                                            character.tool ?? l10n.unknown,
-                                      );
+                              final locale = Localizations.localeOf(context);
+                              final toolDisplayName = ref
+                                  .watch(toolDisplayNamesWithLocaleProvider(
+                                      locale.languageCode))
+                                  .maybeWhen(
+                                    data: (names) =>
+                                        names[character.tool] ??
+                                        character.tool ??
+                                        l10n.unknown,
+                                    orElse: () =>
+                                        character.tool ?? l10n.unknown,
+                                  );
                               return _buildInfoItem(
                                 theme,
                                 title: l10n.writingTool,
@@ -169,8 +170,10 @@ class _M3CharacterDetailPanelState
                         if (character.style != null)
                           Consumer(
                             builder: (context, ref, child) {
+                              final locale = Localizations.localeOf(context);
                               final styleDisplayName = ref
-                                  .watch(styleDisplayNamesProvider)
+                                  .watch(styleDisplayNamesWithLocaleProvider(
+                                      locale.languageCode))
                                   .maybeWhen(
                                     data: (names) =>
                                         names[character.style] ??

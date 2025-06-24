@@ -154,15 +154,20 @@ class M3WorkListItem extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSizes.xs),
-                      ],                      // 风格和工具
+                      ], // 风格和工具
                       Row(
                         children: [
                           Consumer(
                             builder: (context, ref, child) {
-                              final styleDisplayName = ref.watch(styleDisplayNamesProvider).maybeWhen(
-                                data: (names) => names[work.style] ?? work.style,
-                                orElse: () => work.style,
-                              );
+                              final locale = Localizations.localeOf(context);
+                              final styleDisplayName = ref
+                                  .watch(styleDisplayNamesWithLocaleProvider(
+                                      locale.languageCode))
+                                  .maybeWhen(
+                                    data: (names) =>
+                                        names[work.style] ?? work.style,
+                                    orElse: () => work.style,
+                                  );
                               return _buildInfoChip(
                                 context,
                                 Icons.brush_outlined,
@@ -173,10 +178,15 @@ class M3WorkListItem extends ConsumerWidget {
                           const SizedBox(width: AppSizes.s),
                           Consumer(
                             builder: (context, ref, child) {
-                              final toolDisplayName = ref.watch(toolDisplayNamesProvider).maybeWhen(
-                                data: (names) => names[work.tool] ?? work.tool,
-                                orElse: () => work.tool,
-                              );
+                              final locale = Localizations.localeOf(context);
+                              final toolDisplayName = ref
+                                  .watch(toolDisplayNamesWithLocaleProvider(
+                                      locale.languageCode))
+                                  .maybeWhen(
+                                    data: (names) =>
+                                        names[work.tool] ?? work.tool,
+                                    orElse: () => work.tool,
+                                  );
                               return _buildInfoChip(
                                 context,
                                 Icons.construction_outlined,

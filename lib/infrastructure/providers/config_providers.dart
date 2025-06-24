@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/repositories/config_repository.dart';
@@ -6,6 +6,52 @@ import '../../application/services/config_service_impl.dart';
 import '../../domain/models/config/config_item.dart';
 import '../../domain/services/config_service.dart';
 import 'database_providers.dart';
+
+/// 带语言参数的书法风格显示名称映射提供者
+final styleDisplayNamesWithLocaleProvider =
+    FutureProvider.family<Map<String, String>, String?>((ref, locale) async {
+  // 监听刷新触发器，当触发器变化时自动重新获取数据
+  ref.watch(configRefreshTriggerProvider);
+  final configService = ref.watch(configServiceProvider);
+  final configServiceImpl = configService as ConfigServiceImpl;
+  return await configServiceImpl.getDisplayNames(
+      ConfigCategories.style, locale);
+});
+
+/// 带语言参数的书写工具显示名称映射提供者
+final toolDisplayNamesWithLocaleProvider =
+    FutureProvider.family<Map<String, String>, String?>((ref, locale) async {
+  // 监听刷新触发器，当触发器变化时自动重新获取数据
+  ref.watch(configRefreshTriggerProvider);
+  final configService = ref.watch(configServiceProvider);
+  final configServiceImpl = configService as ConfigServiceImpl;
+  return await configServiceImpl.getDisplayNames(ConfigCategories.tool, locale);
+});
+
+/// 获取配置项本地化显示名称的辅助方法
+String getLocalizedConfigDisplayName(BuildContext context, WidgetRef ref,
+    String category, String itemKey, String fallback) {
+  final locale = Localizations.localeOf(context);
+  final languageCode = locale.languageCode;
+
+  if (category == ConfigCategories.style) {
+    return ref
+        .watch(styleDisplayNamesWithLocaleProvider(languageCode))
+        .maybeWhen(
+          data: (names) => names[itemKey] ?? fallback,
+          orElse: () => fallback,
+        );
+  } else if (category == ConfigCategories.tool) {
+    return ref
+        .watch(toolDisplayNamesWithLocaleProvider(languageCode))
+        .maybeWhen(
+          data: (names) => names[itemKey] ?? fallback,
+          orElse: () => fallback,
+        );
+  }
+
+  return fallback;
+}
 
 /// 配置刷新触发器 - 用于手动刷新配置数据
 final configRefreshTriggerProvider = StateProvider<int>((ref) => 0);

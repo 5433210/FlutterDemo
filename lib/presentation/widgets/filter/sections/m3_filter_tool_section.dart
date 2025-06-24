@@ -19,14 +19,15 @@ class M3FilterToolSection extends ConsumerWidget {
     required this.selectedTool,
     required this.onToolChanged,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    
+    final locale = Localizations.localeOf(context);
+
     final activeToolItems = ref.watch(activeToolItemsProvider);
-    final toolDisplayNames = ref.watch(toolDisplayNamesProvider);
+    final toolDisplayNames =
+        ref.watch(toolDisplayNamesWithLocaleProvider(locale.languageCode));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -361,19 +361,50 @@ class ConfigServiceImpl implements ConfigService {
     await _repository.initializeDefaultConfigs();
   }
 
-  /// Get display names for all active items in a category
-  Future<Map<String, String>> getDisplayNames(String category) async {
+  /// Get display names for all active items in a category with localization support
+  Future<Map<String, String>> getDisplayNames(String category,
+      [String? locale]) async {
     final configCategory = await _repository.getConfigCategory(category);
     if (configCategory == null) return {};
 
     return {
-      for (var item in configCategory.activeItems) item.key: item.displayName
+      for (var item in configCategory.activeItems)
+        item.key: _getLocalizedDisplayName(item, locale)
     };
   }
 
-  /// Get display name for a specific item
-  Future<String> getDisplayName(String category, String key) async {
+  /// Get display name for a specific item with localization support
+  Future<String> getDisplayName(String category, String key,
+      [String? locale]) async {
     final configItem = await getConfigItem(category, key);
-    return configItem?.displayName ?? key;
+    if (configItem == null) return key;
+    return _getLocalizedDisplayName(configItem, locale);
+  }
+
+  /// Helper method to get localized display name from a ConfigItem
+  String _getLocalizedDisplayName(ConfigItem item, [String? locale]) {
+    // 如果本地化名称为空，直接返回原始显示名称
+    if (item.localizedNames.isEmpty) {
+      return item.displayName;
+    }
+
+    // 如果指定了语言，尝试使用指定语言
+    if (locale != null && item.localizedNames.containsKey(locale)) {
+      final localizedName = item.localizedNames[locale];
+      if (localizedName != null && localizedName.isNotEmpty) {
+        return localizedName;
+      }
+    }
+
+    // 如果没有指定语言或指定语言不存在，尝试使用英文
+    if (item.localizedNames.containsKey('en')) {
+      final englishName = item.localizedNames['en'];
+      if (englishName != null && englishName.isNotEmpty) {
+        return englishName;
+      }
+    }
+
+    // 如果都没有，回退到原始displayName
+    return item.displayName;
   }
 }

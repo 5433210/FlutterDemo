@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Note: style and tool are now String types instead of enums
+import '../../../domain/services/config_service.dart';
 import '../../../infrastructure/providers/config_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
@@ -538,7 +539,7 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
         child: _buildReadOnlyDropdown(
           label: l10n.calligraphyStyle,
           value: widget.initialStyle,
-          displayNamesProvider: ref.watch(styleDisplayNamesProvider),
+          category: ConfigCategories.style,
           fallbackDisplayName: widget.initialStyle ?? '',
         ),
       );
@@ -562,8 +563,10 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
                 value: item.key,
                 child: Consumer(
                   builder: (context, ref, child) {
+                    final locale = Localizations.localeOf(context);
                     final displayName = ref
-                        .watch(styleDisplayNamesProvider)
+                        .watch(styleDisplayNamesWithLocaleProvider(
+                            locale.languageCode))
                         .maybeWhen(
                           data: (names) => names[item.key] ?? item.displayName,
                           orElse: () => item.displayName,
@@ -690,7 +693,7 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
         child: _buildReadOnlyDropdown(
           label: l10n.writingTool,
           value: widget.initialTool,
-          displayNamesProvider: ref.watch(toolDisplayNamesProvider),
+          category: ConfigCategories.tool,
           fallbackDisplayName: widget.initialTool ?? '',
         ),
       );
@@ -714,8 +717,10 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
                 value: item.key,
                 child: Consumer(
                   builder: (context, ref, child) {
+                    final locale = Localizations.localeOf(context);
                     final displayName = ref
-                        .watch(toolDisplayNamesProvider)
+                        .watch(toolDisplayNamesWithLocaleProvider(
+                            locale.languageCode))
                         .maybeWhen(
                           data: (names) => names[item.key] ?? item.displayName,
                           orElse: () => item.displayName,
@@ -774,14 +779,27 @@ class _M3WorkFormState extends ConsumerState<M3WorkForm> {
     );
   }
 
-  /// 为只读模式创建简化的下拉字段，直接显示配置项的显示名称
+  /// 为只读模式创建简化的下拉字段，直接显示配置项的本地化显示名称
   Widget _buildReadOnlyDropdown({
     required String label,
     required String? value,
-    required AsyncValue<Map<String, String>> displayNamesProvider,
+    required String category,
     required String fallbackDisplayName,
   }) {
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
+
+    AsyncValue<Map<String, String>> displayNamesProvider;
+    if (category == ConfigCategories.style) {
+      displayNamesProvider =
+          ref.watch(styleDisplayNamesWithLocaleProvider(locale.languageCode));
+    } else if (category == ConfigCategories.tool) {
+      displayNamesProvider =
+          ref.watch(toolDisplayNamesWithLocaleProvider(locale.languageCode));
+    } else {
+      // 如果不是已知的分类，返回一个空的 AsyncValue
+      displayNamesProvider = const AsyncValue.data(<String, String>{});
+    }
 
     return displayNamesProvider.when(
       data: (displayNames) {

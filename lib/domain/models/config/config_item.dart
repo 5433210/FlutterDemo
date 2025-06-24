@@ -9,28 +9,28 @@ class ConfigItem with _$ConfigItem {
   const factory ConfigItem({
     /// 配置项的唯一键
     required String key,
-    
+
     /// 显示名称
     required String displayName,
-    
+
     /// 排序顺序
     @Default(0) int sortOrder,
-    
+
     /// 是否为系统内置项（不可删除）
     @Default(false) bool isSystem,
-    
+
     /// 是否激活状态
     @Default(true) bool isActive,
-    
+
     /// 本地化名称映射
     @Default({}) Map<String, String> localizedNames,
-    
+
     /// 扩展属性（JSON格式）
     @Default({}) Map<String, dynamic> metadata,
-    
+
     /// 创建时间
     DateTime? createTime,
-    
+
     /// 更新时间
     DateTime? updateTime,
   }) = _ConfigItem;
@@ -42,8 +42,21 @@ class ConfigItem with _$ConfigItem {
 
   /// 获取指定语言的显示名称
   String getDisplayName([String? locale]) {
-    if (locale != null && localizedNames.containsKey(locale)) {
-      return localizedNames[locale]!;
+    if (locale != null) {
+      // 优先使用指定语言
+      if (localizedNames.containsKey(locale)) {
+        final localizedName = localizedNames[locale];
+        if (localizedName != null && localizedName.isNotEmpty) {
+          return localizedName;
+        }
+      }
+      // 如果没有对应语言，使用英文
+      if (localizedNames.containsKey('en')) {
+        final englishName = localizedNames['en'];
+        if (englishName != null && englishName.isNotEmpty) {
+          return englishName;
+        }
+      }
     }
     return displayName;
   }
@@ -94,13 +107,13 @@ class ConfigCategory with _$ConfigCategory {
   const factory ConfigCategory({
     /// 分类标识
     required String category,
-    
+
     /// 分类显示名称
     required String displayName,
-    
+
     /// 配置项列表
     @Default([]) List<ConfigItem> items,
-    
+
     /// 更新时间
     DateTime? updateTime,
   }) = _ConfigCategory;
@@ -149,7 +162,7 @@ class ConfigCategory with _$ConfigCategory {
 
     final updatedItems = List<ConfigItem>.from(items);
     updatedItems[index] = item;
-    
+
     return copyWith(
       items: updatedItems,
       updateTime: DateTime.now(),
@@ -173,7 +186,7 @@ class ConfigCategory with _$ConfigCategory {
   ConfigCategory reorderItems(List<String> keyOrder) {
     final itemMap = {for (var item in items) item.key: item};
     final reorderedItems = <ConfigItem>[];
-    
+
     // 按指定顺序添加
     for (int i = 0; i < keyOrder.length; i++) {
       final key = keyOrder[i];
@@ -183,10 +196,10 @@ class ConfigCategory with _$ConfigCategory {
         itemMap.remove(key);
       }
     }
-    
+
     // 添加剩余项目
     reorderedItems.addAll(itemMap.values);
-    
+
     return copyWith(
       items: reorderedItems,
       updateTime: DateTime.now(),
@@ -195,8 +208,8 @@ class ConfigCategory with _$ConfigCategory {
 
   /// 验证分类数据完整性
   bool get isValid {
-    return category.isNotEmpty && 
-           displayName.isNotEmpty && 
-           items.every((item) => item.isValid);
+    return category.isNotEmpty &&
+        displayName.isNotEmpty &&
+        items.every((item) => item.isValid);
   }
 }

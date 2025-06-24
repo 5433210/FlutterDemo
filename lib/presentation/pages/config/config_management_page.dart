@@ -81,6 +81,37 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
     super.dispose();
   }
 
+  /// 获取配置项的本地化显示名称
+  String _getLocalizedDisplayName(ConfigItem item) {
+    // 获取当前语言设置
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+
+    // 如果本地化名称为空，直接返回原始显示名称
+    if (item.localizedNames.isEmpty) {
+      return item.displayName;
+    }
+
+    // 优先使用用户设置的语言
+    if (item.localizedNames.containsKey(languageCode)) {
+      final localizedName = item.localizedNames[languageCode];
+      if (localizedName != null && localizedName.isNotEmpty) {
+        return localizedName;
+      }
+    }
+
+    // 如果没有对应语言，使用英文
+    if (item.localizedNames.containsKey('en')) {
+      final englishName = item.localizedNames['en'];
+      if (englishName != null && englishName.isNotEmpty) {
+        return englishName;
+      }
+    }
+
+    // 如果都没有，回退到原始displayName
+    return item.displayName;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -270,17 +301,18 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
   }
 
   Widget _buildConfigItemList(ConfigCategory config, String category) {
-    var items = config.items;
-
-    // 应用搜索过滤
+    var items = config.items; // 应用搜索过滤
     if (_searchQuery.isNotEmpty) {
-      items = items
-          .where((item) =>
-              item.displayName
-                  .toLowerCase()
-                  .contains(_searchQuery.toLowerCase()) ||
-              item.key.toLowerCase().contains(_searchQuery.toLowerCase()))
-          .toList();
+      items = items.where((item) {
+        final localizedName = _getLocalizedDisplayName(item);
+        return localizedName
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            item.displayName
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            item.key.toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
     }
 
     if (items.isEmpty && _searchQuery.isNotEmpty) {
@@ -356,7 +388,9 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
               ],
             ),
             title: Text(
-              item.displayName.isNotEmpty ? item.displayName : '未命名配置项',
+              _getLocalizedDisplayName(item).isNotEmpty
+                  ? _getLocalizedDisplayName(item)
+                  : '未命名配置项',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: item.isActive
@@ -598,16 +632,20 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
 
   void _showItemDetails(ConfigItem item) {
     final l10n = AppLocalizations.of(context);
+    final localizedName = _getLocalizedDisplayName(item);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(item.displayName),
+        title: Text(localizedName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDetailRow(l10n.key, item.key),
-            _buildDetailRow(l10n.displayName, item.displayName),
+            _buildDetailRow(l10n.displayName, localizedName),
+            if (localizedName != item.displayName)
+              _buildDetailRow('原始名称', item.displayName),
             _buildDetailRow(l10n.sortOrder, item.sortOrder.toString()),
             _buildDetailRow(
                 l10n.status, item.isActive ? l10n.activated : l10n.disabled),
