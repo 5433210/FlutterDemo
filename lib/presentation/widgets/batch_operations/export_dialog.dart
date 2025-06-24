@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../l10n/app_localizations.dart';
 
-import '../../providers/batch_selection_provider.dart';
 import '../../../application/services/file_picker_service.dart';
 import '../../../domain/models/import_export/export_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../providers/batch_selection_provider.dart';
 import 'progress_dialog.dart';
 
 /// 导出对话框
 class ExportDialog extends ConsumerStatefulWidget {
   /// 页面类型
   final PageType pageType;
-  
+
   /// 选中的项目ID列表
   final List<String> selectedIds;
-  
+
   /// 导出回调
   final Function(ExportOptions options, String targetPath) onExport;
 
@@ -42,7 +42,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // 根据页面类型设置默认导出类型
     switch (widget.pageType) {
       case PageType.works:
@@ -52,15 +52,15 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         _exportType = ExportType.charactersWithWorks;
         break;
     }
-    
+
     // 默认使用ZIP格式
     _exportFormat = ExportFormat.zip;
-    
+
     // 导出选项全选且固定
     _includeImages = true;
     _includeMetadata = true;
     _compressData = true;
-    
+
     AppLogger.info(
       '打开导出对话框',
       data: {
@@ -81,8 +81,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
+    final l10n = AppLocalizations.of(context);
+
     return AlertDialog(
       title: Text(l10n.export),
       content: SizedBox(
@@ -94,19 +94,19 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             children: [
               // 导出类型选择
               _buildExportTypeSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 导出选项（固定为全选，仅显示不可修改）
               _buildExportOptionsSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 目标路径选择
               _buildTargetPathSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 导出摘要
               _buildExportSummary(l10n),
             ],
@@ -157,7 +157,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                 setState(() {
                   _exportType = value;
                 });
-                
+
                 AppLogger.debug(
                   '切换导出类型',
                   data: {
@@ -189,7 +189,10 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -199,7 +202,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.check_circle, 
+                  Icon(
+                    Icons.check_circle,
                     color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
@@ -211,9 +215,12 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                         Text(l10n.includeImages),
                         Text(
                           l10n.includeImagesDescription,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -223,7 +230,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.check_circle, 
+                  Icon(
+                    Icons.check_circle,
                     color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
@@ -235,9 +243,12 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                         Text(l10n.includeMetadata),
                         Text(
                           l10n.includeMetadataDescription,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -247,7 +258,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.check_circle, 
+                  Icon(
+                    Icons.check_circle,
                     color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
@@ -259,9 +271,12 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                         Text(l10n.compressData),
                         Text(
                           l10n.compressDataDescription,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -288,7 +303,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         Row(
           children: [
             Expanded(
-              child:               TextField(
+              child: TextField(
                 controller: _pathController,
                 decoration: InputDecoration(
                   hintText: l10n.selectExportLocationHint,
@@ -312,7 +327,10 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -326,9 +344,11 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          _buildSummaryRow(l10n.selectedItems, '${widget.selectedIds.length} 个${_getItemTypeName()}'),
-          _buildSummaryRow(l10n.exportType, _getExportTypeLabel(l10n, _exportType)),
-          _buildSummaryRow('导出格式', 'ZIP 压缩包'),
+          _buildSummaryRow(l10n.selectedItems,
+              '${widget.selectedIds.length} 个${_getItemTypeName()}'),
+          _buildSummaryRow(
+              l10n.exportType, _getExportTypeLabel(l10n, _exportType)),
+          _buildSummaryRow(l10n.exportFormat, 'ZIP'),
           if (_targetPath.isNotEmpty)
             _buildSummaryRow(l10n.exportLocation, _targetPath),
         ],
@@ -348,8 +368,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             child: Text(
               '$label:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           Expanded(
@@ -367,9 +387,11 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   bool _isExportTypeAvailable(ExportType type) {
     switch (widget.pageType) {
       case PageType.works:
-        return type == ExportType.worksOnly || type == ExportType.worksWithCharacters;
+        return type == ExportType.worksOnly ||
+            type == ExportType.worksWithCharacters;
       case PageType.characters:
-        return type == ExportType.charactersOnly || type == ExportType.charactersWithWorks;
+        return type == ExportType.charactersOnly ||
+            type == ExportType.charactersWithWorks;
     }
   }
 
@@ -407,7 +429,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
 
   /// 获取项目类型名称
   String _getItemTypeName() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     switch (widget.pageType) {
       case PageType.works:
         return l10n.work;
@@ -420,23 +442,23 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   Future<void> _selectTargetPath() async {
     try {
       final filePickerService = FilePickerServiceImpl();
-      
+
       // 固定选择ZIP文件保存路径
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final suggestedName = 'export_${widget.pageType.name}_$timestamp.zip';
-      
+
       final selectedPath = await filePickerService.pickSaveFile(
         dialogTitle: 'Select Export Location',
         suggestedName: suggestedName,
         allowedExtensions: ['zip'],
       );
-      
+
       if (selectedPath != null) {
         setState(() {
           _targetPath = selectedPath;
           _pathController.text = selectedPath;
         });
-        
+
         AppLogger.info(
           '选择导出路径',
           data: {
@@ -453,11 +475,11 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         error: e,
         tag: 'export_dialog',
       );
-      
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('选择路径失败: ${e.toString()}'),
+            content: Text('${l10n.selectPathFailed}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -475,7 +497,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       compressData: _compressData,
       version: '1.0',
     );
-    
+
     AppLogger.info(
       '开始导出',
       data: {
@@ -492,20 +514,23 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       },
       tag: 'export_dialog',
     );
-    
+
     Navigator.of(context).pop();
     widget.onExport(options, _targetPath);
   }
 
-    /// 创建带进度回调的导出函数
-  static Future<void> Function(ExportOptions, String) createProgressExportFunction({
+  /// 创建带进度回调的导出函数
+  static Future<void> Function(ExportOptions, String)
+      createProgressExportFunction({
     required BuildContext context,
-    required Future<void> Function(ExportOptions options, String targetPath, ProgressDialogController progressController) onExportWithProgress,
+    required Future<void> Function(ExportOptions options, String targetPath,
+            ProgressDialogController progressController)
+        onExportWithProgress,
   }) {
     return (ExportOptions options, String targetPath) async {
       // 显示进度对话框
       final progressController = ProgressDialogController();
-      
+
       // 显示进度对话框
       final progressFuture = ControlledProgressDialog.show(
         context: context,
@@ -527,4 +552,4 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       await progressFuture;
     };
   }
-} 
+}

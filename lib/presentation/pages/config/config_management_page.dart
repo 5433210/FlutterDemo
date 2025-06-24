@@ -58,11 +58,11 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
     } catch (e, stack) {
       debugPrint('❌ 配置数据初始化失败: $e');
       debugPrint('❌ 堆栈: $stack');
-
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('配置数据初始化失败: $e'),
+            content: Text('${l10n.configInitFailed}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -107,13 +107,14 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('页面构建错误', style: Theme.of(context).textTheme.headlineSmall),
+              Text(l10n.pageBuildError,
+                  style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
               Text('$e', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('返回'),
+                child: Text(l10n.back),
               ),
             ],
           ),

@@ -314,6 +314,83 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cannotApplyNoImage => '没有可用的图片';
 
   @override
+  String get homePage => '主页';
+
+  @override
+  String get fontTester => '字体测试工具';
+
+  @override
+  String get fontWeightTester => '字体粗细测试工具';
+
+  @override
+  String get backupTimeoutError => '备份创建超时或失败，请检查存储空间是否足够';
+
+  @override
+  String get retry => '重试';
+
+  @override
+  String get serviceNotReady => '服务未就绪，请稍后再试';
+
+  @override
+  String get exportFailed => '导出失败';
+
+  @override
+  String exportFailedWith(String error) {
+    return '导出失败: $error';
+  }
+
+  @override
+  String get importError => '导入错误';
+
+  @override
+  String get pageBuildError => '页面构建错误';
+
+  @override
+  String get configInitFailed => '配置数据初始化失败';
+
+  @override
+  String get sortFailed => '排序失败';
+
+  @override
+  String get selectPathFailed => '选择路径失败';
+
+  @override
+  String get importErrorCauses => '该问题通常由以下原因引起：';
+
+  @override
+  String get exportEncodingIssue => '• 导出时存在特殊字符编码问题';
+
+  @override
+  String get fileCorrupted => '• 文件在传输过程中损坏';
+
+  @override
+  String get incompatibleCharset => '• 使用了不兼容的字符集';
+
+  @override
+  String get suggestedSolutions => '建议解决方案：';
+
+  @override
+  String get reExportWork => '• 重新导出该作品';
+
+  @override
+  String get checkSpecialChars => '• 检查作品标题是否包含特殊字符';
+
+  @override
+  String get ensureCompleteTransfer => '• 确保文件完整传输';
+
+  @override
+  String get reselectFile => '重新选择文件';
+
+  @override
+  String get validatingImportFile => '正在验证导入文件...';
+
+  @override
+  String get parsingImportData => '正在解析导入数据...';
+
+  @override
+  String get executingImportOperation => '正在执行导入操作...';
+
+  @override
   String get cannotApplyNoSizeInfo => '无法获取图片尺寸信息';
 
   @override
@@ -2057,9 +2134,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get restoringBackup => '正在从备份恢复...';
 
   @override
-  String get retry => '重试';
-
-  @override
   String get rotateLeft => '向左旋转';
 
   @override
@@ -2810,4 +2884,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get about => '关于';
+
+  @override
+  String get appStartupFailed => '应用启动失败';
+
+  @override
+  String get criticalError => '严重错误';
+
+  @override
+  String appStartupFailedWith(String error) {
+    return '应用启动失败: $error';
+  }
 }

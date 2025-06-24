@@ -218,7 +218,8 @@ class ExportService {
       // 确保至少有一页
       if (pageIndices.isEmpty) {
         pageIndices = [0];
-        debugPrint('警告: 未指定有效页面范围，默认使用第一页');
+        debugPrint(
+            'Warning: No valid page range specified, using first page by default');
       }
 
       // 边距 (单位: 厘米 => 点)
@@ -244,7 +245,8 @@ class ExportService {
       final List<Uint8List> pageImages = [];
       for (final pageIndex in pageIndices) {
         if (pageIndex < 0 || pageIndex >= controller.state.pages.length) {
-          debugPrint('警告: 跳过无效的页面索引: $pageIndex (超出范围)');
+          debugPrint(
+              'Warning: Skipping invalid page index: $pageIndex (out of range)');
           continue;
         }
 
@@ -257,7 +259,8 @@ class ExportService {
           pageImages.add(pageImage);
           debugPrint('成功渲染第 ${pageIndex + 1} 页');
         } else {
-          debugPrint('警告: 未能渲染第 ${pageIndex + 1} 页，跳过');
+          debugPrint(
+              'Warning: Failed to render page ${pageIndex + 1}, skipping');
         }
       }
 

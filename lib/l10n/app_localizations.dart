@@ -689,6 +689,156 @@ abstract class AppLocalizations {
   /// **'没有可用的图片'**
   String get cannotApplyNoImage;
 
+  /// No description provided for @homePage.
+  ///
+  /// In zh, this message translates to:
+  /// **'主页'**
+  String get homePage;
+
+  /// No description provided for @fontTester.
+  ///
+  /// In zh, this message translates to:
+  /// **'字体测试工具'**
+  String get fontTester;
+
+  /// No description provided for @fontWeightTester.
+  ///
+  /// In zh, this message translates to:
+  /// **'字体粗细测试工具'**
+  String get fontWeightTester;
+
+  /// No description provided for @backupTimeoutError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份创建超时或失败，请检查存储空间是否足够'**
+  String get backupTimeoutError;
+
+  /// No description provided for @retry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get retry;
+
+  /// No description provided for @serviceNotReady.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务未就绪，请稍后再试'**
+  String get serviceNotReady;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败'**
+  String get exportFailed;
+
+  /// No description provided for @exportFailedWith.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败: {error}'**
+  String exportFailedWith(String error);
+
+  /// No description provided for @importError.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入错误'**
+  String get importError;
+
+  /// No description provided for @pageBuildError.
+  ///
+  /// In zh, this message translates to:
+  /// **'页面构建错误'**
+  String get pageBuildError;
+
+  /// No description provided for @configInitFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置数据初始化失败'**
+  String get configInitFailed;
+
+  /// No description provided for @sortFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序失败'**
+  String get sortFailed;
+
+  /// No description provided for @selectPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择路径失败'**
+  String get selectPathFailed;
+
+  /// No description provided for @importErrorCauses.
+  ///
+  /// In zh, this message translates to:
+  /// **'该问题通常由以下原因引起：'**
+  String get importErrorCauses;
+
+  /// No description provided for @exportEncodingIssue.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 导出时存在特殊字符编码问题'**
+  String get exportEncodingIssue;
+
+  /// No description provided for @fileCorrupted.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 文件在传输过程中损坏'**
+  String get fileCorrupted;
+
+  /// No description provided for @incompatibleCharset.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 使用了不兼容的字符集'**
+  String get incompatibleCharset;
+
+  /// No description provided for @suggestedSolutions.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议解决方案：'**
+  String get suggestedSolutions;
+
+  /// No description provided for @reExportWork.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 重新导出该作品'**
+  String get reExportWork;
+
+  /// No description provided for @checkSpecialChars.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 检查作品标题是否包含特殊字符'**
+  String get checkSpecialChars;
+
+  /// No description provided for @ensureCompleteTransfer.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 确保文件完整传输'**
+  String get ensureCompleteTransfer;
+
+  /// No description provided for @reselectFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新选择文件'**
+  String get reselectFile;
+
+  /// No description provided for @validatingImportFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在验证导入文件...'**
+  String get validatingImportFile;
+
+  /// No description provided for @parsingImportData.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在解析导入数据...'**
+  String get parsingImportData;
+
+  /// No description provided for @executingImportOperation.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在执行导入操作...'**
+  String get executingImportOperation;
+
   /// No description provided for @cannotApplyNoSizeInfo.
   ///
   /// In zh, this message translates to:
@@ -3995,12 +4145,6 @@ abstract class AppLocalizations {
   /// **'正在从备份恢复...'**
   String get restoringBackup;
 
-  /// No description provided for @retry.
-  ///
-  /// In zh, this message translates to:
-  /// **'重试'**
-  String get retry;
-
   /// No description provided for @rotateLeft.
   ///
   /// In zh, this message translates to:
@@ -5452,6 +5596,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'关于'**
   String get about;
+
+  /// No description provided for @appStartupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用启动失败'**
+  String get appStartupFailed;
+
+  /// No description provided for @criticalError.
+  ///
+  /// In zh, this message translates to:
+  /// **'严重错误'**
+  String get criticalError;
+
+  /// No description provided for @appStartupFailedWith.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用启动失败: {error}'**
+  String appStartupFailedWith(String error);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -42,7 +42,7 @@
   "appRestartFailed": "App Restart Failed, Please Manually Restart the App",
   "appRestarting": "Restarting App",
   "appRestartingMessage": "Data Recovery Successful, Restarting App...",
-  "appTitle": "Word by Word",
+  "appTitle": "Char As Gem",
   "apply": "Apply",
   "applyFormatBrush": "Apply Format Brush (Alt+W)",
   "applyTransform": "Apply Transform",
@@ -95,8 +95,37 @@
   "calligraphyStyle": "Calligraphy Style",
   "calligraphyStyleText": "Calligraphy Style",
   "canNotPreview": "Cannot Generate Preview",
-  "cancel": "Cancel",
-  "cannotApplyNoImage": "No Image Available",
+  "cancel": "Cancel",  "cannotApplyNoImage": "No Image Available",
+  "homePage": "Home Page",
+  "fontTester": "Font Tester",
+  "fontWeightTester": "Font Weight Tester",  "backupTimeoutError": "Backup creation timeout or failed, please check if storage space is sufficient",
+  "retry": "Retry",
+  "serviceNotReady": "Service not ready, please try again later",
+  "exportFailed": "Export failed",  "exportFailedWith": "Export failed: {error}",
+  "@exportFailedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message for export failure"
+      }
+    }
+  },
+  "importError": "Import Error",
+  "pageBuildError": "Page Build Error",
+  "back": "Back","configInitFailed": "Configuration data initialization failed",
+  "sortFailed": "Sort failed",
+  "selectPathFailed": "Path selection failed",
+  "importErrorCauses": "This issue is usually caused by the following reasons:",
+  "exportEncodingIssue": "• Special character encoding issues during export",
+  "fileCorrupted": "• File corrupted during transfer",
+  "incompatibleCharset": "• Used incompatible character set",
+  "suggestedSolutions": "Suggested solutions:",
+  "reExportWork": "• Re-export the work",
+  "checkSpecialChars": "• Check if work title contains special characters",
+  "ensureCompleteTransfer": "• Ensure complete file transfer",  "reselectFile": "Reselect File",
+  "validatingImportFile": "Validating import file...",
+  "parsingImportData": "Parsing import data...",
+  "executingImportOperation": "Executing import operation...",
   "cannotApplyNoSizeInfo": "Cannot Get Image Size Information",
   "cannotCapturePageImage": "Cannot Capture Page Image",
   "cannotDeleteOnlyPage": "Cannot Delete Only Page",
@@ -887,12 +916,22 @@
   "buildEnvironment": "Build Environment",
   "gitCommit": "Git Commit",
   "gitBranch": "Git Branch",
-  "platformInfo": "Platform Info",
-  "operatingSystem": "Operating System",
+  "platformInfo": "Platform Info",  "operatingSystem": "Operating System",
   "deviceInfo": "Device Info",
   "flutterVersion": "Flutter Version",
   "dartVersion": "Dart Version",
   "versionDetails": "Version Details",
   "systemInfo": "System Info",
-  "about": "About"
+  "about": "About",
+  "appStartupFailed": "App Startup Failed",
+  "criticalError": "Critical Error",
+  "appStartupFailedWith": "App startup failed: {error}",
+  "@appStartupFailedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Error message for startup failure"
+      }
+    }
+  }
 }

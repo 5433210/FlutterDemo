@@ -144,7 +144,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appRestartingMessage => 'Data Recovery Successful, Restarting App...';
 
   @override
-  String get appTitle => 'Word by Word';
+  String get appTitle => 'Char As Gem';
 
   @override
   String get appVersionInfo => 'App Version Info';
@@ -312,6 +312,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotApplyNoImage => 'No Image Available';
+
+  @override
+  String get homePage => 'Home Page';
+
+  @override
+  String get fontTester => 'Font Tester';
+
+  @override
+  String get fontWeightTester => 'Font Weight Tester';
+
+  @override
+  String get backupTimeoutError => 'Backup creation timeout or failed, please check if storage space is sufficient';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get serviceNotReady => 'Service not ready, please try again later';
+
+  @override
+  String get exportFailed => 'Export failed';
+
+  @override
+  String exportFailedWith(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get importError => 'Import Error';
+
+  @override
+  String get pageBuildError => 'Page Build Error';
+
+  @override
+  String get configInitFailed => 'Configuration data initialization failed';
+
+  @override
+  String get sortFailed => 'Sort failed';
+
+  @override
+  String get selectPathFailed => 'Path selection failed';
+
+  @override
+  String get importErrorCauses => 'This issue is usually caused by the following reasons:';
+
+  @override
+  String get exportEncodingIssue => '• Special character encoding issues during export';
+
+  @override
+  String get fileCorrupted => '• File corrupted during transfer';
+
+  @override
+  String get incompatibleCharset => '• Used incompatible character set';
+
+  @override
+  String get suggestedSolutions => 'Suggested solutions:';
+
+  @override
+  String get reExportWork => '• Re-export the work';
+
+  @override
+  String get checkSpecialChars => '• Check if work title contains special characters';
+
+  @override
+  String get ensureCompleteTransfer => '• Ensure complete file transfer';
+
+  @override
+  String get reselectFile => 'Reselect File';
+
+  @override
+  String get validatingImportFile => 'Validating import file...';
+
+  @override
+  String get parsingImportData => 'Parsing import data...';
+
+  @override
+  String get executingImportOperation => 'Executing import operation...';
 
   @override
   String get cannotApplyNoSizeInfo => 'Cannot Get Image Size Information';
@@ -2057,9 +2134,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoringBackup => 'Restoring from Backup...';
 
   @override
-  String get retry => 'Retry';
-
-  @override
   String get rotateLeft => 'Rotate Left';
 
   @override
@@ -2810,4 +2884,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get about => 'About';
+
+  @override
+  String get appStartupFailed => 'App Startup Failed';
+
+  @override
+  String get criticalError => 'Critical Error';
+
+  @override
+  String appStartupFailedWith(String error) {
+    return 'App startup failed: $error';
+  }
 }

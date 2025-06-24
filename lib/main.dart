@@ -10,8 +10,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
-import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'infrastructure/monitoring/performance_monitor.dart';
+import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
 import 'utils/config/edit_page_logging_config.dart';
 import 'utils/config/logging_config.dart';
@@ -74,11 +74,11 @@ void main() async {
 
   // 初始化日志系统，启用控制台输出和调试级别
   await AppLogger.init(enableConsole: true, minLevel: LogLevel.debug);
-  
+
   // 🚀 启动性能监控器
   PerformanceMonitor().startMonitoring();
   AppLogger.info('性能监控器已启动', tag: 'App');
-  
+
   try {
     // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();
@@ -106,7 +106,7 @@ void main() async {
       AppLogger.fatal('应用启动失败', error: e, stackTrace: stack, tag: 'App');
     } else {
       // 如果日志系统未初始化，使用调试打印
-      debugPrint('严重错误：应用启动失败: $e');
+      debugPrint('Critical error: App startup failed: $e');
       debugPrint('$stack');
     }
 
@@ -121,7 +121,7 @@ void main() async {
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  '应用启动失败: $e',
+                  'App startup failed: $e',
                   style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),

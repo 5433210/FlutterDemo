@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../application/providers/import_export_providers.dart';
-
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
@@ -11,8 +10,8 @@ import '../../../providers/works_providers.dart';
 import '../../../viewmodels/states/work_browse_state.dart';
 import '../../../widgets/batch_operations/export_dialog.dart';
 import '../../../widgets/batch_operations/import_dialog.dart';
-import '../../../widgets/common/m3_page_navigation_bar.dart';
 import '../../../widgets/batch_operations/progress_dialog.dart';
+import '../../../widgets/common/m3_page_navigation_bar.dart';
 
 class M3WorkBrowseNavigationBar extends ConsumerStatefulWidget {
   final ViewMode viewMode;
@@ -55,7 +54,6 @@ class M3WorkBrowseNavigationBar extends ConsumerStatefulWidget {
 
 class _M3WorkBrowseNavigationBarState
     extends ConsumerState<M3WorkBrowseNavigationBar> {
-  
   void _showDeleteConfirmation() {
     final l10n = AppLocalizations.of(context);
     showDialog(
@@ -82,7 +80,7 @@ class _M3WorkBrowseNavigationBarState
 
   void _showExportDialog() {
     final l10n = AppLocalizations.of(context);
-    
+
     // 检查服务是否就绪
     final services = ref.read(batchOperationsServicesProvider);
     if (!services.isReady) {
@@ -91,10 +89,10 @@ class _M3WorkBrowseNavigationBarState
         data: services.serviceStatus,
         tag: 'work_browse_navigation',
       );
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('服务未就绪，请稍后再试'),
+          content: Text(l10n.serviceNotReady),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -118,7 +116,7 @@ class _M3WorkBrowseNavigationBarState
         onExport: (options, targetPath) async {
           // 显示进度对话框
           final progressController = ProgressDialogController();
-          
+
           // 显示进度对话框，不等待用户交互
           final progressFuture = ControlledProgressDialog.show(
             context: context,
@@ -143,7 +141,7 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             final exportService = services.exportService;
             await exportService.exportWorks(
               widget.selectedWorkIds.toList(), // 使用实际的作品ID列表
@@ -153,7 +151,7 @@ class _M3WorkBrowseNavigationBarState
               progressCallback: (progress, message, data) {
                 // 实时更新进度
                 progressController.updateProgress(progress, message, data);
-                
+
                 AppLogger.debug(
                   '导出进度更新',
                   data: {
@@ -165,10 +163,10 @@ class _M3WorkBrowseNavigationBarState
                 );
               },
             );
-            
+
             // 标记完成
             progressController.complete(l10n.exportSuccess);
-            
+
             AppLogger.info(
               '作品导出成功完成',
               data: {
@@ -177,10 +175,10 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             // 等待进度对话框关闭，然后显示成功消息
             await progressFuture;
-            
+
             // 使用延迟检查确保组件仍然活跃
             if (mounted && context.mounted) {
               try {
@@ -213,7 +211,7 @@ class _M3WorkBrowseNavigationBarState
           } catch (e, stackTrace) {
             // 显示错误
             progressController.showError('导出失败: ${e.toString()}');
-            
+
             AppLogger.error(
               '作品导出失败',
               error: e,
@@ -224,19 +222,19 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             // 等待错误对话框关闭
             await progressFuture;
-            
+
             // 使用延迟检查确保组件仍然活跃
             if (mounted && context.mounted) {
               try {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('导出失败: ${e.toString()}'),
+                    content: Text('${l10n.exportFailed}: ${e.toString()}'),
                     backgroundColor: Colors.red,
                     action: SnackBarAction(
-                      label: '重试',
+                      label: l10n.retry,
                       onPressed: () => _showExportDialog(),
                     ),
                   ),
@@ -245,7 +243,10 @@ class _M3WorkBrowseNavigationBarState
                 // 如果显示SnackBar失败，记录日志但不重新抛出异常
                 AppLogger.warning(
                   '显示导出失败消息失败，可能是因为页面已关闭',
-                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  data: {
+                    'originalError': e.toString(),
+                    'snackBarError': snackBarError.toString()
+                  },
                   tag: 'work_browse_navigation',
                 );
               }
@@ -260,7 +261,7 @@ class _M3WorkBrowseNavigationBarState
 
   void _showImportDialog() {
     final l10n = AppLocalizations.of(context);
-    
+
     // 检查服务是否就绪
     final services = ref.read(batchOperationsServicesProvider);
     if (!services.isReady) {
@@ -269,10 +270,10 @@ class _M3WorkBrowseNavigationBarState
         data: services.serviceStatus,
         tag: 'work_browse_navigation',
       );
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('服务未就绪，请稍后再试'),
+          content: Text(l10n.serviceNotReady),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -291,10 +292,10 @@ class _M3WorkBrowseNavigationBarState
         onImport: (options, filePath) async {
           // 保存Navigator状态，用于后续对话框显示
           final navigatorState = Navigator.of(context);
-          
+
           // 显示进度对话框
           final progressController = ProgressDialogController();
-          
+
           // 显示进度对话框
           final progressFuture = ControlledProgressDialog.show(
             context: context,
@@ -317,31 +318,36 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             final importService = services.importService;
-            
+
             // 第一步：验证文件
-            progressController.updateProgress(0.1, '正在验证导入文件...', null);
-            final result = await importService.validateImportFile(filePath, options);
-            
+            progressController.updateProgress(
+                0.1, l10n.validatingImportFile, null);
+            final result =
+                await importService.validateImportFile(filePath, options);
+
             if (!result.isValid) {
               throw Exception(result.messages.map((m) => m.message).join(', '));
             }
-            
+
             // 第二步：解析数据
-            progressController.updateProgress(0.3, '正在解析导入数据...', null);
-            final importData = await importService.parseImportData(filePath, options);
-            
+            progressController.updateProgress(
+                0.3, l10n.parsingImportData, null);
+            final importData =
+                await importService.parseImportData(filePath, options);
+
             // 第三步：执行导入
-            progressController.updateProgress(0.5, '正在执行导入操作...', {
+            progressController
+                .updateProgress(0.5, l10n.executingImportOperation, {
               'itemCount': importData.exportData.works.length,
             });
-            
+
             final importResult = await importService.performImport(
               importData,
               sourceFilePath: filePath,
             );
-            
+
             AppLogger.info(
               '导入结果检查',
               data: {
@@ -355,12 +361,12 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             if (!importResult.success) {
               throw Exception(importResult.errors.join(', '));
             }
-            
-                        AppLogger.info(
+
+            AppLogger.info(
               '作品导入成功完成',
               data: {
                 'filePath': filePath,
@@ -371,22 +377,23 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             // 在进度对话框中显示导入结果
             progressController.showImportResult(importResult, filePath);
-            
+
             AppLogger.info(
               '已在进度对话框中显示导入结果',
               tag: 'work_browse_navigation',
             );
-            
+
             // 等待进度对话框关闭
             await progressFuture;
-            
+
             // 进度对话框关闭后刷新页面数据
             if (mounted) {
-              ref.read(worksNeedsRefreshProvider.notifier).state = RefreshInfo.importCompleted();
-              
+              ref.read(worksNeedsRefreshProvider.notifier).state =
+                  RefreshInfo.importCompleted();
+
               AppLogger.info(
                 '导入完成，已触发作品列表刷新',
                 tag: 'work_browse_navigation',
@@ -395,7 +402,7 @@ class _M3WorkBrowseNavigationBarState
           } catch (e, stackTrace) {
             // 显示错误
             progressController.showError('导入失败: ${e.toString()}');
-            
+
             AppLogger.error(
               '作品导入失败',
               error: e,
@@ -405,10 +412,10 @@ class _M3WorkBrowseNavigationBarState
               },
               tag: 'work_browse_navigation',
             );
-            
+
             // 等待错误对话框关闭
             await progressFuture;
-            
+
             // 使用延迟检查确保组件仍然活跃
             if (mounted && context.mounted) {
               try {
@@ -416,32 +423,33 @@ class _M3WorkBrowseNavigationBarState
                 String userFriendlyMessage;
                 String actionLabel = '重试';
                 VoidCallback? actionCallback = () => _showImportDialog();
-                
-                if (e.toString().contains('Missing extension byte') || 
+
+                if (e.toString().contains('Missing extension byte') ||
                     e.toString().contains('UTF-8') ||
                     e.toString().contains('字符编码')) {
-                  userFriendlyMessage = '导入文件包含损坏的字符数据，可能是由于字符编码问题导致的。建议重新导出文件后再试。';
+                  userFriendlyMessage =
+                      '导入文件包含损坏的字符数据，可能是由于字符编码问题导致的。建议重新导出文件后再试。';
                   actionLabel = '了解更多';
                   actionCallback = () {
                     showDialog(
                       context: context,
-                                             builder: (context) => AlertDialog(
-                         title: Text('导入错误'),
+                      builder: (context) => AlertDialog(
+                        title: Text(l10n.importError),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('该问题通常由以下原因引起：'),
+                            Text(l10n.importErrorCauses),
                             const SizedBox(height: 8),
-                            Text('• 导出时存在特殊字符编码问题'),
-                            Text('• 文件在传输过程中损坏'),
-                            Text('• 使用了不兼容的字符集'),
+                            Text(l10n.exportEncodingIssue),
+                            Text(l10n.fileCorrupted),
+                            Text(l10n.incompatibleCharset),
                             const SizedBox(height: 16),
-                            Text('建议解决方案：'),
+                            Text(l10n.suggestedSolutions),
                             const SizedBox(height: 8),
-                            Text('• 重新导出该作品'),
-                            Text('• 检查作品标题是否包含特殊字符'),
-                            Text('• 确保文件完整传输'),
+                            Text(l10n.reExportWork),
+                            Text(l10n.checkSpecialChars),
+                            Text(l10n.ensureCompleteTransfer),
                           ],
                         ),
                         actions: [
@@ -454,21 +462,21 @@ class _M3WorkBrowseNavigationBarState
                               Navigator.of(context).pop();
                               _showImportDialog();
                             },
-                            child: Text('重新选择文件'),
+                            child: Text(l10n.reselectFile),
                           ),
                         ],
                       ),
                     );
                   };
                 } else if (e.toString().contains('找不到导出数据文件') ||
-                          e.toString().contains('ZIP文件格式无效')) {
+                    e.toString().contains('ZIP文件格式无效')) {
                   userFriendlyMessage = '导入文件格式不正确或文件已损坏，请确保选择的是有效的导出文件。';
                 } else if (e.toString().contains('缺少')) {
                   userFriendlyMessage = '导入文件不完整，缺少必要的数据文件。请重新导出完整的文件。';
                 } else {
                   userFriendlyMessage = '导入失败: ${e.toString()}';
                 }
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(userFriendlyMessage),
@@ -484,7 +492,10 @@ class _M3WorkBrowseNavigationBarState
                 // 如果显示SnackBar失败，记录日志但不重新抛出异常
                 AppLogger.warning(
                   '显示导入失败消息失败，可能是因为页面已关闭',
-                  data: {'originalError': e.toString(), 'snackBarError': snackBarError.toString()},
+                  data: {
+                    'originalError': e.toString(),
+                    'snackBarError': snackBarError.toString()
+                  },
                   tag: 'work_browse_navigation',
                 );
               }
@@ -557,9 +568,9 @@ class _M3WorkBrowseNavigationBarState
               label: Text(l10n.add),
               onPressed: widget.onAddWork,
             ),
-          
+
           const SizedBox(width: AppSizes.s),
-          
+
           // 导入按钮
           FilledButton.icon(
             icon: const Icon(Icons.file_upload),

@@ -539,7 +539,7 @@ class BackupSettings extends ConsumerWidget {
                   content: Text(l10n.backupSuccess),
                   backgroundColor: Colors.green,
                   action: SnackBarAction(
-                    label: '查看',
+                    label: l10n.showDetails,
                     onPressed: () {
                       // 可以添加查看备份文件的功能
                     },
@@ -554,11 +554,11 @@ class BackupSettings extends ConsumerWidget {
             AppLogger.warning('备份路径为null，显示失败消息', tag: 'BackupSettings');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('备份创建超时或失败，请检查存储空间是否足够'),
+                content: Text(AppLocalizations.of(context).backupTimeoutError),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 5),
                 action: SnackBarAction(
-                  label: '重试',
+                  label: AppLocalizations.of(context).retry,
                   onPressed: () => _showCreateBackupDialog(context, ref),
                 ),
               ),
@@ -659,7 +659,7 @@ class BackupSettings extends ConsumerWidget {
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 8),
               action: SnackBarAction(
-                label: '重试',
+                label: AppLocalizations.of(context).retry,
                 onPressed: () => _showCreateBackupDialog(context, ref),
               ),
             ),

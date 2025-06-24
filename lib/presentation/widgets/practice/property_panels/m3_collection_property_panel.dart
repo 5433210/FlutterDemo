@@ -7,8 +7,8 @@ import '../../../../application/providers/service_providers.dart';
 import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../utils/config/edit_page_logging_config.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../practice_edit_controller.dart';
 import 'collection_panels/m3_background_texture_panel.dart';
 import 'collection_panels/m3_content_settings_panel.dart';
@@ -1074,7 +1074,7 @@ class _M3CollectionPropertyPanelState
       if (newContent.containsKey('content')) {
         newContent.remove('content');
         EditPageLogger.propertyPanelDebug(
-          '警告: 在最终处理中移除了嵌套content',
+          'Warning: Nested content removed in final processing',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
             'key': key,
@@ -1175,9 +1175,7 @@ class _M3CollectionPropertyPanelState
     switch (propertyName) {
       case 'invert':
         propertyLabel = l10n.colorInversion;
-        valueLabel = value
-            ? l10n.enabled
-            : l10n.disabled;
+        valueLabel = value ? l10n.enabled : l10n.disabled;
         break;
       case 'scale':
         propertyLabel = l10n.scale;

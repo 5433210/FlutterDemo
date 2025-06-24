@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,20 +49,20 @@ class AppVersionInfoData {
     buffer.writeln('${l10n.buildNumber}: $buildNumber');
     buffer.writeln('${l10n.buildTime}: $buildTime');
     buffer.writeln('${l10n.buildEnvironment}: $buildEnvironment');
-    
+
     if (gitCommit != null) {
       buffer.writeln('${l10n.gitCommit}: $gitCommit');
     }
     if (gitBranch != null) {
       buffer.writeln('${l10n.gitBranch}: $gitBranch');
     }
-    
+
     buffer.writeln();
     buffer.writeln('=== ${l10n.platformInfo} ===');
     buffer.writeln('${l10n.operatingSystem}: $operatingSystem');
     buffer.writeln('${l10n.flutterVersion}: $flutterVersion');
     buffer.writeln('${l10n.dartVersion}: $dartVersion');
-    
+
     return buffer.toString();
   }
 }
@@ -70,11 +71,11 @@ class AppVersionInfoService {
   static Future<AppVersionInfoData> getVersionInfo() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      
+
       // 处理Windows平台的版本格式问题
       String version = packageInfo.version;
       String buildNumber = packageInfo.buildNumber;
-      
+
       // Windows可能返回 "1.0.1.0" 格式，需要转换为 "1.0.1"
       if (Platform.isWindows && version.contains('.')) {
         final parts = version.split('.');
@@ -82,7 +83,7 @@ class AppVersionInfoService {
           version = parts.take(3).join('.');
         }
       }
-      
+
       // 如果buildNumber为空，尝试从version中提取
       if (buildNumber.isEmpty && version.contains('+')) {
         final versionParts = version.split('+');
@@ -91,7 +92,7 @@ class AppVersionInfoService {
           buildNumber = versionParts[1];
         }
       }
-      
+
       // 如果仍然为空，使用默认值
       if (buildNumber.isEmpty) {
         buildNumber = '20250623001';
@@ -120,13 +121,11 @@ class AppVersionInfoService {
         tag: 'system',
         error: e,
         stackTrace: stackTrace,
-      );
-      
-      // 返回默认信息
+      ); // 返回默认信息，使用本地化"未知"
       return AppVersionInfoData(
-        appName: '字字珠玑',
+        appName: 'Char As Gem',
         appVersion: '1.0.0',
-        buildNumber: '未知',
+        buildNumber: 'Unknown', // 这里将在UI层显示时被替换为本地化文本
         buildTime: DateTime.now().toIso8601String(),
         buildEnvironment: kDebugMode ? 'debug' : 'release',
         platformName: _getPlatformName(),
@@ -144,7 +143,7 @@ class AppVersionInfoService {
     if (Platform.isWindows) return 'Windows';
     if (Platform.isMacOS) return 'macOS';
     if (Platform.isLinux) return 'Linux';
-    return '未知平台';
+    return 'Unknown Platform'; // 这里将在UI层显示时被替换为本地化文本
   }
 
   static String _getOperatingSystem() {
@@ -176,14 +175,15 @@ class AppVersionSettings extends ConsumerWidget {
       title: l10n.about,
       children: [
         versionInfoAsync.when(
-          data: (versionInfo) => _buildVersionInfo(context, l10n, theme, versionInfo),
-          loading: () => const ListTile(
-            leading: CircularProgressIndicator(),
-            title: Text('加载中...'),
+          data: (versionInfo) =>
+              _buildVersionInfo(context, l10n, theme, versionInfo),
+          loading: () => ListTile(
+            leading: const CircularProgressIndicator(),
+            title: Text(l10n.loading),
           ),
           error: (error, stack) => ListTile(
             leading: Icon(Icons.error, color: theme.colorScheme.error),
-            title: const Text('加载失败'),
+            title: Text(l10n.loadFailed),
             subtitle: Text(error.toString()),
           ),
         ),
@@ -210,13 +210,14 @@ class AppVersionSettings extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${l10n.appVersion}: ${versionInfo.appVersion}'),
-              Text('${l10n.buildNumber}: ${versionInfo.buildNumber}'),
+              Text(
+                  '${l10n.buildNumber}: ${versionInfo.buildNumber == "Unknown" ? l10n.unknown : versionInfo.buildNumber}'),
               Text('${l10n.buildEnvironment}: ${versionInfo.buildEnvironment}'),
             ],
           ),
           isThreeLine: true,
         ),
-        
+
         // 系统信息
         ListTile(
           leading: Icon(
@@ -234,7 +235,7 @@ class AppVersionSettings extends ConsumerWidget {
           ),
           isThreeLine: true,
         ),
-        
+
         // 复制版本信息按钮
         ListTile(
           leading: Icon(
@@ -257,7 +258,7 @@ class AppVersionSettings extends ConsumerWidget {
     try {
       final formattedInfo = versionInfo.toFormattedString(l10n);
       await Clipboard.setData(ClipboardData(text: formattedInfo));
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -300,4 +301,4 @@ class AppVersionSettings extends ConsumerWidget {
       }
     }
   }
-} 
+}
