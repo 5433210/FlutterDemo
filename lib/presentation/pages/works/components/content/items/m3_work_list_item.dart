@@ -5,6 +5,7 @@ import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
 import '../../../../../../infrastructure/providers/config_providers.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
+import '../../../../../../l10n/app_localizations.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../widgets/image/cached_image.dart';
@@ -343,8 +344,11 @@ class M3WorkListItem extends ConsumerWidget {
               minHeight: 32,
             ),
             padding: const EdgeInsets.all(AppSizes.xs),
-            onPressed: onTagsEdited,
-            tooltip: '编辑标签',
+            onPressed: () {
+              print('DEBUG: 列表项编辑标签按钮被点击 - ${work.id}');
+              onTagsEdited?.call();
+            },
+            tooltip: AppLocalizations.of(context).editTags,
           ),
       ],
     );

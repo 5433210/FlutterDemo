@@ -5746,6 +5746,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'集字ID不能为空'**
   String get collectionIdCannotBeEmpty;
+
+  /// No description provided for @editTags.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑标签'**
+  String get editTags;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

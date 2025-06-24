@@ -61,12 +61,10 @@ void main() async {
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
       title: appTitle,
-    );
-
-    // 设置窗口
+    ); // 设置窗口
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       // 设置窗口图标，确保与任务栏图标一致
-      await windowManager.setIcon('resources/app_trans_bg.ico');
+      await windowManager.setIcon('assets/images/app_trans_bg.ico');
       await windowManager.show();
       await windowManager.focus();
     });

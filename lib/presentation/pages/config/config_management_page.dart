@@ -814,9 +814,10 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
       debugPrint('❌ 重新排序配置项失败: $e');
       debugPrint('❌ 堆栈: $stack');
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('排序失败: $e'),
+            content: Text('${l10n.sortFailed}: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

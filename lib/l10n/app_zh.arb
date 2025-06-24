@@ -951,7 +951,7 @@
   "deleteCharacterFailed": "删除字符失败：{error}",
   "loadCharacterDataFailed": "加载字符数据失败：{error}",
   "basicProperties": "基础属性",
-  "practiceSheetSavedMessage": "字帖 \"{title}\" 保存成功",
-  "workIdCannotBeEmpty": "作品ID不能为空",
-  "collectionIdCannotBeEmpty": "集字ID不能为空" 
+  "practiceSheetSavedMessage": "字帖 \"{title}\" 保存成功",  "workIdCannotBeEmpty": "作品ID不能为空",
+  "collectionIdCannotBeEmpty": "集字ID不能为空",
+  "editTags": "编辑标签"
 }

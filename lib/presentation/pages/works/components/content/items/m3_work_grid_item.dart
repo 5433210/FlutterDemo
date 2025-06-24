@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
+import '../../../../../../l10n/app_localizations.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../widgets/image/cached_image.dart';
-import '../../../../../../l10n/app_localizations.dart';
 
 class M3WorkGridItem extends ConsumerWidget {
   final WorkEntity work;
@@ -168,17 +168,18 @@ class M3WorkGridItem extends ConsumerWidget {
                             ),
                           ),
                         ),
-
-                      // 编辑标签按钮
                       if (!isSelectionMode && onTagsEdited != null)
                         IconButton(
-                          onPressed: onTagsEdited,
+                          onPressed: () {
+                            print('DEBUG: 网格项编辑标签按钮被点击 - ${work.id}');
+                            onTagsEdited?.call();
+                          },
                           icon: const Icon(Icons.edit_outlined),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           iconSize: 16,
                           splashRadius: 20,
-                          tooltip: 'Edit Tags',
+                          tooltip: l10n.editTags,
                         ),
                     ],
                   ),

@@ -951,7 +951,7 @@
   "deleteCharacterFailed": "Failed to delete character: {error}",
   "loadCharacterDataFailed": "Failed to load character data: {error}",
   "basicProperties": "Basic Properties",
-  "practiceSheetSavedMessage": "Practice sheet \"{title}\" saved successfully",
-  "workIdCannotBeEmpty": "Work ID cannot be empty",
-  "collectionIdCannotBeEmpty": "Collection ID cannot be empty"  
+  "practiceSheetSavedMessage": "Practice sheet \"{title}\" saved successfully",  "workIdCannotBeEmpty": "Work ID cannot be empty",
+  "collectionIdCannotBeEmpty": "Collection ID cannot be empty",
+  "editTags": "Edit Tags"
 }

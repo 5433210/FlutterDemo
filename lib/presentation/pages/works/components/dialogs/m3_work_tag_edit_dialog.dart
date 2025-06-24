@@ -32,9 +32,8 @@ class _M3WorkTagEditDialogState extends State<M3WorkTagEditDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-
     return AlertDialog(
-      title: Text(l10n.edit),
+      title: Text(l10n.editTags),
       content: SizedBox(
         width: 400,
         child: Column(

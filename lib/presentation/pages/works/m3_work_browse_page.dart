@@ -16,12 +16,12 @@ import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
+import 'components/content/m3_work_content_area.dart';
 import 'components/content/m3_work_grid_view.dart';
 import 'components/content/m3_work_list_view.dart';
 import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
 import 'components/m3_work_browse_navigation_bar.dart';
-import 'components/content/m3_work_content_area.dart';
 
 class M3WorkBrowsePage extends ConsumerStatefulWidget {
   const M3WorkBrowsePage({super.key});
@@ -169,9 +169,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                     onToggleFavorite: (workId) {
                       viewModel.toggleFavorite(workId);
                     },
-                    onTagsEdited: (workId) {
-                      // TODO: Implement tags editing
-                    },
+                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
                   ),
                 ),
               ],
@@ -395,9 +393,13 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   Future<void> _handleTagEdited(BuildContext context, String workId) async {
     final l10n = AppLocalizations.of(context);
 
+    print('DEBUG: 编辑标签按钮被点击 - workId: $workId');
+
     try {
       final work =
           ref.read(workBrowseProvider).works.firstWhere((w) => w.id == workId);
+
+      print('DEBUG: 找到作品 - ${work.title}, 当前标签: ${work.tags}');
 
       // Get all existing tags for suggestions
       final allTags = ref
@@ -406,17 +408,26 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           .expand((work) => work.tags)
           .toSet()
           .toList();
+
+      print('DEBUG: 准备显示对话框 - 建议标签: $allTags');
+
       final result = await showDialog<List<String>>(
         context: context,
-        builder: (context) => M3WorkTagEditDialog(
-          tags: work.tags,
-          suggestedTags: allTags,
-          onSaved: (newTags) {
-            Navigator.of(context).pop(newTags);
-          },
-        ),
+        builder: (context) {
+          print('DEBUG: 正在构建对话框');
+          return M3WorkTagEditDialog(
+            tags: work.tags,
+            suggestedTags: allTags,
+            onSaved: (newTags) {
+              print('DEBUG: 标签保存 - $newTags');
+              Navigator.of(context).pop(newTags);
+            },
+          );
+        },
         barrierDismissible: false,
       );
+
+      print('DEBUG: 对话框返回结果 - $result');
 
       if (result != null) {
         AppLogger.debug('更新作品标签', tag: 'WorkBrowsePage', data: {
@@ -429,6 +440,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         await ref.read(workBrowseProvider.notifier).updateTags(workId, result);
       }
     } catch (e) {
+      print('DEBUG: 编辑标签时发生错误 - $e');
       AppLogger.error('编辑标签失败', tag: 'WorkBrowsePage', error: e);
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -564,7 +576,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   void _handleSelectAll() {
     final viewModel = ref.read(workBrowseProvider.notifier);
     viewModel.selectAll();
-    
+
     AppLogger.debug('用户触发全选操作',
         tag: 'WorkBrowsePage',
         data: {'totalWorks': ref.read(workBrowseProvider).works.length});
@@ -573,9 +585,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   void _handleClearSelection() {
     final viewModel = ref.read(workBrowseProvider.notifier);
     viewModel.clearSelection();
-    
-    AppLogger.debug('用户触发取消选择操作',
-        tag: 'WorkBrowsePage',
-        data: {'previousSelectedCount': ref.read(workBrowseProvider).selectedWorks.length});
+
+    AppLogger.debug('用户触发取消选择操作', tag: 'WorkBrowsePage', data: {
+      'previousSelectedCount': ref.read(workBrowseProvider).selectedWorks.length
+    });
   }
 }

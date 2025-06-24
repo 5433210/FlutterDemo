@@ -2975,4 +2975,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get collectionIdCannotBeEmpty => '集字ID不能为空';
+
+  @override
+  String get editTags => '编辑标签';
 }

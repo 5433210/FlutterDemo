@@ -2975,4 +2975,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionIdCannotBeEmpty => 'Collection ID cannot be empty';
+
+  @override
+  String get editTags => 'Edit Tags';
 }
