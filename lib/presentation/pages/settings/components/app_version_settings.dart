@@ -289,11 +289,11 @@ class AppVersionSettings extends ConsumerWidget {
         error: e,
         stackTrace: stackTrace,
       );
-
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('复制失败: ${e.toString()}'),
+            content: Text(l10n.copyFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),

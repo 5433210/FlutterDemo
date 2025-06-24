@@ -1482,7 +1482,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.delete),
+            child: Text(l10n.confirm),
           ),
         ],
       ),
@@ -1661,7 +1661,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'type': 'collection',
           'x': x,
           'y': y,
-          'width': 200.0, // 更大的尺寸以便于查看
+          'width': 400.0, // 更大的尺寸以便于查看
           'height': 200.0,
           'rotation': 0.0,
           'layerId': _controller.state.selectedLayerId ??
@@ -1675,7 +1675,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'content': {
             // 使用字符名称作为默认显示内容
             'characters': character.character as String? ?? '集',
-            'fontSize': 200.0, // 更大的字体以便于查看
+            'fontSize': 50.0, // 统一字体大小
             'fontColor': '#000000',
             'backgroundColor': 'transparent',
             'writingMode': 'horizontal-l',
@@ -1833,26 +1833,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         final x = 100.0 + (i * 20);
         final y = 100.0 + (i * 20);
 
-        // 图片默认尺寸
-        const defaultWidth = 200.0;
-        const defaultHeight = 200.0;
-
-        // 创建图片元素
-        final newElement = {
-          'id': newId,
-          'type': 'image',
-          'x': x,
-          'y': y,
-          'width': defaultWidth,
-          'height': defaultHeight,
-          'rotation': 0.0,
-          'opacity': 1.0,
-          'visible': true,
-          'locked': false,
-          'imagePath': item.path,
-          'libraryItemId': itemId,
-          // 其他必要的图片元素属性
-        };
         AppLogger.debug(
           '创建新的图片元素',
           tag: 'PracticeEdit',

@@ -76,7 +76,7 @@ class CollectionElementRenderer {
     } // 兼容原有支持 - 无内容且无背景纹理时显示提示
     if (characters.isEmpty && !hasCharacterTexture) {
       return Center(
-          child: Text(AppLocalizations.of(context).inputChineseContent,
+          child: Text(AppLocalizations.of(context).defaultEditableText,
               style: const TextStyle(color: Colors.grey)));
     }
 

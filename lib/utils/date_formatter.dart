@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
+
 class DateFormatter {
   static final _compactFormatter = DateFormat('yyyy/MM/dd');
   static final _fullFormatter = DateFormat('yyyy年MM月dd日');
@@ -16,16 +18,16 @@ class DateFormatter {
   }
 
   /// Format relative date: 今天/昨天/前天/日期
-  static String formatRelative(DateTime date) {
+  static String formatRelative(DateTime date, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      return '今天';
+      return l10n.today;
     } else if (difference.inDays == 1) {
-      return '昨天';
+      return l10n.yesterday;
     } else if (difference.inDays == 2) {
-      return '前天';
+      return l10n.dayBeforeYesterday;
     } else {
       return formatCompact(date);
     }

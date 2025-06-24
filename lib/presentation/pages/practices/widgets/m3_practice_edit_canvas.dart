@@ -1380,17 +1380,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
         // 将视口坐标转换为页面逻辑坐标
         dropPosition = screenToCanvas(viewportRelativePosition);
-      }
-
-      // 处理边界约束
+      } // 处理边界约束
       final elementDefaultSizes = {
-        'text': const Size(200, 100),
-        'image': const Size(200, 200),
-        'collection': const Size(200, 200),
+        'text': const Size(400, 200),
+        'image': const Size(400, 200),
+        'collection': const Size(400, 200),
       };
 
       final elementSize =
-          elementDefaultSizes[elementType] ?? const Size(200, 100);
+          elementDefaultSizes[elementType] ?? const Size(400, 200);
       final halfWidth = elementSize.width / 2;
       final halfHeight = elementSize.height / 2;
 

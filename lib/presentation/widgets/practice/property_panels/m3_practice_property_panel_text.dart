@@ -576,31 +576,6 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 ),
               ],
             ),
-
-            // 思源字体提示
-            if (fontFamily == 'SourceHanSans' || fontFamily == 'SourceHanSerif')
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        '思源字体支持更精确的字重变化',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
 

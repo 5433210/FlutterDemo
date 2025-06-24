@@ -9,6 +9,7 @@ import '../../application/services/library/library_import_service.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/library/m3_library_picker_dialog.dart';
 import 'states/work_import_state.dart';
 
@@ -136,7 +137,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 导入作品
-  Future<bool> importWork() async {
+  Future<bool> importWork([BuildContext? context]) async {
     if (!canSubmit) return false;
 
     try {
@@ -156,9 +157,10 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         'localImageCount': localImageIndexes.length,
         'localIndexes': localImageIndexes,
       }); // 如果有本地图片需要添加到图库，提示用户
-      if (localImageIndexes.isNotEmpty) {
+      if (localImageIndexes.isNotEmpty && context != null) {
+        final l10n = AppLocalizations.of(context);
         state = state.copyWith(
-          statusMessage: '正在将 ${localImageIndexes.length} 张本地图片添加到图库...',
+          statusMessage: '${l10n.addImages} ${localImageIndexes.length}...',
         );
 
         // 让用户有时间看到提示信息
@@ -206,11 +208,11 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
           });
           // 不抛出错误，继续处理后续图片
         }
-      }
-
-      // 更新状态提示
+      } // 更新状态提示
       state = state.copyWith(
-        statusMessage: '正在导入作品...',
+        statusMessage: context != null
+            ? AppLocalizations.of(context).loading
+            : 'Loading...',
       );
 
       // 让用户看到导入作品的提示

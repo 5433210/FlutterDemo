@@ -22,9 +22,8 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     with TickerProviderStateMixin {
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
-
   double _progress = 0.0;
-  String _message = '准备保存...';
+  final String _message = '';
   bool _completed = false;
   bool _hasError = false;
   String? _errorMessage;
@@ -61,9 +60,6 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
           _progress = 1.0;
           _completed = true;
           _hasError = !result.success;
-          _message = result.success
-              ? (result.message ?? '保存成功')
-              : (result.error ?? '保存失败');
         });
 
         await _progressController.forward();
@@ -83,22 +79,10 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
           _completed = true;
           _hasError = true;
           _errorMessage = e.toString();
-          _message = '保存失败';
         });
 
         await _progressController.forward();
       }
-    }
-  }
-
-  void _updateProgress(double progress, String message) {
-    if (mounted) {
-      setState(() {
-        _progress = progress;
-        _message = message;
-      });
-
-      _progressController.animateTo(progress);
     }
   }
 
@@ -128,10 +112,10 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
             Expanded(
               child: Text(
                 _hasError
-                    ? '保存失败'
+                    ? l10n.saveFailure
                     : _completed
-                        ? '保存完成'
-                        : '正在保存 "${widget.title}"',
+                        ? l10n.saveSuccess
+                        : '${l10n.save} ${widget.title}...',
                 style: theme.textTheme.titleLarge,
               ),
             ),

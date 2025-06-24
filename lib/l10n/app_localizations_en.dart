@@ -281,7 +281,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bringLayerToFront => 'Bring Layer to Front';
 
   @override
-  String get bringToFront => 'Bring to Front';
+  String get bringToFront => 'Bring to Front (Ctrl+T)';
 
   @override
   String get browse => 'Browse';
@@ -1249,7 +1249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gridView => 'Grid View';
 
   @override
-  String get group => 'Group';
+  String get group => 'Group (Ctrl+J)';
 
   @override
   String get groupElements => 'Group Elements';
@@ -2202,7 +2202,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get select => 'Select';
 
   @override
-  String get selectAll => 'Select All';
+  String get selectAll => 'Select All (Ctrl+Shift+A)';
 
   @override
   String get selectBackup => 'Select Backup';
@@ -2254,7 +2254,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectedElementNotFound => 'Selected element not found';
 
   @override
-  String get sendToBack => 'Send to Back';
+  String get sendToBack => 'Send to Back (Ctrl+B)';
 
   @override
   String get serif => 'Serif';
@@ -2283,7 +2283,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showElement => 'Show Element';
 
   @override
-  String get showGrid => 'Show Grid';
+  String get showGrid => 'Show Grid (Ctrl+G)';
 
   @override
   String get showHideAllElements => 'Show/Hide All Elements';
@@ -2539,7 +2539,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
-  String get ungroup => 'Ungroup';
+  String get ungroup => 'Ungroup (Ctrl+U)';
 
   @override
   String get ungroupConfirm => 'Confirm Ungroup';
@@ -2916,4 +2916,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectionMode => 'Selection Mode';
+
+  @override
+  String get defaultPage => 'Default Page';
+
+  @override
+  String get dayBeforeYesterday => 'Day Before Yesterday';
+
+  @override
+  String defaultLayerName(Object number) {
+    return 'Layer $number';
+  }
+
+  @override
+  String defaultPageName(Object number) {
+    return 'Page $number';
+  }
+
+  @override
+  String get importingWorks => 'Importing works...';
+
+  @override
+  String addingImagesToGallery(Object count) {
+    return 'Adding $count local images to gallery...';
+  }
+
+  @override
+  String copyFailed(Object error) {
+    return 'Copy failed: $error';
+  }
+
+  @override
+  String get selectImages => 'Select Images';
+
+  @override
+  String get selectImagesWithCtrl => 'Select Images (Hold Ctrl for multiple selection)';
+
+  @override
+  String deleteCharacterFailed(Object error) {
+    return 'Failed to delete character: $error';
+  }
+
+  @override
+  String loadCharacterDataFailed(Object error) {
+    return 'Failed to load character data: $error';
+  }
+
+  @override
+  String get basicProperties => 'Basic Properties';
+
+  @override
+  String practiceSheetSavedMessage(Object title) {
+    return 'Practice sheet \"$title\" saved successfully';
+  }
+
+  @override
+  String get workIdCannotBeEmpty => 'Work ID cannot be empty';
+
+  @override
+  String get collectionIdCannotBeEmpty => 'Collection ID cannot be empty';
 }

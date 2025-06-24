@@ -71,7 +71,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'type': 'collection',
       'x': x,
       'y': y,
-      'width': 200.0,
+      'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
@@ -82,7 +82,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'isFromCharacterManagement': isFromCharacterManagement,
       'content': {
         'characters': characters,
-        'fontSize': isFromCharacterManagement ? 200.0 : 24.0,
+        'fontSize': isFromCharacterManagement ? 200.0 : 50.0,
         'fontColor': '#000000',
         'backgroundColor': 'transparent',
         'direction': 'horizontal',
@@ -118,7 +118,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': l10n!.collectionElement,
       'content': {
         'characters': '',
-        'fontSize': 200.0,
+        'fontSize': 50.0,
         'fontColor': '#000000',
         'backgroundColor': 'transparent',
         'direction': 'horizontal',
@@ -144,7 +144,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'type': 'image',
       'x': x,
       'y': y,
-      'width': 200.0,
+      'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
@@ -196,7 +196,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'type': 'image',
       'x': x,
       'y': y,
-      'width': 200.0,
+      'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
@@ -222,8 +222,8 @@ mixin ElementManagementMixin on ChangeNotifier
       'type': 'text',
       'x': 100.0,
       'y': 100.0,
-      'width': 200.0,
-      'height': 100.0,
+      'width': 400.0,
+      'height': 200.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
       'opacity': 1.0,
@@ -232,7 +232,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': l10n!.textElement,
       'content': {
         'text': l10n!.defaultEditableText,
-        'fontSize': 24.0,
+        'fontSize': 50.0,
         'fontColor': '#000000',
         'backgroundColor': 'transparent',
         'textAlign': 'left',
@@ -249,20 +249,18 @@ mixin ElementManagementMixin on ChangeNotifier
     final elementId = 'text_${uuid.v4()}';
     final element = {
       'id': elementId,
-      'type': 'text',
-      'x': x,
+      'type': 'text', 'x': x,
       'y': y,
-      'width': 200.0,
-      'height': 100.0,
+      'width': 400.0,
+      'height': 200.0,
       'rotation': 0.0,
       'layerId': _getValidLayerId(),
       'opacity': 1.0, 'isLocked': false, // 锁定标志
       'isHidden': false, // 隐藏标志
       'name': l10n!.textElement, // 默认名称
       'content': {
-        'text': l10n!.defaultEditableText,
-        'fontFamily': 'sans-serif',
-        'fontSize': 24.0,
+        'text': l10n!.defaultEditableText, 'fontFamily': 'sans-serif',
+        'fontSize': 50.0,
         'fontColor': '#000000', // 修改为fontColor以匹配渲染器
         'backgroundColor': '#FFFFFF',
         'textAlign': 'left', // 修改为textAlign以匹配渲染器

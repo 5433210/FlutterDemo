@@ -496,82 +496,17 @@ class PracticeEditController extends ChangeNotifier
     // 创建默认图层
     final defaultLayer = {
       'id': _uuid.v4(),
-      'name': '图层1',
+      'name': _l10n?.defaultLayerName(1) ?? 'Layer 1',
       'order': 0,
       'isVisible': true,
       'isLocked': false,
       'opacity': 1.0,
     };
 
-    // 🧪 为了测试组合元素功能，创建一些测试元素（已注释，需要时可启用）
-    // final testTextElement1 = {
-    //   'id': 'text_${_uuid.v4()}',
-    //   'type': 'text',
-    //   'x': 10.0,
-    //   'y': 10.0,
-    //   'width': 80.0,
-    //   'height': 30.0,
-    //   'rotation': 0.0,
-    //   'layerId': defaultLayer['id'],
-    //   'opacity': 1.0,
-    //   'isLocked': false,
-    //   'isHidden': false,
-    //   'content': {
-    //     'text': '测试文本1',
-    //     'fontSize': 16.0,
-    //     'fontColor': '#000000',
-    //     'backgroundColor': '#FFEB3B',
-    //     'textAlign': 'center',
-    //   },
-    // };
-
-    // final testTextElement2 = {
-    //   'id': 'text_${_uuid.v4()}',
-    //   'type': 'text',
-    //   'x': 20.0,
-    //   'y': 50.0,
-    //   'width': 60.0,
-    //   'height': 40.0,
-    //   'rotation': 15.0,
-    //   'layerId': defaultLayer['id'],
-    //   'opacity': 1.0,
-    //   'isLocked': false,
-    //   'isHidden': false,
-    //   'content': {
-    //     'text': '测试文本2',
-    //     'fontSize': 14.0,
-    //     'fontColor': '#FFFFFF',
-    //     'backgroundColor': '#FF5722',
-    //     'textAlign': 'center',
-    //   },
-    // };
-
-    // 🧪 创建测试组合元素（可选：用于测试组合功能）
-    // final testGroupElement = {
-    //   'id': 'group_${_uuid.v4()}',
-    //   'type': 'group',
-    //   'x': 50.0,
-    //   'y': 50.0,
-    //   'width': 100.0,
-    //   'height': 100.0,
-    //   'rotation': 0.0,
-    //   'layerId': defaultLayer['id'],
-    //   'opacity': 1.0,
-    //   'isLocked': false,
-    //   'isHidden': false,
-    //   'name': '测试组合元素',
-    //   'content': {
-    //     'children': [
-    //       testTextElement1,
-    //       testTextElement2,
-    //     ],
-    //   },
-    // };
-
     // 创建默认页面
     final defaultPage = {
       'id': _uuid.v4(),
-      'name': '页面1',
+      'name': _l10n?.defaultPageName(1) ?? 'Page 1',
       'index': 0,
       'width': 210.0, // A4纸宽度（毫米）
       'height': 297.0, // A4纸高度（毫米）

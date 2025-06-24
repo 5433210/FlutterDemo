@@ -626,7 +626,7 @@ abstract class AppLocalizations {
   /// No description provided for @bringToFront.
   ///
   /// In zh, this message translates to:
-  /// **'置于顶层'**
+  /// **'置于顶层 (Ctrl+T)'**
   String get bringToFront;
 
   /// No description provided for @browse.
@@ -2486,7 +2486,7 @@ abstract class AppLocalizations {
   /// No description provided for @group.
   ///
   /// In zh, this message translates to:
-  /// **'组合'**
+  /// **'组合 (Ctrl+J)'**
   String get group;
 
   /// No description provided for @groupElements.
@@ -4280,7 +4280,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectAll.
   ///
   /// In zh, this message translates to:
-  /// **'全选'**
+  /// **'全选 (Ctrl+Shift+A)'**
   String get selectAll;
 
   /// No description provided for @selectBackup.
@@ -4376,7 +4376,7 @@ abstract class AppLocalizations {
   /// No description provided for @sendToBack.
   ///
   /// In zh, this message translates to:
-  /// **'置于底层'**
+  /// **'置于底层 (Ctrl+B)'**
   String get sendToBack;
 
   /// No description provided for @serif.
@@ -4430,7 +4430,7 @@ abstract class AppLocalizations {
   /// No description provided for @showGrid.
   ///
   /// In zh, this message translates to:
-  /// **'显示网格'**
+  /// **'显示网格 (Ctrl+G)'**
   String get showGrid;
 
   /// No description provided for @showHideAllElements.
@@ -4922,7 +4922,7 @@ abstract class AppLocalizations {
   /// No description provided for @ungroup.
   ///
   /// In zh, this message translates to:
-  /// **'取消组合'**
+  /// **'取消组合 (Ctrl+U)'**
   String get ungroup;
 
   /// No description provided for @ungroupConfirm.
@@ -5656,6 +5656,96 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'选择模式'**
   String get selectionMode;
+
+  /// No description provided for @defaultPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认页面'**
+  String get defaultPage;
+
+  /// No description provided for @dayBeforeYesterday.
+  ///
+  /// In zh, this message translates to:
+  /// **'前天'**
+  String get dayBeforeYesterday;
+
+  /// No description provided for @defaultLayerName.
+  ///
+  /// In zh, this message translates to:
+  /// **'图层{number}'**
+  String defaultLayerName(Object number);
+
+  /// No description provided for @defaultPageName.
+  ///
+  /// In zh, this message translates to:
+  /// **'页面{number}'**
+  String defaultPageName(Object number);
+
+  /// No description provided for @importingWorks.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入作品...'**
+  String get importingWorks;
+
+  /// No description provided for @addingImagesToGallery.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在将 {count} 张本地图片添加到图库...'**
+  String addingImagesToGallery(Object count);
+
+  /// No description provided for @copyFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制失败: {error}'**
+  String copyFailed(Object error);
+
+  /// No description provided for @selectImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图片'**
+  String get selectImages;
+
+  /// No description provided for @selectImagesWithCtrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图片 (可按住Ctrl多选)'**
+  String get selectImagesWithCtrl;
+
+  /// No description provided for @deleteCharacterFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除字符失败：{error}'**
+  String deleteCharacterFailed(Object error);
+
+  /// No description provided for @loadCharacterDataFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载字符数据失败：{error}'**
+  String loadCharacterDataFailed(Object error);
+
+  /// No description provided for @basicProperties.
+  ///
+  /// In zh, this message translates to:
+  /// **'基础属性'**
+  String get basicProperties;
+
+  /// No description provided for @practiceSheetSavedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖 \"{title}\" 保存成功'**
+  String practiceSheetSavedMessage(Object title);
+
+  /// No description provided for @workIdCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'作品ID不能为空'**
+  String get workIdCannotBeEmpty;
+
+  /// No description provided for @collectionIdCannotBeEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'集字ID不能为空'**
+  String get collectionIdCannotBeEmpty;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -189,45 +189,44 @@ mixin CanvasElementCreators {
       EditPageLogger.canvasDebug(
         '开始计算居中偏移',
         data: {'elementType': elementType},
-      );
-      // 元素默认尺寸在element_management_mixin.dart中定义
+      ); // 元素默认尺寸在element_management_mixin.dart中定义
       switch (elementType) {
         case 'collection':
-          // 集字元素默认 200x200，调整位置使其居中
-          finalPosition = Offset(position.dx - 100, position.dy - 100);
+          // 集字元素默认 400x200，调整位置使其居中
+          finalPosition = Offset(position.dx - 200, position.dy - 100);
           EditPageLogger.canvasDebug(
             '计算集字元素居中偏移',
             data: {
-              'defaultSize': '200x200',
+              'defaultSize': '400x200',
               'original': '(${position.dx}, ${position.dy})',
               'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
-              'offset': '(-100, -100)',
+              'offset': '(-200, -100)',
             },
           );
           break;
         case 'image':
-          // 图片元素默认 200x200，调整位置使其居中
-          finalPosition = Offset(position.dx - 100, position.dy - 100);
+          // 图片元素默认 400x200，调整位置使其居中
+          finalPosition = Offset(position.dx - 200, position.dy - 100);
           EditPageLogger.canvasDebug(
             '计算图像元素居中偏移',
             data: {
-              'defaultSize': '200x200',
+              'defaultSize': '400x200',
               'original': '(${position.dx}, ${position.dy})',
               'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
-              'offset': '(-100, -100)',
+              'offset': '(-200, -100)',
             },
           );
           break;
         case 'text':
-          // 文本元素默认 200x100，调整位置使其居中
-          finalPosition = Offset(position.dx - 100, position.dy - 50);
+          // 文本元素默认 400x200，调整位置使其居中
+          finalPosition = Offset(position.dx - 200, position.dy - 100);
           EditPageLogger.canvasDebug(
             '计算文本元素居中偏移',
             data: {
-              'defaultSize': '200x100',
+              'defaultSize': '400x200',
               'original': '(${position.dx}, ${position.dy})',
               'adjusted': '(${finalPosition.dx}, ${finalPosition.dy})',
-              'offset': '(-100, -50)',
+              'offset': '(-200, -100)',
             },
           );
           break;

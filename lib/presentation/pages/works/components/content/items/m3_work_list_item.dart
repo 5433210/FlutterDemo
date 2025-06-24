@@ -206,7 +206,7 @@ class M3WorkListItem extends ConsumerWidget {
                             child: _buildInfoItem(
                               context,
                               Icons.add_circle_outline,
-                              '导入于 ${DateFormatter.formatCompact(work.createTime)}',
+                              DateFormatter.formatCompact(work.createTime),
                             ),
                           ),
                         ],

@@ -281,7 +281,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bringLayerToFront => '图层置于顶层';
 
   @override
-  String get bringToFront => '置于顶层';
+  String get bringToFront => '置于顶层 (Ctrl+T)';
 
   @override
   String get browse => '浏览';
@@ -1249,7 +1249,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gridView => '网格视图';
 
   @override
-  String get group => '组合';
+  String get group => '组合 (Ctrl+J)';
 
   @override
   String get groupElements => '组合元素';
@@ -2202,7 +2202,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get select => '选择';
 
   @override
-  String get selectAll => '全选';
+  String get selectAll => '全选 (Ctrl+Shift+A)';
 
   @override
   String get selectBackup => '选择备份';
@@ -2254,7 +2254,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectedElementNotFound => '选中的元素未找到';
 
   @override
-  String get sendToBack => '置于底层';
+  String get sendToBack => '置于底层 (Ctrl+B)';
 
   @override
   String get serif => 'Serif';
@@ -2283,7 +2283,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get showElement => '显示元素';
 
   @override
-  String get showGrid => '显示网格';
+  String get showGrid => '显示网格 (Ctrl+G)';
 
   @override
   String get showHideAllElements => '显示/隐藏所有元素';
@@ -2539,7 +2539,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get undo => '撤销';
 
   @override
-  String get ungroup => '取消组合';
+  String get ungroup => '取消组合 (Ctrl+U)';
 
   @override
   String get ungroupConfirm => '确认解组';
@@ -2916,4 +2916,63 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get selectionMode => '选择模式';
+
+  @override
+  String get defaultPage => '默认页面';
+
+  @override
+  String get dayBeforeYesterday => '前天';
+
+  @override
+  String defaultLayerName(Object number) {
+    return '图层$number';
+  }
+
+  @override
+  String defaultPageName(Object number) {
+    return '页面$number';
+  }
+
+  @override
+  String get importingWorks => '正在导入作品...';
+
+  @override
+  String addingImagesToGallery(Object count) {
+    return '正在将 $count 张本地图片添加到图库...';
+  }
+
+  @override
+  String copyFailed(Object error) {
+    return '复制失败: $error';
+  }
+
+  @override
+  String get selectImages => '选择图片';
+
+  @override
+  String get selectImagesWithCtrl => '选择图片 (可按住Ctrl多选)';
+
+  @override
+  String deleteCharacterFailed(Object error) {
+    return '删除字符失败：$error';
+  }
+
+  @override
+  String loadCharacterDataFailed(Object error) {
+    return '加载字符数据失败：$error';
+  }
+
+  @override
+  String get basicProperties => '基础属性';
+
+  @override
+  String practiceSheetSavedMessage(Object title) {
+    return '字帖 \"$title\" 保存成功';
+  }
+
+  @override
+  String get workIdCannotBeEmpty => '作品ID不能为空';
+
+  @override
+  String get collectionIdCannotBeEmpty => '集字ID不能为空';
 }
