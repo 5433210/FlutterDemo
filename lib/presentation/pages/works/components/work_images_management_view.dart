@@ -306,7 +306,7 @@ class WorkImagesManagementView extends ConsumerWidget {
                   backgroundColor: Theme.of(context).colorScheme.error,
                   foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
-                child: Text(l10n.delete),
+                child: Text(l10n.confirm),
               ),
             ],
           );

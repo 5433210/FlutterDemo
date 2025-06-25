@@ -205,7 +205,7 @@ class _M3LibraryManagementPageState
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: Text(l10n.delete),
+            child: Text(l10n.confirm),
           ),
         ],
       ),
@@ -242,7 +242,7 @@ class _M3LibraryManagementPageState
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: Text(l10n.delete),
+            child: Text(l10n.confirm),
           ),
         ],
       ),

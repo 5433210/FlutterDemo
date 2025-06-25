@@ -99,21 +99,16 @@
   "cancel": "取消",  "cannotApplyNoImage": "没有可用的图片",
   "homePage": "主页",
   "fontTester": "字体测试工具",
-  "fontWeightTester": "字体粗细测试工具",  "backupTimeoutError": "备份创建超时或失败，请检查存储空间是否足够",
+  "fontWeightTester": "字体粗细测试工具",  
+  "backupTimeoutError": "备份创建超时或失败，请检查存储空间是否足够",
   "retry": "重试",
-  "serviceNotReady": "服务未就绪，请稍后再试",  "exportFailed": "导出失败",
+  "serviceNotReady": "服务未就绪，请稍后再试",  
+  "exportFailed": "导出失败",
   "exportFailedWith": "导出失败: {error}",
-  "@exportFailedWith": {
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "导出失败的错误信息"
-      }
-    }
-  },
   "importError": "导入错误",
   "pageBuildError": "页面构建错误",
-  "back": "返回","configInitFailed": "配置数据初始化失败",
+  "back": "返回",
+  "configInitFailed": "配置数据初始化失败",
   "sortFailed": "排序失败",
   "selectPathFailed": "选择路径失败",
   "importErrorCauses": "该问题通常由以下原因引起：",
@@ -254,7 +249,7 @@
   "deleteLayerMessage": "此图层上的所有元素将被删除。此操作无法撤消。",
   "deleteMessage": "即将删除，此操作无法撤消。",
   "deletePage": "删除页面",
-  "deleteSelected": "删除所选",
+  "deleteSelected": "删除所选（Ctrl+D）",
   "deleteSelectedArea": "删除选中区域",
   "deleteSuccess": "备份删除成功",
   "deleteText": "删除",
@@ -878,7 +873,6 @@
   "writingToolText": "书写工具",
   "yes": "是",
   "yesterday": "昨天",
-  
   "importOptions": "导入选项",
   "validateData": "验证数据",
   "validateDataDescription": "导入前验证数据完整性",
@@ -916,7 +910,8 @@
   "buildEnvironment": "构建环境",
   "gitCommit": "Git提交",
   "gitBranch": "Git分支",
-  "platformInfo": "平台信息",  "operatingSystem": "操作系统",
+  "platformInfo": "平台信息",  
+  "operatingSystem": "操作系统",
   "deviceInfo": "设备信息",
   "flutterVersion": "Flutter版本",
   "dartVersion": "Dart版本",
@@ -924,14 +919,8 @@
   "systemInfo": "系统信息",
   "about": "关于",
   "appStartupFailed": "应用启动失败",
-  "criticalError": "严重错误",  "appStartupFailedWith": "应用启动失败: {error}",
-  "@appStartupFailedWith": {
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "启动失败的错误信息"
-      }
-    }  },
+  "criticalError": "严重错误",  
+  "appStartupFailedWith": "应用启动失败: {error}",
   "collectionElement": "集字元素",
   "imageElement": "图片元素",
   "textElement": "文本元素",
@@ -951,7 +940,8 @@
   "deleteCharacterFailed": "删除字符失败：{error}",
   "loadCharacterDataFailed": "加载字符数据失败：{error}",
   "basicProperties": "基础属性",
-  "practiceSheetSavedMessage": "字帖 \"{title}\" 保存成功",  "workIdCannotBeEmpty": "作品ID不能为空",
+  "practiceSheetSavedMessage": "字帖 \"{title}\" 保存成功",  
+  "workIdCannotBeEmpty": "作品ID不能为空",
   "collectionIdCannotBeEmpty": "集字ID不能为空",
   "editTags": "编辑标签"
 }

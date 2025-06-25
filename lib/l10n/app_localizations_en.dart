@@ -335,7 +335,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportFailed => 'Export failed';
 
   @override
-  String exportFailedWith(String error) {
+  String exportFailedWith(Object error) {
     return 'Export failed: $error';
   }
 
@@ -801,7 +801,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deletePage => 'Delete Page';
 
   @override
-  String get deleteSelected => 'Delete Selected';
+  String get deleteSelected => 'Delete Selected (Ctrl+D)';
 
   @override
   String get deleteSelectedArea => 'Delete Selected Area';
@@ -2892,7 +2892,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get criticalError => 'Critical Error';
 
   @override
-  String appStartupFailedWith(String error) {
+  String appStartupFailedWith(Object error) {
     return 'App startup failed: $error';
   }
 

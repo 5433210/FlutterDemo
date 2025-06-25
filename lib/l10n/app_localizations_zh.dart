@@ -335,7 +335,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportFailed => '导出失败';
 
   @override
-  String exportFailedWith(String error) {
+  String exportFailedWith(Object error) {
     return '导出失败: $error';
   }
 
@@ -801,7 +801,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deletePage => '删除页面';
 
   @override
-  String get deleteSelected => '删除所选';
+  String get deleteSelected => '删除所选（Ctrl+D）';
 
   @override
   String get deleteSelectedArea => '删除选中区域';
@@ -2892,7 +2892,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get criticalError => '严重错误';
 
   @override
-  String appStartupFailedWith(String error) {
+  String appStartupFailedWith(Object error) {
     return '应用启动失败: $error';
   }
 

@@ -735,7 +735,7 @@ abstract class AppLocalizations {
   ///
   /// In zh, this message translates to:
   /// **'导出失败: {error}'**
-  String exportFailedWith(String error);
+  String exportFailedWith(Object error);
 
   /// No description provided for @importError.
   ///
@@ -1610,7 +1610,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteSelected.
   ///
   /// In zh, this message translates to:
-  /// **'删除所选'**
+  /// **'删除所选（Ctrl+D）'**
   String get deleteSelected;
 
   /// No description provided for @deleteSelectedArea.
@@ -5613,7 +5613,7 @@ abstract class AppLocalizations {
   ///
   /// In zh, this message translates to:
   /// **'应用启动失败: {error}'**
-  String appStartupFailedWith(String error);
+  String appStartupFailedWith(Object error);
 
   /// No description provided for @collectionElement.
   ///

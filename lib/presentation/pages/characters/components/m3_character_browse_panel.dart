@@ -440,7 +440,7 @@ class _M3CharacterBrowsePanelState
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: Text(l10n.delete),
+            child: Text(l10n.confirm),
           ),
         ],
       ),

@@ -10,11 +10,9 @@ import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
-import 'components/m3_practice_filter_panel.dart';
-import 'components/m3_practice_grid_view.dart';
-import 'components/m3_practice_list_navigation_bar.dart';
-import 'components/m3_practice_list_view.dart';
 import 'components/m3_practice_content_area.dart';
+import 'components/m3_practice_filter_panel.dart';
+import 'components/m3_practice_list_navigation_bar.dart';
 
 /// Material 3 practice list page
 class M3PracticeListPage extends ConsumerStatefulWidget {
@@ -64,7 +62,9 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
           CrossNavigationHelper.handleBackNavigation(context, ref);
         },
         onSelectAll: () => _handleSelectAll(),
-        onClearSelection: state.selectedPractices.isNotEmpty ? () => _handleClearSelection() : null,
+        onClearSelection: state.selectedPractices.isNotEmpty
+            ? () => _handleClearSelection()
+            : null,
         allPracticeIds: state.practices.map((p) => p['id'] as String).toList(),
       ),
       body: Column(
@@ -177,7 +177,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: Text(l10n.delete),
+            child: Text(l10n.confirm),
           ),
         ],
       ),

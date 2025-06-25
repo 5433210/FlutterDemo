@@ -101,15 +101,8 @@
   "fontWeightTester": "Font Weight Tester",  "backupTimeoutError": "Backup creation timeout or failed, please check if storage space is sufficient",
   "retry": "Retry",
   "serviceNotReady": "Service not ready, please try again later",
-  "exportFailed": "Export failed",  "exportFailedWith": "Export failed: {error}",
-  "@exportFailedWith": {
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "Error message for export failure"
-      }
-    }
-  },
+  "exportFailed": "Export failed",  
+  "exportFailedWith": "Export failed: {error}",
   "importError": "Import Error",
   "pageBuildError": "Page Build Error",
   "back": "Back","configInitFailed": "Configuration data initialization failed",
@@ -252,7 +245,7 @@
   "deleteLayerMessage": "All elements on this layer will be deleted. This action cannot be undone.",
   "deleteMessage": "Confirm Delete This Item?",
   "deletePage": "Delete Page",
-  "deleteSelected": "Delete Selected",
+  "deleteSelected": "Delete Selected (Ctrl+D)",
   "deleteSelectedArea": "Delete Selected Area",
   "deleteSuccess": "Backup Delete Successful",
   "deleteText": "Delete",
@@ -876,7 +869,6 @@
   "writingToolText": "Writing Tool",
   "yes": "Yes",
   "yesterday": "Yesterday",
-  
   "importOptions": "Import Options",
   "validateData": "Validate Data",
   "validateDataDescription": "Verify data integrity before import",
@@ -916,7 +908,8 @@
   "buildEnvironment": "Build Environment",
   "gitCommit": "Git Commit",
   "gitBranch": "Git Branch",
-  "platformInfo": "Platform Info",  "operatingSystem": "Operating System",
+  "platformInfo": "Platform Info",  
+  "operatingSystem": "Operating System",
   "deviceInfo": "Device Info",
   "flutterVersion": "Flutter Version",
   "dartVersion": "Dart Version",
@@ -924,14 +917,8 @@
   "systemInfo": "System Info",
   "about": "About",
   "appStartupFailed": "App Startup Failed",
-  "criticalError": "Critical Error",  "appStartupFailedWith": "App startup failed: {error}",
-  "@appStartupFailedWith": {
-    "placeholders": {
-      "error": {
-        "type": "String",
-        "description": "Error message for startup failure"
-      }
-    }  },
+  "criticalError": "Critical Error",
+  "appStartupFailedWith": "App startup failed: {error}",
   "collectionElement": "Collection Element",
   "imageElement": "Image Element",
   "textElement": "Text Element",
@@ -951,7 +938,8 @@
   "deleteCharacterFailed": "Failed to delete character: {error}",
   "loadCharacterDataFailed": "Failed to load character data: {error}",
   "basicProperties": "Basic Properties",
-  "practiceSheetSavedMessage": "Practice sheet \"{title}\" saved successfully",  "workIdCannotBeEmpty": "Work ID cannot be empty",
+  "practiceSheetSavedMessage": "Practice sheet \"{title}\" saved successfully", 
+  "workIdCannotBeEmpty": "Work ID cannot be empty",
   "collectionIdCannotBeEmpty": "Collection ID cannot be empty",
   "editTags": "Edit Tags"
 }
