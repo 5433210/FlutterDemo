@@ -4,13 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/navigation/navigation_history_item.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/navigation/global_navigation_provider.dart';
+import 'navigation_localizations.dart';
 
 /// 处理跨区域返回导航
 class CrossNavigationHelper {
+  /// 获取本地化的区域名称
+  static String getSectionName(BuildContext context, int sectionIndex) {
+    return NavigationLocalizations.getSectionName(context, sectionIndex);
+  }
+
   /// 获取当前导航位置的可读描述
   static String getNavigationDescription(BuildContext context, int sectionIndex,
       {String? routePath}) {
-    final sectionName = sectionNames[sectionIndex] ?? '未知区域';
+    final sectionName = getSectionName(context, sectionIndex);
     if (routePath == null || routePath == '/') {
       return sectionName;
     }
@@ -125,7 +131,7 @@ class CrossNavigationHelper {
             const SizedBox(height: 16),
             ...List.generate(history.length, (index) {
               final item = history[index];
-              final sectionName = sectionNames[item.sectionIndex] ?? '未知区域';
+              final sectionName = getSectionName(context, item.sectionIndex);
               final subtitle = item.routePath != null
                   ? _getReadableRouteName(item.routePath!)
                   : null;

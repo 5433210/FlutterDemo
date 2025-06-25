@@ -1744,6 +1744,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSelectPage => 'Which page do you want to return to?';
 
   @override
+  String get navigationSectionWorkBrowse => 'Work Browse';
+
+  @override
+  String get navigationSectionCharacterManagement => 'Character Management';
+
+  @override
+  String get navigationSectionPracticeList => 'Practice List';
+
+  @override
+  String get navigationSectionGalleryManagement => 'Gallery Management';
+
+  @override
+  String get navigationSectionSettings => 'Settings';
+
+  @override
+  String get navigationClearHistory => 'Clear Navigation History';
+
+  @override
+  String get navigationHistoryCleared => '导航历史记录已清空';
+
+  @override
+  String get navigationClearHistoryFailed => 'Failed to clear navigation history';
+
+  @override
+  String get navigationAttemptToSpecificItem => '尝试导航到特定历史记录项';
+
+  @override
+  String get navigationItemNotFound => '历史记录中未找到目标项，直接导航到该功能区';
+
+  @override
+  String get navigationSuccessToSpecificItem => 'Successfully navigated to specific history item';
+
+  @override
+  String get navigationFailedToSpecificItem => 'Failed to navigate to specific history item';
+
+  @override
+  String get navigationAttemptBack => '尝试返回上一个功能区';
+
+  @override
+  String get navigationSuccessBack => 'Successfully navigated back to previous section';
+
+  @override
+  String get navigationFailedBack => '返回导航失败';
+
+  @override
+  String get navigationAttemptToNewSection => '尝试导航到新功能区';
+
+  @override
+  String get navigationSuccessToNewSection => 'Successfully navigated to new section';
+
+  @override
+  String get navigationFailedSection => '导航切换失败';
+
+  @override
+  String get navigationRecordRoute => '记录功能区内路由变化';
+
+  @override
+  String get navigationRecordRouteFailed => '记录路由变化失败';
+
+  @override
+  String get navigationSaveState => '保存导航状态';
+
+  @override
+  String get navigationStateSaved => '导航状态已保存';
+
+  @override
+  String get navigationSaveStateFailed => '保存导航状态失败';
+
+  @override
+  String get navigationToggleExpanded => '切换导航栏展开状态';
+
+  @override
+  String get navigationStateRestored => '导航状态已从存储恢复';
+
+  @override
+  String get navigationRestoreStateFailed => '恢复导航状态失败';
+
+  @override
   String get newConfigItem => 'New Configuration Item';
 
   @override

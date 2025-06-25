@@ -1,1 +1,19 @@
-{}
+{
+  "en": [
+    "navigationHistoryCleared",
+    "navigationAttemptToSpecificItem",
+    "navigationItemNotFound",
+    "navigationAttemptBack",
+    "navigationFailedBack",
+    "navigationAttemptToNewSection",
+    "navigationFailedSection",
+    "navigationRecordRoute",
+    "navigationRecordRouteFailed",
+    "navigationSaveState",
+    "navigationStateSaved",
+    "navigationSaveStateFailed",
+    "navigationToggleExpanded",
+    "navigationStateRestored",
+    "navigationRestoreStateFailed"
+  ]
+}

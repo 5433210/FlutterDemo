@@ -1744,6 +1744,84 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationSelectPage => '您想返回到以下哪个页面？';
 
   @override
+  String get navigationSectionWorkBrowse => '作品浏览';
+
+  @override
+  String get navigationSectionCharacterManagement => '字符管理';
+
+  @override
+  String get navigationSectionPracticeList => '字帖列表';
+
+  @override
+  String get navigationSectionGalleryManagement => '图库管理';
+
+  @override
+  String get navigationSectionSettings => '设置';
+
+  @override
+  String get navigationClearHistory => '清空导航历史记录';
+
+  @override
+  String get navigationHistoryCleared => '导航历史记录已清空';
+
+  @override
+  String get navigationClearHistoryFailed => '清空导航历史记录失败';
+
+  @override
+  String get navigationAttemptToSpecificItem => '尝试导航到特定历史记录项';
+
+  @override
+  String get navigationItemNotFound => '历史记录中未找到目标项，直接导航到该功能区';
+
+  @override
+  String get navigationSuccessToSpecificItem => '成功导航到特定历史记录项';
+
+  @override
+  String get navigationFailedToSpecificItem => '导航到特定历史记录项失败';
+
+  @override
+  String get navigationAttemptBack => '尝试返回上一个功能区';
+
+  @override
+  String get navigationSuccessBack => '成功返回到上一个功能区';
+
+  @override
+  String get navigationFailedBack => '返回导航失败';
+
+  @override
+  String get navigationAttemptToNewSection => '尝试导航到新功能区';
+
+  @override
+  String get navigationSuccessToNewSection => '成功导航到新功能区';
+
+  @override
+  String get navigationFailedSection => '导航切换失败';
+
+  @override
+  String get navigationRecordRoute => '记录功能区内路由变化';
+
+  @override
+  String get navigationRecordRouteFailed => '记录路由变化失败';
+
+  @override
+  String get navigationSaveState => '保存导航状态';
+
+  @override
+  String get navigationStateSaved => '导航状态已保存';
+
+  @override
+  String get navigationSaveStateFailed => '保存导航状态失败';
+
+  @override
+  String get navigationToggleExpanded => '切换导航栏展开状态';
+
+  @override
+  String get navigationStateRestored => '导航状态已从存储恢复';
+
+  @override
+  String get navigationRestoreStateFailed => '恢复导航状态失败';
+
+  @override
   String get newConfigItem => '新增配置项';
 
   @override

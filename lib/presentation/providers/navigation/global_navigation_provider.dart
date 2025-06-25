@@ -17,15 +17,6 @@ final globalNavigationProvider =
   },
 );
 
-/// 导航区域名称映射
-final sectionNames = {
-  0: '作品浏览',
-  1: '字符管理',
-  2: '字帖列表',
-  3: '图库管理',
-  4: '设置',
-};
-
 /// 全局导航状态管理器
 class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   /// 最大历史记录数量
@@ -43,12 +34,12 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   /// 清空历史记录
   Future<void> clearHistory() async {
     try {
-      AppLogger.debug('清空导航历史记录', tag: 'Navigation');
+      AppLogger.debug('Clearing navigation history', tag: 'Navigation');
       state = state.copyWith(history: []);
       await _storage.clearNavigationState();
-      AppLogger.info('导航历史记录已清空', tag: 'Navigation');
+      AppLogger.info('Navigation history cleared', tag: 'Navigation');
     } catch (e, stack) {
-      AppLogger.error('清空导航历史记录失败',
+      AppLogger.error('Failed to clear navigation history',
           error: e, stackTrace: stack, tag: 'Navigation');
     }
   }
@@ -75,24 +66,28 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   /// 导航到特定的历史记录项
   /// 返回true表示成功导航，false表示导航失败
   Future<bool> navigateToHistoryItem(NavigationHistoryItem item) async {
-    AppLogger.debug('尝试导航到特定历史记录项', tag: 'Navigation', data: {
-      'currentSection': state.currentSectionIndex,
-      'targetSection': item.sectionIndex,
-      'targetRoute': item.routePath,
-      'historyCount': state.history.length,
-    });
+    AppLogger.debug('Attempting to navigate to specific history item',
+        tag: 'Navigation',
+        data: {
+          'currentSection': state.currentSectionIndex,
+          'targetSection': item.sectionIndex,
+          'targetRoute': item.routePath,
+          'historyCount': state.history.length,
+        });
 
     state = state.copyWith(isNavigating: true);
 
     try {
       // 在历史记录中找到目标项的位置
-      final itemIndex = state.history.indexWhere((historyItem) => 
-        historyItem.sectionIndex == item.sectionIndex && 
-        historyItem.routePath == item.routePath);
-      
+      final itemIndex = state.history.indexWhere((historyItem) =>
+          historyItem.sectionIndex == item.sectionIndex &&
+          historyItem.routePath == item.routePath);
+
       if (itemIndex == -1) {
         // 如果没有找到符合的项，直接导航到目标功能区
-        AppLogger.info('历史记录中未找到目标项，直接导航到该功能区', tag: 'Navigation');
+        AppLogger.info(
+            'Target item not found in history, navigating to target section directly',
+            tag: 'Navigation');
         await navigateToSection(item.sectionIndex);
         return true;
       }
@@ -114,14 +109,17 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
         sectionRoutes: state.sectionRoutes,
       );
 
-      AppLogger.info('成功导航到特定历史记录项', tag: 'Navigation', data: {
-        'newSection': item.sectionIndex,
-        'remainingHistory': newHistory.length,
-      });
+      AppLogger.info('Successfully navigated to specific history item',
+          tag: 'Navigation',
+          data: {
+            'newSection': item.sectionIndex,
+            'remainingHistory': newHistory.length,
+          });
 
       return true;
     } catch (e, stack) {
-      AppLogger.error('导航到特定历史记录项失败', error: e, stackTrace: stack, tag: 'Navigation');
+      AppLogger.error('Failed to navigate to specific history item',
+          error: e, stackTrace: stack, tag: 'Navigation');
       state = state.copyWith(isNavigating: false);
       return false;
     }
@@ -132,10 +130,12 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   Future<bool> navigateBack() async {
     if (state.history.isEmpty) return false;
 
-    AppLogger.debug('尝试返回上一个功能区', tag: 'Navigation', data: {
-      'currentSection': state.currentSectionIndex,
-      'historyCount': state.history.length,
-    });
+    AppLogger.debug('Attempting to navigate back to previous section',
+        tag: 'Navigation',
+        data: {
+          'currentSection': state.currentSectionIndex,
+          'historyCount': state.history.length,
+        });
 
     // 获取最后一条历史记录
     final lastItem = state.history.last;
@@ -159,14 +159,17 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
         sectionRoutes: state.sectionRoutes,
       );
 
-      AppLogger.info('成功返回到上一个功能区', tag: 'Navigation', data: {
-        'newSection': lastItem.sectionIndex,
-        'remainingHistory': newHistory.length,
-      });
+      AppLogger.info('Successfully navigated back to previous section',
+          tag: 'Navigation',
+          data: {
+            'newSection': lastItem.sectionIndex,
+            'remainingHistory': newHistory.length,
+          });
 
       return true;
     } catch (e, stack) {
-      AppLogger.error('返回导航失败', error: e, stackTrace: stack, tag: 'Navigation');
+      AppLogger.error('Failed to navigate back',
+          error: e, stackTrace: stack, tag: 'Navigation');
       state = state.copyWith(isNavigating: false);
       return false;
     }
@@ -176,10 +179,12 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   Future<void> navigateToSection(int sectionIndex) async {
     if (sectionIndex == state.currentSectionIndex) return;
 
-    AppLogger.debug('尝试导航到新功能区', tag: 'Navigation', data: {
-      'fromSection': state.currentSectionIndex,
-      'toSection': sectionIndex,
-    });
+    AppLogger.debug('Attempting to navigate to new section',
+        tag: 'Navigation',
+        data: {
+          'fromSection': state.currentSectionIndex,
+          'toSection': sectionIndex,
+        });
 
     state = state.copyWith(isNavigating: true);
 
@@ -214,12 +219,15 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
         sectionRoutes: state.sectionRoutes,
       );
 
-      AppLogger.info('成功导航到新功能区', tag: 'Navigation', data: {
-        'newSection': sectionIndex,
-        'historyCount': newHistory.length,
-      });
+      AppLogger.info('Successfully navigated to new section',
+          tag: 'Navigation',
+          data: {
+            'newSection': sectionIndex,
+            'historyCount': newHistory.length,
+          });
     } catch (e, stack) {
-      AppLogger.error('导航切换失败', error: e, stackTrace: stack, tag: 'Navigation');
+      AppLogger.error('Failed to navigate to section',
+          error: e, stackTrace: stack, tag: 'Navigation');
       state = state.copyWith(isNavigating: false);
     }
   }
@@ -231,11 +239,13 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
     Map<String, dynamic>? params,
   }) async {
     try {
-      AppLogger.debug('记录功能区内路由变化', tag: 'Navigation', data: {
-        'section': sectionIndex,
-        'route': routePath,
-        'params': params,
-      });
+      AppLogger.debug('Recording section route change',
+          tag: 'Navigation',
+          data: {
+            'section': sectionIndex,
+            'route': routePath,
+            'params': params,
+          });
 
       final sectionRoutes = Map<int, String?>.from(state.sectionRoutes);
       sectionRoutes[sectionIndex] = routePath;
@@ -249,7 +259,7 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
         sectionRoutes: sectionRoutes,
       );
     } catch (e, stack) {
-      AppLogger.error('记录路由变化失败',
+      AppLogger.error('Failed to record route change',
           error: e, stackTrace: stack, tag: 'Navigation');
     }
   }
@@ -257,15 +267,15 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   /// 保存并恢复导航状态
   Future<void> saveNavigationState() async {
     try {
-      AppLogger.debug('保存导航状态', tag: 'Navigation');
+      AppLogger.debug('Saving navigation state', tag: 'Navigation');
       await _storage.saveNavigationState(
         currentSectionIndex: state.currentSectionIndex,
         history: state.history,
         sectionRoutes: state.sectionRoutes,
       );
-      AppLogger.info('导航状态已保存', tag: 'Navigation');
+      AppLogger.info('Navigation state saved', tag: 'Navigation');
     } catch (e, stack) {
-      AppLogger.error('保存导航状态失败',
+      AppLogger.error('Failed to save navigation state',
           error: e, stackTrace: stack, tag: 'Navigation');
     }
   }
@@ -273,9 +283,11 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
   /// 切换导航区域展开状态
   void toggleNavigationExtended() {
     state = state.copyWith(isNavigationExtended: !state.isNavigationExtended);
-    AppLogger.debug('切换导航栏展开状态', tag: 'Navigation', data: {
-      'newState': state.isNavigationExtended ? 'expanded' : 'collapsed',
-    });
+    AppLogger.debug('Toggled navigation bar expanded state',
+        tag: 'Navigation',
+        data: {
+          'newState': state.isNavigationExtended ? 'expanded' : 'collapsed',
+        });
   }
 
   /// 初始化状态，从存储恢复
@@ -287,13 +299,15 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
         history: savedState.history,
         sectionRoutes: savedState.sectionRoutes,
       );
-      AppLogger.info('导航状态已从存储恢复', tag: 'Navigation', data: {
-        'currentSectionIndex': savedState.currentSectionIndex,
-        'historyCount': savedState.history.length,
-        'sectionRoutes': savedState.sectionRoutes,
-      });
+      AppLogger.info('Navigation state restored from storage',
+          tag: 'Navigation',
+          data: {
+            'currentSectionIndex': savedState.currentSectionIndex,
+            'historyCount': savedState.history.length,
+            'sectionRoutes': savedState.sectionRoutes,
+          });
     } catch (e, stack) {
-      AppLogger.error('恢复导航状态失败',
+      AppLogger.error('Failed to restore navigation state',
           error: e, stackTrace: stack, tag: 'Navigation');
       state = const GlobalNavigationState();
     }

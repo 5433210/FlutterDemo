@@ -3413,6 +3413,162 @@ abstract class AppLocalizations {
   /// **'您想返回到以下哪个页面？'**
   String get navigationSelectPage;
 
+  /// No description provided for @navigationSectionWorkBrowse.
+  ///
+  /// In zh, this message translates to:
+  /// **'作品浏览'**
+  String get navigationSectionWorkBrowse;
+
+  /// No description provided for @navigationSectionCharacterManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'字符管理'**
+  String get navigationSectionCharacterManagement;
+
+  /// No description provided for @navigationSectionPracticeList.
+  ///
+  /// In zh, this message translates to:
+  /// **'字帖列表'**
+  String get navigationSectionPracticeList;
+
+  /// No description provided for @navigationSectionGalleryManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'图库管理'**
+  String get navigationSectionGalleryManagement;
+
+  /// No description provided for @navigationSectionSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get navigationSectionSettings;
+
+  /// No description provided for @navigationClearHistory.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空导航历史记录'**
+  String get navigationClearHistory;
+
+  /// No description provided for @navigationHistoryCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'导航历史记录已清空'**
+  String get navigationHistoryCleared;
+
+  /// No description provided for @navigationClearHistoryFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空导航历史记录失败'**
+  String get navigationClearHistoryFailed;
+
+  /// No description provided for @navigationAttemptToSpecificItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'尝试导航到特定历史记录项'**
+  String get navigationAttemptToSpecificItem;
+
+  /// No description provided for @navigationItemNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史记录中未找到目标项，直接导航到该功能区'**
+  String get navigationItemNotFound;
+
+  /// No description provided for @navigationSuccessToSpecificItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功导航到特定历史记录项'**
+  String get navigationSuccessToSpecificItem;
+
+  /// No description provided for @navigationFailedToSpecificItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'导航到特定历史记录项失败'**
+  String get navigationFailedToSpecificItem;
+
+  /// No description provided for @navigationAttemptBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'尝试返回上一个功能区'**
+  String get navigationAttemptBack;
+
+  /// No description provided for @navigationSuccessBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功返回到上一个功能区'**
+  String get navigationSuccessBack;
+
+  /// No description provided for @navigationFailedBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回导航失败'**
+  String get navigationFailedBack;
+
+  /// No description provided for @navigationAttemptToNewSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'尝试导航到新功能区'**
+  String get navigationAttemptToNewSection;
+
+  /// No description provided for @navigationSuccessToNewSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功导航到新功能区'**
+  String get navigationSuccessToNewSection;
+
+  /// No description provided for @navigationFailedSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'导航切换失败'**
+  String get navigationFailedSection;
+
+  /// No description provided for @navigationRecordRoute.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录功能区内路由变化'**
+  String get navigationRecordRoute;
+
+  /// No description provided for @navigationRecordRouteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录路由变化失败'**
+  String get navigationRecordRouteFailed;
+
+  /// No description provided for @navigationSaveState.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存导航状态'**
+  String get navigationSaveState;
+
+  /// No description provided for @navigationStateSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'导航状态已保存'**
+  String get navigationStateSaved;
+
+  /// No description provided for @navigationSaveStateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存导航状态失败'**
+  String get navigationSaveStateFailed;
+
+  /// No description provided for @navigationToggleExpanded.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换导航栏展开状态'**
+  String get navigationToggleExpanded;
+
+  /// No description provided for @navigationStateRestored.
+  ///
+  /// In zh, this message translates to:
+  /// **'导航状态已从存储恢复'**
+  String get navigationStateRestored;
+
+  /// No description provided for @navigationRestoreStateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复导航状态失败'**
+  String get navigationRestoreStateFailed;
+
   /// No description provided for @newConfigItem.
   ///
   /// In zh, this message translates to:
