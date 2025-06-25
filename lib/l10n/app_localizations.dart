@@ -1610,8 +1610,14 @@ abstract class AppLocalizations {
   /// No description provided for @deleteSelected.
   ///
   /// In zh, this message translates to:
-  /// **'删除所选（Ctrl+D）'**
+  /// **'删除所选'**
   String get deleteSelected;
+
+  /// No description provided for @deleteSelectedWithShortcut.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除所选（Ctrl+D）'**
+  String get deleteSelectedWithShortcut;
 
   /// No description provided for @deleteSelectedArea.
   ///
@@ -4280,8 +4286,14 @@ abstract class AppLocalizations {
   /// No description provided for @selectAll.
   ///
   /// In zh, this message translates to:
-  /// **'全选 (Ctrl+Shift+A)'**
+  /// **'全选'**
   String get selectAll;
+
+  /// No description provided for @selectAllWithShortcut.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选 (Ctrl+Shift+A)'**
+  String get selectAllWithShortcut;
 
   /// No description provided for @selectBackup.
   ///

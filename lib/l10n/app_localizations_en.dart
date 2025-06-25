@@ -801,7 +801,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deletePage => 'Delete Page';
 
   @override
-  String get deleteSelected => 'Delete Selected (Ctrl+D)';
+  String get deleteSelected => 'Delete Selected';
+
+  @override
+  String get deleteSelectedWithShortcut => 'Delete Selected (Ctrl+D)';
 
   @override
   String get deleteSelectedArea => 'Delete Selected Area';
@@ -2202,7 +2205,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get select => 'Select';
 
   @override
-  String get selectAll => 'Select All (Ctrl+Shift+A)';
+  String get selectAll => 'Select All';
+
+  @override
+  String get selectAllWithShortcut => 'Select All (Ctrl+Shift+A)';
 
   @override
   String get selectBackup => 'Select Backup';

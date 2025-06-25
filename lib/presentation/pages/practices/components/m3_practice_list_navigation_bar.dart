@@ -21,7 +21,7 @@ class M3PracticeListNavigationBar extends StatefulWidget
   final VoidCallback onSortOrderChanged;
 
   final VoidCallback? onBackPressed;
-  
+
   // 新增：全选和取消选择功能
   final VoidCallback? onSelectAll;
   final VoidCallback? onClearSelection;

@@ -186,7 +186,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.done_all,
-                    tooltip: l10n.selectAll,
+                    tooltip: l10n.selectAllWithShortcut,
                     onPressed: onSelectAll,
                   ),
                 if (onDeselectAll != null)
@@ -323,9 +323,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                tooltip: gridVisible
-                    ? l10n.hideGrid
-                    : l10n.showGrid,
+                tooltip: gridVisible ? l10n.hideGrid : l10n.showGrid,
                 onPressed: onToggleGrid,
                 isActive: gridVisible,
               ),

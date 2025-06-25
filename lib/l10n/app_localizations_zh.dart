@@ -801,7 +801,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deletePage => '删除页面';
 
   @override
-  String get deleteSelected => '删除所选（Ctrl+D）';
+  String get deleteSelected => '删除所选';
+
+  @override
+  String get deleteSelectedWithShortcut => '删除所选（Ctrl+D）';
 
   @override
   String get deleteSelectedArea => '删除选中区域';
@@ -2202,7 +2205,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get select => '选择';
 
   @override
-  String get selectAll => '全选 (Ctrl+Shift+A)';
+  String get selectAll => '全选';
+
+  @override
+  String get selectAllWithShortcut => '全选 (Ctrl+Shift+A)';
 
   @override
   String get selectBackup => '选择备份';
