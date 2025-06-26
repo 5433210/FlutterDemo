@@ -840,6 +840,16 @@ class _M3CollectionPropertyPanelState
     final oldContent = widget.element['content'] as Map<String, dynamic>;
     final oldCharacters = oldContent['characters'] as String? ?? '';
 
+    EditPageLogger.propertyPanelDebug(
+      '[SEGMENTS_SYNC] 文本变更开始处理',
+      tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+      data: {
+        'oldText': oldCharacters,
+        'newText': value,
+        'textChanged': oldCharacters != value,
+      },
+    );
+
     // If text actually changed
     if (oldCharacters != value) {
       // Get current characterImages
@@ -856,27 +866,60 @@ class _M3CollectionPropertyPanelState
         final newIndexBasedImages =
             _convertToIndexBasedImages(value, characterBasedImages);
 
-        // 3. Update content
+        // 3. Update content with new segments
         final updatedContent = Map<String, dynamic>.from(oldContent);
         updatedContent['characters'] = value;
         updatedContent['characterImages'] = newIndexBasedImages;
+        
+        // 重要修复：重新生成 segments 以匹配新文本和当前匹配模式
+        final wordMatchingPriority = updatedContent['wordMatchingPriority'] as bool? ?? 
+            (_matchingMode == MatchingMode.wordMatching);
+        updatedContent['segments'] = _generateSegments(value, wordMatchingPriority);
 
-        // Update property
-        widget.onElementPropertiesChanged({'content': updatedContent});
-
-        // Log
         EditPageLogger.propertyPanelDebug(
-          '文本更新并重新映射字符图像信息',
+          '[SEGMENTS_SYNC] 文本更新时重新生成segments',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
             'newText': value,
             'textLength': value.length,
-            'operation': 'text_update_remap',
+            'wordMatchingPriority': wordMatchingPriority,
+            'segmentsCount': (updatedContent['segments'] as List<dynamic>).length,
+            'operation': 'text_update_remap_segments',
           },
         );
+
+        // Update property
+        widget.onElementPropertiesChanged({'content': updatedContent});
+
+        // 重置候选字符状态并重新加载
+        _resetCandidatesState();
+        _loadCandidateCharacters();
       } else {
-        // If no characterImages, update text directly
-        widget.onUpdateChars(value);
+        // If no characterImages, still need to generate segments for new text
+        final updatedContent = Map<String, dynamic>.from(oldContent);
+        updatedContent['characters'] = value;
+        
+        // 重新生成 segments
+        final wordMatchingPriority = updatedContent['wordMatchingPriority'] as bool? ?? 
+            (_matchingMode == MatchingMode.wordMatching);
+        updatedContent['segments'] = _generateSegments(value, wordMatchingPriority);
+        
+        EditPageLogger.propertyPanelDebug(
+          '[SEGMENTS_SYNC] 文本更新时生成segments（无characterImages）',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'newText': value,
+            'wordMatchingPriority': wordMatchingPriority,
+            'segmentsCount': (updatedContent['segments'] as List<dynamic>).length,
+          },
+        );
+        
+        // 使用完整的content更新而不是仅更新文本
+        widget.onElementPropertiesChanged({'content': updatedContent});
+        
+        // 重置候选字符状态并重新加载
+        _resetCandidatesState();
+        _loadCandidateCharacters();
       }
     } else {
       // Text unchanged, call original method
@@ -1449,5 +1492,14 @@ class _M3CollectionPropertyPanelState
     );
     
     return segments;
+  }
+
+  /// 重置候选字符状态
+  void _resetCandidatesState() {
+    setState(() {
+      _selectedCharIndex = 0;
+      _candidateCharacters.clear();
+      _isLoadingCharacters = false;
+    });
   }
 }
