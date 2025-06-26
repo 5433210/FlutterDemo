@@ -65,6 +65,21 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<Map<String, String>?> getAvailableFormat(String id,
       {bool preferThumbnail = false}) async {
     try {
+      // 优化：如果是占位符ID，直接返回null，避免无效的格式检查
+      if (id.startsWith('placeholder_')) {
+        AppLogger.debug(
+          '跳过占位符格式检查',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'preferThumbnail': preferThumbnail,
+            'isPlaceholder': true,
+            'operation': 'skip_placeholder_format_check',
+          },
+        );
+        return null;
+      }
+
       AppLogger.debug(
         '获取可用格式',
         tag: 'character_image_service',
@@ -254,6 +269,22 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<Uint8List?> getCharacterImage(
       String id, String type, String format) async {
     try {
+      // 优化：如果是占位符ID，直接返回null，避免无效的图像加载
+      if (id.startsWith('placeholder_')) {
+        AppLogger.debug(
+          '跳过占位符图像加载',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'isPlaceholder': true,
+            'operation': 'skip_placeholder_load',
+          },
+        );
+        return null;
+      }
+
       final imagePath = _getImagePath(id, type, format);
       final cacheKey = 'file:$imagePath';
 
@@ -447,6 +478,22 @@ class CharacterImageServiceImpl implements CharacterImageService {
   @override
   Future<bool> hasCharacterImage(String id, String type, String format) async {
     try {
+      // 优化：如果是占位符ID，直接返回false，避免无效的文件检查
+      if (id.startsWith('placeholder_')) {
+        AppLogger.debug(
+          '跳过占位符图像文件检查',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'isPlaceholder': true,
+            'operation': 'skip_placeholder_check',
+          },
+        );
+        return false;
+      }
+
       final imagePath = _getImagePath(id, type, format);
       AppLogger.debug(
         '检查图像文件',

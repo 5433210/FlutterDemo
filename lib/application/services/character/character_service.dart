@@ -422,27 +422,60 @@ class CharacterService {
 
       if (wordMatchingPriority && query.length > 1) {
         // 词匹配优先模式：先尝试精确匹配（查找字符字段精确等于查询词的记录）
-        AppLogger.info('尝试精确匹配', data: {'query': query});
+        AppLogger.info('[WORD_MATCHING_DEBUG] 尝试精确匹配', data: {'query': query});
         characters = await _repository.searchExact(query);
 
-        AppLogger.info('精确匹配结果', data: {
+        AppLogger.info('[WORD_MATCHING_DEBUG] 精确匹配结果', data: {
           'query': query,
           'resultCount': characters.length,
           'results': characters.map((c) => c.character).take(5).toList(),
+          'resultIds': characters.take(5).map((c) => c.id).toList(),
+          'exactMatches': characters.where((c) => c.character == query).length,
+          'nonExactMatches':
+              characters.where((c) => c.character != query).length,
+          'allExactMatchIds': characters
+              .where((c) => c.character == query)
+              .map((c) => c.id)
+              .take(3)
+              .toList(),
+          'nonExactSamples': characters
+              .where((c) => c.character != query)
+              .take(3)
+              .map((c) => {
+                    'id': c.id,
+                    'character': c.character,
+                  })
+              .toList(),
         });
 
         // 如果没有精确匹配结果，尝试智能分词搜索
         if (characters.isEmpty) {
-          AppLogger.info('精确匹配无结果，尝试智能分词搜索');
+          AppLogger.info('[WORD_MATCHING_DEBUG] 精确匹配无结果，尝试智能分词搜索');
           characters = await _searchWithSmartSegmentation(query);
         }
       } else {
         // 仅字符匹配模式：对单个字符使用精确匹配
-        AppLogger.info('使用字符匹配模式', data: {'query': query});
+        AppLogger.info('[CHARACTER_MATCHING_DEBUG] 使用字符匹配模式', data: {
+          'query': query,
+          'queryLength': query.length,
+        });
         characters = await _searchByCharacters(query, exactMatch: true);
+
+        AppLogger.info('[CHARACTER_MATCHING_DEBUG] 字符匹配模式搜索完成', data: {
+          'query': query,
+          'resultCount': characters.length,
+          'results': characters
+              .take(5)
+              .map((c) => {
+                    'id': c.id,
+                    'character': c.character,
+                    'pageId': c.pageId,
+                  })
+              .toList(),
+        });
       }
 
-      AppLogger.info('最终搜索结果', data: {
+      AppLogger.info('[SEARCH_RESULT_DEBUG] 最终搜索结果', data: {
         'query': query,
         'mode': wordMatchingPriority ? 'word_priority' : 'character_only',
         'resultCount': characters.length,
@@ -476,7 +509,7 @@ class CharacterService {
     final allResults = <CharacterEntity>[];
     final addedIds = <String>{};
 
-    AppLogger.info('开始智能分词搜索', data: {
+    AppLogger.info('[SMART_SEGMENTATION_DEBUG] 开始智能分词搜索', data: {
       'query': query,
       'queryLength': query.length,
     });
@@ -486,7 +519,7 @@ class CharacterService {
         query.split(' ').where((part) => part.trim().isNotEmpty).toList();
 
     if (spaceSeparatedParts.length > 1) {
-      AppLogger.info('检测到空格分隔的词语', data: {
+      AppLogger.info('[SMART_SEGMENTATION_DEBUG] 检测到空格分隔的词语', data: {
         'parts': spaceSeparatedParts,
         'count': spaceSeparatedParts.length,
       });
@@ -498,7 +531,7 @@ class CharacterService {
 
         // 先尝试精确匹配这个部分
         final exactResults = await _repository.searchExact(trimmedPart);
-        AppLogger.debug('部分精确匹配', data: {
+        AppLogger.debug('[SMART_SEGMENTATION_DEBUG] 部分精确匹配', data: {
           'part': trimmedPart,
           'resultCount': exactResults.length,
         });
@@ -513,7 +546,8 @@ class CharacterService {
           }
         } else {
           // 如果精确匹配无结果，对这个部分进行字符匹配
-          AppLogger.debug('部分精确匹配无结果，进行字符匹配', data: {'part': trimmedPart});
+          AppLogger.debug('[SMART_SEGMENTATION_DEBUG] 部分精确匹配无结果，进行字符匹配',
+              data: {'part': trimmedPart});
           final charResults = await _searchByCharacters(trimmedPart);
           for (final result in charResults) {
             if (!addedIds.contains(result.id)) {
@@ -525,14 +559,14 @@ class CharacterService {
       }
     } else {
       // 没有空格分隔，尝试其他分词策略
-      AppLogger.info('单一词语，尝试其他分词策略');
+      AppLogger.info('[SMART_SEGMENTATION_DEBUG] 单一词语，尝试其他分词策略');
 
       // 检测是否有中英文混合
       final hasChinese = RegExp(r'[\u4e00-\u9fff]').hasMatch(query);
       final hasEnglish = RegExp(r'[a-zA-Z]').hasMatch(query);
 
       if (hasChinese && hasEnglish) {
-        AppLogger.info('检测到中英文混合，进行智能分割');
+        AppLogger.info('[SMART_SEGMENTATION_DEBUG] 检测到中英文混合，进行智能分割');
         final segments = _segmentMixedText(query);
 
         for (final segment in segments) {
@@ -560,18 +594,19 @@ class CharacterService {
         }
       } else {
         // 单一语言，先尝试精确匹配，再回退到字符匹配
-        AppLogger.info('[NA_FIX_DEBUG] 单一语言，先尝试精确匹配', data: {'query': query});
+        AppLogger.info('[SMART_SEGMENTATION_DEBUG] 单一语言，先尝试精确匹配',
+            data: {'query': query});
 
         // 先尝试精确匹配整个查询词
         final exactResults = await _repository.searchExact(query);
-        AppLogger.debug('[NA_FIX_DEBUG] 单一语言精确匹配结果', data: {
+        AppLogger.debug('[SMART_SEGMENTATION_DEBUG] 单一语言精确匹配结果', data: {
           'query': query,
           'resultCount': exactResults.length,
         });
 
         if (exactResults.isNotEmpty) {
           // 精确匹配有结果，使用精确匹配的结果
-          AppLogger.info('[NA_FIX_DEBUG] 使用精确匹配结果', data: {
+          AppLogger.info('[SMART_SEGMENTATION_DEBUG] 使用精确匹配结果', data: {
             'query': query,
             'resultCount': exactResults.length,
           });
@@ -583,7 +618,7 @@ class CharacterService {
           }
         } else {
           // 精确匹配无结果，回退到字符匹配
-          AppLogger.info('[NA_FIX_DEBUG] 精确匹配无结果，回退到字符匹配',
+          AppLogger.info('[SMART_SEGMENTATION_DEBUG] 精确匹配无结果，回退到字符匹配',
               data: {'query': query});
           final charResults = await _searchByCharacters(query);
           allResults.addAll(charResults);
@@ -591,7 +626,7 @@ class CharacterService {
       }
     }
 
-    AppLogger.info('智能分词搜索完成', data: {
+    AppLogger.info('[SMART_SEGMENTATION_DEBUG] 智能分词搜索完成', data: {
       'query': query,
       'totalResults': allResults.length,
       'uniqueResults': addedIds.length,
@@ -651,7 +686,7 @@ class CharacterService {
     final allResults = <CharacterEntity>[];
     final addedIds = <String>{};
 
-    AppLogger.info('[NA_FIX_DEBUG] 开始字符逐个搜索', data: {
+    AppLogger.info('[CHARACTER_SEARCH_DEBUG] 开始字符逐个搜索', data: {
       'query': query,
       'queryLength': query.length,
       'exactMatch': exactMatch,
@@ -664,22 +699,64 @@ class CharacterService {
       // 跳过空白字符
       if (char.trim().isEmpty) continue;
 
-      AppLogger.debug('[NA_FIX_DEBUG] 搜索单个字符',
+      AppLogger.debug('[CHARACTER_SEARCH_DEBUG] 搜索单个字符',
           data: {'char': char, 'index': i, 'exactMatch': exactMatch});
 
       // 根据exactMatch参数选择搜索方式
       List<CharacterEntity> results;
       if (exactMatch) {
         // 精确匹配：只查找字符字段精确等于该字符的记录
-        results = await _repository.searchExact(char);
-        AppLogger.debug('[NA_FIX_DEBUG] 单个字符精确搜索结果', data: {
-          'char': char,
-          'resultCount': results.length,
+        AppLogger.debug('[CHARACTER_EXACT_MATCH] 即将执行精确搜索', data: {
+          'searchChar': char,
+          'charCode': char.codeUnitAt(0),
+          'charAsBytes': char.codeUnits,
+          'charLength': char.length,
+          'isChineseChar':
+              char.codeUnitAt(0) >= 0x4E00 && char.codeUnitAt(0) <= 0x9FFF,
         });
+
+        results = await _repository.searchExact(char);
+
+        AppLogger.debug('[CHARACTER_EXACT_MATCH] 单个字符精确搜索结果', data: {
+          'searchChar': char,
+          'charCode': char.codeUnitAt(0),
+          'isChineseChar':
+              char.codeUnitAt(0) >= 0x4E00 && char.codeUnitAt(0) <= 0x9FFF,
+          'resultCount': results.length,
+          'results': results
+              .take(3)
+              .map((r) => {
+                    'id': r.id,
+                    'character': r.character,
+                    'characterAsBytes': r.character.codeUnits,
+                    'characterLength': r.character.length,
+                    'pageId': r.pageId,
+                    'isExactMatch': r.character == char,
+                  })
+              .toList(),
+        });
+
+        // 额外验证：确保返回的结果确实是精确匹配
+        final exactMatches = results.where((r) => r.character == char).toList();
+        if (exactMatches.length != results.length) {
+          AppLogger.warning('[CHARACTER_EXACT_MATCH] 发现非精确匹配的结果!', data: {
+            'searchChar': char,
+            'totalResults': results.length,
+            'exactMatches': exactMatches.length,
+            'nonExactMatches': results
+                .where((r) => r.character != char)
+                .map((r) => {
+                      'id': r.id,
+                      'character': r.character,
+                      'characterAsBytes': r.character.codeUnits,
+                    })
+                .toList(),
+          });
+        }
       } else {
         // 模糊匹配：查找包含该字符的所有记录
         results = await _repository.search(char);
-        AppLogger.debug('[NA_FIX_DEBUG] 单个字符模糊搜索结果', data: {
+        AppLogger.debug('[CHARACTER_FUZZY_MATCH] 单个字符模糊搜索结果', data: {
           'char': char,
           'resultCount': results.length,
         });
@@ -694,7 +771,7 @@ class CharacterService {
       }
     }
 
-    AppLogger.info('字符搜索完成', data: {
+    AppLogger.info('[CHARACTER_SEARCH_DEBUG] 字符搜索完成', data: {
       'query': query,
       'totalResults': allResults.length,
       'uniqueResults': addedIds.length,

@@ -229,6 +229,14 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 注意：我们使用position.originalIndex而不是position.index来查找图像，因为position.originalIndex是原始的字符索引
       final charImage =
           _findCharacterImage(position.char, position.originalIndex);
+
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 字符渲染分支决策', data: {
+        'char': position.char,
+        'index': position.originalIndex,
+        'hasCharImage': charImage != null,
+        'willDrawText': charImage == null,
+      });
+
       if (charImage != null) {
         // 如果有图片，绘制图片
         _drawCharacterImage(canvas, rect, position, charImage);
@@ -504,9 +512,38 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 绘制普通背景
   void _drawFallbackBackground(
       Canvas canvas, Rect rect, CharacterPosition position) {
+    // 检查是否为占位符
+    final placeholderInfo = _getPlaceholderInfo(position.originalIndex);
+    final isPlaceholder = placeholderInfo != null;
+
+    // 添加调试信息，特别是对占位符的背景处理
+    EditPageLogger.rendererDebug(
+        '[PLACEHOLDER_RENDER] _drawFallbackBackground 开始',
+        data: {
+          'backgroundColor': position.backgroundColor.toString(),
+          'isTransparent': position.backgroundColor == Colors.transparent,
+          'textureEnabled': textureConfig.enabled,
+          'hasTextureData': textureConfig.data != null,
+          'position': position.originalIndex,
+          'char': position.char,
+          'isPlaceholder': isPlaceholder,
+        });
+
+    // 对于占位符，强制使用透明背景，不绘制任何背景色
+    if (isPlaceholder) {
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 占位符跳过背景绘制', data: {
+        'position': position.originalIndex,
+        'char': position.char,
+      });
+      return;
+    }
+
     // 当纹理启用时，不在字符区域绘制背景色
     // 这样可以让背景纹理透过来，避免被遮挡
     if (textureConfig.enabled && textureConfig.data != null) {
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 跳过背景绘制（纹理启用）', data: {
+        'position': position.originalIndex,
+      });
       return;
     }
 
@@ -515,19 +552,86 @@ class AdvancedCollectionPainter extends CustomPainter {
       final bgPaint = Paint()
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
+
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 绘制背景矩形', data: {
+        'backgroundColor': position.backgroundColor.toString(),
+        'rect': {
+          'left': rect.left,
+          'top': rect.top,
+          'width': rect.width,
+          'height': rect.height
+        },
+        'position': position.originalIndex,
+      });
+
       canvas.drawRect(rect, bgPaint);
+    } else {
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 跳过背景绘制（透明背景）', data: {
+        'position': position.originalIndex,
+      });
     }
     // 如果背景色是透明的，什么都不绘制，保持完全透明
   }
 
   /// 绘制普通文本
   void _drawFallbackText(Canvas canvas, CharacterPosition position, Rect rect) {
+    // 获取字符的占位符信息
+    final placeholderInfo = _getPlaceholderInfo(position.originalIndex);
+
+    // 确定要显示的字符和样式
+    String displayChar = position.char;
+    Color textColor = position.fontColor;
+    double opacity = 1.0;
+
+    // 添加详细调试信息
+    EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] _drawFallbackText 开始',
+        data: {
+          'char': position.char,
+          'originalIndex': position.originalIndex,
+          'placeholderInfo': placeholderInfo,
+          'fontColor': position.fontColor.toString(),
+        });
+
+    if (placeholderInfo != null) {
+      // 如果是占位符，使用原始字符和半透明样式
+      final originalChar = placeholderInfo['originalCharacter'] as String?;
+      if (originalChar != null && originalChar.isNotEmpty) {
+        displayChar = originalChar;
+      }
+
+      // 获取占位符的透明度
+      final placeholderOpacity = placeholderInfo['opacity'] as double?;
+      if (placeholderOpacity != null) {
+        opacity = placeholderOpacity;
+      } else {
+        opacity = 0.5; // 默认半透明
+      }
+
+      // 应用透明度到颜色
+      textColor = textColor.withOpacity(opacity);
+
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 绘制占位符文本', data: {
+        'originalChar': originalChar,
+        'displayChar': displayChar,
+        'opacity': opacity,
+        'position': position.originalIndex,
+        'finalTextColor': textColor.toString(),
+      });
+    } else {
+      // 非占位符的普通文本
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 绘制普通文本', data: {
+        'char': displayChar,
+        'position': position.originalIndex,
+        'textColor': textColor.toString(),
+      });
+    }
+
     final textPainter = TextPainter(
       text: TextSpan(
-        text: position.char,
+        text: displayChar,
         style: TextStyle(
           fontSize: position.size * 0.8,
-          color: position.fontColor,
+          color: textColor,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -538,6 +642,21 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 居中绘制文本
     final double x = rect.left + (rect.width - textPainter.width) / 2;
     final double y = rect.top + (rect.height - textPainter.height) / 2;
+
+    // 添加最终绘制信息
+    EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 最终绘制文本', data: {
+      'displayChar': displayChar,
+      'textColor': textColor.toString(),
+      'fontSize': position.size * 0.8,
+      'position': {'x': x, 'y': y},
+      'rect': {
+        'left': rect.left,
+        'top': rect.top,
+        'width': rect.width,
+        'height': rect.height
+      },
+      'isPlaceholder': placeholderInfo != null,
+    });
 
     textPainter.paint(canvas, Offset(x, y));
   }
@@ -581,6 +700,17 @@ class AdvancedCollectionPainter extends CustomPainter {
       return null;
     }
 
+    // 首先检查是否为占位符，如果是占位符直接返回null，让文本渲染处理
+    final placeholderInfo = _getPlaceholderInfo(index);
+    if (placeholderInfo != null) {
+      EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 占位符跳过图像查找', data: {
+        'char': char,
+        'index': index,
+        'placeholderInfo': placeholderInfo,
+      });
+      return null;
+    }
+
     try {
       // 如果是图像对象，直接返回
       if (characterImages is ui.Image) {
@@ -612,6 +742,18 @@ class AdvancedCollectionPainter extends CustomPainter {
           }
           // 如果是复杂对象，处理characterId
           else if (imageData is Map) {
+            // 再次检查是否为占位符（数据结构中的占位符）
+            final isPlaceholder = imageData['isPlaceholder'] as bool? ?? false;
+            if (isPlaceholder) {
+              EditPageLogger.rendererDebug('[PLACEHOLDER_RENDER] 数据中的占位符跳过图像查找',
+                  data: {
+                    'char': char,
+                    'index': index,
+                    'characterId': imageData['characterId'],
+                  });
+              return null;
+            }
+
             if (imageData.containsKey('characterId')) {
               final characterId = imageData['characterId'];
 
@@ -638,7 +780,19 @@ class AdvancedCollectionPainter extends CustomPainter {
                       });
                     }
                   } else {
-                    // 如果无法使用服务加载，创建占位图像
+                    // 再次检查是否为占位符，如果是占位符则跳过创建灰色方块
+                    final placeholderCheck = _getPlaceholderInfo(index);
+                    if (placeholderCheck != null) {
+                      EditPageLogger.rendererDebug(
+                          '[PLACEHOLDER_RENDER] 服务失败时跳过占位图像创建',
+                          data: {
+                            'char': char,
+                            'index': index,
+                            'characterId': characterId,
+                          });
+                      return;
+                    }
+                    // 如果不是占位符且无法使用服务加载，创建占位图像
                     _createPlaceholderImage(cacheKey)
                         .then((placeholderSuccess) {
                       if (placeholderSuccess) {
@@ -1054,5 +1208,78 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 直接拉伸到整个背景区域
     canvas.drawImageRect(image, srcRect, rect, paint);
     canvas.restore();
+  }
+
+  /// 获取占位符信息
+  Map<String, dynamic>? _getPlaceholderInfo(int index) {
+    try {
+      EditPageLogger.rendererDebug(
+          '[PLACEHOLDER_RENDER] _getPlaceholderInfo 开始',
+          data: {
+            'index': index,
+            'characterImages': characterImages.runtimeType.toString(),
+          });
+
+      if (characterImages is Map<String, dynamic>) {
+        final characterImagesMap =
+            characterImages['characterImages'] as Map<String, dynamic>?;
+
+        EditPageLogger.rendererDebug(
+            '[PLACEHOLDER_RENDER] _getPlaceholderInfo 检查Map',
+            data: {
+              'hasCharacterImagesKey':
+                  characterImages.containsKey('characterImages'),
+              'characterImagesMap': characterImagesMap?.keys.toList(),
+            });
+
+        if (characterImagesMap != null) {
+          final String indexKey = index.toString();
+          final imageData = characterImagesMap[indexKey];
+
+          EditPageLogger.rendererDebug(
+              '[PLACEHOLDER_RENDER] _getPlaceholderInfo 查找索引',
+              data: {
+                'indexKey': indexKey,
+                'hasImageData': imageData != null,
+                'imageDataType': imageData?.runtimeType.toString(),
+                'imageData': imageData,
+              });
+
+          if (imageData is Map<String, dynamic>) {
+            final isPlaceholder = imageData['isPlaceholder'] as bool? ?? false;
+
+            EditPageLogger.rendererDebug(
+                '[PLACEHOLDER_RENDER] _getPlaceholderInfo 检查占位符',
+                data: {
+                  'isPlaceholder': isPlaceholder,
+                  'imageDataKeys': imageData.keys.toList(),
+                });
+
+            if (isPlaceholder) {
+              EditPageLogger.rendererDebug(
+                  '[PLACEHOLDER_RENDER] _getPlaceholderInfo 返回占位符数据',
+                  data: {
+                    'placeholderData': imageData,
+                  });
+              return imageData;
+            }
+          }
+        }
+      }
+
+      EditPageLogger.rendererDebug(
+          '[PLACEHOLDER_RENDER] _getPlaceholderInfo 未找到占位符',
+          data: {
+            'index': index,
+          });
+      return null;
+    } catch (e) {
+      EditPageLogger.rendererError('[PLACEHOLDER_RENDER] 获取占位符信息失败',
+          error: e,
+          data: {
+            'index': index,
+          });
+      return null;
+    }
   }
 }

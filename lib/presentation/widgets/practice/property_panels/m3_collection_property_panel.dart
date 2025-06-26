@@ -296,73 +296,237 @@ class _M3CollectionPropertyPanelState
           continue;
         }
 
-        // Search for matching candidate characters
-        final matchingCharacters =
-            await characterService.searchCharacters(char);
+        try {
+          // Search for matching candidate characters
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 搜索字符匹配结果',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'search_character',
+              'character': char,
+              'index': i,
+              'charCode': char.codeUnitAt(0),
+            },
+          );
 
-        // Skip if no matching candidates found
-        if (matchingCharacters.isEmpty) continue;
+          final matchingCharacters =
+              await characterService.searchCharacters(char);
 
-        // Get detailed info of the first matching character
-        final characterEntity = await characterService
-            .getCharacterDetails(matchingCharacters.first.id);
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 字符搜索结果',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'search_result',
+              'character': char,
+              'index': i,
+              'resultCount': matchingCharacters.length,
+            },
+          );
 
-        // Skip if cannot get details
-        if (characterEntity == null) continue;
+          // If no matching candidates found, set placeholder
+          if (matchingCharacters.isEmpty) {
+            final placeholderId = 'placeholder_${char}_$i';
+            characterImages['$i'] = {
+              'characterId': placeholderId,
+              'type': 'placeholder',
+              'format': 'text',
+              'drawingType': 'placeholder',
+              'drawingFormat': 'text',
+              'isPlaceholder': true,
+              'originalCharacter': char,
+              'transform': {
+                'scale': 1.0,
+                'rotation': 0.0,
+                'color': content['fontColor'] ?? '#000000',
+                'opacity': 0.5,
+                'invert': false,
+              },
+            };
+            hasUpdates = true;
 
-        // Get character image format
-        final format =
-            await characterImageService.getAvailableFormat(characterEntity.id);
-
-        // Skip if cannot get format
-        if (format == null) continue;
-
-        // Check available image formats
-        final hasSquareBinary = await characterImageService.hasCharacterImage(
-            characterEntity.id, 'square-binary', 'png-binary');
-        final hasSquareOutline = await characterImageService.hasCharacterImage(
-            characterEntity.id, 'square-outline', 'svg-outline');
-
-        // Determine drawing format
-        String drawingType;
-        String drawingFormat;
-
-        if (hasSquareBinary) {
-          drawingType = 'square-binary';
-          drawingFormat = 'png-binary';
-        } else if (hasSquareOutline) {
-          drawingType = 'square-outline';
-          drawingFormat = 'svg-outline';
-        } else {
-          drawingType = format['type'] ?? 'square-binary';
-          drawingFormat = format['format'] ?? 'png-binary';
-        }
-
-        // Create character image info
-        final Map<String, dynamic> newImageInfo = {
-          'characterId': characterEntity.id,
-          'type': format['type'] ?? 'square-binary',
-          'format': format['format'] ?? 'png-binary',
-          'drawingType': drawingType,
-          'drawingFormat': drawingFormat,
-          'transform': {
-            'scale': 1.0,
-            'rotation': 0.0,
-            'color': content['fontColor'] ?? '#000000',
-            'opacity': 1.0,
-            'invert': false,
+            EditPageLogger.propertyPanelDebug(
+              '[CHARACTER_MATCHING_DEBUG] 设置占位符',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              data: {
+                'operation': 'set_placeholder',
+                'character': char,
+                'index': i,
+                'placeholderId': placeholderId,
+              },
+            );
+            continue;
           }
-        };
 
-        // If previous image info exists, try to preserve transform property
-        if (imageInfo != null && imageInfo.containsKey('transform')) {
-          newImageInfo['transform'] = Map<String, dynamic>.from(
-              imageInfo['transform'] as Map<String, dynamic>);
+          // Get detailed info of the first matching character
+          final characterEntity = await characterService
+              .getCharacterDetails(matchingCharacters.first.id);
+
+          // Skip if cannot get details
+          if (characterEntity == null) {
+            final placeholderId = 'placeholder_${char}_$i';
+            characterImages['$i'] = {
+              'characterId': placeholderId,
+              'type': 'placeholder',
+              'format': 'text',
+              'drawingType': 'placeholder',
+              'drawingFormat': 'text',
+              'isPlaceholder': true,
+              'originalCharacter': char,
+              'transform': {
+                'scale': 1.0,
+                'rotation': 0.0,
+                'color': content['fontColor'] ?? '#000000',
+                'opacity': 0.5,
+                'invert': false,
+              },
+            };
+            hasUpdates = true;
+
+            EditPageLogger.propertyPanelDebug(
+              '[CHARACTER_MATCHING_DEBUG] 获取字符详情失败，设置占位符',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              data: {
+                'operation': 'character_details_failed',
+                'character': char,
+                'index': i,
+                'placeholderId': placeholderId,
+              },
+            );
+            continue;
+          }
+
+          // Get character image format
+          final format = await characterImageService
+              .getAvailableFormat(characterEntity.id);
+
+          // Skip if cannot get format
+          if (format == null) {
+            final placeholderId = 'placeholder_${char}_$i';
+            characterImages['$i'] = {
+              'characterId': placeholderId,
+              'type': 'placeholder',
+              'format': 'text',
+              'drawingType': 'placeholder',
+              'drawingFormat': 'text',
+              'isPlaceholder': true,
+              'originalCharacter': char,
+              'transform': {
+                'scale': 1.0,
+                'rotation': 0.0,
+                'color': content['fontColor'] ?? '#000000',
+                'opacity': 0.5,
+                'invert': false,
+              },
+            };
+            hasUpdates = true;
+
+            EditPageLogger.propertyPanelDebug(
+              '[CHARACTER_MATCHING_DEBUG] 获取图像格式失败，设置占位符',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              data: {
+                'operation': 'format_failed',
+                'character': char,
+                'index': i,
+                'placeholderId': placeholderId,
+              },
+            );
+            continue;
+          }
+
+          // Check available image formats
+          final hasSquareBinary = await characterImageService.hasCharacterImage(
+              characterEntity.id, 'square-binary', 'png-binary');
+          final hasSquareOutline =
+              await characterImageService.hasCharacterImage(
+                  characterEntity.id, 'square-outline', 'svg-outline');
+
+          // Determine drawing format
+          String drawingType;
+          String drawingFormat;
+
+          if (hasSquareBinary) {
+            drawingType = 'square-binary';
+            drawingFormat = 'png-binary';
+          } else if (hasSquareOutline) {
+            drawingType = 'square-outline';
+            drawingFormat = 'svg-outline';
+          } else {
+            drawingType = format['type'] ?? 'square-binary';
+            drawingFormat = format['format'] ?? 'png-binary';
+          }
+
+          // Create character image info
+          final Map<String, dynamic> newImageInfo = {
+            'characterId': characterEntity.id,
+            'type': format['type'] ?? 'square-binary',
+            'format': format['format'] ?? 'png-binary',
+            'drawingType': drawingType,
+            'drawingFormat': drawingFormat,
+            'transform': {
+              'scale': 1.0,
+              'rotation': 0.0,
+              'color': content['fontColor'] ?? '#000000',
+              'opacity': 1.0,
+              'invert': false,
+            }
+          };
+
+          // If previous image info exists, try to preserve transform property
+          if (imageInfo != null && imageInfo.containsKey('transform')) {
+            newImageInfo['transform'] = Map<String, dynamic>.from(
+                imageInfo['transform'] as Map<String, dynamic>);
+          }
+
+          // Update character image info
+          characterImages['$i'] = newImageInfo;
+          hasUpdates = true;
+
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 成功绑定字符',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'operation': 'character_bound',
+              'character': char,
+              'index': i,
+              'characterId': characterEntity.id,
+              'type': format['type'],
+              'format': format['format'],
+            },
+          );
+        } catch (e) {
+          // If any error occurs during character processing, set placeholder
+          final placeholderId = 'placeholder_${char}_$i';
+          characterImages['$i'] = {
+            'characterId': placeholderId,
+            'type': 'placeholder',
+            'format': 'text',
+            'drawingType': 'placeholder',
+            'drawingFormat': 'text',
+            'isPlaceholder': true,
+            'originalCharacter': char,
+            'transform': {
+              'scale': 1.0,
+              'rotation': 0.0,
+              'color': content['fontColor'] ?? '#000000',
+              'opacity': 0.5,
+              'invert': false,
+            },
+          };
+          hasUpdates = true;
+
+          EditPageLogger.propertyPanelError(
+            '[CHARACTER_MATCHING_DEBUG] 字符处理异常，设置占位符',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            error: e,
+            data: {
+              'operation': 'character_processing_error',
+              'character': char,
+              'index': i,
+              'placeholderId': placeholderId,
+              'missingIndex': i,
+            },
+          );
         }
-
-        // Update character image info
-        characterImages['$i'] = newImageInfo;
-        hasUpdates = true;
       }
 
       // If there are updates, update element content
@@ -766,36 +930,206 @@ class _M3CollectionPropertyPanelState
         },
       );
 
-      if (matchingCharacters.isEmpty) {
-        setState(() {
-          _candidateCharacters = [];
-          _isLoadingCharacters = false;
-        });
-        return;
-      }
-
       // 转换为 CharacterEntity 列表
-      final futures = matchingCharacters.map((viewModel) async {
-        return await characterService.getCharacterDetails(viewModel.id);
-      }).toList();
+      List<CharacterEntity> entities = [];
+      if (matchingCharacters.isNotEmpty) {
+        final futures = matchingCharacters.map((viewModel) async {
+          return await characterService.getCharacterDetails(viewModel.id);
+        }).toList();
 
-      final results = await Future.wait(futures);
-      final entities = results.whereType<CharacterEntity>().toList();
+        final results = await Future.wait(futures);
+        entities = results.whereType<CharacterEntity>().toList();
+      }
 
       setState(() {
         _candidateCharacters = entities;
         _isLoadingCharacters = false;
       });
 
-      // 自动选择首个候选（仅当当前没有绑定候选时）
-      if (entities.isNotEmpty) {
-        _autoSelectFirstCandidateIfNeeded(entities, searchQuery);
+      // 字符匹配模式下的特殊处理
+      if (_matchingMode == MatchingMode.characterMatching) {
+        await _handleCharacterMatchingMode(entities, searchQuery);
+      } else {
+        // 词匹配模式下的自动选择（仅当当前没有绑定候选时）
+        if (entities.isNotEmpty) {
+          _autoSelectFirstCandidateIfNeeded(entities, searchQuery);
+        }
       }
     } catch (e) {
       setState(() {
         _candidateCharacters = [];
         _isLoadingCharacters = false;
       });
+    }
+  }
+
+  /// 处理字符匹配模式的特殊逻辑
+  Future<void> _handleCharacterMatchingMode(
+      List<CharacterEntity> entities, String searchQuery) async {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characterImages =
+        content['characterImages'] as Map<String, dynamic>? ?? {};
+    final charIndex = _selectedCharIndex.toString();
+
+    EditPageLogger.propertyPanelDebug(
+      '[CHARACTER_MATCHING_DEBUG] 处理字符匹配模式',
+      tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+      data: {
+        'searchQuery': searchQuery,
+        'selectedCharIndex': _selectedCharIndex,
+        'candidateCount': entities.length,
+        'hasExistingBinding': characterImages.containsKey(charIndex),
+      },
+    );
+
+    // 检查当前字符是否已有绑定
+    if (characterImages.containsKey(charIndex)) {
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 当前字符已有绑定，跳过自动选择',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {'selectedCharIndex': _selectedCharIndex},
+      );
+      return;
+    }
+
+    if (entities.isNotEmpty) {
+      // 查找精确匹配的候选字符
+      final exactMatches =
+          entities.where((entity) => entity.character == searchQuery).toList();
+
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 实时搜索精确匹配检查',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'searchQuery': searchQuery,
+          'totalEntities': entities.length,
+          'exactMatches': exactMatches.length,
+          'exactMatchCharacters': exactMatches.map((e) => e.character).toList(),
+          'exactMatchIds': exactMatches.map((e) => e.id).toList(),
+          'entityDetails': entities
+              .take(3)
+              .map((e) => {
+                    'id': e.id,
+                    'character': e.character,
+                    'pageId': e.pageId,
+                  })
+              .toList(),
+        },
+      );
+
+      if (exactMatches.isNotEmpty) {
+        // 自动选择第一个精确匹配的候选
+        EditPageLogger.propertyPanelDebug(
+          '[CHARACTER_MATCHING_DEBUG] 找到精确匹配，自动选择',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'searchQuery': searchQuery,
+            'isChineseChar': _isChineseCharacter(searchQuery),
+            'selectedCandidateId': exactMatches.first.id,
+            'selectedCandidateCharacter': exactMatches.first.character,
+            'allExactMatches': exactMatches
+                .map((e) => {
+                      'id': e.id,
+                      'character': e.character,
+                      'pageId': e.pageId,
+                    })
+                .toList(),
+          },
+        );
+        await _selectCandidateCharacter(exactMatches.first);
+      } else {
+        // 没有精确匹配，设置占位符
+        EditPageLogger.propertyPanelDebug(
+          '[CHARACTER_MATCHING_DEBUG] 无精确匹配，设置占位符',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'searchQuery': searchQuery,
+            'isChineseChar': _isChineseCharacter(searchQuery),
+            'candidateCount': entities.length,
+            'allCandidates': entities
+                .take(5)
+                .map((e) => {
+                      'id': e.id,
+                      'character': e.character,
+                      'pageId': e.pageId,
+                    })
+                .toList(),
+            'reasonForPlaceholder': 'no_exact_match_found',
+          },
+        );
+        await _setPlaceholderForCharacter(_selectedCharIndex, searchQuery);
+      }
+    } else {
+      // 没有候选字符，设置占位符
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 无候选字符，设置占位符',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'searchQuery': searchQuery,
+          'isChineseChar': _isChineseCharacter(searchQuery),
+          'reasonForPlaceholder': 'no_candidates_found',
+        },
+      );
+      await _setPlaceholderForCharacter(_selectedCharIndex, searchQuery);
+    }
+  }
+
+  /// 为字符设置占位符
+  Future<void> _setPlaceholderForCharacter(
+      int charIndex, String character) async {
+    try {
+      final content = widget.element['content'] as Map<String, dynamic>;
+      Map<String, dynamic> characterImages = {};
+
+      if (content.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+      }
+
+      // 创建占位符图像信息
+      final placeholderInfo = {
+        'characterId': 'placeholder_${character}_$charIndex',
+        'type': 'placeholder',
+        'format': 'text',
+        'drawingType': 'placeholder',
+        'drawingFormat': 'text',
+        'isPlaceholder': true,
+        'originalCharacter': character,
+        'transform': {
+          'scale': 1.0,
+          'rotation': 0.0,
+          'color': content['fontColor'] ?? '#999999',
+          'opacity': 0.5,
+          'invert': false,
+        },
+      };
+
+      characterImages['$charIndex'] = placeholderInfo;
+
+      final updatedContent = Map<String, dynamic>.from(content);
+      updatedContent['characterImages'] = characterImages;
+
+      _updateProperty('content', updatedContent);
+
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 占位符设置完成',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'charIndex': charIndex,
+          'character': character,
+          'placeholderId': placeholderInfo['characterId'],
+        },
+      );
+    } catch (e) {
+      EditPageLogger.propertyPanelError(
+        '设置占位符失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'charIndex': charIndex,
+          'character': character,
+        },
+      );
     }
   }
 
@@ -936,13 +1270,51 @@ class _M3CollectionPropertyPanelState
   // Select candidate character
   Future<void> _selectCandidateCharacter(CharacterEntity entity) async {
     try {
+      final content = widget.element['content'] as Map<String, dynamic>;
+      final characters = content['characters'] as String? ?? '';
+      final currentChar =
+          (_selectedCharIndex >= 0 && _selectedCharIndex < characters.length)
+              ? characters[_selectedCharIndex]
+              : '';
+
+      EditPageLogger.propertyPanelDebug(
+        '[SELECT_CANDIDATE_DEBUG] 开始选择候选字符',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'selectedCharIndex': _selectedCharIndex,
+          'currentChar': currentChar,
+          'isChineseChar': _isChineseCharacter(currentChar),
+          'candidateId': entity.id,
+          'candidateCharacter': entity.character,
+          'candidatePageId': entity.pageId,
+          'matchingMode': _matchingMode.toString(),
+        },
+      );
+
       // Get character image format
       final characterImageService = ref.read(characterImageServiceProvider);
       final format = await characterImageService.getAvailableFormat(entity.id);
 
       if (format == null) {
+        EditPageLogger.propertyPanelError(
+          '候选字符格式获取失败',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'candidateId': entity.id,
+            'candidateCharacter': entity.character,
+          },
+        );
         return;
       }
+
+      EditPageLogger.propertyPanelDebug(
+        '[SELECT_CANDIDATE_DEBUG] 候选字符格式获取成功',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'candidateId': entity.id,
+          'format': format,
+        },
+      );
 
       // Update character image info
       await _updateCharacterImage(
@@ -950,6 +1322,16 @@ class _M3CollectionPropertyPanelState
         entity.id,
         format['type'] ?? 'square-binary',
         format['format'] ?? 'png-binary',
+      );
+
+      EditPageLogger.propertyPanelDebug(
+        '[SELECT_CANDIDATE_DEBUG] 候选字符选择完成',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'selectedCharIndex': _selectedCharIndex,
+          'candidateId': entity.id,
+          'candidateCharacter': entity.character,
+        },
       );
 
       // Refresh UI
@@ -1357,8 +1739,20 @@ class _M3CollectionPropertyPanelState
     final characters = content['characters'] as String? ?? '';
 
     if (characters.isEmpty || _selectedCharIndex >= characters.length) {
+      EditPageLogger.propertyPanelDebug(
+        '[SEARCH_QUERY_DEBUG] 空查询条件',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'charactersLength': characters.length,
+          'selectedCharIndex': _selectedCharIndex,
+          'reason':
+              characters.isEmpty ? 'empty_characters' : 'index_out_of_bounds',
+        },
+      );
       return '';
     }
+
+    final char = characters[_selectedCharIndex];
 
     if (_matchingMode == MatchingMode.wordMatching) {
       // 词匹配模式：基于 segments 获取对应的文本段
@@ -1373,13 +1767,15 @@ class _M3CollectionPropertyPanelState
 
         if (_selectedCharIndex >= currentPos && _selectedCharIndex < endPos) {
           EditPageLogger.propertyPanelDebug(
-            '[WORD_MATCHING_DEBUG] 词匹配模式获取查询',
+            '[SEARCH_QUERY_DEBUG] 词匹配模式获取查询',
             tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
             data: {
               'selectedCharIndex': _selectedCharIndex,
+              'selectedChar': char,
               'segmentText': text,
               'segmentStart': currentPos,
               'segmentEnd': endPos,
+              'isChineseChar': _isChineseCharacter(char),
             },
           );
           return text;
@@ -1389,18 +1785,29 @@ class _M3CollectionPropertyPanelState
 
       // 如果没有找到对应的段，返回单字符
       EditPageLogger.propertyPanelDebug(
-        '[WORD_MATCHING_DEBUG] 未找到对应的段，回退到单字符',
+        '[SEARCH_QUERY_DEBUG] 未找到对应的段，回退到单字符',
         tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
         data: {
           'selectedCharIndex': _selectedCharIndex,
+          'selectedChar': char,
           'charactersLength': characters.length,
           'segmentsCount': segments.length,
+          'isChineseChar': _isChineseCharacter(char),
         },
       );
-      return characters[_selectedCharIndex];
+      return char;
     } else {
       // 字符匹配模式：返回单个字符
-      return characters[_selectedCharIndex];
+      EditPageLogger.propertyPanelDebug(
+        '[SEARCH_QUERY_DEBUG] 字符匹配模式获取查询',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'selectedCharIndex': _selectedCharIndex,
+          'selectedChar': char,
+          'isChineseChar': _isChineseCharacter(char),
+        },
+      );
+      return char;
     }
   }
 
@@ -1425,6 +1832,22 @@ class _M3CollectionPropertyPanelState
       content['segments'] = _generateSegments(characters, isWordMatching);
     }
 
+    // 关键修复：切换到字符匹配模式时清空现有的 characterImages
+    if (_matchingMode == MatchingMode.characterMatching) {
+      // 清空所有现有的字符图像绑定，强制重新初始化
+      content['characterImages'] = <String, dynamic>{};
+
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 切换到字符匹配模式，清空现有绑定',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'characters': characters,
+          'charactersLength': characters.length,
+          'operation': 'clear_character_images_on_mode_switch',
+        },
+      );
+    }
+
     EditPageLogger.propertyPanelDebug(
       '[WORD_MATCHING_DEBUG] 匹配模式切换并更新content',
       tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
@@ -1433,14 +1856,251 @@ class _M3CollectionPropertyPanelState
         'wordMatchingPriority': isWordMatching,
         'characters': characters,
         'segmentsCount': (content['segments'] as List<dynamic>?)?.length ?? 0,
+        'characterImagesCleared':
+            _matchingMode == MatchingMode.characterMatching,
       },
     );
 
     // 更新元素属性
     _updateProperty('content', content);
 
+    // 如果切换到字符匹配模式，需要为所有字符预处理占位符
+    if (_matchingMode == MatchingMode.characterMatching &&
+        characters.isNotEmpty) {
+      Future.microtask(() => _initializeCharacterMatchingMode(characters));
+    }
+
     // 重新加载候选字符
     _loadCandidateCharacters();
+  }
+
+  /// 初始化字符匹配模式，为所有字符设置匹配项或占位符
+  Future<void> _initializeCharacterMatchingMode(String characters) async {
+    try {
+      EditPageLogger.propertyPanelDebug(
+        '[CHARACTER_MATCHING_DEBUG] 初始化字符匹配模式',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'characters': characters,
+          'charactersLength': characters.length,
+        },
+      );
+
+      final characterService = ref.read(characterServiceProvider);
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>);
+
+      Map<String, dynamic> characterImages = {};
+      if (content.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+      }
+
+      bool hasUpdates = false;
+
+      // 为每个字符位置处理匹配或设置占位符
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+        final charIndex = i.toString();
+
+        try {
+          // 注意：在字符匹配模式初始化时，强制处理所有字符位置
+          // 因为我们在模式切换时已经清空了 characterImages
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 处理字符位置',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'charIndex': i,
+              'character': char,
+              'hasExistingBinding': characterImages.containsKey(charIndex),
+            },
+          );
+
+          // 跳过空白字符，直接设置占位符
+          if (char.trim().isEmpty) {
+            await _setPlaceholderForCharacter(i, char);
+            hasUpdates = true;
+            continue;
+          }
+
+          // 对所有字符进行搜索匹配（包括英文字符）
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 开始搜索字符',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'charIndex': i,
+              'character': char,
+              'isChineseChar': _isChineseCharacter(char),
+              'isEnglishChar': RegExp(r'^[a-zA-Z]$').hasMatch(char),
+            },
+          );
+
+          // 搜索匹配的字符
+          final matchingCharacters =
+              await characterService.searchCharactersWithMode(
+            char,
+            wordMatchingPriority: false,
+          );
+
+          EditPageLogger.propertyPanelDebug(
+            '[CHARACTER_MATCHING_DEBUG] 搜索结果详情',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'searchQuery': char,
+              'totalResults': matchingCharacters.length,
+              'resultIds': matchingCharacters.map((c) => c.id).take(5).toList(),
+              'resultCharacters':
+                  matchingCharacters.map((c) => c.character).take(5).toList(),
+            },
+          );
+
+          if (matchingCharacters.isNotEmpty) {
+            // 转换为 CharacterEntity
+            final futures = matchingCharacters.map((viewModel) async {
+              return await characterService.getCharacterDetails(viewModel.id);
+            }).toList();
+
+            final results = await Future.wait(futures);
+            final entities = results.whereType<CharacterEntity>().toList();
+
+            EditPageLogger.propertyPanelDebug(
+              '[CHARACTER_MATCHING_DEBUG] 实体详情',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              data: {
+                'searchQuery': char,
+                'entityCount': entities.length,
+                'entityIds': entities.map((e) => e.id).take(5).toList(),
+                'entityCharacters':
+                    entities.map((e) => e.character).take(5).toList(),
+                'entityDetails': entities
+                    .take(3)
+                    .map((e) => {
+                          'id': e.id,
+                          'character': e.character,
+                          'pageId': e.pageId,
+                        })
+                    .toList(),
+              },
+            );
+
+            // 查找精确匹配
+            final exactMatches =
+                entities.where((entity) => entity.character == char).toList();
+
+            EditPageLogger.propertyPanelDebug(
+              '[CHARACTER_MATCHING_DEBUG] 精确匹配检查结果',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              data: {
+                'charIndex': i,
+                'searchChar': char,
+                'totalEntities': entities.length,
+                'exactMatches': exactMatches.length,
+                'exactMatchCharacters':
+                    exactMatches.map((e) => e.character).toList(),
+                'exactMatchIds': exactMatches.map((e) => e.id).toList(),
+                'exactMatchDetails': exactMatches
+                    .take(3)
+                    .map((e) => {
+                          'id': e.id,
+                          'character': e.character,
+                          'pageId': e.pageId,
+                        })
+                    .toList(),
+              },
+            );
+
+            if (exactMatches.isNotEmpty) {
+              // 非英文字符自动绑定第一个精确匹配
+              EditPageLogger.propertyPanelDebug(
+                '[CHARACTER_MATCHING_DEBUG] 找到精确匹配，自动绑定',
+                tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+                data: {
+                  'charIndex': i,
+                  'character': char,
+                  'matchedEntity': exactMatches.first.character,
+                  'matchedId': exactMatches.first.id,
+                },
+              );
+
+              // 临时设置选中索引以便更新正确的位置
+              final originalSelectedIndex = _selectedCharIndex;
+              _selectedCharIndex = i;
+              await _selectCandidateCharacter(exactMatches.first);
+              _selectedCharIndex = originalSelectedIndex;
+              hasUpdates = true;
+            } else {
+              // 没有精确匹配，设置占位符
+              await _setPlaceholderForCharacter(i, char);
+              hasUpdates = true;
+            }
+          } else {
+            // 没有候选字符，设置占位符
+            await _setPlaceholderForCharacter(i, char);
+            hasUpdates = true;
+          }
+        } catch (e) {
+          EditPageLogger.propertyPanelError(
+            '处理单个字符失败，强制设置占位符',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            error: e,
+            data: {
+              'charIndex': i,
+              'character': char,
+            },
+          );
+
+          // 异常情况下强制设置占位符
+          try {
+            await _setPlaceholderForCharacter(i, char);
+            hasUpdates = true;
+          } catch (placeholderError) {
+            EditPageLogger.propertyPanelError(
+              '设置占位符也失败了',
+              tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+              error: placeholderError,
+              data: {
+                'charIndex': i,
+                'character': char,
+              },
+            );
+          }
+        }
+      }
+
+      if (hasUpdates) {
+        // 刷新UI
+        setState(() {});
+
+        // 验证所有字符位置都已处理
+        final updatedContent =
+            widget.element['content'] as Map<String, dynamic>;
+        final finalCharacterImages =
+            updatedContent['characterImages'] as Map<String, dynamic>? ?? {};
+
+        EditPageLogger.propertyPanelDebug(
+          '[CHARACTER_MATCHING_DEBUG] 字符匹配模式初始化完成',
+          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          data: {
+            'charactersLength': characters.length,
+            'hasUpdates': hasUpdates,
+            'finalCharacterImagesKeys': finalCharacterImages.keys.toList(),
+            'missingIndices': List.generate(characters.length, (index) => index)
+                .where((index) =>
+                    !finalCharacterImages.containsKey(index.toString()))
+                .toList(),
+          },
+        );
+      }
+    } catch (e) {
+      EditPageLogger.propertyPanelError(
+        '初始化字符匹配模式失败',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        error: e,
+        data: {
+          'characters': characters,
+        },
+      );
+    }
   }
 
   /// 根据匹配模式生成 segments
@@ -1507,5 +2167,12 @@ class _M3CollectionPropertyPanelState
       _candidateCharacters.clear();
       _isLoadingCharacters = false;
     });
+  }
+
+  /// 检查是否为中文字符
+  bool _isChineseCharacter(String char) {
+    if (char.isEmpty) return false;
+    final int code = char.codeUnitAt(0);
+    return code >= 0x4e00 && code <= 0x9fff;
   }
 }
