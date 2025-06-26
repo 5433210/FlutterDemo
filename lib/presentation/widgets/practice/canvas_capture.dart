@@ -162,6 +162,43 @@ class CanvasCapture {
         ? _parseColor(content['backgroundColor'] as String)
         : null;
 
+    // 获取词匹配模式和分段信息
+    final wordMatchingMode = content['wordMatchingPriority'] as bool? ?? false;
+    final segments = content['segments'] as List<dynamic>? ?? [];
+
+    // 如果启用词匹配模式且有分段信息，按分段显示
+    if (wordMatchingMode && segments.isNotEmpty) {
+      return Container(
+        color: backgroundColor,
+        child: Center(
+          child: Wrap(
+            children: segments.map<Widget>((segmentData) {
+              final segment = segmentData as Map<String, dynamic>;
+              final segmentText = segment['text'] as String? ?? '';
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: fontColor.withOpacity(0.3)),
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: Text(
+                  segmentText,
+                  style: TextStyle(
+                    color: fontColor,
+                    fontSize: fontSize,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      );
+    }
+
+    // 默认模式：直接显示字符
     return Container(
       color: backgroundColor,
       child: Center(

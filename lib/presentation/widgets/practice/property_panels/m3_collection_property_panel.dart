@@ -8,6 +8,7 @@ import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../presentation/viewmodels/states/character_grid_state.dart';
 import '../../../../utils/config/edit_page_logging_config.dart';
 import '../practice_edit_controller.dart';
 import 'collection_panels/m3_background_texture_panel.dart';
@@ -16,6 +17,15 @@ import 'collection_panels/m3_geometry_properties_panel.dart';
 import 'collection_panels/m3_visual_properties_panel.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
+
+/// 匹配模式枚举
+enum MatchingMode {
+  /// 词匹配模式：优先寻找完整匹配的词，没有时智能分词
+  wordMatching,
+
+  /// 字符匹配模式：逐个字符精确匹配
+  characterMatching,
+}
 
 /// Material 3 version of the Collection Property Panel with internationalization support
 class M3CollectionPropertyPanel extends ConsumerStatefulWidget {
@@ -55,6 +65,9 @@ class _M3CollectionPropertyPanelState
 
   // Controls candidate character color inversion
   bool _invertCandidateDisplay = false;
+
+  // 匹配模式状态
+  MatchingMode _matchingMode = MatchingMode.wordMatching;
   @override
   Widget build(BuildContext context) {
     final layerId = widget.element['layerId'] as String?;
@@ -103,11 +116,14 @@ class _M3CollectionPropertyPanelState
           candidateCharacters: _candidateCharacters,
           isLoading: _isLoadingCharacters,
           invertDisplay: _invertCandidateDisplay,
+          wordMatchingMode: _matchingMode == MatchingMode.wordMatching,
+          searchQuery: _getSearchQuery(),
           onTextChanged: _onTextChanged,
           onCharacterSelected: _selectCharacter,
           onCandidateCharacterSelected: _selectCandidateCharacter,
           onInvertDisplayToggled: _onInvertDisplayToggled,
           onCharacterInvertToggled: _onCharacterInvertToggled,
+          onWordMatchingModeChanged: _onWordMatchingModeChanged,
           onContentPropertyChanged: _updateContentProperty,
         ),
       ],
@@ -178,6 +194,9 @@ class _M3CollectionPropertyPanelState
       // 首先清理嵌套的 content 结构
       _cleanupNestedContent();
 
+      // 初始化匹配模式和 segments
+      _initializeMatchingModeAndSegments();
+
       // Load candidate characters
       _loadCandidateCharacters();
 
@@ -186,6 +205,53 @@ class _M3CollectionPropertyPanelState
         _autoUpdateMissingCharacterImages(characters);
       }
     });
+  }
+
+  /// 初始化匹配模式和 segments
+  void _initializeMatchingModeAndSegments() {
+    final content = Map<String, dynamic>.from(
+        widget.element['content'] as Map<String, dynamic>);
+    final characters = content['characters'] as String? ?? '';
+    
+    // 检查是否已有匹配模式设置，如果没有则使用默认值
+    final hasWordMatchingPriority = content.containsKey('wordMatchingPriority');
+    final wordMatchingPriority = content['wordMatchingPriority'] as bool? ?? 
+        (_matchingMode == MatchingMode.wordMatching);
+    
+    // 更新内部状态以匹配 content 中的设置
+    _matchingMode = wordMatchingPriority 
+        ? MatchingMode.wordMatching 
+        : MatchingMode.characterMatching;
+    
+    bool needsUpdate = false;
+    
+    // 如果 content 中没有匹配模式设置，添加它
+    if (!hasWordMatchingPriority) {
+      content['wordMatchingPriority'] = wordMatchingPriority;
+      needsUpdate = true;
+    }
+    
+    // 检查是否需要生成 segments
+    final segments = content['segments'] as List<dynamic>? ?? [];
+    if (segments.isEmpty && characters.isNotEmpty) {
+      content['segments'] = _generateSegments(characters, wordMatchingPriority);
+      needsUpdate = true;
+    }
+    
+    // 如果需要更新 content，执行更新
+    if (needsUpdate) {
+      EditPageLogger.propertyPanelDebug(
+        '[WORD_MATCHING_DEBUG] 初始化匹配模式和segments',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'wordMatchingPriority': wordMatchingPriority,
+          'characters': characters,
+          'segmentsCount': (content['segments'] as List<dynamic>).length,
+        },
+      );
+      
+      widget.onElementPropertiesChanged({'content': content});
+    }
   }
 
   // Auto-update missing character images
@@ -643,10 +709,7 @@ class _M3CollectionPropertyPanelState
         _isLoadingCharacters = true;
       });
 
-      // Use CharacterService to get all characters
       final characterService = ref.read(characterServiceProvider);
-
-      // Get currently selected character
       final content = widget.element['content'] as Map<String, dynamic>;
       final characters = content['characters'] as String? ?? '';
 
@@ -658,11 +721,9 @@ class _M3CollectionPropertyPanelState
         return;
       }
 
-      final selectedChar = _selectedCharIndex < characters.length
-          ? characters[_selectedCharIndex]
-          : '';
+      final searchQuery = _getSearchQuery();
 
-      if (selectedChar.isEmpty) {
+      if (searchQuery.isEmpty) {
         setState(() {
           _candidateCharacters = [];
           _isLoadingCharacters = false;
@@ -670,9 +731,40 @@ class _M3CollectionPropertyPanelState
         return;
       }
 
-      // Search character library for matching characters
-      final matchingCharacters =
-          await characterService.searchCharacters(selectedChar);
+      EditPageLogger.propertyPanelDebug(
+        '[WORD_MATCHING_DEBUG] 开始加载候选字符',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'searchQuery': searchQuery,
+          'matchingMode': _matchingMode.toString(),
+          'selectedCharIndex': _selectedCharIndex,
+        },
+      );
+
+      // 根据匹配模式选择搜索策略
+      List<CharacterViewModel> matchingCharacters;
+      if (_matchingMode == MatchingMode.wordMatching) {
+        // 词匹配优先模式
+        matchingCharacters = await characterService.searchCharactersWithMode(
+          searchQuery,
+          wordMatchingPriority: true,
+        );
+      } else {
+        // 字符匹配模式 - 精确匹配单字符
+        matchingCharacters = await characterService.searchCharactersWithMode(
+          searchQuery,
+          wordMatchingPriority: false,
+        );
+      }
+
+      EditPageLogger.propertyPanelDebug(
+        '[WORD_MATCHING_DEBUG] 搜索完成',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'searchQuery': searchQuery,
+          'resultCount': matchingCharacters.length,
+        },
+      );
 
       if (matchingCharacters.isEmpty) {
         setState(() {
@@ -682,7 +774,7 @@ class _M3CollectionPropertyPanelState
         return;
       }
 
-      // Convert to CharacterEntity list
+      // 转换为 CharacterEntity 列表
       final futures = matchingCharacters.map((viewModel) async {
         return await characterService.getCharacterDetails(viewModel.id);
       }).toList();
@@ -693,33 +785,40 @@ class _M3CollectionPropertyPanelState
       setState(() {
         _candidateCharacters = entities;
         _isLoadingCharacters = false;
-      }); // Auto-select first candidate as default only if no candidate is currently bound
+      });
+
+      // 自动选择首个候选（仅当当前没有绑定候选时）
       if (entities.isNotEmpty) {
-        // Find candidates matching the selected character
-        final matchingEntities = entities
-            .where((entity) => entity.character == selectedChar)
-            .toList();
-
-        if (matchingEntities.isNotEmpty) {
-          // Check if any candidate is already bound for this character
-          final characterImages =
-              content['characterImages'] as Map<String, dynamic>? ?? {};
-          final imageInfo =
-              characterImages['$_selectedCharIndex'] as Map<String, dynamic>?;
-
-          // Only auto-select if no candidate is currently bound
-          if (imageInfo == null) {
-            // No candidate is bound, auto-select the first matching one
-            _selectCandidateCharacter(matchingEntities.first);
-          }
-          // If a candidate is already bound, don't auto-replace it
-        }
+        _autoSelectFirstCandidateIfNeeded(entities, searchQuery);
       }
     } catch (e) {
       setState(() {
         _candidateCharacters = [];
         _isLoadingCharacters = false;
       });
+    }
+  }
+
+  /// 自动选择首个候选字符（仅当当前没有绑定时）
+  void _autoSelectFirstCandidateIfNeeded(
+      List<CharacterEntity> entities, String searchQuery) {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characterImages =
+        content['characterImages'] as Map<String, dynamic>? ?? {};
+    final charIndex = _selectedCharIndex.toString();
+
+    // 检查当前字符是否已有绑定
+    if (characterImages.containsKey(charIndex)) {
+      return;
+    }
+
+    // 查找匹配的候选字符
+    final matchingEntities =
+        entities.where((entity) => entity.character == searchQuery).toList();
+
+    if (matchingEntities.isNotEmpty) {
+      // 自动选择第一个匹配的候选
+      _selectCandidateCharacter(matchingEntities.first);
     }
   }
 
@@ -1201,5 +1300,154 @@ class _M3CollectionPropertyPanelState
         duration: const Duration(seconds: 1),
       ),
     );
+  }
+
+  /// 获取搜索查询字符串 - 根据匹配模式决定返回内容
+  String _getSearchQuery() {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+
+    if (characters.isEmpty || _selectedCharIndex >= characters.length) {
+      return '';
+    }
+
+    if (_matchingMode == MatchingMode.wordMatching) {
+      // 词匹配模式：基于 segments 获取对应的文本段
+      final segments = content['segments'] as List<dynamic>? ?? [];
+
+      // 找到包含当前选中字符的段
+      int currentPos = 0;
+      for (final segment in segments) {
+        final segmentMap = segment as Map<String, dynamic>;
+        final text = segmentMap['text'] as String? ?? '';
+        final endPos = currentPos + text.length;
+
+        if (_selectedCharIndex >= currentPos && _selectedCharIndex < endPos) {
+          EditPageLogger.propertyPanelDebug(
+            '[WORD_MATCHING_DEBUG] 词匹配模式获取查询',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'selectedCharIndex': _selectedCharIndex,
+              'segmentText': text,
+              'segmentStart': currentPos,
+              'segmentEnd': endPos,
+            },
+          );
+          return text;
+        }
+        currentPos = endPos;
+      }
+
+      // 如果没有找到对应的段，返回单字符
+      EditPageLogger.propertyPanelDebug(
+        '[WORD_MATCHING_DEBUG] 未找到对应的段，回退到单字符',
+        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        data: {
+          'selectedCharIndex': _selectedCharIndex,
+          'charactersLength': characters.length,
+          'segmentsCount': segments.length,
+        },
+      );
+      return characters[_selectedCharIndex];
+    } else {
+      // 字符匹配模式：返回单个字符
+      return characters[_selectedCharIndex];
+    }
+  }
+
+  /// 切换匹配模式
+  void _onWordMatchingModeChanged(bool isWordMatching) {
+    setState(() {
+      _matchingMode = isWordMatching
+          ? MatchingMode.wordMatching
+          : MatchingMode.characterMatching;
+    });
+
+    // 更新 content 中的匹配模式和 segments
+    final content = Map<String, dynamic>.from(
+        widget.element['content'] as Map<String, dynamic>);
+    final characters = content['characters'] as String? ?? '';
+    
+    // 更新匹配模式标志
+    content['wordMatchingPriority'] = isWordMatching;
+    
+    // 根据匹配模式重新生成 segments
+    if (characters.isNotEmpty) {
+      content['segments'] = _generateSegments(characters, isWordMatching);
+    }
+
+    EditPageLogger.propertyPanelDebug(
+      '[WORD_MATCHING_DEBUG] 匹配模式切换并更新content',
+      tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+      data: {
+        'newMode': _matchingMode.toString(),
+        'wordMatchingPriority': isWordMatching,
+        'characters': characters,
+        'segmentsCount': (content['segments'] as List<dynamic>?)?.length ?? 0,
+      },
+    );
+
+    // 更新元素属性
+    _updateProperty('content', content);
+
+    // 重新加载候选字符
+    _loadCandidateCharacters();
+  }
+
+  /// 根据匹配模式生成 segments
+  List<Map<String, dynamic>> _generateSegments(String text, bool wordMatching) {
+    final segments = <Map<String, dynamic>>[];
+    
+    if (wordMatching) {
+      // 词匹配模式：智能分词
+      // 简单分词逻辑：按空格分割，但可以扩展为更智能的分词
+      final parts = text.split(' ');
+      int startIndex = 0;
+      
+      for (int i = 0; i < parts.length; i++) {
+        final part = parts[i];
+        
+        if (part.isNotEmpty) {
+          segments.add({
+            'text': part,
+            'startIndex': startIndex,
+            'length': part.length,
+          });
+          startIndex += part.length;
+        }
+        
+        // 添加空格分隔符（除了最后一个部分）
+        if (i < parts.length - 1) {
+          segments.add({
+            'text': ' ',
+            'startIndex': startIndex,
+            'length': 1,
+          });
+          startIndex += 1;
+        }
+      }
+    } else {
+      // 字符匹配模式：每个字符一个段
+      for (int i = 0; i < text.length; i++) {
+        segments.add({
+          'text': text[i],
+          'startIndex': i,
+          'length': 1,
+        });
+      }
+    }
+    
+    EditPageLogger.propertyPanelDebug(
+      '[WORD_MATCHING_DEBUG] 生成新的segments',
+      tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+      data: {
+        'text': text,
+        'wordMatching': wordMatching,
+        'segmentsCount': segments.length,
+        'segments': segments,
+      },
+    );
+    
+    return segments;
   }
 }

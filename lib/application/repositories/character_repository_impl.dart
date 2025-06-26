@@ -176,6 +176,38 @@ class CharacterRepositoryImpl implements CharacterRepository {
   }
 
   @override
+  Future<List<CharacterEntity>> searchExact(String query, {int? limit}) async {
+    // 参数验证
+    if (query.trim().isEmpty) return [];
+    if (limit != null && limit <= 0) {
+      throw ArgumentError('Limit must be a positive number');
+    }
+
+    try {
+      // 构建精确匹配查询 - 查找字符字段精确等于查询词的记录
+      final searchQuery = DatabaseQuery(conditions: [
+        DatabaseQueryCondition(
+            field: 'character', operator: '=', value: query.trim())
+      ], limit: limit, orderBy: 'character ASC');
+
+      // 执行查询
+      final results = await _db.query(_table, searchQuery.toJson());
+
+      // 转换结果
+      return results.map((map) => _fromDbMap(map)).toList();
+    } catch (e) {
+      AppLogger.error('Failed to search characters exactly',
+          tag: 'CharacterRepository',
+          error: e,
+          data: {
+            'query': query,
+            'limit': limit,
+          });
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> updateRegion(CharacterRegion region) async {
     try {
       final character = await findById(region.characterId ?? region.id);

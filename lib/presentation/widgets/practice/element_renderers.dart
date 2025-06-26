@@ -70,6 +70,11 @@ class ElementRenderers {
     final enableSoftLineBreak =
         content['enableSoftLineBreak'] as bool? ?? false;
 
+    // Extract segments information for word matching mode
+    final segments = content['segments'] as List<dynamic>?;
+    final segmentsList = segments?.cast<Map<String, dynamic>>();
+    final wordMatchingMode = content['wordMatchingPriority'] as bool? ?? false;
+
     // 获取背景纹理设置
     final hasBackgroundTexture = content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
@@ -183,6 +188,9 @@ class ElementRenderers {
                 textureOpacity: textureOpacity,
                 textureWidth: textureWidth,
                 textureHeight: textureHeight,
+                // 传递词匹配模式设置
+                segments: segmentsList,
+                wordMatchingMode: wordMatchingMode,
                 ref: ref,
               );
             },

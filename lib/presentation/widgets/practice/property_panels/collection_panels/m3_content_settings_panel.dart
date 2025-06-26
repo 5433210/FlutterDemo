@@ -16,12 +16,15 @@ class M3ContentSettingsPanel extends ConsumerWidget {
   final List<CharacterEntity> candidateCharacters;
   final bool isLoading;
   final bool invertDisplay;
+  final bool wordMatchingMode;
+  final String searchQuery; // Add search query parameter
   final Function(String) onTextChanged;
   final Function(int) onCharacterSelected;
   final Function(CharacterEntity) onCandidateCharacterSelected;
   final Function(bool) onInvertDisplayToggled;
   final Function(String, dynamic) onContentPropertyChanged;
   final Function(int, bool) onCharacterInvertToggled;
+  final Function(bool) onWordMatchingModeChanged;
 
   const M3ContentSettingsPanel({
     Key? key,
@@ -30,12 +33,15 @@ class M3ContentSettingsPanel extends ConsumerWidget {
     required this.candidateCharacters,
     required this.isLoading,
     required this.invertDisplay,
+    required this.wordMatchingMode,
+    required this.searchQuery,
     required this.onTextChanged,
     required this.onCharacterSelected,
     required this.onCandidateCharacterSelected,
     required this.onInvertDisplayToggled,
     required this.onContentPropertyChanged,
     required this.onCharacterInvertToggled,
+    required this.onWordMatchingModeChanged,
   }) : super(key: key);
 
   @override
@@ -50,9 +56,37 @@ class M3ContentSettingsPanel extends ConsumerWidget {
       title: l10n.contentSettings,
       defaultExpanded: true,
       children: [
-        // Character content
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.characterCollection),
+        // Character content with matching mode switch
+        Row(
+          children: [
+            Expanded(
+              child: M3PanelStyles.buildSectionTitle(
+                  context, l10n.characterCollection),
+            ),
+            Tooltip(
+              message: wordMatchingMode 
+                  ? l10n.wordMatchingModeDescription 
+                  : l10n.characterMatchingModeDescription,
+              child: FilterChip(
+                label: Text(
+                  wordMatchingMode 
+                      ? l10n.wordMatchingMode 
+                      : l10n.characterMatchingMode,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                selected: wordMatchingMode,
+                showCheckmark: false,
+                avatar: Icon(
+                  wordMatchingMode ? Icons.auto_awesome : Icons.text_fields,
+                  size: 16,
+                ),
+                onSelected: onWordMatchingModeChanged,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
         M3CharacterInputField(
           initialText: characters,
           selectedCharIndex: selectedCharIndex,
@@ -80,6 +114,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
           candidateCharacters: candidateCharacters,
           isLoading: isLoading,
           invertDisplay: invertDisplay,
+          searchQuery: searchQuery,
           onCharacterSelected: onCandidateCharacterSelected,
           onInvertDisplayToggled: onInvertDisplayToggled,
           onCharacterInvertToggled: onCharacterInvertToggled,

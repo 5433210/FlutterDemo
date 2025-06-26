@@ -15,6 +15,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
   final List<CharacterEntity> candidateCharacters;
   final bool isLoading;
   final bool invertDisplay;
+  final String searchQuery; // Add search query parameter
   final Function(CharacterEntity) onCharacterSelected;
   final Function(bool) onInvertDisplayToggled;
   final Function(int, bool) onCharacterInvertToggled;
@@ -26,6 +27,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     required this.candidateCharacters,
     required this.isLoading,
     required this.invertDisplay,
+    required this.searchQuery,
     required this.onCharacterSelected,
     required this.onInvertDisplayToggled,
     required this.onCharacterInvertToggled,
@@ -47,9 +49,9 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     final isCurrentCharInverted =
         _isCharacterInverted(content, selectedCharIndex);
 
-    // Filter matching characters
+    // Filter matching characters based on search query
     final matchingCharacters = candidateCharacters
-        .where((entity) => entity.character == selectedChar)
+        .where((entity) => entity.character == searchQuery)
         .toList();
 
     // Show loading state

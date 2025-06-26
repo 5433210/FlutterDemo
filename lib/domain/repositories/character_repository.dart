@@ -52,6 +52,9 @@ abstract class CharacterRepository {
   /// 搜索字形
   Future<List<CharacterEntity>> search(String query, {int? limit});
 
+  /// 精确匹配搜索字形（查找字符字段精确等于查询词的记录）
+  Future<List<CharacterEntity>> searchExact(String query, {int? limit});
+
   /// 更新字符区域
   Future<void> updateRegion(CharacterRegion region);
 }

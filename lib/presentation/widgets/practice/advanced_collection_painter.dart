@@ -104,43 +104,234 @@ class AdvancedCollectionPainter extends CustomPainter {
         _paintTexture(canvas, rect);
       }
 
-      // 2. 遍历所有字符位置，绘制字符
-      for (int i = 0; i < positions.length; i++) {
-        final position = positions[i];
+      // 2. 检查是否启用词匹配模式
+      final bool wordMatchingMode = _isWordMatchingMode();
+      final List<Map<String, dynamic>> segments = _getSegments();
 
-        // 如果是换行符，直接跳过，不做任何绘制
-        if (position.char == '\n') continue;
+      print('[WORD_MATCHING_DEBUG] === AdvancedCollectionPainter Debug ===');
+      print('[WORD_MATCHING_DEBUG] wordMatchingMode: $wordMatchingMode');
+      print('[WORD_MATCHING_DEBUG] segments: $segments');
+      print('[WORD_MATCHING_DEBUG] positions.length: ${positions.length}');
+      print('[WORD_MATCHING_DEBUG] characterImages: $characterImages');
 
-        // 创建绘制区域
-        final rect = Rect.fromLTWH(
-          position.x,
-          position.y,
-          position.size,
-          position.size,
-        );
-
-        // 3. 绘制字符背景
-        // 由于删除了textureApplicationRange，现在只支持background模式
-        // 所以字符区域只绘制普通背景，不再有characterBackground纹理模式
-        _drawFallbackBackground(canvas, rect, position);
-
-        // 4. 获取字符图片并绘制
-        // 注意：我们使用position.originalIndex而不是position.index来查找图像，因为position.originalIndex是原始的字符索引
-        final charImage =
-            _findCharacterImage(position.char, position.originalIndex);
-        if (charImage != null) {
-          // 如果有图片，绘制图片
-          _drawCharacterImage(canvas, rect, position, charImage);
-        } else {
-          // 如果没有图片，绘制文本
-          _drawFallbackText(canvas, position, rect);
-        }
+      if (wordMatchingMode && segments.isNotEmpty) {
+        // 词匹配模式：按分段渲染
+        print('[WORD_MATCHING_DEBUG] Using segment rendering mode');
+        _paintSegments(canvas, size, segments);
+      } else {
+        // 字符模式：逐个字符渲染
+        print('[WORD_MATCHING_DEBUG] Using character rendering mode');
+        _paintCharacters(canvas, size);
       }
 
       // 恢复画布状态
       canvas.restore();
     } catch (e) {
       EditPageLogger.rendererError('集字画笔绘制异常', error: e);
+    }
+  }
+
+  /// 检查是否启用词匹配模式
+  bool _isWordMatchingMode() {
+    try {
+      if (characterImages is Map<String, dynamic>) {
+        return characterImages['wordMatchingPriority'] as bool? ?? false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 获取分段信息
+  List<Map<String, dynamic>> _getSegments() {
+    try {
+      if (characterImages is Map<String, dynamic>) {
+        final segments = characterImages['segments'] as List<dynamic>? ?? [];
+        return segments.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 分段模式渲染
+  void _paintSegments(
+      Canvas canvas, Size size, List<Map<String, dynamic>> segments) {
+    try {
+      for (int segmentIndex = 0;
+          segmentIndex < segments.length;
+          segmentIndex++) {
+        final segment = segments[segmentIndex];
+        final text = segment['text'] as String;
+
+        // 在词匹配模式下，positions数组的索引就是分段索引
+        if (segmentIndex < positions.length) {
+          final position = positions[segmentIndex];
+
+          // 跳过换行符
+          if (text == '\n') continue;
+
+          // 创建绘制区域
+          final rect = Rect.fromLTWH(
+            position.x,
+            position.y,
+            position.size,
+            position.size,
+          );
+
+          // 绘制分段背景
+          _drawFallbackBackground(canvas, rect, position);
+
+          // 查找分段对应的字符图像（使用分段的起始索引）
+          final startIndex = segment['startIndex'] as int;
+          final firstChar = text.isNotEmpty ? text[0] : '';
+          final charImage = _findCharacterImage(firstChar, startIndex);
+
+          if (charImage != null) {
+            // 如果有图片，绘制到整个分段区域
+            _drawSegmentImage(canvas, rect, position, charImage, text);
+          } else {
+            // 如果没有图片，绘制分段文本
+            _drawSegmentText(canvas, rect, text, position);
+          }
+        }
+      }
+    } catch (e) {
+      EditPageLogger.rendererError('分段渲染异常', error: e);
+    }
+  }
+
+  /// 字符模式渲染（原有逻辑）
+  void _paintCharacters(Canvas canvas, Size size) {
+    // 2. 遍历所有字符位置，绘制字符
+    for (int i = 0; i < positions.length; i++) {
+      final position = positions[i];
+
+      // 如果是换行符，直接跳过，不做任何绘制
+      if (position.char == '\n') continue;
+
+      // 创建绘制区域
+      final rect = Rect.fromLTWH(
+        position.x,
+        position.y,
+        position.size,
+        position.size,
+      );
+
+      // 3. 绘制字符背景
+      // 由于删除了textureApplicationRange，现在只支持background模式
+      // 所以字符区域只绘制普通背景，不再有characterBackground纹理模式
+      _drawFallbackBackground(canvas, rect, position);
+
+      // 4. 获取字符图片并绘制
+      // 注意：我们使用position.originalIndex而不是position.index来查找图像，因为position.originalIndex是原始的字符索引
+      final charImage =
+          _findCharacterImage(position.char, position.originalIndex);
+      if (charImage != null) {
+        // 如果有图片，绘制图片
+        _drawCharacterImage(canvas, rect, position, charImage);
+      } else {
+        // 如果没有图片，绘制文本
+        _drawFallbackText(canvas, position, rect);
+      }
+    }
+  }
+
+  /// 绘制分段图像
+  void _drawSegmentImage(Canvas canvas, Rect rect, CharacterPosition position,
+      ui.Image charImage, String segmentText) {
+    try {
+      // 计算图像绘制参数
+      final paint = Paint();
+      paint.isAntiAlias = true;
+
+      // 计算保持宽高比的绘制区域
+      final imageAspectRatio = charImage.width / charImage.height;
+      final rectAspectRatio = rect.width / rect.height;
+
+      Rect drawRect;
+      if (imageAspectRatio > rectAspectRatio) {
+        // 图像更宽，以宽度为准
+        final drawHeight = rect.width / imageAspectRatio;
+        final offsetY = (rect.height - drawHeight) / 2;
+        drawRect = Rect.fromLTWH(
+          rect.left,
+          rect.top + offsetY,
+          rect.width,
+          drawHeight,
+        );
+      } else {
+        // 图像更高，以高度为准
+        final drawWidth = rect.height * imageAspectRatio;
+        final offsetX = (rect.width - drawWidth) / 2;
+        drawRect = Rect.fromLTWH(
+          rect.left + offsetX,
+          rect.top,
+          drawWidth,
+          rect.height,
+        );
+      }
+
+      // 绘制图像，保持宽高比
+      final srcRect = Rect.fromLTWH(
+          0, 0, charImage.width.toDouble(), charImage.height.toDouble());
+      canvas.drawImageRect(charImage, srcRect, drawRect, paint);
+
+      EditPageLogger.rendererDebug('绘制分段图像', data: {
+        'segmentText': segmentText,
+        'originalRect': '${rect.left},${rect.top},${rect.width},${rect.height}',
+        'drawRect':
+            '${drawRect.left},${drawRect.top},${drawRect.width},${drawRect.height}',
+        'imageSize': '${charImage.width}x${charImage.height}',
+        'aspectRatio': 'image=$imageAspectRatio, rect=$rectAspectRatio',
+      });
+    } catch (e) {
+      EditPageLogger.rendererError('绘制分段图像失败', error: e, data: {
+        'segmentText': segmentText,
+        'rect': rect.toString(),
+      });
+    }
+  }
+
+  /// 绘制分段文本
+  void _drawSegmentText(Canvas canvas, Rect rect, String segmentText,
+      CharacterPosition position) {
+    try {
+      final textSpan = TextSpan(
+        text: segmentText,
+        style: TextStyle(
+          fontSize: fontSize * 0.8, // 稍微缩小字体以适应分段
+          color: position.fontColor,
+          fontWeight: FontWeight.normal,
+        ),
+      );
+
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
+      );
+
+      textPainter.layout(maxWidth: rect.width);
+
+      // 计算居中位置
+      final offset = Offset(
+        rect.left + (rect.width - textPainter.width) / 2,
+        rect.top + (rect.height - textPainter.height) / 2,
+      );
+
+      textPainter.paint(canvas, offset);
+
+      EditPageLogger.rendererDebug('绘制分段文本', data: {
+        'segmentText': segmentText,
+        'rect': '${rect.left},${rect.top},${rect.width},${rect.height}',
+      });
+    } catch (e) {
+      EditPageLogger.rendererError('绘制分段文本失败', error: e, data: {
+        'segmentText': segmentText,
+      });
     }
   }
 

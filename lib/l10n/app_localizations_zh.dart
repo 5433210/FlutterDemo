@@ -1475,7 +1475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get initializing => '初始化中...';
 
   @override
-  String get inputCharacter => '输入字符';
+  String get inputCharacter => '输入字符或文本';
 
   @override
   String get inputChineseContent => '请输入汉字内容';
@@ -2674,6 +2674,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get validChineseCharacter => '请输入有效的汉字';
+
+  @override
+  String get validCharacter => '请输入有效的字符';
+
+  @override
+  String get validCharacterOrSymbol => '请输入有效的字符或符号';
+
+  @override
+  String get multipleCharactersSupported => '支持输入多个字符';
+
+  @override
+  String get charactersOrText => '字符或文本';
+
+  @override
+  String get collectionMatchingMode => '匹配模式';
+
+  @override
+  String get wordMatchingMode => '词匹配优先';
+
+  @override
+  String get characterMatchingMode => '仅字符匹配';
+
+  @override
+  String get wordMatchingModeDescription => '优先匹配整词，无匹配时回退到字符匹配';
+
+  @override
+  String get characterMatchingModeDescription => '仅按单个字符进行匹配';
+
+  @override
+  String get matchingModeSwitch => '匹配模式切换';
 
   @override
   String valueTooLarge(Object label, Object max) {

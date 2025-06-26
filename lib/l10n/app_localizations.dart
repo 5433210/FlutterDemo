@@ -2894,7 +2894,7 @@ abstract class AppLocalizations {
   /// No description provided for @inputCharacter.
   ///
   /// In zh, this message translates to:
-  /// **'输入字符'**
+  /// **'输入字符或文本'**
   String get inputCharacter;
 
   /// No description provided for @inputChineseContent.
@@ -5188,6 +5188,66 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'请输入有效的汉字'**
   String get validChineseCharacter;
+
+  /// No description provided for @validCharacter.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的字符'**
+  String get validCharacter;
+
+  /// No description provided for @validCharacterOrSymbol.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的字符或符号'**
+  String get validCharacterOrSymbol;
+
+  /// No description provided for @multipleCharactersSupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持输入多个字符'**
+  String get multipleCharactersSupported;
+
+  /// No description provided for @charactersOrText.
+  ///
+  /// In zh, this message translates to:
+  /// **'字符或文本'**
+  String get charactersOrText;
+
+  /// No description provided for @collectionMatchingMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配模式'**
+  String get collectionMatchingMode;
+
+  /// No description provided for @wordMatchingMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'词匹配优先'**
+  String get wordMatchingMode;
+
+  /// No description provided for @characterMatchingMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅字符匹配'**
+  String get characterMatchingMode;
+
+  /// No description provided for @wordMatchingModeDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'优先匹配整词，无匹配时回退到字符匹配'**
+  String get wordMatchingModeDescription;
+
+  /// No description provided for @characterMatchingModeDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅按单个字符进行匹配'**
+  String get characterMatchingModeDescription;
+
+  /// No description provided for @matchingModeSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配模式切换'**
+  String get matchingModeSwitch;
 
   /// No description provided for @valueTooLarge.
   ///

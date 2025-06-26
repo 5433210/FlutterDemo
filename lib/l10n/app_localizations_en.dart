@@ -2676,6 +2676,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validChineseCharacter => 'Please Enter Valid Chinese Character';
 
   @override
+  String get validCharacter => 'Please Enter Valid Character';
+
+  @override
+  String get validCharacterOrSymbol => 'Please Enter Valid Character or Symbol';
+
+  @override
+  String get multipleCharactersSupported => 'Multiple Characters Supported';
+
+  @override
+  String get charactersOrText => 'Characters or Text';
+
+  @override
+  String get collectionMatchingMode => 'Matching Mode';
+
+  @override
+  String get wordMatchingMode => 'Word Matching Priority';
+
+  @override
+  String get characterMatchingMode => 'Character Matching Only';
+
+  @override
+  String get wordMatchingModeDescription => 'Priority word matching, fallback to character matching when no word match found';
+
+  @override
+  String get characterMatchingModeDescription => 'Match by individual characters only';
+
+  @override
+  String get matchingModeSwitch => 'Matching Mode Switch';
+
+  @override
   String valueTooLarge(Object label, Object max) {
     return '$label Cannot Be Greater Than $max';
   }

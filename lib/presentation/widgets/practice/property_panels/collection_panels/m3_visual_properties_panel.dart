@@ -66,8 +66,7 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print(
-                      '🎨 [VisualPropertiesPanel] Setting fontColor: $hexColor');
+                  // Setting font color - removed print statement
                   widget.onContentPropertyChanged('fontColor', hexColor);
                 }
               },
@@ -101,8 +100,7 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print(
-                      '🎨 [VisualPropertiesPanel] Setting backgroundColor: $hexColor');
+                  // Setting background color - removed print statement
                   widget.onContentPropertyChanged('backgroundColor', hexColor);
                 }
               },

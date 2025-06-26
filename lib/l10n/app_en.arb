@@ -837,6 +837,10 @@
   "updatedAt": "Updated At",
   "userConfig": "User Configuration",
   "validChineseCharacter": "Please Enter Valid Chinese Character",
+  "validCharacter": "Please Enter Valid Character",
+  "validCharacterOrSymbol": "Please Enter Valid Character or Symbol",
+  "multipleCharactersSupported": "Multiple Characters Supported",
+  "charactersOrText": "Characters or Text",
   "valueTooLarge": "{label} Cannot Be Greater Than {max}",
   "valueTooSmall": "{label} Cannot Be Less Than {min}",
   "verticalAlignment": "Vertical Alignment",
@@ -961,5 +965,11 @@
   "practiceSheetSavedMessage": "Practice sheet \"{title}\" saved successfully", 
   "workIdCannotBeEmpty": "Work ID cannot be empty",
   "collectionIdCannotBeEmpty": "Collection ID cannot be empty",
-  "editTags": "Edit Tags"
+  "editTags": "Edit Tags",
+  "collectionMatchingMode": "Matching Mode",
+  "wordMatchingMode": "Word Matching Priority",
+  "characterMatchingMode": "Character Matching Only",
+  "wordMatchingModeDescription": "Priority word matching, fallback to character matching when no word match found",
+  "characterMatchingModeDescription": "Match by individual characters only",
+  "matchingModeSwitch": "Matching Mode Switch"
 }

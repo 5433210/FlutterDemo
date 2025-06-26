@@ -95,14 +95,11 @@ class _CharacterInputValidator {
       return _ValidationResult.failure(l10n.inputCharacter);
     }
 
-    if (input.length > 1) {
-      return _ValidationResult.failure(l10n.onlyOneCharacter);
-    }
-
-    // Validate if it's a Chinese character
-    final RegExp hanziRegExp = RegExp(r'[\u4e00-\u9fa5]');
-    if (!hanziRegExp.hasMatch(input)) {
-      return _ValidationResult.failure(l10n.validChineseCharacter);
+    // Remove single character limitation - now supports multiple characters
+    // Validate if all characters are valid (expanded character set for international use)
+    final RegExp validCharRegExp = RegExp(r'^[\u0020-\u007E\u00A0-\u00FF\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF\u2000-\u206F\u4e00-\u9fa5\u3400-\u4DBF\uF900-\uFAFF\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\uFF00-\uFFEF]+$');
+    if (!validCharRegExp.hasMatch(input)) {
+      return _ValidationResult.failure(l10n.validCharacterOrSymbol);
     }
 
     return _ValidationResult.success;
@@ -492,7 +489,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             controller: _characterController,
             focusNode: _inputFocusNode,
             autofocus: true,
-            maxLength: 1,
+            // Removed maxLength: 1 to support multiple characters
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 24, color: colorScheme.onSurface),
             decoration: InputDecoration(

@@ -66,6 +66,9 @@ class CollectionElementRenderer {
     double textureOpacity = 1.0,
     double textureWidth = 0, // 纹理宽度
     double textureHeight = 0, // 纹理高度
+    // Word matching mode support
+    List<Map<String, dynamic>>? segments, // 分段信息
+    bool wordMatchingMode = false, // 词匹配模式
     WidgetRef? ref,
   }) {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
@@ -97,8 +100,20 @@ class CollectionElementRenderer {
       // 如果字符串为空，添加空格作为占位符，以创建可渲染的区域
       charList.add(' ');
       isNewLineList.add(false);
+    } else if (wordMatchingMode && segments != null && segments.isNotEmpty) {
+      // 词匹配模式：使用分段信息
+      for (final segment in segments) {
+        final text = segment['text'] as String;
+        if (text == '\n') {
+          isNewLineList.add(true);
+          charList.add('\n'); // 添加换行符作为占位符
+        } else {
+          charList.add(text);
+          isNewLineList.add(false);
+        }
+      }
     } else {
-      // 按行分割文本
+      // 字符匹配模式：按行分割文本
       final lines = characters.split('\n');
       for (int i = 0; i < lines.length; i++) {
         final line = lines[i];
