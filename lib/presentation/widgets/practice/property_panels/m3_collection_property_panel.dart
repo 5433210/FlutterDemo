@@ -212,32 +212,32 @@ class _M3CollectionPropertyPanelState
     final content = Map<String, dynamic>.from(
         widget.element['content'] as Map<String, dynamic>);
     final characters = content['characters'] as String? ?? '';
-    
+
     // 检查是否已有匹配模式设置，如果没有则使用默认值
     final hasWordMatchingPriority = content.containsKey('wordMatchingPriority');
-    final wordMatchingPriority = content['wordMatchingPriority'] as bool? ?? 
+    final wordMatchingPriority = content['wordMatchingPriority'] as bool? ??
         (_matchingMode == MatchingMode.wordMatching);
-    
+
     // 更新内部状态以匹配 content 中的设置
-    _matchingMode = wordMatchingPriority 
-        ? MatchingMode.wordMatching 
+    _matchingMode = wordMatchingPriority
+        ? MatchingMode.wordMatching
         : MatchingMode.characterMatching;
-    
+
     bool needsUpdate = false;
-    
+
     // 如果 content 中没有匹配模式设置，添加它
     if (!hasWordMatchingPriority) {
       content['wordMatchingPriority'] = wordMatchingPriority;
       needsUpdate = true;
     }
-    
+
     // 检查是否需要生成 segments
     final segments = content['segments'] as List<dynamic>? ?? [];
     if (segments.isEmpty && characters.isNotEmpty) {
       content['segments'] = _generateSegments(characters, wordMatchingPriority);
       needsUpdate = true;
     }
-    
+
     // 如果需要更新 content，执行更新
     if (needsUpdate) {
       EditPageLogger.propertyPanelDebug(
@@ -249,7 +249,7 @@ class _M3CollectionPropertyPanelState
           'segmentsCount': (content['segments'] as List<dynamic>).length,
         },
       );
-      
+
       widget.onElementPropertiesChanged({'content': content});
     }
   }
@@ -870,11 +870,13 @@ class _M3CollectionPropertyPanelState
         final updatedContent = Map<String, dynamic>.from(oldContent);
         updatedContent['characters'] = value;
         updatedContent['characterImages'] = newIndexBasedImages;
-        
+
         // 重要修复：重新生成 segments 以匹配新文本和当前匹配模式
-        final wordMatchingPriority = updatedContent['wordMatchingPriority'] as bool? ?? 
-            (_matchingMode == MatchingMode.wordMatching);
-        updatedContent['segments'] = _generateSegments(value, wordMatchingPriority);
+        final wordMatchingPriority =
+            updatedContent['wordMatchingPriority'] as bool? ??
+                (_matchingMode == MatchingMode.wordMatching);
+        updatedContent['segments'] =
+            _generateSegments(value, wordMatchingPriority);
 
         EditPageLogger.propertyPanelDebug(
           '[SEGMENTS_SYNC] 文本更新时重新生成segments',
@@ -883,7 +885,8 @@ class _M3CollectionPropertyPanelState
             'newText': value,
             'textLength': value.length,
             'wordMatchingPriority': wordMatchingPriority,
-            'segmentsCount': (updatedContent['segments'] as List<dynamic>).length,
+            'segmentsCount':
+                (updatedContent['segments'] as List<dynamic>).length,
             'operation': 'text_update_remap_segments',
           },
         );
@@ -898,25 +901,28 @@ class _M3CollectionPropertyPanelState
         // If no characterImages, still need to generate segments for new text
         final updatedContent = Map<String, dynamic>.from(oldContent);
         updatedContent['characters'] = value;
-        
+
         // 重新生成 segments
-        final wordMatchingPriority = updatedContent['wordMatchingPriority'] as bool? ?? 
-            (_matchingMode == MatchingMode.wordMatching);
-        updatedContent['segments'] = _generateSegments(value, wordMatchingPriority);
-        
+        final wordMatchingPriority =
+            updatedContent['wordMatchingPriority'] as bool? ??
+                (_matchingMode == MatchingMode.wordMatching);
+        updatedContent['segments'] =
+            _generateSegments(value, wordMatchingPriority);
+
         EditPageLogger.propertyPanelDebug(
           '[SEGMENTS_SYNC] 文本更新时生成segments（无characterImages）',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
             'newText': value,
             'wordMatchingPriority': wordMatchingPriority,
-            'segmentsCount': (updatedContent['segments'] as List<dynamic>).length,
+            'segmentsCount':
+                (updatedContent['segments'] as List<dynamic>).length,
           },
         );
-        
+
         // 使用完整的content更新而不是仅更新文本
         widget.onElementPropertiesChanged({'content': updatedContent});
-        
+
         // 重置候选字符状态并重新加载
         _resetCandidatesState();
         _loadCandidateCharacters();
@@ -1410,10 +1416,10 @@ class _M3CollectionPropertyPanelState
     final content = Map<String, dynamic>.from(
         widget.element['content'] as Map<String, dynamic>);
     final characters = content['characters'] as String? ?? '';
-    
+
     // 更新匹配模式标志
     content['wordMatchingPriority'] = isWordMatching;
-    
+
     // 根据匹配模式重新生成 segments
     if (characters.isNotEmpty) {
       content['segments'] = _generateSegments(characters, isWordMatching);
@@ -1440,16 +1446,16 @@ class _M3CollectionPropertyPanelState
   /// 根据匹配模式生成 segments
   List<Map<String, dynamic>> _generateSegments(String text, bool wordMatching) {
     final segments = <Map<String, dynamic>>[];
-    
+
     if (wordMatching) {
       // 词匹配模式：智能分词
       // 简单分词逻辑：按空格分割，但可以扩展为更智能的分词
       final parts = text.split(' ');
       int startIndex = 0;
-      
+
       for (int i = 0; i < parts.length; i++) {
         final part = parts[i];
-        
+
         if (part.isNotEmpty) {
           segments.add({
             'text': part,
@@ -1458,7 +1464,7 @@ class _M3CollectionPropertyPanelState
           });
           startIndex += part.length;
         }
-        
+
         // 添加空格分隔符（除了最后一个部分）
         if (i < parts.length - 1) {
           segments.add({
@@ -1479,7 +1485,7 @@ class _M3CollectionPropertyPanelState
         });
       }
     }
-    
+
     EditPageLogger.propertyPanelDebug(
       '[WORD_MATCHING_DEBUG] 生成新的segments',
       tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
@@ -1490,7 +1496,7 @@ class _M3CollectionPropertyPanelState
         'segments': segments,
       },
     );
-    
+
     return segments;
   }
 
