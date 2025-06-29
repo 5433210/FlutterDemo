@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../image/cached_image.dart';
+import 'cross_platform_svg_picture.dart';
 
 /// 可缩放的图像查看器组件
 class ZoomableImageView extends StatefulWidget {
@@ -189,8 +189,8 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
               );
         }
 
-        return SvgPicture.file(
-          File(path),
+        return CrossPlatformSvgPicture.fromPath(
+          path,
           fit: BoxFit.contain,
           placeholderBuilder: (context) => const Center(
             child: CircularProgressIndicator(),

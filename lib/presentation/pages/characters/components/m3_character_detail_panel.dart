@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../application/services/character/character_service.dart';
@@ -16,6 +15,7 @@ import '../../../../theme/app_sizes.dart';
 import '../../../../utils/chinese_font_helper.dart';
 import '../../../providers/character/character_detail_provider.dart';
 import '../../../widgets/layout/flexible_row.dart';
+import '../../../widgets/common/cross_platform_svg_picture.dart';
 
 /// 图片尺寸信息类
 class ImageDimensions {
@@ -903,8 +903,8 @@ class _M3CharacterDetailPanelState
           );
         }
 
-        return SvgPicture.file(
-          File(imagePath),
+        return CrossPlatformSvgPicture.fromPath(
+          imagePath,
           fit: BoxFit.contain,
           placeholderBuilder: (context) => const Center(
             child: SizedBox(
