@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../utils/dialog_navigation_helper.dart';
 import '../widgets/practice/optimized_save_service.dart';
 
 /// 优化保存进度对话框
@@ -27,6 +28,7 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
   bool _completed = false;
   bool _hasError = false;
   String? _errorMessage;
+  bool _hasNavigated = false; // 添加标志防止重复导航
 
   @override
   void initState() {
@@ -42,12 +44,22 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
       curve: Curves.easeInOut,
     );
 
-    _startSaving();
+    // 在下一帧开始保存操作，确保组件完全初始化
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startSaving();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _progressController.dispose();
+    // 确保动画控制器被正确销毁
+    try {
+      _progressController.dispose();
+    } catch (e) {
+      debugPrint('OptimizedSaveDialog: Error disposing animation controller: $e');
+    }
     super.dispose();
   }
 
@@ -55,34 +67,60 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     try {
       final result = await widget.saveFuture;
 
-      if (mounted) {
-        setState(() {
-          _progress = 1.0;
-          _completed = true;
-          _hasError = !result.success;
-        });
+      if (!mounted) return;
 
-        await _progressController.forward();
+      setState(() {
+        _progress = 1.0;
+        _completed = true;
+        _hasError = !result.success;
+      });
 
-        // 成功时自动关闭，失败时让用户手动关闭
-        if (result.success) {
-          await Future.delayed(const Duration(milliseconds: 1000));
-          if (mounted) {
-            Navigator.of(context).pop(result);
-          }
+      // 安全地执行动画
+      await _safeAnimateProgress();
+
+      // 成功时自动关闭，失败时让用户手动关闭
+      if (result.success && !_hasNavigated && mounted) {
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (mounted && !_hasNavigated) {
+          _hasNavigated = true; // 标记已开始导航
+          await DialogNavigationHelper.safePopWithTypeGuard<SaveResult>(
+            context,
+            result: result,
+            dialogName: 'OptimizedSaveDialog',
+          );
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _progress = 1.0;
-          _completed = true;
-          _hasError = true;
-          _errorMessage = e.toString();
-        });
+      if (!mounted) return;
 
+      setState(() {
+        _progress = 1.0;
+        _completed = true;
+        _hasError = true;
+        _errorMessage = e.toString();
+      });
+
+      // 安全地执行动画
+      await _safeAnimateProgress();
+    }
+  }
+
+  /// 安全地执行进度动画，避免在组件销毁后操作动画控制器
+  Future<void> _safeAnimateProgress() async {
+    if (!mounted) return;
+    
+    try {
+      // 检查动画控制器是否仍然有效
+      if (_progressController.status != AnimationStatus.dismissed &&
+          _progressController.status != AnimationStatus.completed) {
         await _progressController.forward();
+      } else {
+        // 如果动画已经完成或被重置，直接设置为完成状态
+        _progressController.value = 1.0;
       }
+    } catch (e) {
+      // 动画控制器可能已被销毁或遇到其他错误，忽略
+      debugPrint('OptimizedSaveDialog: Animation controller error: $e');
     }
   }
 
@@ -129,8 +167,17 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
             AnimatedBuilder(
               animation: _progressAnimation,
               builder: (context, child) {
+                // 安全地获取动画值，防止在重建过程中出现错误
+                double animationValue;
+                try {
+                  animationValue = _progressAnimation.value;
+                } catch (e) {
+                  // 如果动画值获取失败，使用当前进度值
+                  animationValue = _progress;
+                }
+                
                 return LinearProgressIndicator(
-                  value: _progressAnimation.value,
+                  value: animationValue,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     _hasError
@@ -187,17 +234,26 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
           if (_completed) ...[
             if (_hasError) ...[
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => DialogNavigationHelper.safeCancel(
+                  context,
+                  dialogName: 'OptimizedSaveDialog',
+                ),
                 child: Text(l10n.retry),
               ),
             ],
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => DialogNavigationHelper.safeCancel(
+                context,
+                dialogName: 'OptimizedSaveDialog',
+              ),
               child: Text(_hasError ? l10n.confirm : l10n.done),
             ),
           ] else ...[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => DialogNavigationHelper.safeCancel(
+                context,
+                dialogName: 'OptimizedSaveDialog',
+              ),
               child: Text(l10n.cancel),
             ),
           ],

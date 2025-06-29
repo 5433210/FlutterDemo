@@ -5183,11 +5183,11 @@ abstract class AppLocalizations {
   /// **'用户配置'**
   String get userConfig;
 
-  /// No description provided for @validChineseCharacter.
+  /// No description provided for @validCharacter.
   ///
   /// In zh, this message translates to:
-  /// **'请输入有效的汉字'**
-  String get validChineseCharacter;
+  /// **'请输入有效的字符'**
+  String get validCharacter;
 
   /// No description provided for @valueTooLarge.
   ///

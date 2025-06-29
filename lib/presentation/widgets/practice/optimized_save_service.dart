@@ -141,7 +141,8 @@ class OptimizedSaveService {
       onProgress?.call(0.85, '更新缓存...');
 
       // 5. 更新控制器状态 (85% - 95%)
-      // 注意：需要使用mixin中的updatePracticeTitle方法
+      // 🔧 修复：必须同时更新ID和标题，确保 isSaved 状态正确
+      controller.currentPracticeId = result.id;
       controller.updatePracticeTitle(saveTitle);
       controller.state.markSaved();
 

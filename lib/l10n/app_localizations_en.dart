@@ -2673,7 +2673,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get userConfig => 'User Configuration';
 
   @override
-  String get validChineseCharacter => 'Please Enter Valid Chinese Character';
+  String get validCharacter => 'Please Enter Valid Character';
 
   @override
   String valueTooLarge(Object label, Object max) {

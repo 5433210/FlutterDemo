@@ -184,8 +184,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             // Force refresh of the thumbnail by updating the timestamp
             if (mounted) {
               setState(() {
-                _thumbnailRefreshTimestamp =
-                    DateTime.now().millisecondsSinceEpoch;
+                _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
               });
             }
             AppLogger.debug('Triggering thumbnail refresh',
@@ -245,24 +244,24 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         'newRegionId': widget.selectedRegion.id,
         'timestamp': _thumbnailRefreshTimestamp,
       });
-    } // Reload image if selected region or image data changes
-    if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
-        widget.imageData != oldWidget.imageData ||
-        widget.processingOptions != oldWidget.processingOptions) {
-      _initiateImageLoading();
-      // Clear erase state when region changes
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          try {
-            ref.read(erase.eraseStateProvider.notifier).clear();
-            // Recalculate dynamic brush size when the selected region changes
-            _setDynamicBrushSize();
-          } catch (e) {
-            AppLogger.error('Error updating widget state: $e');
+      // Reload image if selected region or image data changes
+      if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
+          widget.imageData != oldWidget.imageData ||
+          widget.processingOptions != oldWidget.processingOptions) {
+        _initiateImageLoading();
+        // Clear erase state when region changes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            try {
+              ref.read(erase.eraseStateProvider.notifier).clear();
+              // Recalculate dynamic brush size when the selected region changes
+              _setDynamicBrushSize();
+            } catch (e) {
+              AppLogger.error('Error updating widget state: $e');
+            }
           }
-        }
-      });
-    }
+        });
+      }
   }
 
   @override
@@ -282,7 +281,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Dispose resources safely
       _loadedImage?.dispose();
       _loadedImage = null;
-
+      
       _characterController.dispose();
       _inputFocusNode.dispose();
       _mainPanelFocusNode.dispose();
@@ -308,64 +307,56 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     ServicesBinding.instance.keyboard.addHandler(
         _handleKeyboardEvent); // Clear erase state on init and load user preferences
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        try {
-          ref
-              .read(erase.eraseStateProvider.notifier)
-              .clear(); // Load processing options and initialize with appropriate values
-          _initializeProcessingOptions();
+      ref
+          .read(erase.eraseStateProvider.notifier)
+          .clear(); // Load processing options and initialize with appropriate values
+      _initializeProcessingOptions();
 
-          // Set dynamic brush size based on image size
-          _setDynamicBrushSize();
+      // Set dynamic brush size based on image size
+      _setDynamicBrushSize();
 
-          //Set invert mode based on actual conditions
-          if ((widget.selectedRegion.options.inverted &&
-                  !ref.read(erase.eraseStateProvider).imageInvertMode) ||
-              (!widget.selectedRegion.options.inverted &&
-                  ref.read(erase.eraseStateProvider).imageInvertMode)) {
-            ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+      //Set invert mode based on actual conditions
+      if ((widget.selectedRegion.options.inverted &&
+              !ref.read(erase.eraseStateProvider).imageInvertMode) ||
+          (!widget.selectedRegion.options.inverted &&
+              ref.read(erase.eraseStateProvider).imageInvertMode)) {
+        ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+      }
+
+      // Automatically open character input for new selections
+      if (_isNewSelection) {
+        setState(() => _isEditing = true);
+        // Use a short delay to ensure rendering is complete before focusing
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _inputFocusNode.requestFocus();
           }
+        });
+      }
 
-          // Automatically open character input for new selections
-          if (_isNewSelection) {
-            setState(() => _isEditing = true);
-            // Use a short delay to ensure rendering is complete before focusing
-            Future.delayed(const Duration(milliseconds: 100), () {
+      // Listen for all refresh events including erase data reload
+      ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
+        if (!mounted) return; // Safety check
+        if (previous != current) {
+          try {
+            final refreshEvent =
+                ref.read(characterRefreshNotifierProvider.notifier).lastEventType;
+
+            if (refreshEvent == RefreshEventType.eraseDataReloaded) {
+              // Force state refresh when erase data is reloaded
               if (mounted) {
-                _inputFocusNode.requestFocus();
-              }
-            });
-          }
-
-          // Listen for all refresh events including erase data reload
-          ref.listenManual(characterRefreshNotifierProvider,
-              (previous, current) {
-            if (!mounted) return; // Safety check
-            if (previous != current) {
-              try {
-                final refreshEvent = ref
-                    .read(characterRefreshNotifierProvider.notifier)
-                    .lastEventType;
-
-                if (refreshEvent == RefreshEventType.eraseDataReloaded) {
-                  // Force state refresh when erase data is reloaded
-                  if (mounted) {
-                    setState(() {
-                      // Just trigger rebuild
-                      _thumbnailRefreshTimestamp =
-                          DateTime.now().millisecondsSinceEpoch;
-                    });
-                  }
-                }
-              } catch (e) {
-                AppLogger.error('Error in refresh listener: $e');
+                setState(() {
+                  // Just trigger rebuild
+                  _thumbnailRefreshTimestamp =
+                      DateTime.now().millisecondsSinceEpoch;
+                });
               }
             }
-          });
-        } catch (e) {
-          AppLogger.error('Error in initState callback: $e');
+          } catch (e) {
+            AppLogger.error('Error in refresh listener: $e');
+          }
         }
-      }
+      });
     });
   }
 
@@ -1453,8 +1444,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   }
 
   Future<void> _handleSave() async {
-    if (!mounted) return; // Safety check
-
+    if (!mounted) return; // Early exit if component is disposed
+    
     final l10n = AppLocalizations.of(context);
 
     // Validate input
@@ -1710,12 +1701,15 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       AppLogger.error('Failed to save character', error: e);
       // Cancel progress timer
       _progressTimer?.cancel();
-      // Notify UI of save failure
-      saveNotifier.setError(e.toString());
-      // Return to edit mode
-      setState(() => _isEditing = true);
+      // Notify UI of save failure only if component is still mounted
+      if (mounted) {
+        saveNotifier.setError(e.toString());
+        // Return to edit mode
+        setState(() => _isEditing = true);
+      }
     } finally {
       _progressTimer?.cancel();
+      _progressTimer = null;
     }
   }
 
@@ -1921,6 +1915,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 /// Noise reduction slider widget with optimized rebuilds
 class _NoiseReductionSlider extends ConsumerWidget {
   const _NoiseReductionSlider({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Use the memoized noise reduction provider for more efficient rebuilds
@@ -1954,6 +1949,9 @@ class _NoiseReductionSlider extends ConsumerWidget {
           // Remove onChangeEnd to match brush slider behavior
         ),
       ),
+    );
+  }
+}
     );
   }
 }

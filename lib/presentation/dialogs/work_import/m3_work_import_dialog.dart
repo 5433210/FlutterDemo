@@ -5,6 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../../pages/works/components/m3_work_import_navigation_bar.dart';
 import '../../providers/work_import_provider.dart';
+import '../../utils/dialog_navigation_helper.dart';
 import 'components/form/m3_work_import_form.dart';
 import 'components/preview/m3_work_import_preview.dart';
 
@@ -38,14 +39,22 @@ class M3WorkImportDialog extends ConsumerWidget {
           appBar: M3WorkImportNavigationBar(
             onClose: () {
               viewModel.reset();
-              Navigator.of(context).pop(false);
+              DialogNavigationHelper.safePop<bool>(
+                context,
+                result: false,
+                dialogName: 'M3WorkImportDialog',
+              );
             },
             onStart: (state.canSubmit && !state.isProcessing)
                 ? () async {
                     final success = await viewModel.importWork();
 
                     if (success && context.mounted) {
-                      Navigator.of(context).pop(true);
+                      DialogNavigationHelper.safePop<bool>(
+                        context,
+                        result: true,
+                        dialogName: 'M3WorkImportDialog',
+                      );
                     }
                   }
                 : () {},

@@ -588,6 +588,13 @@ class FileOperations {
 
         if (inputTitle == null || inputTitle.isEmpty) return;
         title = inputTitle;
+        
+        // 🔧 添加短暂延迟，确保对话框完全关闭后再进行下一步操作
+        // 避免导航栈中的类型混乱
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        // 再次检查context是否仍然有效
+        if (!context.mounted) return;
       }
 
       // 创建保存Future
@@ -649,6 +656,7 @@ class FileOperations {
           data: {
             'title': title,
             'hasCanvasKey': canvasKey != null,
+            'error': e.toString(),
           },
         );
 

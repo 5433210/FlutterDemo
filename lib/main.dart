@@ -64,7 +64,7 @@ void main() async {
     ); // 设置窗口
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       // 设置窗口图标，确保与任务栏图标一致
-      await windowManager.setIcon('assets/images/app_trans_bg.ico');
+      await windowManager.setIcon('assets/images/app_trans_bg4.ico');
       await windowManager.show();
       await windowManager.focus();
     });

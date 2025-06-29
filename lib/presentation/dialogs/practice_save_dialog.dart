@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
+import '../utils/dialog_navigation_helper.dart';
 
 /// 字帖保存对话框
 /// 用于输入字帖标题
@@ -110,163 +110,30 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
   Future<void> _handleSave() async {
     if (await _validateTitle()) {
       if (mounted) {
-        // 返回标题字符串，确保使用正确的Navigator和类型
         final title = _titleController.text.trim();
 
-        // 记录导航信息以帮助调试
         AppLogger.info(
-          'PracticeSaveDialog attempting to pop with result',
+          'PracticeSaveDialog saving with title',
           tag: 'PracticeSaveDialog',
-          data: {
-            'title': title,
-            'resultType': 'String',
-            'canPop': Navigator.of(context).canPop(),
-            'currentRoute': ModalRoute.of(context)?.settings.name ?? 'unknown',
-          },
+          data: {'title': title},
         );
 
-        // 使用更安全的导航方法
-        _safeNavigatePop(title);
+        // 🔧 使用类型保护的安全导航助手，避免与其他对话框的类型混乱
+        await DialogNavigationHelper.safePopWithTypeGuard<String>(
+          context,
+          result: title,
+          dialogName: 'PracticeSaveDialog',
+        );
       }
     }
   }
 
   /// 安全地取消对话框
   void _safeCancel() {
-    if (!mounted) return;
-
-    final navigator = Navigator.of(context);
-    if (!navigator.canPop()) return;
-
-    try {
-      navigator.pop();
-    } catch (e) {
-      AppLogger.warning(
-        'PracticeSaveDialog cancel navigation failed, trying deferred approach',
-        tag: 'PracticeSaveDialog',
-        data: {'error': e.toString()},
-      );
-
-      // 使用延迟方法
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        Future.microtask(() {
-          if (mounted) {
-            try {
-              Navigator.of(context).pop();
-            } catch (e2) {
-              AppLogger.error(
-                'PracticeSaveDialog cancel deferred navigation failed',
-                tag: 'PracticeSaveDialog',
-                data: {'error': e2.toString()},
-              );
-            }
-          }
-        });
-      });
-    }
-  }
-
-  /// 安全地执行导航弹出操作
-  void _safeNavigatePop(String title) {
-    // 检查是否可以安全地导航
-    if (!mounted) {
-      AppLogger.warning(
-        'PracticeSaveDialog widget not mounted, cannot navigate',
-        tag: 'PracticeSaveDialog',
-      );
-      return;
-    }
-
-    final navigator = Navigator.of(context);
-    if (!navigator.canPop()) {
-      AppLogger.warning(
-        'PracticeSaveDialog navigator cannot pop',
-        tag: 'PracticeSaveDialog',
-      );
-      return;
-    }
-
-    // 使用多层防护确保安全导航
-    try {
-      // 首先尝试立即导航
-      navigator.pop<String>(title);
-      AppLogger.info(
-        'PracticeSaveDialog navigation successful',
-        tag: 'PracticeSaveDialog',
-        data: {'title': title},
-      );
-    } catch (e) {
-      AppLogger.warning(
-        'PracticeSaveDialog immediate navigation failed, trying deferred approach',
-        tag: 'PracticeSaveDialog',
-        data: {'error': e.toString()},
-      );
-
-      // 如果立即导航失败，使用延迟方法
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        _attemptDeferredNavigation(title);
-      });
-    }
-  }
-
-  /// 尝试延迟导航
-  void _attemptDeferredNavigation(String title) {
-    if (!mounted) return;
-
-    Future.microtask(() async {
-      if (!mounted) return;
-
-      // 等待一个更长的时间确保所有状态更新完成
-      await Future.delayed(const Duration(milliseconds: 50));
-
-      if (!mounted) return;
-
-      try {
-        final navigator = Navigator.of(context);
-        if (navigator.canPop()) {
-          navigator.pop<String>(title);
-          AppLogger.info(
-            'PracticeSaveDialog deferred navigation successful',
-            tag: 'PracticeSaveDialog',
-            data: {'title': title},
-          );
-        } else {
-          AppLogger.error(
-            'PracticeSaveDialog cannot pop after deferred attempt',
-            tag: 'PracticeSaveDialog',
-          );
-        }
-      } catch (e) {
-        AppLogger.error(
-          'PracticeSaveDialog deferred navigation failed',
-          tag: 'PracticeSaveDialog',
-          data: {'error': e.toString()},
-        );
-
-        // 最后的备用方案：尝试使用根导航器
-        _attemptRootNavigation(title);
-      }
-    });
-  }
-
-  /// 尝试使用根导航器
-  void _attemptRootNavigation(String title) {
-    if (!mounted) return;
-
-    try {
-      Navigator.of(context, rootNavigator: true).pop<String>(title);
-      AppLogger.info(
-        'PracticeSaveDialog root navigation successful',
-        tag: 'PracticeSaveDialog',
-        data: {'title': title},
-      );
-    } catch (e) {
-      AppLogger.error(
-        'PracticeSaveDialog all navigation attempts failed',
-        tag: 'PracticeSaveDialog',
-        data: {'error': e.toString()},
-      );
-    }
+    DialogNavigationHelper.safeCancel(
+      context,
+      dialogName: 'PracticeSaveDialog',
+    );
   }
 
   /// 验证标题

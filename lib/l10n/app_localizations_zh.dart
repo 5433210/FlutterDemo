@@ -2673,7 +2673,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get userConfig => '用户配置';
 
   @override
-  String get validChineseCharacter => '请输入有效的汉字';
+  String get validCharacter => '请输入有效的字符';
 
   @override
   String valueTooLarge(Object label, Object max) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../utils/dialog_navigation_helper.dart';
 
 Future<bool?> showConfirmDialog({
   required BuildContext context,
@@ -17,11 +18,19 @@ Future<bool?> showConfirmDialog({
       content: Text(message),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => DialogNavigationHelper.safePop<bool>(
+            context,
+            result: false,
+            dialogName: 'ConfirmDialog',
+          ),
           child: Text(cancelText ?? l10n.cancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: () => DialogNavigationHelper.safePop<bool>(
+            context,
+            result: true,
+            dialogName: 'ConfirmDialog',
+          ),
           child: Text(confirmText ?? l10n.confirm),
         ),
       ],
@@ -43,7 +52,10 @@ Future<void> showErrorDialog({
       content: Text(message),
       actions: [
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => DialogNavigationHelper.safeCancel(
+            context,
+            dialogName: 'ErrorDialog',
+          ),
           child: Text(buttonText ?? l10n.ok),
         ),
       ],
