@@ -58,7 +58,8 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     try {
       _progressController.dispose();
     } catch (e) {
-      debugPrint('OptimizedSaveDialog: Error disposing animation controller: $e');
+      debugPrint(
+          'OptimizedSaveDialog: Error disposing animation controller: $e');
     }
     super.dispose();
   }
@@ -73,6 +74,9 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
         _progress = 1.0;
         _completed = true;
         _hasError = !result.success;
+        if (!result.success) {
+          _errorMessage = result.message ?? '保存失败';
+        }
       });
 
       // 安全地执行动画
@@ -93,11 +97,14 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     } catch (e) {
       if (!mounted) return;
 
+      // 特殊处理图像相关错误
+      String errorMessage = _formatErrorMessage(e);
+
       setState(() {
         _progress = 1.0;
         _completed = true;
         _hasError = true;
-        _errorMessage = e.toString();
+        _errorMessage = errorMessage;
       });
 
       // 安全地执行动画
@@ -105,10 +112,42 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     }
   }
 
+  /// 格式化错误消息，对常见错误提供更友好的提示
+  String _formatErrorMessage(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+
+    if (errorStr.contains('invalid image data')) {
+      // 检查是否为SVG相关错误
+      if (errorStr.contains('svg') || errorStr.contains('.svg')) {
+        return 'SVG图像格式不受支持，请使用PNG或JPG格式';
+      }
+      return '图像数据无效，可能是文件损坏或格式不受支持。\n建议：请确保文件为有效的PNG、JPG或SVG格式';
+    } else if (errorStr.contains('file not found') ||
+        errorStr.contains('no such file')) {
+      return '找不到指定的文件，可能文件已被移动或删除';
+    } else if (errorStr.contains('permission denied')) {
+      return '文件访问权限不足，请检查文件读写权限';
+    } else if (errorStr.contains('disk full') ||
+        errorStr.contains('no space left')) {
+      return '磁盘空间不足，请清理磁盘空间后重试';
+    } else if (errorStr.contains('timeout')) {
+      return '操作超时，请检查网络连接或重试';
+    } else if (errorStr.contains('network')) {
+      return '网络连接错误，请检查网络状态';
+    } else if (errorStr.contains('format') || errorStr.contains('codec')) {
+      return '图像格式不受支持或文件已损坏';
+    } else {
+      // 提取更有用的错误信息
+      final lines = error.toString().split('\n');
+      final firstLine = lines.isNotEmpty ? lines[0] : error.toString();
+      return '操作失败：$firstLine';
+    }
+  }
+
   /// 安全地执行进度动画，避免在组件销毁后操作动画控制器
   Future<void> _safeAnimateProgress() async {
     if (!mounted) return;
-    
+
     try {
       // 检查动画控制器是否仍然有效
       if (_progressController.status != AnimationStatus.dismissed &&
@@ -175,7 +214,7 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
                   // 如果动画值获取失败，使用当前进度值
                   animationValue = _progress;
                 }
-                
+
                 return LinearProgressIndicator(
                   value: animationValue,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,

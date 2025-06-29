@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../application/services/character/character_service.dart';
@@ -12,8 +13,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/widgets/common/zoomable_image_view.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_sizes.dart';
-import '../../../providers/character/character_detail_provider.dart';
 import '../../../../utils/chinese_font_helper.dart';
+import '../../../providers/character/character_detail_provider.dart';
 import '../../../widgets/layout/flexible_row.dart';
 
 /// 图片尺寸信息类
@@ -413,12 +414,38 @@ class _M3CharacterDetailPanelState
                 // SVG 渲染 with error handling
                 _buildSvgImage(imagePath)
               else
-                // 常规图片渲染
+                // 常规图片渲染，添加更好的错误处理
                 Image.file(
                   File(imagePath),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.broken_image);
+                    return Container(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .errorContainer
+                          .withOpacity(0.3),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image,
+                              size: 24,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '图像加载失败',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   },
                 ),
             ],
@@ -578,14 +605,6 @@ class _M3CharacterDetailPanelState
                     ],
                   );
                 },
-                loadingBuilder: (context) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                      strokeWidth: 2,
-                    ),
-                  );
-                },
               ),
             )
           : Column(
@@ -605,6 +624,7 @@ class _M3CharacterDetailPanelState
             ),
     );
   }
+
   Widget _buildInfoItem(
     ThemeData theme, {
     required String title,
@@ -636,7 +656,8 @@ class _M3CharacterDetailPanelState
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   overflow: TextOverflow.ellipsis,
-                ),                ChineseFontHelper.createTextWithChineseSupport(
+                ),
+                ChineseFontHelper.createTextWithChineseSupport(
                   content,
                   style: theme.textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
@@ -686,7 +707,8 @@ class _M3CharacterDetailPanelState
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
-                  children: [                    Expanded(
+                  children: [
+                    Expanded(
                       child: ChineseFontHelper.createTextWithChineseSupport(
                         content,
                         style: theme.textTheme.bodyMedium,
@@ -839,8 +861,81 @@ class _M3CharacterDetailPanelState
   }
 
   Widget _buildSvgImage(String imagePath) {
-    // Temporary workaround: Use regular image handling for all platforms
-    // TODO: Implement proper conditional compilation for SVG handling
-    return const Icon(Icons.image);
+    // 使用flutter_svg渲染SVG文件，添加错误处理
+    return FutureBuilder<void>(
+      future: _validateSvgFile(imagePath),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Container(
+            color:
+                Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.broken_image,
+                    size: 24,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'SVG加载失败',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SvgPicture.file(
+          File(imagePath),
+          fit: BoxFit.contain,
+          placeholderBuilder: (context) => const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 验证SVG文件
+  Future<void> _validateSvgFile(String path) async {
+    try {
+      final file = File(path);
+      if (!await file.exists()) {
+        throw Exception('SVG文件不存在');
+      }
+
+      final content = await file.readAsString();
+      if (content.trim().isEmpty) {
+        throw Exception('SVG文件为空');
+      }
+
+      if (!content.toLowerCase().contains('<svg')) {
+        throw Exception('不是有效的SVG文件');
+      }
+    } catch (e) {
+      throw Exception('SVG验证失败: $e');
+    }
   }
 }
