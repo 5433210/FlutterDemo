@@ -174,20 +174,10 @@ const migrations = [
   // 版本 5: 添加字符收藏功能
   '''
   
-  -- 确保characters表存在（如果第一个迁移失败）
-  CREATE TABLE IF NOT EXISTS characters (
-    id TEXT PRIMARY KEY,
-    workId TEXT NOT NULL,
-    pageId TEXT NOT NULL,
-    character TEXT NOT NULL,
-    region TEXT NOT NULL,
-    tags TEXT,
-    createTime TEXT NOT NULL,
-    updateTime TEXT NOT NULL,
-    FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
-  );
+  -- 检查characters表是否已经有isFavorite和note列
+  -- 如果没有，则进行表结构升级
   
-  -- 创建characters表的新版本，包含需要的列
+  -- 创建新的characters表结构
   CREATE TABLE IF NOT EXISTS characters_new (
     id TEXT PRIMARY KEY,
     workId TEXT NOT NULL,
@@ -202,15 +192,16 @@ const migrations = [
     FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
   );
   
-  -- 迁移现有数据（如果有）
+  -- 检查旧表是否存在并迁移数据
   INSERT OR IGNORE INTO characters_new (
     id, workId, pageId, character, region, tags, createTime, updateTime, isFavorite, note
   )
   SELECT 
     id, workId, pageId, character, region, tags, createTime, updateTime, 
-    COALESCE(isFavorite, 0) as isFavorite,
-    note
-  FROM characters;
+    0 as isFavorite,  -- 直接设为0，避免引用不存在的列
+    NULL as note      -- 直接设为NULL，避免引用不存在的列
+  FROM characters
+  WHERE EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='characters');
   
   -- 删除旧表并重命名新表
   DROP TABLE IF EXISTS characters;
@@ -219,6 +210,7 @@ const migrations = [
   -- 重新创建索引
   CREATE INDEX IF NOT EXISTS idx_characters_workId ON characters(workId);
   CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(character);
+  CREATE INDEX IF NOT EXISTS idx_characters_favorite ON characters(isFavorite);
   
   
   ''',

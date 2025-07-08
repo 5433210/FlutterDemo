@@ -75,3 +75,18 @@ flutter:
     - family: SourceHanSerif
       fonts:
         - asset: assets/fonts/SourceHanSerif-VF.otf.ttc
+
+# MSIX packaging configuration
+msix_config:
+  display_name: 字字珠玑
+  publisher_display_name: 大力出奇迹
+  identity_name: C82AF157.CharAsGem  
+  msix_version: 1.0.1.0
+  logo_path: assets/images/app_trans_bg4.ico
+  capabilities: internetClient, location
+  architecture: x64
+  publisher: CN=D3B892E0-3B54-4655-BA20-904E2C134030
+  certificate_path: package/windows/msix/CharAsGem.pfx
+  certificate_password: password
+  store: false
+  install_certificate: false
