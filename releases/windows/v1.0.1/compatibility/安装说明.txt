@@ -1,0 +1,36 @@
+字字珠玑 - Windows 兼容性安装包 v1.0.1
+=====================================
+
+系统要求:
+- Windows 7 SP1 及以上版本
+- Windows 8/8.1/10/11
+
+安装步骤:
+1. 双击 CharAsGemInstaller_Legacy_v1.0.1.exe 开始安装
+2. 如果出现安全警告，点击"更多信息"然后"仍要运行"
+3. 按照安装向导完成安装
+
+证书安装（可选）:
+1. 双击 CharAsGem.cer 证书文件
+2. 点击"安装证书"
+3. 选择"本地计算机"
+4. 将证书放入"受信任的根证书颁发机构"
+
+注意事项:
+- 此为兼容性版本，支持较老的 Windows 系统
+- 如果您使用 Windows 10/11，建议使用 MSIX 版本
+
+技术支持: 字字珠玑开发团队 构建成功！[0m
+输出文件: c:\Users\wailik\Documents\Code\Flutter\demo\demo\package\windows\msi\releases\windows\v1.0.1\CharAsGemInstaller_Legacy_v1.0.1.exe
+[32m✓ 文件已复制到: c:\Users\wailik\Documents\Code\Flutter\demo\demo\releases\windows\v1.0.1\compatibility\CharAsGemInstaller_Legacy_v1.0.1.exe[0m
+字字珠玑 v1.0.1 兼容性安装包
+=============================
+
+支持系统: Windows 7 SP1+ (64位)
+安装文件: CharAsGemInstaller_Legacy_v1.0.1.exe
+
+安装方法:
+1. 右键"以管理员身份运行"
+2. 按照向导完成安装
+
+注意: Windows 7 用户需要 SP1 更新

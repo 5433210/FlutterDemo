@@ -19,6 +19,8 @@ out/
 *.kra~
 *.apk
 *.msix
+*.exe
+*.msi
 
 # OS generated files #
 ######################

@@ -1,0 +1,31 @@
+CharAsGem Software License Agreement
+
+Copyright (C) 2025 DaLiChuQiJi
+
+This software is protected by copyright laws and international treaties.
+
+License Terms:
+
+1. Grant of License
+   This license agreement grants you a non-exclusive right to use one copy of this software.
+
+2. Usage Restrictions
+   - You may install and use this software on any number of devices
+   - You may not reverse engineer, decompile, or disassemble the software
+   - You may not modify, adapt, or create derivative works
+
+3. Distribution Restrictions
+   You may not distribute, sell, rent, lease, or otherwise transfer this software.
+
+4. Disclaimer
+   This software is provided "as is" without any express or implied warranties.
+
+5. Limitation of Liability
+   In no event shall the copyright holders be liable for any claims, damages, or other liability.
+
+6. Termination
+   This license will automatically terminate if you violate any terms of this agreement.
+
+By installing or using this software, you agree to be bound by the terms of this agreement.
+
+If you do not agree to these terms, do not install or use this software.
