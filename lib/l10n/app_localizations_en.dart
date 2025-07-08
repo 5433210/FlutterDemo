@@ -427,7 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get centimeter => 'Centimeter';
 
   @override
-  String get characterCollection => 'Character Collection';
+  String get characterCollection => 'Characters';
 
   @override
   String characterCollectionFindSwitchFailed(Object error) {
@@ -1622,7 +1622,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryCount => 'Library Count';
 
   @override
-  String get libraryManagement => 'Library Management';
+  String get libraryManagement => 'Gallery';
 
   @override
   String get lineHeight => 'Line Height';
@@ -2069,7 +2069,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get practices => 'Practice Sheets';
+  String get practices => 'Practices';
 
   @override
   String get preparingPrint => 'Preparing to Print, Please Wait...';

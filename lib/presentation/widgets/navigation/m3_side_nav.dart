@@ -92,7 +92,7 @@ class M3NavigationSidebar extends StatelessWidget {
         },
         // 使用自定义的可滚动导航栏实现
         child: Container(
-          width: extended ? 130 : 72,
+          width: extended ? 150 : 72,
           color: colorScheme.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

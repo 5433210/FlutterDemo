@@ -69,39 +69,39 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
               child: _buildImageWidget(theme),
             ),
           ),
-          if (widget.showControls) ...[
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.zoom_in),
-                      onPressed: () => _handleZoom(0.5),
-                      tooltip: 'Zoom In',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.zoom_out),
-                      onPressed: () => _handleZoom(-0.5),
-                      tooltip: 'Zoom Out',
-                    ),
-                    if (_isZoomed)
-                      IconButton(
-                        icon: const Icon(Icons.zoom_out_map),
-                        onPressed: _resetZoom,
-                        tooltip: 'Reset Zoom',
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          // if (widget.showControls) ...[
+          //   Positioned(
+          //     top: 16,
+          //     right: 16,
+          //     child: Container(
+          //       decoration: BoxDecoration(
+          //         color: theme.colorScheme.surface.withOpacity(0.9),
+          //         borderRadius: BorderRadius.circular(20),
+          //       ),
+          //       child: Row(
+          //         mainAxisSize: MainAxisSize.min,
+          //         children: [
+          //           IconButton(
+          //             icon: const Icon(Icons.zoom_in),
+          //             onPressed: () => _handleZoom(0.5),
+          //             tooltip: 'Zoom In',
+          //           ),
+          //           IconButton(
+          //             icon: const Icon(Icons.zoom_out),
+          //             onPressed: () => _handleZoom(-0.5),
+          //             tooltip: 'Zoom Out',
+          //           ),
+          //           if (_isZoomed)
+          //             IconButton(
+          //               icon: const Icon(Icons.zoom_out_map),
+          //               onPressed: _resetZoom,
+          //               tooltip: 'Reset Zoom',
+          //             ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );
