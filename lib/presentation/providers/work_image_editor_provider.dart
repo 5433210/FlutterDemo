@@ -1,12 +1,20 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
 import '../../domain/models/work/work_image.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../../l10n/app_localizations.dart';
+import '../widgets/library/m3_library_picker_dialog.dart';
 import './work_detail_provider.dart';
+
+enum ImageSource {
+  local,
+  library,
+}
 
 final currentWorkImageIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -38,13 +46,35 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
     await addImages();
   }
 
-  /// Add one or more images
-  /// This is the consolidated method for adding images - always allows multiple selection
-  Future<void> addImages() async {
+  /// Add one or more images with source selection
+  /// This is the consolidated method for adding images - allows selection from local files or library
+  Future<void> addImages([BuildContext? context]) async {
+    if (context == null) {
+      // If no context provided, fallback to local file selection for backward compatibility
+      await addImagesFromLocal();
+      return;
+    }
+
+    // Show source selection dialog
+    final source = await _showImageSourceDialog(context);
+    if (source == null) return;
+
+    switch (source) {
+      case ImageSource.local:
+        await addImagesFromLocal();
+        break;
+      case ImageSource.library:
+        await addImagesFromLibrary(context);
+        break;
+    }
+  }
+
+  /// Add images from local file system
+  Future<void> addImagesFromLocal() async {
     try {
       state = state.copyWith(isProcessing: true, error: null);
 
-      AppLogger.debug('Starting image selection', tag: 'WorkImageEditor');
+      AppLogger.debug('Starting local image selection', tag: 'WorkImageEditor');
 
       // Always use multiple selection - users can still select just one if they want
       final result = await FilePicker.platform.pickFiles(
@@ -68,42 +98,158 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         return;
       }
 
+      final selectedFiles = result.files
+          .where((file) => file.path != null)
+          .map((file) => File(file.path!))
+          .where((file) => file.existsSync())
+          .toList();
+
+      if (selectedFiles.isEmpty) {
+        state = state.copyWith(
+          isProcessing: false,
+          error: '没有找到有效的图片文件',
+        );
+        return;
+      }
+
+      AppLogger.info('Selected local files for work editing', tag: 'WorkImageEditor', data: {
+        'fileCount': selectedFiles.length,
+        'willAddToLibrary': true,
+      });
+
+      await _processSelectedFiles(selectedFiles, fromLibrary: false);
+
+    } catch (e) {
+      AppLogger.error('Error in local image selection',
+          tag: 'WorkImageEditor', error: e);
+      state = state.copyWith(
+        isProcessing: false,
+        error: '添加本地图片失败: $e',
+      );
+    }
+  }
+
+  /// Add images from library
+  Future<void> addImagesFromLibrary(BuildContext context) async {
+    try {
+      state = state.copyWith(isProcessing: true, error: null);
+
+      AppLogger.debug('Starting library image selection', tag: 'WorkImageEditor');
+
+      final selectedItems = await M3LibraryPickerDialog.showMulti(context);
+
+      if (selectedItems == null || selectedItems.isEmpty) {
+        AppLogger.debug('User cancelled library selection', tag: 'WorkImageEditor');
+        state = state.copyWith(isProcessing: false);
+        return;
+      }
+
+      final selectedFiles = selectedItems
+          .map((item) => File(item.path))
+          .where((file) => file.existsSync())
+          .toList();
+
+      if (selectedFiles.isEmpty) {
+        state = state.copyWith(
+          isProcessing: false,
+          error: '没有找到有效的图库图片文件',
+        );
+        return;
+      }
+
+      AppLogger.info('Selected library files for work editing', tag: 'WorkImageEditor', data: {
+        'fileCount': selectedFiles.length,
+        'libraryItemIds': selectedItems.map((item) => item.id).toList(),
+      });
+
+      // Create library item ID mapping
+      final libraryItemIds = <String, String>{};
+      for (int i = 0; i < selectedFiles.length; i++) {
+        libraryItemIds[selectedFiles[i].path] = selectedItems[i].id;
+      }
+
+      await _processSelectedFiles(selectedFiles, fromLibrary: true, libraryItemIds: libraryItemIds);
+
+    } catch (e) {
+      AppLogger.error('Error in library image selection',
+          tag: 'WorkImageEditor', error: e);
+      state = state.copyWith(
+        isProcessing: false,
+        error: '添加图库图片失败: $e',
+      );
+    }
+  }
+
+  /// Process selected files (common logic for both local and library sources)
+  Future<void> _processSelectedFiles(
+    List<File> selectedFiles, {
+    required bool fromLibrary,
+    Map<String, String>? libraryItemIds,
+  }) async {
+    try {
       final workId = _ref.read(workDetailProvider).work!.id;
+      final libraryImportService = _ref.read(libraryImportServiceProvider);
       final newImages = <WorkImage>[];
       int successCount = 0;
       int errorCount = 0;
 
-      // Process each selected file - works for single or multiple selection
-      for (final file in result.files) {
-        if (file.path == null) {
-          errorCount++;
-          continue;
+      // If files are from local, add them to library first
+      final finalLibraryItemIds = libraryItemIds ?? <String, String>{};
+
+      if (!fromLibrary) {
+        AppLogger.info('Adding local files to library first', tag: 'WorkImageEditor', data: {
+          'fileCount': selectedFiles.length,
+        });
+
+        for (int i = 0; i < selectedFiles.length; i++) {
+          final file = selectedFiles[i];
+          try {
+            AppLogger.debug('Adding file to library', tag: 'WorkImageEditor', data: {
+              'index': i + 1,
+              'total': selectedFiles.length,
+              'filePath': file.path,
+            });
+
+            final libraryItem = await libraryImportService.importFile(file.path);
+            if (libraryItem != null) {
+              finalLibraryItemIds[file.path] = libraryItem.id;
+              AppLogger.debug('File added to library successfully', tag: 'WorkImageEditor', data: {
+                'filePath': file.path,
+                'libraryItemId': libraryItem.id,
+              });
+            }
+          } catch (e) {
+            AppLogger.warning('Failed to add file to library, continuing',
+                tag: 'WorkImageEditor', error: e, data: {'filePath': file.path});
+            // Continue processing even if library import fails
+          }
         }
+      }
 
+      // Process each selected file for work import
+      for (int i = 0; i < selectedFiles.length; i++) {
+        final file = selectedFiles[i];
         try {
-          final filePath = file.path!;
-          final imageFile = File(filePath);
-
-          // Basic verification
-          if (!await imageFile.exists()) {
+          if (!await file.exists()) {
             AppLogger.warning('Selected file does not exist',
-                tag: 'WorkImageEditor', data: {'path': filePath});
+                tag: 'WorkImageEditor', data: {'path': file.path});
             errorCount++;
             continue;
           }
 
           // Create a unique ID that includes timestamp and counter
-          final imageId =
-              '${DateTime.now().millisecondsSinceEpoch}_$successCount';
+          final imageId = '${DateTime.now().millisecondsSinceEpoch}_$successCount';
+          final libraryItemId = finalLibraryItemIds[file.path];
 
           final newImage = WorkImage(
             id: imageId,
             workId: workId,
-            path: imageFile.path,
-            originalPath: imageFile.path,
-            thumbnailPath: imageFile.path,
-            format: imageFile.path.split('.').last.toLowerCase(),
-            size: await imageFile.length(),
+            libraryItemId: libraryItemId, // Link to library item if available
+            path: file.path,
+            originalPath: file.path,
+            thumbnailPath: file.path,
+            format: file.path.split('.').last.toLowerCase(),
+            size: await file.length(),
             width: 0,
             height: 0,
             index: state.images.length + newImages.length,
@@ -124,13 +270,15 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         // Update state with all new images
         final allImages = [...state.images, ...newImages];
 
-        AppLogger.debug('Adding images to state',
+        AppLogger.debug('Adding images to work state',
             tag: 'WorkImageEditor',
             data: {
               'newImagesCount': newImages.length,
               'totalImagesCount': allImages.length,
               'successCount': successCount,
               'errorCount': errorCount,
+              'fromLibrary': fromLibrary,
+              'libraryItemIdsCount': finalLibraryItemIds.length,
             });
 
         state = state.copyWith(
@@ -148,23 +296,59 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
         // Show user feedback about partial failures if any
         if (errorCount > 0 && successCount > 0) {
-          state = state.copyWith(
-              error: '已添加 $successCount 张图片，$errorCount 张图片无法处理');
-        } else if (errorCount > 0 && successCount == 0) {
-          state = state.copyWith(error: '无法处理所选图片');
+          AppLogger.warning('Some images failed to process',
+              tag: 'WorkImageEditor',
+              data: {'successCount': successCount, 'errorCount': errorCount});
         }
       } else {
-        state = state.copyWith(isProcessing: false, error: '无法添加所选图片');
+        state = state.copyWith(
+          isProcessing: false,
+          error: errorCount > 0 ? '所有选择的图片都处理失败' : '没有有效的图片文件',
+        );
       }
-    } catch (e, stackTrace) {
-      AppLogger.error('Failed to add images',
-          tag: 'WorkImageEditor', error: e, stackTrace: stackTrace);
-
+    } catch (e) {
+      AppLogger.error('Error processing selected files',
+          tag: 'WorkImageEditor', error: e);
       state = state.copyWith(
         isProcessing: false,
-        error: '添加图片失败: ${e.toString()}',
+        error: '处理选择的图片失败: $e',
       );
     }
+  }
+
+  /// Show image source selection dialog
+  Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    
+    return await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.addImages),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder),
+              title: Text('从本地文件选择'),
+              subtitle: Text('选择的图片将自动添加到图库'),
+              onTap: () => Navigator.of(context).pop(ImageSource.local),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: Text('从图库选择'),
+              subtitle: Text('选择已存在的图库图片'),
+              onTap: () => Navigator.of(context).pop(ImageSource.library),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> deleteImage(String imageId) async {
