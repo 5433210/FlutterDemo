@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 
+import '../../application/providers/data_path_provider.dart';
 import '../../application/services/storage/library_storage.dart';
 import '../../application/services/storage/library_storage_interface.dart';
 import '../../application/services/storage/library_storage_service.dart';
@@ -61,9 +61,9 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
   AppLogger.debug('初始化存储服务', tag: 'Storage');
 
   try {
-    // 1. 获取存储路径
-    final appDir = await getApplicationDocumentsDirectory();
-    final storagePath = path.join(appDir.path, 'storage');
+    // 1. 获取实际数据路径（考虑用户自定义路径）
+    final actualDataPath = await ref.watch(actualDataPathProvider.future);
+    final storagePath = path.join(actualDataPath, 'storage');
 
     // 2. 创建存储服务实例
     final storage = LocalStorage(basePath: storagePath);
@@ -71,7 +71,7 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
     // 3. 初始化目录结构
     await _initializeStorageStructure(storage);
 
-    AppLogger.info('存储服务初始化完成', tag: 'Storage');
+    AppLogger.info('存储服务初始化完成，数据路径: $storagePath', tag: 'Storage');
     return storage;
   } catch (e, stack) {
     AppLogger.error('存储服务初始化失败', error: e, stackTrace: stack, tag: 'Storage');

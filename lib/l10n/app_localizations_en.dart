@@ -658,7 +658,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createBackup => 'Create Backup';
 
   @override
-  String get createBackupDescription => 'Create backup before import';
+  String get createBackupDescription => 'Create a New Data Backup';
 
   @override
   String createExportDirectoryFailed(Object error) {
@@ -1101,9 +1101,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importingDescription => 'Importing data, please wait...';
-
-  @override
-  String get processing => 'Processing...';
 
   @override
   String get exporting => 'Exporting, Please Wait...';
@@ -2101,6 +2098,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previousPage => 'Previous Page';
 
   @override
+  String get processing => 'Processing...';
+
+  @override
   String get processingEraseData => 'Processing Erase Data...';
 
   @override
@@ -2848,6 +2848,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validateDataMandatory => 'Mandatory validation of import file integrity and format to ensure data security';
 
   @override
+  String get createBackupBeforeImport => 'Create backup before import';
+
+  @override
   String get preserveMetadata => 'Preserve Metadata';
 
   @override
@@ -3062,4 +3065,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editTags => 'Edit Tags';
+
+  @override
+  String get dataPathSettings => 'Data Storage Path';
+
+  @override
+  String get dataPathSettingsDescription => 'Set the storage location for application data. Restart required after changes.';
+
+  @override
+  String get dataPath => 'Data Path';
+
+  @override
+  String get dataPathHint => 'Select data storage path';
+
+  @override
+  String get selectFolder => 'Select Folder';
+
+  @override
+  String get applyNewPath => 'Apply New Path';
+
+  @override
+  String get resetDataPathToDefault => 'Reset to Default';
+
+  @override
+  String get currentCustomPath => 'Currently using custom data path';
+
+  @override
+  String get currentDefaultPath => 'Currently using default data path';
+
+  @override
+  String get confirmChangeDataPath => 'Confirm Change Data Path';
+
+  @override
+  String get changeDataPathMessage => 'The application needs to restart after changing the data path to take effect.';
+
+  @override
+  String get note => 'Note';
+
+  @override
+  String get confirmContinue => 'Are you sure you want to continue?';
+
+  @override
+  String get confirmResetToDefaultPath => 'Confirm Reset to Default Path';
+
+  @override
+  String get resetToDefaultPathMessage => 'This will reset the data path to the default location. The application needs to restart to take effect. Are you sure you want to continue?';
+
+  @override
+  String get needRestartApp => 'Need to Restart App';
+
+  @override
+  String get dataPathChangedMessage => 'Data path has been changed. Please restart the application for changes to take effect.';
+
+  @override
+  String get restartNow => 'Restart Now';
+
+  @override
+  String get migratingData => 'Migrating Data';
+
+  @override
+  String get fileCount => 'File Count';
+
+  @override
+  String get dataSize => 'Data Size';
+
+  @override
+  String get estimatedTime => 'Estimated Time';
+
+  @override
+  String get doNotCloseApp => 'Please do not close the application...';
+
+  @override
+  String get setDataPathFailed => 'Failed to set data path. Please check path permissions and compatibility';
+
+  @override
+  String setDataPathFailedWithError(Object error) {
+    return 'Failed to set data path: $error';
+  }
+
+  @override
+  String get resetToDefaultFailed => 'Failed to reset to default path';
+
+  @override
+  String resetToDefaultFailedWithError(Object error) {
+    return 'Failed to reset to default path: $error';
+  }
+
+  @override
+  String pathValidationFailed(Object error) {
+    return 'Path validation failed: $error';
+  }
+
+  @override
+  String get pathValidationFailedGeneric => 'Path validation failed. Please check if the path is valid';
 }

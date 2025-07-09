@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'application/providers/app_initialization_provider.dart';
 import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/monitoring/performance_monitor.dart';
@@ -90,6 +91,20 @@ void main() async {
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],
     );
+
+    // 预加载数据路径配置
+    try {
+      AppLogger.info('开始预加载数据路径配置', tag: 'App');
+      final initResult = await container.read(appInitializationProvider.future);
+      if (initResult.isSuccess) {
+        AppLogger.info('数据路径配置预加载成功', tag: 'App');
+      } else {
+        AppLogger.warning('数据路径配置预加载失败: ${initResult.errorMessage}',
+            tag: 'App');
+      }
+    } catch (e) {
+      AppLogger.error('数据路径配置预加载出错', error: e, tag: 'App');
+    }
 
     // 启动应用
     runApp(

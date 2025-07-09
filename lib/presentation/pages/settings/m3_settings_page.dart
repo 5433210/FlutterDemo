@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../theme/app_sizes.dart';
 import '../../utils/cross_navigation_helper.dart';
-
-import 'components/appearance_settings.dart';
 import 'components/app_version_settings.dart';
+import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
 import 'components/cache_settings.dart';
 import 'components/configuration_settings.dart';
+import 'components/data_path_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
 import 'components/storage_settings.dart';
@@ -49,6 +49,8 @@ class M3SettingsPage extends ConsumerWidget {
           LanguageSettings(),
           Divider(),
           ConfigurationSettings(),
+          Divider(),
+          DataPathSettings(),
           Divider(),
           StorageSettings(),
           Divider(),

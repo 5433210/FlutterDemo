@@ -1352,7 +1352,7 @@ abstract class AppLocalizations {
   /// No description provided for @createBackupDescription.
   ///
   /// In zh, this message translates to:
-  /// **'导入前创建备份'**
+  /// **'创建新的数据备份'**
   String get createBackupDescription;
 
   /// No description provided for @createExportDirectoryFailed.
@@ -2194,12 +2194,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'正在导入数据，请稍候...'**
   String get importingDescription;
-
-  /// No description provided for @processing.
-  ///
-  /// In zh, this message translates to:
-  /// **'处理中...'**
-  String get processing;
 
   /// No description provided for @exporting.
   ///
@@ -4091,6 +4085,12 @@ abstract class AppLocalizations {
   /// **'上一页'**
   String get previousPage;
 
+  /// No description provided for @processing.
+  ///
+  /// In zh, this message translates to:
+  /// **'处理中...'**
+  String get processing;
+
   /// No description provided for @processingEraseData.
   ///
   /// In zh, this message translates to:
@@ -5525,6 +5525,12 @@ abstract class AppLocalizations {
   /// **'强制验证导入文件的完整性和格式，确保数据安全'**
   String get validateDataMandatory;
 
+  /// No description provided for @createBackupBeforeImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入前创建备份'**
+  String get createBackupBeforeImport;
+
   /// No description provided for @preserveMetadata.
   ///
   /// In zh, this message translates to:
@@ -5920,6 +5926,180 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'编辑标签'**
   String get editTags;
+
+  /// No description provided for @dataPathSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据存储路径'**
+  String get dataPathSettings;
+
+  /// No description provided for @dataPathSettingsDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置应用数据的存储位置。更改后需要重启应用程序。'**
+  String get dataPathSettingsDescription;
+
+  /// No description provided for @dataPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径'**
+  String get dataPath;
+
+  /// No description provided for @dataPathHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择数据存储路径'**
+  String get dataPathHint;
+
+  /// No description provided for @selectFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文件夹'**
+  String get selectFolder;
+
+  /// No description provided for @applyNewPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用新路径'**
+  String get applyNewPath;
+
+  /// No description provided for @resetDataPathToDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置为默认'**
+  String get resetDataPathToDefault;
+
+  /// No description provided for @currentCustomPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前使用自定义数据路径'**
+  String get currentCustomPath;
+
+  /// No description provided for @currentDefaultPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前使用默认数据路径'**
+  String get currentDefaultPath;
+
+  /// No description provided for @confirmChangeDataPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认更改数据路径'**
+  String get confirmChangeDataPath;
+
+  /// No description provided for @changeDataPathMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'更改数据路径后，应用程序需要重启才能生效。'**
+  String get changeDataPathMessage;
+
+  /// No description provided for @note.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意'**
+  String get note;
+
+  /// No description provided for @confirmContinue.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要继续吗？'**
+  String get confirmContinue;
+
+  /// No description provided for @confirmResetToDefaultPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认重置为默认路径'**
+  String get confirmResetToDefaultPath;
+
+  /// No description provided for @resetToDefaultPathMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'这将把数据路径重置为默认位置，应用程序需要重启才能生效。确定要继续吗？'**
+  String get resetToDefaultPathMessage;
+
+  /// No description provided for @needRestartApp.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要重启应用'**
+  String get needRestartApp;
+
+  /// No description provided for @dataPathChangedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径已更改，请重启应用程序以使更改生效。'**
+  String get dataPathChangedMessage;
+
+  /// No description provided for @restartNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即重启'**
+  String get restartNow;
+
+  /// No description provided for @migratingData.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在迁移数据'**
+  String get migratingData;
+
+  /// No description provided for @fileCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件数量'**
+  String get fileCount;
+
+  /// No description provided for @dataSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据大小'**
+  String get dataSize;
+
+  /// No description provided for @estimatedTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'预计时间'**
+  String get estimatedTime;
+
+  /// No description provided for @doNotCloseApp.
+  ///
+  /// In zh, this message translates to:
+  /// **'请不要关闭应用程序...'**
+  String get doNotCloseApp;
+
+  /// No description provided for @setDataPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置数据路径失败，请检查路径权限和兼容性'**
+  String get setDataPathFailed;
+
+  /// No description provided for @setDataPathFailedWithError.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置数据路径失败: {error}'**
+  String setDataPathFailedWithError(Object error);
+
+  /// No description provided for @resetToDefaultFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置为默认路径失败'**
+  String get resetToDefaultFailed;
+
+  /// No description provided for @resetToDefaultFailedWithError.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置为默认路径失败: {error}'**
+  String resetToDefaultFailedWithError(Object error);
+
+  /// No description provided for @pathValidationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径验证失败: {error}'**
+  String pathValidationFailed(Object error);
+
+  /// No description provided for @pathValidationFailedGeneric.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径验证失败，请检查路径是否有效'**
+  String get pathValidationFailedGeneric;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -11,14 +11,11 @@ import '../../dialogs/work_import/m3_work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../utils/cross_navigation_helper.dart';
-import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_content_area.dart';
-import 'components/content/m3_work_grid_view.dart';
-import 'components/content/m3_work_list_view.dart';
 import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
 import 'components/m3_work_browse_navigation_bar.dart';
@@ -269,97 +266,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     });
   }
 
-  Widget _buildMainContent() {
-    final state = ref.watch(workBrowseProvider);
-    final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
-
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-            const SizedBox(height: 16),
-            Text(l10n.error(state.error!),
-                style: TextStyle(color: colorScheme.error)),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => _loadWorks(force: true),
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.reload),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return state.isLoading
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.loading,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-          )
-        : state.works.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inbox,
-                        size: 64,
-                        color: colorScheme.onSurfaceVariant.withAlpha(128)),
-                    const SizedBox(height: 16),
-                    Text(l10n.noWorks,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Text(l10n.noWorksHint,
-                        style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: () => _showImportDialog(context),
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.import),
-                    ),
-                  ],
-                ),
-              )
-            : state.viewMode == ViewMode.grid
-                ? M3WorkGridView(
-                    works: state.works,
-                    batchMode: state.batchMode,
-                    selectedWorks: state.selectedWorks,
-                    onSelectionChanged: (workId, selected) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleSelection(workId),
-                    onItemTap: (workId) => _handleWorkSelected(context, workId),
-                    onToggleFavorite: (workId) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleFavorite(workId),
-                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
-                  )
-                : M3WorkListView(
-                    works: state.works,
-                    batchMode: state.batchMode,
-                    selectedWorks: state.selectedWorks,
-                    onSelectionChanged: (workId, selected) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleSelection(workId),
-                    onItemTap: (workId) => _handleWorkSelected(context, workId),
-                    onToggleFavorite: (workId) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleFavorite(workId),
-                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
-                  );
-  }
-
   /// Safely handle deletion of selected works
   void _handleDeleteSelected(BuildContext context) {
     // Verify the widget is still mounted before proceeding
@@ -451,14 +357,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         );
       }
     }
-  }
-
-  void _handleWorkSelected(BuildContext context, String workId) async {
-    await Navigator.pushNamed(
-      context,
-      AppRoutes.workDetail,
-      arguments: workId,
-    );
   }
 
   Future<void> _loadWorks({bool force = false}) async {

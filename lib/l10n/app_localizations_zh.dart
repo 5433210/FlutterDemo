@@ -658,7 +658,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createBackup => '创建备份';
 
   @override
-  String get createBackupDescription => '导入前创建备份';
+  String get createBackupDescription => '创建新的数据备份';
 
   @override
   String createExportDirectoryFailed(Object error) {
@@ -1101,9 +1101,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importingDescription => '正在导入数据，请稍候...';
-
-  @override
-  String get processing => '处理中...';
 
   @override
   String get exporting => '正在导出，请稍候...';
@@ -2101,6 +2098,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get previousPage => '上一页';
 
   @override
+  String get processing => '处理中...';
+
+  @override
   String get processingEraseData => '处理擦除数据...';
 
   @override
@@ -2848,6 +2848,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get validateDataMandatory => '强制验证导入文件的完整性和格式，确保数据安全';
 
   @override
+  String get createBackupBeforeImport => '导入前创建备份';
+
+  @override
   String get preserveMetadata => '保留元数据';
 
   @override
@@ -3062,4 +3065,97 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editTags => '编辑标签';
+
+  @override
+  String get dataPathSettings => '数据存储路径';
+
+  @override
+  String get dataPathSettingsDescription => '设置应用数据的存储位置。更改后需要重启应用程序。';
+
+  @override
+  String get dataPath => '数据路径';
+
+  @override
+  String get dataPathHint => '选择数据存储路径';
+
+  @override
+  String get selectFolder => '选择文件夹';
+
+  @override
+  String get applyNewPath => '应用新路径';
+
+  @override
+  String get resetDataPathToDefault => '重置为默认';
+
+  @override
+  String get currentCustomPath => '当前使用自定义数据路径';
+
+  @override
+  String get currentDefaultPath => '当前使用默认数据路径';
+
+  @override
+  String get confirmChangeDataPath => '确认更改数据路径';
+
+  @override
+  String get changeDataPathMessage => '更改数据路径后，应用程序需要重启才能生效。';
+
+  @override
+  String get note => '注意';
+
+  @override
+  String get confirmContinue => '确定要继续吗？';
+
+  @override
+  String get confirmResetToDefaultPath => '确认重置为默认路径';
+
+  @override
+  String get resetToDefaultPathMessage => '这将把数据路径重置为默认位置，应用程序需要重启才能生效。确定要继续吗？';
+
+  @override
+  String get needRestartApp => '需要重启应用';
+
+  @override
+  String get dataPathChangedMessage => '数据路径已更改，请重启应用程序以使更改生效。';
+
+  @override
+  String get restartNow => '立即重启';
+
+  @override
+  String get migratingData => '正在迁移数据';
+
+  @override
+  String get fileCount => '文件数量';
+
+  @override
+  String get dataSize => '数据大小';
+
+  @override
+  String get estimatedTime => '预计时间';
+
+  @override
+  String get doNotCloseApp => '请不要关闭应用程序...';
+
+  @override
+  String get setDataPathFailed => '设置数据路径失败，请检查路径权限和兼容性';
+
+  @override
+  String setDataPathFailedWithError(Object error) {
+    return '设置数据路径失败: $error';
+  }
+
+  @override
+  String get resetToDefaultFailed => '重置为默认路径失败';
+
+  @override
+  String resetToDefaultFailedWithError(Object error) {
+    return '重置为默认路径失败: $error';
+  }
+
+  @override
+  String pathValidationFailed(Object error) {
+    return '路径验证失败: $error';
+  }
+
+  @override
+  String get pathValidationFailedGeneric => '路径验证失败，请检查路径是否有效';
 }
