@@ -1,14 +1,14 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:demo/domain/models/work/work_image.dart';
 import 'package:demo/application/repositories/work_image_repository_impl.dart';
+import 'package:demo/domain/models/work/work_image.dart';
 import 'package:demo/infrastructure/persistence/sqlite/sqlite_database.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('图片顺序调整测试', () {
     late WorkImageRepositoryImpl repository;
     late SQLiteDatabase database;
     const testWorkId = 'test-work-id';
-    
+
     setUp(() async {
       // 这里需要初始化数据库
       // database = await SQLiteDatabase.initialize(':memory:');
@@ -50,22 +50,22 @@ void main() {
 
       // 先保存原始顺序
       await repository.saveMany(images);
-      
+
       // 验证原始顺序
       final originalImages = await repository.getAllByWorkId(testWorkId);
       expect(originalImages.length, 2);
       expect(originalImages[0].id, 'image-1');
       expect(originalImages[1].id, 'image-2');
-      
+
       // 调整顺序
       final reorderedImages = [
         images[1].copyWith(index: 0, updateTime: DateTime.now()),
         images[0].copyWith(index: 1, updateTime: DateTime.now()),
       ];
-      
+
       // 保存调整后的顺序
       await repository.saveMany(reorderedImages);
-      
+
       // 验证调整后的顺序
       final reorderedResult = await repository.getAllByWorkId(testWorkId);
       expect(reorderedResult.length, 2);

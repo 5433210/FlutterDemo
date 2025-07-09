@@ -497,7 +497,10 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
           'hasPendingAdditions': imageEditorState.hasPendingAdditions,
           'deletedImageIds': imageEditorState.deletedImageIds,
           'imageCount': imageEditorState.images.length,
-          'currentOrder': imageEditorState.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+          'currentOrder': imageEditorState.images
+              .map((img) => '${img.id}(${img.index})')
+              .take(5)
+              .toList(),
         });
 
         // Always save - 不再检查是否有变化，确保顺序调整能被保存
@@ -511,7 +514,10 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
       AppLogger.info('保存后的图片状态', tag: 'M3WorkDetailPage', data: {
         'savedImageCount': savedImages.length,
-        'savedOrder': savedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'savedOrder': savedImages
+            .map((img) => '${img.id}(${img.index})')
+            .take(5)
+            .toList(),
       });
 
       // Only process cover when there are images
@@ -536,9 +542,9 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
             await imageService.updateCover(editingWork.id, savedImages[0].id);
             AppLogger.info('封面重新生成成功', tag: 'M3WorkDetailPage');
           } catch (e) {
-            AppLogger.warning('封面重新生成失败，但不影响图片保存', 
-                tag: 'M3WorkDetailPage', 
-                error: e, 
+            AppLogger.warning('封面重新生成失败，但不影响图片保存',
+                tag: 'M3WorkDetailPage',
+                error: e,
                 data: {
                   'firstImageId': savedImages[0].id,
                   'reason': '可能是顺序调整时图片文件路径问题',
@@ -558,13 +564,18 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
       // 验证保存结果 - 重新加载并检查
       if (success && editingWork != null) {
-        await ref.read(workDetailProvider.notifier).loadWorkDetails(editingWork.id);
+        await ref
+            .read(workDetailProvider.notifier)
+            .loadWorkDetails(editingWork.id);
         final reloadedWork = ref.read(workDetailProvider).work;
-        
+
         AppLogger.info('保存验证 - 重新加载作品', tag: 'M3WorkDetailPage', data: {
           'workId': reloadedWork?.id,
           'reloadedImageCount': reloadedWork?.images.length,
-          'reloadedOrder': reloadedWork?.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+          'reloadedOrder': reloadedWork?.images
+              .map((img) => '${img.id}(${img.index})')
+              .take(5)
+              .toList(),
         });
       }
 

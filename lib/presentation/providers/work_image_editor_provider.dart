@@ -337,7 +337,10 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         'newIndex': newIndex,
         'totalImages': state.images.length,
         'beforeAdjustment': 'oldIndex=$oldIndex, newIndex=$newIndex',
-        'originalOrder': state.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'originalOrder': state.images
+            .map((img) => '${img.id}(${img.index})')
+            .take(5)
+            .toList(),
       });
 
       // Flutter ReorderableListView 的标准调整逻辑
@@ -352,7 +355,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       });
 
       final items = List<WorkImage>.from(state.images);
-      
+
       // 记录移动前的图片信息
       final movingImage = items[oldIndex];
       AppLogger.info('移动的图片信息', tag: 'WorkImageEditor', data: {
@@ -377,9 +380,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       AppLogger.info('重排序完成 - 内存中的状态', tag: 'WorkImageEditor', data: {
         'oldIndex': oldIndex,
         'newIndex': newIndex,
-        'firstImageId': reindexedImages.isNotEmpty ? reindexedImages[0].id : null,
-        'movedImageNewIndex': reindexedImages.indexWhere((img) => img.id == movingImage.id),
-        'newOrder': reindexedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'firstImageId':
+            reindexedImages.isNotEmpty ? reindexedImages[0].id : null,
+        'movedImageNewIndex':
+            reindexedImages.indexWhere((img) => img.id == movingImage.id),
+        'newOrder': reindexedImages
+            .map((img) => '${img.id}(${img.index})')
+            .take(5)
+            .toList(),
         'allImagesCount': reindexedImages.length,
       });
 
@@ -390,7 +398,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       // 标记作品已更改
       _ref.read(workDetailProvider.notifier).markAsChanged();
-      
+
       AppLogger.info('重排序完成 - 状态已更新', tag: 'WorkImageEditor', data: {
         'hasChanges': _ref.read(workDetailProvider).hasChanges,
         'stateImageCount': state.images.length,
@@ -425,7 +433,10 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       AppLogger.info('开始保存图片更改', tag: 'WorkImageEditor', data: {
         'workId': workId,
         'imageCount': state.images.length,
-        'currentOrder': state.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'currentOrder': state.images
+            .map((img) => '${img.id}(${img.index})')
+            .take(5)
+            .toList(),
         'hasPendingAdditions': state.hasPendingAdditions,
         'deletedImageIds': state.deletedImageIds,
         'firstImageId': state.images.isNotEmpty ? state.images[0].id : null,
@@ -467,7 +478,10 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       AppLogger.info('图片保存完成', tag: 'WorkImageEditor', data: {
         'savedCount': savedImages.length,
-        'savedOrder': savedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'savedOrder': savedImages
+            .map((img) => '${img.id}(${img.index})')
+            .take(5)
+            .toList(),
       });
 
       state = state.copyWith(

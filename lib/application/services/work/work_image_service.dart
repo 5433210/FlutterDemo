@@ -48,8 +48,10 @@ class WorkImageService with WorkServiceErrorHandler {
         });
 
         // 路径标准化：统一使用绝对路径进行比较
-        final normalizedUsedPaths = usedPaths.map((path) => File(path).absolute.path).toSet();
-        final normalizedAllFiles = allFiles.map((path) => File(path).absolute.path).toList();
+        final normalizedUsedPaths =
+            usedPaths.map((path) => File(path).absolute.path).toSet();
+        final normalizedAllFiles =
+            allFiles.map((path) => File(path).absolute.path).toList();
 
         AppLogger.info('路径标准化完成', tag: 'WorkImageService', data: {
           'workId': workId,
@@ -72,13 +74,18 @@ class WorkImageService with WorkServiceErrorHandler {
 
         AppLogger.info('详细文件使用状态检查', tag: 'WorkImageService', data: {
           'workId': workId,
-          'fileCheckSample': detailedFileCheck.entries.take(3).map((e) => {
-            'file': e.key,
-            'status': e.value,
-          }).toList(),
+          'fileCheckSample': detailedFileCheck.entries
+              .take(3)
+              .map((e) => {
+                    'file': e.key,
+                    'status': e.value,
+                  })
+              .toList(),
         });
 
-        final unusedFiles = normalizedAllFiles.where((f) => !normalizedUsedPaths.contains(f)).toList();
+        final unusedFiles = normalizedAllFiles
+            .where((f) => !normalizedUsedPaths.contains(f))
+            .toList();
 
         if (unusedFiles.isNotEmpty) {
           // 在删除之前，进行额外的安全检查
@@ -92,7 +99,7 @@ class WorkImageService with WorkServiceErrorHandler {
             final exists = await fileObj.exists();
             final fileName = file.split(Platform.pathSeparator).last;
             final isUsed = normalizedUsedPaths.contains(file);
-            
+
             fileDetails[file] = {
               'exists': exists,
               'size': exists ? await fileObj.length() : 0,
@@ -104,54 +111,64 @@ class WorkImageService with WorkServiceErrorHandler {
               'isThumbnail': fileName.contains('thumbnail'),
             };
           }
-          
+
           AppLogger.info('所有文件详细信息', tag: 'WorkImageService', data: {
             'workId': workId,
-            'fileDetails': fileDetails.entries.take(10).map((e) => {
-              'path': e.key,
-              'info': e.value,
-            }).toList(),
+            'fileDetails': fileDetails.entries
+                .take(10)
+                .map((e) => {
+                      'path': e.key,
+                      'info': e.value,
+                    })
+                .toList(),
           });
 
           // 特别检查封面文件
           final coverImportedPath = _storage.getWorkCoverImportedPath(workId);
           final coverThumbnailPath = _storage.getWorkCoverThumbnailPath(workId);
-          
+
           AppLogger.info('封面文件检查', tag: 'WorkImageService', data: {
             'workId': workId,
             'coverImportedPath': coverImportedPath,
             'coverThumbnailPath': coverThumbnailPath,
-            'coverImportedInUsedPaths': normalizedUsedPaths.contains(File(coverImportedPath).absolute.path),
-            'coverThumbnailInUsedPaths': normalizedUsedPaths.contains(File(coverThumbnailPath).absolute.path),
-            'coverImportedInAllFiles': normalizedAllFiles.contains(File(coverImportedPath).absolute.path),
-            'coverThumbnailInAllFiles': normalizedAllFiles.contains(File(coverThumbnailPath).absolute.path),
+            'coverImportedInUsedPaths': normalizedUsedPaths
+                .contains(File(coverImportedPath).absolute.path),
+            'coverThumbnailInUsedPaths': normalizedUsedPaths
+                .contains(File(coverThumbnailPath).absolute.path),
+            'coverImportedInAllFiles': normalizedAllFiles
+                .contains(File(coverImportedPath).absolute.path),
+            'coverThumbnailInAllFiles': normalizedAllFiles
+                .contains(File(coverThumbnailPath).absolute.path),
           });
 
           for (final file in unusedFiles) {
             // 检查是否是系统文件或重要文件
-            final fileName = file.split(Platform.pathSeparator).last.toLowerCase();
-            if (fileName.startsWith('cover_') || 
-                fileName.contains('thumbnail') || 
-                fileName.contains('imported') || 
+            final fileName =
+                file.split(Platform.pathSeparator).last.toLowerCase();
+            if (fileName.startsWith('cover_') ||
+                fileName.contains('thumbnail') ||
+                fileName.contains('imported') ||
                 fileName.contains('original')) {
-              
               // 对于重要文件，进行额外验证
               bool shouldKeep = false;
-              
+
               // 检查是否可能是当前使用的文件的不同路径表示
               for (final usedPath in normalizedUsedPaths) {
-                final usedFileName = usedPath.split(Platform.pathSeparator).last;
+                final usedFileName =
+                    usedPath.split(Platform.pathSeparator).last;
                 if (usedFileName == fileName) {
                   shouldKeep = true;
-                  AppLogger.warning('发现可能的路径匹配冲突', tag: 'WorkImageService', data: {
-                    'candidateForDeletion': file,
-                    'matchingUsedPath': usedPath,
-                    'fileName': fileName,
-                  });
+                  AppLogger.warning('发现可能的路径匹配冲突',
+                      tag: 'WorkImageService',
+                      data: {
+                        'candidateForDeletion': file,
+                        'matchingUsedPath': usedPath,
+                        'fileName': fileName,
+                      });
                   break;
                 }
               }
-              
+
               if (shouldKeep) {
                 unsafeToDelete.add(file);
               } else {
@@ -579,7 +596,8 @@ class WorkImageService with WorkServiceErrorHandler {
         AppLogger.info('开始保存图片更改', tag: 'WorkImageService', data: {
           'workId': workId,
           'imageCount': images.length,
-          'imageOrder': images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+          'imageOrder':
+              images.map((img) => '${img.id}(${img.index})').take(5).toList(),
           'firstImageId': images.isNotEmpty ? images[0].id : null,
         });
 
@@ -604,8 +622,12 @@ class WorkImageService with WorkServiceErrorHandler {
               existingImages.isNotEmpty ? existingImages[0].index : null,
           'newFirstImageIndex': images.isNotEmpty ? images[0].index : null,
           'imagesReordered': imagesReordered,
-          'existingOrder': existingImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
-          'newOrder': images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+          'existingOrder': existingImages
+              .map((img) => '${img.id}(${img.index})')
+              .take(5)
+              .toList(),
+          'newOrder':
+              images.map((img) => '${img.id}(${img.index})').take(5).toList(),
         });
 
         // 确定是否需要更新封面
@@ -827,18 +849,20 @@ class WorkImageService with WorkServiceErrorHandler {
 
             // 清理未使用的文件
             final usedPaths = <String>[];
-            
+
             // 收集所有图片相关的路径
             for (final img in savedImages) {
               usedPaths.addAll([img.path, img.originalPath, img.thumbnailPath]);
             }
-            
+
             // 添加封面文件路径
             try {
-              final coverImportedPath = _storage.getWorkCoverImportedPath(workId);
-              final coverThumbnailPath = _storage.getWorkCoverThumbnailPath(workId);
+              final coverImportedPath =
+                  _storage.getWorkCoverImportedPath(workId);
+              final coverThumbnailPath =
+                  _storage.getWorkCoverThumbnailPath(workId);
               usedPaths.addAll([coverImportedPath, coverThumbnailPath]);
-              
+
               AppLogger.info('添加封面文件到保护列表', tag: 'WorkImageService', data: {
                 'coverImportedPath': coverImportedPath,
                 'coverThumbnailPath': coverThumbnailPath,
@@ -846,7 +870,8 @@ class WorkImageService with WorkServiceErrorHandler {
                 'coverThumbnailExists': await File(coverThumbnailPath).exists(),
               });
             } catch (e) {
-              AppLogger.warning('获取封面文件路径失败', tag: 'WorkImageService', error: e);
+              AppLogger.warning('获取封面文件路径失败',
+                  tag: 'WorkImageService', error: e);
             }
 
             AppLogger.info('收集所有应该保留的文件路径', tag: 'WorkImageService', data: {
@@ -854,12 +879,15 @@ class WorkImageService with WorkServiceErrorHandler {
               'savedImagesCount': savedImages.length,
               'usedPathsCount': usedPaths.length,
               'usedPaths': usedPaths.take(10).toList(),
-              'imageDetails': savedImages.map((img) => {
-                'id': img.id,
-                'path': img.path,
-                'originalPath': img.originalPath,
-                'thumbnailPath': img.thumbnailPath,
-              }).take(3).toList(),
+              'imageDetails': savedImages
+                  .map((img) => {
+                        'id': img.id,
+                        'path': img.path,
+                        'originalPath': img.originalPath,
+                        'thumbnailPath': img.thumbnailPath,
+                      })
+                  .take(3)
+                  .toList(),
             });
 
             await cleanupUnusedFiles(workId, usedPaths);
@@ -915,10 +943,10 @@ class WorkImageService with WorkServiceErrorHandler {
         // 尝试多个可能的源图片路径
         final importedPath = _storage.getImportedPath(workId, imageId);
         final originalPath = _storage.getOriginalPath(workId, imageId);
-        
+
         File? sourceFile;
         String sourcePath = '';
-        
+
         // 首先尝试 imported.png
         if (await File(importedPath).exists()) {
           sourceFile = File(importedPath);
@@ -926,7 +954,7 @@ class WorkImageService with WorkServiceErrorHandler {
           AppLogger.debug('使用导入图片作为封面源', tag: 'WorkImageService', data: {
             'sourcePath': sourcePath,
           });
-        } 
+        }
         // 如果 imported.png 不存在，尝试 original.jpg/png/etc
         else if (await File(originalPath).exists()) {
           sourceFile = File(originalPath);
@@ -946,7 +974,7 @@ class WorkImageService with WorkServiceErrorHandler {
             });
           }
         }
-        
+
         if (sourceFile == null || !await sourceFile.exists()) {
           AppLogger.error('无法找到有效的源图片文件', tag: 'WorkImageService', data: {
             'workId': workId,
