@@ -93,7 +93,13 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
                       },
                       onReorder: (oldIndex, newIndex) {
                         AppLogger.debug(
-                            'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex');
+                            'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex', 
+                            tag: 'EnhancedWorkPreview',
+                            data: {
+                              'oldIndex': oldIndex,
+                              'newIndex': newIndex,
+                              'totalImages': widget.images.length,
+                            });
                         widget.onImagesReordered?.call(oldIndex, newIndex);
                       },
                       pathResolver: (image) => image.path,

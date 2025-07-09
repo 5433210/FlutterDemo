@@ -357,6 +357,12 @@ class WorkImagesManagementView extends ConsumerWidget {
 
   /// 处理图片重新排序
   void _handleReorder(WidgetRef ref, int oldIndex, int newIndex) {
+    AppLogger.debug('WorkImagesManagementView._handleReorder', 
+        tag: 'WorkImagesManagementView', data: {
+      'oldIndex': oldIndex,
+      'newIndex': newIndex,
+    });
+    
     ref
         .read(workImageEditorProvider.notifier)
         .reorderImages(oldIndex, newIndex);

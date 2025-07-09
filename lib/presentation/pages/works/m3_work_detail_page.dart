@@ -474,21 +474,18 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
     final editingWork = ref.read(workDetailProvider).editingWork;
 
     // Ensure complete copy of current edit state
-    AppLogger.debug('Complete work state before saving',
-        tag: 'M3WorkDetailPage',
-        data: {
-          'workId': editingWork?.id,
-          'title': editingWork?.title,
-          'author': editingWork?.author,
-          'style': editingWork?.style,
-          'tool': editingWork?.tool,
-          // 'creationDate': editingWork?.creationDate.toString(),
-          'remark': editingWork?.remark,
-          'tagCount': editingWork?.tags.length,
-          'tags': editingWork?.tags,
-          'imageCount': editingWork?.images.length,
-          'updateTime': editingWork?.updateTime.toString(),
-        });
+    AppLogger.info('准备保存作品更改', tag: 'M3WorkDetailPage', data: {
+      'workId': editingWork?.id,
+      'title': editingWork?.title,
+      'author': editingWork?.author,
+      'style': editingWork?.style,
+      'tool': editingWork?.tool,
+      'remark': editingWork?.remark,
+      'tagCount': editingWork?.tags.length,
+      'tags': editingWork?.tags,
+      'imageCount': editingWork?.images.length,
+      'updateTime': editingWork?.updateTime.toString(),
+    });
 
     try {
       // First save the images if they've been edited
@@ -496,14 +493,26 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
         final imageEditorState = ref.read(workImageEditorProvider);
         final imageEditorNotifier = ref.read(workImageEditorProvider.notifier);
 
-        if (imageEditorState.hasPendingAdditions ||
-            imageEditorState.deletedImageIds.isNotEmpty) {
-          await imageEditorNotifier.saveChanges();
-        }
+        AppLogger.info('图片编辑器状态检查', tag: 'M3WorkDetailPage', data: {
+          'hasPendingAdditions': imageEditorState.hasPendingAdditions,
+          'deletedImageIds': imageEditorState.deletedImageIds,
+          'imageCount': imageEditorState.images.length,
+          'currentOrder': imageEditorState.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        });
+
+        // Always save - 不再检查是否有变化，确保顺序调整能被保存
+        AppLogger.info('开始保存图片更改', tag: 'M3WorkDetailPage');
+        await imageEditorNotifier.saveChanges();
+        AppLogger.info('图片更改保存完成', tag: 'M3WorkDetailPage');
       }
 
       // Get saved images list
       final savedImages = ref.read(workImageEditorProvider).images;
+
+      AppLogger.info('保存后的图片状态', tag: 'M3WorkDetailPage', data: {
+        'savedImageCount': savedImages.length,
+        'savedOrder': savedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+      });
 
       // Only process cover when there are images
       if (savedImages.isNotEmpty && editingWork != null) {
@@ -516,38 +525,64 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
         final coverExists =
             await storageService.verifyWorkImageExists(coverPath);
 
+        // 只有在封面不存在时才重新生成，避免不必要的错误
         if (!coverExists) {
-          AppLogger.info('Cover does not exist after save, regenerating',
-              tag: 'M3WorkDetailPage',
-              data: {'firstImageId': savedImages[0].id});
+          AppLogger.info('封面不存在，尝试重新生成', tag: 'M3WorkDetailPage', data: {
+            'firstImageId': savedImages[0].id,
+            'coverPath': coverPath,
+          });
 
-          await imageService.updateCover(editingWork.id, savedImages[0].id);
+          try {
+            await imageService.updateCover(editingWork.id, savedImages[0].id);
+            AppLogger.info('封面重新生成成功', tag: 'M3WorkDetailPage');
+          } catch (e) {
+            AppLogger.warning('封面重新生成失败，但不影响图片保存', 
+                tag: 'M3WorkDetailPage', 
+                error: e, 
+                data: {
+                  'firstImageId': savedImages[0].id,
+                  'reason': '可能是顺序调整时图片文件路径问题',
+                });
+            // 不要抛出异常，封面生成失败不应该影响图片顺序保存
+          }
         } else {
-          AppLogger.debug('Cover exists after save', tag: 'M3WorkDetailPage');
+          AppLogger.info('封面已存在，跳过更新', tag: 'M3WorkDetailPage', data: {
+            'coverPath': coverPath,
+          });
         }
       }
 
       // Then save work details
+      AppLogger.info('开始保存作品详情', tag: 'M3WorkDetailPage');
       final success = await ref.read(workDetailProvider.notifier).saveChanges();
+
+      // 验证保存结果 - 重新加载并检查
+      if (success && editingWork != null) {
+        await ref.read(workDetailProvider.notifier).loadWorkDetails(editingWork.id);
+        final reloadedWork = ref.read(workDetailProvider).work;
+        
+        AppLogger.info('保存验证 - 重新加载作品', tag: 'M3WorkDetailPage', data: {
+          'workId': reloadedWork?.id,
+          'reloadedImageCount': reloadedWork?.images.length,
+          'reloadedOrder': reloadedWork?.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        });
+      }
 
       // Log latest state after save
       final savedWork = ref.read(workDetailProvider).work;
-      AppLogger.debug('Complete work state after saving',
-          tag: 'M3WorkDetailPage',
-          data: {
-            'workId': savedWork?.id,
-            'title': savedWork?.title,
-            'author': savedWork?.author,
-            'style': savedWork?.style,
-            'tool': savedWork?.tool,
-            // 'creationDate': savedWork?.creationDate.toString(),
-            'remark': savedWork?.remark,
-            'tagCount': savedWork?.tags.length,
-            'tags': savedWork?.tags,
-            'imageCount': savedWork?.images.length,
-            'updateTime': savedWork?.updateTime.toString(),
-            'saveSuccess': success,
-          });
+      AppLogger.info('保存完成状态', tag: 'M3WorkDetailPage', data: {
+        'workId': savedWork?.id,
+        'title': savedWork?.title,
+        'author': savedWork?.author,
+        'style': savedWork?.style,
+        'tool': savedWork?.tool,
+        'remark': savedWork?.remark,
+        'tagCount': savedWork?.tags.length,
+        'tags': savedWork?.tags,
+        'imageCount': savedWork?.images.length,
+        'updateTime': savedWork?.updateTime.toString(),
+        'saveSuccess': success,
+      });
 
       // Notify works list to refresh
       ref.read(worksNeedsRefreshProvider.notifier).state =

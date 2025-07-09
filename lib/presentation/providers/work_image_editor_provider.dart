@@ -332,11 +332,36 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
   Future<void> reorderImages(int oldIndex, int newIndex) async {
     try {
+      AppLogger.info('开始重排序图片', tag: 'WorkImageEditor', data: {
+        'oldIndex': oldIndex,
+        'newIndex': newIndex,
+        'totalImages': state.images.length,
+        'beforeAdjustment': 'oldIndex=$oldIndex, newIndex=$newIndex',
+        'originalOrder': state.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+      });
+
+      // Flutter ReorderableListView 的标准调整逻辑
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
 
+      AppLogger.info('调整后的索引', tag: 'WorkImageEditor', data: {
+        'adjustedOldIndex': oldIndex,
+        'adjustedNewIndex': newIndex,
+        'afterAdjustment': 'oldIndex=$oldIndex, newIndex=$newIndex',
+      });
+
       final items = List<WorkImage>.from(state.images);
+      
+      // 记录移动前的图片信息
+      final movingImage = items[oldIndex];
+      AppLogger.info('移动的图片信息', tag: 'WorkImageEditor', data: {
+        'movingImageId': movingImage.id,
+        'movingImageIndex': movingImage.index,
+        'movingImagePath': movingImage.path,
+      });
+
+      // 执行移动操作
       final item = items.removeAt(oldIndex);
       items.insert(newIndex, item);
 
@@ -349,20 +374,28 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         ),
       );
 
-      AppLogger.debug('重排序图片', tag: 'WorkImageEditor', data: {
+      AppLogger.info('重排序完成 - 内存中的状态', tag: 'WorkImageEditor', data: {
         'oldIndex': oldIndex,
         'newIndex': newIndex,
-        'firstImageId':
-            reindexedImages.isNotEmpty ? reindexedImages[0].id : null,
+        'firstImageId': reindexedImages.isNotEmpty ? reindexedImages[0].id : null,
+        'movedImageNewIndex': reindexedImages.indexWhere((img) => img.id == movingImage.id),
+        'newOrder': reindexedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'allImagesCount': reindexedImages.length,
       });
 
       state = state.copyWith(images: reindexedImages);
 
-      // 更新选中索引
+      // 更新选中索引到移动后的位置
       _ref.read(currentWorkImageIndexProvider.notifier).state = newIndex;
 
       // 标记作品已更改
       _ref.read(workDetailProvider.notifier).markAsChanged();
+      
+      AppLogger.info('重排序完成 - 状态已更新', tag: 'WorkImageEditor', data: {
+        'hasChanges': _ref.read(workDetailProvider).hasChanges,
+        'stateImageCount': state.images.length,
+        'currentSelectedIndex': _ref.read(currentWorkImageIndexProvider),
+      });
     } catch (e) {
       AppLogger.error('重排序图片失败', tag: 'WorkImageEditor', error: e);
       state = state.copyWith(error: '重排序图片失败: $e');
@@ -389,9 +422,12 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       final workId = _ref.read(workDetailProvider).work?.id;
       if (workId == null) return;
 
-      AppLogger.debug('开始保存图片更改', tag: 'WorkImageEditor', data: {
+      AppLogger.info('开始保存图片更改', tag: 'WorkImageEditor', data: {
         'workId': workId,
         'imageCount': state.images.length,
+        'currentOrder': state.images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+        'hasPendingAdditions': state.hasPendingAdditions,
+        'deletedImageIds': state.deletedImageIds,
         'firstImageId': state.images.isNotEmpty ? state.images[0].id : null,
       });
 
@@ -412,17 +448,27 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         }
       }
 
-      // 保存所有图片
+      // 保存所有图片 - 不再检查条件，确保顺序调整能被保存
+      AppLogger.info('调用 Service 保存图片', tag: 'WorkImageEditor', data: {
+        'imageCount': state.images.length,
+        'saveReason': 'Always save to ensure order changes are persisted',
+      });
+
       final savedImages = await workImageService.saveChanges(
         workId,
         state.images,
         onProgress: (progress, message) {
-          AppLogger.debug('保存进度', tag: 'WorkImageEditor', data: {
+          AppLogger.info('保存进度', tag: 'WorkImageEditor', data: {
             'progress': progress,
             'message': message,
           });
         },
       );
+
+      AppLogger.info('图片保存完成', tag: 'WorkImageEditor', data: {
+        'savedCount': savedImages.length,
+        'savedOrder': savedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+      });
 
       state = state.copyWith(
         images: savedImages,
@@ -430,10 +476,6 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         isProcessing: false,
         hasPendingAdditions: false, // Clear pending flag after successful save
       );
-
-      AppLogger.debug('图片保存完成', tag: 'WorkImageEditor', data: {
-        'savedCount': savedImages.length,
-      });
 
       // 移除此行 - 不要重新加载作品详情，会覆盖已编辑的更改
       // await _ref.read(workDetailProvider.notifier).loadWorkDetails(workId);

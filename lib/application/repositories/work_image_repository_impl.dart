@@ -137,12 +137,34 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
       'orderBy': 'indexInWork ASC',
     });
 
-    AppLogger.debug('获取作品图片列表', tag: 'WorkImageRepository', data: {
+    AppLogger.info('获取作品图片列表', tag: 'WorkImageRepository', data: {
       'workId': workId,
       'count': results.length,
+      'orderBy': 'indexInWork ASC',
+      'dbResults': results.map((r) => '${r['id']}(${r['indexInWork']})').take(5).toList(),
     });
 
-    return results.map((row) => _mapToWorkImage(row)).toList();
+    final images = results.map((row) => _mapToWorkImage(row)).toList();
+    
+    AppLogger.info('数据库查询结果验证', tag: 'WorkImageRepository', data: {
+      'mappedImages': images.map((img) => '${img.id}(${img.index})').take(5).toList(),
+      'indexSequence': images.map((img) => img.index).toList(),
+      'isSequential': _isSequentialIndex(images),
+    });
+
+    return images;
+  }
+
+  /// 检查索引是否是连续的
+  bool _isSequentialIndex(List<WorkImage> images) {
+    if (images.isEmpty) return true;
+    
+    for (int i = 0; i < images.length; i++) {
+      if (images[i].index != i) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @override
@@ -175,14 +197,17 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
 
   @override
   Future<List<WorkImage>> saveMany(List<WorkImage> images) async {
-    AppLogger.debug('批量保存图片', tag: 'WorkImageRepository', data: {
+    AppLogger.info('批量保存图片到数据库', tag: 'WorkImageRepository', data: {
       'count': images.length,
+      'imageOrder': images.map((img) => '${img.id}(${img.index})').take(5).toList(),
       'times': images
           .map((img) => {
                 'id': img.id,
+                'index': img.index,
                 'createTime': DateTimeHelper.toStorageFormat(img.createTime),
                 'updateTime': DateTimeHelper.toStorageFormat(img.updateTime),
               })
+          .take(3)
           .toList(),
     });
 
@@ -191,7 +216,25 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     final data = Map.fromEntries(
       images.map((img) => MapEntry(img.id, _mapToRow(img, img.workId))),
     );
+    
+    AppLogger.info('准备写入数据库', tag: 'WorkImageRepository', data: {
+      'dataKeys': data.keys.take(3).toList(),
+      'sampleRow': _sanitizeRowForLogging(data.values.first),
+    });
+    
     await _db.setMany('work_images', data);
+    
+    // 验证保存结果
+    final workId = images.first.workId;
+    final savedImages = await getAllByWorkId(workId);
+    
+    AppLogger.info('数据库保存验证', tag: 'WorkImageRepository', data: {
+      'savedCount': savedImages.length,
+      'savedOrder': savedImages.map((img) => '${img.id}(${img.index})').take(5).toList(),
+      'firstImageId': savedImages.isNotEmpty ? savedImages[0].id : null,
+      'indexCorrect': savedImages.every((img) => img.index >= 0 && img.index < savedImages.length),
+    });
+    
     return images;
   }
 

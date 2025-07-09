@@ -63,8 +63,11 @@ class PathPrivacyHelper {
       return relativePath;
     }
     
+    // 将相对路径中的正斜杠转换为当前平台的路径分隔符
+    final normalizedRelativePath = relativePath.replaceAll('/', path.separator);
+    
     // 组合存储根目录和相对路径
-    return path.join(storageBasePath, relativePath);
+    return path.join(storageBasePath, normalizedRelativePath);
   }
   
   /// 检查路径是否包含隐私信息

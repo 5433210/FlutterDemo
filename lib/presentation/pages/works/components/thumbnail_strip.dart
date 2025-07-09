@@ -115,7 +115,12 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
               HapticFeedback.lightImpact();
             },
             onReorder: (oldIndex, newIndex) {
-              if (oldIndex < newIndex) newIndex--;
+              // 直接传递原始索引，让上层 Provider 统一处理索引调整逻辑
+              AppLogger.debug('ThumbnailStrip onReorder', tag: 'ThumbnailStrip', data: {
+                'oldIndex': oldIndex,
+                'newIndex': newIndex,
+                'totalImages': widget.images.length,
+              });
               widget.onReorder?.call(oldIndex, newIndex);
             },
             proxyDecorator: (child, index, animation) {
