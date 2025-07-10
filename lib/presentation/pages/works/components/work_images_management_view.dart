@@ -141,7 +141,8 @@ class WorkImagesManagementView extends ConsumerWidget {
                   message: l10n.addImage,
                   preferBelow: false,
                   child: IconButton(
-                    onPressed: isProcessing ? null : () => notifier.addImages(context),
+                    onPressed:
+                        isProcessing ? null : () => notifier.addImages(context),
                     icon: const Icon(Icons.add_photo_alternate),
                   ),
                 ),

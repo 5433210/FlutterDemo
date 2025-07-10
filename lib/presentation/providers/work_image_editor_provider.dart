@@ -112,13 +112,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         return;
       }
 
-      AppLogger.info('Selected local files for work editing', tag: 'WorkImageEditor', data: {
-        'fileCount': selectedFiles.length,
-        'willAddToLibrary': true,
-      });
+      AppLogger.info('Selected local files for work editing',
+          tag: 'WorkImageEditor',
+          data: {
+            'fileCount': selectedFiles.length,
+            'willAddToLibrary': true,
+          });
 
       await _processSelectedFiles(selectedFiles, fromLibrary: false);
-
     } catch (e) {
       AppLogger.error('Error in local image selection',
           tag: 'WorkImageEditor', error: e);
@@ -134,12 +135,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
     try {
       state = state.copyWith(isProcessing: true, error: null);
 
-      AppLogger.debug('Starting library image selection', tag: 'WorkImageEditor');
+      AppLogger.debug('Starting library image selection',
+          tag: 'WorkImageEditor');
 
       final selectedItems = await M3LibraryPickerDialog.showMulti(context);
 
       if (selectedItems == null || selectedItems.isEmpty) {
-        AppLogger.debug('User cancelled library selection', tag: 'WorkImageEditor');
+        AppLogger.debug('User cancelled library selection',
+            tag: 'WorkImageEditor');
         state = state.copyWith(isProcessing: false);
         return;
       }
@@ -157,10 +160,12 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         return;
       }
 
-      AppLogger.info('Selected library files for work editing', tag: 'WorkImageEditor', data: {
-        'fileCount': selectedFiles.length,
-        'libraryItemIds': selectedItems.map((item) => item.id).toList(),
-      });
+      AppLogger.info('Selected library files for work editing',
+          tag: 'WorkImageEditor',
+          data: {
+            'fileCount': selectedFiles.length,
+            'libraryItemIds': selectedItems.map((item) => item.id).toList(),
+          });
 
       // Create library item ID mapping
       final libraryItemIds = <String, String>{};
@@ -168,8 +173,8 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         libraryItemIds[selectedFiles[i].path] = selectedItems[i].id;
       }
 
-      await _processSelectedFiles(selectedFiles, fromLibrary: true, libraryItemIds: libraryItemIds);
-
+      await _processSelectedFiles(selectedFiles,
+          fromLibrary: true, libraryItemIds: libraryItemIds);
     } catch (e) {
       AppLogger.error('Error in library image selection',
           tag: 'WorkImageEditor', error: e);
@@ -197,30 +202,39 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       final finalLibraryItemIds = libraryItemIds ?? <String, String>{};
 
       if (!fromLibrary) {
-        AppLogger.info('Adding local files to library first', tag: 'WorkImageEditor', data: {
-          'fileCount': selectedFiles.length,
-        });
+        AppLogger.info('Adding local files to library first',
+            tag: 'WorkImageEditor',
+            data: {
+              'fileCount': selectedFiles.length,
+            });
 
         for (int i = 0; i < selectedFiles.length; i++) {
           final file = selectedFiles[i];
           try {
-            AppLogger.debug('Adding file to library', tag: 'WorkImageEditor', data: {
-              'index': i + 1,
-              'total': selectedFiles.length,
-              'filePath': file.path,
-            });
+            AppLogger.debug('Adding file to library',
+                tag: 'WorkImageEditor',
+                data: {
+                  'index': i + 1,
+                  'total': selectedFiles.length,
+                  'filePath': file.path,
+                });
 
-            final libraryItem = await libraryImportService.importFile(file.path);
+            final libraryItem =
+                await libraryImportService.importFile(file.path);
             if (libraryItem != null) {
               finalLibraryItemIds[file.path] = libraryItem.id;
-              AppLogger.debug('File added to library successfully', tag: 'WorkImageEditor', data: {
-                'filePath': file.path,
-                'libraryItemId': libraryItem.id,
-              });
+              AppLogger.debug('File added to library successfully',
+                  tag: 'WorkImageEditor',
+                  data: {
+                    'filePath': file.path,
+                    'libraryItemId': libraryItem.id,
+                  });
             }
           } catch (e) {
             AppLogger.warning('Failed to add file to library, continuing',
-                tag: 'WorkImageEditor', error: e, data: {'filePath': file.path});
+                tag: 'WorkImageEditor',
+                error: e,
+                data: {'filePath': file.path});
             // Continue processing even if library import fails
           }
         }
@@ -238,7 +252,8 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
           }
 
           // Create a unique ID that includes timestamp and counter
-          final imageId = '${DateTime.now().millisecondsSinceEpoch}_$successCount';
+          final imageId =
+              '${DateTime.now().millisecondsSinceEpoch}_$successCount';
           final libraryItemId = finalLibraryItemIds[file.path];
 
           final newImage = WorkImage(
@@ -319,7 +334,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
   /// Show image source selection dialog
   Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    
+
     return await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -329,14 +344,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
           children: [
             ListTile(
               leading: const Icon(Icons.folder),
-              title: Text('从本地文件选择'),
-              subtitle: Text('选择的图片将自动添加到图库'),
+              title: const Text('从本地文件选择'),
+              subtitle: const Text('选择的图片将自动添加到图库'),
               onTap: () => Navigator.of(context).pop(ImageSource.local),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text('从图库选择'),
-              subtitle: Text('选择已存在的图库图片'),
+              title: const Text('从图库选择'),
+              subtitle: const Text('选择已存在的图库图片'),
               onTap: () => Navigator.of(context).pop(ImageSource.library),
             ),
           ],
