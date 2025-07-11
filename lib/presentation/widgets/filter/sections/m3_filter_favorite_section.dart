@@ -21,18 +21,24 @@ class M3FilterFavoriteSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Checkbox(
-          value: isFavoriteOnly,
-          onChanged: (value) => onFavoriteChanged(value ?? false),
+        Text(
+          l10n.favorite,
+          style: Theme.of(context).textTheme.titleSmall,
         ),
-        Flexible(
-          child: Text(
-            l10n.favoritesOnly,
-            overflow: TextOverflow.ellipsis,
-          ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Checkbox(
+              value: isFavoriteOnly,
+              onChanged: (value) => onFavoriteChanged(value ?? false),
+            ),
+            Expanded(
+              child: Text(l10n.favoritesOnly),
+            ),
+          ],
         ),
       ],
     );

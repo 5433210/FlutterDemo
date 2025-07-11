@@ -136,12 +136,9 @@ class _M3PracticeFilterPanelImplState
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: buildFilterSections(context),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: buildFilterSections(context),
                   ),
                 ),
               ],
@@ -464,16 +461,14 @@ class _M3PracticeFilterPanelImplState
 
   Widget _buildSectionCard(BuildContext context, Widget child) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        elevation: 0,
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLowest,
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: child,
-        ),
+        borderRadius: BorderRadius.circular(12.0),
       ),
+      child: child,
     );
   }
 
