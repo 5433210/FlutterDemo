@@ -329,48 +329,48 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
     required VoidCallback onToggle,
     required Widget child,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSizes.spacing16,
-        right: AppSizes.spacing16,
-        bottom: AppSizes.spacing8,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 可展开的标题栏
-          InkWell(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 可展开的标题栏
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.spacing16,
+            vertical: AppSizes.spacing8,
+          ),
+          child: InkWell(
             onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.spacing8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  Icon(
-                    isExpanded ? Icons.expand_more : Icons.chevron_right,
-                    size: 20,
-                  ),
-                ],
-              ),
+                ),
+                Icon(
+                  isExpanded ? Icons.expand_more : Icons.chevron_right,
+                  size: 20,
+                ),
+              ],
             ),
           ),
-          // 内容区域
-          if (isExpanded)
-            Card(
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.spacing8),
-                child: child,
-              ),
+        ),
+        // 内容区域
+        if (isExpanded)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(12.0),
             ),
-        ],
-      ),
+            child: child,
+          ),
+      ],
     );
   }
 
@@ -387,7 +387,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
         }
       }),
       child: M3FilterDateRangeSection(
-        title: isCreationDate ? l10n.createdAt : l10n.updatedAt,
+        title: '',
         filter: isCreationDate ? _creationDateFilter : _updateDateFilter,
         onChanged: (newFilter) {
           if (isCreationDate) {
