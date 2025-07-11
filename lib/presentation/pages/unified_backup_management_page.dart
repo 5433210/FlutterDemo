@@ -160,7 +160,7 @@ class _UnifiedBackupManagementPageState
             Text(l10n.noBackupPaths,
                 style: const TextStyle(fontSize: 18, color: Colors.grey)),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
+            OutlinedButton.icon(
               icon: const Icon(Icons.backup),
               label: Text(l10n.createFirstBackup),
               onPressed: () => _createBackup(),
@@ -227,7 +227,7 @@ class _UnifiedBackupManagementPageState
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     icon: const Icon(Icons.backup),
                     label: Text(l10n.createBackup),
                     onPressed: _createBackup,
@@ -235,7 +235,7 @@ class _UnifiedBackupManagementPageState
                 ),
                 const SizedBox(width: AppSizes.p8),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     icon: const Icon(Icons.upload_file),
                     label: Text(l10n.importBackup),
                     onPressed: _importBackup,
@@ -490,7 +490,7 @@ class _UnifiedBackupManagementPageState
             onPressed: () => Navigator.of(context).pop(null),
             child: Text(l10n.cancel),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
             child: Text(l10n.create),
           ),
@@ -872,11 +872,13 @@ class _UnifiedBackupManagementPageState
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(l10n.cancel),
           ),
-          ElevatedButton(
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(l10n.confirmRestoreButton,
-                style: const TextStyle(color: Colors.white)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.orange),
+              foregroundColor: Colors.orange,
+            ),
+            child: Text(l10n.confirmRestoreButton),
           ),
         ],
       ),
@@ -1063,11 +1065,13 @@ class _UnifiedBackupManagementPageState
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(l10n.cancel),
           ),
-          ElevatedButton(
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            child: Text(l10n.confirmImportButton,
-                style: const TextStyle(color: Colors.white)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.blue),
+              foregroundColor: Colors.blue,
+            ),
+            child: Text(l10n.confirmImportButton),
           ),
         ],
       ),

@@ -165,7 +165,7 @@ class _BackupLocationSettingsState extends State<BackupLocationSettings> {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: _selectNewBackupPath,
                 icon: const Icon(Icons.folder_open),
                 label: Text(
