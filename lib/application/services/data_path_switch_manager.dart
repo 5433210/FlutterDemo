@@ -1,0 +1,505 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../domain/models/backup_models.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../l10n/app_localizations.dart';
+import 'backup_registry_manager.dart';
+
+/// 数据路径切换管理器
+class DataPathSwitchManager {
+  static const String _dataPathKey = 'current_data_path';
+  static const String _legacyDataPathsKey = 'legacy_data_paths';
+
+  /// 检查数据路径切换前的建议
+  static Future<BackupRecommendation> checkPreSwitchRecommendations(
+      BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      // 1. 检查是否已设置备份路径
+      final backupPath = await BackupRegistryManager.getCurrentBackupPath();
+
+      if (backupPath == null) {
+        return BackupRecommendation(
+          needsBackupPath: true,
+          recommendBackup: true,
+          reason: l10n.noBackupPathSetRecommendCreateBackup,
+        );
+      }
+
+      // 2. 检查最近备份时间
+      final lastBackupTime = await _getLastBackupTime();
+      final now = DateTime.now();
+
+      if (lastBackupTime == null) {
+        return BackupRecommendation(
+          needsBackupPath: false,
+          recommendBackup: true,
+          reason: l10n.noBackupExistsRecommendCreate,
+        );
+      }
+
+      if (now.difference(lastBackupTime).inHours > 24) {
+        return BackupRecommendation(
+          needsBackupPath: false,
+          recommendBackup: true,
+          reason: l10n.oldBackupRecommendCreateNew,
+        );
+      }
+
+      return BackupRecommendation(
+        needsBackupPath: false,
+        recommendBackup: false,
+        reason: l10n.recentBackupCanSwitch,
+      );
+    } catch (e, stack) {
+      AppLogger.error('检查数据路径切换建议失败',
+          error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
+
+      return BackupRecommendation(
+        needsBackupPath: true,
+        recommendBackup: true,
+        reason: l10n.checkFailedRecommendBackup,
+      );
+    }
+  }
+
+  /// 显示备份建议对话框
+  static Future<BackupChoice> showBackupRecommendationDialog(
+    BuildContext context,
+    BackupRecommendation recommendation,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<BackupChoice>(
+          context: context,
+          barrierDismissible: true, // 允许点击外部关闭
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.blue),
+                const SizedBox(width: 8),
+                Text(l10n.dataSafetySuggestions),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.safetyTip,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(recommendation.reason),
+                const SizedBox(height: 8),
+                Text(l10n.backupEnsuresDataSafety),
+                Text(l10n.quickRecoveryOnIssues),
+                Text(l10n.canChooseDirectSwitch),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, BackupChoice.cancel),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(context, BackupChoice.skipBackup),
+                child: Text(l10n.directSwitch),
+              ),
+              ElevatedButton(
+                onPressed: () =>
+                    Navigator.pop(context, BackupChoice.createBackup),
+                child: Text(l10n.backupFirst),
+              ),
+            ],
+          ),
+        ) ??
+        BackupChoice.cancel;
+  }
+
+  /// 显示数据路径切换确认对话框
+  static Future<bool> showDataPathSwitchConfirmDialog(
+    BuildContext context,
+    String newPath,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.confirmDataPathSwitch),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.newDataPath),
+                const SizedBox(height: 8),
+                Text(
+                  newPath,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Text(l10n.notesTitle),
+                Text(l10n.oldDataNotAutoDeleted),
+                Text(l10n.canManuallyCleanLater),
+                Text(l10n.confirmDataNormalBeforeClean),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.confirmSwitch),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  /// 执行数据路径切换
+  static Future<void> performDataPathSwitch(
+      String newPath, BuildContext context) async {
+    try {
+      AppLogger.info('开始数据路径切换', tag: 'DataPathSwitchManager', data: {
+        'newPath': newPath,
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      final oldPath = prefs.getString(_dataPathKey);
+
+      // 1. 记录旧数据路径
+      if (oldPath != null && oldPath != newPath) {
+        await _recordLegacyDataPath(oldPath, context);
+      }
+
+      // 2. 设置新数据路径
+      await prefs.setString(_dataPathKey, newPath);
+
+      // 3. 确保新路径存在
+      final newDirectory = Directory(newPath);
+      if (!await newDirectory.exists()) {
+        await newDirectory.create(recursive: true);
+      }
+
+      AppLogger.info('数据路径切换完成', tag: 'DataPathSwitchManager', data: {
+        'oldPath': oldPath,
+        'newPath': newPath,
+      });
+    } catch (e, stack) {
+      AppLogger.error('数据路径切换失败',
+          error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
+      rethrow;
+    }
+  }
+
+  /// 获取当前数据路径
+  static Future<String?> getCurrentDataPath() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_dataPathKey);
+    } catch (e, stack) {
+      AppLogger.error('获取当前数据路径失败',
+          error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
+      return null;
+    }
+  }
+
+  /// 记录旧数据路径
+  static Future<void> _recordLegacyDataPath(
+      String oldPath, BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final legacyPathsJson = prefs.getStringList(_legacyDataPathsKey) ?? [];
+
+      // 计算目录大小
+      final sizeEstimate = await _calculateDirectorySize(oldPath);
+
+      // 生成唯一ID
+      final id = 'legacy_${DateTime.now().millisecondsSinceEpoch}';
+
+      final legacyPath = LegacyDataPath(
+        id: id,
+        path: oldPath,
+        switchedTime: DateTime.now(),
+        sizeEstimate: sizeEstimate,
+        status: 'pending_cleanup',
+        description: l10n.legacyDataPathDescription,
+      );
+
+      legacyPathsJson.add(legacyPath.toJson().toString());
+      await prefs.setStringList(_legacyDataPathsKey, legacyPathsJson);
+
+      AppLogger.info('记录旧数据路径', tag: 'DataPathSwitchManager', data: {
+        'oldPath': oldPath,
+        'sizeEstimate': sizeEstimate,
+      });
+    } catch (e, stack) {
+      AppLogger.error('记录旧数据路径失败',
+          error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
+    }
+  }
+
+  /// 获取最后备份时间
+  static Future<DateTime?> _getLastBackupTime() async {
+    try {
+      final backups = await BackupRegistryManager.getAllBackups();
+      if (backups.isEmpty) return null;
+
+      return backups
+          .map((backup) => backup.createdTime)
+          .reduce((a, b) => a.isAfter(b) ? a : b);
+    } catch (e) {
+      AppLogger.warning('获取最后备份时间失败', error: e, tag: 'DataPathSwitchManager');
+      return null;
+    }
+  }
+
+  /// 计算目录大小
+  static Future<int> _calculateDirectorySize(String path) async {
+    try {
+      final directory = Directory(path);
+      if (!await directory.exists()) return 0;
+
+      int totalSize = 0;
+      await for (final entity in directory.list(recursive: true)) {
+        if (entity is File) {
+          try {
+            final size = await entity.length();
+            totalSize += size;
+          } catch (e) {
+            // 忽略无法访问的文件
+          }
+        }
+      }
+      return totalSize;
+    } catch (e) {
+      AppLogger.warning('计算目录大小失败', error: e, tag: 'DataPathSwitchManager');
+      return 0;
+    }
+  }
+
+  /// 验证路径有效性
+  static Future<bool> validatePath(String path) async {
+    try {
+      final directory = Directory(path);
+
+      // 检查路径是否存在或可以创建
+      if (!await directory.exists()) {
+        try {
+          await directory.create(recursive: true);
+          // 创建成功后删除测试目录
+          await directory.delete();
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // 检查是否有写入权限
+      final testFile = File('$path${Platform.pathSeparator}test_write.tmp');
+      try {
+        await testFile.writeAsString('test');
+        await testFile.delete();
+        return true;
+      } catch (e) {
+        return false;
+      }
+    } catch (e) {
+      AppLogger.warning('验证路径有效性失败', error: e, tag: 'DataPathSwitchManager');
+      return false;
+    }
+  }
+
+  /// 获取路径可用空间
+  static Future<int> getAvailableSpace(String path) async {
+    try {
+      final directory = Directory(path);
+      // 检查目录是否存在
+      if (!await directory.exists()) {
+        return 0;
+      }
+
+      // 这里需要根据平台实现获取可用空间
+      // 暂时返回0，实际实现需要使用平台特定的API
+      return 0;
+    } catch (e) {
+      AppLogger.warning('获取路径可用空间失败', error: e, tag: 'DataPathSwitchManager');
+      return 0;
+    }
+  }
+
+  /// 显示数据路径切换确认对话框（包含合并选项）
+  static Future<PathSwitchOptions?> showAdvancedDataPathSwitchDialog(
+    BuildContext context,
+    String newPath,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<PathSwitchOptions>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.swap_horiz, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(l10n.dataPathSwitchOptions),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.newDataPath),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                newPath,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.dataMergeOptions,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            _PathSwitchOptionsWidget(),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              const options = PathSwitchOptions(
+                mergeBackupData: true,
+                migrateFiles: false,
+              );
+              Navigator.pop(context, options);
+            },
+            child: Text(l10n.mergeOnlyBackupInfo),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              const options = PathSwitchOptions(
+                mergeBackupData: true,
+                migrateFiles: true,
+              );
+              Navigator.pop(context, options);
+            },
+            child: Text(l10n.mergeAndMigrateFiles),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 执行高级数据路径切换
+  static Future<void> executeAdvancedPathSwitch(
+    String newPath,
+    PathSwitchOptions options,
+  ) async {
+    try {
+      await BackupRegistryManager.switchBackupPathWithOptions(
+        newPath,
+        mergeHistoryBackups: options.mergeBackupData,
+        migrateFiles: options.migrateFiles,
+      );
+    } catch (e, stack) {
+      AppLogger.error('执行高级路径切换失败',
+          error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
+      rethrow;
+    }
+  }
+}
+
+/// 路径切换选项
+class PathSwitchOptions {
+  /// 是否合并备份数据
+  final bool mergeBackupData;
+
+  /// 是否迁移文件
+  final bool migrateFiles;
+
+  const PathSwitchOptions({
+    required this.mergeBackupData,
+    required this.migrateFiles,
+  });
+}
+
+/// 路径切换选项 Widget
+class _PathSwitchOptionsWidget extends StatefulWidget {
+  @override
+  _PathSwitchOptionsWidgetState createState() =>
+      _PathSwitchOptionsWidgetState();
+}
+
+class _PathSwitchOptionsWidgetState extends State<_PathSwitchOptionsWidget> {
+  bool _mergeBackupData = true;
+  bool _migrateFiles = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      children: [
+        CheckboxListTile(
+          title: Text(l10n.mergeBackupInfo),
+          subtitle: Text(l10n.mergeBackupInfoDesc),
+          value: _mergeBackupData,
+          onChanged: (value) {
+            setState(() {
+              _mergeBackupData = value ?? true;
+            });
+          },
+        ),
+        CheckboxListTile(
+          title: Text(l10n.migrateBackupFiles),
+          subtitle: Text(l10n.migrateBackupFilesDesc),
+          value: _migrateFiles,
+          onChanged: (value) {
+            setState(() {
+              _migrateFiles = value ?? false;
+            });
+          },
+        ),
+        if (!_migrateFiles)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.orange, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.fileMigrationWarning,
+                    style: const TextStyle(fontSize: 12, color: Colors.orange),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}

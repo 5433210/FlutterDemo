@@ -237,6 +237,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupRecommendationDescription => 'For data safety, it\'s recommended to manually create a backup before importing';
 
   @override
+  String backupCount(int count) {
+    return '$count backups';
+  }
+
+  @override
   String get goToBackup => 'Go to Backup';
 
   @override
@@ -2949,6 +2954,209 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitBranch => 'Git Branch';
 
   @override
+  String get currentPath => 'Current Path';
+
+  @override
+  String get historicalPaths => 'Historical Paths';
+
+  @override
+  String backupCountFormat(Object count) {
+    return '$count backups';
+  }
+
+  @override
+  String get deletePathButton => 'Delete Path';
+
+  @override
+  String get exportAllBackupsButton => 'Export All Backups';
+
+  @override
+  String get noBackupFilesInPathMessage => 'No backup files in this path';
+
+  @override
+  String get importToCurrentPathButton => 'Import to Current Path';
+
+  @override
+  String get backupDescriptionInputLabel => 'Backup Description';
+
+  @override
+  String get backupDescriptionInputExample => 'e.g., Backup before version update';
+
+  @override
+  String get creatingBackupProgressMessage => 'Creating backup...';
+
+  @override
+  String get creatingBackupPleaseWaitMessage => 'This may take a few minutes, please be patient';
+
+  @override
+  String createBackupFailedMessage(Object error) {
+    return 'Failed to create backup: $error';
+  }
+
+  @override
+  String get selectBackupFileToImportDialog => 'Select backup file to import';
+
+  @override
+  String get importingBackupProgressMessage => 'Importing backup...';
+
+  @override
+  String get pleaseWaitMessage => 'Please wait';
+
+  @override
+  String importBackupFailedMessage(Object error) {
+    return 'Failed to import backup: $error';
+  }
+
+  @override
+  String get backupImportSuccessMessage => 'Backup imported successfully';
+
+  @override
+  String cleanupCompletedMessage(Object count) {
+    return 'Cleanup completed, removed $count invalid paths';
+  }
+
+  @override
+  String cleanupFailedMessage(Object error) {
+    return 'Cleanup failed: $error';
+  }
+
+  @override
+  String get dangerousOperationConfirmTitle => 'Dangerous Operation Confirmation';
+
+  @override
+  String deletePathConfirmContent(Object path) {
+    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove this path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
+  }
+
+  @override
+  String get confirmDeleteButton => 'Confirm Delete';
+
+  @override
+  String get backupPathDeletedMessage => 'Backup path has been deleted';
+
+  @override
+  String deleteFailedMessage(Object error) {
+    return 'Delete failed: $error';
+  }
+
+  @override
+  String get noBackupFilesToExportMessage => 'No backup files to export in this path';
+
+  @override
+  String get selectExportLocationDialog => 'Select export location';
+
+  @override
+  String exportingBackupsProgressFormat(Object count) {
+    return 'Exporting $count backups...';
+  }
+
+  @override
+  String exportCompletedFormat(Object failedMessage, Object successCount) {
+    return 'Export completed: $successCount successful$failedMessage';
+  }
+
+  @override
+  String exportFailedPartFormat(Object failCount) {
+    return ', $failCount failed';
+  }
+
+  @override
+  String get viewExportResultsButton => 'View';
+
+  @override
+  String batchExportFailedMessage(Object error) {
+    return 'Batch export failed: $error';
+  }
+
+  @override
+  String get confirmRestoreTitle => 'Confirm Restore';
+
+  @override
+  String get confirmRestoreMessage => 'Are you sure you want to restore this backup?';
+
+  @override
+  String backupFileLabel(Object filename) {
+    return 'Backup: $filename';
+  }
+
+  @override
+  String backupDescriptionLabel(Object description) {
+    return 'Description: $description';
+  }
+
+  @override
+  String backupTimeLabel(Object time) {
+    return 'Time: $time';
+  }
+
+  @override
+  String get restoreWarningMessage => 'Warning: Current data will be overwritten by backup data. This operation cannot be undone!';
+
+  @override
+  String get appWillRestartMessage => 'Application will restart automatically after restore.';
+
+  @override
+  String get confirmRestoreButton => 'Confirm Restore';
+
+  @override
+  String get restoringBackupMessage => 'Restoring backup...';
+
+  @override
+  String get doNotCloseAppMessage => 'Do not close the application';
+
+  @override
+  String get backupRestoreSuccessMessage => 'Backup restored successfully, please restart the app to complete the restore';
+
+  @override
+  String backupRestoreFailedMessage(Object error) {
+    return 'Failed to restore backup: $error';
+  }
+
+  @override
+  String get exportingBackupMessage => 'Exporting backup...';
+
+  @override
+  String exportSuccessMessage(Object path) {
+    return 'Export successful: $path';
+  }
+
+  @override
+  String exportBackupFailedMessage(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get importToCurrentPathTitle => 'Import to Current Path';
+
+  @override
+  String get importToCurrentPathMessage => 'Are you sure you want to import this backup to the current backup path?';
+
+  @override
+  String get importToCurrentPathDescription => 'This will copy the backup file to the current path, original file remains unchanged.';
+
+  @override
+  String get confirmImportButton => 'Confirm Import';
+
+  @override
+  String get importingToCurrentPathMessage => 'Importing backup to current path...';
+
+  @override
+  String get importToCurrentPathSuccessMessage => 'Backup successfully imported to current path';
+
+  @override
+  String get currentBackupPathNotSet => 'Current backup path not set';
+
+  @override
+  String sourceBackupFileNotFound(Object path) {
+    return '源备份文件不存在: $path';
+  }
+
+  @override
+  String backupFileNotFound(Object path) {
+    return '备份文件不存在: $path';
+  }
+
+  @override
   String get platformInfo => 'Platform Info';
 
   @override
@@ -3158,4 +3366,690 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pathValidationFailedGeneric => 'Path validation failed. Please check if the path is valid';
+
+  @override
+  String get dataPathManagement => 'Data Path Management';
+
+  @override
+  String get currentStorageInfo => 'Current Storage Info';
+
+  @override
+  String get dataPathSettingsSubtitle => 'Configure application data storage location';
+
+  @override
+  String get dataPathManagementSubtitle => 'Manage current and historical data paths';
+
+  @override
+  String get currentStorageInfoSubtitle => 'View current storage space usage';
+
+  @override
+  String get customPath => 'Custom Path';
+
+  @override
+  String get defaultPath => 'Default Path';
+
+  @override
+  String get gettingPathInfo => 'Getting path info...';
+
+  @override
+  String get pathConfigError => 'Path configuration error';
+
+  @override
+  String get totalSize => 'Total Size';
+
+  @override
+  String get statisticsInProgress => 'Calculating...';
+
+  @override
+  String get cannotGetStorageInfo => 'Cannot get storage info';
+
+  @override
+  String get currentStorageInfoTitle => 'Current Storage Info';
+
+  @override
+  String get databaseSize => 'Database Size';
+
+  @override
+  String get backups => 'Backups';
+
+  @override
+  String get gettingStorageInfo => 'Getting storage info...';
+
+  @override
+  String get getStorageInfoFailed => 'Failed to get storage info';
+
+  @override
+  String get backupPathSettings => 'Backup Path Settings';
+
+  @override
+  String get backupManagement => 'Backup Management';
+
+  @override
+  String get backupPathSettingsSubtitle => 'Configure and manage backup storage paths';
+
+  @override
+  String get backupManagementSubtitle => 'Create, restore, import, export and manage all backup files';
+
+  @override
+  String get backupNotAvailable => 'Backup Management Unavailable';
+
+  @override
+  String get backupNotAvailableMessage => 'Backup management requires database support.\n\nPossible reasons:\n• Database is initializing\n• Database initialization failed\n• Application is starting up\n\nPlease try again later or restart the app.';
+
+  @override
+  String get openBackupManagementFailed => 'Failed to open backup management';
+
+  @override
+  String get library => 'Library';
+
+  @override
+  String get countUnit => '';
+
+  @override
+  String get dataPathManagementTitle => 'Data Path Management';
+
+  @override
+  String get currentDataPath => 'Current Data Path';
+
+  @override
+  String get browsePath => 'Browse Path';
+
+  @override
+  String get pathSettings => 'Path Settings';
+
+  @override
+  String get historyDataPaths => 'Historical Data Paths';
+
+  @override
+  String get pathInfo => 'Path Info';
+
+  @override
+  String get lastUsed => 'Last Used';
+
+  @override
+  String get pathSize => 'Path Size';
+
+  @override
+  String get pathInvalid => 'Path Invalid';
+
+  @override
+  String get deletePath => 'Delete Path';
+
+  @override
+  String get noHistoryPaths => 'No Historical Paths';
+
+  @override
+  String get noHistoryPathsDescription => 'No other data paths have been used yet';
+
+  @override
+  String get getPathInfoFailed => 'Failed to get path information';
+
+  @override
+  String get openPathSwitchWizardFailed => 'Failed to open data path switch wizard';
+
+  @override
+  String get dataPathSwitchWizard => 'Data Path Switch Wizard';
+
+  @override
+  String get dataBackup => 'Data Backup';
+
+  @override
+  String get selectNewPath => 'Select New Path';
+
+  @override
+  String get confirmSwitch => 'Confirm Switch';
+
+  @override
+  String get dataSafetySuggestion => 'Data Safety Suggestion';
+
+  @override
+  String get safetyBackupRecommendation => 'To ensure data safety, it\'s recommended to create a backup before switching data path:';
+
+  @override
+  String get startBackup => 'Start Backup';
+
+  @override
+  String get skipBackup => 'Skip Backup';
+
+  @override
+  String get backupCompleted => '✓ Backup Completed';
+
+  @override
+  String get backupCreatedSuccessfully => 'Backup created successfully, you can safely proceed with path switching';
+
+  @override
+  String get selectNewDataPath => 'Select new data storage path:';
+
+  @override
+  String get selectPath => 'Select Path';
+
+  @override
+  String get selectedPath => 'Selected Path:';
+
+  @override
+  String get noticeTitle => 'Notice';
+
+  @override
+  String get recommendSufficientSpace => 'Choose a disk with sufficient free space';
+
+  @override
+  String get ensureReadWritePermission => 'Ensure the new path has read/write permissions';
+
+  @override
+  String get oldDataNotDeleted => 'Old data will not be automatically deleted after path switching';
+
+  @override
+  String get confirmSwitchToNewPath => 'Confirm switching to new data path';
+
+  @override
+  String get newDataPath => 'New data path:';
+
+  @override
+  String get importantReminder => 'Important Reminder';
+
+  @override
+  String get oldDataWillNotBeDeleted => 'After switching, data in old path will not be automatically deleted';
+
+  @override
+  String get canCleanupLaterViaManagement => 'You can clean up old data later via Data Path Management';
+
+  @override
+  String get recommendConfirmBeforeCleanup => 'Recommend confirming new path data is normal before cleaning up old path';
+
+  @override
+  String get operationCannotBeUndone => 'This operation cannot be undone, please confirm carefully';
+
+  @override
+  String get confirmSwitchButton => 'Confirm Switch';
+
+  @override
+  String get processingPleaseWait => 'Processing, please wait...';
+
+  @override
+  String get previousStep => 'Previous';
+
+  @override
+  String get nextStep => 'Next';
+
+  @override
+  String get exitWizard => 'Exit Wizard';
+
+  @override
+  String get confirmExitWizard => 'Are you sure you want to exit the data path switch wizard?';
+
+  @override
+  String get exitConfirm => 'Exit';
+
+  @override
+  String get switchSuccessful => 'Switch Successful';
+
+  @override
+  String get pathSwitchCompletedMessage => 'Data path switch completed!\\n\\nYou can view and clean up old path data in Data Path Management.';
+
+  @override
+  String get pathSwitchFailed => 'Path Switch Failed';
+
+  @override
+  String get backupServiceInitializing => 'Backup service is initializing, please wait and try again';
+
+  @override
+  String get backupServiceNotReady => 'Backup service is temporarily unavailable';
+
+  @override
+  String get suggestRestartOrWait => 'Suggestion: Restart the app or wait for service initialization to complete';
+
+  @override
+  String get backupPathNotSet => 'Backup path not set';
+
+  @override
+  String get suggestConfigureBackupPath => 'Suggestion: Configure backup path in settings first';
+
+  @override
+  String get backupCreationFailed => 'Backup Creation Failed';
+
+  @override
+  String get skipBackupConfirm => 'Skip Backup';
+
+  @override
+  String get skipBackupWarning => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
+
+  @override
+  String get confirmSkip => 'Confirm Skip';
+
+  @override
+  String get dataSafetyRecommendation => 'Data Safety Recommendation';
+
+  @override
+  String get backupBeforeSwitchRecommendation => 'To ensure data safety, we recommend creating a backup before switching data paths:';
+
+  @override
+  String get backupSuccessCanSwitchPath => 'Backup created successfully, it\'s safe to proceed with path switching';
+
+  @override
+  String get selectPathButton => 'Select Path';
+
+  @override
+  String get selectSufficientSpaceDisk => 'Recommend choosing a disk with sufficient free space';
+
+  @override
+  String get oldDataNotAutoDeleted => 'Old data will not be automatically deleted after path switching';
+
+  @override
+  String get oldPathDataNotAutoDeleted => 'Old path data will not be automatically deleted after switching';
+
+  @override
+  String get canCleanOldDataLater => 'You can clean up old data later through \"Data Path Management\"';
+
+  @override
+  String get recommendConfirmNewDataBeforeClean => 'Recommend confirming new path data is normal before cleaning old path';
+
+  @override
+  String get operationCannotUndo => 'This operation cannot be undone, please confirm carefully';
+
+  @override
+  String get checkBackupRecommendationFailed => 'Failed to check backup recommendation';
+
+  @override
+  String get safetyBackupBeforePathSwitch => 'Safety backup before data path switching';
+
+  @override
+  String get createBackupFailed => 'Create backup failed';
+
+  @override
+  String get backupServiceNotAvailable => 'Backup service is temporarily unavailable';
+
+  @override
+  String get suggestRestartOrWaitService => 'Suggestion: Restart the app or wait for service initialization';
+
+  @override
+  String get backupPathNotSetUp => 'Backup path is not set up';
+
+  @override
+  String get suggestConfigureBackupPathFirst => 'Suggestion: Configure backup path in settings first';
+
+  @override
+  String get detailedError => 'Detailed error';
+
+  @override
+  String get retryAction => 'Retry';
+
+  @override
+  String get skipBackupWarningMessage => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
+
+  @override
+  String get confirmSkipAction => 'Confirm Skip';
+
+  @override
+  String get selectNewDataPathDialog => 'Select new data storage path';
+
+  @override
+  String get pathSwitchCompleted => 'Data path switching completed!\\n\\nYou can view and clean up old path data in \"Data Path Management\".';
+
+  @override
+  String get pathSwitchFailedMessage => 'Path switching failed';
+
+  @override
+  String get loadPathInfoFailed => 'Failed to load path information';
+
+  @override
+  String get getHistoryPathsFailed => 'Failed to get history paths';
+
+  @override
+  String get cannotReadPathContent => 'Cannot read path content';
+
+  @override
+  String get analyzePathInfoFailed => 'Failed to analyze path information';
+
+  @override
+  String get cannotReadPathFileInfo => 'Cannot read path file information';
+
+  @override
+  String get getPathUsageTimeFailed => 'Failed to get path usage time';
+
+  @override
+  String get defaultPathName => 'Default Path';
+
+  @override
+  String get useDefaultPath => 'Use default path';
+
+  @override
+  String get validPath => 'Valid path';
+
+  @override
+  String get lastUsedTime => 'Last used';
+
+  @override
+  String get statusLabel => 'Status';
+
+  @override
+  String get statusAvailable => 'Available';
+
+  @override
+  String get statusUnavailable => 'Unavailable';
+
+  @override
+  String get monthsAgo => 'months ago';
+
+  @override
+  String get daysAgo => 'days ago';
+
+  @override
+  String get hoursAgo => 'hours ago';
+
+  @override
+  String get justNow => 'just now';
+
+  @override
+  String get pathNotExists => 'Path does not exist';
+
+  @override
+  String get openPathFailed => 'Failed to open path';
+
+  @override
+  String get backupLocationSettings => 'Backup Location Settings';
+
+  @override
+  String get loadBackupRegistryFailed => 'Failed to load backup registry';
+
+  @override
+  String get loadCurrentBackupPathFailed => 'Failed to load current backup path';
+
+  @override
+  String get selectBackupStorageLocation => 'Select backup storage location';
+
+  @override
+  String get backupPathSetSuccessfully => 'Backup path set successfully';
+
+  @override
+  String get setBackupPathFailed => 'Failed to set backup path';
+
+  @override
+  String get backupStorageLocation => 'Backup Storage Location';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get changePath => 'Change Path';
+
+  @override
+  String get backupStatistics => 'Backup Statistics';
+
+  @override
+  String get totalBackups => 'Total Backups';
+
+  @override
+  String get currentLocation => 'Current Location';
+
+  @override
+  String get historyLocation => 'History Location';
+
+  @override
+  String get lastBackup => 'Last Backup';
+
+  @override
+  String get usageInstructions => 'Usage Instructions';
+
+  @override
+  String get backupLocationTips => '• Recommend choosing a disk with sufficient free space as backup location\\n• Backup location can be external storage devices (like external hard drives)\\n• After changing backup location, all backup information will be managed uniformly\\n• Historical backup files will not be moved automatically, but can be viewed in backup management';
+
+  @override
+  String get selectNewDataPathTitle => 'Select new data storage path';
+
+  @override
+  String get noBackupPathSetRecommendCreateBackup => 'No backup path set, recommend setting backup path and creating backup first';
+
+  @override
+  String get noBackupExistsRecommendCreate => 'No backup exists yet, recommend creating backup first to ensure data safety';
+
+  @override
+  String get oldBackupRecommendCreateNew => 'Last backup is over 24 hours old, recommend creating new backup';
+
+  @override
+  String get recentBackupCanSwitch => 'Recent backup exists, safe to switch directly';
+
+  @override
+  String get checkFailedRecommendBackup => 'Check failed, recommend creating backup first to ensure data safety';
+
+  @override
+  String get dataSafetySuggestions => 'Data Safety Suggestions';
+
+  @override
+  String get safetyTip => '💡 Safety Tips:';
+
+  @override
+  String get backupEnsuresDataSafety => '• Backup ensures data safety';
+
+  @override
+  String get quickRecoveryOnIssues => '• Quick recovery if issues occur during switching';
+
+  @override
+  String get canChooseDirectSwitch => '• You can also choose to switch directly';
+
+  @override
+  String get directSwitch => 'Switch Directly';
+
+  @override
+  String get backupFirst => 'Backup First';
+
+  @override
+  String get confirmDataPathSwitch => 'Confirm Data Path Switch';
+
+  @override
+  String get notesTitle => 'Notes:';
+
+  @override
+  String get canManuallyCleanLater => '• You can manually clean up old path data later';
+
+  @override
+  String get confirmDataNormalBeforeClean => '• Recommend confirming data is normal before cleaning old path';
+
+  @override
+  String get dataPathSwitchOptions => 'Data Path Switch Options';
+
+  @override
+  String get dataMergeOptions => 'Data Merge Options:';
+
+  @override
+  String get mergeOnlyBackupInfo => 'Merge Backup Info Only';
+
+  @override
+  String get mergeAndMigrateFiles => 'Merge and Migrate Files';
+
+  @override
+  String get mergeBackupInfo => 'Merge Backup Info';
+
+  @override
+  String get mergeBackupInfoDesc => 'Merge old path backup info into new path registry';
+
+  @override
+  String get migrateBackupFiles => 'Migrate Backup Files';
+
+  @override
+  String get migrateBackupFilesDesc => 'Copy old path backup files to new path (recommended)';
+
+  @override
+  String get fileMigrationWarning => 'When not migrating files, old path backup files remain in original location';
+
+  @override
+  String get legacyDataPathDescription => 'Legacy data path pending cleanup';
+
+  @override
+  String get noBackupPaths => 'No backup paths';
+
+  @override
+  String get createFirstBackup => 'Create first backup';
+
+  @override
+  String get backupOverview => 'Backup Overview';
+
+  @override
+  String get historyPath => 'History Path';
+
+  @override
+  String get backupsCount => 'backups';
+
+  @override
+  String get exportAllBackups => 'Export All Backups';
+
+  @override
+  String get importToCurrentPath => 'Import to Current Path';
+
+  @override
+  String get noBackupFilesInPath => 'No backup files in this path';
+
+  @override
+  String get enterBackupDescription => 'Enter backup description (optional):';
+
+  @override
+  String get importingBackup => 'Importing backup...';
+
+  @override
+  String get backupImportedSuccessfully => 'Backup imported successfully';
+
+  @override
+  String get importBackupFailed => 'Failed to import backup';
+
+  @override
+  String cleanupCompleted(Object count) {
+    return 'Cleanup completed, removed $count invalid paths';
+  }
+
+  @override
+  String get cleanupFailed => 'Cleanup failed';
+
+  @override
+  String get dangerousOperationConfirm => 'Dangerous Operation Confirmation';
+
+  @override
+  String confirmDeleteBackupPath(Object path) {
+    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove the path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
+  }
+
+  @override
+  String get backupPathDeleted => 'Backup path deleted';
+
+  @override
+  String get noBackupFilesToExport => 'No backup files to export in this path';
+
+  @override
+  String exportingBackups(Object count) {
+    return 'Exporting $count backups...';
+  }
+
+  @override
+  String exportCompleted(Object failed, Object success) {
+    return 'Export completed: $success successful$failed';
+  }
+
+  @override
+  String failedCount(Object count) {
+    return ', $count failed';
+  }
+
+  @override
+  String get batchExportFailed => 'Batch export failed';
+
+  @override
+  String get confirmRestoreBackup => 'Are you sure you want to restore this backup?';
+
+  @override
+  String get warningOverwriteData => 'Warning: This will overwrite all current data!';
+
+  @override
+  String get appWillRestartAfterRestore => 'The app will restart automatically after restore.';
+
+  @override
+  String get confirmRestoreAction => 'Confirm Restore';
+
+  @override
+  String get backupRestoredSuccessfully => 'Backup restored successfully, please restart the app to complete restoration';
+
+  @override
+  String get restoreBackupFailed => 'Failed to restore backup';
+
+  @override
+  String backupExportedSuccessfully(Object filename) {
+    return 'Backup exported successfully: $filename';
+  }
+
+  @override
+  String get exportBackupFailed => 'Failed to export backup';
+
+  @override
+  String get importToCurrentPathDesc => 'This will copy the backup file to current path, original file remains unchanged.';
+
+  @override
+  String get confirmImportAction => 'Confirm Import';
+
+  @override
+  String get importingToCurrentPath => 'Importing to current path...';
+
+  @override
+  String get backupImportedToCurrentPath => 'Backup imported to current path';
+
+  @override
+  String get importToCurrentPathFailed => 'Failed to import backup to current path';
+
+  @override
+  String get confirmDeleteTitle => 'Confirm Delete';
+
+  @override
+  String confirmDeleteBackup(String filename, String description) {
+    return 'Are you sure you want to delete this backup?\\n\\nBackup: $filename\\nDescription: $description\\n\\nThis operation cannot be undone!';
+  }
+
+  @override
+  String get confirmDeleteAction => 'Confirm Delete';
+
+  @override
+  String get backupDeletedSuccessfully => 'Backup deleted successfully';
+
+  @override
+  String get deleteBackupFailed => 'Failed to delete backup';
+
+  @override
+  String get loadDataFailed => 'Failed to load data';
+
+  @override
+  String get backupServiceNotInitialized => 'Backup service not initialized';
+
+  @override
+  String get cleanupInvalidPaths => 'Cleanup Invalid Paths';
+
+  @override
+  String get viewAction => 'View';
+
+  @override
+  String get importedSuffix => '(Imported)';
+
+  @override
+  String get backupLabel => 'Backup';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get timeLabel => 'Time';
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get scannedBackupFileDescription => 'Scanned backup file';
+
+  @override
+  String get pathAnalysis => 'Path Analysis';
+
+  @override
+  String get deleteHistoryPathRecord => 'Delete History Path Record';
+
+  @override
+  String get confirmDeleteHistoryPath => 'Are you sure you want to delete this history path record?';
+
+  @override
+  String get deleteHistoryPathNote => 'Note: This will only delete the record, not the actual folder and data.';
+
+  @override
+  String get historyPathDeleted => 'History path record deleted';
 }

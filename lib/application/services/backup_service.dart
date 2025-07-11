@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../infrastructure/logging/logger.dart';
-import '../../infrastructure/persistence/database_interface.dart';
 import '../../infrastructure/storage/storage_interface.dart';
 
 /// 备份信息
@@ -89,7 +88,6 @@ class BackupInfo {
 /// 备份服务
 class BackupService {
   final IStorage _storage;
-  final DatabaseInterface _database;
 
   /// 备份目录路径
   late final String _backupDir;
@@ -97,9 +95,7 @@ class BackupService {
   /// 构造函数
   BackupService({
     required IStorage storage,
-    required DatabaseInterface database,
-  })  : _storage = storage,
-        _database = database {
+  }) : _storage = storage {
     _backupDir = p.join(_storage.getAppDataPath(), 'backups');
   }
 
@@ -1132,7 +1128,8 @@ class BackupService {
       AppLogger.info('备份兼容性检查通过', tag: 'BackupService');
     } catch (e, stack) {
       if (e.toString().contains('不支持') || e.toString().contains('无法恢复')) {
-        AppLogger.error('备份兼容性检查失败', error: e, tag: 'BackupService');
+        AppLogger.error('备份兼容性检查失败',
+            error: e, stackTrace: stack, tag: 'BackupService');
         rethrow;
       } else {
         AppLogger.warning('备份兼容性检查出现问题，但继续恢复', tag: 'BackupService', data: {
@@ -1285,10 +1282,7 @@ class BackupService {
           tag: 'BackupService',
           data: {'markerPath': restoreMarkerPath, 'restoreInfo': restoreInfo});
 
-      // 关闭数据库连接
-      await _database.close();
-
-      // 等待一段时间，确保数据库连接完全关闭
+      // 等待一段时间，确保文件操作完成
       await Future.delayed(const Duration(milliseconds: 500));
 
       // 复制备份数据库文件到待恢复位置
@@ -1310,10 +1304,7 @@ class BackupService {
         'originalSize': dbBackupFile.lengthSync()
       });
 
-      // 重新打开数据库
-      await _database.initialize();
-
-      // 通知用户需要重启应用
+      // 通知用户需要重启应用以完成数据库恢复
       throw NeedsRestartException('数据库恢复需要重启应用');
     } catch (e, stack) {
       if (e is NeedsRestartException) {
@@ -1323,12 +1314,6 @@ class BackupService {
 
       AppLogger.error('恢复数据库失败',
           error: e, stackTrace: stack, tag: 'BackupService');
-      // 尝试重新打开数据库
-      try {
-        await _database.initialize();
-      } catch (openError) {
-        AppLogger.error('重新打开数据库失败', error: openError, tag: 'BackupService');
-      }
       rethrow;
     }
   }

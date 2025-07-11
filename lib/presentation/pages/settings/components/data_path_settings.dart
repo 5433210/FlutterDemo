@@ -10,6 +10,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../../utils/app_restart_service.dart';
 import '../../../widgets/settings/settings_section.dart';
+import '../../data_path_switch_wizard.dart';
+import './data_path_management_page.dart';
 
 /// 数据路径设置组件
 class DataPathSettings extends ConsumerWidget {
@@ -48,6 +50,36 @@ class DataPathSettings extends ConsumerWidget {
             ),
             onTap: () => _showDataPathDialog(context),
           ),
+          // 数据路径切换向导入口
+          ListTile(
+            title: const Text('数据路径切换向导'),
+            subtitle: const Text('安全地切换到新的数据存储路径'),
+            leading: Icon(
+              Icons.swap_horiz,
+              color: colorScheme.primary,
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            onTap: () => _showDataPathSwitchWizard(context),
+          ),
+          // 数据路径管理入口
+          ListTile(
+            title: const Text('数据路径管理'),
+            subtitle: const Text('管理当前和历史数据路径'),
+            leading: Icon(
+              Icons.settings_applications,
+              color: colorScheme.primary,
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            onTap: () => _showDataPathManagement(context),
+          ),
         ],
       ],
     );
@@ -58,6 +90,24 @@ class DataPathSettings extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => const _DataPathConfigDialog(),
+    );
+  }
+
+  /// 显示数据路径切换向导
+  void _showDataPathSwitchWizard(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const DataPathSwitchWizard(),
+      ),
+    );
+  }
+
+  /// 显示数据路径管理页面
+  void _showDataPathManagement(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const DataPathManagementPage(),
+      ),
     );
   }
 }

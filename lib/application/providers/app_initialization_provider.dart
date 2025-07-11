@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/app_initialization_service.dart';
 import 'data_path_provider.dart';
+import 'import_export_providers.dart';
 
 /// 应用初始化Provider
 /// 管理应用启动时的初始化状态
@@ -24,6 +25,9 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
 
     // 确保实际数据路径加载
     await ref.watch(actualDataPathProvider.future);
+
+    // 确保ServiceLocator初始化（这会注册所有必要的服务，包括EnhancedBackupService）
+    await ref.watch(serviceLocatorProvider.future);
 
     return AppInitializationResult.success();
   } catch (e) {

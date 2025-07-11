@@ -63,3 +63,8 @@ final workRepositoryProvider = Provider<WorkRepository>((ref) {
 DatabaseInterface _getInitializedDatabase(Ref ref) {
   return ref.watch(initializedDatabaseProvider);
 }
+
+/// 公共访问数据库的Provider
+final databaseProvider = Provider<DatabaseInterface>((ref) {
+  return ref.watch(initializedDatabaseProvider);
+});

@@ -8,10 +8,9 @@ import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
 import 'components/cache_settings.dart';
 import 'components/configuration_settings.dart';
-import 'components/data_path_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
-import 'components/storage_settings.dart';
+import 'components/unified_storage_settings.dart';
 
 /// Material 3 version of the settings page
 class M3SettingsPage extends ConsumerWidget {
@@ -50,9 +49,7 @@ class M3SettingsPage extends ConsumerWidget {
           Divider(),
           ConfigurationSettings(),
           Divider(),
-          DataPathSettings(),
-          Divider(),
-          StorageSettings(),
+          UnifiedStorageSettings(),
           Divider(),
           BackupSettings(),
           Divider(),

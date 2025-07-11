@@ -539,6 +539,12 @@ abstract class AppLocalizations {
   /// **'为确保数据安全，建议在导入前手动创建备份'**
   String get backupRecommendationDescription;
 
+  /// 显示备份数量的文本
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个备份'**
+  String backupCount(int count);
+
   /// No description provided for @goToBackup.
   ///
   /// In zh, this message translates to:
@@ -5723,6 +5729,336 @@ abstract class AppLocalizations {
   /// **'Git分支'**
   String get gitBranch;
 
+  /// No description provided for @currentPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前路径'**
+  String get currentPath;
+
+  /// No description provided for @historicalPaths.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史路径'**
+  String get historicalPaths;
+
+  /// No description provided for @backupCountFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个备份'**
+  String backupCountFormat(Object count);
+
+  /// No description provided for @deletePathButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除路径'**
+  String get deletePathButton;
+
+  /// No description provided for @exportAllBackupsButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出所有备份'**
+  String get exportAllBackupsButton;
+
+  /// No description provided for @noBackupFilesInPathMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'此路径下没有备份文件'**
+  String get noBackupFilesInPathMessage;
+
+  /// No description provided for @importToCurrentPathButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入到当前路径'**
+  String get importToCurrentPathButton;
+
+  /// No description provided for @backupDescriptionInputLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份描述'**
+  String get backupDescriptionInputLabel;
+
+  /// No description provided for @backupDescriptionInputExample.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：版本更新前的备份'**
+  String get backupDescriptionInputExample;
+
+  /// No description provided for @creatingBackupProgressMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在创建备份...'**
+  String get creatingBackupProgressMessage;
+
+  /// No description provided for @creatingBackupPleaseWaitMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'这可能需要几分钟时间，请耐心等待'**
+  String get creatingBackupPleaseWaitMessage;
+
+  /// No description provided for @createBackupFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建备份失败: {error}'**
+  String createBackupFailedMessage(Object error);
+
+  /// No description provided for @selectBackupFileToImportDialog.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择要导入的备份文件'**
+  String get selectBackupFileToImportDialog;
+
+  /// No description provided for @importingBackupProgressMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入备份...'**
+  String get importingBackupProgressMessage;
+
+  /// No description provided for @pleaseWaitMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'请稍候'**
+  String get pleaseWaitMessage;
+
+  /// No description provided for @importBackupFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入备份失败: {error}'**
+  String importBackupFailedMessage(Object error);
+
+  /// No description provided for @backupImportSuccessMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份导入成功'**
+  String get backupImportSuccessMessage;
+
+  /// No description provided for @cleanupCompletedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理完成，移除了 {count} 个无效路径'**
+  String cleanupCompletedMessage(Object count);
+
+  /// No description provided for @cleanupFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理失败: {error}'**
+  String cleanupFailedMessage(Object error);
+
+  /// No description provided for @dangerousOperationConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'危险操作确认'**
+  String get dangerousOperationConfirmTitle;
+
+  /// No description provided for @deletePathConfirmContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除整个备份路径吗？\\n\\n路径：{path}\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！'**
+  String deletePathConfirmContent(Object path);
+
+  /// No description provided for @confirmDeleteButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除'**
+  String get confirmDeleteButton;
+
+  /// No description provided for @backupPathDeletedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份路径已删除'**
+  String get backupPathDeletedMessage;
+
+  /// No description provided for @deleteFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除失败: {error}'**
+  String deleteFailedMessage(Object error);
+
+  /// No description provided for @noBackupFilesToExportMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'此路径下没有备份文件可导出'**
+  String get noBackupFilesToExportMessage;
+
+  /// No description provided for @selectExportLocationDialog.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择导出位置'**
+  String get selectExportLocationDialog;
+
+  /// No description provided for @exportingBackupsProgressFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出 {count} 个备份...'**
+  String exportingBackupsProgressFormat(Object count);
+
+  /// No description provided for @exportCompletedFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出完成: 成功 {successCount} 个{failedMessage}'**
+  String exportCompletedFormat(Object failedMessage, Object successCount);
+
+  /// No description provided for @exportFailedPartFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'，失败 {failCount} 个'**
+  String exportFailedPartFormat(Object failCount);
+
+  /// No description provided for @viewExportResultsButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看'**
+  String get viewExportResultsButton;
+
+  /// No description provided for @batchExportFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'批量导出失败: {error}'**
+  String batchExportFailedMessage(Object error);
+
+  /// No description provided for @confirmRestoreTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认恢复'**
+  String get confirmRestoreTitle;
+
+  /// No description provided for @confirmRestoreMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要恢复这个备份吗？'**
+  String get confirmRestoreMessage;
+
+  /// No description provided for @backupFileLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份：{filename}'**
+  String backupFileLabel(Object filename);
+
+  /// No description provided for @backupDescriptionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'描述：{description}'**
+  String backupDescriptionLabel(Object description);
+
+  /// No description provided for @backupTimeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间：{time}'**
+  String backupTimeLabel(Object time);
+
+  /// No description provided for @restoreWarningMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意：当前数据将被备份数据覆盖，此操作不可撤销！'**
+  String get restoreWarningMessage;
+
+  /// No description provided for @appWillRestartMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复后应用将自动重启。'**
+  String get appWillRestartMessage;
+
+  /// No description provided for @confirmRestoreButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定恢复'**
+  String get confirmRestoreButton;
+
+  /// No description provided for @restoringBackupMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在恢复备份...'**
+  String get restoringBackupMessage;
+
+  /// No description provided for @doNotCloseAppMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'请勿关闭应用'**
+  String get doNotCloseAppMessage;
+
+  /// No description provided for @backupRestoreSuccessMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份恢复成功，请重启应用以完成恢复'**
+  String get backupRestoreSuccessMessage;
+
+  /// No description provided for @backupRestoreFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复备份失败: {error}'**
+  String backupRestoreFailedMessage(Object error);
+
+  /// No description provided for @exportingBackupMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出备份...'**
+  String get exportingBackupMessage;
+
+  /// No description provided for @exportSuccessMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出成功: {path}'**
+  String exportSuccessMessage(Object path);
+
+  /// No description provided for @exportBackupFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败: {error}'**
+  String exportBackupFailedMessage(Object error);
+
+  /// No description provided for @importToCurrentPathTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入到当前路径'**
+  String get importToCurrentPathTitle;
+
+  /// No description provided for @importToCurrentPathMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要将此备份导入到当前备份路径吗？'**
+  String get importToCurrentPathMessage;
+
+  /// No description provided for @importToCurrentPathDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'这将复制备份文件到当前路径，原文件保持不变。'**
+  String get importToCurrentPathDescription;
+
+  /// No description provided for @confirmImportButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定导入'**
+  String get confirmImportButton;
+
+  /// No description provided for @importingToCurrentPathMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入备份到当前路径...'**
+  String get importingToCurrentPathMessage;
+
+  /// No description provided for @importToCurrentPathSuccessMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份已成功导入到当前路径'**
+  String get importToCurrentPathSuccessMessage;
+
+  /// No description provided for @currentBackupPathNotSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前备份路径未设置'**
+  String get currentBackupPathNotSet;
+
+  /// No description provided for @sourceBackupFileNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'源备份文件不存在: {path}'**
+  String sourceBackupFileNotFound(Object path);
+
+  /// No description provided for @backupFileNotFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件不存在: {path}'**
+  String backupFileNotFound(Object path);
+
   /// No description provided for @platformInfo.
   ///
   /// In zh, this message translates to:
@@ -6100,6 +6436,1350 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'路径验证失败，请检查路径是否有效'**
   String get pathValidationFailedGeneric;
+
+  /// No description provided for @dataPathManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径管理'**
+  String get dataPathManagement;
+
+  /// No description provided for @currentStorageInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前存储信息'**
+  String get currentStorageInfo;
+
+  /// No description provided for @dataPathSettingsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置应用数据的存储位置'**
+  String get dataPathSettingsSubtitle;
+
+  /// No description provided for @dataPathManagementSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理当前和历史数据路径'**
+  String get dataPathManagementSubtitle;
+
+  /// No description provided for @currentStorageInfoSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看当前存储空间使用情况'**
+  String get currentStorageInfoSubtitle;
+
+  /// No description provided for @customPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义路径'**
+  String get customPath;
+
+  /// No description provided for @defaultPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认路径'**
+  String get defaultPath;
+
+  /// No description provided for @gettingPathInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'获取路径信息中...'**
+  String get gettingPathInfo;
+
+  /// No description provided for @pathConfigError.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径配置错误'**
+  String get pathConfigError;
+
+  /// No description provided for @totalSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'总大小'**
+  String get totalSize;
+
+  /// No description provided for @statisticsInProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'统计中...'**
+  String get statisticsInProgress;
+
+  /// No description provided for @cannotGetStorageInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法获取存储信息'**
+  String get cannotGetStorageInfo;
+
+  /// No description provided for @currentStorageInfoTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前存储信息'**
+  String get currentStorageInfoTitle;
+
+  /// No description provided for @databaseSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据库大小'**
+  String get databaseSize;
+
+  /// No description provided for @backups.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份'**
+  String get backups;
+
+  /// No description provided for @gettingStorageInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在获取存储信息...'**
+  String get gettingStorageInfo;
+
+  /// No description provided for @getStorageInfoFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'获取存储信息失败'**
+  String get getStorageInfoFailed;
+
+  /// No description provided for @backupPathSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份路径设置'**
+  String get backupPathSettings;
+
+  /// No description provided for @backupManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份管理'**
+  String get backupManagement;
+
+  /// No description provided for @backupPathSettingsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置和管理备份存储路径'**
+  String get backupPathSettingsSubtitle;
+
+  /// No description provided for @backupManagementSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建、恢复、导入、导出和管理所有备份文件'**
+  String get backupManagementSubtitle;
+
+  /// No description provided for @backupNotAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份管理暂不可用'**
+  String get backupNotAvailable;
+
+  /// No description provided for @backupNotAvailableMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份管理功能需要数据库支持。\n\n可能的原因：\n• 数据库正在初始化中\n• 数据库初始化失败\n• 应用正在启动中\n\n请稍后再试，或重启应用。'**
+  String get backupNotAvailableMessage;
+
+  /// No description provided for @openBackupManagementFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开备份管理失败'**
+  String get openBackupManagementFailed;
+
+  /// No description provided for @library.
+  ///
+  /// In zh, this message translates to:
+  /// **'图库'**
+  String get library;
+
+  /// No description provided for @countUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'个'**
+  String get countUnit;
+
+  /// No description provided for @dataPathManagementTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径管理'**
+  String get dataPathManagementTitle;
+
+  /// No description provided for @currentDataPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前数据路径'**
+  String get currentDataPath;
+
+  /// No description provided for @browsePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'浏览路径'**
+  String get browsePath;
+
+  /// No description provided for @pathSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径设置'**
+  String get pathSettings;
+
+  /// No description provided for @historyDataPaths.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史数据路径'**
+  String get historyDataPaths;
+
+  /// No description provided for @pathInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径信息'**
+  String get pathInfo;
+
+  /// No description provided for @lastUsed.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后使用'**
+  String get lastUsed;
+
+  /// No description provided for @pathSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径大小'**
+  String get pathSize;
+
+  /// No description provided for @pathInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径无效'**
+  String get pathInvalid;
+
+  /// No description provided for @deletePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除路径'**
+  String get deletePath;
+
+  /// No description provided for @noHistoryPaths.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有历史路径'**
+  String get noHistoryPaths;
+
+  /// No description provided for @noHistoryPathsDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未使用过其他数据路径'**
+  String get noHistoryPathsDescription;
+
+  /// No description provided for @getPathInfoFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法获取路径信息'**
+  String get getPathInfoFailed;
+
+  /// No description provided for @openPathSwitchWizardFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开数据路径切换向导失败'**
+  String get openPathSwitchWizardFailed;
+
+  /// No description provided for @dataPathSwitchWizard.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径切换向导'**
+  String get dataPathSwitchWizard;
+
+  /// No description provided for @dataBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据备份'**
+  String get dataBackup;
+
+  /// No description provided for @selectNewPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择新路径'**
+  String get selectNewPath;
+
+  /// No description provided for @confirmSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认切换'**
+  String get confirmSwitch;
+
+  /// No description provided for @dataSafetySuggestion.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据安全建议'**
+  String get dataSafetySuggestion;
+
+  /// No description provided for @safetyBackupRecommendation.
+  ///
+  /// In zh, this message translates to:
+  /// **'为了确保数据安全，建议在切换数据路径前先创建备份：'**
+  String get safetyBackupRecommendation;
+
+  /// No description provided for @startBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始备份'**
+  String get startBackup;
+
+  /// No description provided for @skipBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过备份'**
+  String get skipBackup;
+
+  /// No description provided for @backupCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'✓ 备份已完成'**
+  String get backupCompleted;
+
+  /// No description provided for @backupCreatedSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份创建成功，可以安全进行路径切换'**
+  String get backupCreatedSuccessfully;
+
+  /// No description provided for @selectNewDataPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择新的数据存储路径：'**
+  String get selectNewDataPath;
+
+  /// No description provided for @selectPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择路径'**
+  String get selectPath;
+
+  /// No description provided for @selectedPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择的路径：'**
+  String get selectedPath;
+
+  /// No description provided for @noticeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意事项'**
+  String get noticeTitle;
+
+  /// No description provided for @recommendSufficientSpace.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议选择剩余空间充足的磁盘'**
+  String get recommendSufficientSpace;
+
+  /// No description provided for @ensureReadWritePermission.
+  ///
+  /// In zh, this message translates to:
+  /// **'确保新路径有读写权限'**
+  String get ensureReadWritePermission;
+
+  /// No description provided for @oldDataNotDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径切换后，旧数据不会自动删除'**
+  String get oldDataNotDeleted;
+
+  /// No description provided for @confirmSwitchToNewPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认切换到新的数据路径'**
+  String get confirmSwitchToNewPath;
+
+  /// No description provided for @newDataPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'新的数据路径：'**
+  String get newDataPath;
+
+  /// No description provided for @importantReminder.
+  ///
+  /// In zh, this message translates to:
+  /// **'重要提醒'**
+  String get importantReminder;
+
+  /// No description provided for @oldDataWillNotBeDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换后，旧路径的数据不会自动删除'**
+  String get oldDataWillNotBeDeleted;
+
+  /// No description provided for @canCleanupLaterViaManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'您可以稍后通过数据路径管理清理旧数据'**
+  String get canCleanupLaterViaManagement;
+
+  /// No description provided for @recommendConfirmBeforeCleanup.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议确认新路径数据正常后再清理旧路径'**
+  String get recommendConfirmBeforeCleanup;
+
+  /// No description provided for @operationCannotBeUndone.
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作无法撤销，请谨慎确认'**
+  String get operationCannotBeUndone;
+
+  /// No description provided for @confirmSwitchButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认切换'**
+  String get confirmSwitchButton;
+
+  /// No description provided for @processingPleaseWait.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在处理中，请稍候...'**
+  String get processingPleaseWait;
+
+  /// No description provided for @previousStep.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一步'**
+  String get previousStep;
+
+  /// No description provided for @nextStep.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一步'**
+  String get nextStep;
+
+  /// No description provided for @exitWizard.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出向导'**
+  String get exitWizard;
+
+  /// No description provided for @confirmExitWizard.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要退出数据路径切换向导吗？'**
+  String get confirmExitWizard;
+
+  /// No description provided for @exitConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出'**
+  String get exitConfirm;
+
+  /// No description provided for @switchSuccessful.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换成功'**
+  String get switchSuccessful;
+
+  /// No description provided for @pathSwitchCompletedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径切换完成！\\n\\n您可以在数据路径管理中查看和清理旧路径的数据。'**
+  String get pathSwitchCompletedMessage;
+
+  /// No description provided for @pathSwitchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径切换失败'**
+  String get pathSwitchFailed;
+
+  /// No description provided for @backupServiceInitializing.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份服务正在初始化中，请稍等片刻后重试'**
+  String get backupServiceInitializing;
+
+  /// No description provided for @backupServiceNotReady.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份服务暂时不可用'**
+  String get backupServiceNotReady;
+
+  /// No description provided for @suggestRestartOrWait.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议：重启应用或等待服务初始化完成后重试'**
+  String get suggestRestartOrWait;
+
+  /// No description provided for @backupPathNotSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未设置备份路径'**
+  String get backupPathNotSet;
+
+  /// No description provided for @suggestConfigureBackupPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议：先在设置中配置备份路径'**
+  String get suggestConfigureBackupPath;
+
+  /// No description provided for @backupCreationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份创建失败'**
+  String get backupCreationFailed;
+
+  /// No description provided for @skipBackupConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过备份'**
+  String get skipBackupConfirm;
+
+  /// No description provided for @skipBackupWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。'**
+  String get skipBackupWarning;
+
+  /// No description provided for @confirmSkip.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定跳过'**
+  String get confirmSkip;
+
+  /// No description provided for @dataSafetyRecommendation.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据安全建议'**
+  String get dataSafetyRecommendation;
+
+  /// No description provided for @backupBeforeSwitchRecommendation.
+  ///
+  /// In zh, this message translates to:
+  /// **'为了确保数据安全，建议在切换数据路径前先创建备份：'**
+  String get backupBeforeSwitchRecommendation;
+
+  /// No description provided for @backupSuccessCanSwitchPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份创建成功，可以安全进行路径切换'**
+  String get backupSuccessCanSwitchPath;
+
+  /// No description provided for @selectPathButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择路径'**
+  String get selectPathButton;
+
+  /// No description provided for @selectSufficientSpaceDisk.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议选择剩余空间充足的磁盘'**
+  String get selectSufficientSpaceDisk;
+
+  /// No description provided for @oldDataNotAutoDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径切换后，旧数据不会自动删除'**
+  String get oldDataNotAutoDeleted;
+
+  /// No description provided for @oldPathDataNotAutoDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换后，旧路径的数据不会自动删除'**
+  String get oldPathDataNotAutoDeleted;
+
+  /// No description provided for @canCleanOldDataLater.
+  ///
+  /// In zh, this message translates to:
+  /// **'您可以稍后通过\"数据路径管理\"清理旧数据'**
+  String get canCleanOldDataLater;
+
+  /// No description provided for @recommendConfirmNewDataBeforeClean.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议确认新路径数据正常后再清理旧路径'**
+  String get recommendConfirmNewDataBeforeClean;
+
+  /// No description provided for @operationCannotUndo.
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作无法撤销，请谨慎确认'**
+  String get operationCannotUndo;
+
+  /// No description provided for @checkBackupRecommendationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查备份建议失败'**
+  String get checkBackupRecommendationFailed;
+
+  /// No description provided for @safetyBackupBeforePathSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径切换前的安全备份'**
+  String get safetyBackupBeforePathSwitch;
+
+  /// No description provided for @createBackupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建备份失败'**
+  String get createBackupFailed;
+
+  /// No description provided for @backupServiceNotAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份服务暂时不可用'**
+  String get backupServiceNotAvailable;
+
+  /// No description provided for @suggestRestartOrWaitService.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议：重启应用或等待服务初始化完成后重试'**
+  String get suggestRestartOrWaitService;
+
+  /// No description provided for @backupPathNotSetUp.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未设置备份路径'**
+  String get backupPathNotSetUp;
+
+  /// No description provided for @suggestConfigureBackupPathFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议：先在设置中配置备份路径'**
+  String get suggestConfigureBackupPathFirst;
+
+  /// No description provided for @detailedError.
+  ///
+  /// In zh, this message translates to:
+  /// **'详细错误'**
+  String get detailedError;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get retryAction;
+
+  /// No description provided for @skipBackupWarningMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。'**
+  String get skipBackupWarningMessage;
+
+  /// No description provided for @confirmSkipAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定跳过'**
+  String get confirmSkipAction;
+
+  /// No description provided for @selectNewDataPathDialog.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择新的数据存储路径'**
+  String get selectNewDataPathDialog;
+
+  /// No description provided for @pathSwitchCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径切换完成！\\n\\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。'**
+  String get pathSwitchCompleted;
+
+  /// No description provided for @pathSwitchFailedMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径切换失败'**
+  String get pathSwitchFailedMessage;
+
+  /// No description provided for @loadPathInfoFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载路径信息失败'**
+  String get loadPathInfoFailed;
+
+  /// No description provided for @getHistoryPathsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'获取历史路径失败'**
+  String get getHistoryPathsFailed;
+
+  /// No description provided for @cannotReadPathContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取路径内容'**
+  String get cannotReadPathContent;
+
+  /// No description provided for @analyzePathInfoFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'分析路径信息失败'**
+  String get analyzePathInfoFailed;
+
+  /// No description provided for @cannotReadPathFileInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取路径文件信息'**
+  String get cannotReadPathFileInfo;
+
+  /// No description provided for @getPathUsageTimeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'获取路径使用时间失败'**
+  String get getPathUsageTimeFailed;
+
+  /// No description provided for @defaultPathName.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认路径'**
+  String get defaultPathName;
+
+  /// No description provided for @useDefaultPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用默认路径'**
+  String get useDefaultPath;
+
+  /// No description provided for @validPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效路径'**
+  String get validPath;
+
+  /// No description provided for @lastUsedTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'上次使用'**
+  String get lastUsedTime;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get statusLabel;
+
+  /// No description provided for @statusAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'可用'**
+  String get statusAvailable;
+
+  /// No description provided for @statusUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'不可用'**
+  String get statusUnavailable;
+
+  /// No description provided for @monthsAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'个月前'**
+  String get monthsAgo;
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'天前'**
+  String get daysAgo;
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'小时前'**
+  String get hoursAgo;
+
+  /// No description provided for @justNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'刚刚'**
+  String get justNow;
+
+  /// No description provided for @pathNotExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径不存在'**
+  String get pathNotExists;
+
+  /// No description provided for @openPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开路径失败'**
+  String get openPathFailed;
+
+  /// No description provided for @backupLocationSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份位置设置'**
+  String get backupLocationSettings;
+
+  /// No description provided for @loadBackupRegistryFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载备份注册表失败'**
+  String get loadBackupRegistryFailed;
+
+  /// No description provided for @loadCurrentBackupPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载当前备份路径失败'**
+  String get loadCurrentBackupPathFailed;
+
+  /// No description provided for @selectBackupStorageLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择备份存储位置'**
+  String get selectBackupStorageLocation;
+
+  /// No description provided for @backupPathSetSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份路径设置成功'**
+  String get backupPathSetSuccessfully;
+
+  /// No description provided for @setBackupPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置备份路径失败'**
+  String get setBackupPathFailed;
+
+  /// No description provided for @backupStorageLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份存储位置'**
+  String get backupStorageLocation;
+
+  /// No description provided for @notSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置'**
+  String get notSet;
+
+  /// No description provided for @changePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'更换路径'**
+  String get changePath;
+
+  /// No description provided for @backupStatistics.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份统计'**
+  String get backupStatistics;
+
+  /// No description provided for @totalBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'总备份数'**
+  String get totalBackups;
+
+  /// No description provided for @currentLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前位置'**
+  String get currentLocation;
+
+  /// No description provided for @historyLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史位置'**
+  String get historyLocation;
+
+  /// No description provided for @lastBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后备份'**
+  String get lastBackup;
+
+  /// No description provided for @usageInstructions.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用说明'**
+  String get usageInstructions;
+
+  /// No description provided for @backupLocationTips.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 建议选择剩余空间充足的磁盘作为备份位置\\n• 备份位置可以是外部存储设备（如移动硬盘）\\n• 更换备份位置后，所有备份信息将统一管理\\n• 历史备份文件不会自动移动，但可以在备份管理中查看'**
+  String get backupLocationTips;
+
+  /// No description provided for @selectNewDataPathTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择新的数据存储路径'**
+  String get selectNewDataPathTitle;
+
+  /// No description provided for @noBackupPathSetRecommendCreateBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置备份路径，建议先设置备份路径并创建备份'**
+  String get noBackupPathSetRecommendCreateBackup;
+
+  /// No description provided for @noBackupExistsRecommendCreate.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未创建任何备份，建议先创建备份以确保数据安全'**
+  String get noBackupExistsRecommendCreate;
+
+  /// No description provided for @oldBackupRecommendCreateNew.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近备份时间超过24小时，建议创建新备份'**
+  String get oldBackupRecommendCreateNew;
+
+  /// No description provided for @recentBackupCanSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近已有备份，可以直接切换'**
+  String get recentBackupCanSwitch;
+
+  /// No description provided for @checkFailedRecommendBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查失败，建议先创建备份以确保数据安全'**
+  String get checkFailedRecommendBackup;
+
+  /// No description provided for @dataSafetySuggestions.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据安全建议'**
+  String get dataSafetySuggestions;
+
+  /// No description provided for @safetyTip.
+  ///
+  /// In zh, this message translates to:
+  /// **'💡 安全建议：'**
+  String get safetyTip;
+
+  /// No description provided for @backupEnsuresDataSafety.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 备份可以确保数据安全'**
+  String get backupEnsuresDataSafety;
+
+  /// No description provided for @quickRecoveryOnIssues.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 切换过程中如遇问题可快速恢复'**
+  String get quickRecoveryOnIssues;
+
+  /// No description provided for @canChooseDirectSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 您也可以选择直接切换'**
+  String get canChooseDirectSwitch;
+
+  /// No description provided for @directSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接切换'**
+  String get directSwitch;
+
+  /// No description provided for @backupFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'先备份'**
+  String get backupFirst;
+
+  /// No description provided for @confirmDataPathSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认数据路径切换'**
+  String get confirmDataPathSwitch;
+
+  /// No description provided for @notesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意事项：'**
+  String get notesTitle;
+
+  /// No description provided for @canManuallyCleanLater.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 您可以稍后手动清理旧路径的数据'**
+  String get canManuallyCleanLater;
+
+  /// No description provided for @confirmDataNormalBeforeClean.
+  ///
+  /// In zh, this message translates to:
+  /// **'• 建议确认数据正常后再清理旧路径'**
+  String get confirmDataNormalBeforeClean;
+
+  /// No description provided for @dataPathSwitchOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据路径切换选项'**
+  String get dataPathSwitchOptions;
+
+  /// No description provided for @dataMergeOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据合并选项：'**
+  String get dataMergeOptions;
+
+  /// No description provided for @mergeOnlyBackupInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅合并备份信息'**
+  String get mergeOnlyBackupInfo;
+
+  /// No description provided for @mergeAndMigrateFiles.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并并迁移文件'**
+  String get mergeAndMigrateFiles;
+
+  /// No description provided for @mergeBackupInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'合并备份信息'**
+  String get mergeBackupInfo;
+
+  /// No description provided for @mergeBackupInfoDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'将旧路径的备份信息合并到新路径的注册表中'**
+  String get mergeBackupInfoDesc;
+
+  /// No description provided for @migrateBackupFiles.
+  ///
+  /// In zh, this message translates to:
+  /// **'迁移备份文件'**
+  String get migrateBackupFiles;
+
+  /// No description provided for @migrateBackupFilesDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'将旧路径的备份文件复制到新路径（推荐）'**
+  String get migrateBackupFilesDesc;
+
+  /// No description provided for @fileMigrationWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'不迁移文件时，旧路径的备份文件仍保留在原位置'**
+  String get fileMigrationWarning;
+
+  /// No description provided for @legacyDataPathDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要清理的旧数据路径'**
+  String get legacyDataPathDescription;
+
+  /// No description provided for @noBackupPaths.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无备份路径'**
+  String get noBackupPaths;
+
+  /// No description provided for @createFirstBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建第一个备份'**
+  String get createFirstBackup;
+
+  /// No description provided for @backupOverview.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份概览'**
+  String get backupOverview;
+
+  /// No description provided for @historyPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史路径'**
+  String get historyPath;
+
+  /// No description provided for @backupsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'个备份'**
+  String get backupsCount;
+
+  /// No description provided for @exportAllBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出所有备份'**
+  String get exportAllBackups;
+
+  /// No description provided for @importToCurrentPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入到当前路径'**
+  String get importToCurrentPath;
+
+  /// No description provided for @noBackupFilesInPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'此路径下没有备份文件'**
+  String get noBackupFilesInPath;
+
+  /// No description provided for @enterBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入备份描述（可选）：'**
+  String get enterBackupDescription;
+
+  /// No description provided for @importingBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入备份...'**
+  String get importingBackup;
+
+  /// No description provided for @backupImportedSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份导入成功'**
+  String get backupImportedSuccessfully;
+
+  /// No description provided for @importBackupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入备份失败'**
+  String get importBackupFailed;
+
+  /// No description provided for @cleanupCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理完成，移除了 {count} 个无效路径'**
+  String cleanupCompleted(Object count);
+
+  /// No description provided for @cleanupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理失败'**
+  String get cleanupFailed;
+
+  /// No description provided for @dangerousOperationConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'危险操作确认'**
+  String get dangerousOperationConfirm;
+
+  /// No description provided for @confirmDeleteBackupPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除整个备份路径吗？\\n\\n路径：{path}\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！'**
+  String confirmDeleteBackupPath(Object path);
+
+  /// No description provided for @backupPathDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份路径已删除'**
+  String get backupPathDeleted;
+
+  /// No description provided for @noBackupFilesToExport.
+  ///
+  /// In zh, this message translates to:
+  /// **'此路径下没有备份文件可导出'**
+  String get noBackupFilesToExport;
+
+  /// No description provided for @exportingBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出 {count} 个备份...'**
+  String exportingBackups(Object count);
+
+  /// No description provided for @exportCompleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出完成: 成功 {success} 个{failed}'**
+  String exportCompleted(Object failed, Object success);
+
+  /// No description provided for @failedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **', 失败 {count} 个'**
+  String failedCount(Object count);
+
+  /// No description provided for @batchExportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'批量导出失败'**
+  String get batchExportFailed;
+
+  /// No description provided for @confirmRestoreBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要恢复这个备份吗？'**
+  String get confirmRestoreBackup;
+
+  /// No description provided for @warningOverwriteData.
+  ///
+  /// In zh, this message translates to:
+  /// **'警告：这将覆盖当前所有数据！'**
+  String get warningOverwriteData;
+
+  /// No description provided for @appWillRestartAfterRestore.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复后应用将自动重启。'**
+  String get appWillRestartAfterRestore;
+
+  /// No description provided for @confirmRestoreAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定恢复'**
+  String get confirmRestoreAction;
+
+  /// No description provided for @backupRestoredSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份恢复成功，请重启应用以完成恢复'**
+  String get backupRestoredSuccessfully;
+
+  /// No description provided for @restoreBackupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复备份失败'**
+  String get restoreBackupFailed;
+
+  /// No description provided for @backupExportedSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份导出成功: {filename}'**
+  String backupExportedSuccessfully(Object filename);
+
+  /// No description provided for @exportBackupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出备份失败'**
+  String get exportBackupFailed;
+
+  /// No description provided for @importToCurrentPathDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'这将复制备份文件到当前路径，原文件保持不变。'**
+  String get importToCurrentPathDesc;
+
+  /// No description provided for @confirmImportAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定导入'**
+  String get confirmImportAction;
+
+  /// No description provided for @importingToCurrentPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入到当前路径...'**
+  String get importingToCurrentPath;
+
+  /// No description provided for @backupImportedToCurrentPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份已导入到当前路径'**
+  String get backupImportedToCurrentPath;
+
+  /// No description provided for @importToCurrentPathFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入备份到当前路径失败'**
+  String get importToCurrentPathFailed;
+
+  /// No description provided for @confirmDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除'**
+  String get confirmDeleteTitle;
+
+  /// Confirmation message for deleting a backup
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除这个备份吗？\\n\\n备份：{filename}\\n描述：{description}\\n\\n此操作不可恢复！'**
+  String confirmDeleteBackup(String filename, String description);
+
+  /// No description provided for @confirmDeleteAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除'**
+  String get confirmDeleteAction;
+
+  /// No description provided for @backupDeletedSuccessfully.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份删除成功'**
+  String get backupDeletedSuccessfully;
+
+  /// No description provided for @deleteBackupFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除备份失败'**
+  String get deleteBackupFailed;
+
+  /// No description provided for @loadDataFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'加载数据失败'**
+  String get loadDataFailed;
+
+  /// No description provided for @backupServiceNotInitialized.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份服务未初始化'**
+  String get backupServiceNotInitialized;
+
+  /// No description provided for @cleanupInvalidPaths.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理无效路径'**
+  String get cleanupInvalidPaths;
+
+  /// No description provided for @viewAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看'**
+  String get viewAction;
+
+  /// No description provided for @importedSuffix.
+  ///
+  /// In zh, this message translates to:
+  /// **'(导入)'**
+  String get importedSuffix;
+
+  /// No description provided for @backupLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份'**
+  String get backupLabel;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'描述'**
+  String get descriptionLabel;
+
+  /// No description provided for @timeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间'**
+  String get timeLabel;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get cancelAction;
+
+  /// No description provided for @scannedBackupFileDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'扫描发现的备份文件'**
+  String get scannedBackupFileDescription;
+
+  /// No description provided for @pathAnalysis.
+  ///
+  /// In zh, this message translates to:
+  /// **'路径分析'**
+  String get pathAnalysis;
+
+  /// No description provided for @deleteHistoryPathRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除历史路径记录'**
+  String get deleteHistoryPathRecord;
+
+  /// No description provided for @confirmDeleteHistoryPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除此历史路径记录吗？'**
+  String get confirmDeleteHistoryPath;
+
+  /// No description provided for @deleteHistoryPathNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意：这只会删除记录，不会删除实际的文件夹和数据。'**
+  String get deleteHistoryPathNote;
+
+  /// No description provided for @historyPathDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史路径记录已删除'**
+  String get historyPathDeleted;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

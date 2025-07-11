@@ -52,7 +52,7 @@ class AppTheme {
           fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
           fontSize: 20,
           fontWeight: FontWeight.w500,
-          color: Colors.white,
+          color: Colors.white, // 为暗色主题指定白色文字
         ),
       ),
       cardTheme: CardTheme(
@@ -159,6 +159,7 @@ class AppTheme {
           fontFamily: shouldUseChinenseFont ? 'SourceHanSerif' : null,
           fontSize: 20,
           fontWeight: FontWeight.w500,
+          color: Colors.black87, // 为亮色主题指定深色文字
         ),
       ),
       cardTheme: CardTheme(

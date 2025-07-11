@@ -237,6 +237,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupRecommendationDescription => '为确保数据安全，建议在导入前手动创建备份';
 
   @override
+  String backupCount(int count) {
+    return '$count 个备份';
+  }
+
+  @override
   String get goToBackup => '前往备份';
 
   @override
@@ -2949,6 +2954,209 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitBranch => 'Git分支';
 
   @override
+  String get currentPath => '当前路径';
+
+  @override
+  String get historicalPaths => '历史路径';
+
+  @override
+  String backupCountFormat(Object count) {
+    return '$count 个备份';
+  }
+
+  @override
+  String get deletePathButton => '删除路径';
+
+  @override
+  String get exportAllBackupsButton => '导出所有备份';
+
+  @override
+  String get noBackupFilesInPathMessage => '此路径下没有备份文件';
+
+  @override
+  String get importToCurrentPathButton => '导入到当前路径';
+
+  @override
+  String get backupDescriptionInputLabel => '备份描述';
+
+  @override
+  String get backupDescriptionInputExample => '例如：版本更新前的备份';
+
+  @override
+  String get creatingBackupProgressMessage => '正在创建备份...';
+
+  @override
+  String get creatingBackupPleaseWaitMessage => '这可能需要几分钟时间，请耐心等待';
+
+  @override
+  String createBackupFailedMessage(Object error) {
+    return '创建备份失败: $error';
+  }
+
+  @override
+  String get selectBackupFileToImportDialog => '选择要导入的备份文件';
+
+  @override
+  String get importingBackupProgressMessage => '正在导入备份...';
+
+  @override
+  String get pleaseWaitMessage => '请稍候';
+
+  @override
+  String importBackupFailedMessage(Object error) {
+    return '导入备份失败: $error';
+  }
+
+  @override
+  String get backupImportSuccessMessage => '备份导入成功';
+
+  @override
+  String cleanupCompletedMessage(Object count) {
+    return '清理完成，移除了 $count 个无效路径';
+  }
+
+  @override
+  String cleanupFailedMessage(Object error) {
+    return '清理失败: $error';
+  }
+
+  @override
+  String get dangerousOperationConfirmTitle => '危险操作确认';
+
+  @override
+  String deletePathConfirmContent(Object path) {
+    return '确定要删除整个备份路径吗？\\n\\n路径：$path\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！';
+  }
+
+  @override
+  String get confirmDeleteButton => '确定删除';
+
+  @override
+  String get backupPathDeletedMessage => '备份路径已删除';
+
+  @override
+  String deleteFailedMessage(Object error) {
+    return '删除失败: $error';
+  }
+
+  @override
+  String get noBackupFilesToExportMessage => '此路径下没有备份文件可导出';
+
+  @override
+  String get selectExportLocationDialog => '选择导出位置';
+
+  @override
+  String exportingBackupsProgressFormat(Object count) {
+    return '正在导出 $count 个备份...';
+  }
+
+  @override
+  String exportCompletedFormat(Object failedMessage, Object successCount) {
+    return '导出完成: 成功 $successCount 个$failedMessage';
+  }
+
+  @override
+  String exportFailedPartFormat(Object failCount) {
+    return '，失败 $failCount 个';
+  }
+
+  @override
+  String get viewExportResultsButton => '查看';
+
+  @override
+  String batchExportFailedMessage(Object error) {
+    return '批量导出失败: $error';
+  }
+
+  @override
+  String get confirmRestoreTitle => '确认恢复';
+
+  @override
+  String get confirmRestoreMessage => '确定要恢复这个备份吗？';
+
+  @override
+  String backupFileLabel(Object filename) {
+    return '备份：$filename';
+  }
+
+  @override
+  String backupDescriptionLabel(Object description) {
+    return '描述：$description';
+  }
+
+  @override
+  String backupTimeLabel(Object time) {
+    return '时间：$time';
+  }
+
+  @override
+  String get restoreWarningMessage => '注意：当前数据将被备份数据覆盖，此操作不可撤销！';
+
+  @override
+  String get appWillRestartMessage => '恢复后应用将自动重启。';
+
+  @override
+  String get confirmRestoreButton => '确定恢复';
+
+  @override
+  String get restoringBackupMessage => '正在恢复备份...';
+
+  @override
+  String get doNotCloseAppMessage => '请勿关闭应用';
+
+  @override
+  String get backupRestoreSuccessMessage => '备份恢复成功，请重启应用以完成恢复';
+
+  @override
+  String backupRestoreFailedMessage(Object error) {
+    return '恢复备份失败: $error';
+  }
+
+  @override
+  String get exportingBackupMessage => '正在导出备份...';
+
+  @override
+  String exportSuccessMessage(Object path) {
+    return '导出成功: $path';
+  }
+
+  @override
+  String exportBackupFailedMessage(Object error) {
+    return '导出失败: $error';
+  }
+
+  @override
+  String get importToCurrentPathTitle => '导入到当前路径';
+
+  @override
+  String get importToCurrentPathMessage => '确定要将此备份导入到当前备份路径吗？';
+
+  @override
+  String get importToCurrentPathDescription => '这将复制备份文件到当前路径，原文件保持不变。';
+
+  @override
+  String get confirmImportButton => '确定导入';
+
+  @override
+  String get importingToCurrentPathMessage => '正在导入备份到当前路径...';
+
+  @override
+  String get importToCurrentPathSuccessMessage => '备份已成功导入到当前路径';
+
+  @override
+  String get currentBackupPathNotSet => '当前备份路径未设置';
+
+  @override
+  String sourceBackupFileNotFound(Object path) {
+    return '源备份文件不存在: $path';
+  }
+
+  @override
+  String backupFileNotFound(Object path) {
+    return '备份文件不存在: $path';
+  }
+
+  @override
   String get platformInfo => '平台信息';
 
   @override
@@ -3158,4 +3366,690 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pathValidationFailedGeneric => '路径验证失败，请检查路径是否有效';
+
+  @override
+  String get dataPathManagement => '数据路径管理';
+
+  @override
+  String get currentStorageInfo => '当前存储信息';
+
+  @override
+  String get dataPathSettingsSubtitle => '配置应用数据的存储位置';
+
+  @override
+  String get dataPathManagementSubtitle => '管理当前和历史数据路径';
+
+  @override
+  String get currentStorageInfoSubtitle => '查看当前存储空间使用情况';
+
+  @override
+  String get customPath => '自定义路径';
+
+  @override
+  String get defaultPath => '默认路径';
+
+  @override
+  String get gettingPathInfo => '获取路径信息中...';
+
+  @override
+  String get pathConfigError => '路径配置错误';
+
+  @override
+  String get totalSize => '总大小';
+
+  @override
+  String get statisticsInProgress => '统计中...';
+
+  @override
+  String get cannotGetStorageInfo => '无法获取存储信息';
+
+  @override
+  String get currentStorageInfoTitle => '当前存储信息';
+
+  @override
+  String get databaseSize => '数据库大小';
+
+  @override
+  String get backups => '备份';
+
+  @override
+  String get gettingStorageInfo => '正在获取存储信息...';
+
+  @override
+  String get getStorageInfoFailed => '获取存储信息失败';
+
+  @override
+  String get backupPathSettings => '备份路径设置';
+
+  @override
+  String get backupManagement => '备份管理';
+
+  @override
+  String get backupPathSettingsSubtitle => '配置和管理备份存储路径';
+
+  @override
+  String get backupManagementSubtitle => '创建、恢复、导入、导出和管理所有备份文件';
+
+  @override
+  String get backupNotAvailable => '备份管理暂不可用';
+
+  @override
+  String get backupNotAvailableMessage => '备份管理功能需要数据库支持。\n\n可能的原因：\n• 数据库正在初始化中\n• 数据库初始化失败\n• 应用正在启动中\n\n请稍后再试，或重启应用。';
+
+  @override
+  String get openBackupManagementFailed => '打开备份管理失败';
+
+  @override
+  String get library => '图库';
+
+  @override
+  String get countUnit => '个';
+
+  @override
+  String get dataPathManagementTitle => '数据路径管理';
+
+  @override
+  String get currentDataPath => '当前数据路径';
+
+  @override
+  String get browsePath => '浏览路径';
+
+  @override
+  String get pathSettings => '路径设置';
+
+  @override
+  String get historyDataPaths => '历史数据路径';
+
+  @override
+  String get pathInfo => '路径信息';
+
+  @override
+  String get lastUsed => '最后使用';
+
+  @override
+  String get pathSize => '路径大小';
+
+  @override
+  String get pathInvalid => '路径无效';
+
+  @override
+  String get deletePath => '删除路径';
+
+  @override
+  String get noHistoryPaths => '没有历史路径';
+
+  @override
+  String get noHistoryPathsDescription => '尚未使用过其他数据路径';
+
+  @override
+  String get getPathInfoFailed => '无法获取路径信息';
+
+  @override
+  String get openPathSwitchWizardFailed => '打开数据路径切换向导失败';
+
+  @override
+  String get dataPathSwitchWizard => '数据路径切换向导';
+
+  @override
+  String get dataBackup => '数据备份';
+
+  @override
+  String get selectNewPath => '选择新路径';
+
+  @override
+  String get confirmSwitch => '确认切换';
+
+  @override
+  String get dataSafetySuggestion => '数据安全建议';
+
+  @override
+  String get safetyBackupRecommendation => '为了确保数据安全，建议在切换数据路径前先创建备份：';
+
+  @override
+  String get startBackup => '开始备份';
+
+  @override
+  String get skipBackup => '跳过备份';
+
+  @override
+  String get backupCompleted => '✓ 备份已完成';
+
+  @override
+  String get backupCreatedSuccessfully => '备份创建成功，可以安全进行路径切换';
+
+  @override
+  String get selectNewDataPath => '选择新的数据存储路径：';
+
+  @override
+  String get selectPath => '选择路径';
+
+  @override
+  String get selectedPath => '已选择的路径：';
+
+  @override
+  String get noticeTitle => '注意事项';
+
+  @override
+  String get recommendSufficientSpace => '建议选择剩余空间充足的磁盘';
+
+  @override
+  String get ensureReadWritePermission => '确保新路径有读写权限';
+
+  @override
+  String get oldDataNotDeleted => '路径切换后，旧数据不会自动删除';
+
+  @override
+  String get confirmSwitchToNewPath => '确认切换到新的数据路径';
+
+  @override
+  String get newDataPath => '新的数据路径：';
+
+  @override
+  String get importantReminder => '重要提醒';
+
+  @override
+  String get oldDataWillNotBeDeleted => '切换后，旧路径的数据不会自动删除';
+
+  @override
+  String get canCleanupLaterViaManagement => '您可以稍后通过数据路径管理清理旧数据';
+
+  @override
+  String get recommendConfirmBeforeCleanup => '建议确认新路径数据正常后再清理旧路径';
+
+  @override
+  String get operationCannotBeUndone => '此操作无法撤销，请谨慎确认';
+
+  @override
+  String get confirmSwitchButton => '确认切换';
+
+  @override
+  String get processingPleaseWait => '正在处理中，请稍候...';
+
+  @override
+  String get previousStep => '上一步';
+
+  @override
+  String get nextStep => '下一步';
+
+  @override
+  String get exitWizard => '退出向导';
+
+  @override
+  String get confirmExitWizard => '确定要退出数据路径切换向导吗？';
+
+  @override
+  String get exitConfirm => '退出';
+
+  @override
+  String get switchSuccessful => '切换成功';
+
+  @override
+  String get pathSwitchCompletedMessage => '数据路径切换完成！\\n\\n您可以在数据路径管理中查看和清理旧路径的数据。';
+
+  @override
+  String get pathSwitchFailed => '路径切换失败';
+
+  @override
+  String get backupServiceInitializing => '备份服务正在初始化中，请稍等片刻后重试';
+
+  @override
+  String get backupServiceNotReady => '备份服务暂时不可用';
+
+  @override
+  String get suggestRestartOrWait => '建议：重启应用或等待服务初始化完成后重试';
+
+  @override
+  String get backupPathNotSet => '尚未设置备份路径';
+
+  @override
+  String get suggestConfigureBackupPath => '建议：先在设置中配置备份路径';
+
+  @override
+  String get backupCreationFailed => '备份创建失败';
+
+  @override
+  String get skipBackupConfirm => '跳过备份';
+
+  @override
+  String get skipBackupWarning => '确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。';
+
+  @override
+  String get confirmSkip => '确定跳过';
+
+  @override
+  String get dataSafetyRecommendation => '数据安全建议';
+
+  @override
+  String get backupBeforeSwitchRecommendation => '为了确保数据安全，建议在切换数据路径前先创建备份：';
+
+  @override
+  String get backupSuccessCanSwitchPath => '备份创建成功，可以安全进行路径切换';
+
+  @override
+  String get selectPathButton => '选择路径';
+
+  @override
+  String get selectSufficientSpaceDisk => '建议选择剩余空间充足的磁盘';
+
+  @override
+  String get oldDataNotAutoDeleted => '路径切换后，旧数据不会自动删除';
+
+  @override
+  String get oldPathDataNotAutoDeleted => '切换后，旧路径的数据不会自动删除';
+
+  @override
+  String get canCleanOldDataLater => '您可以稍后通过\"数据路径管理\"清理旧数据';
+
+  @override
+  String get recommendConfirmNewDataBeforeClean => '建议确认新路径数据正常后再清理旧路径';
+
+  @override
+  String get operationCannotUndo => '此操作无法撤销，请谨慎确认';
+
+  @override
+  String get checkBackupRecommendationFailed => '检查备份建议失败';
+
+  @override
+  String get safetyBackupBeforePathSwitch => '数据路径切换前的安全备份';
+
+  @override
+  String get createBackupFailed => '创建备份失败';
+
+  @override
+  String get backupServiceNotAvailable => '备份服务暂时不可用';
+
+  @override
+  String get suggestRestartOrWaitService => '建议：重启应用或等待服务初始化完成后重试';
+
+  @override
+  String get backupPathNotSetUp => '尚未设置备份路径';
+
+  @override
+  String get suggestConfigureBackupPathFirst => '建议：先在设置中配置备份路径';
+
+  @override
+  String get detailedError => '详细错误';
+
+  @override
+  String get retryAction => '重试';
+
+  @override
+  String get skipBackupWarningMessage => '确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。';
+
+  @override
+  String get confirmSkipAction => '确定跳过';
+
+  @override
+  String get selectNewDataPathDialog => '选择新的数据存储路径';
+
+  @override
+  String get pathSwitchCompleted => '数据路径切换完成！\\n\\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。';
+
+  @override
+  String get pathSwitchFailedMessage => '路径切换失败';
+
+  @override
+  String get loadPathInfoFailed => '加载路径信息失败';
+
+  @override
+  String get getHistoryPathsFailed => '获取历史路径失败';
+
+  @override
+  String get cannotReadPathContent => '无法读取路径内容';
+
+  @override
+  String get analyzePathInfoFailed => '分析路径信息失败';
+
+  @override
+  String get cannotReadPathFileInfo => '无法读取路径文件信息';
+
+  @override
+  String get getPathUsageTimeFailed => '获取路径使用时间失败';
+
+  @override
+  String get defaultPathName => '默认路径';
+
+  @override
+  String get useDefaultPath => '使用默认路径';
+
+  @override
+  String get validPath => '有效路径';
+
+  @override
+  String get lastUsedTime => '上次使用';
+
+  @override
+  String get statusLabel => '状态';
+
+  @override
+  String get statusAvailable => '可用';
+
+  @override
+  String get statusUnavailable => '不可用';
+
+  @override
+  String get monthsAgo => '个月前';
+
+  @override
+  String get daysAgo => '天前';
+
+  @override
+  String get hoursAgo => '小时前';
+
+  @override
+  String get justNow => '刚刚';
+
+  @override
+  String get pathNotExists => '路径不存在';
+
+  @override
+  String get openPathFailed => '打开路径失败';
+
+  @override
+  String get backupLocationSettings => '备份位置设置';
+
+  @override
+  String get loadBackupRegistryFailed => '加载备份注册表失败';
+
+  @override
+  String get loadCurrentBackupPathFailed => '加载当前备份路径失败';
+
+  @override
+  String get selectBackupStorageLocation => '选择备份存储位置';
+
+  @override
+  String get backupPathSetSuccessfully => '备份路径设置成功';
+
+  @override
+  String get setBackupPathFailed => '设置备份路径失败';
+
+  @override
+  String get backupStorageLocation => '备份存储位置';
+
+  @override
+  String get notSet => '未设置';
+
+  @override
+  String get changePath => '更换路径';
+
+  @override
+  String get backupStatistics => '备份统计';
+
+  @override
+  String get totalBackups => '总备份数';
+
+  @override
+  String get currentLocation => '当前位置';
+
+  @override
+  String get historyLocation => '历史位置';
+
+  @override
+  String get lastBackup => '最后备份';
+
+  @override
+  String get usageInstructions => '使用说明';
+
+  @override
+  String get backupLocationTips => '• 建议选择剩余空间充足的磁盘作为备份位置\\n• 备份位置可以是外部存储设备（如移动硬盘）\\n• 更换备份位置后，所有备份信息将统一管理\\n• 历史备份文件不会自动移动，但可以在备份管理中查看';
+
+  @override
+  String get selectNewDataPathTitle => '选择新的数据存储路径';
+
+  @override
+  String get noBackupPathSetRecommendCreateBackup => '未设置备份路径，建议先设置备份路径并创建备份';
+
+  @override
+  String get noBackupExistsRecommendCreate => '尚未创建任何备份，建议先创建备份以确保数据安全';
+
+  @override
+  String get oldBackupRecommendCreateNew => '最近备份时间超过24小时，建议创建新备份';
+
+  @override
+  String get recentBackupCanSwitch => '最近已有备份，可以直接切换';
+
+  @override
+  String get checkFailedRecommendBackup => '检查失败，建议先创建备份以确保数据安全';
+
+  @override
+  String get dataSafetySuggestions => '数据安全建议';
+
+  @override
+  String get safetyTip => '💡 安全建议：';
+
+  @override
+  String get backupEnsuresDataSafety => '• 备份可以确保数据安全';
+
+  @override
+  String get quickRecoveryOnIssues => '• 切换过程中如遇问题可快速恢复';
+
+  @override
+  String get canChooseDirectSwitch => '• 您也可以选择直接切换';
+
+  @override
+  String get directSwitch => '直接切换';
+
+  @override
+  String get backupFirst => '先备份';
+
+  @override
+  String get confirmDataPathSwitch => '确认数据路径切换';
+
+  @override
+  String get notesTitle => '注意事项：';
+
+  @override
+  String get canManuallyCleanLater => '• 您可以稍后手动清理旧路径的数据';
+
+  @override
+  String get confirmDataNormalBeforeClean => '• 建议确认数据正常后再清理旧路径';
+
+  @override
+  String get dataPathSwitchOptions => '数据路径切换选项';
+
+  @override
+  String get dataMergeOptions => '数据合并选项：';
+
+  @override
+  String get mergeOnlyBackupInfo => '仅合并备份信息';
+
+  @override
+  String get mergeAndMigrateFiles => '合并并迁移文件';
+
+  @override
+  String get mergeBackupInfo => '合并备份信息';
+
+  @override
+  String get mergeBackupInfoDesc => '将旧路径的备份信息合并到新路径的注册表中';
+
+  @override
+  String get migrateBackupFiles => '迁移备份文件';
+
+  @override
+  String get migrateBackupFilesDesc => '将旧路径的备份文件复制到新路径（推荐）';
+
+  @override
+  String get fileMigrationWarning => '不迁移文件时，旧路径的备份文件仍保留在原位置';
+
+  @override
+  String get legacyDataPathDescription => '需要清理的旧数据路径';
+
+  @override
+  String get noBackupPaths => '暂无备份路径';
+
+  @override
+  String get createFirstBackup => '创建第一个备份';
+
+  @override
+  String get backupOverview => '备份概览';
+
+  @override
+  String get historyPath => '历史路径';
+
+  @override
+  String get backupsCount => '个备份';
+
+  @override
+  String get exportAllBackups => '导出所有备份';
+
+  @override
+  String get importToCurrentPath => '导入到当前路径';
+
+  @override
+  String get noBackupFilesInPath => '此路径下没有备份文件';
+
+  @override
+  String get enterBackupDescription => '请输入备份描述（可选）：';
+
+  @override
+  String get importingBackup => '正在导入备份...';
+
+  @override
+  String get backupImportedSuccessfully => '备份导入成功';
+
+  @override
+  String get importBackupFailed => '导入备份失败';
+
+  @override
+  String cleanupCompleted(Object count) {
+    return '清理完成，移除了 $count 个无效路径';
+  }
+
+  @override
+  String get cleanupFailed => '清理失败';
+
+  @override
+  String get dangerousOperationConfirm => '危险操作确认';
+
+  @override
+  String confirmDeleteBackupPath(Object path) {
+    return '确定要删除整个备份路径吗？\\n\\n路径：$path\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！';
+  }
+
+  @override
+  String get backupPathDeleted => '备份路径已删除';
+
+  @override
+  String get noBackupFilesToExport => '此路径下没有备份文件可导出';
+
+  @override
+  String exportingBackups(Object count) {
+    return '正在导出 $count 个备份...';
+  }
+
+  @override
+  String exportCompleted(Object failed, Object success) {
+    return '导出完成: 成功 $success 个$failed';
+  }
+
+  @override
+  String failedCount(Object count) {
+    return ', 失败 $count 个';
+  }
+
+  @override
+  String get batchExportFailed => '批量导出失败';
+
+  @override
+  String get confirmRestoreBackup => '确定要恢复这个备份吗？';
+
+  @override
+  String get warningOverwriteData => '警告：这将覆盖当前所有数据！';
+
+  @override
+  String get appWillRestartAfterRestore => '恢复后应用将自动重启。';
+
+  @override
+  String get confirmRestoreAction => '确定恢复';
+
+  @override
+  String get backupRestoredSuccessfully => '备份恢复成功，请重启应用以完成恢复';
+
+  @override
+  String get restoreBackupFailed => '恢复备份失败';
+
+  @override
+  String backupExportedSuccessfully(Object filename) {
+    return '备份导出成功: $filename';
+  }
+
+  @override
+  String get exportBackupFailed => '导出备份失败';
+
+  @override
+  String get importToCurrentPathDesc => '这将复制备份文件到当前路径，原文件保持不变。';
+
+  @override
+  String get confirmImportAction => '确定导入';
+
+  @override
+  String get importingToCurrentPath => '正在导入到当前路径...';
+
+  @override
+  String get backupImportedToCurrentPath => '备份已导入到当前路径';
+
+  @override
+  String get importToCurrentPathFailed => '导入备份到当前路径失败';
+
+  @override
+  String get confirmDeleteTitle => '确认删除';
+
+  @override
+  String confirmDeleteBackup(String filename, String description) {
+    return '确定要删除这个备份吗？\\n\\n备份：$filename\\n描述：$description\\n\\n此操作不可恢复！';
+  }
+
+  @override
+  String get confirmDeleteAction => '确定删除';
+
+  @override
+  String get backupDeletedSuccessfully => '备份删除成功';
+
+  @override
+  String get deleteBackupFailed => '删除备份失败';
+
+  @override
+  String get loadDataFailed => '加载数据失败';
+
+  @override
+  String get backupServiceNotInitialized => '备份服务未初始化';
+
+  @override
+  String get cleanupInvalidPaths => '清理无效路径';
+
+  @override
+  String get viewAction => '查看';
+
+  @override
+  String get importedSuffix => '(导入)';
+
+  @override
+  String get backupLabel => '备份';
+
+  @override
+  String get descriptionLabel => '描述';
+
+  @override
+  String get timeLabel => '时间';
+
+  @override
+  String get cancelAction => '取消';
+
+  @override
+  String get scannedBackupFileDescription => '扫描发现的备份文件';
+
+  @override
+  String get pathAnalysis => '路径分析';
+
+  @override
+  String get deleteHistoryPathRecord => '删除历史路径记录';
+
+  @override
+  String get confirmDeleteHistoryPath => '确定要删除此历史路径记录吗？';
+
+  @override
+  String get deleteHistoryPathNote => '注意：这只会删除记录，不会删除实际的文件夹和数据。';
+
+  @override
+  String get historyPathDeleted => '历史路径记录已删除';
 }

@@ -3,29 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/backup_service.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../utils/app_restart_service.dart';
 
 /// 备份列表提供者
 final backupListProvider = FutureProvider<List<BackupInfo>>((ref) async {
-  final backupService = ref.watch(backupServiceProvider);
+  final backupService = await ref.watch(backupServiceProvider.future);
   return await backupService.getBackups();
 });
 
 /// 备份服务提供者
-final backupServiceProvider = Provider<BackupService>((ref) {
+final backupServiceProvider = FutureProvider<BackupService>((ref) async {
   final storage = ref.watch(initializedStorageProvider);
-  final database = ref.watch(initializedDatabaseProvider);
 
   final service = BackupService(
     storage: storage,
-    database: database,
   );
 
   // 初始化备份服务
-  service.initialize();
+  await service.initialize();
 
   return service;
 });
@@ -77,7 +74,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
         'keepBackupCount': state.keepBackupCount,
       });
 
-      final backupService = ref.read(backupServiceProvider);
+      final backupService = await ref.read(backupServiceProvider.future);
       final backupPath =
           await backupService.createBackup(description: description);
 
@@ -146,7 +143,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
   /// 删除备份
   Future<bool> deleteBackup(String backupPath) async {
     try {
-      final backupService = ref.read(backupServiceProvider);
+      final backupService = await ref.read(backupServiceProvider.future);
       final success = await backupService.deleteBackup(backupPath);
 
       // 刷新备份列表
@@ -161,7 +158,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
   /// 导出备份到外部位置
   Future<bool> exportBackup(String backupPath, String exportPath) async {
     try {
-      final backupService = ref.read(backupServiceProvider);
+      final backupService = await ref.read(backupServiceProvider.future);
       final success = await backupService.exportBackup(backupPath, exportPath);
       return success;
     } catch (e) {
@@ -172,7 +169,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
   /// 从外部位置导入备份
   Future<bool> importBackup(String importPath) async {
     try {
-      final backupService = ref.read(backupServiceProvider);
+      final backupService = await ref.read(backupServiceProvider.future);
       final success = await backupService.importBackup(importPath);
 
       // 刷新备份列表
@@ -195,7 +192,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
     bool autoRestart = true, // 保留参数但默认为true
   }) async {
     try {
-      final backupService = ref.read(backupServiceProvider);
+      final backupService = await ref.read(backupServiceProvider.future);
       bool needsRestart = false;
 
       // 保存当前上下文，避免异步操作后上下文失效
@@ -269,7 +266,7 @@ class BackupSettingsNotifier extends StateNotifier<BackupSettings> {
     state = state.copyWith(keepBackupCount: count);
 
     // 如果减少了保留数量，清理多余的备份
-    final backupService = ref.read(backupServiceProvider);
+    final backupService = await ref.read(backupServiceProvider.future);
     await backupService.cleanupOldBackups(count);
   }
 

@@ -59,12 +59,43 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
     }
   }
 
-  // 获取目标存储空间（100GB）
-  const targetSize = 100 * 1024 * 1024 * 1024;
-  final usagePercentage = (totalSize / targetSize) * 100;
+  // 获取分区总空间（当前分区可用空间）
+  int totalDiskSpace = 0;
+  try {
+    // 在实际应用中，应使用平台特定的API获取磁盘空间信息
+    // 这里使用一个合理的估算值
+    totalDiskSpace = totalSize * 10; // 假设总空间是使用空间的10倍
+  } catch (e) {
+    // 如果无法获取磁盘信息，使用合理的默认值
+    totalDiskSpace = totalSize * 10;
+  }
+
+  final usagePercentage =
+      totalDiskSpace > 0 ? (totalSize / totalDiskSpace) * 100 : 0.0;
+
+  // 计算数据库大小
+  final databaseSize =
+      await _calculateSpecificDirectorySize(basePath, 'database');
+
+  // 计算备份信息
+  final backupSize = await _calculateSpecificDirectorySize(basePath, 'backups');
+  int backupCount = 0;
+  try {
+    final backupDir = Directory('$basePath${Platform.pathSeparator}backups');
+    if (await backupDir.exists()) {
+      await for (final entity in backupDir.list()) {
+        if (entity is File && entity.path.endsWith('.backup')) {
+          backupCount++;
+        }
+      }
+    }
+  } catch (e) {
+    // 忽略错误
+  }
+
   return StorageInfo(
     path: basePath,
-    totalSize: targetSize,
+    totalSize: totalDiskSpace,
     usedSize: totalSize,
     usagePercentage: usagePercentage,
     workCount: workCount,
@@ -73,9 +104,13 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
     fileCount: fileCount,
     cacheSize: cacheSize,
     subdirectories: subdirectories,
-    workSize: 0, // You may want to calculate this value appropriately
-    characterSize: 0, // You may want to calculate this value appropriately
-    librarySize: 0, // You may want to calculate this value appropriately
+    workSize: await _calculateSpecificDirectorySize(basePath, 'works'),
+    characterSize:
+        await _calculateSpecificDirectorySize(basePath, 'characters'),
+    librarySize: await _calculateSpecificDirectorySize(basePath, 'library'),
+    databaseSize: databaseSize,
+    backupCount: backupCount,
+    backupSize: backupSize,
   );
 });
 
@@ -96,6 +131,13 @@ Future<int> _calculateDirectorySize(String dirPath) async {
   }
 
   return size;
+}
+
+/// 计算特定子目录的大小
+Future<int> _calculateSpecificDirectorySize(
+    String basePath, String subDir) async {
+  final fullPath = '$basePath${Platform.pathSeparator}$subDir';
+  return await _calculateDirectorySize(fullPath);
 }
 
 class DirectoryInfo {
@@ -123,6 +165,9 @@ class StorageInfo {
   final int workSize;
   final int characterSize;
   final int librarySize;
+  final int databaseSize;
+  final int backupCount;
+  final int backupSize;
   final List<DirectoryInfo> subdirectories;
 
   StorageInfo({
@@ -139,5 +184,8 @@ class StorageInfo {
     required this.characterSize,
     required this.librarySize,
     required this.workSize,
+    required this.databaseSize,
+    required this.backupCount,
+    required this.backupSize,
   });
 }
