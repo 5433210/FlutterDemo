@@ -313,6 +313,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         setState(() {});
       }
     });
+
+    // Start periodic clipboard monitoring
+    _startClipboardMonitoring();
   }
 
   /// Add a new page
