@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +8,7 @@ import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/file_utils.dart';
+import '../utils/localized_string_extensions.dart';
 
 /// 备份位置设置界面
 class BackupLocationSettings extends StatefulWidget {
@@ -88,6 +91,311 @@ class _BackupLocationSettingsState extends State<BackupLocationSettings> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// 删除当前路径下的所有备份
+  Future<void> _deleteAllBackupsInCurrentPath() async {
+    final l10n = AppLocalizations.of(context);
+    if (_currentPath == null || _registry == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未设置备份路径')),
+      );
+      return;
+    }
+
+    final backupCount = _registry!.backups.length;
+    if (backupCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('该路径下没有备份文件')),
+      );
+      return;
+    }
+
+    // 显示确认对话框
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('危险操作确认'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('您即将删除该路径下的所有备份文件：'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                _currentPath!,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('将删除 $backupCount 个备份文件，此操作不可撤销！'),
+            const SizedBox(height: 8),
+            Text(
+              '请确认您真的要执行此操作。',
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelAction),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              '确认删除全部',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _performDeleteAllBackups();
+    }
+  }
+
+  /// 执行删除所有备份操作
+  Future<void> _performDeleteAllBackups() async {
+    // 保存对话框上下文
+    BuildContext? dialogContext;
+
+    // 显示进度对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        dialogContext = context; // 保存对话框上下文
+        return const AlertDialog(
+          title: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('正在删除备份...'),
+            ],
+          ),
+          content: Text('正在删除所有备份文件，请稍候...'),
+        );
+      },
+    );
+
+    try {
+      int deletedCount = 0;
+      int failedCount = 0;
+      List<String> failedFiles = [];
+
+      final backups = _registry!.backups;
+      for (final backup in backups) {
+        try {
+          // 删除文件
+          final backupFile = File(backup.fullPath);
+          if (await backupFile.exists()) {
+            await backupFile.delete();
+          }
+
+          // 从注册表中移除
+          await BackupRegistryManager.deleteBackup(backup.id);
+          deletedCount++;
+        } catch (e) {
+          failedCount++;
+          failedFiles.add('${backup.filename}: $e');
+          AppLogger.error('删除备份失败',
+              error: e,
+              tag: 'BackupLocationSettings',
+              data: {'backup': backup.filename, 'path': _currentPath});
+        }
+      }
+
+      // 先关闭进度对话框，再处理后续操作
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      // 重新加载数据
+      await _loadCurrentPath();
+
+      // 显示结果
+      if (mounted) {
+        final message = failedCount == 0
+            ? '成功删除 $deletedCount 个备份文件'
+            : '删除完成：成功 $deletedCount 个，失败 $failedCount 个';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: failedCount == 0 ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+
+        if (failedCount > 0) {
+          // 显示失败详情
+          AppLogger.warning('部分备份删除失败',
+              tag: 'BackupLocationSettings',
+              data: {'failedFiles': failedFiles});
+        }
+      }
+    } catch (e) {
+      AppLogger.error('删除所有备份失败', error: e, tag: 'BackupLocationSettings');
+
+      // 确保对话框关闭
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('删除操作失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// 清理重复的备份记录
+  Future<void> _cleanDuplicateBackups() async {
+    final l10n = AppLocalizations.of(context);
+
+    // 显示确认对话框
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('清理重复记录'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('此操作将：'),
+            SizedBox(height: 8),
+            Text('• 删除重复的备份记录'),
+            Text('• 删除指向不存在文件的记录'),
+            Text('• 保留唯一且有效的备份记录'),
+            SizedBox(height: 12),
+            Text('注意：此操作不会删除实际的备份文件，只会整理记录。'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelAction),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text(
+              '开始清理',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _performCleanDuplicateBackups();
+    }
+  }
+
+  /// 执行清理重复备份记录操作
+  Future<void> _performCleanDuplicateBackups() async {
+    // 保存对话框上下文
+    BuildContext? dialogContext;
+
+    // 显示进度对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        dialogContext = context; // 保存对话框上下文
+        return const AlertDialog(
+          title: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('正在清理重复记录...'),
+            ],
+          ),
+          content: Text('正在检查和清理重复的备份记录，请稍候...'),
+        );
+      },
+    );
+
+    try {
+      final removedCount = await BackupRegistryManager.removeDuplicateBackups();
+
+      // 先关闭进度对话框，再处理后续操作
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      // 重新加载数据
+      await _loadCurrentPath();
+
+      // 显示结果
+      if (mounted) {
+        final message = removedCount == 0
+            ? '未发现重复记录，备份注册表已是最新状态'
+            : '清理完成，已移除 $removedCount 条重复或无效记录';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: removedCount == 0 ? Colors.blue : Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('清理重复备份记录失败', error: e, tag: 'BackupLocationSettings');
+
+      // 确保对话框关闭
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('清理操作失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -213,6 +521,33 @@ class _BackupLocationSettingsState extends State<BackupLocationSettings> {
                 l10n.lastBackup,
                 FileUtils.formatDateTime(statistics.lastBackupTime!),
               ),
+            const SizedBox(height: 12),
+            // 清理重复记录按钮
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _cleanDuplicateBackups,
+                icon: const Icon(Icons.cleaning_services),
+                label: const Text('清理重复记录'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 删除备份按钮
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _deleteAllBackupsInCurrentPath,
+                icon: const Icon(Icons.delete),
+                label: const Text('删除所有备份'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -256,7 +591,7 @@ class _BackupLocationSettingsState extends State<BackupLocationSettings> {
             ),
             const SizedBox(height: 12),
             Text(
-              l10n.backupLocationTips,
+              l10n.backupLocationTips.processLineBreaks,
               style: const TextStyle(fontSize: 14, height: 1.5),
             ),
           ],

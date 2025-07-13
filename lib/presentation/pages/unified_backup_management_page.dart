@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,6 +15,8 @@ import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_sizes.dart';
 import '../../utils/file_size_formatter.dart';
+import '../utils/localized_string_extensions.dart';
+import '../widgets/dialogs/backup_progress_dialog.dart';
 
 /// 统一备份管理页面
 /// 整合所有备份文件操作：创建、删除、导出、导入、恢复、路径管理
@@ -29,8 +32,10 @@ class _UnifiedBackupManagementPageState
     extends ConsumerState<UnifiedBackupManagementPage> {
   List<String> _allPaths = [];
   final Map<String, List<BackupEntry>> _pathBackups = {};
+  final Map<String, bool> _expandedPaths = {}; // 跟踪每个路径的展开状态
   bool _isLoading = false;
   String? _currentPath;
+  bool _isCancelled = false;
 
   @override
   void initState() {
@@ -38,7 +43,15 @@ class _UnifiedBackupManagementPageState
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _isCancelled = true;
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
+    if (_isCancelled) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -51,10 +64,14 @@ class _UnifiedBackupManagementPageState
             AppLocalizations.of(context).backupServiceNotInitialized);
       }
 
+      if (_isCancelled) return;
+
       final backupService = serviceLocator.get<EnhancedBackupService>();
 
       // 获取当前路径
       _currentPath = await BackupRegistryManager.getCurrentBackupPath();
+
+      if (_isCancelled) return;
 
       // 获取所有路径
       _allPaths = await backupService.getAllBackupPaths();
@@ -62,9 +79,13 @@ class _UnifiedBackupManagementPageState
       // 为每个路径加载备份
       _pathBackups.clear();
       for (final path in _allPaths) {
+        if (_isCancelled) return;
         final backups = await backupService.scanBackupsInPath(path);
+        if (_isCancelled) return;
         _pathBackups[path] = backups;
       }
+
+      if (_isCancelled) return;
 
       AppLogger.info('Unified backup management data loaded successfully',
           tag: 'UnifiedBackupManagement',
@@ -73,8 +94,11 @@ class _UnifiedBackupManagementPageState
             'totalBackups': _pathBackups.values.expand((x) => x).length,
           });
     } catch (e, stack) {
-      AppLogger.error('Failed to load unified backup management data',
-          error: e, stackTrace: stack, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to load unified backup management data',
+            error: e, stackTrace: stack, tag: 'UnifiedBackupManagement');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +149,17 @@ class _UnifiedBackupManagementPageState
                     const Icon(Icons.upload_file),
                     const SizedBox(width: 8),
                     Text(l10n.importBackup),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'delete_all_backups',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('删除所有备份', style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
@@ -270,150 +305,323 @@ class _UnifiedBackupManagementPageState
       AppLocalizations l10n) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.p16),
-      child: ExpansionTile(
-        title: Row(
-          children: [
-            Icon(
-              isCurrent ? Icons.folder_special : Icons.folder_outlined,
-              color: isCurrent ? Colors.blue : Colors.grey,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                path,
-                style: TextStyle(
-                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                  color: isCurrent ? Colors.blue : null,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
+          onExpansionChanged: (isExpanded) {
+            setState(() {
+              _expandedPaths[path] = isExpanded;
+            });
+          },
+          initiallyExpanded: _expandedPaths[path] ?? false,
+          title: Row(
+            children: [
+              Icon(
+                isCurrent ? Icons.folder_special : Icons.folder_outlined,
+                color: isCurrent ? Colors.blue : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  path,
+                  style: TextStyle(
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                    color: isCurrent ? Colors.blue : null,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        subtitle: Row(
+            ],
+          ),
+          subtitle: Row(
+            children: [
+              if (isCurrent)
+                Chip(
+                  label: Text(l10n.currentPath),
+                  backgroundColor: Colors.blue,
+                  labelStyle:
+                      const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              if (!isCurrent)
+                Chip(
+                  label: Text(l10n.historicalPaths),
+                  backgroundColor: Colors.orange,
+                  labelStyle:
+                      const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              const SizedBox(width: 8),
+              Text(l10n.backupCount(backups.length)),
+              const SizedBox(width: 8),
+            ],
+          ),
+          leading: backups.isEmpty
+              ? Icon(Icons.folder_open, color: Colors.grey.shade400)
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 改进的展开指示器，带提示和图标变化
+              Tooltip(
+                message: backups.isEmpty
+                    ? '此路径下没有备份文件'
+                    : (_expandedPaths[path] ?? false)
+                        ? '点击收起文件列表'
+                        : '点击展开查看 ${backups.length} 个备份文件',
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: backups.isEmpty
+                        ? Colors.grey.shade100
+                        : (_expandedPaths[path] ?? false)
+                            ? Colors.blue.shade100
+                            : Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(
+                    backups.isEmpty
+                        ? Icons.folder_open
+                        : (_expandedPaths[path] ?? false)
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                    color: backups.isEmpty
+                        ? Colors.grey.shade500
+                        : (_expandedPaths[path] ?? false)
+                            ? Colors.blue.shade700
+                            : Colors.blue.shade600,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                onSelected: (action) =>
+                    _handlePathAction(action, path, backups),
+                itemBuilder: (context) => [
+                  if (!isCurrent)
+                    PopupMenuItem(
+                      value: 'delete_path',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete_forever, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Text(l10n.deletePathButton),
+                        ],
+                      ),
+                    ),
+                  PopupMenuItem(
+                    value: 'export_all',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.download),
+                        const SizedBox(width: 8),
+                        Text(l10n.exportAllBackupsButton),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           children: [
-            if (isCurrent)
-              Chip(
-                label: Text(l10n.currentPath),
-                backgroundColor: Colors.blue,
-                labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            if (!isCurrent)
-              Chip(
-                label: Text(l10n.historicalPaths),
-                backgroundColor: Colors.orange,
-                labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            const SizedBox(width: 8),
-            Text(l10n.backupCount(backups.length)),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (action) => _handlePathAction(action, path, backups),
-          itemBuilder: (context) => [
-            if (!isCurrent)
-              PopupMenuItem(
-                value: 'delete_path',
+            if (backups.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(AppSizes.p16),
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_forever, color: Colors.red),
+                    Icon(Icons.info_outline, color: Colors.grey.shade500),
                     const SizedBox(width: 8),
-                    Text(l10n.deletePathButton),
+                    Text(l10n.noBackupFilesInPathMessage,
+                        style: TextStyle(color: Colors.grey.shade600)),
+                  ],
+                ),
+              )
+            else ...[
+              // 备份文件列表头部
+              Container(
+                color: Colors.grey.shade50,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.backup, size: 16, color: Colors.grey.shade600),
+                    const SizedBox(width: 8),
+                    Text(
+                      '备份文件列表 (${backups.length} 个)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            PopupMenuItem(
-              value: 'export_all',
-              child: Row(
-                children: [
-                  const Icon(Icons.download),
-                  const SizedBox(width: 8),
-                  Text(l10n.exportAllBackupsButton),
-                ],
-              ),
-            ),
+              ...backups.map((backup) => _buildBackupTile(backup, path, l10n)),
+            ],
           ],
         ),
-        children: [
-          if (backups.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.p16),
-              child: Text(l10n.noBackupFilesInPathMessage,
-                  style: const TextStyle(color: Colors.grey)),
-            )
-          else
-            ...backups.map((backup) => _buildBackupTile(backup, path, l10n)),
-        ],
       ),
     );
   }
 
   Widget _buildBackupTile(
       BackupEntry backup, String path, AppLocalizations l10n) {
-    return ListTile(
-      leading: Icon(
-        backup.location == 'current' ? Icons.backup : Icons.history,
-        color: backup.location == 'current' ? Colors.green : Colors.orange,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(8),
       ),
-      title: Text(backup.filename),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(backup.description),
-          Text(
-            DateFormat.yMd().add_Hm().format(backup.createdTime),
-            style: const TextStyle(fontSize: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: backup.location == 'current'
+              ? Colors.green.shade100
+              : Colors.orange.shade100,
+          child: Icon(
+            backup.location == 'current' ? Icons.backup : Icons.history,
+            color: backup.location == 'current'
+                ? Colors.green.shade700
+                : Colors.orange.shade700,
+            size: 20,
           ),
-          Text(
-            FileSizeFormatter.format(backup.size),
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-      trailing: PopupMenuButton<String>(
-        onSelected: (action) => _handleBackupAction(action, backup, path),
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: 'restore',
-            child: Row(
-              children: [
-                const Icon(Icons.restore),
-                const SizedBox(width: 8),
-                Text(l10n.restore),
-              ],
-            ),
-          ),
-          PopupMenuItem(
-            value: 'export',
-            child: Row(
-              children: [
-                const Icon(Icons.download),
-                const SizedBox(width: 8),
-                Text(l10n.export),
-              ],
-            ),
-          ),
-          if (backup.location == 'legacy')
-            PopupMenuItem(
-              value: 'import_to_current',
-              child: Row(
-                children: [
-                  const Icon(Icons.import_export),
-                  const SizedBox(width: 8),
-                  Text(l10n.importToCurrentPathButton),
-                ],
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                backup.filename,
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
-          PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                const Icon(Icons.delete, color: Colors.red),
-                const SizedBox(width: 8),
-                Text(l10n.delete),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: backup.location == 'current'
+                    ? Colors.green.shade50
+                    : Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: backup.location == 'current'
+                      ? Colors.green.shade200
+                      : Colors.orange.shade200,
+                ),
+              ),
+              child: Text(
+                backup.location == 'current' ? '当前' : '历史',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: backup.location == 'current'
+                      ? Colors.green.shade700
+                      : Colors.orange.shade700,
+                ),
+              ),
             ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (backup.description.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    backup.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              Row(
+                children: [
+                  Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat.yMd().add_Hm().format(backup.createdTime),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(Icons.storage, size: 14, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    FileSizeFormatter.format(backup.size),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
+        trailing: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: PopupMenuButton<String>(
+            onSelected: (action) => _handleBackupAction(action, backup, path),
+            icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'restore',
+                child: Row(
+                  children: [
+                    const Icon(Icons.restore, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(l10n.restore),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    const Icon(Icons.download, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Text(l10n.export),
+                  ],
+                ),
+              ),
+              if (backup.location == 'legacy')
+                PopupMenuItem(
+                  value: 'import_to_current',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.import_export, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(l10n.importToCurrentPathButton),
+                    ],
+                  ),
+                ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Text(l10n.delete,
+                        style: const TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -425,6 +633,9 @@ class _UnifiedBackupManagementPageState
         break;
       case 'import_backup':
         await _importBackup();
+        break;
+      case 'delete_all_backups':
+        await _deleteAllBackups();
         break;
       case 'cleanup_invalid_paths':
         await _cleanupInvalidPaths();
@@ -504,62 +715,160 @@ class _UnifiedBackupManagementPageState
   }
 
   Future<void> _performBackupCreation(String? description) async {
+    // 检查页面是否仍然挂载
+    if (!mounted || _isCancelled) return;
+
     final l10n = AppLocalizations.of(context);
-    // 显示进度对话框
+
+    try {
+      // 获取当前备份路径进行基本检查
+      final backupPath = await BackupRegistryManager.getCurrentBackupPath();
+      if (backupPath == null) {
+        throw Exception('请先设置备份路径');
+      }
+
+      // TODO: 未来可以添加更详细的备份前诊断
+      AppLogger.info('备份前检查通过', tag: 'UnifiedBackupManagement');
+    } catch (e) {
+      // 基本检查失败
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('备份前检查失败：$e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
+
+    // 创建取消令牌
+    bool isOperationCancelled = false;
+
+    // 显示可取消的进度对话框
+    final dialogCompleter = Completer<void>();
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.creatingBackupProgressMessage),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.creatingBackupPleaseWaitMessage,
-                style: const TextStyle(fontSize: 12)),
-          ],
-        ),
+      builder: (dialogContext) => BackupProgressDialog(
+        title: l10n.createBackup,
+        message: '备份可能需要几分钟时间，请保持应用运行',
+        onCancel: () {
+          isOperationCancelled = true;
+          Navigator.of(dialogContext).pop();
+          dialogCompleter.complete();
+        },
       ),
-    );
+    ).then((_) {
+      if (!dialogCompleter.isCompleted) {
+        dialogCompleter.complete();
+      }
+    });
 
     try {
       final serviceLocator = ref.read(syncServiceLocatorProvider);
       final backupService = serviceLocator.get<EnhancedBackupService>();
 
-      // 创建备份
-      await backupService.createBackup(description: description);
+      // 创建备份 (添加15分钟超时)
+      await Future.any([
+        backupService.createBackup(description: description),
+        Future.delayed(const Duration(minutes: 15), () {
+          throw TimeoutException(
+              '备份操作超时，请检查存储空间并重试', const Duration(minutes: 15));
+        }),
+      ]);
 
-      // 关闭进度对话框
+      // 检查是否被取消
+      if (isOperationCancelled || _isCancelled || !mounted) {
+        if (mounted) {
+          // 确保对话框关闭
+          if (!dialogCompleter.isCompleted) {
+            dialogCompleter.complete();
+          }
+          // 只关闭进度对话框，不关闭页面
+          if (Navigator.of(context).canPop()) {
+            final currentRoute = ModalRoute.of(context);
+            if (currentRoute != null && !currentRoute.isFirst) {
+              Navigator.of(context).pop();
+            }
+          }
+        }
+        return;
+      }
+
+      // 标记对话框应该关闭
+      if (!dialogCompleter.isCompleted) {
+        dialogCompleter.complete();
+      }
+
+      // 关闭进度对话框 - 只关闭对话框，不关闭页面
       if (mounted) {
-        Navigator.of(context).pop();
+        // 等待一小段时间确保对话框有时间关闭
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // 只关闭当前的进度对话框
+        if (Navigator.of(context).canPop()) {
+          final currentRoute = ModalRoute.of(context);
+          if (currentRoute != null && !currentRoute.isFirst) {
+            Navigator.of(context).pop();
+          }
+        }
 
         // 重新加载数据
         await _loadData();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.backupSuccess),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted && !_isCancelled && !isOperationCancelled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.backupSuccess),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
-      // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${l10n.createBackup} ${l10n.backupFailure}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      // 标记对话框应该关闭
+      if (!dialogCompleter.isCompleted) {
+        dialogCompleter.complete();
       }
 
-      AppLogger.error('Failed to create backup',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 错误时只关闭对话框，不关闭页面
+      if (mounted) {
+        // 等待一小段时间确保对话框有时间关闭
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // 只关闭当前的进度对话框
+        if (Navigator.of(context).canPop()) {
+          final currentRoute = ModalRoute.of(context);
+          if (currentRoute != null && !currentRoute.isFirst) {
+            Navigator.of(context).pop();
+          }
+        }
+
+        if (!_isCancelled && !isOperationCancelled) {
+          String errorMessage =
+              '${l10n.createBackup} ${l10n.backupFailure}: $e';
+
+          // 为超时错误提供更友好的消息
+          if (e is TimeoutException) {
+            errorMessage =
+                '备份操作超时。可能的原因：\n• 数据量过大\n• 存储空间不足\n• 磁盘读写速度慢\n\n请检查存储空间并重试。';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        }
+      }
+
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled && !isOperationCancelled) {
+        AppLogger.error('Failed to create backup',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
     }
   }
 
@@ -585,51 +894,165 @@ class _UnifiedBackupManagementPageState
   }
 
   Future<void> _performBackupImport(String filePath) async {
+    if (!mounted || _isCancelled) return;
+
     final l10n = AppLocalizations.of(context);
-    // 显示进度对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.importingBackupProgressMessage),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.pleaseWaitMessage, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-      ),
-    );
+
+    // 存储对话框上下文以便精确关闭
+    BuildContext? dialogContext;
 
     try {
+      // 首先检查是否有重复备份
+      final duplicateBackup =
+          await BackupRegistryManager.checkForDuplicateBackup(filePath);
+
+      if (duplicateBackup != null) {
+        // 显示重复文件确认对话框
+        final shouldProceed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('发现重复备份'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('检测到要导入的备份文件与现有备份重复：'),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('现有备份: ${duplicateBackup.filename}'),
+                      Text(
+                          '创建时间: ${DateFormat.yMd().add_Hm().format(duplicateBackup.createdTime)}'),
+                      Text(
+                          '大小: ${FileSizeFormatter.format(duplicateBackup.size)}'),
+                      if (duplicateBackup.checksum != null)
+                        Text(
+                            '校验和: ${duplicateBackup.checksum!.substring(0, 8)}...'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('是否仍要继续导入此备份？'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.cancelAction),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('继续导入'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldProceed != true) {
+          return; // 用户选择取消导入
+        }
+      }
+
+      // 显示进度对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext ctx) {
+          dialogContext = ctx; // 保存对话框上下文
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSizes.p16),
+                Text(l10n.importingBackupProgressMessage),
+                const SizedBox(height: AppSizes.p8),
+                Text(l10n.pleaseWaitMessage,
+                    style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          );
+        },
+      );
+
       final serviceLocator = ref.read(syncServiceLocatorProvider);
       final backupService = serviceLocator.get<EnhancedBackupService>();
 
       // 导入备份
       await backupService.importBackup(filePath);
 
-      // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      // 检查是否被取消
+      if (_isCancelled || !mounted) {
+        return;
+      }
 
-        // 重新加载数据
+      // 强制关闭进度对话框
+      if (dialogContext != null && mounted) {
+        try {
+          Navigator.of(dialogContext!).pop();
+          AppLogger.debug('导入进度对话框已关闭', tag: 'UnifiedBackupManagement');
+        } catch (e) {
+          AppLogger.warning('关闭导入进度对话框失败',
+              tag: 'UnifiedBackupManagement', data: {'error': e.toString()});
+          // 备用方案：使用原始上下文
+          try {
+            Navigator.of(context).pop();
+          } catch (e2) {
+            AppLogger.error('备用关闭方案也失败',
+                tag: 'UnifiedBackupManagement', data: {'error': e2.toString()});
+          }
+        }
+      }
+
+      // 等待确保对话框关闭
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // 重新加载数据
+      if (mounted) {
         await _loadData();
+      }
+
+      if (mounted && !_isCancelled) {
+        final message = duplicateBackup != null
+            ? '${l10n.backupImportSuccessMessage} (重复文件已导入)'
+            : l10n.backupImportSuccessMessage;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.backupImportSuccessMessage),
+            content: Text(message),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
-      // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      // 确保对话框关闭
+      if (dialogContext != null && mounted) {
+        try {
+          Navigator.of(dialogContext!).pop();
+        } catch (e2) {
+          try {
+            Navigator.of(context).pop();
+          } catch (e3) {
+            // 忽略
+          }
+        }
+      }
 
+      if (mounted && !_isCancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.importBackupFailedMessage(e.toString())),
@@ -638,8 +1061,11 @@ class _UnifiedBackupManagementPageState
         );
       }
 
-      AppLogger.error('Failed to import backup',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to import backup',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
     }
   }
 
@@ -745,34 +1171,59 @@ class _UnifiedBackupManagementPageState
   Future<void> _performBatchExport(List<BackupEntry> backups, String sourcePath,
       String outputDirectory) async {
     final l10n = AppLocalizations.of(context);
-    // 显示进度对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.exportingBackupsProgressFormat(backups.length)),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.pleaseWaitMessage, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-      ),
-    );
+
+    // 创建进度跟踪器
+    final progressNotifier = ValueNotifier<int>(0);
+    bool dialogShown = false;
 
     try {
+      // 显示带进度的对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('正在导出备份...'),
+            ],
+          ),
+          content: ValueListenableBuilder<int>(
+            valueListenable: progressNotifier,
+            builder: (context, progress, child) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.exportingBackupsProgressFormat(backups.length)),
+                  const SizedBox(height: AppSizes.p8),
+                  LinearProgressIndicator(
+                    value: backups.isNotEmpty ? progress / backups.length : 0,
+                  ),
+                  const SizedBox(height: AppSizes.p8),
+                  Text('已处理: $progress / ${backups.length}'),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+      dialogShown = true;
+
       int successCount = 0;
       int failCount = 0;
 
-      for (final backup in backups) {
+      for (int i = 0; i < backups.length; i++) {
+        final backup = backups[i];
         try {
-          final sourceFilePath = p.join(sourcePath, backup.filename);
+          // 使用backup的fullPath而不是手动构建路径
           final targetFilePath = p.join(outputDirectory, backup.filename);
 
-          final sourceFile = File(sourceFilePath);
+          final sourceFile = File(backup.fullPath);
           if (await sourceFile.exists()) {
             await sourceFile.copy(targetFilePath);
             successCount++;
@@ -781,24 +1232,32 @@ class _UnifiedBackupManagementPageState
             AppLogger.warning(l10n.backupFileNotFound,
                 tag: 'UnifiedBackupManagement',
                 data: {
-                  'file': sourceFilePath,
+                  'file': backup.fullPath,
                 });
           }
         } catch (e) {
           failCount++;
-          AppLogger.error('Failed to export single backup',
-              error: e,
-              tag: 'UnifiedBackupManagement',
-              data: {
-                'backup': backup.filename,
-              });
+          // 只在页面仍然挂载且未被取消时记录错误日志
+          if (mounted && !_isCancelled) {
+            AppLogger.error('Failed to export single backup',
+                error: e,
+                tag: 'UnifiedBackupManagement',
+                data: {
+                  'backup': backup.filename,
+                  'fullPath': backup.fullPath,
+                });
+          }
         }
+
+        // 更新进度
+        progressNotifier.value = i + 1;
+
+        // 给UI一些时间更新
+        await Future.delayed(const Duration(milliseconds: 10));
       }
 
-      // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
-
+      // 显示结果
+      if (mounted && !_isCancelled) {
         final failedMessage =
             failCount > 0 ? l10n.exportFailedPartFormat(failCount) : '';
         final message = l10n.exportCompletedFormat(successCount, failedMessage);
@@ -817,10 +1276,7 @@ class _UnifiedBackupManagementPageState
         );
       }
     } catch (e) {
-      // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
-
+      if (mounted && !_isCancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.batchExportFailedMessage(e.toString())),
@@ -829,12 +1285,30 @@ class _UnifiedBackupManagementPageState
         );
       }
 
-      AppLogger.error('Failed to batch export',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to batch export',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
+    } finally {
+      // 确保清理资源
+      progressNotifier.dispose();
+
+      // 确保对话框关闭
+      if (mounted && dialogShown) {
+        try {
+          Navigator.of(context).pop();
+        } catch (e) {
+          // 忽略导航错误
+          AppLogger.warning('Failed to close dialog',
+              tag: 'UnifiedBackupManagement', data: {'error': e.toString()});
+        }
+      }
     }
   }
 
   Future<void> _restoreBackup(BackupEntry backup) async {
+    if (!mounted || _isCancelled) return;
     final l10n = AppLocalizations.of(context);
     // 显示确认对话框
     final confirmed = await showDialog<bool>(
@@ -891,23 +1365,30 @@ class _UnifiedBackupManagementPageState
 
   Future<void> _performBackupRestore(BackupEntry backup) async {
     final l10n = AppLocalizations.of(context);
+
+    // 保存对话框上下文
+    BuildContext? dialogContext;
+
     // 显示进度对话框
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.restoringBackupMessage),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.doNotCloseAppMessage,
-                style: const TextStyle(fontSize: 12, color: Colors.red)),
-          ],
-        ),
-      ),
+      builder: (context) {
+        dialogContext = context; // 保存对话框上下文
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: AppSizes.p16),
+              Text(l10n.restoringBackupMessage),
+              const SizedBox(height: AppSizes.p8),
+              Text(l10n.doNotCloseAppMessage,
+                  style: const TextStyle(fontSize: 12, color: Colors.red)),
+            ],
+          ),
+        );
+      },
     );
 
     try {
@@ -917,10 +1398,18 @@ class _UnifiedBackupManagementPageState
       // 恢复备份
       await backupService.restoreBackup(backup.filename);
 
+      // 检查是否被取消
+      if (_isCancelled || !mounted) {
+        if (mounted && dialogContext != null) {
+          Navigator.of(dialogContext!).pop();
+        }
+        return;
+      }
+
       // 恢复成功，应用可能已经重启了
       // 如果还在这里，说明恢复完成但没有重启
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -932,19 +1421,24 @@ class _UnifiedBackupManagementPageState
       }
     } catch (e) {
       // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.backupRestoreFailedMessage(e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (!_isCancelled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.backupRestoreFailedMessage(e.toString())),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
 
-      AppLogger.error('Failed to restore backup',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to restore backup',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
     }
   }
 
@@ -965,30 +1459,97 @@ class _UnifiedBackupManagementPageState
   Future<void> _performBackupExport(
       BackupEntry backup, String outputDirectory) async {
     final l10n = AppLocalizations.of(context);
-    // 显示进度对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.exportingBackupMessage),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.pleaseWaitMessage, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-      ),
-    );
+
+    // 保存对话框上下文
+    BuildContext? dialogContext;
 
     try {
-      // 构建源文件路径和目标文件路径
+      // 构建目标文件路径
       final backupPath =
           backup.location == 'current' ? (_currentPath ?? '') : backup.id;
       final sourcePath = p.join(backupPath, backup.filename);
       final targetPath = p.join(outputDirectory, backup.filename);
+
+      // 检查目标文件是否已存在
+      final targetExists =
+          await BackupRegistryManager.checkFileExistsAtPath(targetPath);
+
+      if (targetExists) {
+        // 显示文件重复确认对话框
+        final userChoice = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('文件已存在'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('目标位置已存在同名文件：'),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    targetPath,
+                    style:
+                        const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('请选择操作：'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('cancel'),
+                child: Text(l10n.cancelAction),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('overwrite'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child:
+                    const Text('覆盖文件', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+
+        if (userChoice == 'cancel') {
+          return; // 用户取消导出
+        }
+        // 如果是 'overwrite'，保持原始路径不变
+      }
+
+      // 显示进度对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          dialogContext = context; // 保存对话框上下文
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSizes.p16),
+                Text(l10n.exportingBackupMessage),
+                const SizedBox(height: AppSizes.p8),
+                Text(l10n.pleaseWaitMessage,
+                    style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          );
+        },
+      );
 
       // 复制文件
       final sourceFile = File(sourcePath);
@@ -999,8 +1560,8 @@ class _UnifiedBackupManagementPageState
       await sourceFile.copy(targetPath);
 
       // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1017,8 +1578,8 @@ class _UnifiedBackupManagementPageState
       }
     } catch (e) {
       // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1028,8 +1589,11 @@ class _UnifiedBackupManagementPageState
         );
       }
 
-      AppLogger.error('Failed to export backup',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to export backup',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
     }
   }
 
@@ -1084,23 +1648,9 @@ class _UnifiedBackupManagementPageState
 
   Future<void> _performBackupImportToCurrentPath(BackupEntry backup) async {
     final l10n = AppLocalizations.of(context);
-    // 显示进度对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSizes.p16),
-            Text(l10n.importingToCurrentPathMessage),
-            const SizedBox(height: AppSizes.p8),
-            Text(l10n.pleaseWaitMessage, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-      ),
-    );
+
+    // 保存对话框上下文
+    BuildContext? dialogContext;
 
     try {
       if (_currentPath == null) {
@@ -1110,6 +1660,87 @@ class _UnifiedBackupManagementPageState
       // 构建源文件路径和目标文件路径
       final sourcePath = p.join(backup.id, backup.filename);
       final targetPath = p.join(_currentPath!, backup.filename);
+
+      // 检查目标文件是否已存在
+      final targetExists =
+          await BackupRegistryManager.checkFileExistsAtPath(targetPath);
+
+      if (targetExists) {
+        // 显示文件重复确认对话框
+        final userChoice = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('文件已存在'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('当前路径下已存在同名备份文件：'),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    backup.filename,
+                    style:
+                        const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('请选择操作：'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('cancel'),
+                child: Text(l10n.cancelAction),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('overwrite'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child:
+                    const Text('覆盖文件', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+
+        if (userChoice == 'cancel') {
+          return; // 用户取消导入
+        }
+        // 如果是 'overwrite'，保持原始路径不变
+      }
+
+      // 显示进度对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          dialogContext = context; // 保存对话框上下文
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSizes.p16),
+                Text(l10n.importingToCurrentPathMessage),
+                const SizedBox(height: AppSizes.p8),
+                Text(l10n.pleaseWaitMessage,
+                    style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          );
+        },
+      );
 
       // 复制文件
       final sourceFile = File(sourcePath);
@@ -1134,13 +1765,15 @@ class _UnifiedBackupManagementPageState
       // 添加到注册表
       await BackupRegistryManager.addBackup(newBackupEntry);
 
+      // 重新加载数据
+      await _loadData();
+
       // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
 
-        // 重新加载数据
-        await _loadData();
-
+      if (mounted && !_isCancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.importToCurrentPathSuccessMessage),
@@ -1150,9 +1783,11 @@ class _UnifiedBackupManagementPageState
       }
     } catch (e) {
       // 关闭进度对话框
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
 
+      if (mounted && !_isCancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${l10n.importBackupFailedMessage}: $e'),
@@ -1161,8 +1796,11 @@ class _UnifiedBackupManagementPageState
         );
       }
 
-      AppLogger.error('Failed to import backup to current path',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to import backup to current path',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
     }
   }
 
@@ -1185,7 +1823,7 @@ class _UnifiedBackupManagementPageState
           children: [
             Text(l10n
                 .confirmDeleteBackup(backup.filename, backup.description)
-                .replaceAll('\\n', '\n')),
+                .processLineBreaks),
           ],
         ),
         actions: [
@@ -1244,8 +1882,331 @@ class _UnifiedBackupManagementPageState
         );
       }
 
-      AppLogger.error('Failed to delete backup',
-          error: e, tag: 'UnifiedBackupManagement');
+      // 只在页面仍然挂载且未被取消时记录错误日志
+      if (mounted && !_isCancelled) {
+        AppLogger.error('Failed to delete backup',
+            error: e, tag: 'UnifiedBackupManagement');
+      }
+    }
+  }
+
+  /// 删除所有备份
+  Future<void> _deleteAllBackups() async {
+    final l10n = AppLocalizations.of(context);
+
+    // 计算总备份数
+    final totalBackups = _pathBackups.values.expand((x) => x).length;
+
+    if (totalBackups == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('没有备份文件可删除'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // 显示确认对话框
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('确认删除所有备份'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('您即将删除 $totalBackups 个备份文件。'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '此操作不可撤销！所有备份数据将永久丢失。',
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('删除范围包括：'),
+            ..._pathBackups.entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(left: 16, top: 4),
+                child: Text('• ${entry.key}: ${entry.value.length} 个文件'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelAction),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('确认删除全部', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _performDeleteAllBackups();
+    }
+  }
+
+  /// 执行删除所有备份操作
+  Future<void> _performDeleteAllBackups() async {
+    // 计算总数用于进度显示
+    final totalBackups = _pathBackups.values.expand((x) => x).length;
+
+    // 创建一个ValueNotifier来跟踪进度
+    final progressNotifier = ValueNotifier<int>(0);
+
+    // 存储对话框上下文以便精确关闭
+    BuildContext? dialogContext;
+
+    // 显示进度对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        dialogContext = ctx; // 保存对话框上下文
+        return AlertDialog(
+          title: const Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('正在删除备份...'),
+            ],
+          ),
+          content: ValueListenableBuilder<int>(
+            valueListenable: progressNotifier,
+            builder: (context, progress, child) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('正在删除备份文件，请稍候...'),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: totalBackups > 0 ? progress / totalBackups : 0,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('已处理: $progress / $totalBackups'),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    try {
+      int deletedCount = 0;
+      int failedCount = 0;
+      int processedCount = 0;
+      List<String> failedFiles = [];
+
+      AppLogger.info('开始删除所有备份', tag: 'UnifiedBackupManagement', data: {
+        'totalPaths': _pathBackups.length,
+        'totalBackups': totalBackups,
+      });
+
+      // 遍历所有路径的备份
+      for (final entry in _pathBackups.entries) {
+        final path = entry.key;
+        final backups = entry.value;
+
+        AppLogger.info('处理路径: $path',
+            tag: 'UnifiedBackupManagement',
+            data: {'backupCount': backups.length});
+
+        for (final backup in backups) {
+          try {
+            AppLogger.debug('删除备份: ${backup.filename}',
+                tag: 'UnifiedBackupManagement',
+                data: {'fullPath': backup.fullPath});
+
+            // 使用backup的fullPath而不是手动构建路径
+            final backupFile = File(backup.fullPath);
+
+            if (await backupFile.exists()) {
+              await backupFile.delete();
+              AppLogger.debug('文件删除成功: ${backup.fullPath}',
+                  tag: 'UnifiedBackupManagement');
+            } else {
+              AppLogger.warning('文件不存在: ${backup.fullPath}',
+                  tag: 'UnifiedBackupManagement');
+            }
+
+            // 从注册表中移除
+            await BackupRegistryManager.deleteBackup(backup.id);
+            AppLogger.debug('注册表删除成功: ${backup.id}',
+                tag: 'UnifiedBackupManagement');
+
+            deletedCount++;
+          } catch (e) {
+            failedCount++;
+            failedFiles.add('${backup.filename}: $e');
+            AppLogger.error('删除备份失败',
+                error: e,
+                tag: 'UnifiedBackupManagement',
+                data: {
+                  'backup': backup.filename,
+                  'path': path,
+                  'fullPath': backup.fullPath,
+                  'backupId': backup.id,
+                });
+          }
+
+          // 更新进度
+          processedCount++;
+          progressNotifier.value = processedCount;
+
+          // 给UI一些时间更新
+          await Future.delayed(const Duration(milliseconds: 10));
+        }
+      }
+
+      AppLogger.info('删除操作完成', tag: 'UnifiedBackupManagement', data: {
+        'deletedCount': deletedCount,
+        'failedCount': failedCount,
+        'totalProcessed': processedCount,
+      });
+
+      // 强制关闭进度对话框
+      if (dialogContext != null && mounted) {
+        try {
+          Navigator.of(dialogContext!).pop();
+          AppLogger.debug('进度对话框已关闭', tag: 'UnifiedBackupManagement');
+        } catch (e) {
+          AppLogger.warning('关闭进度对话框失败',
+              tag: 'UnifiedBackupManagement', data: {'error': e.toString()});
+          // 备用方案：使用原始上下文
+          try {
+            Navigator.of(context).pop();
+          } catch (e2) {
+            AppLogger.error('备用关闭方案也失败',
+                tag: 'UnifiedBackupManagement', data: {'error': e2.toString()});
+          }
+        }
+      }
+
+      // 等待确保对话框关闭
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // 重新加载数据
+      if (mounted) {
+        await _loadData();
+      }
+
+      // 显示结果
+      if (mounted) {
+        if (failedCount == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('成功删除 $deletedCount 个备份文件'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          // 显示部分失败的详细信息
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('删除完成'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('成功删除: $deletedCount 个文件'),
+                  if (failedCount > 0) ...[
+                    Text('删除失败: $failedCount 个文件'),
+                    const SizedBox(height: 8),
+                    const Text('失败详情:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    ...failedFiles.take(5).map((error) => Padding(
+                          padding: const EdgeInsets.only(left: 8, top: 2),
+                          child: Text('• $error',
+                              style: const TextStyle(fontSize: 12)),
+                        )),
+                    if (failedFiles.length > 5)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, top: 2),
+                        child: Text('...还有 ${failedFiles.length - 5} 个错误'),
+                      ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('确定'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      AppLogger.error('删除所有备份失败',
+          error: e,
+          tag: 'UnifiedBackupManagement',
+          data: {
+            'totalBackups': totalBackups,
+            'pathCount': _pathBackups.length,
+          });
+
+      // 确保对话框关闭
+      if (dialogContext != null && mounted) {
+        try {
+          Navigator.of(dialogContext!).pop();
+        } catch (e2) {
+          try {
+            Navigator.of(context).pop();
+          } catch (e3) {
+            // 忽略
+          }
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('删除操作失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      // 清理资源
+      progressNotifier.dispose();
     }
   }
 }

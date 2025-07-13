@@ -411,9 +411,11 @@ class EnhancedBackupService {
       await for (final entity in directory.list()) {
         if (entity is File && entity.path.endsWith('.zip')) {
           final filename = path.basename(entity.path);
+          final fullPath = entity.path;
 
-          // 检查是否已经在注册表中
-          final alreadyExists = backups.any((b) => b.filename == filename);
+          // 检查是否已经在注册表中（基于文件名和完整路径）
+          final alreadyExists = backups
+              .any((b) => b.filename == filename && b.fullPath == fullPath);
           if (!alreadyExists) {
             final backupEntry =
                 await _createBackupEntryFromFile(entity, backupPath);

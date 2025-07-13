@@ -256,6 +256,24 @@ class BackupRegistryManager {
   static Future<void> addBackup(BackupEntry backup) async {
     try {
       final registry = await getRegistry();
+
+      // 检查是否已存在相同的备份记录
+      final existingBackup = registry.backups
+          .where((existing) =>
+              existing.id == backup.id ||
+              (existing.filename == backup.filename &&
+                  existing.fullPath == backup.fullPath))
+          .firstOrNull;
+
+      if (existingBackup != null) {
+        AppLogger.warning('备份记录已存在，跳过添加', tag: 'BackupRegistryManager', data: {
+          'existingId': existingBackup.id,
+          'newId': backup.id,
+          'filename': backup.filename,
+        });
+        return;
+      }
+
       registry.addBackup(backup);
       await _saveRegistry(registry.location.path, registry);
 
@@ -571,9 +589,11 @@ class BackupRegistryManager {
       await for (final entity in directory.list()) {
         if (entity is File && entity.path.endsWith('.zip')) {
           final filename = path.basename(entity.path);
+          final fullPath = entity.path;
 
-          // 检查是否已经在注册表中
-          final alreadyExists = backups.any((b) => b.filename == filename);
+          // 检查是否已经在注册表中（基于文件名和完整路径）
+          final alreadyExists = backups
+              .any((b) => b.filename == filename && b.fullPath == fullPath);
           if (!alreadyExists) {
             final backupEntry = await _createBackupEntryFromFile(entity);
             if (backupEntry != null) {
@@ -838,6 +858,163 @@ class BackupRegistryManager {
       AppLogger.error('安全删除备份路径失败',
           error: e, stackTrace: stack, tag: 'BackupRegistryManager');
       return false;
+    }
+  }
+
+  /// 检查文件是否与现有备份重复
+  /// 返回重复的备份条目，如果没有重复则返回null
+  static Future<BackupEntry?> checkForDuplicateBackup(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) {
+        return null;
+      }
+
+      final registry = await getRegistry();
+      final filename = path.basename(filePath);
+      final fileSize = await file.length();
+      final fileChecksum = await calculateChecksum(file);
+
+      // 检查是否有同名同大小的文件
+      for (final backup in registry.backups) {
+        if (backup.filename == filename && backup.size == fileSize) {
+          // 进一步检查校验和
+          if (backup.checksum != null && backup.checksum == fileChecksum) {
+            AppLogger.info('发现重复备份 (校验和匹配)',
+                tag: 'BackupRegistryManager',
+                data: {
+                  'filename': filename,
+                  'size': fileSize,
+                  'checksum': fileChecksum,
+                  'existingBackupId': backup.id,
+                });
+            return backup;
+          }
+        }
+      }
+
+      // 如果没有找到精确匹配，检查是否有相同校验和但不同文件名的文件
+      for (final backup in registry.backups) {
+        if (backup.checksum != null && backup.checksum == fileChecksum) {
+          AppLogger.info('发现重复备份 (内容相同但文件名不同)',
+              tag: 'BackupRegistryManager',
+              data: {
+                'newFilename': filename,
+                'existingFilename': backup.filename,
+                'checksum': fileChecksum,
+                'existingBackupId': backup.id,
+              });
+          return backup;
+        }
+      }
+
+      return null;
+    } catch (e, stack) {
+      AppLogger.error('检查重复备份失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      return null;
+    }
+  }
+
+  /// 检查目标路径是否已存在文件
+  static Future<bool> checkFileExistsAtPath(String targetPath) async {
+    try {
+      final file = File(targetPath);
+      return await file.exists();
+    } catch (e) {
+      AppLogger.warning('检查文件是否存在失败',
+          error: e, tag: 'BackupRegistryManager', data: {'path': targetPath});
+      return false;
+    }
+  }
+
+  /// 生成不重复的文件名
+  static Future<String> generateUniqueFilename(
+      String targetDirectory, String originalFilename) async {
+    final extension = path.extension(originalFilename);
+    final nameWithoutExtension =
+        path.basenameWithoutExtension(originalFilename);
+
+    String newFilename = originalFilename;
+    int counter = 1;
+
+    while (
+        await checkFileExistsAtPath(path.join(targetDirectory, newFilename))) {
+      newFilename = '${nameWithoutExtension}_$counter$extension';
+      counter++;
+    }
+
+    return newFilename;
+  }
+
+  /// 清理重复的备份记录
+  static Future<int> removeDuplicateBackups() async {
+    try {
+      final registry = await getRegistry();
+      final originalCount = registry.backups.length;
+
+      // 创建去重后的备份列表
+      final uniqueBackups = <BackupEntry>[];
+      final seenFiles = <String>{};
+      final seenIds = <String>{};
+
+      for (final backup in registry.backups) {
+        final key = '${backup.filename}:${backup.fullPath}';
+
+        // 检查文件是否实际存在
+        final file = File(backup.fullPath);
+        final fileExists = await file.exists();
+
+        if (!fileExists) {
+          AppLogger.info('移除不存在的备份记录', tag: 'BackupRegistryManager', data: {
+            'backupId': backup.id,
+            'filename': backup.filename,
+            'path': backup.fullPath,
+          });
+          continue;
+        }
+
+        // 检查是否重复（基于文件路径和ID）
+        if (seenFiles.contains(key) || seenIds.contains(backup.id)) {
+          AppLogger.info('移除重复的备份记录', tag: 'BackupRegistryManager', data: {
+            'backupId': backup.id,
+            'filename': backup.filename,
+            'reason':
+                seenFiles.contains(key) ? 'duplicate_file' : 'duplicate_id',
+          });
+          continue;
+        }
+
+        seenFiles.add(key);
+        seenIds.add(backup.id);
+        uniqueBackups.add(backup);
+      }
+
+      // 如果发现重复记录，更新注册表
+      final removedCount = originalCount - uniqueBackups.length;
+      if (removedCount > 0) {
+        final updatedRegistry = BackupRegistry(
+          location: registry.location,
+          backups: uniqueBackups,
+          settings: registry.settings,
+          statistics: registry.statistics,
+        );
+
+        await _saveRegistry(
+            registry.location.path, updatedRegistry.updateStatistics());
+
+        AppLogger.info('清理重复备份记录完成', tag: 'BackupRegistryManager', data: {
+          'originalCount': originalCount,
+          'uniqueCount': uniqueBackups.length,
+          'removedCount': removedCount,
+        });
+      }
+
+      return removedCount;
+    } catch (e, stack) {
+      AppLogger.error('清理重复备份记录失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      return 0;
     }
   }
 }

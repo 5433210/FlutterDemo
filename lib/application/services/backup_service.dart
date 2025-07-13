@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
+import 'backup_progress_manager.dart';
 
 /// 备份信息
 class BackupInfo {
@@ -179,8 +180,13 @@ class BackupService {
 
   /// 创建备份
   Future<String> createBackup({String? description}) async {
+    final progressManager = BackupProgressManager();
+
     try {
       AppLogger.info('开始创建备份', tag: 'BackupService');
+
+      // 开始备份进度
+      progressManager.startBackup();
 
       // 生成备份文件名
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
@@ -188,15 +194,23 @@ class BackupService {
       final backupPath = p.join(_backupDir, backupFileName);
 
       // 为整个备份过程添加超时机制
-      return await Future.any([
+      final result = await Future.any([
         _performBackup(backupPath, description),
         Future.delayed(const Duration(minutes: 15), () {
+          progressManager.failBackup('备份操作超时');
           throw TimeoutException('备份操作超时', const Duration(minutes: 15));
         }),
       ]);
+
+      // 备份完成
+      progressManager.completeBackup();
+      AppLogger.info('备份创建完成', tag: 'BackupService');
+
+      return result;
     } catch (e, stack) {
       AppLogger.error('创建备份失败',
           error: e, stackTrace: stack, tag: 'BackupService');
+      progressManager.failBackup('创建备份失败: $e');
       rethrow;
     }
   }
@@ -204,25 +218,33 @@ class BackupService {
   /// 执行实际的备份操作
   Future<String> _performBackup(String backupPath, String? description) async {
     String? tempPath;
+    final progressManager = BackupProgressManager();
+
     try {
       // 创建临时目录
       AppLogger.info('创建临时目录', tag: 'BackupService');
+      progressManager.updateStep('创建临时目录...', detail: '正在准备备份环境');
       final tempDir = await _storage.createTempDirectory();
       tempPath = tempDir.path;
 
       // 备份数据库
       AppLogger.info('开始备份数据库', tag: 'BackupService');
+      progressManager.updateStep('备份数据库...', detail: '正在复制数据库文件');
+      progressManager.updateProgress(0, 4); // 0/4 步骤完成
       await _backupDatabase(tempPath);
       AppLogger.info('数据库备份完成', tag: 'BackupService');
 
       // 备份应用数据
       AppLogger.info('开始备份应用数据', tag: 'BackupService');
+      progressManager.updateStep('备份应用数据...', detail: '正在复制用户文件');
+      progressManager.updateProgress(1, 4); // 1/4 步骤完成
       await _backupAppData(tempPath);
       AppLogger.info('应用数据备份完成', tag: 'BackupService');
 
       // 创建备份描述文件
       if (description != null) {
         AppLogger.info('创建备份描述文件', tag: 'BackupService');
+        progressManager.updateStep('创建描述文件...', detail: '正在保存备份信息');
         await _createBackupInfo(tempPath, description);
       }
 
@@ -230,10 +252,14 @@ class BackupService {
       AppLogger.info('开始创建ZIP文件', tag: 'BackupService', data: {
         'targetPath': backupPath,
       });
+      progressManager.updateStep('压缩备份文件...', detail: '正在创建ZIP压缩包');
+      progressManager.updateProgress(2, 4); // 2/4 步骤完成
       await _createZipArchive(tempPath, backupPath);
       AppLogger.info('ZIP文件创建完成', tag: 'BackupService');
 
       // 检查最终文件大小
+      progressManager.updateStep('验证备份...', detail: '正在检查备份文件完整性');
+      progressManager.updateProgress(3, 4); // 3/4 步骤完成
       final backupFile = File(backupPath);
       if (await backupFile.exists()) {
         final fileSize = await backupFile.length();
@@ -858,10 +884,55 @@ class BackupService {
   /// 带重试机制的文件复制
   Future<void> _copyFileWithRetry(String sourcePath, String targetPath,
       {int maxRetries = 3}) async {
+    final fileName = p.basename(sourcePath);
+
+    // 🔥 关键修复：检查文件大小，跳过过大的文件以防止卡顿
+    try {
+      final sourceFile = File(sourcePath);
+      if (await sourceFile.exists()) {
+        final fileStat = await sourceFile.stat();
+        final fileSizeMB = fileStat.size / (1024 * 1024);
+
+        // 跳过超过200MB的文件 - 这是防止卡顿的关键
+        if (fileSizeMB > 200) {
+          AppLogger.warning('跳过超大文件以避免备份卡顿', tag: 'BackupService', data: {
+            'file': fileName,
+            'sizeMB': fileSizeMB.toStringAsFixed(2),
+            'reason': '文件过大，可能导致备份卡顿超过2分钟'
+          });
+          return; // 直接返回，不复制此文件
+        }
+
+        // 对于大文件（>50MB）记录警告
+        if (fileSizeMB > 50) {
+          AppLogger.info('正在处理大文件', tag: 'BackupService', data: {
+            'file': fileName,
+            'sizeMB': fileSizeMB.toStringAsFixed(2),
+            'note': '可能需要较长时间'
+          });
+        }
+      }
+    } catch (e) {
+      // 如果无法获取文件信息，记录但继续尝试复制
+      AppLogger.debug('无法获取文件大小信息',
+          tag: 'BackupService',
+          data: {'file': fileName, 'error': e.toString()});
+    }
+
     int retryCount = 0;
     while (true) {
       try {
+        final startTime = DateTime.now();
         await _storage.copyFile(sourcePath, targetPath);
+        final duration = DateTime.now().difference(startTime);
+
+        // 记录耗时较长的文件复制
+        if (duration.inSeconds > 10) {
+          AppLogger.info('文件复制耗时较长',
+              tag: 'BackupService',
+              data: {'file': fileName, 'duration': '${duration.inSeconds}秒'});
+        }
+
         return;
       } catch (e) {
         retryCount++;
@@ -878,7 +949,7 @@ class BackupService {
         }
 
         AppLogger.warning('复制文件失败，准备重试', tag: 'BackupService', data: {
-          'source': sourcePath,
+          'source': fileName,
           'target': targetPath,
           'retry': retryCount,
           'error': e.toString()
