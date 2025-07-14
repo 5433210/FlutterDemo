@@ -43,10 +43,10 @@ class FileLogHandler implements LogHandler {
 
   @override
   void handle(LogEntry entry) {
-    // 不再直接写入，而是添加到待处理队列
+    // 添加到待处理队列并同步写入
     synchronized(_writeLock, () async {
       _pendingLogs.add(entry);
-      return _processLogs();
+      await _processLogs();
     });
   }
 
@@ -128,35 +128,32 @@ class FileLogHandler implements LogHandler {
         final entry = _pendingLogs.removeAt(0);
         final formattedLog = _formatLogEntry(entry);
 
-        // 创建新的 IOSink 以避免 StreamSink 重用问题
         if (_sink == null) {
           await _openLogFile();
         }
 
-        // 安全写入
-        _sink?.writeln(formattedLog);
-        await _sink?.flush(); // 立即刷新确保写入
-
-        // 添加错误和堆栈跟踪（如果有）
-        if (entry.error != null) {
-          _sink?.writeln('Error: ${entry.error}');
+        try {
+          _sink?.writeln(formattedLog);
+          await _sink?.flush();
+          if (entry.error != null) {
+            _sink?.writeln('Error: ${entry.error}');
+          }
+          if (entry.stackTrace != null) {
+            _sink?.writeln('Stack Trace:');
+            _sink?.writeln(entry.stackTrace);
+          }
+        } catch (e) {
+          debugPrint('Error writing to log file (sink): $e');
         }
-        if (entry.stackTrace != null) {
-          _sink?.writeln('Stack Trace:');
-          _sink?.writeln(entry.stackTrace);
-        }
 
-        // 检查是否需要轮换日志文件
         await _checkRotation();
       }
     } catch (e) {
       debugPrint('Error writing to log file: $e');
     } finally {
       _isWriting = false;
-
-      // 检查是否还有更多日志待处理
       if (_pendingLogs.isNotEmpty) {
-        _processLogs();
+        await _processLogs();
       }
     }
   }

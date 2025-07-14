@@ -76,7 +76,11 @@ void main() async {
   }
 
   // 初始化日志系统，启用控制台输出和调试级别
-  await AppLogger.init(enableConsole: true, minLevel: LogLevel.debug);
+  await AppLogger.init(
+      enableFile: true,
+      enableConsole: true,
+      minLevel: LogLevel.debug,
+      filePath: 'app.log');
 
   // 🚀 启动性能监控器
   PerformanceMonitor().startMonitoring();
@@ -106,26 +110,28 @@ void main() async {
         AppLogger.warning('数据路径配置预加载失败: ${initResult.errorMessage}',
             tag: 'App');
       }
-      
+
       // 无论初始化是否成功，都要检查备份恢复
       try {
         AppLogger.info('开始检查备份恢复', tag: 'App');
         final config = await DataPathConfigService.readConfig();
         final dataPath = await config.getActualDataPath();
-        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
+        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
+            dataPath);
         AppLogger.info('备份恢复检查完成', tag: 'App');
       } catch (e) {
         AppLogger.warning('备份恢复检查失败', error: e, tag: 'App');
       }
     } catch (e) {
       AppLogger.error('数据路径配置预加载出错', error: e, tag: 'App');
-      
+
       // 即使预加载失败，也要尝试检查备份恢复
       try {
         AppLogger.info('预加载失败，仍然尝试检查备份恢复', tag: 'App');
         final config = await DataPathConfigService.readConfig();
         final dataPath = await config.getActualDataPath();
-        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
+        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
+            dataPath);
         AppLogger.info('备份恢复检查完成', tag: 'App');
       } catch (restoreError) {
         AppLogger.warning('备份恢复检查失败', error: restoreError, tag: 'App');

@@ -18,14 +18,19 @@ class EnhancedBackupService {
   /// 应用重启后检查并完成备份恢复（第四阶段）
   static Future<void> checkAndCompleteRestoreAfterRestart(
       String dataPath) async {
+    final markerFilePath = path.join(dataPath, 'restore_pending.json');
     AppLogger.info('检查是否有待完成的备份恢复', tag: 'EnhancedBackupService', data: {
       'dataPath': dataPath,
+      'markerFilePath': markerFilePath,
     });
 
-    final markerFile = File(path.join(dataPath, 'restore_pending.json'));
+    final markerFile = File(markerFilePath);
 
     if (!await markerFile.exists()) {
-      AppLogger.debug('没有找到恢复标记文件', tag: 'EnhancedBackupService');
+      AppLogger.debug('没有找到恢复标记文件', tag: 'EnhancedBackupService', data: {
+        'markerFilePath': markerFilePath,
+        'exists': false,
+      });
       return;
     }
 
@@ -55,7 +60,8 @@ class EnhancedBackupService {
       }
 
       // 执行恢复操作
-      await _performRestoreFromTempDirectory(tempRestoreDir, dataPath);
+      await _performRestoreFromTempDirectory(
+          tempRestoreDir, '$dataPath/storage');
 
       // 清理临时目录
       await tempDirectory.delete(recursive: true);
@@ -163,6 +169,19 @@ class EnhancedBackupService {
           }
         }
       }
+      // // 数据库恢复标记逻辑：app.db -> app.db.new，并创建 db_ready_to_restore 文件
+      // final restoredDbFile = File(path.join(databaseDir.path, 'app.db'));
+      // if (await restoredDbFile.exists()) {
+      //   final newDbFile = File(path.join(targetDatabaseDir.path, 'app.db.new'));
+      //   await restoredDbFile.copy(newDbFile.path);
+      //   final readyFile =
+      //       File(path.join(targetDatabaseDir.path, 'db_ready_to_restore'));
+      //   await readyFile.writeAsString('ready');
+      //   AppLogger.info('数据库恢复标记已设置', tag: 'EnhancedBackupService', data: {
+      //     'dbFile': newDbFile.path,
+      //     'readyFile': readyFile.path,
+      //   });
+      // }
     }
 
     AppLogger.info('从临时目录恢复数据完成', tag: 'EnhancedBackupService');
