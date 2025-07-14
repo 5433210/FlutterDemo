@@ -3025,7 +3025,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String deletePathConfirmContent(Object path) {
-    return '确定要删除整个备份路径吗？\\n\\n路径：$path\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！';
+    return '确定要删除整个备份路径吗？\n\n路径：$path\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！';
   }
 
   @override
@@ -3584,7 +3584,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get switchSuccessful => '切换成功';
 
   @override
-  String get pathSwitchCompletedMessage => '数据路径切换完成！\\n\\n您可以在数据路径管理中查看和清理旧路径的数据。';
+  String get pathSwitchCompletedMessage => '数据路径切换完成！\n\n您可以在数据路径管理中查看和清理旧路径的数据。';
 
   @override
   String get pathSwitchFailed => '路径切换失败';
@@ -3611,7 +3611,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get skipBackupConfirm => '跳过备份';
 
   @override
-  String get skipBackupWarning => '确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。';
+  String get skipBackupWarning => '确定要跳过备份直接进行路径切换吗？\n\n这可能存在数据丢失的风险。';
 
   @override
   String get confirmSkip => '确定跳过';
@@ -3674,7 +3674,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get retryAction => '重试';
 
   @override
-  String get skipBackupWarningMessage => '确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。';
+  String get skipBackupWarningMessage => '确定要跳过备份直接进行路径切换吗？\n\n这可能存在数据丢失的风险。';
 
   @override
   String get confirmSkipAction => '确定跳过';
@@ -3683,7 +3683,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectNewDataPathDialog => '选择新的数据存储路径';
 
   @override
-  String get pathSwitchCompleted => '数据路径切换完成！\\n\\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。';
+  String get pathSwitchCompleted => '数据路径切换完成！\n\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。';
 
   @override
   String get pathSwitchFailedMessage => '路径切换失败';
@@ -3791,7 +3791,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get usageInstructions => '使用说明';
 
   @override
-  String get backupLocationTips => '• 建议选择剩余空间充足的磁盘作为备份位置\\n• 备份位置可以是外部存储设备（如移动硬盘）\\n• 更换备份位置后，所有备份信息将统一管理\\n• 历史备份文件不会自动移动，但可以在备份管理中查看';
+  String get backupLocationTips => '• 建议选择剩余空间充足的磁盘作为备份位置\n• 备份位置可以是外部存储设备（如移动硬盘）\n• 更换备份位置后，所有备份信息将统一管理\n• 历史备份文件不会自动移动，但可以在备份管理中查看';
 
   @override
   String get selectNewDataPathTitle => '选择新的数据存储路径';
@@ -3923,7 +3923,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String confirmDeleteBackupPath(Object path) {
-    return '确定要删除整个备份路径吗？\\n\\n路径：$path\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！';
+    return '确定要删除整个备份路径吗？\n\n路径：$path\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！';
   }
 
   @override
@@ -3996,7 +3996,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String confirmDeleteBackup(String filename, String description) {
-    return '确定要删除这个备份吗？\\n\\n备份：$filename\\n描述：$description\\n\\n此操作不可恢复！';
+    return '确定要删除这个备份吗？\n\n备份：$filename\n描述：$description\n\n此操作不可恢复！';
   }
 
   @override

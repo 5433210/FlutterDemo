@@ -14,6 +14,7 @@ import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_sizes.dart';
+import '../../utils/app_restart_service.dart';
 import '../../utils/file_size_formatter.dart';
 import '../utils/localized_string_extensions.dart';
 import '../widgets/dialogs/backup_progress_dialog.dart';
@@ -36,6 +37,7 @@ class _UnifiedBackupManagementPageState
   bool _isLoading = false;
   String? _currentPath;
   bool _isCancelled = false;
+  bool _isProcessingRestore = false; // 跟踪是否正在处理恢复操作
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _UnifiedBackupManagementPageState
   @override
   void dispose() {
     _isCancelled = true;
+    // 注意：不要在这里重置 _isProcessingRestore，让异步回调自己处理
     super.dispose();
   }
 
@@ -1002,7 +1005,7 @@ class _UnifiedBackupManagementPageState
       // 强制关闭进度对话框
       if (dialogContext != null && mounted) {
         try {
-          Navigator.of(dialogContext!).pop();
+          _safeCloseDialog(dialogContext);
           AppLogger.debug('导入进度对话框已关闭', tag: 'UnifiedBackupManagement');
         } catch (e) {
           AppLogger.warning('关闭导入进度对话框失败',
@@ -1366,8 +1369,19 @@ class _UnifiedBackupManagementPageState
   Future<void> _performBackupRestore(BackupEntry backup) async {
     final l10n = AppLocalizations.of(context);
 
+    // 防止重复恢复操作
+    if (_isProcessingRestore) {
+      AppLogger.warning('已有恢复操作正在进行中', tag: 'UnifiedBackupManagementPage');
+      return;
+    }
+
+    _isProcessingRestore = true;
+
     // 保存对话框上下文
     BuildContext? dialogContext;
+    
+    // 创建一个Completer来等待恢复完成
+    final Completer<void> restoreCompleter = Completer<void>();
 
     // 显示进度对话框
     showDialog(
@@ -1396,42 +1410,131 @@ class _UnifiedBackupManagementPageState
       final backupService = serviceLocator.get<EnhancedBackupService>();
 
       // 恢复备份
-      await backupService.restoreBackup(backup.filename);
+      await backupService.restoreBackup(
+        backup.id,
+        onRestoreComplete: (needsRestart, message) async {
+          try {
+            AppLogger.info('备份恢复完成，处理重启逻辑',
+                tag: 'UnifiedBackupManagementPage',
+                data: {
+                  'needsRestart': needsRestart,
+                  'message': message,
+                  'isProcessingRestore': _isProcessingRestore,
+                  'mounted': mounted,
+                  'isCancelled': _isCancelled,
+                });
 
-      // 检查是否被取消
-      if (_isCancelled || !mounted) {
-        if (mounted && dialogContext != null) {
-          Navigator.of(dialogContext!).pop();
-        }
-        return;
-      }
+            // 立即检查Widget状态，如果已销毁则直接返回
+            if (!mounted || _isCancelled) {
+              AppLogger.warning('Widget已被销毁或已取消，跳过重启处理',
+                  tag: 'UnifiedBackupManagementPage',
+                  data: {
+                    'mounted': mounted,
+                    'isCancelled': _isCancelled,
+                    'isProcessingRestore': _isProcessingRestore,
+                  });
+              restoreCompleter.complete();
+              return;
+            }
 
-      // 恢复成功，应用可能已经重启了
-      // 如果还在这里，说明恢复完成但没有重启
-      if (mounted && dialogContext != null) {
-        Navigator.of(dialogContext!).pop();
+            if (needsRestart) {
+              AppLogger.info('准备关闭进度对话框并显示重启提示', tag: 'UnifiedBackupManagementPage');
+              // 关闭当前进度对话框
+              _safeCloseDialog(dialogContext);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.backupRestoreSuccessMessage),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
+              AppLogger.info('进度对话框关闭完成，开始延迟', tag: 'UnifiedBackupManagementPage');
+              
+              // 延迟一小段时间确保对话框关闭
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              AppLogger.info('延迟完成，检查Widget状态', tag: 'UnifiedBackupManagementPage', data: {
+                'mounted': mounted,
+                'isCancelled': _isCancelled,
+              });
+
+              if (mounted && !_isCancelled) {
+                AppLogger.info('开始显示成功消息', tag: 'UnifiedBackupManagementPage');
+                
+                // 显示成功消息
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$message\n应用将在3秒后自动重启...'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+
+                AppLogger.info('成功消息显示完成，开始延迟重启流程', tag: 'UnifiedBackupManagementPage');
+                
+                // 参考数据路径切换的方式，延迟重启
+                Future.delayed(const Duration(seconds: 3), () {
+                  AppLogger.info('延迟重启回调被调用', tag: 'UnifiedBackupManagementPage', data: {
+                    'mounted': mounted,
+                    'isCancelled': _isCancelled,
+                  });
+                  
+                  if (mounted && !_isCancelled) {
+                    AppLogger.info('执行延迟重启', tag: 'UnifiedBackupManagementPage');
+                    AppRestartService.restartApp(context);
+                  } else {
+                    AppLogger.warning('延迟重启时Widget已被销毁', tag: 'UnifiedBackupManagementPage', data: {
+                      'mounted': mounted,
+                      'isCancelled': _isCancelled,
+                    });
+                  }
+                });
+                
+                AppLogger.info('延迟重启已设置', tag: 'UnifiedBackupManagementPage');
+              } else {
+                AppLogger.warning('Widget状态检查失败，无法显示重启提示', tag: 'UnifiedBackupManagementPage', data: {
+                  'mounted': mounted,
+                  'isCancelled': _isCancelled,
+                });
+              }
+            } else {
+              // 如果不需要重启，显示成功消息
+              if (mounted && !_isCancelled) {
+                _safeCloseDialog(dialogContext);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            AppLogger.error('恢复回调处理失败', error: e, tag: 'UnifiedBackupManagementPage');
+          } finally {
+            // 无论如何都要完成Completer
+            if (!restoreCompleter.isCompleted) {
+              restoreCompleter.complete();
+            }
+          }
+        },
+        autoRestart: true, // 启用自动重启
+      );
+
+      // 等待恢复回调完成
+      await restoreCompleter.future;
+      
+      AppLogger.info('恢复操作完全完成', tag: 'UnifiedBackupManagementPage');
+
     } catch (e) {
       // 关闭进度对话框
-      if (mounted && dialogContext != null) {
-        Navigator.of(dialogContext!).pop();
+      _safeCloseDialog(dialogContext);
 
-        if (!_isCancelled) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.backupRestoreFailedMessage(e.toString())),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      // 只在页面仍然挂载且未被取消时显示错误消息
+      if (!_isCancelled && mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.backupRestoreFailedMessage(e.toString())),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
 
       // 只在页面仍然挂载且未被取消时记录错误日志
@@ -1439,6 +1542,9 @@ class _UnifiedBackupManagementPageState
         AppLogger.error('Failed to restore backup',
             error: e, tag: 'UnifiedBackupManagement');
       }
+    } finally {
+      // 重置恢复状态标志
+      _isProcessingRestore = false;
     }
   }
 
@@ -2207,6 +2313,126 @@ class _UnifiedBackupManagementPageState
     } finally {
       // 清理资源
       progressNotifier.dispose();
+    }
+  }
+
+  /// 显示重启确认对话框
+  Future<bool> _showRestartConfirmationDialog(
+    BuildContext context,
+    String message,
+  ) async {
+    AppLogger.info('开始显示重启确认对话框',
+        tag: 'UnifiedBackupManagementPage', data: {'message': message});
+
+    // 再次检查Widget是否仍然挂载
+    if (!mounted) {
+      AppLogger.warning('Widget已被销毁，无法显示重启确认对话框',
+          tag: 'UnifiedBackupManagementPage');
+      return false;
+    }
+
+    final result = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            AppLogger.info('重启确认对话框构建器被调用', tag: 'UnifiedBackupManagementPage');
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.restart_alt, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('需要重启'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(message),
+                  const SizedBox(height: 16),
+                  Text(
+                    '重启应用以应用更改',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    AppLogger.info('用户选择稍后重启',
+                        tag: 'UnifiedBackupManagementPage');
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('稍后'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    AppLogger.info('用户选择立即重启',
+                        tag: 'UnifiedBackupManagementPage');
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('立即重启'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    AppLogger.info('重启确认对话框返回结果',
+        tag: 'UnifiedBackupManagementPage', data: {'result': result});
+
+    return result;
+  }
+
+  /// 安全地关闭对话框，避免Widget生命周期问题
+  void _safeCloseDialog(BuildContext? dialogContext) {
+    AppLogger.info('_safeCloseDialog 被调用', tag: 'UnifiedBackupManagementPage', data: {
+      'dialogContext': dialogContext != null ? 'not null' : 'null',
+      'mounted': mounted,
+      'isCancelled': _isCancelled,
+    });
+    
+    if (dialogContext == null) {
+      AppLogger.debug('对话框上下文为空，无需关闭', tag: 'UnifiedBackupManagementPage');
+      return;
+    }
+
+    if (!mounted || _isCancelled) {
+      AppLogger.warning('Widget已被销毁或已取消，无法安全关闭对话框',
+          tag: 'UnifiedBackupManagementPage');
+      return;
+    }
+
+    try {
+      AppLogger.info('尝试关闭对话框', tag: 'UnifiedBackupManagementPage');
+      
+      // 检查Navigator是否仍然可用
+      if (Navigator.canPop(dialogContext)) {
+        AppLogger.info('Navigator.canPop 返回 true，开始关闭对话框', tag: 'UnifiedBackupManagementPage');
+        Navigator.of(dialogContext).pop();
+        AppLogger.debug('对话框关闭成功', tag: 'UnifiedBackupManagementPage');
+      } else {
+        AppLogger.debug('对话框无法弹出，可能已关闭', tag: 'UnifiedBackupManagementPage');
+      }
+    } catch (e) {
+      AppLogger.warning('关闭对话框失败，可能是Widget已被销毁',
+          error: e, tag: 'UnifiedBackupManagementPage');
+
+      // 尝试备用方案
+      if (mounted && !_isCancelled) {
+        try {
+          AppLogger.info('尝试备用关闭方案', tag: 'UnifiedBackupManagementPage');
+          Navigator.of(context).pop();
+          AppLogger.debug('备用关闭方案成功', tag: 'UnifiedBackupManagementPage');
+        } catch (e2) {
+          AppLogger.error('备用关闭方案也失败',
+              error: e2, tag: 'UnifiedBackupManagementPage');
+        }
+      }
     }
   }
 }

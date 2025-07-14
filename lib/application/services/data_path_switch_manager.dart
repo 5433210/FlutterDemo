@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/backup_models.dart';
+import '../../domain/models/config/data_path_config.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/app_restart_service.dart';
 import 'backup_registry_manager.dart';
+import 'data_path_config_service.dart';
 
 /// 数据路径切换管理器
 class DataPathSwitchManager {
-  static const String _dataPathKey = 'current_data_path';
   static const String _legacyDataPathsKey = 'legacy_data_paths';
 
   /// 检查数据路径切换前的建议
@@ -173,26 +175,43 @@ class DataPathSwitchManager {
         'newPath': newPath,
       });
 
-      final prefs = await SharedPreferences.getInstance();
-      final oldPath = prefs.getString(_dataPathKey);
+      // 获取当前配置
+      final currentConfig = await DataPathConfigService.readConfig();
+      final oldPath = await currentConfig.getActualDataPath();
 
       // 1. 记录旧数据路径
-      if (oldPath != null && oldPath != newPath) {
+      if (oldPath != newPath) {
         await _recordLegacyDataPath(oldPath, context);
       }
 
-      // 2. 设置新数据路径
-      await prefs.setString(_dataPathKey, newPath);
+      // 2. 验证新路径
+      final validationResult =
+          await DataPathConfigService.validatePath(newPath);
+      if (!validationResult.isValid) {
+        throw Exception('路径验证失败: ${validationResult.errorMessage}');
+      }
 
-      // 3. 确保新路径存在
+      // 3. 创建新配置并保存
+      final newConfig = DataPathConfig.withCustomPath(newPath);
+      await DataPathConfigService.writeConfig(newConfig);
+
+      // 4. 确保新路径存在
       final newDirectory = Directory(newPath);
       if (!await newDirectory.exists()) {
         await newDirectory.create(recursive: true);
       }
 
-      AppLogger.info('数据路径切换完成', tag: 'DataPathSwitchManager', data: {
+      // 5. 写入数据版本信息
+      await DataPathConfigService.writeDataVersion(newPath);
+
+      AppLogger.info('数据路径切换完成，准备重启应用', tag: 'DataPathSwitchManager', data: {
         'oldPath': oldPath,
         'newPath': newPath,
+      });
+
+      // 6. 延迟一段时间后重启应用，让UI有时间显示成功消息
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        AppRestartService.restartApp(context);
       });
     } catch (e, stack) {
       AppLogger.error('数据路径切换失败',
@@ -204,8 +223,8 @@ class DataPathSwitchManager {
   /// 获取当前数据路径
   static Future<String?> getCurrentDataPath() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_dataPathKey);
+      final config = await DataPathConfigService.readConfig();
+      return await config.getActualDataPath();
     } catch (e, stack) {
       AppLogger.error('获取当前数据路径失败',
           error: e, stackTrace: stack, tag: 'DataPathSwitchManager');

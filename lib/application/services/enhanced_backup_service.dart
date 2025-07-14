@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,10 +10,200 @@ import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
 import 'backup_registry_manager.dart';
 import 'backup_service.dart';
+import 'data_path_config_service.dart';
 
 /// 增强的备份服务
 /// 基于配置文件的备份管理，支持多位置备份统一管理
 class EnhancedBackupService {
+  /// 应用重启后检查并完成备份恢复（第四阶段）
+  static Future<void> checkAndCompleteRestoreAfterRestart(
+      String dataPath) async {
+    AppLogger.info('检查是否有待完成的备份恢复', tag: 'EnhancedBackupService', data: {
+      'dataPath': dataPath,
+    });
+
+    final markerFile = File(path.join(dataPath, 'restore_pending.json'));
+
+    if (!await markerFile.exists()) {
+      AppLogger.debug('没有找到恢复标记文件', tag: 'EnhancedBackupService');
+      return;
+    }
+
+    try {
+      // 读取恢复标记文件
+      final markerContent = await markerFile.readAsString();
+      final markerData = json.decode(markerContent) as Map<String, dynamic>;
+
+      final tempRestoreDir = markerData['temp_restore_dir'] as String;
+      final backupId = markerData['backup_id'] as String;
+      final backupFilename = markerData['backup_filename'] as String;
+
+      AppLogger.info('发现待完成的备份恢复', tag: 'EnhancedBackupService', data: {
+        'backupId': backupId,
+        'backupFilename': backupFilename,
+        'tempRestoreDir': tempRestoreDir,
+      });
+
+      // 检查临时恢复目录是否存在
+      final tempDirectory = Directory(tempRestoreDir);
+      if (!await tempDirectory.exists()) {
+        AppLogger.error('临时恢复目录不存在', tag: 'EnhancedBackupService', data: {
+          'tempRestoreDir': tempRestoreDir,
+        });
+        await markerFile.delete();
+        return;
+      }
+
+      // 执行恢复操作
+      await _performRestoreFromTempDirectory(tempRestoreDir, dataPath);
+
+      // 清理临时目录
+      await tempDirectory.delete(recursive: true);
+
+      // 删除标记文件
+      await markerFile.delete();
+
+      AppLogger.info('备份恢复完成', tag: 'EnhancedBackupService', data: {
+        'backupId': backupId,
+        'backupFilename': backupFilename,
+      });
+    } catch (e, stack) {
+      AppLogger.error('完成备份恢复时发生错误',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+
+      // 发生错误时，仍然尝试清理标记文件
+      try {
+        await markerFile.delete();
+      } catch (deleteError) {
+        AppLogger.warning('删除恢复标记文件失败',
+            error: deleteError, tag: 'EnhancedBackupService');
+      }
+    }
+  }
+
+  /// 从临时目录执行恢复操作
+  static Future<void> _performRestoreFromTempDirectory(
+      String tempRestoreDir, String dataPath) async {
+    AppLogger.info('开始从临时目录恢复数据', tag: 'EnhancedBackupService', data: {
+      'tempRestoreDir': tempRestoreDir,
+      'dataPath': dataPath,
+    });
+
+    // 确保目标数据目录存在
+    await Directory(dataPath).create(recursive: true);
+
+    // 1. 恢复 data 目录下的所有子目录到 dataPath
+    final dataDir = Directory(path.join(tempRestoreDir, 'data'));
+    if (await dataDir.exists()) {
+      await for (final entity in dataDir.list(recursive: true)) {
+        if (entity is File) {
+          final relativePath = path.relative(entity.path, from: dataDir.path);
+          final targetFilePath = path.join(dataPath, relativePath);
+          final targetDir = path.dirname(targetFilePath);
+
+          await Directory(targetDir).create(recursive: true);
+
+          try {
+            // 如果目标文件已存在，先删除
+            if (await File(targetFilePath).exists()) {
+              await File(targetFilePath).delete();
+            }
+
+            await entity.copy(targetFilePath);
+
+            AppLogger.debug('文件恢复完成', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+            });
+          } catch (e) {
+            AppLogger.error('文件恢复失败', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+              'error': e.toString(),
+            });
+          }
+        }
+      }
+    }
+
+    // 2. 恢复 database 目录到 dataPath/database
+    final databaseDir = Directory(path.join(tempRestoreDir, 'database'));
+    if (await databaseDir.exists()) {
+      final targetDatabaseDir = Directory(path.join(dataPath, 'database'));
+      await targetDatabaseDir.create(recursive: true);
+
+      await for (final entity in databaseDir.list(recursive: true)) {
+        if (entity is File) {
+          final relativePath =
+              path.relative(entity.path, from: databaseDir.path);
+          final targetFilePath =
+              path.join(targetDatabaseDir.path, relativePath);
+          final targetDir = path.dirname(targetFilePath);
+
+          await Directory(targetDir).create(recursive: true);
+
+          try {
+            // 如果目标文件已存在，先删除
+            if (await File(targetFilePath).exists()) {
+              await File(targetFilePath).delete();
+            }
+
+            await entity.copy(targetFilePath);
+
+            AppLogger.debug('数据库文件恢复完成', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+            });
+          } catch (e) {
+            AppLogger.error('数据库文件恢复失败', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+              'error': e.toString(),
+            });
+          }
+        }
+      }
+    }
+
+    AppLogger.info('从临时目录恢复数据完成', tag: 'EnhancedBackupService');
+  }
+
+  /// 应用重启后自动恢复临时目录内容
+  static Future<void> restorePendingFilesAfterRestart(String dataPath) async {
+    final tempRestoreDir = Directory(path.join(dataPath, 'temp_restore'));
+    if (await tempRestoreDir.exists()) {
+      await for (final entity in tempRestoreDir.list(recursive: true)) {
+        if (entity is File) {
+          final relativePath =
+              path.relative(entity.path, from: tempRestoreDir.path);
+          final targetFilePath = path.join(dataPath, relativePath);
+          final targetDir = path.dirname(targetFilePath);
+          await Directory(targetDir).create(recursive: true);
+          try {
+            if (await File(targetFilePath).exists()) {
+              await File(targetFilePath).delete();
+            }
+            await entity.rename(targetFilePath);
+            AppLogger.info('重启后恢复临时文件', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+              'result': 'success',
+            });
+          } catch (e) {
+            AppLogger.error('重启后恢复临时文件失败', tag: 'EnhancedBackupService', data: {
+              'source': entity.path,
+              'target': targetFilePath,
+              'result': 'fail',
+              'error': e.toString(),
+            });
+          }
+        }
+      }
+      await tempRestoreDir.delete(recursive: true);
+      AppLogger.info('临时恢复目录已清理', tag: 'EnhancedBackupService');
+    }
+  }
+
   final BackupService _backupService;
 
   EnhancedBackupService({
@@ -187,31 +378,220 @@ class EnhancedBackupService {
     }
   }
 
-  /// 恢复备份
-  Future<void> restoreBackup(String backupId) async {
+  /// 恢复备份（新的分阶段流程）
+  /// 支持通过 backupId 或文件名来查找备份
+  Future<void> restoreBackup(
+    String backupIdOrFilename, {
+    void Function(bool needsRestart, String message)? onRestoreComplete,
+    bool autoRestart = false,
+  }) async {
     try {
       final registry = await BackupRegistryManager.getRegistry();
-      final backup = registry.getBackup(backupId);
+
+      // 首先尝试通过ID查找
+      BackupEntry? backup = registry.getBackup(backupIdOrFilename);
+
+      // 如果通过ID找不到，尝试通过文件名查找
+      backup ??= registry.backups.cast<BackupEntry?>().firstWhere(
+            (b) => b?.filename == backupIdOrFilename,
+            orElse: () => null,
+          );
 
       if (backup == null) {
-        throw Exception('备份不存在: $backupId');
+        throw Exception('备份不存在: $backupIdOrFilename');
       }
 
-      // 验证备份文件完整性
-      final isValid = await BackupRegistryManager.verifyBackupIntegrity(backup);
-      if (!isValid) {
-        throw Exception('备份文件已损坏或不完整');
-      }
-
-      // 使用原始备份服务恢复
-      await _backupService.restoreFromBackup(backup.fullPath);
-
-      AppLogger.info('恢复备份成功', tag: 'EnhancedBackupService', data: {
-        'backupId': backupId,
+      // 阶段1：核验备份文件
+      AppLogger.info('开始核验备份文件', tag: 'EnhancedBackupService', data: {
+        'backupId': backup.id,
         'filename': backup.filename,
+      });
+
+      final isValid = await _verifyBackupFile(backup);
+      if (!isValid) {
+        throw Exception('备份文件核验失败');
+      }
+
+      // 阶段2：解压到临时目录
+      AppLogger.info('开始解压备份文件到临时目录', tag: 'EnhancedBackupService');
+      final tempRestoreDir = await _extractBackupToTempDirectory(backup);
+
+      // 阶段3：创建恢复标记文件并重启应用
+      AppLogger.info('创建恢复标记文件并准备重启', tag: 'EnhancedBackupService');
+      await _createRestoreMarker(tempRestoreDir, backup);
+
+      // 调用回调函数，通知需要重启
+      if (onRestoreComplete != null) {
+        onRestoreComplete(true, '备份文件已准备就绪，需要重启应用完成恢复');
+      }
+
+      AppLogger.info('备份恢复准备完成，等待重启', tag: 'EnhancedBackupService', data: {
+        'backupId': backup.id,
+        'tempRestoreDir': tempRestoreDir,
       });
     } catch (e, stack) {
       AppLogger.error('恢复备份失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 验证备份文件完整性（第一阶段）
+  Future<bool> _verifyBackupFile(BackupEntry backup) async {
+    try {
+      // 1. 检查文件是否存在
+      final backupFile = File(backup.fullPath);
+      if (!await backupFile.exists()) {
+        AppLogger.error('备份文件不存在', tag: 'EnhancedBackupService', data: {
+          'path': backup.fullPath,
+        });
+        return false;
+      }
+
+      // 2. 检查文件大小
+      final actualSize = await backupFile.length();
+      if (actualSize != backup.size) {
+        AppLogger.error('备份文件大小不匹配', tag: 'EnhancedBackupService', data: {
+          'expected': backup.size,
+          'actual': actualSize,
+        });
+        return false;
+      }
+
+      // 3. 验证校验和（如果有的话）
+      if (backup.checksum != null) {
+        final actualChecksum =
+            await BackupRegistryManager.calculateChecksum(backupFile);
+        if (actualChecksum != backup.checksum) {
+          AppLogger.error('备份文件校验和不匹配', tag: 'EnhancedBackupService', data: {
+            'expected': backup.checksum,
+            'actual': actualChecksum,
+          });
+          return false;
+        }
+      }
+
+      // 4. 验证ZIP文件格式
+      try {
+        final zipBytes = await backupFile.readAsBytes();
+        final archive = ZipDecoder().decodeBytes(zipBytes);
+
+        // 检查是否包含必要的目录
+        bool hasDatabase = false;
+        bool hasData = false;
+
+        for (final file in archive) {
+          if (file.name.startsWith('database/')) {
+            hasDatabase = true;
+          } else if (file.name.startsWith('data/')) {
+            hasData = true;
+          }
+        }
+
+        if (!hasDatabase || !hasData) {
+          AppLogger.error('备份文件缺少必要的目录结构', tag: 'EnhancedBackupService', data: {
+            'hasDatabase': hasDatabase,
+            'hasData': hasData,
+          });
+          return false;
+        }
+      } catch (e) {
+        AppLogger.error('备份文件ZIP格式验证失败',
+            tag: 'EnhancedBackupService', error: e);
+        return false;
+      }
+
+      AppLogger.info('备份文件核验通过', tag: 'EnhancedBackupService');
+      return true;
+    } catch (e, stack) {
+      AppLogger.error('验证备份文件时发生错误',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      return false;
+    }
+  }
+
+  /// 解压备份文件到临时目录（第二阶段）
+  Future<String> _extractBackupToTempDirectory(BackupEntry backup) async {
+    try {
+      // 获取当前数据路径
+      final config = await DataPathConfigService.readConfig();
+      final currentDataPath = await config.getActualDataPath();
+
+      // 创建临时恢复目录
+      final tempRestoreDir = path.join(currentDataPath, 'temp_restore');
+      final tempDirectory = Directory(tempRestoreDir);
+
+      // 如果临时目录已存在，先清理
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+
+      await tempDirectory.create(recursive: true);
+
+      // 解压备份文件
+      final backupFile = File(backup.fullPath);
+      final zipBytes = await backupFile.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(zipBytes);
+
+      for (final file in archive) {
+        final filePath = path.join(tempRestoreDir, file.name);
+
+        if (file.isFile) {
+          // 创建文件目录
+          final fileDir = path.dirname(filePath);
+          await Directory(fileDir).create(recursive: true);
+
+          // 写入文件内容
+          await File(filePath).writeAsBytes(file.content as List<int>);
+        } else {
+          // 创建目录
+          await Directory(filePath).create(recursive: true);
+        }
+      }
+
+      AppLogger.info('备份文件解压完成', tag: 'EnhancedBackupService', data: {
+        'tempRestoreDir': tempRestoreDir,
+        'fileCount': archive.length,
+      });
+
+      return tempRestoreDir;
+    } catch (e, stack) {
+      AppLogger.error('解压备份文件到临时目录失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 创建恢复标记文件（第三阶段）
+  Future<void> _createRestoreMarker(
+      String tempRestoreDir, BackupEntry backup) async {
+    try {
+      // 获取当前数据路径
+      final config = await DataPathConfigService.readConfig();
+      final currentDataPath = await config.getActualDataPath();
+
+      // 创建标记文件
+      final markerFile =
+          File(path.join(currentDataPath, 'restore_pending.json'));
+
+      final markerData = {
+        'timestamp': DateTime.now().toIso8601String(),
+        'backup_id': backup.id,
+        'backup_filename': backup.filename,
+        'backup_description': backup.description,
+        'temp_restore_dir': tempRestoreDir,
+        'data_path': currentDataPath,
+        'restore_stage': 'pending',
+      };
+
+      await markerFile.writeAsString(json.encode(markerData));
+
+      AppLogger.info('恢复标记文件创建完成', tag: 'EnhancedBackupService', data: {
+        'markerFile': markerFile.path,
+        'tempRestoreDir': tempRestoreDir,
+      });
+    } catch (e, stack) {
+      AppLogger.error('创建恢复标记文件失败',
           error: e, stackTrace: stack, tag: 'EnhancedBackupService');
       rethrow;
     }
@@ -446,8 +826,11 @@ class EnhancedBackupService {
       final currentPath = await BackupRegistryManager.getCurrentBackupPath();
       final isLegacy = currentPath != backupPath;
 
+      // 为扫描的文件生成稳定的ID（基于文件路径和修改时间）
+      final stableId = _generateStableId(file.path, stat.modified);
+
       return BackupEntry(
-        id: _generateId(),
+        id: stableId,
         filename: path.basename(file.path),
         fullPath: file.path,
         size: stat.size,
@@ -656,6 +1039,324 @@ class EnhancedBackupService {
       );
     } catch (e, stack) {
       AppLogger.error('获取路径切换预览失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 为文件生成稳定的ID（基于文件路径和修改时间）
+  String _generateStableId(String filePath, DateTime modifiedTime) {
+    final fileName = path.basename(filePath);
+    final timeStamp = modifiedTime.millisecondsSinceEpoch;
+    final hashSource = '$fileName-$timeStamp';
+
+    // 使用文件名和修改时间的哈希作为稳定ID
+    // 这确保同一个文件总是有相同的ID
+    final hashCode = hashSource.hashCode.abs();
+    return 'backup_stable_$hashCode';
+  }
+
+  /// 检查路径是否是外部路径（不在应用目录内）
+  Future<bool> _isExternalPath(String filePath) async {
+    try {
+      // 获取应用目录
+      final appDir = Directory.current;
+      final appPath = appDir.path;
+
+      // 将路径标准化
+      final normalizedFilePath = path.normalize(filePath);
+      final normalizedAppPath = path.normalize(appPath);
+
+      // 检查文件路径是否以应用路径开头
+      return !normalizedFilePath.startsWith(normalizedAppPath);
+    } catch (e) {
+      AppLogger.warning('检查外部路径失败，假设为外部路径',
+          error: e, tag: 'EnhancedBackupService');
+      return true; // 保守处理，假设是外部路径
+    }
+  }
+
+  /// 从外部备份文件恢复
+  Future<void> _restoreFromExternalBackup(
+    BackupEntry backup, {
+    void Function(bool needsRestart, String message)? onRestoreComplete,
+    bool autoRestart = false,
+  }) async {
+    try {
+      AppLogger.info('开始从外部路径恢复备份', tag: 'EnhancedBackupService', data: {
+        'externalPath': backup.fullPath,
+        'filename': backup.filename,
+      });
+
+      // 方案：创建一个临时的BackupService实例，使用外部文件所在的目录作为basePath
+      // 这样就可以绕过路径验证
+      final externalDir = path.dirname(backup.fullPath);
+
+      // 创建一个专门处理外部路径的备份服务实例
+      await _restoreFromExternalPathWithTempService(
+        backup.fullPath,
+        externalDir,
+        onRestoreComplete: onRestoreComplete,
+        autoRestart: autoRestart,
+      );
+    } catch (e, stack) {
+      AppLogger.error('从外部路径恢复备份失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 使用临时服务从外部路径恢复
+  Future<void> _restoreFromExternalPathWithTempService(
+    String backupFilePath,
+    String externalDir, {
+    void Function(bool needsRestart, String message)? onRestoreComplete,
+    bool autoRestart = false,
+  }) async {
+    try {
+      // 将外部备份文件复制到当前数据路径下的临时目录
+      // 这样确保路径在 LocalStorage 的允许范围内
+      String? tempBackupPath;
+
+      try {
+        // 获取当前数据路径
+        final config = await DataPathConfigService.readConfig();
+        final currentDataPath = await config.getActualDataPath();
+
+        // 在当前数据路径下创建临时目录
+        final tempDir =
+            Directory(path.join(currentDataPath, 'temp', 'external_restore'));
+        await tempDir.create(recursive: true);
+
+        final tempFileName =
+            'external_restore_${DateTime.now().millisecondsSinceEpoch}_${path.basename(backupFilePath)}';
+        tempBackupPath = path.join(tempDir.path, tempFileName);
+
+        AppLogger.info('创建当前数据路径内的临时文件', tag: 'EnhancedBackupService', data: {
+          'currentDataPath': currentDataPath,
+          'tempDir': tempDir.path,
+          'tempBackupPath': tempBackupPath,
+        });
+
+        // 复制外部备份文件到当前数据路径内的临时位置
+        final sourceFile = File(backupFilePath);
+        final tempBackupFile = File(tempBackupPath);
+        await sourceFile.copy(tempBackupFile.path);
+
+        AppLogger.info('外部备份文件复制到当前数据路径完成，开始恢复',
+            tag: 'EnhancedBackupService',
+            data: {
+              'tempPath': tempBackupPath,
+            });
+
+        // 直接解压和恢复备份文件，避免LocalStorage路径验证问题
+        await _directRestoreFromBackup(
+          tempBackupPath,
+          currentDataPath,
+          onRestoreComplete: onRestoreComplete,
+          autoRestart: autoRestart,
+        );
+
+        AppLogger.info('外部备份恢复成功', tag: 'EnhancedBackupService');
+      } finally {
+        // 清理临时文件
+        try {
+          if (tempBackupPath != null) {
+            final tempBackupFile = File(tempBackupPath);
+            if (await tempBackupFile.exists()) {
+              await tempBackupFile.delete();
+              AppLogger.debug('临时备份文件删除完成', tag: 'EnhancedBackupService');
+            }
+          }
+        } catch (e) {
+          AppLogger.warning('清理外部恢复临时文件失败',
+              error: e, tag: 'EnhancedBackupService');
+        }
+      }
+    } catch (e, stack) {
+      AppLogger.error('使用临时服务从外部路径恢复失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 直接从备份文件恢复，避免LocalStorage路径验证问题
+  Future<void> _directRestoreFromBackup(
+    String backupPath,
+    String targetDataPath, {
+    void Function(bool needsRestart, String message)? onRestoreComplete,
+    bool autoRestart = false,
+  }) async {
+    try {
+      AppLogger.info('开始直接从备份恢复', tag: 'EnhancedBackupService', data: {
+        'backupPath': backupPath,
+        'targetDataPath': targetDataPath,
+      });
+
+      // 检查备份文件是否存在
+      final backupFile = File(backupPath);
+      if (!await backupFile.exists()) {
+        throw Exception('备份文件不存在: $backupPath');
+      }
+
+      // 创建临时解压目录
+      final tempExtractDir =
+          Directory(path.join(targetDataPath, 'temp', 'extract'));
+      await tempExtractDir.create(recursive: true);
+
+      try {
+        // 解压备份文件
+        AppLogger.info('开始解压备份文件', tag: 'EnhancedBackupService');
+        await _extractBackupArchive(backupPath, tempExtractDir.path);
+
+        // 恢复文件到目标位置
+        AppLogger.info('开始恢复文件到目标位置', tag: 'EnhancedBackupService');
+        await _restoreFilesToTarget(tempExtractDir.path, targetDataPath);
+
+        AppLogger.info('直接备份恢复成功', tag: 'EnhancedBackupService');
+
+        // 调用回调，通知恢复完成需要重启
+        if (onRestoreComplete != null) {
+          onRestoreComplete(true, '备份恢复成功，需要重启应用以应用更改。');
+        }
+      } finally {
+        // 清理临时解压目录
+        try {
+          await tempExtractDir.delete(recursive: true);
+          AppLogger.debug('临时解压目录清理完成', tag: 'EnhancedBackupService');
+        } catch (e) {
+          AppLogger.warning('清理临时解压目录失败',
+              error: e, tag: 'EnhancedBackupService');
+        }
+      }
+    } catch (e, stack) {
+      AppLogger.error('直接备份恢复失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 解压备份归档文件
+  Future<void> _extractBackupArchive(
+      String archivePath, String extractPath) async {
+    try {
+      // 读取归档文件
+      final archiveFile = File(archivePath);
+      final bytes = await archiveFile.readAsBytes();
+
+      // 解码归档
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      // 提取文件
+      for (final file in archive) {
+        final fileName = file.name;
+        final filePath = path.join(extractPath, fileName);
+
+        if (file.isFile) {
+          // 创建文件目录
+          final fileDir = path.dirname(filePath);
+          await Directory(fileDir).create(recursive: true);
+
+          // 写入文件内容
+          await File(filePath).writeAsBytes(file.content as List<int>);
+        } else {
+          // 创建目录
+          await Directory(filePath).create(recursive: true);
+        }
+      }
+
+      AppLogger.info('备份归档解压完成',
+          tag: 'EnhancedBackupService', data: {'fileCount': archive.length});
+    } catch (e, stack) {
+      AppLogger.error('解压备份归档失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 恢复文件到目标位置
+  Future<void> _restoreFilesToTarget(
+      String extractPath, String targetPath) async {
+    try {
+      final extractDir = Directory(extractPath);
+
+      // 1. 恢复 data 目录下的所有子目录到 targetPath
+      final dataDir = Directory(path.join(extractPath, 'data'));
+      if (await dataDir.exists()) {
+        await for (final entity in dataDir.list(recursive: true)) {
+          if (entity is File) {
+            final relativePath = path.relative(entity.path, from: dataDir.path);
+            final targetFilePath = path.join(targetPath, relativePath);
+            final targetDir = path.dirname(targetFilePath);
+            await Directory(targetDir).create(recursive: true);
+            bool existed = await File(targetFilePath).exists();
+            try {
+              await entity.copy(targetFilePath);
+              AppLogger.info('文件恢复', tag: 'EnhancedBackupService', data: {
+                'source': entity.path,
+                'target': targetFilePath,
+                'existedBefore': existed,
+                'result': 'success',
+              });
+            } catch (e) {
+              // 文件占用异常，暂存到 temp_restore 目录
+              final tempRestorePath =
+                  path.join(targetPath, 'temp_restore', relativePath);
+              await Directory(path.dirname(tempRestorePath))
+                  .create(recursive: true);
+              await entity.copy(tempRestorePath);
+              AppLogger.warning('文件占用，暂存到临时恢复目录',
+                  tag: 'EnhancedBackupService',
+                  data: {
+                    'source': entity.path,
+                    'target': tempRestorePath,
+                    'existedBefore': existed,
+                    'result': 'pending',
+                    'error': e.toString(),
+                  });
+            }
+          }
+        }
+      }
+
+      // 2. 恢复 database 整个目录到 targetPath/database 下
+      final databaseDir = Directory(path.join(extractPath, 'database'));
+      if (await databaseDir.exists()) {
+        final targetDatabaseDir = Directory(path.join(targetPath, 'database'));
+        await targetDatabaseDir.create(recursive: true);
+        await for (final entity in databaseDir.list(recursive: true)) {
+          if (entity is File) {
+            final relativePath =
+                path.relative(entity.path, from: databaseDir.path);
+            final targetFilePath =
+                path.join(targetDatabaseDir.path, relativePath);
+            final targetDir = path.dirname(targetFilePath);
+            await Directory(targetDir).create(recursive: true);
+            bool existed = await File(targetFilePath).exists();
+            try {
+              await entity.copy(targetFilePath);
+              AppLogger.info('文件恢复', tag: 'EnhancedBackupService', data: {
+                'source': entity.path,
+                'target': targetFilePath,
+                'existedBefore': existed,
+                'result': 'success',
+              });
+            } catch (e) {
+              AppLogger.error('文件恢复失败', tag: 'EnhancedBackupService', data: {
+                'source': entity.path,
+                'target': targetFilePath,
+                'existedBefore': existed,
+                'result': 'fail',
+                'error': e.toString(),
+              });
+            }
+          }
+        }
+      }
+
+      AppLogger.info('文件恢复到目标位置完成', tag: 'EnhancedBackupService');
+    } catch (e, stack) {
+      AppLogger.error('恢复文件到目标位置失败',
           error: e, stackTrace: stack, tag: 'EnhancedBackupService');
       rethrow;
     }

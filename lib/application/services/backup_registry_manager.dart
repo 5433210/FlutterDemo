@@ -345,6 +345,18 @@ class BackupRegistryManager {
     return 'backup_${timestamp}_$randomValue';
   }
 
+  /// 为文件生成稳定的ID（基于文件路径和修改时间）
+  static String _generateStableId(String filePath, DateTime modifiedTime) {
+    final fileName = path.basename(filePath);
+    final timeStamp = modifiedTime.millisecondsSinceEpoch;
+    final hashSource = '$fileName-$timeStamp';
+
+    // 使用文件名和修改时间的哈希作为稳定ID
+    // 这确保同一个文件总是有相同的ID
+    final hashCode = hashSource.hashCode.abs();
+    return 'backup_stable_$hashCode';
+  }
+
   /// 计算文件校验和
   static Future<String> calculateChecksum(File file) async {
     try {
@@ -646,8 +658,11 @@ class BackupRegistryManager {
     try {
       final stat = await file.stat();
 
+      // 为扫描的文件生成稳定的ID（基于文件路径和修改时间）
+      final stableId = _generateStableId(file.path, stat.modified);
+
       return BackupEntry(
-        id: _generateId(),
+        id: stableId,
         filename: path.basename(file.path),
         fullPath: file.path,
         size: stat.size,

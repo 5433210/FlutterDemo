@@ -611,18 +611,56 @@ class _DataPathSwitchWizardState extends ConsumerState<DataPathSwitchWizard> {
         await showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: Text(l10n.switchSuccessful),
-            content: Text(l10n.pathSwitchCompleted),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // 关闭对话框
-                  Navigator.pop(context, true); // 关闭向导并返回成功
-                },
-                child: Text(l10n.confirm),
+          builder: (context) => PopScope(
+            canPop: false,
+            child: AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Text(l10n.switchSuccessful),
+                ],
               ),
-            ],
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.pathSwitchCompleted),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.appWillRestartAfterRestore,
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // 关闭对话框
+                    Navigator.pop(context, true); // 关闭向导并返回成功
+                  },
+                  child: Text(l10n.confirm),
+                ),
+              ],
+            ),
           ),
         );
       }

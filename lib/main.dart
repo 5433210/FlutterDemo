@@ -9,6 +9,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'application/providers/app_initialization_provider.dart';
+import 'application/services/data_path_config_service.dart';
+import 'application/services/enhanced_backup_service.dart';
 import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/monitoring/performance_monitor.dart';
@@ -58,7 +60,7 @@ void main() async {
       size: Size(1280, 800),
       minimumSize: Size(800, 600),
       center: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
       title: appTitle,
@@ -66,6 +68,8 @@ void main() async {
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       // 设置窗口图标，确保与任务栏图标一致
       await windowManager.setIcon('assets/images/app_trans_bg4.ico');
+      // 确保窗口背景不透明
+      await windowManager.setBackgroundColor(Colors.white);
       await windowManager.show();
       await windowManager.focus();
     });
@@ -102,8 +106,30 @@ void main() async {
         AppLogger.warning('数据路径配置预加载失败: ${initResult.errorMessage}',
             tag: 'App');
       }
+      
+      // 无论初始化是否成功，都要检查备份恢复
+      try {
+        AppLogger.info('开始检查备份恢复', tag: 'App');
+        final config = await DataPathConfigService.readConfig();
+        final dataPath = await config.getActualDataPath();
+        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
+        AppLogger.info('备份恢复检查完成', tag: 'App');
+      } catch (e) {
+        AppLogger.warning('备份恢复检查失败', error: e, tag: 'App');
+      }
     } catch (e) {
       AppLogger.error('数据路径配置预加载出错', error: e, tag: 'App');
+      
+      // 即使预加载失败，也要尝试检查备份恢复
+      try {
+        AppLogger.info('预加载失败，仍然尝试检查备份恢复', tag: 'App');
+        final config = await DataPathConfigService.readConfig();
+        final dataPath = await config.getActualDataPath();
+        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
+        AppLogger.info('备份恢复检查完成', tag: 'App');
+      } catch (restoreError) {
+        AppLogger.warning('备份恢复检查失败', error: restoreError, tag: 'App');
+      }
     }
 
     // 启动应用

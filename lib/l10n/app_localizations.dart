@@ -5852,7 +5852,7 @@ abstract class AppLocalizations {
   /// No description provided for @deletePathConfirmContent.
   ///
   /// In zh, this message translates to:
-  /// **'确定要删除整个备份路径吗？\\n\\n路径：{path}\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！'**
+  /// **'确定要删除整个备份路径吗？\n\n路径：{path}\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！'**
   String deletePathConfirmContent(Object path);
 
   /// No description provided for @confirmDeleteButton.
@@ -6872,7 +6872,7 @@ abstract class AppLocalizations {
   /// No description provided for @pathSwitchCompletedMessage.
   ///
   /// In zh, this message translates to:
-  /// **'数据路径切换完成！\\n\\n您可以在数据路径管理中查看和清理旧路径的数据。'**
+  /// **'数据路径切换完成！\n\n您可以在数据路径管理中查看和清理旧路径的数据。'**
   String get pathSwitchCompletedMessage;
 
   /// No description provided for @pathSwitchFailed.
@@ -6926,7 +6926,7 @@ abstract class AppLocalizations {
   /// No description provided for @skipBackupWarning.
   ///
   /// In zh, this message translates to:
-  /// **'确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。'**
+  /// **'确定要跳过备份直接进行路径切换吗？\n\n这可能存在数据丢失的风险。'**
   String get skipBackupWarning;
 
   /// No description provided for @confirmSkip.
@@ -7052,7 +7052,7 @@ abstract class AppLocalizations {
   /// No description provided for @skipBackupWarningMessage.
   ///
   /// In zh, this message translates to:
-  /// **'确定要跳过备份直接进行路径切换吗？\\n\\n这可能存在数据丢失的风险。'**
+  /// **'确定要跳过备份直接进行路径切换吗？\n\n这可能存在数据丢失的风险。'**
   String get skipBackupWarningMessage;
 
   /// No description provided for @confirmSkipAction.
@@ -7070,7 +7070,7 @@ abstract class AppLocalizations {
   /// No description provided for @pathSwitchCompleted.
   ///
   /// In zh, this message translates to:
-  /// **'数据路径切换完成！\\n\\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。'**
+  /// **'数据路径切换完成！\n\n您可以在\"数据路径管理\"中查看和清理旧路径的数据。'**
   String get pathSwitchCompleted;
 
   /// No description provided for @pathSwitchFailedMessage.
@@ -7286,7 +7286,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupLocationTips.
   ///
   /// In zh, this message translates to:
-  /// **'• 建议选择剩余空间充足的磁盘作为备份位置\\n• 备份位置可以是外部存储设备（如移动硬盘）\\n• 更换备份位置后，所有备份信息将统一管理\\n• 历史备份文件不会自动移动，但可以在备份管理中查看'**
+  /// **'• 建议选择剩余空间充足的磁盘作为备份位置\n• 备份位置可以是外部存储设备（如移动硬盘）\n• 更换备份位置后，所有备份信息将统一管理\n• 历史备份文件不会自动移动，但可以在备份管理中查看'**
   String get backupLocationTips;
 
   /// No description provided for @selectNewDataPathTitle.
@@ -7544,7 +7544,7 @@ abstract class AppLocalizations {
   /// No description provided for @confirmDeleteBackupPath.
   ///
   /// In zh, this message translates to:
-  /// **'确定要删除整个备份路径吗？\\n\\n路径：{path}\\n\\n这将会：\\n• 删除该路径下的所有备份文件\\n• 从历史记录中移除该路径\\n• 此操作不可恢复\\n\\n请谨慎操作！'**
+  /// **'确定要删除整个备份路径吗？\n\n路径：{path}\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！'**
   String confirmDeleteBackupPath(Object path);
 
   /// No description provided for @backupPathDeleted.
@@ -7670,7 +7670,7 @@ abstract class AppLocalizations {
   /// Confirmation message for deleting a backup
   ///
   /// In zh, this message translates to:
-  /// **'确定要删除这个备份吗？\\n\\n备份：{filename}\\n描述：{description}\\n\\n此操作不可恢复！'**
+  /// **'确定要删除这个备份吗？\n\n备份：{filename}\n描述：{description}\n\n此操作不可恢复！'**
   String confirmDeleteBackup(String filename, String description);
 
   /// No description provided for @confirmDeleteAction.
