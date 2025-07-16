@@ -28,12 +28,19 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    AppLogger.info('开始构建MyApp', tag: 'UI');
+    
     // Listen to initialization provider to ensure everything is set up
     final initialization = ref.watch(appInitializationProvider);
+    AppLogger.info('应用初始化状态', tag: 'UI', data: {
+      'state': initialization.toString(),
+    });
+    
     // 监听功能标志
     final featureFlags = ref.watch(featureFlagsProvider);
-
-    // 不再需要这里的窗口标题更新逻辑，我们将使用WindowTitleUpdater组件
+    AppLogger.debug('功能标志状态', tag: 'UI', data: {
+      'useMaterial3UI': featureFlags.useMaterial3UI,
+    });
 
     // 记录系统语言信息
     final platformLocale = Platform.localeName.toLowerCase();
@@ -59,39 +66,55 @@ class MyApp extends ConsumerWidget {
       detectedSystemLocale = const Locale('zh');
       debugPrint('【系统语言】未检测到支持的系统语言，默认使用中文');
     }
+    
+    AppLogger.info('初始化状态分支判断前', tag: 'UI', data: {
+      'state': initialization.toString(),
+    });
+    
     return initialization.when(
-      loading: () => MaterialApp(
-        home: const InitializationScreen(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: detectedSystemLocale,
-      ),
-      error: (error, stack) => MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Builder(builder: (context) {
-              AppLocalizations? l10n;
-              try {
-                l10n = AppLocalizations.of(context);
-              } catch (e) {
-                l10n = null;
-              }
-              return Text(
-                l10n?.initializationFailed(error.toString()) ??
-                    'Initialization failed: $error',
-                style: const TextStyle(color: Colors.red),
-              );
-            }),
+      loading: () {
+        AppLogger.info('应用处于加载状态，显示初始化屏幕', tag: 'UI');
+        return MaterialApp(
+          home: const InitializationScreen(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: detectedSystemLocale,
+        );
+      },
+      error: (error, stack) {
+        AppLogger.error('应用初始化失败', error: error, stackTrace: stack, tag: 'UI');
+        return MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: Builder(builder: (context) {
+                AppLocalizations? l10n;
+                try {
+                  l10n = AppLocalizations.of(context);
+                } catch (e) {
+                  l10n = null;
+                }
+                return Text(
+                  l10n?.initializationFailed(error.toString()) ??
+                      'Initialization failed: $error',
+                  style: const TextStyle(color: Colors.red),
+                );
+              }),
+            ),
           ),
-        ),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: detectedSystemLocale,
-      ),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: detectedSystemLocale,
+        );
+      },
       data: (_) {
+        AppLogger.info('应用初始化成功，开始构建主界面', tag: 'UI');
+        
         // 获取用户语言设置
         final userLanguage =
             ref.watch(settingsProvider.select((s) => s.language));
+        AppLogger.debug('用户语言设置', tag: 'UI', data: {
+          'userLanguage': userLanguage.toString(),
+        });
         debugPrint('【系统语言】当前用户语言设置: $userLanguage');
 
         // 确定最终使用的 Locale - 重要：使用 watch 而非 read 以确保设置变更时重建
@@ -103,9 +126,13 @@ class MyApp extends ConsumerWidget {
 
         // 获取当前语言环境的字符串表示
         final currentLocale = finalLocale?.languageCode;
+        AppLogger.debug('最终使用的语言', tag: 'UI', data: {
+          'finalLocale': finalLocale?.languageCode ?? "null",
+        });
 
         // 创建MaterialApp
-        return MaterialApp(
+        AppLogger.info('开始创建MaterialApp', tag: 'UI');
+        final app = MaterialApp(
           title: userLanguage == AppLanguage.en
               ? 'Character As Gem'
               : '字字珠玑', // 使用简单的条件判断设置标题
@@ -116,9 +143,11 @@ class MyApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           home: Builder(
             builder: (context) {
+              AppLogger.info('构建主界面Builder', tag: 'UI');
               // 在MaterialApp初始化后更新窗口标题 - 仅在桌面平台
               final l10n = AppLocalizations.of(context);
               WidgetsBinding.instance.addPostFrameCallback((_) {
+                AppLogger.info('主界面首帧渲染完成回调', tag: 'UI');
                 if (!kIsWeb &&
                     (Platform.isWindows ||
                         Platform.isMacOS ||
@@ -127,6 +156,7 @@ class MyApp extends ConsumerWidget {
                 }
               });
 
+              AppLogger.info('返回M3MainWindow', tag: 'UI');
               return const M3MainWindow();
             },
           ),
@@ -137,6 +167,9 @@ class MyApp extends ConsumerWidget {
           // 直接设置 locale 值，而不是依赖回调
           locale: finalLocale,
         );
+        
+        AppLogger.info('MaterialApp创建完成', tag: 'UI');
+        return app;
       },
     );
   }

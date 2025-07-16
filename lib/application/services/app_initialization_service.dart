@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 
 import '../../infrastructure/logging/logger.dart';
 import '../providers/data_path_provider.dart';
+import '../providers/unified_path_provider.dart' as unified;
 import 'data_path_config_service.dart';
 
 /// 应用启动初始化服务
@@ -36,7 +37,7 @@ class AppInitializationService {
 
       // 3. 初始化存储服务
       try {
-        await ref.read(actualDataPathProvider.future);
+        await ref.read(unified.actualDataPathProvider.future);
         AppLogger.debug('存储服务预加载完成', tag: 'AppInit');
       } catch (e) {
         AppLogger.warning('存储服务预加载失败', error: e, tag: 'AppInit');

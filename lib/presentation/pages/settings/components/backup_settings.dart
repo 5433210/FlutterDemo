@@ -6,7 +6,7 @@ import '../../../../application/services/enhanced_backup_service.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/settings/settings_section.dart';
-import '../../backup_location_settings.dart';
+import '../../backup_path_settings.dart';
 import '../../unified_backup_management_page.dart';
 
 /// 备份设置面板
@@ -35,7 +35,7 @@ class BackupSettings extends ConsumerWidget {
             size: 16,
             color: colorScheme.onSurfaceVariant,
           ),
-          onTap: () => _showBackupLocationSettings(context),
+          onTap: () => _showBackupPathSettings(context),
         ),
 
         // 备份管理
@@ -54,15 +54,6 @@ class BackupSettings extends ConsumerWidget {
           onTap: () => _showUnifiedBackupManagement(context, ref),
         ),
       ],
-    );
-  }
-
-  /// 显示备份位置设置
-  void _showBackupLocationSettings(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const BackupLocationSettings(),
-      ),
     );
   }
 
@@ -90,36 +81,28 @@ class BackupSettings extends ConsumerWidget {
     }
   }
 
+  /// 显示备份路径设置
+  void _showBackupPathSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const BackupPathSettings(),
+      ),
+    );
+  }
+
   /// 显示服务不可用对话框
   void _showServiceNotAvailableDialog(
       BuildContext context, WidgetRef ref, String featureName) {
     final l10n = AppLocalizations.of(context);
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(l10n.backupNotAvailable),
-          ],
-        ),
+        title: Text(l10n.backupNotAvailable),
         content: Text(l10n.backupNotAvailableMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(l10n.confirm),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // 简单的重试：重新检查服务状态
-              Future.delayed(const Duration(seconds: 1), () {
-                _showUnifiedBackupManagement(context, ref);
-              });
-            },
-            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -127,20 +110,14 @@ class BackupSettings extends ConsumerWidget {
   }
 
   /// 显示错误对话框
-  void _showErrorDialog(BuildContext context, String title, String message) {
+  void _showErrorDialog(
+      BuildContext context, String title, String errorMessage) {
     final l10n = AppLocalizations.of(context);
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.error, color: Colors.red),
-            const SizedBox(width: 8),
-            Text(title),
-          ],
-        ),
-        content: Text(message),
+        title: Text(title),
+        content: Text(errorMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

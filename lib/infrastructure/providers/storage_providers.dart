@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
-import '../../application/providers/data_path_provider.dart';
+import '../../application/providers/unified_path_provider.dart' as unified;
 import '../../application/services/storage/library_storage.dart';
 import '../../application/services/storage/library_storage_interface.dart';
 import '../../application/services/storage/library_storage_service.dart';
@@ -62,7 +62,8 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
 
   try {
     // 1. 获取实际数据路径（考虑用户自定义路径）
-    final actualDataPath = await ref.watch(actualDataPathProvider.future);
+    final actualDataPath =
+        await ref.watch(unified.actualDataPathProvider.future);
     final storagePath = path.join(actualDataPath, 'storage');
 
     // 2. 创建存储服务实例

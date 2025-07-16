@@ -143,34 +143,72 @@ class BackupRegistry {
   final List<BackupEntry> backups;
   final BackupSettings settings;
   final BackupStatistics statistics;
+  
+  // 新增：历史路径备份映射表
+  final Map<String, List<BackupEntry>> historyPathBackups;
 
   BackupRegistry({
     required this.location,
     required this.backups,
     BackupSettings? settings,
     BackupStatistics? statistics,
+    this.historyPathBackups = const {},
   })  : settings = settings ?? BackupSettings(),
-        statistics = statistics ?? _calculateStatistics(backups);
+        statistics = statistics ?? _calculateStatistics(backups, historyPathBackups);
 
-  static BackupStatistics _calculateStatistics(List<BackupEntry> backups) {
+  static BackupStatistics _calculateStatistics(
+      List<BackupEntry> backups, Map<String, List<BackupEntry>> historyPathBackups) {
     final currentLocationBackups =
         backups.where((b) => b.location == 'current').length;
-    final legacyLocationBackups =
-        backups.where((b) => b.location == 'legacy').length;
-    final totalSize = backups.fold<int>(0, (sum, backup) => sum + backup.size);
-    final lastBackupTime = backups.isEmpty
-        ? null
-        : backups
+        
+    // 计算历史路径备份数量
+    int legacyLocationBackups = backups.where((b) => b.location == 'legacy').length;
+    for (final entries in historyPathBackups.values) {
+      legacyLocationBackups += entries.length;
+    }
+    
+    // 计算总大小
+    int totalSize = backups.fold<int>(0, (sum, backup) => sum + backup.size);
+    for (final entries in historyPathBackups.values) {
+      totalSize += entries.fold<int>(0, (sum, backup) => sum + backup.size);
+    }
+    
+    // 查找最新备份时间
+    DateTime? lastBackupTime;
+    if (backups.isNotEmpty) {
+      lastBackupTime = backups
+          .map((b) => b.createdTime)
+          .reduce((a, b) => a.isAfter(b) ? a : b);
+    }
+    
+    // 检查历史备份中是否有更新的备份
+    for (final entries in historyPathBackups.values) {
+      if (entries.isNotEmpty) {
+        final historyLatest = entries
             .map((b) => b.createdTime)
             .reduce((a, b) => a.isAfter(b) ? a : b);
+        if (lastBackupTime == null || historyLatest.isAfter(lastBackupTime)) {
+          lastBackupTime = historyLatest;
+        }
+      }
+    }
 
     return BackupStatistics(
-      totalBackups: backups.length,
+      totalBackups: backups.length + _countHistoryBackups(historyPathBackups),
       currentLocationBackups: currentLocationBackups,
       legacyLocationBackups: legacyLocationBackups,
       totalSize: totalSize,
       lastBackupTime: lastBackupTime,
     );
+  }
+  
+  // 计算历史备份总数
+  static int _countHistoryBackups(Map<String, List<BackupEntry>> historyPathBackups) {
+    int count = 0;
+    for (final entries in historyPathBackups.values) {
+      count += entries.length;
+    }
+    return count;
   }
 
   Map<String, dynamic> toJson() => {
@@ -178,12 +216,27 @@ class BackupRegistry {
         'backup_registry': backups.map((b) => b.toJson()).toList(),
         'settings': settings.toJson(),
         'statistics': statistics.toJson(),
+        // 新增：序列化历史路径备份
+        'history_path_backups': historyPathBackups.map(
+          (key, value) => MapEntry(key, value.map((e) => e.toJson()).toList()),
+        ),
       };
 
   factory BackupRegistry.fromJson(Map<String, dynamic> json) {
     final backups = (json['backup_registry'] as List<dynamic>)
         .map((b) => BackupEntry.fromJson(b as Map<String, dynamic>))
         .toList();
+        
+    // 解析历史路径备份
+    final historyPathBackups = <String, List<BackupEntry>>{};
+    if (json.containsKey('history_path_backups')) {
+      final historyJson = json['history_path_backups'] as Map<String, dynamic>;
+      historyJson.forEach((key, value) {
+        historyPathBackups[key] = (value as List<dynamic>)
+            .map((b) => BackupEntry.fromJson(b as Map<String, dynamic>))
+            .toList();
+      });
+    }
 
     return BackupRegistry(
       location: BackupLocation.fromJson(
@@ -193,6 +246,7 @@ class BackupRegistry {
           BackupSettings.fromJson(json['settings'] as Map<String, dynamic>),
       statistics:
           BackupStatistics.fromJson(json['statistics'] as Map<String, dynamic>),
+      historyPathBackups: historyPathBackups,
     );
   }
 
@@ -204,15 +258,78 @@ class BackupRegistry {
   /// 移除备份
   void removeBackup(String backupId) {
     backups.removeWhere((backup) => backup.id == backupId);
+    
+    // 也从历史路径备份中移除
+    for (final path in historyPathBackups.keys) {
+      historyPathBackups[path]?.removeWhere((backup) => backup.id == backupId);
+    }
   }
 
   /// 获取备份
   BackupEntry? getBackup(String backupId) {
     try {
-      return backups.firstWhere((backup) => backup.id == backupId);
+      // 先从当前路径查找
+      try {
+        return backups.firstWhere((backup) => backup.id == backupId);
+      } catch (e) {
+        // 继续从历史路径查找
+      }
+      
+      // 从历史路径查找
+      for (final entries in historyPathBackups.values) {
+        try {
+          return entries.firstWhere((backup) => backup.id == backupId);
+        } catch (e) {
+          // 继续查找
+        }
+      }
+      
+      return null;
     } catch (e) {
       return null;
     }
+  }
+  
+  /// 获取当前路径的备份
+  List<BackupEntry> getCurrentPathBackups() {
+    return List<BackupEntry>.from(backups);
+  }
+  
+  /// 获取所有历史路径的备份
+  List<BackupEntry> getAllHistoryPathBackups() {
+    final allHistoryBackups = <BackupEntry>[];
+    for (final entries in historyPathBackups.values) {
+      allHistoryBackups.addAll(entries);
+    }
+    return allHistoryBackups;
+  }
+  
+  /// 获取指定历史路径的备份
+  List<BackupEntry> getHistoryPathBackups(String path) {
+    return List<BackupEntry>.from(historyPathBackups[path] ?? []);
+  }
+  
+  /// 获取所有备份（包括当前路径和历史路径）
+  List<BackupEntry> getAllBackups() {
+    final allBackups = List<BackupEntry>.from(backups);
+    for (final entries in historyPathBackups.values) {
+      allBackups.addAll(entries);
+    }
+    return allBackups;
+  }
+  
+  /// 添加历史路径备份
+  void addHistoryPathBackups(String path, List<BackupEntry> entries) {
+    if (historyPathBackups.containsKey(path)) {
+      historyPathBackups[path]!.addAll(entries);
+    } else {
+      historyPathBackups[path] = List<BackupEntry>.from(entries);
+    }
+  }
+  
+  /// 移除历史路径
+  void removeHistoryPath(String path) {
+    historyPathBackups.remove(path);
   }
 
   /// 更新统计信息
@@ -221,7 +338,8 @@ class BackupRegistry {
       location: location,
       backups: backups,
       settings: settings,
-      statistics: _calculateStatistics(backups),
+      historyPathBackups: historyPathBackups,
+      statistics: _calculateStatistics(backups, historyPathBackups),
     );
   }
 }

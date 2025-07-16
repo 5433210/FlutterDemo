@@ -9,19 +9,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
+import 'unified_path_config_service.dart';
 
 /// 备份注册管理器
 class BackupRegistryManager {
   static const String _registryFileName = 'backup_registry.json';
   static const String _backupPathKey = 'current_backup_path';
+  static bool _useUnifiedConfig = true; // 控制是否使用统一配置
+  
+  // 添加标志位，防止递归读取
+  static bool _readingFromUnifiedConfig = false;
 
   static final Random _random = Random();
 
   /// 获取备份注册表
   static Future<BackupRegistry> getRegistry() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final currentPath = prefs.getString(_backupPathKey);
+      final currentPath = await getCurrentBackupPath();
 
       if (currentPath == null) {
         throw Exception('未设置备份路径');
@@ -51,97 +55,209 @@ class BackupRegistryManager {
     }
   }
 
+  /// 获取当前备份路径
+  static Future<String?> getCurrentBackupPath() async {
+    try {
+      if (_useUnifiedConfig && !_readingFromUnifiedConfig) {
+        return await _getCurrentBackupPathFromUnifiedConfig();
+      } else {
+        return await _legacyGetCurrentBackupPath();
+      }
+    } catch (e, stack) {
+      AppLogger.error('获取当前备份路径失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      
+      // 如果统一配置失败，尝试回退到旧配置
+      if (_useUnifiedConfig && !_readingFromUnifiedConfig) {
+        AppLogger.warning('从统一配置获取备份路径失败，回退到旧方法', tag: 'BackupRegistryManager');
+        _useUnifiedConfig = false;
+        return await _legacyGetCurrentBackupPath();
+      }
+      
+      return null;
+    }
+  }
+
+  /// 从统一配置获取当前备份路径
+  static Future<String?> _getCurrentBackupPathFromUnifiedConfig() async {
+    // 设置标志位，防止递归调用
+    _readingFromUnifiedConfig = true;
+    
+    try {
+      AppLogger.debug('从统一配置获取当前备份路径', tag: 'BackupRegistryManager');
+      final unifiedConfig = await UnifiedPathConfigService.readConfig();
+      if (unifiedConfig.backupPath.path.isEmpty) {
+        return null;
+      }
+      return unifiedConfig.backupPath.path;
+    } catch (e, stack) {
+      AppLogger.error('从统一配置获取当前备份路径失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      rethrow;
+    } finally {
+      // 重置标志位
+      _readingFromUnifiedConfig = false;
+    }
+  }
+
+  /// 旧的获取当前备份路径方法
+  static Future<String?> _legacyGetCurrentBackupPath() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_backupPathKey);
+    } catch (e) {
+      AppLogger.error('旧方法获取当前备份路径失败',
+          error: e, tag: 'BackupRegistryManager');
+      return null;
+    }
+  }
+
   /// 设置新的备份路径（支持数据合并）
   static Future<void> setBackupLocation(String newPath,
       {IStorage? storage, bool mergeHistoryBackups = true}) async {
     try {
-      AppLogger.info('设置新的备份路径', tag: 'BackupRegistryManager', data: {
-        'newPath': newPath,
-        'mergeHistoryBackups': mergeHistoryBackups,
-      });
-
-      final prefs = await SharedPreferences.getInstance();
-      final currentPath = await getCurrentBackupPath();
-
-      // 1. 确保目录存在
-      final directory = Directory(newPath);
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      // 2. 收集所有备份数据
-      final allBackups = <BackupEntry>[];
-
-      // 2.1 扫描新路径中已有的备份
-      final newPathBackups = await _scanBackupsInPath(newPath);
-      allBackups.addAll(newPathBackups);
-
-      // 2.2 如果需要合并历史备份数据
-      if (mergeHistoryBackups) {
-        // 从当前路径合并备份
-        if (currentPath != null && currentPath != newPath) {
-          final currentPathBackups = await _mergeBackupsFromPath(currentPath);
-          allBackups.addAll(currentPathBackups);
-
-          // 将当前路径添加到历史记录
-          await addHistoryBackupPath(currentPath);
-        }
-
-        // 从历史路径合并备份
-        final historyPaths = await getHistoryBackupPaths();
-        for (final historyPath in historyPaths) {
-          if (historyPath != newPath && await Directory(historyPath).exists()) {
-            final historyBackups = await _mergeBackupsFromPath(historyPath);
-            allBackups.addAll(historyBackups);
-          }
-        }
+      if (_useUnifiedConfig) {
+        await _setBackupLocationWithUnifiedConfig(newPath, mergeHistoryBackups);
       } else {
-        // 如果不合并，仍然扫描原有备份（向后兼容）
-        final existingBackups = await _scanExistingBackups(storage);
-        allBackups.addAll(existingBackups);
+        await _legacySetBackupLocation(newPath, storage, mergeHistoryBackups);
       }
-
-      // 3. 去重处理（基于文件名和大小）
-      final uniqueBackups = _deduplicateBackups(allBackups);
-
-      // 4. 创建新的注册表
-      final registry = BackupRegistry(
-        location: BackupLocation(
-          path: newPath,
-          createdTime: DateTime.now(),
-          description: mergeHistoryBackups ? '主要备份位置（已合并历史数据）' : '主要备份位置',
-        ),
-        backups: uniqueBackups,
-      );
-
-      // 5. 保存注册表到新位置
-      await _saveRegistry(newPath, registry);
-
-      // 6. 更新当前路径
-      await prefs.setString(_backupPathKey, newPath);
-
-      AppLogger.info('成功设置新的备份路径', tag: 'BackupRegistryManager', data: {
-        'newPath': newPath,
-        'totalBackupsCount': uniqueBackups.length,
-        'mergedHistoryData': mergeHistoryBackups,
-      });
     } catch (e, stack) {
       AppLogger.error('设置备份路径失败',
           error: e, stackTrace: stack, tag: 'BackupRegistryManager');
-      rethrow;
+      
+      // 如果统一配置失败，尝试回退到旧配置
+      if (_useUnifiedConfig) {
+        AppLogger.warning('使用统一配置设置备份路径失败，回退到旧方法', tag: 'BackupRegistryManager');
+        _useUnifiedConfig = false;
+        await _legacySetBackupLocation(newPath, storage, mergeHistoryBackups);
+      } else {
+        rethrow;
+      }
     }
   }
 
-  /// 获取当前备份路径
-  static Future<String?> getCurrentBackupPath() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_backupPathKey);
-    } catch (e, stack) {
-      AppLogger.error('获取当前备份路径失败',
-          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
-      return null;
+  /// 使用统一配置设置备份路径
+  static Future<void> _setBackupLocationWithUnifiedConfig(
+      String newPath, bool mergeHistoryBackups) async {
+    AppLogger.info('使用统一配置设置新的备份路径', tag: 'BackupRegistryManager', data: {
+      'newPath': newPath,
+      'mergeHistoryBackups': mergeHistoryBackups,
+    });
+
+    // 1. 确保目录存在
+    final directory = Directory(newPath);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
     }
+
+    // 2. 读取当前统一配置
+    final unifiedConfig = await UnifiedPathConfigService.readConfig();
+    
+    // 3. 如果需要合并历史备份数据，添加当前路径到历史记录
+    if (mergeHistoryBackups && 
+        unifiedConfig.backupPath.path.isNotEmpty && 
+        unifiedConfig.backupPath.path != newPath) {
+      await UnifiedPathConfigService.addHistoryBackupPath(unifiedConfig.backupPath.path);
+    }
+    
+    // 4. 更新统一配置
+    final updatedConfig = unifiedConfig.copyWith(
+      backupPath: unifiedConfig.backupPath.copyWith(
+        path: newPath,
+        createdTime: DateTime.now(),
+      ),
+      lastUpdated: DateTime.now(),
+    );
+    
+    // 5. 保存统一配置
+    await UnifiedPathConfigService.writeConfig(updatedConfig);
+
+    // 6. 确保备份注册表存在
+    final registryFile = File(path.join(newPath, _registryFileName));
+    if (!await registryFile.exists()) {
+      await _createNewRegistry(newPath);
+    }
+
+    AppLogger.info('成功使用统一配置设置新的备份路径', tag: 'BackupRegistryManager', data: {
+      'newPath': newPath,
+      'mergedHistoryData': mergeHistoryBackups,
+    });
+  }
+
+  /// 旧的设置备份路径方法
+  static Future<void> _legacySetBackupLocation(
+      String newPath, IStorage? storage, bool mergeHistoryBackups) async {
+    AppLogger.info('设置新的备份路径', tag: 'BackupRegistryManager', data: {
+      'newPath': newPath,
+      'mergeHistoryBackups': mergeHistoryBackups,
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final currentPath = await getCurrentBackupPath();
+
+    // 1. 确保目录存在
+    final directory = Directory(newPath);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+
+    // 2. 收集所有备份数据
+    final currentPathBackups = <BackupEntry>[];
+    final historyPathBackups = <String, List<BackupEntry>>{};
+
+    // 2.1 扫描新路径中已有的备份
+    final newPathBackups = await _scanBackupsInPath(newPath);
+    currentPathBackups.addAll(newPathBackups);
+
+    // 2.2 如果需要合并历史备份数据
+    if (mergeHistoryBackups) {
+      // 从当前路径合并备份
+      if (currentPath != null && currentPath != newPath) {
+        final currentPathScannedBackups = await _scanBackupsInPath(currentPath);
+        // 将当前路径的备份添加到历史路径备份中
+        historyPathBackups[currentPath] = currentPathScannedBackups;
+
+        // 将当前路径添加到历史记录
+        await addHistoryBackupPath(currentPath);
+      }
+
+      // 从历史路径合并备份
+      final historyPaths = await getHistoryBackupPaths();
+      for (final historyPath in historyPaths) {
+        if (historyPath != newPath && await Directory(historyPath).exists()) {
+          final historyBackups = await _scanBackupsInPath(historyPath);
+          historyPathBackups[historyPath] = historyBackups;
+        }
+      }
+    } else {
+      // 如果不合并，仍然扫描原有备份（向后兼容）
+      final existingBackups = await _scanExistingBackups(storage);
+      currentPathBackups.addAll(existingBackups);
+    }
+
+    // 3. 创建新的注册表
+    final registry = BackupRegistry(
+      location: BackupLocation(
+        path: newPath,
+        createdTime: DateTime.now(),
+        description: mergeHistoryBackups ? '主要备份位置（已合并历史数据）' : '主要备份位置',
+      ),
+      backups: currentPathBackups,
+      historyPathBackups: historyPathBackups,
+    );
+
+    // 4. 保存注册表到新位置
+    await _saveRegistry(newPath, registry);
+
+    // 5. 更新当前路径
+    await prefs.setString(_backupPathKey, newPath);
+
+    AppLogger.info('成功设置新的备份路径', tag: 'BackupRegistryManager', data: {
+      'newPath': newPath,
+      'currentBackupsCount': currentPathBackups.length,
+      'historyPathsCount': historyPathBackups.length,
+      'mergedHistoryData': mergeHistoryBackups,
+    });
   }
 
   /// 扫描现有备份
@@ -330,11 +446,47 @@ class BackupRegistryManager {
   static Future<List<BackupEntry>> getAllBackups() async {
     try {
       final registry = await getRegistry();
-      return registry.backups;
+      return registry.getAllBackups();
     } catch (e, stack) {
       AppLogger.error('获取所有备份失败',
           error: e, stackTrace: stack, tag: 'BackupRegistryManager');
       rethrow;
+    }
+  }
+  
+  /// 获取当前路径的备份
+  static Future<List<BackupEntry>> getCurrentPathBackups() async {
+    try {
+      final registry = await getRegistry();
+      return registry.getCurrentPathBackups();
+    } catch (e, stack) {
+      AppLogger.error('获取当前路径备份失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      rethrow;
+    }
+  }
+  
+  /// 获取所有历史路径的备份
+  static Future<List<BackupEntry>> getAllHistoryPathBackups() async {
+    try {
+      final registry = await getRegistry();
+      return registry.getAllHistoryPathBackups();
+    } catch (e, stack) {
+      AppLogger.error('获取历史路径备份失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      rethrow;
+    }
+  }
+  
+  /// 获取指定历史路径的备份
+  static Future<List<BackupEntry>> getHistoryPathBackups(String path) async {
+    try {
+      final registry = await getRegistry();
+      return registry.getHistoryPathBackups(path);
+    } catch (e, stack) {
+      AppLogger.error('获取指定历史路径备份失败',
+          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
+      return [];
     }
   }
 
@@ -456,18 +608,23 @@ class BackupRegistryManager {
 
   /// 添加历史备份路径
   static Future<void> addHistoryBackupPath(String path) async {
+    if (path.isEmpty) return;
+    
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final currentPaths = prefs.getStringList('backup_history_paths') ?? [];
-
-      if (!currentPaths.contains(path)) {
-        currentPaths.add(path);
-        await prefs.setStringList('backup_history_paths', currentPaths);
-
-        AppLogger.info('添加历史备份路径', tag: 'BackupRegistryManager', data: {
-          'path': path,
-          'totalHistoryPaths': currentPaths.length,
-        });
+      if (_useUnifiedConfig) {
+        await UnifiedPathConfigService.addHistoryBackupPath(path);
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final historyPathsJson = prefs.getStringList('backup_history_paths') ?? [];
+        
+        if (!historyPathsJson.contains(path)) {
+          historyPathsJson.add(path);
+          await prefs.setStringList('backup_history_paths', historyPathsJson);
+          
+          AppLogger.info('添加历史备份路径', tag: 'BackupRegistryManager', data: {
+            'path': path,
+          });
+        }
       }
     } catch (e, stack) {
       AppLogger.error('添加历史备份路径失败',
@@ -478,8 +635,12 @@ class BackupRegistryManager {
   /// 获取历史备份路径
   static Future<List<String>> getHistoryBackupPaths() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getStringList('backup_history_paths') ?? [];
+      if (_useUnifiedConfig) {
+        return await UnifiedPathConfigService.getHistoryBackupPaths();
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getStringList('backup_history_paths') ?? [];
+      }
     } catch (e, stack) {
       AppLogger.error('获取历史备份路径失败',
           error: e, stackTrace: stack, tag: 'BackupRegistryManager');
@@ -490,16 +651,20 @@ class BackupRegistryManager {
   /// 移除历史备份路径
   static Future<void> removeHistoryBackupPath(String path) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final currentPaths = prefs.getStringList('backup_history_paths') ?? [];
-
-      if (currentPaths.remove(path)) {
-        await prefs.setStringList('backup_history_paths', currentPaths);
-
-        AppLogger.info('移除历史备份路径', tag: 'BackupRegistryManager', data: {
-          'path': path,
-          'remainingHistoryPaths': currentPaths.length,
-        });
+      if (_useUnifiedConfig) {
+        await UnifiedPathConfigService.cleanHistoryBackupPath(path);
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final historyPathsJson = prefs.getStringList('backup_history_paths') ?? [];
+        
+        if (historyPathsJson.contains(path)) {
+          historyPathsJson.remove(path);
+          await prefs.setStringList('backup_history_paths', historyPathsJson);
+          
+          AppLogger.info('移除历史备份路径', tag: 'BackupRegistryManager', data: {
+            'path': path,
+          });
+        }
       }
     } catch (e, stack) {
       AppLogger.error('移除历史备份路径失败',

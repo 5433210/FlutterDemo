@@ -36,167 +36,207 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   // OptimizedRefreshManager? _refreshManager;
 
   @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    final l10n = AppLocalizations.of(context);
-
-    // Use a local variable to store whether a refresh is in progress
-    bool isRefreshing = false;
-
-    ref.listen(worksNeedsRefreshProvider, (previous, current) async {
-      if (current == null || isRefreshing || !mounted) return;
-
-      // Set flag to prevent multiple concurrent refreshes
-      isRefreshing = true;
-
-      try {
-        // Check mounted state again before proceeding
-        if (!mounted) return;
-
-        AppLogger.debug(
-          '收到刷新请求',
-          tag: 'WorkBrowsePage',
-          data: {
-            'reason': current.reason,
-            'priority': current.priority,
-            'force': current.force,
-          },
-        );
-
-        // Capture the force value before the async gap
-        final shouldForceRefresh = current.force;
-
-        // Check mounted before starting async operation
-        if (!mounted) return;
-
-        await viewModel.loadWorks(forceRefresh: shouldForceRefresh);
-      } catch (e) {
-        AppLogger.error('刷新失败', tag: 'WorkBrowsePage', error: e);
-      } finally {
-        isRefreshing = false;
-
-        // Using a local variable to store the notifier before checking mounted
-        // This prevents accessing the provider after widget deactivation
-        if (mounted) {
-          final notifier = ref.read(worksNeedsRefreshProvider.notifier);
-          notifier.state = null;
-        }
-      }
+  void initState() {
+    super.initState();
+    AppLogger.info('M3WorkBrowsePage initState', tag: 'WorkBrowse');
+    
+    // 添加帧回调，确认首帧渲染完成
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLogger.info('M3WorkBrowsePage 首帧渲染完成', tag: 'WorkBrowse');
     });
-    return PageLayout(
-      toolbar: M3WorkBrowseNavigationBar(
-        viewMode: state.viewMode,
-        onViewModeChanged: (mode) => viewModel.setViewMode(mode),
-        onImport: () => _showImportDialog(context),
-        onSearch: viewModel.setSearchQuery,
-        batchMode: state.batchMode,
-        onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
-        selectedCount: state.selectedWorks.length,
-        selectedWorkIds: state.selectedWorks, // 传递实际选中的作品ID
-        onDeleteSelected: () {
-          // Use a method instead of an inline callback to handle deletion
-          _handleDeleteSelected(context);
-        },
-        onBackPressed: () {
-          CrossNavigationHelper.handleBackNavigation(context, ref);
-        },
-        onAddWork: () => _showWorkImportDialog(context),
-        allWorkIds: state.works.map((w) => w.id).toList(),
-        onSelectAll: () => _handleSelectAll(),
-        onClearSelection: () => _handleClearSelection(),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                // Filter Panel
-                if (state.isSidebarOpen)
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate responsive panel width
-                      final screenWidth = MediaQuery.of(context).size.width;
-                      final maxPanelWidth =
-                          (screenWidth * 0.4).clamp(250.0, 400.0);
-                      final minPanelWidth =
-                          (screenWidth * 0.25).clamp(200.0, 280.0);
-                      final initialPanelWidth =
-                          (screenWidth * 0.3).clamp(250.0, 300.0);
+  }
 
-                      return PersistentResizablePanel(
-                        panelId: 'work_browse_filter_panel',
-                        initialWidth: initialPanelWidth,
-                        minWidth: minPanelWidth,
-                        maxWidth: maxPanelWidth,
-                        isLeftPanel: true,
-                        child: M3WorkFilterPanel(
-                          filter: state.filter,
-                          onFilterChanged: viewModel.updateFilter,
-                          onToggleExpand: () => viewModel.toggleSidebar(),
-                          searchController: state.searchController,
-                          initialSearchValue: state.searchQuery,
-                          onRefresh: () => viewModel.refresh(),
-                        ),
-                      );
-                    },
+  @override
+  void dispose() {
+    AppLogger.info('M3WorkBrowsePage dispose', tag: 'WorkBrowse');
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AppLogger.info('M3WorkBrowsePage didChangeDependencies', tag: 'WorkBrowse');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    AppLogger.info('M3WorkBrowsePage build开始', tag: 'WorkBrowse');
+    
+    try {
+      final l10n = AppLocalizations.of(context);
+      AppLogger.debug('获取本地化资源成功', tag: 'WorkBrowse');
+      
+      final state = ref.watch(workBrowseProvider);
+      final viewModel = ref.read(workBrowseProvider.notifier);
+
+      // Use a local variable to store whether a refresh is in progress
+      bool isRefreshing = false;
+
+      ref.listen(worksNeedsRefreshProvider, (previous, current) async {
+        if (current == null || isRefreshing || !mounted) return;
+
+        // Set flag to prevent multiple concurrent refreshes
+        isRefreshing = true;
+
+        try {
+          // Check mounted state again before proceeding
+          if (!mounted) return;
+
+          AppLogger.debug(
+            '收到刷新请求',
+            tag: 'WorkBrowsePage',
+            data: {
+              'reason': current.reason,
+              'priority': current.priority,
+              'force': current.force,
+            },
+          );
+
+          // Capture the force value before the async gap
+          final shouldForceRefresh = current.force;
+
+          // Check mounted before starting async operation
+          if (!mounted) return;
+
+          await viewModel.loadWorks(forceRefresh: shouldForceRefresh);
+        } catch (e) {
+          AppLogger.error('刷新失败', tag: 'WorkBrowsePage', error: e);
+        } finally {
+          isRefreshing = false;
+
+          // Using a local variable to store the notifier before checking mounted
+          // This prevents accessing the provider after widget deactivation
+          if (mounted) {
+            final notifier = ref.read(worksNeedsRefreshProvider.notifier);
+            notifier.state = null;
+          }
+        }
+      });
+      return PageLayout(
+        toolbar: M3WorkBrowseNavigationBar(
+          viewMode: state.viewMode,
+          onViewModeChanged: (mode) => viewModel.setViewMode(mode),
+          onImport: () => _showImportDialog(context),
+          onSearch: viewModel.setSearchQuery,
+          batchMode: state.batchMode,
+          onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
+          selectedCount: state.selectedWorks.length,
+          selectedWorkIds: state.selectedWorks, // 传递实际选中的作品ID
+          onDeleteSelected: () {
+            // Use a method instead of an inline callback to handle deletion
+            _handleDeleteSelected(context);
+          },
+          onBackPressed: () {
+            CrossNavigationHelper.handleBackNavigation(context, ref);
+          },
+          onAddWork: () => _showWorkImportDialog(context),
+          allWorkIds: state.works.map((w) => w.id).toList(),
+          onSelectAll: () => _handleSelectAll(),
+          onClearSelection: () => _handleClearSelection(),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  // Filter Panel
+                  if (state.isSidebarOpen)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Calculate responsive panel width
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final maxPanelWidth =
+                            (screenWidth * 0.4).clamp(250.0, 400.0);
+                        final minPanelWidth =
+                            (screenWidth * 0.25).clamp(200.0, 280.0);
+                        final initialPanelWidth =
+                            (screenWidth * 0.3).clamp(250.0, 300.0);
+
+                        return PersistentResizablePanel(
+                          panelId: 'work_browse_filter_panel',
+                          initialWidth: initialPanelWidth,
+                          minWidth: minPanelWidth,
+                          maxWidth: maxPanelWidth,
+                          isLeftPanel: true,
+                          child: M3WorkFilterPanel(
+                            filter: state.filter,
+                            onFilterChanged: viewModel.updateFilter,
+                            onToggleExpand: () => viewModel.toggleSidebar(),
+                            searchController: state.searchController,
+                            initialSearchValue: state.searchQuery,
+                            onRefresh: () => viewModel.refresh(),
+                          ),
+                        );
+                      },
+                    ),
+                  PersistentSidebarToggle(
+                    sidebarId: 'work_browse_filter_sidebar',
+                    defaultIsOpen: state.isSidebarOpen,
+                    onToggle: (isOpen) => viewModel.toggleSidebar(),
+                    alignRight: false,
                   ),
-                PersistentSidebarToggle(
-                  sidebarId: 'work_browse_filter_sidebar',
-                  defaultIsOpen: state.isSidebarOpen,
-                  onToggle: (isOpen) => viewModel.toggleSidebar(),
-                  alignRight: false,
-                ),
-                // Content area with batch selection support
-                Expanded(
-                  child: M3WorkContentArea(
-                    works: state.works,
-                    viewMode: state.viewMode,
-                    batchMode: state.batchMode,
-                    selectedWorks: state.selectedWorks,
-                    onSelectionChanged: (workId, selected) {
-                      viewModel.toggleSelection(workId);
-                    },
-                    onItemTap: (workId) {
-                      Navigator.of(context).pushNamed(
-                        AppRoutes.workDetail,
-                        arguments: workId,
-                      );
-                    },
-                    onToggleFavorite: (workId) {
-                      viewModel.toggleFavorite(workId);
-                    },
-                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                  // Content area with batch selection support
+                  Expanded(
+                    child: M3WorkContentArea(
+                      works: state.works,
+                      viewMode: state.viewMode,
+                      batchMode: state.batchMode,
+                      selectedWorks: state.selectedWorks,
+                      onSelectionChanged: (workId, selected) {
+                        viewModel.toggleSelection(workId);
+                      },
+                      onItemTap: (workId) {
+                        Navigator.of(context).pushNamed(
+                          AppRoutes.workDetail,
+                          arguments: workId,
+                        );
+                      },
+                      onToggleFavorite: (workId) {
+                        viewModel.toggleFavorite(workId);
+                      },
+                      onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (!state.isLoading && state.works.isNotEmpty)
-            M3PaginationControls(
-              currentPage: state.page,
-              pageSize: state.pageSize,
-              totalItems: state.totalItems,
-              onPageChanged: (page) {
-                ref.read(workBrowseProvider.notifier).setPage(page);
-              },
-              onPageSizeChanged: (size) {
-                ref.read(workBrowseProvider.notifier).setPageSize(size);
-              },
-              availablePageSizes: const [10, 20, 50, 100],
-            ),
-        ],
-      ),
-      floatingActionButton: state.isLoading && state.works.isEmpty
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                _loadWorks(force: true);
-              },
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.reload),
-            )
-          : null,
-    );
+            if (!state.isLoading && state.works.isNotEmpty)
+              M3PaginationControls(
+                currentPage: state.page,
+                pageSize: state.pageSize,
+                totalItems: state.totalItems,
+                onPageChanged: (page) {
+                  ref.read(workBrowseProvider.notifier).setPage(page);
+                },
+                onPageSizeChanged: (size) {
+                  ref.read(workBrowseProvider.notifier).setPageSize(size);
+                },
+                availablePageSizes: const [10, 20, 50, 100],
+              ),
+          ],
+        ),
+        floatingActionButton: state.isLoading && state.works.isEmpty
+            ? FloatingActionButton.extended(
+                onPressed: () {
+                  _loadWorks(force: true);
+                },
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.reload),
+              )
+            : null,
+      );
+    } catch (e, stack) {
+      AppLogger.error('M3WorkBrowsePage build过程中发生错误', 
+        error: e, stackTrace: stack, tag: 'WorkBrowse');
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('作品浏览'),
+        ),
+        body: Center(
+          child: Text('加载错误: $e'),
+        ),
+      );
+    }
   }
 
   @override
@@ -227,43 +267,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     } else if (state == AppLifecycleState.paused) {
       performanceMonitor.recordOperation('app_paused', Duration.zero);
     }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    // Initialize the refresh notifier reference
-    if (mounted) {
-      _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
-    }
-
-    Future.microtask(() {
-      if (!mounted) return;
-
-      // Use the stored notifier if available
-      if (_refreshNotifier != null) {
-        _refreshNotifier!.state = const RefreshInfo(
-          reason: 'App initialization',
-          force: true,
-          priority: 10,
-        );
-      }
-    });
-
-    // 🚀 启动性能监控
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final performanceMonitor = ref.read(performanceMonitorProvider);
-      performanceMonitor.recordOperation(
-          'work_browse_page_init', Duration.zero);
-    });
   }
 
   /// Safely handle deletion of selected works

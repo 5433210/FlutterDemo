@@ -181,6 +181,10 @@ class DataPathSwitchManager {
 
       // 1. 记录旧数据路径
       if (oldPath != newPath) {
+        // 使用新的方法记录历史数据路径
+        await DataPathConfigService.addHistoryDataPath(oldPath);
+
+        // 为了向后兼容，同时也记录到旧的系统中
         await _recordLegacyDataPath(oldPath, context);
       }
 
@@ -192,7 +196,13 @@ class DataPathSwitchManager {
       }
 
       // 3. 创建新配置并保存
-      final newConfig = DataPathConfig.withCustomPath(newPath);
+      // 重新读取配置以获取更新后的历史路径
+      final updatedConfig = await DataPathConfigService.readConfig();
+      final newConfig = DataPathConfig.withCustomPath(
+        newPath,
+        historyPaths: updatedConfig.historyPaths,
+      );
+
       await DataPathConfigService.writeConfig(newConfig);
 
       // 4. 确保新路径存在
@@ -207,6 +217,7 @@ class DataPathSwitchManager {
       AppLogger.info('数据路径切换完成，准备重启应用', tag: 'DataPathSwitchManager', data: {
         'oldPath': oldPath,
         'newPath': newPath,
+        'historyPaths': newConfig.historyPaths,
       });
 
       // 6. 延迟一段时间后重启应用，让UI有时间显示成功消息

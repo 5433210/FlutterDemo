@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../application/providers/data_path_provider.dart';
-import '../../../../application/services/backup_registry_manager.dart';
+import '../../../../application/services/data_path_config_service.dart';
+import '../../../../application/services/unified_path_config_service.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../utils/file_size_formatter.dart';
@@ -42,8 +43,11 @@ class _DataPathManagementPageState
         _currentPath = await dataPathConfig.getActualDataPath();
       }
 
-      // 获取历史路径（这里先用模拟数据，之后需要实际实现）
+      // 获取历史路径
       _historyPaths = await _getHistoryPaths();
+
+      // 调试信息：打印配置文件内容
+      await _debugPrintConfigContent();
     } catch (e) {
       AppLogger.error('加载路径信息失败', error: e, tag: 'DataPathManagement');
     } finally {
@@ -51,11 +55,56 @@ class _DataPathManagementPageState
     }
   }
 
+  /// 调试方法：打印统一路径配置内容
+  Future<void> _debugPrintConfigContent() async {
+    try {
+      // 检查统一路径配置
+      final unifiedConfig = await UnifiedPathConfigService.readConfig();
+      AppLogger.debug('统一路径配置内容:', tag: 'DataPathManagement', data: {
+        'dataPath': {
+          'useDefaultPath': unifiedConfig.dataPath.useDefaultPath,
+          'customPath': unifiedConfig.dataPath.customPath,
+          'historyPaths': unifiedConfig.dataPath.historyPaths,
+          'requiresRestart': unifiedConfig.dataPath.requiresRestart,
+        },
+        'backupPath': {
+          'path': unifiedConfig.backupPath.path,
+          'historyPaths': unifiedConfig.backupPath.historyPaths,
+        },
+        'lastUpdated': unifiedConfig.lastUpdated.toIso8601String(),
+      });
+
+      // 特别关注历史路径
+      AppLogger.debug('数据路径历史记录:', tag: 'DataPathManagement', data: {
+        'historyPaths': unifiedConfig.dataPath.historyPaths,
+        'count': unifiedConfig.dataPath.historyPaths.length,
+      });
+
+      // 也检查旧配置文件是否存在
+      final configPath = await DataPathConfigService.getConfigFilePath();
+      final configFile = File(configPath);
+
+      if (await configFile.exists()) {
+        final content = await configFile.readAsString();
+        AppLogger.debug('旧配置文件仍存在:', tag: 'DataPathManagement', data: {
+          'configPath': configPath,
+          'content': content,
+        });
+      } else {
+        AppLogger.debug('旧配置文件不存在', tag: 'DataPathManagement', data: {
+          'configPath': configPath,
+        });
+      }
+    } catch (e) {
+      AppLogger.error('调试打印配置内容失败', error: e, tag: 'DataPathManagement');
+    }
+  }
+
   Future<List<PathInfo>> _getHistoryPaths() async {
     try {
-      // 从SharedPreferences获取真实的历史路径
+      // 从配置中获取真实的历史数据路径
       final historyPathStrings =
-          await BackupRegistryManager.getHistoryBackupPaths();
+          await DataPathConfigService.getHistoryDataPaths();
       final List<PathInfo> historyPaths = [];
 
       for (final pathStr in historyPathStrings) {
@@ -65,7 +114,7 @@ class _DataPathManagementPageState
 
       return historyPaths;
     } catch (e) {
-      AppLogger.error('获取历史路径失败', error: e, tag: 'DataPathManagement');
+      AppLogger.error('获取历史数据路径失败', error: e, tag: 'DataPathManagement');
       return [];
     }
   }
@@ -770,18 +819,29 @@ class _DataPathManagementPageState
 
     if (confirmed == true) {
       try {
-        // TODO: 实现真正的删除历史路径逻辑
-        setState(() {
-          _historyPaths.remove(pathInfo);
-        });
+        // 使用DataPathConfigService删除历史数据路径
+        final success =
+            await DataPathConfigService.removeHistoryDataPath(pathInfo.path);
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.historyPathDeleted)),
-          );
+        if (success) {
+          setState(() {
+            _historyPaths.remove(pathInfo);
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.historyPathDeleted)),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.deleteFailed('记录不存在'))),
+            );
+          }
         }
       } catch (e) {
-        AppLogger.error('删除历史路径失败', error: e, tag: 'DataPathManagement');
+        AppLogger.error('删除历史数据路径失败', error: e, tag: 'DataPathManagement');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.deleteFailed(e.toString()))),

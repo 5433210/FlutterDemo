@@ -7193,12 +7193,6 @@ abstract class AppLocalizations {
   /// **'打开路径失败'**
   String get openPathFailed;
 
-  /// No description provided for @backupLocationSettings.
-  ///
-  /// In zh, this message translates to:
-  /// **'备份位置设置'**
-  String get backupLocationSettings;
-
   /// No description provided for @loadBackupRegistryFailed.
   ///
   /// In zh, this message translates to:

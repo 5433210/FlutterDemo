@@ -870,17 +870,32 @@ class EnhancedBackupService {
   /// 获取所有路径下的备份（合并当前和历史路径）
   Future<List<BackupEntry>> getAllBackupsFromAllPaths() async {
     try {
-      final allBackups = <BackupEntry>[];
+      // 直接使用BackupRegistryManager获取所有备份
+      final allBackups = await BackupRegistryManager.getAllBackups();
+      
+      if (allBackups.isNotEmpty) {
+        // 按创建时间排序
+        allBackups.sort((a, b) => b.createdTime.compareTo(a.createdTime));
+        
+        AppLogger.info('获取所有路径备份完成', tag: 'EnhancedBackupService', data: {
+          'totalBackups': allBackups.length
+        });
+        
+        return allBackups;
+      }
+      
+      // 如果注册表为空，则尝试扫描所有路径
       final paths = await getAllBackupPaths();
-
+      final scannedBackups = <BackupEntry>[];
+      
       for (final path in paths) {
         final backups = await scanBackupsInPath(path);
-        allBackups.addAll(backups);
+        scannedBackups.addAll(backups);
       }
 
       // 去重（基于文件名和大小）
       final uniqueBackups = <BackupEntry>[];
-      for (final backup in allBackups) {
+      for (final backup in scannedBackups) {
         final isDuplicate = uniqueBackups.any((existing) =>
             existing.filename == backup.filename &&
             existing.size == backup.size);
@@ -893,7 +908,7 @@ class EnhancedBackupService {
       // 按创建时间排序
       uniqueBackups.sort((a, b) => b.createdTime.compareTo(a.createdTime));
 
-      AppLogger.info('获取所有路径备份完成', tag: 'EnhancedBackupService', data: {
+      AppLogger.info('扫描所有路径备份完成', tag: 'EnhancedBackupService', data: {
         'totalPaths': paths.length,
         'totalBackups': uniqueBackups.length
       });

@@ -66,8 +66,20 @@ class DataPathConfigNotifier extends StateNotifier<AsyncValue<DataPathConfig>> {
           return false;
       }
 
+      // 保存当前路径到历史记录（如果有）
+      final currentConfig = state.value;
+      if (currentConfig != null && !currentConfig.useDefaultPath) {
+        final currentPath = await currentConfig.getActualDataPath();
+        if (currentPath != newPath) {
+          await DataPathConfigService.addHistoryDataPath(currentPath);
+        }
+      }
+
       // 创建新配置
-      final newConfig = DataPathConfig.withCustomPath(newPath);
+      final newConfig = DataPathConfig.withCustomPath(
+        newPath,
+        historyPaths: currentConfig?.historyPaths ?? [],
+      );
 
       // 保存配置
       await DataPathConfigService.writeConfig(newConfig);
@@ -78,7 +90,6 @@ class DataPathConfigNotifier extends StateNotifier<AsyncValue<DataPathConfig>> {
       }
 
       // 数据迁移（如果需要）
-      final currentConfig = state.value;
       if (currentConfig != null && !currentConfig.useDefaultPath) {
         final currentPath = await currentConfig.getActualDataPath();
         if (currentPath != newPath) {
@@ -111,7 +122,23 @@ class DataPathConfigNotifier extends StateNotifier<AsyncValue<DataPathConfig>> {
   /// 重置为默认路径
   Future<bool> resetToDefaultPath() async {
     try {
-      final defaultConfig = DataPathConfig.defaultConfig();
+      // 获取当前配置
+      final currentConfig = state.value;
+      
+      // 创建新的默认配置，但保留历史路径
+      final defaultConfig = DataPathConfig(
+        useDefaultPath: true,
+        customPath: null,
+        historyPaths: currentConfig?.historyPaths ?? [],
+        lastUpdated: DateTime.now(),
+        requiresRestart: false,
+      );
+
+      // 保存当前路径到历史记录（如果有）
+      if (currentConfig != null && !currentConfig.useDefaultPath) {
+        final currentPath = await currentConfig.getActualDataPath();
+        await DataPathConfigService.addHistoryDataPath(currentPath);
+      }
 
       // 保存配置
       await DataPathConfigService.writeConfig(defaultConfig);
@@ -121,7 +148,6 @@ class DataPathConfigNotifier extends StateNotifier<AsyncValue<DataPathConfig>> {
       await DataPathConfigService.writeDataVersion(defaultPath);
 
       // 数据迁移（如果需要）
-      final currentConfig = state.value;
       if (currentConfig != null && !currentConfig.useDefaultPath) {
         final currentPath = await currentConfig.getActualDataPath();
         if (currentPath != defaultPath) {

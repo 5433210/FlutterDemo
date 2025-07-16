@@ -9,8 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'application/providers/app_initialization_provider.dart';
-import 'application/services/data_path_config_service.dart';
-import 'application/services/enhanced_backup_service.dart';
+import 'application/services/unified_path_config_service.dart';
 import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/monitoring/performance_monitor.dart';
@@ -20,6 +19,9 @@ import 'utils/config/edit_page_logging_config.dart';
 import 'utils/config/logging_config.dart';
 import 'utils/keyboard/keyboard_monitor.dart';
 import 'utils/keyboard/keyboard_utils.dart';
+
+// 添加标志位，防止重复初始化
+bool _unifiedPathConfigInitialized = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,6 +92,27 @@ void main() async {
     // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();
 
+    // 初始化统一路径配置（确保只初始化一次）
+    if (!_unifiedPathConfigInitialized) {
+      _unifiedPathConfigInitialized = true;
+      try {
+        AppLogger.info('开始初始化统一路径配置', tag: 'App');
+        final unifiedConfig = await UnifiedPathConfigService.readConfig();
+        AppLogger.info('统一路径配置初始化成功', tag: 'App', data: {
+          'dataPath': unifiedConfig.dataPath.useDefaultPath
+              ? '默认路径'
+              : unifiedConfig.dataPath.customPath,
+          'backupPath': unifiedConfig.backupPath.path.isEmpty
+              ? '未设置'
+              : unifiedConfig.backupPath.path,
+          'dataHistoryCount': unifiedConfig.dataPath.historyPaths.length,
+          'backupHistoryCount': unifiedConfig.backupPath.historyPaths.length,
+        });
+      } catch (e) {
+        AppLogger.warning('统一路径配置初始化失败，将使用旧配置', error: e, tag: 'App');
+      }
+    }
+
     // 创建ProviderContainer用于初始化阶段 - Use SilentObserver here too
     final container = ProviderContainer(
       observers: [
@@ -111,31 +134,10 @@ void main() async {
             tag: 'App');
       }
 
-      // 无论初始化是否成功，都要检查备份恢复
-      try {
-        AppLogger.info('开始检查备份恢复', tag: 'App');
-        final config = await DataPathConfigService.readConfig();
-        final dataPath = await config.getActualDataPath();
-        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
-            dataPath);
-        AppLogger.info('备份恢复检查完成', tag: 'App');
-      } catch (e) {
-        AppLogger.warning('备份恢复检查失败', error: e, tag: 'App');
-      }
+      // 备份恢复检查现在在应用初始化过程中处理
     } catch (e) {
       AppLogger.error('数据路径配置预加载出错', error: e, tag: 'App');
-
-      // 即使预加载失败，也要尝试检查备份恢复
-      try {
-        AppLogger.info('预加载失败，仍然尝试检查备份恢复', tag: 'App');
-        final config = await DataPathConfigService.readConfig();
-        final dataPath = await config.getActualDataPath();
-        await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
-            dataPath);
-        AppLogger.info('备份恢复检查完成', tag: 'App');
-      } catch (restoreError) {
-        AppLogger.warning('备份恢复检查失败', error: restoreError, tag: 'App');
-      }
+      // 备份恢复检查现在在应用初始化过程中处理，即使预加载失败也会尝试
     }
 
     // 启动应用

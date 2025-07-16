@@ -52,66 +52,66 @@ class _UnifiedBackupManagementPageState
     super.dispose();
   }
 
+  /// 加载备份数据
   Future<void> _loadData() async {
-    if (_isCancelled) return;
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final serviceLocator = ref.read(syncServiceLocatorProvider);
-
-      if (!serviceLocator.isRegistered<EnhancedBackupService>()) {
-        throw Exception(
-            AppLocalizations.of(context).backupServiceNotInitialized);
-      }
-
-      if (_isCancelled) return;
-
-      final backupService = serviceLocator.get<EnhancedBackupService>();
-
-      // 获取当前路径
+      // 获取当前备份路径
       _currentPath = await BackupRegistryManager.getCurrentBackupPath();
 
-      if (_isCancelled) return;
-
       // 获取所有路径
-      _allPaths = await backupService.getAllBackupPaths();
-
-      // 为每个路径加载备份
+      _allPaths = [];
       _pathBackups.clear();
-      for (final path in _allPaths) {
-        if (_isCancelled) return;
-        final backups = await backupService.scanBackupsInPath(path);
-        if (_isCancelled) return;
-        _pathBackups[path] = backups;
+
+      // 1. 添加当前路径（如果有）
+      if (_currentPath != null) {
+        _allPaths.add(_currentPath!);
+        // 获取当前路径的备份
+        final currentPathBackups = await BackupRegistryManager.getCurrentPathBackups();
+        _pathBackups[_currentPath!] = currentPathBackups;
       }
 
-      if (_isCancelled) return;
-
-      AppLogger.info('Unified backup management data loaded successfully',
-          tag: 'UnifiedBackupManagement',
-          data: {
-            'pathCount': _allPaths.length,
-            'totalBackups': _pathBackups.values.expand((x) => x).length,
-          });
-    } catch (e, stack) {
-      // 只在页面仍然挂载且未被取消时记录错误日志
-      if (mounted && !_isCancelled) {
-        AppLogger.error('Failed to load unified backup management data',
-            error: e, stackTrace: stack, tag: 'UnifiedBackupManagement');
+      // 2. 获取历史路径
+      final historyPaths = await BackupRegistryManager.getHistoryBackupPaths();
+      
+      // 3. 添加历史路径（排除当前路径）
+      for (final path in historyPaths) {
+        if (path != _currentPath && await Directory(path).exists()) {
+          _allPaths.add(path);
+          
+          // 获取该历史路径的备份
+          final historyPathBackups = await BackupRegistryManager.getHistoryPathBackups(path);
+          _pathBackups[path] = historyPathBackups;
+        }
       }
 
+      // 4. 设置默认展开状态
+      if (_expandedPaths.isEmpty && _allPaths.isNotEmpty) {
+        _expandedPaths[_allPaths[0]] = true; // 默认展开第一个路径
+      }
+
+      AppLogger.info('加载备份数据完成', tag: 'BackupManagementUI', data: {
+        'currentPath': _currentPath,
+        'totalPaths': _allPaths.length,
+        'totalBackups': _pathBackups.values.expand((x) => x).length,
+      });
+    } catch (e) {
+      AppLogger.error('加载备份数据失败', error: e, tag: 'BackupManagementUI');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('${AppLocalizations.of(context).loadDataFailed}: $e')),
+            content: Text(AppLocalizations.of(context).loadDataFailed),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
-      if (mounted) {
+      if (mounted && !_isCancelled) {
         setState(() {
           _isLoading = false;
         });
@@ -156,6 +156,16 @@ class _UnifiedBackupManagementPageState
                 ),
               ),
               const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'clean_duplicate_backups',
+                child: Row(
+                  children: [
+                    const Icon(Icons.cleaning_services, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Text('清理重复记录'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'delete_all_backups',
                 child: Row(
@@ -637,6 +647,9 @@ class _UnifiedBackupManagementPageState
       case 'import_backup':
         await _importBackup();
         break;
+      case 'clean_duplicate_backups':
+        await _cleanDuplicateBackups();
+        break;
       case 'delete_all_backups':
         await _deleteAllBackups();
         break;
@@ -1093,6 +1106,83 @@ class _UnifiedBackupManagementPageState
     }
   }
 
+  /// 清理重复的备份记录
+  Future<void> _cleanDuplicateBackups() async {
+    final l10n = AppLocalizations.of(context);
+
+    // 显示确认对话框
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('清理重复记录'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('此操作将清理重复的备份记录，不会删除实际的备份文件。'),
+            SizedBox(height: 8),
+            Text('是否继续？'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      setState(() => _isLoading = true);
+
+      // 执行清理操作
+      final removedCount = await BackupRegistryManager.removeDuplicateBackups();
+
+      // 重新加载数据
+      await _loadData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('清理完成，移除了 $removedCount 个重复记录'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('清理重复备份记录失败',
+          error: e, tag: 'UnifiedBackupManagementPage');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('清理操作失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _deleteBackupPath(String path) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
@@ -1177,45 +1267,48 @@ class _UnifiedBackupManagementPageState
 
     // 创建进度跟踪器
     final progressNotifier = ValueNotifier<int>(0);
-    bool dialogShown = false;
+    // 保存对话框上下文
+    BuildContext? dialogContext;
 
     try {
       // 显示带进度的对话框
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 16),
-              Text('正在导出备份...'),
-            ],
-          ),
-          content: ValueListenableBuilder<int>(
-            valueListenable: progressNotifier,
-            builder: (context, progress, child) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.exportingBackupsProgressFormat(backups.length)),
-                  const SizedBox(height: AppSizes.p8),
-                  LinearProgressIndicator(
-                    value: backups.isNotEmpty ? progress / backups.length : 0,
-                  ),
-                  const SizedBox(height: AppSizes.p8),
-                  Text('已处理: $progress / ${backups.length}'),
-                ],
-              );
-            },
-          ),
-        ),
+        builder: (context) {
+          dialogContext = context; // 保存对话框上下文
+          return AlertDialog(
+            title: const Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('正在导出备份...'),
+              ],
+            ),
+            content: ValueListenableBuilder<int>(
+              valueListenable: progressNotifier,
+              builder: (context, progress, child) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.exportingBackupsProgressFormat(backups.length)),
+                    const SizedBox(height: AppSizes.p8),
+                    LinearProgressIndicator(
+                      value: backups.isNotEmpty ? progress / backups.length : 0,
+                    ),
+                    const SizedBox(height: AppSizes.p8),
+                    Text('已处理: $progress / ${backups.length}'),
+                  ],
+                );
+              },
+            ),
+          );
+        },
       );
-      dialogShown = true;
 
       int successCount = 0;
       int failCount = 0;
@@ -1259,6 +1352,11 @@ class _UnifiedBackupManagementPageState
         await Future.delayed(const Duration(milliseconds: 10));
       }
 
+      // 关闭进度对话框
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
       // 显示结果
       if (mounted && !_isCancelled) {
         final failedMessage =
@@ -1279,6 +1377,11 @@ class _UnifiedBackupManagementPageState
         );
       }
     } catch (e) {
+      // 关闭进度对话框
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+      }
+
       if (mounted && !_isCancelled) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1296,17 +1399,6 @@ class _UnifiedBackupManagementPageState
     } finally {
       // 确保清理资源
       progressNotifier.dispose();
-
-      // 确保对话框关闭
-      if (mounted && dialogShown) {
-        try {
-          Navigator.of(context).pop();
-        } catch (e) {
-          // 忽略导航错误
-          AppLogger.warning('Failed to close dialog',
-              tag: 'UnifiedBackupManagement', data: {'error': e.toString()});
-        }
-      }
     }
   }
 
@@ -1570,10 +1662,8 @@ class _UnifiedBackupManagementPageState
     BuildContext? dialogContext;
 
     try {
-      // 构建目标文件路径
-      final backupPath =
-          backup.location == 'current' ? (_currentPath ?? '') : backup.id;
-      final sourcePath = p.join(backupPath, backup.filename);
+      // 构建源文件路径 - 修复：直接使用backup.fullPath而不是尝试构建路径
+      final sourcePath = backup.fullPath;
       final targetPath = p.join(outputDirectory, backup.filename);
 
       // 检查目标文件是否已存在

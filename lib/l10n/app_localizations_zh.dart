@@ -3746,9 +3746,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openPathFailed => '打开路径失败';
 
   @override
-  String get backupLocationSettings => '备份位置设置';
-
-  @override
   String get loadBackupRegistryFailed => '加载备份注册表失败';
 
   @override

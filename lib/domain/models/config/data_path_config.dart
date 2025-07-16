@@ -9,6 +9,9 @@ class DataPathConfig {
   /// 自定义数据路径
   final String? customPath;
 
+  /// 历史数据路径列表
+  final List<String> historyPaths;
+
   /// 配置更新时间
   final DateTime lastUpdated;
 
@@ -18,6 +21,7 @@ class DataPathConfig {
   const DataPathConfig({
     required this.useDefaultPath,
     this.customPath,
+    this.historyPaths = const [],
     required this.lastUpdated,
     required this.requiresRestart,
   });
@@ -37,16 +41,18 @@ class DataPathConfig {
     return DataPathConfig(
       useDefaultPath: true,
       customPath: null,
+      historyPaths: const [],
       lastUpdated: DateTime.now(),
       requiresRestart: false,
     );
   }
 
   /// 创建自定义路径配置
-  factory DataPathConfig.withCustomPath(String customPath) {
+  factory DataPathConfig.withCustomPath(String customPath, {List<String>? historyPaths}) {
     return DataPathConfig(
       useDefaultPath: false,
       customPath: customPath,
+      historyPaths: historyPaths ?? const [],
       lastUpdated: DateTime.now(),
       requiresRestart: true,
     );
@@ -57,6 +63,9 @@ class DataPathConfig {
     return DataPathConfig(
       useDefaultPath: json['useDefaultPath'] as bool? ?? true,
       customPath: json['customPath'] as String?,
+      historyPaths: json.containsKey('historyPaths')
+          ? List<String>.from(json['historyPaths'])
+          : const [],
       lastUpdated: DateTime.parse(json['lastUpdated'] as String),
       requiresRestart: json['requiresRestart'] as bool? ?? false,
     );
@@ -67,6 +76,7 @@ class DataPathConfig {
     return {
       'useDefaultPath': useDefaultPath,
       'customPath': customPath,
+      'historyPaths': historyPaths,
       'lastUpdated': lastUpdated.toIso8601String(),
       'requiresRestart': requiresRestart,
     };
@@ -76,12 +86,14 @@ class DataPathConfig {
   DataPathConfig copyWith({
     bool? useDefaultPath,
     String? customPath,
+    List<String>? historyPaths,
     DateTime? lastUpdated,
     bool? requiresRestart,
   }) {
     return DataPathConfig(
       useDefaultPath: useDefaultPath ?? this.useDefaultPath,
       customPath: customPath ?? this.customPath,
+      historyPaths: historyPaths ?? this.historyPaths,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       requiresRestart: requiresRestart ?? this.requiresRestart,
     );
@@ -94,6 +106,7 @@ class DataPathConfig {
           runtimeType == other.runtimeType &&
           useDefaultPath == other.useDefaultPath &&
           customPath == other.customPath &&
+          _listEquals(historyPaths, other.historyPaths) &&
           lastUpdated == other.lastUpdated &&
           requiresRestart == other.requiresRestart;
 
@@ -101,12 +114,23 @@ class DataPathConfig {
   int get hashCode =>
       useDefaultPath.hashCode ^
       customPath.hashCode ^
+      historyPaths.hashCode ^
       lastUpdated.hashCode ^
       requiresRestart.hashCode;
 
   @override
   String toString() {
-    return 'DataPathConfig(useDefaultPath: $useDefaultPath, customPath: $customPath, lastUpdated: $lastUpdated, requiresRestart: $requiresRestart)';
+    return 'DataPathConfig(useDefaultPath: $useDefaultPath, customPath: $customPath, historyPaths: $historyPaths, lastUpdated: $lastUpdated, requiresRestart: $requiresRestart)';
+  }
+  
+  // 辅助方法：比较两个列表是否相等
+  bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }
 

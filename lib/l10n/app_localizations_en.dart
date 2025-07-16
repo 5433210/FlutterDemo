@@ -3746,9 +3746,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openPathFailed => 'Failed to open path';
 
   @override
-  String get backupLocationSettings => 'Backup Location Settings';
-
-  @override
   String get loadBackupRegistryFailed => 'Failed to load backup registry';
 
   @override

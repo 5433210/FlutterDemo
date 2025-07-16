@@ -1191,7 +1191,6 @@
   "justNow": "刚刚",
   "pathNotExists": "路径不存在",
   "openPathFailed": "打开路径失败",
-  "backupLocationSettings": "备份位置设置",
   "loadBackupRegistryFailed": "加载备份注册表失败",
   "loadCurrentBackupPathFailed": "加载当前备份路径失败",
   "selectBackupStorageLocation": "选择备份存储位置",

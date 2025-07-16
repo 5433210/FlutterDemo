@@ -1180,7 +1180,6 @@
   "justNow": "just now",
   "pathNotExists": "Path does not exist",
   "openPathFailed": "Failed to open path",
-  "backupLocationSettings": "Backup Location Settings",
   "loadBackupRegistryFailed": "Failed to load backup registry",
   "loadCurrentBackupPathFailed": "Failed to load current backup path",
   "selectBackupStorageLocation": "Select backup storage location",
