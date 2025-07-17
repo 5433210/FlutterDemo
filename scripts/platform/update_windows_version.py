@@ -40,7 +40,31 @@ def update_windows_version(project_root, file_version, product_version):
     if cmake_file.exists():
         if not update_cmake_version(cmake_file, file_version):
             print("警告: 更新Windows CMakeLists.txt失败")
-    
+
+    # 更新 pubspec.yaml 中的 MSIX 配置
+    pubspec_file = Path(project_root) / 'pubspec.yaml'
+    if pubspec_file.exists():
+        # 从版本号生成MSIX版本（使用构建序号作为第4位）
+        # 例如：1.0.3.20250717008 -> 1.0.3.8
+        version_parts = file_version.split('.')
+        if len(version_parts) >= 4:
+            # 提取构建号的最后3位作为构建序号
+            build_number = version_parts[3]
+            if len(build_number) >= 3:
+                build_sequence = int(build_number[-3:])  # 取最后3位
+                # 确保不超过65535的限制
+                build_sequence = min(build_sequence, 65535)
+            else:
+                build_sequence = int(build_number) if build_number.isdigit() else 0
+            msix_version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2]}.{build_sequence}"
+        elif len(version_parts) >= 3:
+            msix_version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2]}.0"
+        else:
+            msix_version = f"{file_version}.0"
+
+        if not update_pubspec_msix(pubspec_file, msix_version):
+            success = False
+
     return success
 
 def update_runner_rc(file_path, file_version, product_version):
@@ -98,6 +122,37 @@ def update_runner_rc(file_path, file_version, product_version):
         
     except Exception as e:
         print(f"更新 {file_path} 失败: {e}")
+        return False
+
+def update_pubspec_msix(pubspec_path, msix_version):
+    """更新pubspec.yaml中的MSIX版本
+
+    Args:
+        pubspec_path: pubspec.yaml文件路径
+        msix_version: MSIX版本号
+
+    Returns:
+        bool: 更新是否成功
+    """
+    try:
+        with open(pubspec_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # 更新msix_version
+        content = re.sub(
+            r'msix_version:\s*[\d.]+',
+            f'msix_version: {msix_version}',
+            content
+        )
+
+        with open(pubspec_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        print(f"已更新 {pubspec_path} 中的 MSIX 版本: {msix_version}")
+        return True
+
+    except Exception as e:
+        print(f"更新 {pubspec_path} 失败: {e}")
         return False
 
 def update_cmake_version(file_path, version):

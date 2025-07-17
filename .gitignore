@@ -16,6 +16,7 @@ migrate_working_dir/
 *.zip
 .vs/
 out/
+releases/
 *.kra~
 *.apk
 *.msix

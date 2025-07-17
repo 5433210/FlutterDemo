@@ -182,7 +182,7 @@ class BuildNumberUpdater:
         
         self.save_build_history(history)
         
-        print(f"✓ 构建号已更新: {current_build} -> {build_number}")
+        print(f"√ 构建号已更新: {current_build} -> {build_number}")
         return True, build_number
     
     def rollback_build_number(self, steps=1):
@@ -221,7 +221,7 @@ class BuildNumberUpdater:
         history['builds'] = builds[:-steps]
         self.save_build_history(history)
         
-        print(f"✓ 构建号已回滚 {steps} 步: -> {target_build_number}")
+        print(f"√ 构建号已回滚 {steps} 步: -> {target_build_number}")
         return True, target_build_number
     
     def show_build_history(self, limit=10):
@@ -330,7 +330,7 @@ def main():
             ], capture_output=True, text=True, cwd=updater.project_root)
             
             if result.returncode == 0:
-                print("✓ 所有平台版本信息已同步更新")
+                print("√ 所有平台版本信息已同步更新")
             else:
                 print("警告: 平台版本同步更新失败")
                 print(result.stderr)

@@ -1,6 +1,6 @@
 name: charasgem
 description: A versatile calligraphy management and practice application.
-version: 1.0.1+20250623001
+version: 0.0.0+0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -78,14 +78,13 @@ flutter:
 
 # MSIX packaging configuration
 msix_config:
-  display_name: 字字珠玑
+  display_name: Char As Gem
   publisher_display_name: 大力出奇迹
-  identity_name: C82AF157.CharAsGem  
-  msix_version: 1.0.1.0
+  identity_name: C82AF157.CharAsGem
+  msix_version: 0.0.0.0
   logo_path: assets/images/app_trans_bg4.ico
-  capabilities: internetClient, location
   architecture: x64
-  publisher: CN=D3B892E0-3B54-4655-BA20-904E2C134030
+  publisher: CN=53293241-CEA8-41F3-8141-C7ABB9B773E3
   certificate_path: package/windows/msix/CharAsGem.pfx
   certificate_password: password
   store: false

@@ -1,0 +1,76 @@
+{
+  "builds": [
+    {
+      "build_number": "20250717001",
+      "previous_build": "20250623001",
+      "timestamp": "2025-07-17T15:42:49.714619",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717002",
+      "previous_build": "20250717001",
+      "timestamp": "2025-07-17T15:48:31.054240",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717003",
+      "previous_build": "20250717002",
+      "timestamp": "2025-07-17T15:51:11.123364",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717004",
+      "previous_build": "20250717003",
+      "timestamp": "2025-07-17T15:52:13.457370",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717005",
+      "previous_build": "20250717004",
+      "timestamp": "2025-07-17T15:59:20.031650",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717006",
+      "previous_build": "20250717005",
+      "timestamp": "2025-07-17T16:04:41.903070",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717007",
+      "previous_build": "20250717001",
+      "timestamp": "2025-07-17T16:14:57.524916",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717008",
+      "previous_build": "20250717007",
+      "timestamp": "2025-07-17T16:23:44.488912",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717009",
+      "previous_build": "20250717001",
+      "timestamp": "2025-07-17T16:35:52.233059",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717010",
+      "previous_build": "20250717009",
+      "timestamp": "2025-07-17T16:41:22.137947",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717011",
+      "previous_build": "20250717010",
+      "timestamp": "2025-07-17T22:13:10.420162",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250717012",
+      "previous_build": "20250717001",
+      "timestamp": "2025-07-17T22:14:19.939306",
+      "strategy": "auto"
+    }
+  ]
+}

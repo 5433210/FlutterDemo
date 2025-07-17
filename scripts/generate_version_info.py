@@ -67,27 +67,27 @@ class VersionGenerator:
         
         try:
             # 获取当前提交哈希
-            result = subprocess.run(['git', 'rev-parse', 'HEAD'], 
+            result = subprocess.run(['git', 'rev-parse', 'HEAD'],
                                   capture_output=True, text=True, cwd=self.project_root)
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout:
                 git_info['commit'] = result.stdout.strip()[:8]  # 取前8位
-            
+
             # 获取当前分支
-            result = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], 
+            result = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                                   capture_output=True, text=True, cwd=self.project_root)
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout:
                 git_info['branch'] = result.stdout.strip()
-            
+
             # 获取最新标签
-            result = subprocess.run(['git', 'describe', '--tags', '--abbrev=0'], 
+            result = subprocess.run(['git', 'describe', '--tags', '--abbrev=0'],
                                   capture_output=True, text=True, cwd=self.project_root)
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout:
                 git_info['tag'] = result.stdout.strip()
-            
+
             # 检查是否有未提交的更改
-            result = subprocess.run(['git', 'status', '--porcelain'], 
+            result = subprocess.run(['git', 'status', '--porcelain'],
                                   capture_output=True, text=True, cwd=self.project_root)
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout is not None:
                 git_info['is_dirty'] = bool(result.stdout.strip())
                 
         except Exception as e:
@@ -319,51 +319,51 @@ class VersionGenerator:
         
         # 更新Android平台
         if self._update_android_version(platforms['android']):
-            print("✅ Android平台版本更新成功")
+            print("√ Android平台版本更新成功")
         else:
-            print("❌ Android平台版本更新失败")
+            print("× Android平台版本更新失败")
             success = False
-        
+
         # 更新iOS平台
         if self._update_ios_version(platforms['ios']):
-            print("✅ iOS平台版本更新成功")
+            print("√ iOS平台版本更新成功")
         else:
-            print("❌ iOS平台版本更新失败")
+            print("× iOS平台版本更新失败")
             success = False
-        
+
         # 更新鸿蒙OS平台
         if self._update_ohos_version(platforms['ohos']):
-            print("✅ 鸿蒙OS平台版本更新成功")
+            print("√ 鸿蒙OS平台版本更新成功")
         else:
-            print("❌ 鸿蒙OS平台版本更新失败")
+            print("× 鸿蒙OS平台版本更新失败")
             success = False
-        
+
         # 更新Web平台
         if self._update_web_version(platforms['web']):
-            print("✅ Web平台版本更新成功")
+            print("√ Web平台版本更新成功")
         else:
-            print("❌ Web平台版本更新失败")
+            print("× Web平台版本更新失败")
             success = False
-        
+
         # 更新Windows平台
         if self._update_windows_version(platforms['windows']):
-            print("✅ Windows平台版本更新成功")
+            print("√ Windows平台版本更新成功")
         else:
-            print("❌ Windows平台版本更新失败")
+            print("× Windows平台版本更新失败")
             success = False
-        
+
         # 更新macOS平台
         if self._update_macos_version(platforms['macos']):
-            print("✅ macOS平台版本更新成功")
+            print("√ macOS平台版本更新成功")
         else:
-            print("❌ macOS平台版本更新失败")
+            print("× macOS平台版本更新失败")
             success = False
-        
+
         # 更新Linux平台
         if self._update_linux_version(platforms['linux']):
-            print("✅ Linux平台版本更新成功")
+            print("√ Linux平台版本更新成功")
         else:
-            print("❌ Linux平台版本更新失败")
+            print("× Linux平台版本更新失败")
             success = False
         
         return success

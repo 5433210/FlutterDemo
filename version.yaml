@@ -25,11 +25,11 @@ platforms:
     pwa_version: 1.0.0
     theme_color: '#0175C2'
   windows:
-    company_name: CharasGem
+    company_name: wailik
     min_version: 10.0.17763.0
 project:
   description: A versatile calligraphy management and practice application.
-  display_name: 字字珠玑
+  display_name: CharAsGem
   name: charasgem
 release:
   channels:
@@ -38,8 +38,8 @@ release:
   - alpha
   - dev
 version:
-  build: '20250623001'
-  major: 1
+  build: '0'
+  major: 0
   minor: 0
-  patch: 1
+  patch: 0
   prerelease: ''
