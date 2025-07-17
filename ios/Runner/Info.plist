@@ -65,7 +65,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>20250717012</string>
+	<string>0</string>
 	<key>GitCommit</key>
 	<string>$(GIT_COMMIT)</string>
 	<key>LSRequiresIPhoneOS</key>
