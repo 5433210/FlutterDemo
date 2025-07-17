@@ -5,13 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/logger.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
 import '../../../presentation/pages/settings/m3_settings_page.dart';
-import '../../../presentation/pages/works/m3_character_collection_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
-import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
@@ -20,6 +17,8 @@ import '../../utils/cross_navigation_helper.dart';
 import '../library/m3_library_management_page.dart';
 import '../practices/m3_practice_edit_page.dart';
 import '../practices/m3_practice_list_page.dart';
+import '../works/m3_character_collection_page.dart';
+import '../works/m3_work_detail_page.dart';
 
 class M3MainWindow extends ConsumerStatefulWidget {
   const M3MainWindow({super.key});
@@ -55,23 +54,23 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     super.initState();
     AppLogger.info('M3MainWindow initState', tag: 'MainWindow');
     WidgetsBinding.instance.addObserver(this);
-    
+
     // 添加帧回调，确认首帧渲染完成
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLogger.info('M3MainWindow 首帧渲染完成', tag: 'MainWindow');
     });
-    
+
     // 添加错误处理
     FlutterError.onError = (FlutterErrorDetails details) {
-      AppLogger.error('Flutter错误', 
-        error: details.exception, 
-        stackTrace: details.stack, 
-        tag: 'FlutterError',
-        data: {
-          'library': details.library,
-          'context': details.context?.toString() ?? 'unknown',
-          'silent': details.silent,
-        });
+      AppLogger.error('Flutter错误',
+          error: details.exception,
+          stackTrace: details.stack,
+          tag: 'FlutterError',
+          data: {
+            'library': details.library,
+            'context': details.context?.toString() ?? 'unknown',
+            'silent': details.silent,
+          });
       FlutterError.presentError(details);
     };
   }
@@ -93,18 +92,18 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   @override
   Widget build(BuildContext context) {
     AppLogger.info('M3MainWindow build开始', tag: 'MainWindow');
-    
+
     try {
       // 从全局导航状态读取状态
       final navState = ref.watch(globalNavigationProvider);
       final selectedIndex = navState.currentSectionIndex;
-      
+
       AppLogger.info('M3MainWindow 导航状态', tag: 'MainWindow', data: {
         'selectedIndex': selectedIndex,
         'isNavigating': navState.isNavigating,
         'isNavigationExtended': navState.isNavigationExtended,
       });
-  
+
       // 检测功能区切换 - 使用WidgetsBinding.instance.addPostFrameCallback避免在build中修改状态
       if (_lastSelectedIndex != selectedIndex) {
         // 记录从哪个功能区切换到哪个功能区
@@ -118,7 +117,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
           },
           tag: 'Navigation',
         );
-  
+
         // 延迟到当前帧结束后处理状态更新，避免在build中修改状态
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _lastSelectedIndex != selectedIndex) {
@@ -128,53 +127,60 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
           }
         });
       }
-  
+
       AppLogger.info('M3MainWindow 构建LayoutBuilder', tag: 'MainWindow');
       return LayoutBuilder(
         builder: (context, constraints) {
-          AppLogger.info('M3MainWindow LayoutBuilder回调', tag: 'MainWindow', data: {
-            'width': constraints.maxWidth,
-            'height': constraints.maxHeight,
-          });
-          
+          AppLogger.info('M3MainWindow LayoutBuilder回调',
+              tag: 'MainWindow',
+              data: {
+                'width': constraints.maxWidth,
+                'height': constraints.maxHeight,
+              });
+
           return PopScope(
             // 处理返回按钮事件，先尝试在当前功能区内返回，否则尝试跨功能区返回
             canPop: false, // 禁止默认的返回行为，我们将自己处理
             onPopInvokedWithResult: (bool didPop, dynamic result) async {
               // 如果系统已处理了弹出操作，不需要进一步处理
               if (didPop) return;
-  
+
               // 如果正在导航过渡中，不处理返回
               if (navState.isNavigating) return;
-  
+
               // 先尝试在当前功能区内的Navigator返回
               final currentNavigator =
                   _navigatorKeys[selectedIndex]?.currentState;
               final canPopInCurrentSection =
                   currentNavigator != null && currentNavigator.canPop();
-  
+
               if (canPopInCurrentSection) {
                 currentNavigator.pop();
                 return; // 已在功能区内处理返回，不需要退出应用
               }
-  
+
               // 如果当前功能区内无法返回，尝试回到上一个功能区
               await CrossNavigationHelper.handleBackNavigation(context, ref);
             },
             child: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 // 导航快捷键
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
+                LogicalKeySet(
+                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
                     const ActivateTabIntent(0),
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
+                LogicalKeySet(
+                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
                     const ActivateTabIntent(1),
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
+                LogicalKeySet(
+                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
                     const ActivateTabIntent(2),
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
+                LogicalKeySet(
+                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
                     const ActivateTabIntent(3),
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
+                LogicalKeySet(
+                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
                     const ActivateTabIntent(4),
-  
+
                 // 侧边栏快捷键
                 LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
                     const ToggleNavigationIntent(),
@@ -189,7 +195,8 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                       return null;
                     },
                   ),
-                  ToggleNavigationIntent: CallbackAction<ToggleNavigationIntent>(
+                  ToggleNavigationIntent:
+                      CallbackAction<ToggleNavigationIntent>(
                     onInvoke: (intent) {
                       ref
                           .read(globalNavigationProvider.notifier)
@@ -203,7 +210,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                     children: [
                       // 标题栏
                       const M3TitleBar(),
-  
+
                       // 内容区域
                       Expanded(
                         child: Row(
@@ -229,32 +236,38 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                               child: Stack(
                                 children: List.generate(5, (index) {
                                   // 检查当前索引是否应该被初始化
-                                  final shouldInitialize = index == selectedIndex;
+                                  final shouldInitialize =
+                                      index == selectedIndex;
                                   final isInitialized =
                                       _initializedSections.contains(index);
-  
+
                                   // 如果当前索引应该被初始化但还未初始化，延迟初始化
                                   if (shouldInitialize && !isInitialized) {
-                                    AppLogger.info('初始化功能区', tag: 'MainWindow', data: {
-                                      'index': index,
-                                    });
+                                    AppLogger.info('初始化功能区',
+                                        tag: 'MainWindow',
+                                        data: {
+                                          'index': index,
+                                        });
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
                                       if (mounted &&
-                                          !_initializedSections.contains(index)) {
+                                          !_initializedSections
+                                              .contains(index)) {
                                         setState(() {
                                           _initializedSections.add(index);
                                         });
                                       }
                                     });
                                   }
-  
+
                                   // 仅当当前选中或已初始化时才创建导航器
                                   if (index == selectedIndex && isInitialized) {
-                                    AppLogger.info('构建功能区导航器', tag: 'MainWindow', data: {
-                                      'index': index,
-                                      'isSelected': true,
-                                    });
+                                    AppLogger.info('构建功能区导航器',
+                                        tag: 'MainWindow',
+                                        data: {
+                                          'index': index,
+                                          'isSelected': true,
+                                        });
                                     // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
                                     return KeyedSubtree(
                                       key: ValueKey('navigator_$index'),
@@ -262,14 +275,17 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                                     );
                                   } else if (isInitialized) {
                                     // 已初始化但未选中的功能区，使用Offstage隐藏
-                                    AppLogger.info('隐藏功能区导航器', tag: 'MainWindow', data: {
-                                      'index': index,
-                                      'isSelected': false,
-                                    });
+                                    AppLogger.info('隐藏功能区导航器',
+                                        tag: 'MainWindow',
+                                        data: {
+                                          'index': index,
+                                          'isSelected': false,
+                                        });
                                     return Offstage(
                                       offstage: true,
                                       child: KeyedSubtree(
-                                        key: ValueKey('navigator_hidden_$index'),
+                                        key:
+                                            ValueKey('navigator_hidden_$index'),
                                         child: _buildNavigator(index),
                                       ),
                                     );
@@ -292,8 +308,8 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
         },
       );
     } catch (e, stack) {
-      AppLogger.error('M3MainWindow build过程中发生错误', 
-        error: e, stackTrace: stack, tag: 'MainWindow');
+      AppLogger.error('M3MainWindow build过程中发生错误',
+          error: e, stackTrace: stack, tag: 'MainWindow');
       return Center(
         child: Text('应用加载错误: $e'),
       );
@@ -322,12 +338,54 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     setState(() {}); // 触发重建以应用新的亮度设置
   }
 
+  /// 生成路由的方法，复用全局路由逻辑
+  Route<dynamic>? _generateRoute(RouteSettings settings) {
+    final args = settings.arguments;
+
+    switch (settings.name) {
+      case AppRoutes.workDetail:
+        if (args is Map<String, String>) {
+          return MaterialPageRoute(
+            builder: (context) => M3WorkDetailPage(
+                workId: args['workId']!, initialPageId: args['pageId']!),
+          );
+        } else if (args is String) {
+          return MaterialPageRoute(
+            builder: (context) => M3WorkDetailPage(workId: args),
+          );
+        }
+        break;
+
+      case AppRoutes.characterCollection:
+        if (args is Map<String, String>) {
+          return MaterialPageRoute(
+            builder: (context) => M3CharacterCollectionPage(
+              workId: args['workId']!,
+              initialPageId: args['pageId']!,
+              initialCharacterId: args['characterId']!,
+            ),
+          );
+        }
+        break;
+
+      case AppRoutes.practiceEdit:
+        return MaterialPageRoute(
+          builder: (context) => M3PracticeEditPage(
+            practiceId: args as String?,
+          ),
+        );
+    }
+
+    // 未知路由返回null，让Flutter处理
+    return null;
+  }
+
   /// 构建导航器
   Widget _buildNavigator(int index) {
     AppLogger.info('构建导航器', tag: 'MainWindow', data: {
       'index': index,
     });
-    
+
     try {
       // 根据索引选择不同的主页
       Widget homePage;
@@ -358,13 +416,13 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
           });
           homePage = const M3WorkBrowsePage();
       }
-  
+
       // 创建导航器
       AppLogger.info('创建Navigator实例', tag: 'MainWindow', data: {
         'index': index,
         'key': _navigatorKeys[index].toString(),
       });
-      
+
       return Navigator(
         key: _navigatorKeys[index],
         onGenerateRoute: (settings) {
@@ -372,21 +430,24 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
             'index': index,
             'route': settings.name,
           });
-          
+
           // 默认路由返回主页
           if (settings.name == '/' || settings.name == null) {
             return MaterialPageRoute(builder: (context) => homePage);
           }
-          
+
           // 使用全局路由生成器
-          return null;
+          return _generateRoute(settings);
         },
       );
     } catch (e, stack) {
-      AppLogger.error('构建导航器失败', 
-        error: e, stackTrace: stack, tag: 'MainWindow', data: {
-        'index': index,
-      });
+      AppLogger.error('构建导航器失败',
+          error: e,
+          stackTrace: stack,
+          tag: 'MainWindow',
+          data: {
+            'index': index,
+          });
       return Center(
         child: Text('导航器加载错误: $e'),
       );
