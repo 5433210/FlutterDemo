@@ -238,7 +238,7 @@ class EnhancedBackupService {
       final backupPath = await BackupRegistryManager.getCurrentBackupPath();
 
       if (backupPath == null) {
-        throw Exception('请先设置备份路径');
+        throw Exception('Please set backup path first');
       }
 
       // 2. 使用原始备份服务创建备份
@@ -248,7 +248,7 @@ class EnhancedBackupService {
       // 3. 获取备份文件信息
       final backupFile = File(backupFilePath);
       if (!await backupFile.exists()) {
-        throw Exception('备份文件创建失败');
+        throw Exception('Backup file creation failed');
       }
 
       // 4. 移动备份文件到指定位置（如果不在当前备份路径）
@@ -267,7 +267,7 @@ class EnhancedBackupService {
         size: await File(targetPath).length(),
         createdTime: DateTime.now(),
         location: 'current',
-        description: description ?? '手动创建的备份',
+        description: description ?? 'Manually created backup',
         checksum: checksum,
         appVersion: await _getAppVersion(),
       );
@@ -327,7 +327,7 @@ class EnhancedBackupService {
                   size: info.size,
                   createdTime: info.creationTime,
                   location: 'legacy',
-                  description: info.description ?? '历史备份',
+                  description: info.description ?? 'Legacy backup',
                 ))
             .toList();
       } catch (fallbackError) {
@@ -417,7 +417,7 @@ class EnhancedBackupService {
           );
 
       if (backup == null) {
-        throw Exception('备份不存在: $backupIdOrFilename');
+        throw Exception('Backup not found: $backupIdOrFilename');
       }
 
       // 阶段1：核验备份文件
@@ -428,7 +428,7 @@ class EnhancedBackupService {
 
       final isValid = await _verifyBackupFile(backup);
       if (!isValid) {
-        throw Exception('备份文件核验失败');
+        throw Exception('Backup file verification failed');
       }
 
       // 阶段2：解压到临时目录
@@ -441,7 +441,8 @@ class EnhancedBackupService {
 
       // 调用回调函数，通知需要重启
       if (onRestoreComplete != null) {
-        onRestoreComplete(true, '备份文件已准备就绪，需要重启应用完成恢复');
+        onRestoreComplete(
+            true, 'Backup file is ready, restart required to complete restore');
       }
 
       AppLogger.info('备份恢复准备完成，等待重启', tag: 'EnhancedBackupService', data: {
@@ -678,7 +679,7 @@ class EnhancedBackupService {
       final backup = registry.getBackup(backupId);
 
       if (backup == null) {
-        throw Exception('备份不存在: $backupId');
+        throw Exception('Backup not found: $backupId');
       }
 
       final sourceFile = File(backup.fullPath);
@@ -704,12 +705,12 @@ class EnhancedBackupService {
     try {
       final sourceFile = File(sourcePath);
       if (!await sourceFile.exists()) {
-        throw Exception('源文件不存在: $sourcePath');
+        throw Exception('Source file not found: $sourcePath');
       }
 
       final backupPath = await BackupRegistryManager.getCurrentBackupPath();
       if (backupPath == null) {
-        throw Exception('请先设置备份路径');
+        throw Exception('Please set backup path first');
       }
 
       // 生成新的文件名
@@ -731,7 +732,7 @@ class EnhancedBackupService {
         size: await File(targetPath).length(),
         createdTime: DateTime.now(),
         location: 'current',
-        description: description ?? '导入的备份',
+        description: description ?? 'Imported backup',
         checksum: checksum,
         appVersion: await _getAppVersion(),
       );
@@ -855,7 +856,8 @@ class EnhancedBackupService {
         size: stat.size,
         createdTime: stat.modified,
         location: isLegacy ? 'legacy' : 'current',
-        description: isLegacy ? '历史路径备份' : '当前路径备份',
+        description:
+            isLegacy ? 'Historical path backup' : 'Current path backup',
         checksum: await BackupRegistryManager.calculateChecksum(file),
       );
     } catch (e) {
@@ -872,22 +874,22 @@ class EnhancedBackupService {
     try {
       // 直接使用BackupRegistryManager获取所有备份
       final allBackups = await BackupRegistryManager.getAllBackups();
-      
+
       if (allBackups.isNotEmpty) {
         // 按创建时间排序
         allBackups.sort((a, b) => b.createdTime.compareTo(a.createdTime));
-        
-        AppLogger.info('获取所有路径备份完成', tag: 'EnhancedBackupService', data: {
-          'totalBackups': allBackups.length
-        });
-        
+
+        AppLogger.info('获取所有路径备份完成',
+            tag: 'EnhancedBackupService',
+            data: {'totalBackups': allBackups.length});
+
         return allBackups;
       }
-      
+
       // 如果注册表为空，则尝试扫描所有路径
       final paths = await getAllBackupPaths();
       final scannedBackups = <BackupEntry>[];
-      
+
       for (final path in paths) {
         final backups = await scanBackupsInPath(path);
         scannedBackups.addAll(backups);
@@ -1230,7 +1232,7 @@ class EnhancedBackupService {
       // 检查备份文件是否存在
       final backupFile = File(backupPath);
       if (!await backupFile.exists()) {
-        throw Exception('备份文件不存在: $backupPath');
+        throw Exception('Backup file does not exist: $backupPath');
       }
 
       // 创建临时解压目录
@@ -1251,7 +1253,8 @@ class EnhancedBackupService {
 
         // 调用回调，通知恢复完成需要重启
         if (onRestoreComplete != null) {
-          onRestoreComplete(true, '备份恢复成功，需要重启应用以应用更改。');
+          onRestoreComplete(true,
+              'Backup restored successfully, restart required to apply changes.');
         }
       } finally {
         // 清理临时解压目录

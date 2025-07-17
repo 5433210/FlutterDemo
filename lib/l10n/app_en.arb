@@ -955,7 +955,7 @@
   "noBackupFilesInPathMessage": "No backup files in this path",
   "importToCurrentPathButton": "Import to Current Path",
   "backupDescriptionInputLabel": "Backup Description",
-  "backupDescriptionInputExample": "e.g., Backup before version update",
+  "backupDescriptionInputExample": "e.g., Weekly backup, Pre-important update backup, etc.",
   "creatingBackupProgressMessage": "Creating backup...",
   "creatingBackupPleaseWaitMessage": "This may take a few minutes, please be patient",
   "createBackupFailedMessage": "Failed to create backup: {error}",
@@ -1282,5 +1282,308 @@
   "deleteHistoryPathRecord": "Delete History Path Record",
   "confirmDeleteHistoryPath": "Are you sure you want to delete this history path record?",
   "deleteHistoryPathNote": "Note: This will only delete the record, not the actual folder and data.",
-  "historyPathDeleted": "History path record deleted"
+  "historyPathDeleted": "History path record deleted",
+  "cleanDuplicateRecords": "Clean Duplicate Records",
+  "deleteAllBackups": "Delete All Backups",
+  "noBackupsInPath": "No backup files in this path",
+  "collapseFileList": "Click to collapse file list",
+  "expandFileList": "Click to expand and view {count} backup files",
+  "@expandFileList": {
+    "description": "Prompt to expand and view backup file list",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "backupFileListTitle": "Backup File List ({count})",
+  "@backupFileListTitle": {
+    "description": "Backup file list title",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "currentLabel": "Current",
+  "historyLabel": "History",
+  "continueImport": "Continue Import",
+  "fileExistsTitle": "File Already Exists",
+  "overwriteFile": "Overwrite File",
+  "importedSuffix": "Imported Backup",
+  "historyPathBackup": "Historical Path Backup",
+  "currentPathBackup": "Current Path Backup",
+  "noBackupsToDelete": "No backup files to delete",
+  "confirmDeleteAllBackups": "Confirm Delete All Backups",
+  "allBackupsDeleteWarning": "This action cannot be undone! All backup data will be permanently lost.",
+  "deleteRangeTitle": "Delete range includes:",
+  "deleteRangeItem": "• {path}: {count} files",
+  "@deleteRangeItem": {
+    "description": "Delete range item",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/storage/backup"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "confirmDeleteAllButton": "Confirm Delete All",
+  "deletingBackups": "Deleting backups...",
+  "processedCount": "Processed: {current} / {total}",
+  "@processedCount": {
+    "description": "Processing progress",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "deleteCompleteTitle": "Delete Complete",
+  "deleteSuccessCount": "Successfully deleted: {count} files",
+  "@deleteSuccessCount": {
+    "description": "Number of files successfully deleted",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "deleteFailCount": "Failed to delete: {count} files",
+  "@deleteFailCount": {
+    "description": "Number of files failed to delete",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "deleteFailDetails": "Failure details:",
+  "moreErrorsCount": "...and {count} more errors",
+  "@moreErrorsCount": {
+    "description": "Number of more errors",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "done": "Done",
+  "duplicateBackupFound": "Duplicate Backup Found",
+  "duplicateBackupFoundDesc": "The backup file you're importing is a duplicate of an existing backup:",
+  "existingBackupInfo": "Existing backup: {filename}",
+  "@existingBackupInfo": {
+    "description": "Existing backup information",
+    "placeholders": {
+      "filename": {
+        "type": "String",
+        "example": "backup_20220101.zip"
+      }
+    }
+  },
+  "backupCreationTime": "Creation time: {time}",
+  "@backupCreationTime": {
+    "description": "Backup creation time",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2022-01-01 12:00:00"
+      }
+    }
+  },
+  "backupSize": "Size: {size}",
+  "@backupSize": {
+    "description": "Backup size",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "10MB"
+      }
+    }
+  },
+  "backupChecksum": "Checksum: {checksum}...",
+  "@backupChecksum": {
+    "description": "Backup checksum",
+    "placeholders": {
+      "checksum": {
+        "type": "String",
+        "example": "abc123"
+      }
+    }
+  },
+  "continueDuplicateImport": "Do you still want to continue importing this backup?",
+  "targetLocationExists": "A file with the same name already exists at the target location:",
+  "targetPathLabel": "Please select an action:",
+  "currentPathFileExists": "A backup file with the same name already exists in the current path:",
+  "backupRestartWarning": "Restart the app to apply changes",
+  "restartLaterButton": "Later",
+  "restartNowButton": "Restart Now",
+  "restartNeeded": "Restart Needed",
+  "successDeletedCount": "Successfully deleted {count} backup files",
+  "@successDeletedCount": {
+    "description": "Number of backup files successfully deleted",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "backupPathNotSet": "Please set backup path first",
+  "backupFileCreationFailed": "Failed to create backup file",
+  "backupNotFound": "Backup not found: {id}",
+  "@backupNotFound": {
+    "description": "Error message for backup not found",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "backup_123"
+      }
+    }
+  },
+  "backupVerificationFailed": "Backup file verification failed",
+  "sourceFileNotFound": "Source file not found: {path}",
+  "@sourceFileNotFound": {
+    "description": "Error message for source file not found",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/file"
+      }
+    }
+  },
+  "backupFileNotExist": "Backup file does not exist: {path}",
+  "@backupFileNotExist": {
+    "description": "Error message for backup file not existing",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/backup.zip"
+      }
+    }
+  },
+  "pleaseSetBackupPathFirst": "Please set backup path first",
+  "backupPreCheckFailed": "Backup pre-check failed: {error}",
+  "@backupPreCheckFailed": {
+    "description": "Backup pre-check failed error message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Path does not exist"
+      }
+    }
+  },
+  "backupOperationTimeoutError": "Backup operation timed out, please check available storage space and retry",
+  "backupTimeoutDetailedError": "Backup operation timed out. Possible causes:\n• Large amount of data\n• Insufficient storage space\n• Slow disk read/write speed\n\nPlease check storage space and retry.",
+  "backupMayTakeMinutes": "Backup may take several minutes, please keep the app running",
+  "duplicateFileImported": "(duplicate file imported)",
+  "exportingBackupsProgress": "Exporting backups...",
+  "processedProgress": "Processed: {current} / {total}",
+  "@processedProgress": {
+    "description": "Processing progress display",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "appWillRestartInSeconds": "{message}\nApp will restart automatically in 3 seconds...",
+  "@appWillRestartInSeconds": {
+    "description": "App restart countdown message",
+    "placeholders": {
+      "message": {
+        "type": "String",
+        "example": "Operation completed"
+      }
+    }
+  },
+  "cleanDuplicateRecordsTitle": "Clean Duplicate Records",
+  "cleanDuplicateRecordsDescription": "This operation will clean duplicate backup records without deleting actual backup files.",
+  "continueQuestion": "Continue?",
+  "cleanupCompletedWithCount": "Cleanup completed, removed {count} duplicate records",
+  "@cleanupCompletedWithCount": {
+    "description": "Cleanup completion message",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "cleanupOperationFailed": "Cleanup operation failed: {error}",
+  "@cleanupOperationFailed": {
+    "description": "Cleanup operation failure message",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Permission denied"
+      }
+    }
+  },
+  "currentPathFileExistsMessage": "A backup file with the same name already exists in the current path:",
+  "pleaseSelectOperation": "Please select an operation:",
+  "overwriteFileAction": "Overwrite File",
+  "deleteBackupsCountMessage": "You are about to delete {count} backup files.",
+  "@deleteBackupsCountMessage": {
+    "description": "Delete backup files count prompt",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "deletingBackupsProgress": "Deleting backup files, please wait...",
+  "backupPathNotSetError": "Please set backup path first",
+  "backupFileCreationFailedError": "Backup file creation failed",
+  "manualBackupDescription": "Manually created backup",
+  "backupNotFoundError": "Backup not found: {id}",
+  "@backupNotFoundError": {
+    "description": "Backup not found error message",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "backup_123"
+      }
+    }
+  },
+  "backupFileVerificationFailedError": "Backup file verification failed",
+  "backupReadyRestartMessage": "Backup file is ready, restart required to complete restore",
+  "backupFileNotExistError": "Backup file does not exist",
+  "backupFileSizeMismatchError": "Backup file size mismatch",
+  "backupFileChecksumMismatchError": "Backup file checksum mismatch",
+  "backupFileMissingDirectoryStructureError": "Backup file missing required directory structure",
+  "legacyBackupDescription": "Legacy backup",
+  "sourceFileNotFoundError": "Source file not found: {path}",
+  "@sourceFileNotFoundError": {
+    "description": "Source file not found error message",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/file"
+      }
+    }
+  },
+  "importedBackupDescription": "Imported backup",
+  "historyPathBackupDescription": "Historical path backup",
+  "currentPathBackupDescription": "Current path backup",
+  "backupRestoreSuccessWithRestartMessage": "Backup restored successfully, restart required to apply changes."
 }

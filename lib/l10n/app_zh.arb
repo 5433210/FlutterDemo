@@ -1300,5 +1300,529 @@
   "deleteHistoryPathRecord": "删除历史路径记录",
   "confirmDeleteHistoryPath": "确定要删除此历史路径记录吗？",
   "deleteHistoryPathNote": "注意：这只会删除记录，不会删除实际的文件夹和数据。",
-  "historyPathDeleted": "历史路径记录已删除"
+  "historyPathDeleted": "历史路径记录已删除",
+  "cleanDuplicateRecords": "清理重复记录",
+  "deleteAllBackups": "删除所有备份",
+  "noBackupsInPath": "此路径下没有备份文件",
+  "collapseFileList": "点击收起文件列表",
+  "expandFileList": "点击展开查看 {count} 个备份文件",
+  "@expandFileList": {
+    "description": "展开查看备份文件列表的提示",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "backupFileListTitle": "备份文件列表 ({count} 个)",
+  "@backupFileListTitle": {
+    "description": "备份文件列表标题",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "currentLabel": "当前",
+  "historyLabel": "历史",
+  "continueImport": "继续导入",
+  "fileExistsTitle": "文件已存在",
+  "overwriteFile": "覆盖文件",
+  "importedSuffix": "导入的备份",
+  "historyPathBackup": "历史路径备份",
+  "currentPathBackup": "当前路径备份",
+  "noBackupsToDelete": "没有备份文件可删除",
+  "confirmDeleteAllBackups": "确认删除所有备份",
+  "allBackupsDeleteWarning": "此操作不可撤销！所有备份数据将永久丢失。",
+  "deleteRangeTitle": "删除范围包括：",
+  "deleteRangeItem": "• {path}: {count} 个文件",
+  "@deleteRangeItem": {
+    "description": "删除范围项",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/storage/backup"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "confirmDeleteAllButton": "确认删除全部",
+  "deletingBackups": "正在删除备份...",
+  "processedCount": "已处理: {current} / {total}",
+  "@processedCount": {
+    "description": "处理进度",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "deleteCompleteTitle": "删除完成",
+  "deleteSuccessCount": "成功删除: {count} 个文件",
+  "@deleteSuccessCount": {
+    "description": "成功删除的文件数",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "deleteFailCount": "删除失败: {count} 个文件",
+  "@deleteFailCount": {
+    "description": "删除失败的文件数",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "deleteFailDetails": "失败详情:",
+  "moreErrorsCount": "...还有 {count} 个错误",
+  "@moreErrorsCount": {
+    "description": "还有更多错误的数量",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "done": "确定",
+  "duplicateBackupFound": "发现重复备份",
+  "duplicateBackupFoundDesc": "检测到要导入的备份文件与现有备份重复：",
+  "existingBackupInfo": "现有备份: {filename}",
+  "@existingBackupInfo": {
+    "description": "现有备份信息",
+    "placeholders": {
+      "filename": {
+        "type": "String",
+        "example": "backup_20220101.zip"
+      }
+    }
+  },
+  "backupCreationTime": "创建时间: {time}",
+  "@backupCreationTime": {
+    "description": "备份创建时间",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2022-01-01 12:00:00"
+      }
+    }
+  },
+  "backupSize": "大小: {size}",
+  "@backupSize": {
+    "description": "备份大小",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "10MB"
+      }
+    }
+  },
+  "backupChecksum": "校验和: {checksum}...",
+  "@backupChecksum": {
+    "description": "备份校验和",
+    "placeholders": {
+      "checksum": {
+        "type": "String",
+        "example": "abc123"
+      }
+    }
+  },
+  "continueDuplicateImport": "是否仍要继续导入此备份？",
+  "targetLocationExists": "目标位置已存在同名文件：",
+  "targetPathLabel": "请选择操作：",
+  "currentPathFileExists": "当前路径下已存在同名备份文件：",
+  "backupRestartWarning": "重启应用以应用更改",
+  "restartLaterButton": "稍后",
+  "restartNowButton": "立即重启",
+  "restartNeeded": "需要重启",
+  "successDeletedCount": "成功删除 {count} 个备份文件",
+  "@successDeletedCount": {
+    "description": "成功删除的备份文件数",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "backupOverview": "备份概览",
+  "totalBackups": "总备份数",
+  "currentLocation": "当前位置",
+  "historyLocation": "历史位置",
+  "importBackup": "导入备份",
+  "selectBackupFileToImportDialog": "选择要导入的备份文件",
+  "importingBackupProgressMessage": "正在导入备份...",
+  "pleaseWaitMessage": "请稍候",
+  "backupImportSuccessMessage": "备份导入成功",
+  "importBackupFailedMessage": "导入备份失败: {error}",
+  "@importBackupFailedMessage": {
+    "description": "导入备份失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "文件损坏"
+      }
+    }
+  },
+  "confirmRestoreTitle": "确认恢复",
+  "confirmRestoreMessage": "您即将恢复以下备份：",
+  "backupFileLabel": "备份文件: {filename}",
+  "@backupFileLabel": {
+    "description": "备份文件标签",
+    "placeholders": {
+      "filename": {
+        "type": "String",
+        "example": "backup_20220101.zip"
+      }
+    }
+  },
+  "backupDescriptionLabel": "备份描述: {description}",
+  "@backupDescriptionLabel": {
+    "description": "备份描述标签",
+    "placeholders": {
+      "description": {
+        "type": "String",
+        "example": "每周备份"
+      }
+    }
+  },
+  "backupTimeLabel": "备份时间: {time}",
+  "@backupTimeLabel": {
+    "description": "备份时间标签",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2022-01-01 12:00:00"
+      }
+    }
+  },
+  "restoreWarningMessage": "警告：此操作将覆盖当前所有数据！",
+  "appWillRestartMessage": "恢复完成后应用将自动重启",
+  "confirmRestoreButton": "确认恢复",
+  "restoringBackupMessage": "正在恢复备份...",
+  "doNotCloseAppMessage": "请勿关闭应用，恢复过程可能需要几分钟",
+  "backupRestoreFailedMessage": "备份恢复失败: {error}",
+  "@backupRestoreFailedMessage": {
+    "description": "备份恢复失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "文件损坏"
+      }
+    }
+  },
+  "selectExportLocationDialog": "选择导出位置",
+  "exportingBackupMessage": "正在导出备份...",
+  "exportSuccessMessage": "备份导出成功: {path}",
+  "@exportSuccessMessage": {
+    "description": "备份导出成功的消息",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/storage/backup.zip"
+      }
+    }
+  },
+  "exportBackupFailedMessage": "导出备份失败: {error}",
+  "@exportBackupFailedMessage": {
+    "description": "导出备份失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "无法写入文件"
+      }
+    }
+  },
+  "exportingBackupsProgressFormat": "正在导出 {count} 个备份文件...",
+  "@exportingBackupsProgressFormat": {
+    "description": "导出备份进度格式",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "exportCompletedFormat2": "导出完成，成功: {success}{failed}",
+  "@exportCompletedFormat2": {
+    "description": "导出完成格式",
+    "placeholders": {
+      "success": {
+        "type": "int",
+        "example": "5"
+      },
+      "failed": {
+        "type": "String",
+        "example": ", 失败: 2"
+      }
+    }
+  },
+  "exportFailedPartFormat2": ", 失败: {count}",
+  "@exportFailedPartFormat2": {
+    "description": "导出失败部分格式",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "viewAction": "查看",
+  "batchExportFailedMessage": "批量导出失败: {error}",
+  "@batchExportFailedMessage": {
+    "description": "批量导出失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "无法写入文件"
+      }
+    }
+  },
+  "backupFileNotFound": "备份文件不存在",
+  "importToCurrentPathTitle": "导入到当前路径",
+  "importToCurrentPathMessage": "您即将将此备份文件导入到当前备份路径：",
+  "importToCurrentPathDescription": "导入后，此备份将出现在当前路径的备份列表中",
+  "confirmImportButton": "确认导入",
+  "currentBackupPathNotSet": "当前备份路径未设置",
+  "importingToCurrentPathMessage": "正在导入到当前路径...",
+  "importToCurrentPathSuccessMessage": "备份已成功导入到当前路径",
+  "sourceBackupFileNotFound": "源备份文件不存在",
+  "confirmDeleteTitle": "确认删除",
+  "confirmDeleteBackup": "确定要删除备份文件\"{filename}\"（{description}）吗？\n此操作不可撤销。",
+  "@confirmDeleteBackup": {
+    "description": "确认删除备份的消息",
+    "placeholders": {
+      "filename": {
+        "type": "String",
+        "example": "backup_20220101.zip"
+      },
+      "description": {
+        "type": "String",
+        "example": "每周备份"
+      }
+    }
+  },
+  "cancelAction": "取消",
+  "confirmDeleteAction": "确认删除",
+  "backupDeletedSuccessfully": "备份已成功删除",
+  "deleteBackupFailed": "删除备份失败",
+  "backupManagement": "备份管理",
+  "refresh": "刷新",
+  "noBackupPaths": "没有备份路径",
+  "createFirstBackup": "创建第一个备份",
+  "deletePathButton": "删除路径",
+  "exportAllBackupsButton": "导出全部备份",
+  "noBackupFilesInPathMessage": "此路径下没有备份文件",
+  "deletePathConfirmContent": "确定要删除备份路径 {path} 吗？此操作不可撤销，将删除该路径下的所有备份文件。",
+  "@deletePathConfirmContent": {
+    "description": "确认删除备份路径的内容",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/storage/backup"
+      }
+    }
+  },
+  "backupPathDeletedMessage": "备份路径已删除",
+  "deleteFailedMessage": "删除失败: {error}",
+  "@deleteFailedMessage": {
+    "description": "删除失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "无法删除文件"
+      }
+    }
+  },
+  "noBackupFilesToExportMessage": "没有备份文件可导出",
+  "currentPath": "当前路径",
+  "historicalPaths": "历史路径",
+  "cleanupInvalidPaths": "清理无效路径",
+  "cleanupCompletedMessage": "清理完成，移除了 {count} 个无效路径",
+  "@cleanupCompletedMessage": {
+    "description": "清理完成的消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "cleanupFailedMessage": "清理失败: {error}",
+  "@cleanupFailedMessage": {
+    "description": "清理失败的消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "无法访问文件系统"
+      }
+    }
+  },
+  "loadDataFailed": "加载数据失败",
+  "backupDescriptionInputLabel": "备份描述",
+  "backupDescriptionInputExample": "例如：每周备份、重要更新前备份等",
+  "importToCurrentPathButton": "导入到当前路径",
+  "export": "导出",
+  "restore": "恢复",
+  "dangerousOperationConfirmTitle": "危险操作确认",
+  "confirmDeleteButton": "确认删除",
+  "backupPathNotSet": "请先设置备份路径",
+  "backupFileCreationFailed": "备份文件创建失败",
+  "backupNotFound": "备份不存在: {id}",
+  "@backupNotFound": {
+    "description": "备份不存在的错误消息",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "backup_123"
+      }
+    }
+  },
+  "backupVerificationFailed": "备份文件核验失败",
+  "sourceFileNotFound": "源文件不存在: {path}",
+  "@sourceFileNotFound": {
+    "description": "源文件不存在的错误消息",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/file"
+      }
+    }
+  },
+  "backupFileNotExist": "备份文件不存在: {path}",
+  "@backupFileNotExist": {
+    "description": "备份文件不存在的错误消息",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/backup.zip"
+      }
+    }
+  },
+  "pleaseSetBackupPathFirst": "请先设置备份路径",
+  "backupPreCheckFailed": "备份前检查失败：{error}",
+  "@backupPreCheckFailed": {
+    "description": "备份前检查失败的错误消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "路径不存在"
+      }
+    }
+  },
+  "backupOperationTimeoutError": "备份操作超时，请检查存储空间并重试",
+  "backupTimeoutDetailedError": "备份操作超时。可能的原因：\n• 数据量过大\n• 存储空间不足\n• 磁盘读写速度慢\n\n请检查存储空间并重试。",
+  "backupMayTakeMinutes": "备份可能需要几分钟时间，请保持应用运行",
+  "duplicateFileImported": "(重复文件已导入)",
+  "exportingBackupsProgress": "正在导出备份...",
+  "processedProgress": "已处理: {current} / {total}",
+  "@processedProgress": {
+    "description": "处理进度显示",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "appWillRestartInSeconds": "{message}\n应用将在3秒后自动重启...",
+  "@appWillRestartInSeconds": {
+    "description": "应用重启倒计时消息",
+    "placeholders": {
+      "message": {
+        "type": "String",
+        "example": "操作完成"
+      }
+    }
+  },
+  "cleanDuplicateRecordsTitle": "清理重复记录",
+  "cleanDuplicateRecordsDescription": "此操作将清理重复的备份记录，不会删除实际的备份文件。",
+  "continueQuestion": "是否继续？",
+  "cleanupCompletedWithCount": "清理完成，移除了 {count} 个重复记录",
+  "@cleanupCompletedWithCount": {
+    "description": "清理完成消息",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "cleanupOperationFailed": "清理操作失败: {error}",
+  "@cleanupOperationFailed": {
+    "description": "清理操作失败消息",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "权限不足"
+      }
+    }
+  },
+  "currentPathFileExistsMessage": "当前路径下已存在同名备份文件：",
+  "pleaseSelectOperation": "请选择操作：",
+  "overwriteFileAction": "覆盖文件",
+  "deleteBackupsCountMessage": "您即将删除 {count} 个备份文件。",
+  "@deleteBackupsCountMessage": {
+    "description": "删除备份文件数量提示",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "deletingBackupsProgress": "正在删除备份文件，请稍候...",
+  "backupPathNotSetError": "请先设置备份路径",
+  "backupFileCreationFailedError": "备份文件创建失败",
+  "manualBackupDescription": "手动创建的备份",
+  "backupNotFoundError": "备份不存在: {id}",
+  "@backupNotFoundError": {
+    "description": "备份不存在错误消息",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "backup_123"
+      }
+    }
+  },
+  "backupFileVerificationFailedError": "备份文件核验失败",
+  "backupReadyRestartMessage": "备份文件已准备就绪，需要重启应用完成恢复",
+  "backupFileNotExistError": "备份文件不存在",
+  "backupFileSizeMismatchError": "备份文件大小不匹配",
+  "backupFileChecksumMismatchError": "备份文件校验和不匹配",
+  "backupFileMissingDirectoryStructureError": "备份文件缺少必要的目录结构",
+  "legacyBackupDescription": "历史备份",
+  "sourceFileNotFoundError": "源文件不存在: {path}",
+  "@sourceFileNotFoundError": {
+    "description": "源文件不存在错误消息",
+    "placeholders": {
+      "path": {
+        "type": "String",
+        "example": "/path/to/file"
+      }
+    }
+  },
+  "importedBackupDescription": "导入的备份",
+  "historyPathBackupDescription": "历史路径备份",
+  "currentPathBackupDescription": "当前路径备份",
+  "backupRestoreSuccessWithRestartMessage": "备份恢复成功，需要重启应用以应用更改。"
 }

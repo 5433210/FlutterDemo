@@ -1766,7 +1766,7 @@ abstract class AppLocalizations {
   /// No description provided for @done.
   ///
   /// In zh, this message translates to:
-  /// **'完成'**
+  /// **'确定'**
   String get done;
 
   /// No description provided for @dropToImportImages.
@@ -5756,7 +5756,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportAllBackupsButton.
   ///
   /// In zh, this message translates to:
-  /// **'导出所有备份'**
+  /// **'导出全部备份'**
   String get exportAllBackupsButton;
 
   /// No description provided for @noBackupFilesInPathMessage.
@@ -5780,7 +5780,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupDescriptionInputExample.
   ///
   /// In zh, this message translates to:
-  /// **'例如：版本更新前的备份'**
+  /// **'例如：每周备份、重要更新前备份等'**
   String get backupDescriptionInputExample;
 
   /// No description provided for @creatingBackupProgressMessage.
@@ -5819,11 +5819,11 @@ abstract class AppLocalizations {
   /// **'请稍候'**
   String get pleaseWaitMessage;
 
-  /// No description provided for @importBackupFailedMessage.
+  /// 导入备份失败的消息
   ///
   /// In zh, this message translates to:
   /// **'导入备份失败: {error}'**
-  String importBackupFailedMessage(Object error);
+  String importBackupFailedMessage(String error);
 
   /// No description provided for @backupImportSuccessMessage.
   ///
@@ -5831,17 +5831,17 @@ abstract class AppLocalizations {
   /// **'备份导入成功'**
   String get backupImportSuccessMessage;
 
-  /// No description provided for @cleanupCompletedMessage.
+  /// 清理完成的消息
   ///
   /// In zh, this message translates to:
   /// **'清理完成，移除了 {count} 个无效路径'**
-  String cleanupCompletedMessage(Object count);
+  String cleanupCompletedMessage(int count);
 
-  /// No description provided for @cleanupFailedMessage.
+  /// 清理失败的消息
   ///
   /// In zh, this message translates to:
   /// **'清理失败: {error}'**
-  String cleanupFailedMessage(Object error);
+  String cleanupFailedMessage(String error);
 
   /// No description provided for @dangerousOperationConfirmTitle.
   ///
@@ -5849,16 +5849,16 @@ abstract class AppLocalizations {
   /// **'危险操作确认'**
   String get dangerousOperationConfirmTitle;
 
-  /// No description provided for @deletePathConfirmContent.
+  /// 确认删除备份路径的内容
   ///
   /// In zh, this message translates to:
-  /// **'确定要删除整个备份路径吗？\n\n路径：{path}\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！'**
-  String deletePathConfirmContent(Object path);
+  /// **'确定要删除备份路径 {path} 吗？此操作不可撤销，将删除该路径下的所有备份文件。'**
+  String deletePathConfirmContent(String path);
 
   /// No description provided for @confirmDeleteButton.
   ///
   /// In zh, this message translates to:
-  /// **'确定删除'**
+  /// **'确认删除'**
   String get confirmDeleteButton;
 
   /// No description provided for @backupPathDeletedMessage.
@@ -5867,16 +5867,16 @@ abstract class AppLocalizations {
   /// **'备份路径已删除'**
   String get backupPathDeletedMessage;
 
-  /// No description provided for @deleteFailedMessage.
+  /// 删除失败的消息
   ///
   /// In zh, this message translates to:
   /// **'删除失败: {error}'**
-  String deleteFailedMessage(Object error);
+  String deleteFailedMessage(String error);
 
   /// No description provided for @noBackupFilesToExportMessage.
   ///
   /// In zh, this message translates to:
-  /// **'此路径下没有备份文件可导出'**
+  /// **'没有备份文件可导出'**
   String get noBackupFilesToExportMessage;
 
   /// No description provided for @selectExportLocationDialog.
@@ -5885,11 +5885,11 @@ abstract class AppLocalizations {
   /// **'选择导出位置'**
   String get selectExportLocationDialog;
 
-  /// No description provided for @exportingBackupsProgressFormat.
+  /// 导出备份进度格式
   ///
   /// In zh, this message translates to:
-  /// **'正在导出 {count} 个备份...'**
-  String exportingBackupsProgressFormat(Object count);
+  /// **'正在导出 {count} 个备份文件...'**
+  String exportingBackupsProgressFormat(int count);
 
   /// No description provided for @exportCompletedFormat.
   ///
@@ -5909,11 +5909,11 @@ abstract class AppLocalizations {
   /// **'查看'**
   String get viewExportResultsButton;
 
-  /// No description provided for @batchExportFailedMessage.
+  /// 批量导出失败的消息
   ///
   /// In zh, this message translates to:
   /// **'批量导出失败: {error}'**
-  String batchExportFailedMessage(Object error);
+  String batchExportFailedMessage(String error);
 
   /// No description provided for @confirmRestoreTitle.
   ///
@@ -5924,43 +5924,43 @@ abstract class AppLocalizations {
   /// No description provided for @confirmRestoreMessage.
   ///
   /// In zh, this message translates to:
-  /// **'确定要恢复这个备份吗？'**
+  /// **'您即将恢复以下备份：'**
   String get confirmRestoreMessage;
 
-  /// No description provided for @backupFileLabel.
+  /// 备份文件标签
   ///
   /// In zh, this message translates to:
-  /// **'备份：{filename}'**
-  String backupFileLabel(Object filename);
+  /// **'备份文件: {filename}'**
+  String backupFileLabel(String filename);
 
-  /// No description provided for @backupDescriptionLabel.
+  /// 备份描述标签
   ///
   /// In zh, this message translates to:
-  /// **'描述：{description}'**
-  String backupDescriptionLabel(Object description);
+  /// **'备份描述: {description}'**
+  String backupDescriptionLabel(String description);
 
-  /// No description provided for @backupTimeLabel.
+  /// 备份时间标签
   ///
   /// In zh, this message translates to:
-  /// **'时间：{time}'**
-  String backupTimeLabel(Object time);
+  /// **'备份时间: {time}'**
+  String backupTimeLabel(String time);
 
   /// No description provided for @restoreWarningMessage.
   ///
   /// In zh, this message translates to:
-  /// **'注意：当前数据将被备份数据覆盖，此操作不可撤销！'**
+  /// **'警告：此操作将覆盖当前所有数据！'**
   String get restoreWarningMessage;
 
   /// No description provided for @appWillRestartMessage.
   ///
   /// In zh, this message translates to:
-  /// **'恢复后应用将自动重启。'**
+  /// **'恢复完成后应用将自动重启'**
   String get appWillRestartMessage;
 
   /// No description provided for @confirmRestoreButton.
   ///
   /// In zh, this message translates to:
-  /// **'确定恢复'**
+  /// **'确认恢复'**
   String get confirmRestoreButton;
 
   /// No description provided for @restoringBackupMessage.
@@ -5972,7 +5972,7 @@ abstract class AppLocalizations {
   /// No description provided for @doNotCloseAppMessage.
   ///
   /// In zh, this message translates to:
-  /// **'请勿关闭应用'**
+  /// **'请勿关闭应用，恢复过程可能需要几分钟'**
   String get doNotCloseAppMessage;
 
   /// No description provided for @backupRestoreSuccessMessage.
@@ -5981,11 +5981,11 @@ abstract class AppLocalizations {
   /// **'备份恢复成功，请重启应用以完成恢复'**
   String get backupRestoreSuccessMessage;
 
-  /// No description provided for @backupRestoreFailedMessage.
+  /// 备份恢复失败的消息
   ///
   /// In zh, this message translates to:
-  /// **'恢复备份失败: {error}'**
-  String backupRestoreFailedMessage(Object error);
+  /// **'备份恢复失败: {error}'**
+  String backupRestoreFailedMessage(String error);
 
   /// No description provided for @exportingBackupMessage.
   ///
@@ -5993,17 +5993,17 @@ abstract class AppLocalizations {
   /// **'正在导出备份...'**
   String get exportingBackupMessage;
 
-  /// No description provided for @exportSuccessMessage.
+  /// 备份导出成功的消息
   ///
   /// In zh, this message translates to:
-  /// **'导出成功: {path}'**
-  String exportSuccessMessage(Object path);
+  /// **'备份导出成功: {path}'**
+  String exportSuccessMessage(String path);
 
-  /// No description provided for @exportBackupFailedMessage.
+  /// 导出备份失败的消息
   ///
   /// In zh, this message translates to:
-  /// **'导出失败: {error}'**
-  String exportBackupFailedMessage(Object error);
+  /// **'导出备份失败: {error}'**
+  String exportBackupFailedMessage(String error);
 
   /// No description provided for @importToCurrentPathTitle.
   ///
@@ -6014,25 +6014,25 @@ abstract class AppLocalizations {
   /// No description provided for @importToCurrentPathMessage.
   ///
   /// In zh, this message translates to:
-  /// **'确定要将此备份导入到当前备份路径吗？'**
+  /// **'您即将将此备份文件导入到当前备份路径：'**
   String get importToCurrentPathMessage;
 
   /// No description provided for @importToCurrentPathDescription.
   ///
   /// In zh, this message translates to:
-  /// **'这将复制备份文件到当前路径，原文件保持不变。'**
+  /// **'导入后，此备份将出现在当前路径的备份列表中'**
   String get importToCurrentPathDescription;
 
   /// No description provided for @confirmImportButton.
   ///
   /// In zh, this message translates to:
-  /// **'确定导入'**
+  /// **'确认导入'**
   String get confirmImportButton;
 
   /// No description provided for @importingToCurrentPathMessage.
   ///
   /// In zh, this message translates to:
-  /// **'正在导入备份到当前路径...'**
+  /// **'正在导入到当前路径...'**
   String get importingToCurrentPathMessage;
 
   /// No description provided for @importToCurrentPathSuccessMessage.
@@ -6050,14 +6050,14 @@ abstract class AppLocalizations {
   /// No description provided for @sourceBackupFileNotFound.
   ///
   /// In zh, this message translates to:
-  /// **'源备份文件不存在: {path}'**
-  String sourceBackupFileNotFound(Object path);
+  /// **'源备份文件不存在'**
+  String get sourceBackupFileNotFound;
 
   /// No description provided for @backupFileNotFound.
   ///
   /// In zh, this message translates to:
-  /// **'备份文件不存在: {path}'**
-  String backupFileNotFound(Object path);
+  /// **'备份文件不存在'**
+  String get backupFileNotFound;
 
   /// No description provided for @platformInfo.
   ///
@@ -6902,7 +6902,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupPathNotSet.
   ///
   /// In zh, this message translates to:
-  /// **'尚未设置备份路径'**
+  /// **'请先设置备份路径'**
   String get backupPathNotSet;
 
   /// No description provided for @suggestConfigureBackupPath.
@@ -7448,7 +7448,7 @@ abstract class AppLocalizations {
   /// No description provided for @noBackupPaths.
   ///
   /// In zh, this message translates to:
-  /// **'暂无备份路径'**
+  /// **'没有备份路径'**
   String get noBackupPaths;
 
   /// No description provided for @createFirstBackup.
@@ -7661,22 +7661,22 @@ abstract class AppLocalizations {
   /// **'确认删除'**
   String get confirmDeleteTitle;
 
-  /// Confirmation message for deleting a backup
+  /// 确认删除备份的消息
   ///
   /// In zh, this message translates to:
-  /// **'确定要删除这个备份吗？\n\n备份：{filename}\n描述：{description}\n\n此操作不可恢复！'**
+  /// **'确定要删除备份文件\"{filename}\"（{description}）吗？\n此操作不可撤销。'**
   String confirmDeleteBackup(String filename, String description);
 
   /// No description provided for @confirmDeleteAction.
   ///
   /// In zh, this message translates to:
-  /// **'确定删除'**
+  /// **'确认删除'**
   String get confirmDeleteAction;
 
   /// No description provided for @backupDeletedSuccessfully.
   ///
   /// In zh, this message translates to:
-  /// **'备份删除成功'**
+  /// **'备份已成功删除'**
   String get backupDeletedSuccessfully;
 
   /// No description provided for @deleteBackupFailed.
@@ -7712,7 +7712,7 @@ abstract class AppLocalizations {
   /// No description provided for @importedSuffix.
   ///
   /// In zh, this message translates to:
-  /// **'(导入)'**
+  /// **'导入的备份'**
   String get importedSuffix;
 
   /// No description provided for @backupLabel.
@@ -7774,6 +7774,504 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'历史路径记录已删除'**
   String get historyPathDeleted;
+
+  /// No description provided for @cleanDuplicateRecords.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理重复记录'**
+  String get cleanDuplicateRecords;
+
+  /// No description provided for @deleteAllBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除所有备份'**
+  String get deleteAllBackups;
+
+  /// No description provided for @noBackupsInPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'此路径下没有备份文件'**
+  String get noBackupsInPath;
+
+  /// No description provided for @collapseFileList.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击收起文件列表'**
+  String get collapseFileList;
+
+  /// 展开查看备份文件列表的提示
+  ///
+  /// In zh, this message translates to:
+  /// **'点击展开查看 {count} 个备份文件'**
+  String expandFileList(int count);
+
+  /// 备份文件列表标题
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件列表 ({count} 个)'**
+  String backupFileListTitle(int count);
+
+  /// No description provided for @currentLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前'**
+  String get currentLabel;
+
+  /// No description provided for @historyLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史'**
+  String get historyLabel;
+
+  /// No description provided for @continueImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续导入'**
+  String get continueImport;
+
+  /// No description provided for @fileExistsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件已存在'**
+  String get fileExistsTitle;
+
+  /// No description provided for @overwriteFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖文件'**
+  String get overwriteFile;
+
+  /// No description provided for @historyPathBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史路径备份'**
+  String get historyPathBackup;
+
+  /// No description provided for @currentPathBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前路径备份'**
+  String get currentPathBackup;
+
+  /// No description provided for @noBackupsToDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有备份文件可删除'**
+  String get noBackupsToDelete;
+
+  /// No description provided for @confirmDeleteAllBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除所有备份'**
+  String get confirmDeleteAllBackups;
+
+  /// No description provided for @allBackupsDeleteWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作不可撤销！所有备份数据将永久丢失。'**
+  String get allBackupsDeleteWarning;
+
+  /// No description provided for @deleteRangeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除范围包括：'**
+  String get deleteRangeTitle;
+
+  /// 删除范围项
+  ///
+  /// In zh, this message translates to:
+  /// **'• {path}: {count} 个文件'**
+  String deleteRangeItem(String path, int count);
+
+  /// No description provided for @confirmDeleteAllButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除全部'**
+  String get confirmDeleteAllButton;
+
+  /// No description provided for @deletingBackups.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在删除备份...'**
+  String get deletingBackups;
+
+  /// 处理进度
+  ///
+  /// In zh, this message translates to:
+  /// **'已处理: {current} / {total}'**
+  String processedCount(int current, int total);
+
+  /// No description provided for @deleteCompleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除完成'**
+  String get deleteCompleteTitle;
+
+  /// 成功删除的文件数
+  ///
+  /// In zh, this message translates to:
+  /// **'成功删除: {count} 个文件'**
+  String deleteSuccessCount(int count);
+
+  /// 删除失败的文件数
+  ///
+  /// In zh, this message translates to:
+  /// **'删除失败: {count} 个文件'**
+  String deleteFailCount(int count);
+
+  /// No description provided for @deleteFailDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'失败详情:'**
+  String get deleteFailDetails;
+
+  /// 还有更多错误的数量
+  ///
+  /// In zh, this message translates to:
+  /// **'...还有 {count} 个错误'**
+  String moreErrorsCount(int count);
+
+  /// No description provided for @duplicateBackupFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现重复备份'**
+  String get duplicateBackupFound;
+
+  /// No description provided for @duplicateBackupFoundDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测到要导入的备份文件与现有备份重复：'**
+  String get duplicateBackupFoundDesc;
+
+  /// 现有备份信息
+  ///
+  /// In zh, this message translates to:
+  /// **'现有备份: {filename}'**
+  String existingBackupInfo(String filename);
+
+  /// 备份创建时间
+  ///
+  /// In zh, this message translates to:
+  /// **'创建时间: {time}'**
+  String backupCreationTime(String time);
+
+  /// 备份大小
+  ///
+  /// In zh, this message translates to:
+  /// **'大小: {size}'**
+  String backupSize(String size);
+
+  /// 备份校验和
+  ///
+  /// In zh, this message translates to:
+  /// **'校验和: {checksum}...'**
+  String backupChecksum(String checksum);
+
+  /// No description provided for @continueDuplicateImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'是否仍要继续导入此备份？'**
+  String get continueDuplicateImport;
+
+  /// No description provided for @targetLocationExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标位置已存在同名文件：'**
+  String get targetLocationExists;
+
+  /// No description provided for @targetPathLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择操作：'**
+  String get targetPathLabel;
+
+  /// No description provided for @currentPathFileExists.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前路径下已存在同名备份文件：'**
+  String get currentPathFileExists;
+
+  /// No description provided for @backupRestartWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'重启应用以应用更改'**
+  String get backupRestartWarning;
+
+  /// No description provided for @restartLaterButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'稍后'**
+  String get restartLaterButton;
+
+  /// No description provided for @restartNowButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即重启'**
+  String get restartNowButton;
+
+  /// No description provided for @restartNeeded.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要重启'**
+  String get restartNeeded;
+
+  /// 成功删除的备份文件数
+  ///
+  /// In zh, this message translates to:
+  /// **'成功删除 {count} 个备份文件'**
+  String successDeletedCount(int count);
+
+  /// 导出完成格式
+  ///
+  /// In zh, this message translates to:
+  /// **'导出完成，成功: {success}{failed}'**
+  String exportCompletedFormat2(int success, String failed);
+
+  /// 导出失败部分格式
+  ///
+  /// In zh, this message translates to:
+  /// **', 失败: {count}'**
+  String exportFailedPartFormat2(int count);
+
+  /// No description provided for @backupFileCreationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件创建失败'**
+  String get backupFileCreationFailed;
+
+  /// 备份不存在的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'备份不存在: {id}'**
+  String backupNotFound(String id);
+
+  /// No description provided for @backupVerificationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件核验失败'**
+  String get backupVerificationFailed;
+
+  /// 源文件不存在的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'源文件不存在: {path}'**
+  String sourceFileNotFound(String path);
+
+  /// 备份文件不存在的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件不存在: {path}'**
+  String backupFileNotExist(String path);
+
+  /// No description provided for @pleaseSetBackupPathFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先设置备份路径'**
+  String get pleaseSetBackupPathFirst;
+
+  /// 备份前检查失败的错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'备份前检查失败：{error}'**
+  String backupPreCheckFailed(String error);
+
+  /// No description provided for @backupOperationTimeoutError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份操作超时，请检查存储空间并重试'**
+  String get backupOperationTimeoutError;
+
+  /// No description provided for @backupTimeoutDetailedError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份操作超时。可能的原因：\n• 数据量过大\n• 存储空间不足\n• 磁盘读写速度慢\n\n请检查存储空间并重试。'**
+  String get backupTimeoutDetailedError;
+
+  /// No description provided for @backupMayTakeMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份可能需要几分钟时间，请保持应用运行'**
+  String get backupMayTakeMinutes;
+
+  /// No description provided for @duplicateFileImported.
+  ///
+  /// In zh, this message translates to:
+  /// **'(重复文件已导入)'**
+  String get duplicateFileImported;
+
+  /// No description provided for @exportingBackupsProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出备份...'**
+  String get exportingBackupsProgress;
+
+  /// 处理进度显示
+  ///
+  /// In zh, this message translates to:
+  /// **'已处理: {current} / {total}'**
+  String processedProgress(int current, int total);
+
+  /// 应用重启倒计时消息
+  ///
+  /// In zh, this message translates to:
+  /// **'{message}\n应用将在3秒后自动重启...'**
+  String appWillRestartInSeconds(String message);
+
+  /// No description provided for @cleanDuplicateRecordsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理重复记录'**
+  String get cleanDuplicateRecordsTitle;
+
+  /// No description provided for @cleanDuplicateRecordsDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作将清理重复的备份记录，不会删除实际的备份文件。'**
+  String get cleanDuplicateRecordsDescription;
+
+  /// No description provided for @continueQuestion.
+  ///
+  /// In zh, this message translates to:
+  /// **'是否继续？'**
+  String get continueQuestion;
+
+  /// 清理完成消息
+  ///
+  /// In zh, this message translates to:
+  /// **'清理完成，移除了 {count} 个重复记录'**
+  String cleanupCompletedWithCount(int count);
+
+  /// 清理操作失败消息
+  ///
+  /// In zh, this message translates to:
+  /// **'清理操作失败: {error}'**
+  String cleanupOperationFailed(String error);
+
+  /// No description provided for @currentPathFileExistsMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前路径下已存在同名备份文件：'**
+  String get currentPathFileExistsMessage;
+
+  /// No description provided for @pleaseSelectOperation.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择操作：'**
+  String get pleaseSelectOperation;
+
+  /// No description provided for @overwriteFileAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖文件'**
+  String get overwriteFileAction;
+
+  /// 删除备份文件数量提示
+  ///
+  /// In zh, this message translates to:
+  /// **'您即将删除 {count} 个备份文件。'**
+  String deleteBackupsCountMessage(int count);
+
+  /// No description provided for @deletingBackupsProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在删除备份文件，请稍候...'**
+  String get deletingBackupsProgress;
+
+  /// No description provided for @backupPathNotSetError.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先设置备份路径'**
+  String get backupPathNotSetError;
+
+  /// No description provided for @backupFileCreationFailedError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件创建失败'**
+  String get backupFileCreationFailedError;
+
+  /// No description provided for @manualBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动创建的备份'**
+  String get manualBackupDescription;
+
+  /// 备份不存在错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'备份不存在: {id}'**
+  String backupNotFoundError(String id);
+
+  /// No description provided for @backupFileVerificationFailedError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件核验失败'**
+  String get backupFileVerificationFailedError;
+
+  /// No description provided for @backupReadyRestartMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件已准备就绪，需要重启应用完成恢复'**
+  String get backupReadyRestartMessage;
+
+  /// No description provided for @backupFileNotExistError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件不存在'**
+  String get backupFileNotExistError;
+
+  /// No description provided for @backupFileSizeMismatchError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件大小不匹配'**
+  String get backupFileSizeMismatchError;
+
+  /// No description provided for @backupFileChecksumMismatchError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件校验和不匹配'**
+  String get backupFileChecksumMismatchError;
+
+  /// No description provided for @backupFileMissingDirectoryStructureError.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份文件缺少必要的目录结构'**
+  String get backupFileMissingDirectoryStructureError;
+
+  /// No description provided for @legacyBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史备份'**
+  String get legacyBackupDescription;
+
+  /// 源文件不存在错误消息
+  ///
+  /// In zh, this message translates to:
+  /// **'源文件不存在: {path}'**
+  String sourceFileNotFoundError(String path);
+
+  /// No description provided for @importedBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入的备份'**
+  String get importedBackupDescription;
+
+  /// No description provided for @historyPathBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史路径备份'**
+  String get historyPathBackupDescription;
+
+  /// No description provided for @currentPathBackupDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前路径备份'**
+  String get currentPathBackupDescription;
+
+  /// No description provided for @backupRestoreSuccessWithRestartMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份恢复成功，需要重启应用以应用更改。'**
+  String get backupRestoreSuccessWithRestartMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

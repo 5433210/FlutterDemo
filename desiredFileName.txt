@@ -16,6 +16,8 @@
     "navigationStateRestored",
     "navigationRestoreStateFailed",
     "sourceBackupFileNotFound",
-    "backupFileNotFound"
+    "backupFileNotFound",
+    "exportCompletedFormat2",
+    "exportFailedPartFormat2"
   ]
 }

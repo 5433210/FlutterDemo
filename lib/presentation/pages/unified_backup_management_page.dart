@@ -72,20 +72,22 @@ class _UnifiedBackupManagementPageState
       if (_currentPath != null) {
         _allPaths.add(_currentPath!);
         // 获取当前路径的备份
-        final currentPathBackups = await BackupRegistryManager.getCurrentPathBackups();
+        final currentPathBackups =
+            await BackupRegistryManager.getCurrentPathBackups();
         _pathBackups[_currentPath!] = currentPathBackups;
       }
 
       // 2. 获取历史路径
       final historyPaths = await BackupRegistryManager.getHistoryBackupPaths();
-      
+
       // 3. 添加历史路径（排除当前路径）
       for (final path in historyPaths) {
         if (path != _currentPath && await Directory(path).exists()) {
           _allPaths.add(path);
-          
+
           // 获取该历史路径的备份
-          final historyPathBackups = await BackupRegistryManager.getHistoryPathBackups(path);
+          final historyPathBackups =
+              await BackupRegistryManager.getHistoryPathBackups(path);
           _pathBackups[path] = historyPathBackups;
         }
       }
@@ -162,17 +164,18 @@ class _UnifiedBackupManagementPageState
                   children: [
                     const Icon(Icons.cleaning_services, color: Colors.orange),
                     const SizedBox(width: 8),
-                    Text('清理重复记录'),
+                    Text(l10n.cleanDuplicateRecords),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete_all_backups',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_sweep, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('删除所有备份', style: TextStyle(color: Colors.red)),
+                    const Icon(Icons.delete_sweep, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Text(l10n.deleteAllBackups,
+                        style: const TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
@@ -377,10 +380,10 @@ class _UnifiedBackupManagementPageState
               // 改进的展开指示器，带提示和图标变化
               Tooltip(
                 message: backups.isEmpty
-                    ? '此路径下没有备份文件'
+                    ? l10n.noBackupsInPath
                     : (_expandedPaths[path] ?? false)
-                        ? '点击收起文件列表'
-                        : '点击展开查看 ${backups.length} 个备份文件',
+                        ? l10n.collapseFileList
+                        : l10n.expandFileList(backups.length),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -460,7 +463,7 @@ class _UnifiedBackupManagementPageState
                     Icon(Icons.backup, size: 16, color: Colors.grey.shade600),
                     const SizedBox(width: 8),
                     Text(
-                      '备份文件列表 (${backups.length} 个)',
+                      l10n.backupFileListTitle(backups.length),
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Colors.grey.shade700,
@@ -521,7 +524,9 @@ class _UnifiedBackupManagementPageState
                 ),
               ),
               child: Text(
-                backup.location == 'current' ? '当前' : '历史',
+                backup.location == 'current'
+                    ? l10n.currentLabel
+                    : l10n.historyLabel,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
@@ -740,7 +745,7 @@ class _UnifiedBackupManagementPageState
       // 获取当前备份路径进行基本检查
       final backupPath = await BackupRegistryManager.getCurrentBackupPath();
       if (backupPath == null) {
-        throw Exception('请先设置备份路径');
+        throw Exception(l10n.pleaseSetBackupPathFirst);
       }
 
       // TODO: 未来可以添加更详细的备份前诊断
@@ -749,7 +754,7 @@ class _UnifiedBackupManagementPageState
       // 基本检查失败
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('备份前检查失败：$e'),
+          content: Text(l10n.backupPreCheckFailed(e.toString())),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
         ),
@@ -767,7 +772,7 @@ class _UnifiedBackupManagementPageState
       barrierDismissible: false,
       builder: (dialogContext) => BackupProgressDialog(
         title: l10n.createBackup,
-        message: '备份可能需要几分钟时间，请保持应用运行',
+        message: l10n.backupMayTakeMinutes,
         onCancel: () {
           isOperationCancelled = true;
           Navigator.of(dialogContext).pop();
@@ -789,7 +794,7 @@ class _UnifiedBackupManagementPageState
         backupService.createBackup(description: description),
         Future.delayed(const Duration(minutes: 15), () {
           throw TimeoutException(
-              '备份操作超时，请检查存储空间并重试', const Duration(minutes: 15));
+              l10n.backupOperationTimeoutError, const Duration(minutes: 15));
         }),
       ]);
 
@@ -866,8 +871,7 @@ class _UnifiedBackupManagementPageState
 
           // 为超时错误提供更友好的消息
           if (e is TimeoutException) {
-            errorMessage =
-                '备份操作超时。可能的原因：\n• 数据量过大\n• 存储空间不足\n• 磁盘读写速度慢\n\n请检查存储空间并重试。';
+            errorMessage = l10n.backupTimeoutDetailedError;
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -927,18 +931,18 @@ class _UnifiedBackupManagementPageState
         final shouldProceed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.warning, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('发现重复备份'),
+                const Icon(Icons.warning, color: Colors.orange),
+                const SizedBox(width: 8),
+                Text(l10n.duplicateBackupFound),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('检测到要导入的备份文件与现有备份重复：'),
+                Text(l10n.duplicateBackupFoundDesc),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -949,19 +953,20 @@ class _UnifiedBackupManagementPageState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('现有备份: ${duplicateBackup.filename}'),
-                      Text(
-                          '创建时间: ${DateFormat.yMd().add_Hm().format(duplicateBackup.createdTime)}'),
-                      Text(
-                          '大小: ${FileSizeFormatter.format(duplicateBackup.size)}'),
+                      Text(l10n.existingBackupInfo(duplicateBackup.filename)),
+                      Text(l10n.backupCreationTime(DateFormat.yMd()
+                          .add_Hm()
+                          .format(duplicateBackup.createdTime))),
+                      Text(l10n.backupSize(
+                          FileSizeFormatter.format(duplicateBackup.size))),
                       if (duplicateBackup.checksum != null)
-                        Text(
-                            '校验和: ${duplicateBackup.checksum!.substring(0, 8)}...'),
+                        Text(l10n.backupChecksum(
+                            duplicateBackup.checksum!.substring(0, 8))),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('是否仍要继续导入此备份？'),
+                Text(l10n.continueDuplicateImport),
               ],
             ),
             actions: [
@@ -971,7 +976,7 @@ class _UnifiedBackupManagementPageState
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('继续导入'),
+                child: Text(l10n.continueImport),
               ),
             ],
           ),
@@ -1043,7 +1048,7 @@ class _UnifiedBackupManagementPageState
 
       if (mounted && !_isCancelled) {
         final message = duplicateBackup != null
-            ? '${l10n.backupImportSuccessMessage} (重复文件已导入)'
+            ? '${l10n.backupImportSuccessMessage} ${l10n.duplicateFileImported}'
             : l10n.backupImportSuccessMessage;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1114,20 +1119,20 @@ class _UnifiedBackupManagementPageState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.cleaning_services, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('清理重复记录'),
+            const Icon(Icons.cleaning_services, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text(l10n.cleanDuplicateRecordsTitle),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('此操作将清理重复的备份记录，不会删除实际的备份文件。'),
-            SizedBox(height: 8),
-            Text('是否继续？'),
+            Text(l10n.cleanDuplicateRecordsDescription),
+            const SizedBox(height: 8),
+            Text(l10n.continueQuestion),
           ],
         ),
         actions: [
@@ -1159,7 +1164,7 @@ class _UnifiedBackupManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('清理完成，移除了 $removedCount 个重复记录'),
+            content: Text(l10n.cleanupCompletedWithCount(removedCount)),
             backgroundColor: Colors.green,
           ),
         );
@@ -1171,7 +1176,7 @@ class _UnifiedBackupManagementPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('清理操作失败: $e'),
+            content: Text(l10n.cleanupOperationFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -1278,15 +1283,15 @@ class _UnifiedBackupManagementPageState
         builder: (context) {
           dialogContext = context; // 保存对话框上下文
           return AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 16),
-                Text('正在导出备份...'),
+                const SizedBox(width: 16),
+                Text(l10n.exportingBackupsProgress),
               ],
             ),
             content: ValueListenableBuilder<int>(
@@ -1301,7 +1306,7 @@ class _UnifiedBackupManagementPageState
                       value: backups.isNotEmpty ? progress / backups.length : 0,
                     ),
                     const SizedBox(height: AppSizes.p8),
-                    Text('已处理: $progress / ${backups.length}'),
+                    Text(l10n.processedProgress(progress, backups.length)),
                   ],
                 );
               },
@@ -1471,7 +1476,7 @@ class _UnifiedBackupManagementPageState
 
     // 保存对话框上下文
     BuildContext? dialogContext;
-    
+
     // 创建一个Completer来等待恢复完成
     final Completer<void> restoreCompleter = Completer<void>();
 
@@ -1530,58 +1535,70 @@ class _UnifiedBackupManagementPageState
             }
 
             if (needsRestart) {
-              AppLogger.info('准备关闭进度对话框并显示重启提示', tag: 'UnifiedBackupManagementPage');
+              AppLogger.info('准备关闭进度对话框并显示重启提示',
+                  tag: 'UnifiedBackupManagementPage');
               // 关闭当前进度对话框
               _safeCloseDialog(dialogContext);
 
-              AppLogger.info('进度对话框关闭完成，开始延迟', tag: 'UnifiedBackupManagementPage');
-              
+              AppLogger.info('进度对话框关闭完成，开始延迟',
+                  tag: 'UnifiedBackupManagementPage');
+
               // 延迟一小段时间确保对话框关闭
               await Future.delayed(const Duration(milliseconds: 300));
 
-              AppLogger.info('延迟完成，检查Widget状态', tag: 'UnifiedBackupManagementPage', data: {
-                'mounted': mounted,
-                'isCancelled': _isCancelled,
-              });
+              AppLogger.info('延迟完成，检查Widget状态',
+                  tag: 'UnifiedBackupManagementPage',
+                  data: {
+                    'mounted': mounted,
+                    'isCancelled': _isCancelled,
+                  });
 
               if (mounted && !_isCancelled) {
                 AppLogger.info('开始显示成功消息', tag: 'UnifiedBackupManagementPage');
-                
+
                 // 显示成功消息
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('$message\n应用将在3秒后自动重启...'),
+                    content: Text(l10n.appWillRestartInSeconds(message)),
                     backgroundColor: Colors.green,
                     duration: const Duration(seconds: 3),
                   ),
                 );
 
-                AppLogger.info('成功消息显示完成，开始延迟重启流程', tag: 'UnifiedBackupManagementPage');
-                
+                AppLogger.info('成功消息显示完成，开始延迟重启流程',
+                    tag: 'UnifiedBackupManagementPage');
+
                 // 参考数据路径切换的方式，延迟重启
                 Future.delayed(const Duration(seconds: 3), () {
-                  AppLogger.info('延迟重启回调被调用', tag: 'UnifiedBackupManagementPage', data: {
-                    'mounted': mounted,
-                    'isCancelled': _isCancelled,
-                  });
-                  
+                  AppLogger.info('延迟重启回调被调用',
+                      tag: 'UnifiedBackupManagementPage',
+                      data: {
+                        'mounted': mounted,
+                        'isCancelled': _isCancelled,
+                      });
+
                   if (mounted && !_isCancelled) {
-                    AppLogger.info('执行延迟重启', tag: 'UnifiedBackupManagementPage');
+                    AppLogger.info('执行延迟重启',
+                        tag: 'UnifiedBackupManagementPage');
                     AppRestartService.restartApp(context);
                   } else {
-                    AppLogger.warning('延迟重启时Widget已被销毁', tag: 'UnifiedBackupManagementPage', data: {
+                    AppLogger.warning('延迟重启时Widget已被销毁',
+                        tag: 'UnifiedBackupManagementPage',
+                        data: {
+                          'mounted': mounted,
+                          'isCancelled': _isCancelled,
+                        });
+                  }
+                });
+
+                AppLogger.info('延迟重启已设置', tag: 'UnifiedBackupManagementPage');
+              } else {
+                AppLogger.warning('Widget状态检查失败，无法显示重启提示',
+                    tag: 'UnifiedBackupManagementPage',
+                    data: {
                       'mounted': mounted,
                       'isCancelled': _isCancelled,
                     });
-                  }
-                });
-                
-                AppLogger.info('延迟重启已设置', tag: 'UnifiedBackupManagementPage');
-              } else {
-                AppLogger.warning('Widget状态检查失败，无法显示重启提示', tag: 'UnifiedBackupManagementPage', data: {
-                  'mounted': mounted,
-                  'isCancelled': _isCancelled,
-                });
               }
             } else {
               // 如果不需要重启，显示成功消息
@@ -1598,7 +1615,8 @@ class _UnifiedBackupManagementPageState
               }
             }
           } catch (e) {
-            AppLogger.error('恢复回调处理失败', error: e, tag: 'UnifiedBackupManagementPage');
+            AppLogger.error('恢复回调处理失败',
+                error: e, tag: 'UnifiedBackupManagementPage');
           } finally {
             // 无论如何都要完成Completer
             if (!restoreCompleter.isCompleted) {
@@ -1611,9 +1629,8 @@ class _UnifiedBackupManagementPageState
 
       // 等待恢复回调完成
       await restoreCompleter.future;
-      
-      AppLogger.info('恢复操作完全完成', tag: 'UnifiedBackupManagementPage');
 
+      AppLogger.info('恢复操作完全完成', tag: 'UnifiedBackupManagementPage');
     } catch (e) {
       // 关闭进度对话框
       _safeCloseDialog(dialogContext);
@@ -1675,18 +1692,18 @@ class _UnifiedBackupManagementPageState
         final userChoice = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.warning, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('文件已存在'),
+                const Icon(Icons.warning, color: Colors.orange),
+                const SizedBox(width: 8),
+                Text(l10n.fileExistsTitle),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('目标位置已存在同名文件：'),
+                Text(l10n.targetLocationExists),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1701,7 +1718,7 @@ class _UnifiedBackupManagementPageState
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('请选择操作：'),
+                Text(l10n.targetPathLabel),
               ],
             ),
             actions: [
@@ -1712,8 +1729,8 @@ class _UnifiedBackupManagementPageState
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop('overwrite'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child:
-                    const Text('覆盖文件', style: TextStyle(color: Colors.white)),
+                child: Text(l10n.overwriteFile,
+                    style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -1866,18 +1883,18 @@ class _UnifiedBackupManagementPageState
         final userChoice = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.warning, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('文件已存在'),
+                const Icon(Icons.warning, color: Colors.orange),
+                const SizedBox(width: 8),
+                Text(l10n.fileExistsTitle),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('当前路径下已存在同名备份文件：'),
+                Text(l10n.currentPathFileExistsMessage),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1892,7 +1909,7 @@ class _UnifiedBackupManagementPageState
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('请选择操作：'),
+                Text(l10n.pleaseSelectOperation),
               ],
             ),
             actions: [
@@ -1903,8 +1920,8 @@ class _UnifiedBackupManagementPageState
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop('overwrite'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child:
-                    const Text('覆盖文件', style: TextStyle(color: Colors.white)),
+                child: Text(l10n.overwriteFileAction,
+                    style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -2095,8 +2112,8 @@ class _UnifiedBackupManagementPageState
 
     if (totalBackups == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('没有备份文件可删除'),
+        SnackBar(
+          content: Text(l10n.noBackupsToDelete),
           backgroundColor: Colors.orange,
         ),
       );
@@ -2107,18 +2124,18 @@ class _UnifiedBackupManagementPageState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
-            SizedBox(width: 8),
-            Text('确认删除所有备份'),
+            const Icon(Icons.warning, color: Colors.red),
+            const SizedBox(width: 8),
+            Text(l10n.confirmDeleteAllBackups),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('您即将删除 $totalBackups 个备份文件。'),
+            Text(l10n.deleteBackupsCountMessage(totalBackups)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -2133,7 +2150,7 @@ class _UnifiedBackupManagementPageState
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '此操作不可撤销！所有备份数据将永久丢失。',
+                      l10n.allBackupsDeleteWarning,
                       style: TextStyle(
                         color: Colors.red.shade700,
                         fontWeight: FontWeight.w500,
@@ -2144,11 +2161,12 @@ class _UnifiedBackupManagementPageState
               ),
             ),
             const SizedBox(height: 12),
-            const Text('删除范围包括：'),
+            Text(l10n.deleteRangeTitle),
             ..._pathBackups.entries.map(
               (entry) => Padding(
                 padding: const EdgeInsets.only(left: 16, top: 4),
-                child: Text('• ${entry.key}: ${entry.value.length} 个文件'),
+                child:
+                    Text(l10n.deleteRangeItem(entry.key, entry.value.length)),
               ),
             ),
           ],
@@ -2161,7 +2179,8 @@ class _UnifiedBackupManagementPageState
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('确认删除全部', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.confirmDeleteAllButton,
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -2174,6 +2193,8 @@ class _UnifiedBackupManagementPageState
 
   /// 执行删除所有备份操作
   Future<void> _performDeleteAllBackups() async {
+    final l10n = AppLocalizations.of(context);
+
     // 计算总数用于进度显示
     final totalBackups = _pathBackups.values.expand((x) => x).length;
 
@@ -2190,15 +2211,15 @@ class _UnifiedBackupManagementPageState
       builder: (BuildContext ctx) {
         dialogContext = ctx; // 保存对话框上下文
         return AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              SizedBox(width: 16),
-              Text('正在删除备份...'),
+              const SizedBox(width: 16),
+              Text(l10n.deletingBackups),
             ],
           ),
           content: ValueListenableBuilder<int>(
@@ -2207,13 +2228,13 @@ class _UnifiedBackupManagementPageState
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('正在删除备份文件，请稍候...'),
+                  Text(l10n.deletingBackupsProgress),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: totalBackups > 0 ? progress / totalBackups : 0,
                   ),
                   const SizedBox(height: 8),
-                  Text('已处理: $progress / $totalBackups'),
+                  Text(l10n.processedCount(progress, totalBackups)),
                 ],
               );
             },
@@ -2326,7 +2347,7 @@ class _UnifiedBackupManagementPageState
         if (failedCount == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('成功删除 $deletedCount 个备份文件'),
+              content: Text(l10n.successDeletedCount(deletedCount)),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
             ),
@@ -2336,17 +2357,17 @@ class _UnifiedBackupManagementPageState
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('删除完成'),
+              title: Text(l10n.deleteCompleteTitle),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('成功删除: $deletedCount 个文件'),
+                  Text(l10n.deleteSuccessCount(deletedCount)),
                   if (failedCount > 0) ...[
-                    Text('删除失败: $failedCount 个文件'),
+                    Text(l10n.deleteFailCount(failedCount)),
                     const SizedBox(height: 8),
-                    const Text('失败详情:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(l10n.deleteFailDetails,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     ...failedFiles.take(5).map((error) => Padding(
                           padding: const EdgeInsets.only(left: 8, top: 2),
                           child: Text('• $error',
@@ -2355,7 +2376,8 @@ class _UnifiedBackupManagementPageState
                     if (failedFiles.length > 5)
                       Padding(
                         padding: const EdgeInsets.only(left: 8, top: 2),
-                        child: Text('...还有 ${failedFiles.length - 5} 个错误'),
+                        child:
+                            Text(l10n.moreErrorsCount(failedFiles.length - 5)),
                       ),
                   ],
                 ],
@@ -2363,7 +2385,7 @@ class _UnifiedBackupManagementPageState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('确定'),
+                  child: Text(l10n.done),
                 ),
               ],
             ),
@@ -2393,9 +2415,10 @@ class _UnifiedBackupManagementPageState
       }
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('删除操作失败: $e'),
+            content: Text(l10n.deleteFailedMessage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -2426,12 +2449,13 @@ class _UnifiedBackupManagementPageState
           barrierDismissible: false,
           builder: (context) {
             AppLogger.info('重启确认对话框构建器被调用', tag: 'UnifiedBackupManagementPage');
+            final l10n = AppLocalizations.of(context);
             return AlertDialog(
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.restart_alt, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text('需要重启'),
+                  const Icon(Icons.restart_alt, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  Text(l10n.restartNeeded),
                 ],
               ),
               content: Column(
@@ -2441,7 +2465,7 @@ class _UnifiedBackupManagementPageState
                   Text(message),
                   const SizedBox(height: 16),
                   Text(
-                    '重启应用以应用更改',
+                    l10n.backupRestartWarning,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -2456,7 +2480,7 @@ class _UnifiedBackupManagementPageState
                         tag: 'UnifiedBackupManagementPage');
                     Navigator.of(context).pop(false);
                   },
-                  child: const Text('稍后'),
+                  child: Text(l10n.restartLaterButton),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -2464,7 +2488,7 @@ class _UnifiedBackupManagementPageState
                         tag: 'UnifiedBackupManagementPage');
                     Navigator.of(context).pop(true);
                   },
-                  child: const Text('立即重启'),
+                  child: Text(l10n.restartNowButton),
                 ),
               ],
             );
@@ -2480,12 +2504,14 @@ class _UnifiedBackupManagementPageState
 
   /// 安全地关闭对话框，避免Widget生命周期问题
   void _safeCloseDialog(BuildContext? dialogContext) {
-    AppLogger.info('_safeCloseDialog 被调用', tag: 'UnifiedBackupManagementPage', data: {
-      'dialogContext': dialogContext != null ? 'not null' : 'null',
-      'mounted': mounted,
-      'isCancelled': _isCancelled,
-    });
-    
+    AppLogger.info('_safeCloseDialog 被调用',
+        tag: 'UnifiedBackupManagementPage',
+        data: {
+          'dialogContext': dialogContext != null ? 'not null' : 'null',
+          'mounted': mounted,
+          'isCancelled': _isCancelled,
+        });
+
     if (dialogContext == null) {
       AppLogger.debug('对话框上下文为空，无需关闭', tag: 'UnifiedBackupManagementPage');
       return;
@@ -2499,10 +2525,11 @@ class _UnifiedBackupManagementPageState
 
     try {
       AppLogger.info('尝试关闭对话框', tag: 'UnifiedBackupManagementPage');
-      
+
       // 检查Navigator是否仍然可用
       if (Navigator.canPop(dialogContext)) {
-        AppLogger.info('Navigator.canPop 返回 true，开始关闭对话框', tag: 'UnifiedBackupManagementPage');
+        AppLogger.info('Navigator.canPop 返回 true，开始关闭对话框',
+            tag: 'UnifiedBackupManagementPage');
         Navigator.of(dialogContext).pop();
         AppLogger.debug('对话框关闭成功', tag: 'UnifiedBackupManagementPage');
       } else {

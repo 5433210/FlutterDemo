@@ -881,7 +881,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distribution => '分布';
 
   @override
-  String get done => '完成';
+  String get done => '确定';
 
   @override
   String get dropToImportImages => '释放鼠标以导入图片';
@@ -2968,7 +2968,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deletePathButton => '删除路径';
 
   @override
-  String get exportAllBackupsButton => '导出所有备份';
+  String get exportAllBackupsButton => '导出全部备份';
 
   @override
   String get noBackupFilesInPathMessage => '此路径下没有备份文件';
@@ -2980,7 +2980,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupDescriptionInputLabel => '备份描述';
 
   @override
-  String get backupDescriptionInputExample => '例如：版本更新前的备份';
+  String get backupDescriptionInputExample => '例如：每周备份、重要更新前备份等';
 
   @override
   String get creatingBackupProgressMessage => '正在创建备份...';
@@ -3003,7 +3003,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pleaseWaitMessage => '请稍候';
 
   @override
-  String importBackupFailedMessage(Object error) {
+  String importBackupFailedMessage(String error) {
     return '导入备份失败: $error';
   }
 
@@ -3011,12 +3011,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupImportSuccessMessage => '备份导入成功';
 
   @override
-  String cleanupCompletedMessage(Object count) {
+  String cleanupCompletedMessage(int count) {
     return '清理完成，移除了 $count 个无效路径';
   }
 
   @override
-  String cleanupFailedMessage(Object error) {
+  String cleanupFailedMessage(String error) {
     return '清理失败: $error';
   }
 
@@ -3024,30 +3024,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dangerousOperationConfirmTitle => '危险操作确认';
 
   @override
-  String deletePathConfirmContent(Object path) {
-    return '确定要删除整个备份路径吗？\n\n路径：$path\n\n这将会：\n• 删除该路径下的所有备份文件\n• 从历史记录中移除该路径\n• 此操作不可恢复\n\n请谨慎操作！';
+  String deletePathConfirmContent(String path) {
+    return '确定要删除备份路径 $path 吗？此操作不可撤销，将删除该路径下的所有备份文件。';
   }
 
   @override
-  String get confirmDeleteButton => '确定删除';
+  String get confirmDeleteButton => '确认删除';
 
   @override
   String get backupPathDeletedMessage => '备份路径已删除';
 
   @override
-  String deleteFailedMessage(Object error) {
+  String deleteFailedMessage(String error) {
     return '删除失败: $error';
   }
 
   @override
-  String get noBackupFilesToExportMessage => '此路径下没有备份文件可导出';
+  String get noBackupFilesToExportMessage => '没有备份文件可导出';
 
   @override
   String get selectExportLocationDialog => '选择导出位置';
 
   @override
-  String exportingBackupsProgressFormat(Object count) {
-    return '正在导出 $count 个备份...';
+  String exportingBackupsProgressFormat(int count) {
+    return '正在导出 $count 个备份文件...';
   }
 
   @override
@@ -3064,7 +3064,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewExportResultsButton => '查看';
 
   @override
-  String batchExportFailedMessage(Object error) {
+  String batchExportFailedMessage(String error) {
     return '批量导出失败: $error';
   }
 
@@ -3072,73 +3072,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirmRestoreTitle => '确认恢复';
 
   @override
-  String get confirmRestoreMessage => '确定要恢复这个备份吗？';
+  String get confirmRestoreMessage => '您即将恢复以下备份：';
 
   @override
-  String backupFileLabel(Object filename) {
-    return '备份：$filename';
+  String backupFileLabel(String filename) {
+    return '备份文件: $filename';
   }
 
   @override
-  String backupDescriptionLabel(Object description) {
-    return '描述：$description';
+  String backupDescriptionLabel(String description) {
+    return '备份描述: $description';
   }
 
   @override
-  String backupTimeLabel(Object time) {
-    return '时间：$time';
+  String backupTimeLabel(String time) {
+    return '备份时间: $time';
   }
 
   @override
-  String get restoreWarningMessage => '注意：当前数据将被备份数据覆盖，此操作不可撤销！';
+  String get restoreWarningMessage => '警告：此操作将覆盖当前所有数据！';
 
   @override
-  String get appWillRestartMessage => '恢复后应用将自动重启。';
+  String get appWillRestartMessage => '恢复完成后应用将自动重启';
 
   @override
-  String get confirmRestoreButton => '确定恢复';
+  String get confirmRestoreButton => '确认恢复';
 
   @override
   String get restoringBackupMessage => '正在恢复备份...';
 
   @override
-  String get doNotCloseAppMessage => '请勿关闭应用';
+  String get doNotCloseAppMessage => '请勿关闭应用，恢复过程可能需要几分钟';
 
   @override
   String get backupRestoreSuccessMessage => '备份恢复成功，请重启应用以完成恢复';
 
   @override
-  String backupRestoreFailedMessage(Object error) {
-    return '恢复备份失败: $error';
+  String backupRestoreFailedMessage(String error) {
+    return '备份恢复失败: $error';
   }
 
   @override
   String get exportingBackupMessage => '正在导出备份...';
 
   @override
-  String exportSuccessMessage(Object path) {
-    return '导出成功: $path';
+  String exportSuccessMessage(String path) {
+    return '备份导出成功: $path';
   }
 
   @override
-  String exportBackupFailedMessage(Object error) {
-    return '导出失败: $error';
+  String exportBackupFailedMessage(String error) {
+    return '导出备份失败: $error';
   }
 
   @override
   String get importToCurrentPathTitle => '导入到当前路径';
 
   @override
-  String get importToCurrentPathMessage => '确定要将此备份导入到当前备份路径吗？';
+  String get importToCurrentPathMessage => '您即将将此备份文件导入到当前备份路径：';
 
   @override
-  String get importToCurrentPathDescription => '这将复制备份文件到当前路径，原文件保持不变。';
+  String get importToCurrentPathDescription => '导入后，此备份将出现在当前路径的备份列表中';
 
   @override
-  String get confirmImportButton => '确定导入';
+  String get confirmImportButton => '确认导入';
 
   @override
-  String get importingToCurrentPathMessage => '正在导入备份到当前路径...';
+  String get importingToCurrentPathMessage => '正在导入到当前路径...';
 
   @override
   String get importToCurrentPathSuccessMessage => '备份已成功导入到当前路径';
@@ -3147,14 +3147,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get currentBackupPathNotSet => '当前备份路径未设置';
 
   @override
-  String sourceBackupFileNotFound(Object path) {
-    return '源备份文件不存在: $path';
-  }
+  String get sourceBackupFileNotFound => '源备份文件不存在';
 
   @override
-  String backupFileNotFound(Object path) {
-    return '备份文件不存在: $path';
-  }
+  String get backupFileNotFound => '备份文件不存在';
 
   @override
   String get platformInfo => '平台信息';
@@ -3599,7 +3595,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestRestartOrWait => '建议：重启应用或等待服务初始化完成后重试';
 
   @override
-  String get backupPathNotSet => '尚未设置备份路径';
+  String get backupPathNotSet => '请先设置备份路径';
 
   @override
   String get suggestConfigureBackupPath => '建议：先在设置中配置备份路径';
@@ -3872,7 +3868,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get legacyDataPathDescription => '需要清理的旧数据路径';
 
   @override
-  String get noBackupPaths => '暂无备份路径';
+  String get noBackupPaths => '没有备份路径';
 
   @override
   String get createFirstBackup => '创建第一个备份';
@@ -3993,14 +3989,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String confirmDeleteBackup(String filename, String description) {
-    return '确定要删除这个备份吗？\n\n备份：$filename\n描述：$description\n\n此操作不可恢复！';
+    return '确定要删除备份文件\"$filename\"（$description）吗？\n此操作不可撤销。';
   }
 
   @override
-  String get confirmDeleteAction => '确定删除';
+  String get confirmDeleteAction => '确认删除';
 
   @override
-  String get backupDeletedSuccessfully => '备份删除成功';
+  String get backupDeletedSuccessfully => '备份已成功删除';
 
   @override
   String get deleteBackupFailed => '删除备份失败';
@@ -4018,7 +4014,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewAction => '查看';
 
   @override
-  String get importedSuffix => '(导入)';
+  String get importedSuffix => '导入的备份';
 
   @override
   String get backupLabel => '备份';
@@ -4049,4 +4045,303 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get historyPathDeleted => '历史路径记录已删除';
+
+  @override
+  String get cleanDuplicateRecords => '清理重复记录';
+
+  @override
+  String get deleteAllBackups => '删除所有备份';
+
+  @override
+  String get noBackupsInPath => '此路径下没有备份文件';
+
+  @override
+  String get collapseFileList => '点击收起文件列表';
+
+  @override
+  String expandFileList(int count) {
+    return '点击展开查看 $count 个备份文件';
+  }
+
+  @override
+  String backupFileListTitle(int count) {
+    return '备份文件列表 ($count 个)';
+  }
+
+  @override
+  String get currentLabel => '当前';
+
+  @override
+  String get historyLabel => '历史';
+
+  @override
+  String get continueImport => '继续导入';
+
+  @override
+  String get fileExistsTitle => '文件已存在';
+
+  @override
+  String get overwriteFile => '覆盖文件';
+
+  @override
+  String get historyPathBackup => '历史路径备份';
+
+  @override
+  String get currentPathBackup => '当前路径备份';
+
+  @override
+  String get noBackupsToDelete => '没有备份文件可删除';
+
+  @override
+  String get confirmDeleteAllBackups => '确认删除所有备份';
+
+  @override
+  String get allBackupsDeleteWarning => '此操作不可撤销！所有备份数据将永久丢失。';
+
+  @override
+  String get deleteRangeTitle => '删除范围包括：';
+
+  @override
+  String deleteRangeItem(String path, int count) {
+    return '• $path: $count 个文件';
+  }
+
+  @override
+  String get confirmDeleteAllButton => '确认删除全部';
+
+  @override
+  String get deletingBackups => '正在删除备份...';
+
+  @override
+  String processedCount(int current, int total) {
+    return '已处理: $current / $total';
+  }
+
+  @override
+  String get deleteCompleteTitle => '删除完成';
+
+  @override
+  String deleteSuccessCount(int count) {
+    return '成功删除: $count 个文件';
+  }
+
+  @override
+  String deleteFailCount(int count) {
+    return '删除失败: $count 个文件';
+  }
+
+  @override
+  String get deleteFailDetails => '失败详情:';
+
+  @override
+  String moreErrorsCount(int count) {
+    return '...还有 $count 个错误';
+  }
+
+  @override
+  String get duplicateBackupFound => '发现重复备份';
+
+  @override
+  String get duplicateBackupFoundDesc => '检测到要导入的备份文件与现有备份重复：';
+
+  @override
+  String existingBackupInfo(String filename) {
+    return '现有备份: $filename';
+  }
+
+  @override
+  String backupCreationTime(String time) {
+    return '创建时间: $time';
+  }
+
+  @override
+  String backupSize(String size) {
+    return '大小: $size';
+  }
+
+  @override
+  String backupChecksum(String checksum) {
+    return '校验和: $checksum...';
+  }
+
+  @override
+  String get continueDuplicateImport => '是否仍要继续导入此备份？';
+
+  @override
+  String get targetLocationExists => '目标位置已存在同名文件：';
+
+  @override
+  String get targetPathLabel => '请选择操作：';
+
+  @override
+  String get currentPathFileExists => '当前路径下已存在同名备份文件：';
+
+  @override
+  String get backupRestartWarning => '重启应用以应用更改';
+
+  @override
+  String get restartLaterButton => '稍后';
+
+  @override
+  String get restartNowButton => '立即重启';
+
+  @override
+  String get restartNeeded => '需要重启';
+
+  @override
+  String successDeletedCount(int count) {
+    return '成功删除 $count 个备份文件';
+  }
+
+  @override
+  String exportCompletedFormat2(int success, String failed) {
+    return '导出完成，成功: $success$failed';
+  }
+
+  @override
+  String exportFailedPartFormat2(int count) {
+    return ', 失败: $count';
+  }
+
+  @override
+  String get backupFileCreationFailed => '备份文件创建失败';
+
+  @override
+  String backupNotFound(String id) {
+    return '备份不存在: $id';
+  }
+
+  @override
+  String get backupVerificationFailed => '备份文件核验失败';
+
+  @override
+  String sourceFileNotFound(String path) {
+    return '源文件不存在: $path';
+  }
+
+  @override
+  String backupFileNotExist(String path) {
+    return '备份文件不存在: $path';
+  }
+
+  @override
+  String get pleaseSetBackupPathFirst => '请先设置备份路径';
+
+  @override
+  String backupPreCheckFailed(String error) {
+    return '备份前检查失败：$error';
+  }
+
+  @override
+  String get backupOperationTimeoutError => '备份操作超时，请检查存储空间并重试';
+
+  @override
+  String get backupTimeoutDetailedError => '备份操作超时。可能的原因：\n• 数据量过大\n• 存储空间不足\n• 磁盘读写速度慢\n\n请检查存储空间并重试。';
+
+  @override
+  String get backupMayTakeMinutes => '备份可能需要几分钟时间，请保持应用运行';
+
+  @override
+  String get duplicateFileImported => '(重复文件已导入)';
+
+  @override
+  String get exportingBackupsProgress => '正在导出备份...';
+
+  @override
+  String processedProgress(int current, int total) {
+    return '已处理: $current / $total';
+  }
+
+  @override
+  String appWillRestartInSeconds(String message) {
+    return '$message\n应用将在3秒后自动重启...';
+  }
+
+  @override
+  String get cleanDuplicateRecordsTitle => '清理重复记录';
+
+  @override
+  String get cleanDuplicateRecordsDescription => '此操作将清理重复的备份记录，不会删除实际的备份文件。';
+
+  @override
+  String get continueQuestion => '是否继续？';
+
+  @override
+  String cleanupCompletedWithCount(int count) {
+    return '清理完成，移除了 $count 个重复记录';
+  }
+
+  @override
+  String cleanupOperationFailed(String error) {
+    return '清理操作失败: $error';
+  }
+
+  @override
+  String get currentPathFileExistsMessage => '当前路径下已存在同名备份文件：';
+
+  @override
+  String get pleaseSelectOperation => '请选择操作：';
+
+  @override
+  String get overwriteFileAction => '覆盖文件';
+
+  @override
+  String deleteBackupsCountMessage(int count) {
+    return '您即将删除 $count 个备份文件。';
+  }
+
+  @override
+  String get deletingBackupsProgress => '正在删除备份文件，请稍候...';
+
+  @override
+  String get backupPathNotSetError => '请先设置备份路径';
+
+  @override
+  String get backupFileCreationFailedError => '备份文件创建失败';
+
+  @override
+  String get manualBackupDescription => '手动创建的备份';
+
+  @override
+  String backupNotFoundError(String id) {
+    return '备份不存在: $id';
+  }
+
+  @override
+  String get backupFileVerificationFailedError => '备份文件核验失败';
+
+  @override
+  String get backupReadyRestartMessage => '备份文件已准备就绪，需要重启应用完成恢复';
+
+  @override
+  String get backupFileNotExistError => '备份文件不存在';
+
+  @override
+  String get backupFileSizeMismatchError => '备份文件大小不匹配';
+
+  @override
+  String get backupFileChecksumMismatchError => '备份文件校验和不匹配';
+
+  @override
+  String get backupFileMissingDirectoryStructureError => '备份文件缺少必要的目录结构';
+
+  @override
+  String get legacyBackupDescription => '历史备份';
+
+  @override
+  String sourceFileNotFoundError(String path) {
+    return '源文件不存在: $path';
+  }
+
+  @override
+  String get importedBackupDescription => '导入的备份';
+
+  @override
+  String get historyPathBackupDescription => '历史路径备份';
+
+  @override
+  String get currentPathBackupDescription => '当前路径备份';
+
+  @override
+  String get backupRestoreSuccessWithRestartMessage => '备份恢复成功，需要重启应用以应用更改。';
 }

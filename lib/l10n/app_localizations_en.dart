@@ -2980,7 +2980,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupDescriptionInputLabel => 'Backup Description';
 
   @override
-  String get backupDescriptionInputExample => 'e.g., Backup before version update';
+  String get backupDescriptionInputExample => 'e.g., Weekly backup, Pre-important update backup, etc.';
 
   @override
   String get creatingBackupProgressMessage => 'Creating backup...';
@@ -3003,7 +3003,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseWaitMessage => 'Please wait';
 
   @override
-  String importBackupFailedMessage(Object error) {
+  String importBackupFailedMessage(String error) {
     return 'Failed to import backup: $error';
   }
 
@@ -3011,12 +3011,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupImportSuccessMessage => 'Backup imported successfully';
 
   @override
-  String cleanupCompletedMessage(Object count) {
+  String cleanupCompletedMessage(int count) {
     return 'Cleanup completed, removed $count invalid paths';
   }
 
   @override
-  String cleanupFailedMessage(Object error) {
+  String cleanupFailedMessage(String error) {
     return 'Cleanup failed: $error';
   }
 
@@ -3024,7 +3024,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dangerousOperationConfirmTitle => 'Dangerous Operation Confirmation';
 
   @override
-  String deletePathConfirmContent(Object path) {
+  String deletePathConfirmContent(String path) {
     return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove this path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
   }
 
@@ -3035,7 +3035,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPathDeletedMessage => 'Backup path has been deleted';
 
   @override
-  String deleteFailedMessage(Object error) {
+  String deleteFailedMessage(String error) {
     return 'Delete failed: $error';
   }
 
@@ -3046,7 +3046,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectExportLocationDialog => 'Select export location';
 
   @override
-  String exportingBackupsProgressFormat(Object count) {
+  String exportingBackupsProgressFormat(int count) {
     return 'Exporting $count backups...';
   }
 
@@ -3064,7 +3064,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewExportResultsButton => 'View';
 
   @override
-  String batchExportFailedMessage(Object error) {
+  String batchExportFailedMessage(String error) {
     return 'Batch export failed: $error';
   }
 
@@ -3075,17 +3075,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmRestoreMessage => 'Are you sure you want to restore this backup?';
 
   @override
-  String backupFileLabel(Object filename) {
+  String backupFileLabel(String filename) {
     return 'Backup: $filename';
   }
 
   @override
-  String backupDescriptionLabel(Object description) {
+  String backupDescriptionLabel(String description) {
     return 'Description: $description';
   }
 
   @override
-  String backupTimeLabel(Object time) {
+  String backupTimeLabel(String time) {
     return 'Time: $time';
   }
 
@@ -3108,7 +3108,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupRestoreSuccessMessage => 'Backup restored successfully, please restart the app to complete the restore';
 
   @override
-  String backupRestoreFailedMessage(Object error) {
+  String backupRestoreFailedMessage(String error) {
     return 'Failed to restore backup: $error';
   }
 
@@ -3116,12 +3116,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportingBackupMessage => 'Exporting backup...';
 
   @override
-  String exportSuccessMessage(Object path) {
+  String exportSuccessMessage(String path) {
     return 'Export successful: $path';
   }
 
   @override
-  String exportBackupFailedMessage(Object error) {
+  String exportBackupFailedMessage(String error) {
     return 'Export failed: $error';
   }
 
@@ -3147,14 +3147,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentBackupPathNotSet => 'Current backup path not set';
 
   @override
-  String sourceBackupFileNotFound(Object path) {
-    return '源备份文件不存在: $path';
-  }
+  String get sourceBackupFileNotFound => '源备份文件不存在';
 
   @override
-  String backupFileNotFound(Object path) {
-    return '备份文件不存在: $path';
-  }
+  String get backupFileNotFound => '备份文件不存在';
 
   @override
   String get platformInfo => 'Platform Info';
@@ -3599,7 +3595,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestRestartOrWait => 'Suggestion: Restart the app or wait for service initialization to complete';
 
   @override
-  String get backupPathNotSet => 'Backup path not set';
+  String get backupPathNotSet => 'Please set backup path first';
 
   @override
   String get suggestConfigureBackupPath => 'Suggestion: Configure backup path in settings first';
@@ -4018,7 +4014,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewAction => 'View';
 
   @override
-  String get importedSuffix => '(Imported)';
+  String get importedSuffix => 'Imported Backup';
 
   @override
   String get backupLabel => 'Backup';
@@ -4049,4 +4045,303 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyPathDeleted => 'History path record deleted';
+
+  @override
+  String get cleanDuplicateRecords => 'Clean Duplicate Records';
+
+  @override
+  String get deleteAllBackups => 'Delete All Backups';
+
+  @override
+  String get noBackupsInPath => 'No backup files in this path';
+
+  @override
+  String get collapseFileList => 'Click to collapse file list';
+
+  @override
+  String expandFileList(int count) {
+    return 'Click to expand and view $count backup files';
+  }
+
+  @override
+  String backupFileListTitle(int count) {
+    return 'Backup File List ($count)';
+  }
+
+  @override
+  String get currentLabel => 'Current';
+
+  @override
+  String get historyLabel => 'History';
+
+  @override
+  String get continueImport => 'Continue Import';
+
+  @override
+  String get fileExistsTitle => 'File Already Exists';
+
+  @override
+  String get overwriteFile => 'Overwrite File';
+
+  @override
+  String get historyPathBackup => 'Historical Path Backup';
+
+  @override
+  String get currentPathBackup => 'Current Path Backup';
+
+  @override
+  String get noBackupsToDelete => 'No backup files to delete';
+
+  @override
+  String get confirmDeleteAllBackups => 'Confirm Delete All Backups';
+
+  @override
+  String get allBackupsDeleteWarning => 'This action cannot be undone! All backup data will be permanently lost.';
+
+  @override
+  String get deleteRangeTitle => 'Delete range includes:';
+
+  @override
+  String deleteRangeItem(String path, int count) {
+    return '• $path: $count files';
+  }
+
+  @override
+  String get confirmDeleteAllButton => 'Confirm Delete All';
+
+  @override
+  String get deletingBackups => 'Deleting backups...';
+
+  @override
+  String processedCount(int current, int total) {
+    return 'Processed: $current / $total';
+  }
+
+  @override
+  String get deleteCompleteTitle => 'Delete Complete';
+
+  @override
+  String deleteSuccessCount(int count) {
+    return 'Successfully deleted: $count files';
+  }
+
+  @override
+  String deleteFailCount(int count) {
+    return 'Failed to delete: $count files';
+  }
+
+  @override
+  String get deleteFailDetails => 'Failure details:';
+
+  @override
+  String moreErrorsCount(int count) {
+    return '...and $count more errors';
+  }
+
+  @override
+  String get duplicateBackupFound => 'Duplicate Backup Found';
+
+  @override
+  String get duplicateBackupFoundDesc => 'The backup file you\'re importing is a duplicate of an existing backup:';
+
+  @override
+  String existingBackupInfo(String filename) {
+    return 'Existing backup: $filename';
+  }
+
+  @override
+  String backupCreationTime(String time) {
+    return 'Creation time: $time';
+  }
+
+  @override
+  String backupSize(String size) {
+    return 'Size: $size';
+  }
+
+  @override
+  String backupChecksum(String checksum) {
+    return 'Checksum: $checksum...';
+  }
+
+  @override
+  String get continueDuplicateImport => 'Do you still want to continue importing this backup?';
+
+  @override
+  String get targetLocationExists => 'A file with the same name already exists at the target location:';
+
+  @override
+  String get targetPathLabel => 'Please select an action:';
+
+  @override
+  String get currentPathFileExists => 'A backup file with the same name already exists in the current path:';
+
+  @override
+  String get backupRestartWarning => 'Restart the app to apply changes';
+
+  @override
+  String get restartLaterButton => 'Later';
+
+  @override
+  String get restartNowButton => 'Restart Now';
+
+  @override
+  String get restartNeeded => 'Restart Needed';
+
+  @override
+  String successDeletedCount(int count) {
+    return 'Successfully deleted $count backup files';
+  }
+
+  @override
+  String exportCompletedFormat2(int success, String failed) {
+    return '导出完成，成功: $success$failed';
+  }
+
+  @override
+  String exportFailedPartFormat2(int count) {
+    return ', 失败: $count';
+  }
+
+  @override
+  String get backupFileCreationFailed => 'Failed to create backup file';
+
+  @override
+  String backupNotFound(String id) {
+    return 'Backup not found: $id';
+  }
+
+  @override
+  String get backupVerificationFailed => 'Backup file verification failed';
+
+  @override
+  String sourceFileNotFound(String path) {
+    return 'Source file not found: $path';
+  }
+
+  @override
+  String backupFileNotExist(String path) {
+    return 'Backup file does not exist: $path';
+  }
+
+  @override
+  String get pleaseSetBackupPathFirst => 'Please set backup path first';
+
+  @override
+  String backupPreCheckFailed(String error) {
+    return 'Backup pre-check failed: $error';
+  }
+
+  @override
+  String get backupOperationTimeoutError => 'Backup operation timed out, please check available storage space and retry';
+
+  @override
+  String get backupTimeoutDetailedError => 'Backup operation timed out. Possible causes:\n• Large amount of data\n• Insufficient storage space\n• Slow disk read/write speed\n\nPlease check storage space and retry.';
+
+  @override
+  String get backupMayTakeMinutes => 'Backup may take several minutes, please keep the app running';
+
+  @override
+  String get duplicateFileImported => '(duplicate file imported)';
+
+  @override
+  String get exportingBackupsProgress => 'Exporting backups...';
+
+  @override
+  String processedProgress(int current, int total) {
+    return 'Processed: $current / $total';
+  }
+
+  @override
+  String appWillRestartInSeconds(String message) {
+    return '$message\nApp will restart automatically in 3 seconds...';
+  }
+
+  @override
+  String get cleanDuplicateRecordsTitle => 'Clean Duplicate Records';
+
+  @override
+  String get cleanDuplicateRecordsDescription => 'This operation will clean duplicate backup records without deleting actual backup files.';
+
+  @override
+  String get continueQuestion => 'Continue?';
+
+  @override
+  String cleanupCompletedWithCount(int count) {
+    return 'Cleanup completed, removed $count duplicate records';
+  }
+
+  @override
+  String cleanupOperationFailed(String error) {
+    return 'Cleanup operation failed: $error';
+  }
+
+  @override
+  String get currentPathFileExistsMessage => 'A backup file with the same name already exists in the current path:';
+
+  @override
+  String get pleaseSelectOperation => 'Please select an operation:';
+
+  @override
+  String get overwriteFileAction => 'Overwrite File';
+
+  @override
+  String deleteBackupsCountMessage(int count) {
+    return 'You are about to delete $count backup files.';
+  }
+
+  @override
+  String get deletingBackupsProgress => 'Deleting backup files, please wait...';
+
+  @override
+  String get backupPathNotSetError => 'Please set backup path first';
+
+  @override
+  String get backupFileCreationFailedError => 'Backup file creation failed';
+
+  @override
+  String get manualBackupDescription => 'Manually created backup';
+
+  @override
+  String backupNotFoundError(String id) {
+    return 'Backup not found: $id';
+  }
+
+  @override
+  String get backupFileVerificationFailedError => 'Backup file verification failed';
+
+  @override
+  String get backupReadyRestartMessage => 'Backup file is ready, restart required to complete restore';
+
+  @override
+  String get backupFileNotExistError => 'Backup file does not exist';
+
+  @override
+  String get backupFileSizeMismatchError => 'Backup file size mismatch';
+
+  @override
+  String get backupFileChecksumMismatchError => 'Backup file checksum mismatch';
+
+  @override
+  String get backupFileMissingDirectoryStructureError => 'Backup file missing required directory structure';
+
+  @override
+  String get legacyBackupDescription => 'Legacy backup';
+
+  @override
+  String sourceFileNotFoundError(String path) {
+    return 'Source file not found: $path';
+  }
+
+  @override
+  String get importedBackupDescription => 'Imported backup';
+
+  @override
+  String get historyPathBackupDescription => 'Historical path backup';
+
+  @override
+  String get currentPathBackupDescription => 'Current path backup';
+
+  @override
+  String get backupRestoreSuccessWithRestartMessage => 'Backup restored successfully, restart required to apply changes.';
 }
