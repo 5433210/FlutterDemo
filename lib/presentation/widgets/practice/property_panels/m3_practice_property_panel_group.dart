@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_practice_property_panel_base.dart';
-import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// Material 3 组合属性面板
 class M3GroupPropertyPanel extends M3PracticePropertyPanel {
@@ -739,7 +739,7 @@ class _M3GroupPropertyPanelContentState
     final newName = _nameController.text.trim();
     final groupId = widget.element['id'] as String;
     final oldName = widget.element['name'] as String? ?? 'Group';
-    
+
     if (newName.isNotEmpty && newName != oldName) {
       EditPageLogger.propertyPanelDebug(
         '分组名称修改',
@@ -750,10 +750,10 @@ class _M3GroupPropertyPanelContentState
           'operation': 'group_rename',
         },
       );
-      
+
       try {
         _updateElementProperty('name', newName);
-        
+
         EditPageLogger.propertyPanelDebug(
           '分组名称修改成功',
           data: {
@@ -777,7 +777,7 @@ class _M3GroupPropertyPanelContentState
     } else if (newName.isEmpty) {
       // 如果名称为空，恢复原来的名称
       _nameController.text = oldName;
-      
+
       EditPageLogger.propertyPanelDebug(
         '分组名称恢复',
         data: {
@@ -787,7 +787,7 @@ class _M3GroupPropertyPanelContentState
         },
       );
     }
-    
+
     setState(() {
       _isEditingName = false;
     });
@@ -816,7 +816,7 @@ class _M3GroupPropertyPanelContentState
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteGroupConfirm),
-        content: Text(l10n.deleteMessage),
+        content: Text(l10n.deleteMessage(1)),
         actions: [
           TextButton(
             onPressed: () {
@@ -840,7 +840,7 @@ class _M3GroupPropertyPanelContentState
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              
+
               EditPageLogger.propertyPanelDebug(
                 '确认删除分组',
                 data: {
@@ -850,10 +850,10 @@ class _M3GroupPropertyPanelContentState
                   'operation': 'group_delete_confirmed',
                 },
               );
-              
+
               try {
                 widget.controller.deleteElement(groupId);
-                
+
                 EditPageLogger.propertyPanelDebug(
                   '分组删除成功',
                   data: {
@@ -895,7 +895,7 @@ class _M3GroupPropertyPanelContentState
   void _enterGroupEditMode() {
     final id = widget.element['id'] as String;
     final groupName = widget.element['name'] as String? ?? 'Group';
-    
+
     EditPageLogger.propertyPanelDebug(
       '进入分组编辑模式',
       data: {
@@ -904,10 +904,10 @@ class _M3GroupPropertyPanelContentState
         'operation': 'group_edit_mode_enter',
       },
     );
-    
+
     try {
       widget.controller.enterGroupEditMode(id);
-      
+
       EditPageLogger.propertyPanelDebug(
         '分组编辑模式启动成功',
         data: {
@@ -1013,7 +1013,7 @@ class _M3GroupPropertyPanelContentState
   void _updateElementProperty(String key, dynamic value) {
     final id = widget.element['id'] as String;
     final currentValue = widget.element[key];
-    
+
     if (currentValue != value) {
       EditPageLogger.propertyPanelDebug(
         '分组属性更新',
@@ -1025,13 +1025,13 @@ class _M3GroupPropertyPanelContentState
           'operation': 'group_property_update',
         },
       );
-      
+
       try {
         widget.onElementPropertiesChanged({
           'id': id,
           key: value,
         });
-        
+
         EditPageLogger.propertyPanelDebug(
           '分组属性更新成功',
           data: {

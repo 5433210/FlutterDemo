@@ -19,14 +19,11 @@ class M3DeleteConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
-    final title = isBatch 
-        ? l10n.batchDeleteMessage(count)
-        : l10n.deleteConfirm;
 
-    final content = isBatch 
-        ? l10n.batchDeleteMessage(count)
-        : l10n.deleteMessage;
+    final title = isBatch ? l10n.batchDeleteMessage(count) : l10n.deleteConfirm;
+
+    final content =
+        isBatch ? l10n.batchDeleteMessage(count) : l10n.deleteMessage(count);
 
     // Add keyboard shortcut support
     return KeyboardListener(

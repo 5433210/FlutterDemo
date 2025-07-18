@@ -15,6 +15,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get a5Size => 'A5 (148×210mm)';
 
   @override
+  String get about => 'About';
+
+  @override
   String get activated => 'Activated';
 
   @override
@@ -72,6 +75,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addedToCategory => 'Added to Category';
 
   @override
+  String addingImagesToGallery(Object count) {
+    return 'Adding $count local images to gallery...';
+  }
+
+  @override
   String get adjust => 'Adjust';
 
   @override
@@ -123,6 +131,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get all => 'All';
 
   @override
+  String get allBackupsDeleteWarning => 'This action cannot be undone! All backup data will be permanently lost.';
+
+  @override
   String get allCategories => 'All Categories';
 
   @override
@@ -135,6 +146,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allTypes => 'All Types';
 
   @override
+  String get analyzePathInfoFailed => 'Failed to analyze path information';
+
+  @override
   String get appRestartFailed => 'App Restart Failed, Please Manually Restart the App';
 
   @override
@@ -144,10 +158,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appRestartingMessage => 'Data Recovery Successful, Restarting App...';
 
   @override
+  String get appStartupFailed => 'App Startup Failed';
+
+  @override
+  String appStartupFailedWith(Object error) {
+    return 'App startup failed: $error';
+  }
+
+  @override
   String get appTitle => 'Char As Gem';
 
   @override
+  String get appVersion => 'App Version';
+
+  @override
   String get appVersionInfo => 'App Version Info';
+
+  @override
+  String get appWillRestartAfterRestore => 'The app will restart automatically after restore.';
+
+  @override
+  String appWillRestartInSeconds(Object message) {
+    return '$message\nApp will restart automatically in 3 seconds...';
+  }
+
+  @override
+  String get appWillRestartMessage => 'Application will restart automatically after restore.';
 
   @override
   String get apply => 'Apply';
@@ -156,10 +192,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get applyFormatBrush => 'Apply Format Brush (Alt+W)';
 
   @override
+  String get applyNewPath => 'Apply New Path';
+
+  @override
   String get applyTransform => 'Apply Transform';
 
   @override
   String get ascending => 'Ascending';
+
+  @override
+  String get askUser => 'Ask User';
+
+  @override
+  String get askUserDescription => 'Ask user for each conflict';
 
   @override
   String get author => 'Author';
@@ -213,22 +258,193 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backgroundColor => 'Background Color';
 
   @override
+  String get backupBeforeSwitchRecommendation => 'To ensure data safety, we recommend creating a backup before switching data paths:';
+
+  @override
+  String backupChecksum(Object checksum) {
+    return 'Checksum: $checksum...';
+  }
+
+  @override
+  String get backupCompleted => '✓ Backup Completed';
+
+  @override
+  String backupCount(Object count) {
+    return '$count backups';
+  }
+
+  @override
+  String backupCountFormat(Object count) {
+    return '$count backups';
+  }
+
+  @override
+  String get backupCreatedSuccessfully => 'Backup created successfully, you can safely proceed with path switching';
+
+  @override
+  String get backupCreationFailed => 'Backup Creation Failed';
+
+  @override
+  String backupCreationTime(Object time) {
+    return 'Creation time: $time';
+  }
+
+  @override
+  String get backupDeletedSuccessfully => 'Backup deleted successfully';
+
+  @override
   String get backupDescription => 'Description (Optional)';
 
   @override
   String get backupDescriptionHint => 'Enter a description for this backup';
 
   @override
+  String get backupDescriptionInputExample => 'e.g., Weekly backup, Pre-important update backup, etc.';
+
+  @override
+  String get backupDescriptionInputLabel => 'Backup Description';
+
+  @override
+  String backupDescriptionLabel(Object description) {
+    return 'Description: $description';
+  }
+
+  @override
+  String get backupEnsuresDataSafety => '• Backup ensures data safety';
+
+  @override
+  String backupExportedSuccessfully(Object filename) {
+    return 'Backup exported successfully: $filename';
+  }
+
+  @override
   String get backupFailure => 'Failed to Create Backup';
+
+  @override
+  String get backupFile => 'Backup File';
+
+  @override
+  String get backupFileChecksumMismatchError => 'Backup file checksum mismatch';
+
+  @override
+  String get backupFileCreationFailed => 'Failed to create backup file';
+
+  @override
+  String get backupFileCreationFailedError => 'Backup file creation failed';
+
+  @override
+  String backupFileLabel(Object filename) {
+    return 'Backup: $filename';
+  }
+
+  @override
+  String backupFileListTitle(Object count) {
+    return 'Backup File List ($count)';
+  }
+
+  @override
+  String get backupFileMissingDirectoryStructureError => 'Backup file missing required directory structure';
+
+  @override
+  String backupFileNotExist(Object path) {
+    return 'Backup file does not exist: $path';
+  }
+
+  @override
+  String get backupFileNotExistError => 'Backup file does not exist';
+
+  @override
+  String get backupFileNotFound => '备份文件不存在';
+
+  @override
+  String get backupFileSizeMismatchError => 'Backup file size mismatch';
+
+  @override
+  String get backupFileVerificationFailedError => 'Backup file verification failed';
+
+  @override
+  String get backupFirst => 'Backup First';
+
+  @override
+  String get backupImportSuccessMessage => 'Backup imported successfully';
+
+  @override
+  String get backupImportedSuccessfully => 'Backup imported successfully';
+
+  @override
+  String get backupImportedToCurrentPath => 'Backup imported to current path';
+
+  @override
+  String get backupLabel => 'Backup';
 
   @override
   String get backupList => 'Backup List';
 
   @override
-  String get backupSettings => 'Backup and Restore';
+  String get backupLocationTips => '• Recommend choosing a disk with sufficient free space as backup location\\n• Backup location can be external storage devices (like external hard drives)\\n• After changing backup location, all backup information will be managed uniformly\\n• Historical backup files will not be moved automatically, but can be viewed in backup management';
 
   @override
-  String get backupSuccess => 'Backup Created Successfully';
+  String get backupManagement => 'Backup Management';
+
+  @override
+  String get backupManagementSubtitle => 'Create, restore, import, export and manage all backup files';
+
+  @override
+  String get backupMayTakeMinutes => 'Backup may take several minutes, please keep the app running';
+
+  @override
+  String get backupNotAvailable => 'Backup Management Unavailable';
+
+  @override
+  String get backupNotAvailableMessage => 'Backup management requires database support.\n\nPossible reasons:\n• Database is initializing\n• Database initialization failed\n• Application is starting up\n\nPlease try again later or restart the app.';
+
+  @override
+  String backupNotFound(Object id) {
+    return 'Backup not found: $id';
+  }
+
+  @override
+  String backupNotFoundError(Object id) {
+    return 'Backup not found: $id';
+  }
+
+  @override
+  String get backupOperationTimeoutError => 'Backup operation timed out, please check available storage space and retry';
+
+  @override
+  String get backupOverview => 'Backup Overview';
+
+  @override
+  String get backupPathDeleted => 'Backup path deleted';
+
+  @override
+  String get backupPathDeletedMessage => 'Backup path has been deleted';
+
+  @override
+  String get backupPathNotSet => 'Please set backup path first';
+
+  @override
+  String get backupPathNotSetError => 'Please set backup path first';
+
+  @override
+  String get backupPathNotSetUp => 'Backup path is not set up';
+
+  @override
+  String get backupPathSetSuccessfully => 'Backup path set successfully';
+
+  @override
+  String get backupPathSettings => 'Backup Path Settings';
+
+  @override
+  String get backupPathSettingsSubtitle => 'Configure and manage backup storage paths';
+
+  @override
+  String backupPreCheckFailed(Object error) {
+    return 'Backup pre-check failed: $error';
+  }
+
+  @override
+  String get backupReadyRestartMessage => 'Backup file is ready, restart required to complete restore';
 
   @override
   String get backupRecommendation => 'Recommend creating backup before import';
@@ -237,18 +453,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupRecommendationDescription => 'For data safety, it\'s recommended to manually create a backup before importing';
 
   @override
-  String backupCount(int count) {
-    return '$count backups';
+  String get backupRestartWarning => 'Restart the app to apply changes';
+
+  @override
+  String backupRestoreFailedMessage(Object error) {
+    return 'Failed to restore backup: $error';
   }
 
   @override
-  String get goToBackup => 'Go to Backup';
+  String get backupRestoreSuccessMessage => 'Backup restored successfully, please restart the app to complete the restore';
 
   @override
-  String get navigatedToBackupSettings => 'Navigated to backup settings page';
+  String get backupRestoreSuccessWithRestartMessage => 'Backup restored successfully, restart required to apply changes.';
+
+  @override
+  String get backupRestoredSuccessfully => 'Backup restored successfully, please restart the app to complete restoration';
+
+  @override
+  String get backupServiceInitializing => 'Backup service is initializing, please wait and try again';
+
+  @override
+  String get backupServiceNotAvailable => 'Backup service is temporarily unavailable';
+
+  @override
+  String get backupServiceNotInitialized => 'Backup service not initialized';
+
+  @override
+  String get backupServiceNotReady => 'Backup service is temporarily unavailable';
+
+  @override
+  String get backupSettings => 'Backup and Restore';
+
+  @override
+  String backupSize(Object size) {
+    return 'Size: $size';
+  }
+
+  @override
+  String get backupStatistics => 'Backup Statistics';
+
+  @override
+  String get backupStorageLocation => 'Backup Storage Location';
+
+  @override
+  String get backupSuccess => 'Backup Created Successfully';
+
+  @override
+  String get backupSuccessCanSwitchPath => 'Backup created successfully, it\'s safe to proceed with path switching';
+
+  @override
+  String backupTimeLabel(Object time) {
+    return 'Time: $time';
+  }
+
+  @override
+  String get backupTimeoutDetailedError => 'Backup operation timed out. Possible causes:\n• Large amount of data\n• Insufficient storage space\n• Slow disk read/write speed\n\nPlease check storage space and retry.';
+
+  @override
+  String get backupTimeoutError => 'Backup creation timeout or failed, please check if storage space is sufficient';
+
+  @override
+  String get backupVerificationFailed => 'Backup file verification failed';
+
+  @override
+  String get backups => 'Backups';
+
+  @override
+  String get backupsCount => 'backups';
 
   @override
   String get basicInfo => 'Basic Information';
+
+  @override
+  String get basicProperties => 'Basic Properties';
 
   @override
   String batchDeleteMessage(Object count) {
@@ -256,13 +533,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get batchExportFailed => 'Batch export failed';
+
+  @override
+  String batchExportFailedMessage(Object error) {
+    return 'Batch export failed: $error';
+  }
+
+  @override
+  String get batchImport => 'Batch Import';
+
+  @override
   String get batchMode => 'Batch Mode';
 
   @override
   String get batchOperations => 'Batch Operations';
-
-  @override
-  String get batchImport => 'Batch Import';
 
   @override
   String get beforeDate => 'Before a Certain Date';
@@ -292,7 +577,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browse => 'Browse';
 
   @override
+  String get browsePath => 'Browse Path';
+
+  @override
   String get brushSize => 'Brush Size';
+
+  @override
+  String get buildEnvironment => 'Build Environment';
+
+  @override
+  String get buildNumber => 'Build Number';
+
+  @override
+  String get buildTime => 'Build Time';
 
   @override
   String get cacheClearedMessage => 'Cache Cleared Successfully';
@@ -310,90 +607,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calligraphyStyleText => 'Calligraphy Style';
 
   @override
+  String get canChooseDirectSwitch => '• You can also choose to switch directly';
+
+  @override
+  String get canCleanOldDataLater => 'You can clean up old data later through \"Data Path Management\"';
+
+  @override
+  String get canCleanupLaterViaManagement => 'You can clean up old data later via Data Path Management';
+
+  @override
+  String get canManuallyCleanLater => '• You can manually clean up old path data later';
+
+  @override
   String get canNotPreview => 'Cannot Generate Preview';
 
   @override
   String get cancel => 'Cancel';
 
   @override
+  String get cancelAction => 'Cancel';
+
+  @override
   String get cannotApplyNoImage => 'No Image Available';
-
-  @override
-  String get homePage => 'Home Page';
-
-  @override
-  String get fontTester => 'Font Tester';
-
-  @override
-  String get fontWeightTester => 'Font Weight Tester';
-
-  @override
-  String get backupTimeoutError => 'Backup creation timeout or failed, please check if storage space is sufficient';
-
-  @override
-  String get retry => 'Retry';
-
-  @override
-  String get serviceNotReady => 'Service not ready, please try again later';
-
-  @override
-  String get exportFailed => 'Export failed';
-
-  @override
-  String exportFailedWith(Object error) {
-    return 'Export failed: $error';
-  }
-
-  @override
-  String get importError => 'Import Error';
-
-  @override
-  String get pageBuildError => 'Page Build Error';
-
-  @override
-  String get configInitFailed => 'Configuration data initialization failed';
-
-  @override
-  String get sortFailed => 'Sort failed';
-
-  @override
-  String get selectPathFailed => 'Path selection failed';
-
-  @override
-  String get importErrorCauses => 'This issue is usually caused by the following reasons:';
-
-  @override
-  String get exportEncodingIssue => '• Special character encoding issues during export';
-
-  @override
-  String get fileCorrupted => '• File corrupted during transfer';
-
-  @override
-  String get incompatibleCharset => '• Used incompatible character set';
-
-  @override
-  String get suggestedSolutions => 'Suggested solutions:';
-
-  @override
-  String get reExportWork => '• Re-export the work';
-
-  @override
-  String get checkSpecialChars => '• Check if work title contains special characters';
-
-  @override
-  String get ensureCompleteTransfer => '• Ensure complete file transfer';
-
-  @override
-  String get reselectFile => 'Reselect File';
-
-  @override
-  String get validatingImportFile => 'Validating import file...';
-
-  @override
-  String get parsingImportData => 'Parsing import data...';
-
-  @override
-  String get executingImportOperation => 'Executing import operation...';
 
   @override
   String get cannotApplyNoSizeInfo => 'Cannot Get Image Size Information';
@@ -403,6 +638,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotDeleteOnlyPage => 'Cannot Delete Only Page';
+
+  @override
+  String get cannotGetStorageInfo => 'Cannot get storage info';
+
+  @override
+  String get cannotReadPathContent => 'Cannot read path content';
+
+  @override
+  String get cannotReadPathFileInfo => 'Cannot read path file information';
 
   @override
   String get cannotSaveMissingController => 'Cannot Save: Missing Controller';
@@ -430,6 +674,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get centimeter => 'Centimeter';
+
+  @override
+  String get changeDataPathMessage => 'The application needs to restart after changing the data path to take effect.';
+
+  @override
+  String get changePath => 'Change Path';
+
+  @override
+  String get character => 'Character';
 
   @override
   String get characterCollection => 'Characters';
@@ -526,9 +779,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterUpdated => 'Character Updated';
 
   @override
-  String charactersSelected(Object count) {
-    return 'Selected $count Characters';
-  }
+  String get characters => 'Characters';
 
   @override
   String charactersCount(Object count) {
@@ -536,13 +787,67 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String charactersSelected(Object count) {
+    return 'Selected $count Characters';
+  }
+
+  @override
+  String get checkBackupRecommendationFailed => 'Failed to check backup recommendation';
+
+  @override
+  String get checkFailedRecommendBackup => 'Check failed, recommend creating backup first to ensure data safety';
+
+  @override
+  String get checkSpecialChars => '• Check if work title contains special characters';
+
+  @override
+  String get cleanDuplicateRecords => 'Clean Duplicate Records';
+
+  @override
+  String get cleanDuplicateRecordsDescription => 'This operation will clean duplicate backup records without deleting actual backup files.';
+
+  @override
+  String get cleanDuplicateRecordsTitle => 'Clean Duplicate Records';
+
+  @override
+  String cleanupCompleted(Object count) {
+    return 'Cleanup completed, removed $count invalid paths';
+  }
+
+  @override
+  String cleanupCompletedMessage(Object count) {
+    return 'Cleanup completed, removed $count invalid paths';
+  }
+
+  @override
+  String cleanupCompletedWithCount(Object count) {
+    return 'Cleanup completed, removed $count duplicate records';
+  }
+
+  @override
+  String get cleanupFailed => 'Cleanup failed';
+
+  @override
+  String cleanupFailedMessage(Object error) {
+    return 'Cleanup failed: $error';
+  }
+
+  @override
+  String get cleanupInvalidPaths => 'Cleanup Invalid Paths';
+
+  @override
+  String cleanupOperationFailed(Object error) {
+    return 'Cleanup operation failed: $error';
+  }
+
+  @override
   String get clearCache => 'Clear Cache';
 
   @override
-  String get clearSelection => 'Clear Selection';
+  String get clearCacheConfirmMessage => 'Are you sure you want to clear all cache data? This will free up disk space but may temporarily slow down the application.';
 
   @override
-  String get clearCacheConfirmMessage => 'Are you sure you want to clear all cache data? This will free up disk space but may temporarily slow down the application.';
+  String get clearSelection => 'Clear Selection';
 
   @override
   String get close => 'Close';
@@ -554,7 +859,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collapse => 'Collapse';
 
   @override
+  String get collapseFileList => 'Click to collapse file list';
+
+  @override
   String get collectionDate => 'Collection Date';
+
+  @override
+  String get collectionElement => 'Collection Element';
+
+  @override
+  String get collectionIdCannotBeEmpty => 'Collection ID cannot be empty';
 
   @override
   String get collectionTime => 'Collection Time';
@@ -590,6 +904,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completingSave => 'Completing Save...';
 
   @override
+  String get compressData => 'Compress Data';
+
+  @override
+  String get compressDataDescription => 'Reduce export file size';
+
+  @override
+  String get configInitFailed => 'Configuration data initialization failed';
+
+  @override
+  String get configInitializationFailed => 'Configuration initialization failed';
+
+  @override
+  String get configInitializing => 'Initializing configuration...';
+
+  @override
   String get configKey => 'Configuration Key';
 
   @override
@@ -602,27 +931,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configManagementTitle => 'Calligraphy Style Management';
 
   @override
-  String get configInitializing => 'Initializing configuration...';
-
-  @override
-  String get configInitializationFailed => 'Configuration initialization failed';
-
-  @override
-  String itemsCount(Object count) {
-    return '$count items';
-  }
-
-  @override
-  String get writingToolManagement => 'Writing Tool Management';
-
-  @override
   String get confirm => 'Confirm';
+
+  @override
+  String get confirmChangeDataPath => 'Confirm Change Data Path';
+
+  @override
+  String get confirmContinue => 'Are you sure you want to continue?';
+
+  @override
+  String get confirmDataNormalBeforeClean => '• Recommend confirming data is normal before cleaning old path';
+
+  @override
+  String get confirmDataPathSwitch => 'Confirm Data Path Switch';
 
   @override
   String get confirmDelete => 'Confirm Delete';
 
   @override
+  String get confirmDeleteAction => 'Confirm Delete';
+
+  @override
   String get confirmDeleteAll => 'Confirm Delete All';
+
+  @override
+  String get confirmDeleteAllBackups => 'Confirm Delete All Backups';
+
+  @override
+  String get confirmDeleteAllButton => 'Confirm Delete All';
+
+  @override
+  String confirmDeleteBackup(Object description, Object filename) {
+    return 'Are you sure you want to delete this backup?\\n\\nBackup: $filename\\nDescription: $description\\n\\nThis operation cannot be undone!';
+  }
+
+  @override
+  String confirmDeleteBackupPath(Object path) {
+    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove the path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
+  }
+
+  @override
+  String get confirmDeleteButton => 'Confirm Delete';
+
+  @override
+  String get confirmDeleteHistoryPath => 'Are you sure you want to delete this history path record?';
+
+  @override
+  String get confirmDeleteTitle => 'Confirm Delete';
+
+  @override
+  String get confirmExitWizard => 'Are you sure you want to exit the data path switch wizard?';
+
+  @override
+  String get confirmImportAction => 'Confirm Import';
+
+  @override
+  String get confirmImportButton => 'Confirm Import';
 
   @override
   String get confirmOverwrite => 'Confirm Overwrite';
@@ -633,7 +997,57 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get confirmResetToDefaultPath => 'Confirm Reset to Default Path';
+
+  @override
+  String get confirmRestoreAction => 'Confirm Restore';
+
+  @override
+  String get confirmRestoreBackup => 'Are you sure you want to restore this backup?';
+
+  @override
+  String get confirmRestoreButton => 'Confirm Restore';
+
+  @override
+  String get confirmRestoreMessage => 'Are you sure you want to restore this backup?';
+
+  @override
+  String get confirmRestoreTitle => 'Confirm Restore';
+
+  @override
   String get confirmShortcuts => 'Shortcuts: Enter Confirm, Esc Cancel';
+
+  @override
+  String get confirmSkip => 'Confirm Skip';
+
+  @override
+  String get confirmSkipAction => 'Confirm Skip';
+
+  @override
+  String get confirmSwitch => 'Confirm Switch';
+
+  @override
+  String get confirmSwitchButton => 'Confirm Switch';
+
+  @override
+  String get confirmSwitchToNewPath => 'Confirm switching to new data path';
+
+  @override
+  String get conflictDetailsTitle => 'Conflict Resolution Details';
+
+  @override
+  String get conflictReason => 'Conflict Reason';
+
+  @override
+  String get conflictResolution => 'Conflict Resolution';
+
+  @override
+  String conflictsCount(Object count) {
+    return 'Found $count conflicts';
+  }
+
+  @override
+  String get conflictsFound => 'Conflicts Found';
 
   @override
   String get contentProperties => 'Content Properties';
@@ -642,19 +1056,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contentSettings => 'Content Settings';
 
   @override
+  String get continueDuplicateImport => 'Do you still want to continue importing this backup?';
+
+  @override
+  String get continueImport => 'Continue Import';
+
+  @override
+  String get continueQuestion => 'Continue?';
+
+  @override
   String get copy => 'Copy (Ctrl+Shift+C)';
+
+  @override
+  String copyFailed(Object error) {
+    return 'Copy failed: $error';
+  }
 
   @override
   String get copyFormat => 'Copy Format (Alt+Q)';
 
   @override
-  String get copyVersionInfo => 'Copy Version Info';
-
-  @override
   String get copySelected => 'Copy Selected Items';
 
   @override
+  String get copyVersionInfo => 'Copy Version Info';
+
+  @override
   String get couldNotGetFilePath => 'Could Not Get File Path';
+
+  @override
+  String get countUnit => '';
 
   @override
   String get create => 'Create';
@@ -663,12 +1094,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createBackup => 'Create Backup';
 
   @override
+  String get createBackupBeforeImport => 'Create backup before import';
+
+  @override
   String get createBackupDescription => 'Create a New Data Backup';
+
+  @override
+  String get createBackupFailed => 'Create backup failed';
+
+  @override
+  String createBackupFailedMessage(Object error) {
+    return 'Failed to create backup: $error';
+  }
 
   @override
   String createExportDirectoryFailed(Object error) {
     return 'Failed to Create Export Directory $error';
   }
+
+  @override
+  String get createFirstBackup => 'Create first backup';
 
   @override
   String get createTime => 'Creation Time';
@@ -680,7 +1125,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creatingBackup => 'Creating Backup...';
 
   @override
+  String get creatingBackupPleaseWaitMessage => 'This may take a few minutes, please be patient';
+
+  @override
+  String get creatingBackupProgressMessage => 'Creating backup...';
+
+  @override
   String get creationDate => 'Creation Date';
+
+  @override
+  String get criticalError => 'Critical Error';
 
   @override
   String get cropBottom => 'Crop Bottom';
@@ -703,13 +1157,61 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get currentBackupPathNotSet => 'Current backup path not set';
+
+  @override
   String get currentCharInversion => 'Current Character Inversion';
+
+  @override
+  String get currentCustomPath => 'Currently using custom data path';
+
+  @override
+  String get currentDataPath => 'Current Data Path';
+
+  @override
+  String get currentDefaultPath => 'Currently using default data path';
+
+  @override
+  String get currentLabel => 'Current';
+
+  @override
+  String get currentLocation => 'Current Location';
 
   @override
   String get currentPage => 'Current Page';
 
   @override
+  String get currentPath => 'Current Path';
+
+  @override
+  String get currentPathBackup => 'Current Path Backup';
+
+  @override
+  String get currentPathBackupDescription => 'Current path backup';
+
+  @override
+  String get currentPathFileExists => 'A backup file with the same name already exists in the current path:';
+
+  @override
+  String get currentPathFileExistsMessage => 'A backup file with the same name already exists in the current path:';
+
+  @override
+  String get currentStorageInfo => 'Current Storage Info';
+
+  @override
+  String get currentStorageInfoSubtitle => 'View current storage space usage';
+
+  @override
+  String get currentStorageInfoTitle => 'Current Storage Info';
+
+  @override
+  String get currentTool => 'Current Tool';
+
+  @override
   String get custom => 'Custom';
+
+  @override
+  String get customPath => 'Custom Path';
 
   @override
   String get customRange => 'Custom Range';
@@ -724,10 +1226,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dangerZone => 'Danger Zone';
 
   @override
+  String get dangerousOperationConfirm => 'Dangerous Operation Confirmation';
+
+  @override
+  String get dangerousOperationConfirmTitle => 'Dangerous Operation Confirmation';
+
+  @override
+  String get dartVersion => 'Dart Version';
+
+  @override
+  String get dataBackup => 'Data Backup';
+
+  @override
   String get dataEmpty => 'Data Empty';
 
   @override
   String get dataIncomplete => 'Data Incomplete';
+
+  @override
+  String get dataMergeOptions => 'Data Merge Options:';
+
+  @override
+  String get dataPath => 'Data Path';
+
+  @override
+  String get dataPathChangedMessage => 'Data path has been changed. Please restart the application for changes to take effect.';
+
+  @override
+  String get dataPathHint => 'Select data storage path';
+
+  @override
+  String get dataPathManagement => 'Data Path Management';
+
+  @override
+  String get dataPathManagementSubtitle => 'Manage current and historical data paths';
+
+  @override
+  String get dataPathManagementTitle => 'Data Path Management';
+
+  @override
+  String get dataPathSettings => 'Data Storage Path';
+
+  @override
+  String get dataPathSettingsDescription => 'Set the storage location for application data. Restart required after changes.';
+
+  @override
+  String get dataPathSettingsSubtitle => 'Configure application data storage location';
+
+  @override
+  String get dataPathSwitchOptions => 'Data Path Switch Options';
+
+  @override
+  String get dataPathSwitchWizard => 'Data Path Switch Wizard';
+
+  @override
+  String get dataSafetyRecommendation => 'Data Safety Recommendation';
+
+  @override
+  String get dataSafetySuggestion => 'Data Safety Suggestion';
+
+  @override
+  String get dataSafetySuggestions => 'Data Safety Suggestions';
+
+  @override
+  String get dataSize => 'Data Size';
+
+  @override
+  String get databaseSize => 'Database Size';
+
+  @override
+  String get dayBeforeYesterday => 'Day Before Yesterday';
 
   @override
   String days(num count) {
@@ -741,13 +1309,52 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get daysAgo => 'days ago';
+
+  @override
+  String get defaultEditableText => 'Editable Text in Property Panel';
+
+  @override
+  String get defaultLayer => 'Default Layer';
+
+  @override
+  String defaultLayerName(Object number) {
+    return 'Layer $number';
+  }
+
+  @override
+  String get defaultPage => 'Default Page';
+
+  @override
+  String defaultPageName(Object number) {
+    return 'Page $number';
+  }
+
+  @override
+  String get defaultPath => 'Default Path';
+
+  @override
+  String get defaultPathName => 'Default Path';
+
+  @override
   String get delete => 'Delete (Ctrl+D)';
 
   @override
   String get deleteAll => 'Delete All';
 
   @override
+  String get deleteAllBackups => 'Delete All Backups';
+
+  @override
   String get deleteBackup => 'Delete Backup';
+
+  @override
+  String get deleteBackupFailed => 'Failed to delete backup';
+
+  @override
+  String deleteBackupsCountMessage(Object count) {
+    return 'You are about to delete $count backup files.';
+  }
 
   @override
   String get deleteCategory => 'Delete Category';
@@ -757,6 +1364,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteCategoryWithFiles => 'Delete Category and Files';
+
+  @override
+  String deleteCharacterFailed(Object error) {
+    return 'Failed to delete character: $error';
+  }
+
+  @override
+  String get deleteCompleteTitle => 'Delete Complete';
 
   @override
   String get deleteConfigItem => 'Delete Configuration Item';
@@ -771,8 +1386,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteElementConfirmMessage => 'Confirm Delete These Elements?';
 
   @override
+  String deleteFailCount(Object count) {
+    return 'Failed to delete: $count files';
+  }
+
+  @override
+  String get deleteFailDetails => 'Failure details:';
+
+  @override
   String deleteFailed(Object error) {
     return 'Delete Failed: $error';
+  }
+
+  @override
+  String deleteFailedMessage(Object error) {
+    return 'Delete failed: $error';
   }
 
   @override
@@ -783,6 +1411,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteGroupConfirm => 'Confirm Delete Group';
+
+  @override
+  String get deleteHistoryPathNote => 'Note: This will only delete the record, not the actual folder and data.';
+
+  @override
+  String get deleteHistoryPathRecord => 'Delete History Path Record';
 
   @override
   String get deleteImage => 'Delete Image';
@@ -800,22 +1434,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteLayerMessage => 'All elements on this layer will be deleted. This action cannot be undone.';
 
   @override
-  String get deleteMessage => 'Confirm Delete This Item?';
+  String deleteMessage(Object count) {
+    return 'Confirm Delete This Item?';
+  }
 
   @override
   String get deletePage => 'Delete Page';
 
   @override
-  String get deleteSelected => 'Delete Selected';
+  String get deletePath => 'Delete Path';
 
   @override
-  String get deleteSelectedWithShortcut => 'Delete Selected (Ctrl+D)';
+  String get deletePathButton => 'Delete Path';
+
+  @override
+  String deletePathConfirmContent(Object path) {
+    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove this path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
+  }
+
+  @override
+  String deleteRangeItem(Object count, Object path) {
+    return '• $path: $count files';
+  }
+
+  @override
+  String get deleteRangeTitle => 'Delete range includes:';
+
+  @override
+  String get deleteSelected => 'Delete Selected';
 
   @override
   String get deleteSelectedArea => 'Delete Selected Area';
 
   @override
+  String get deleteSelectedWithShortcut => 'Delete Selected (Ctrl+D)';
+
+  @override
   String get deleteSuccess => 'Backup Delete Successful';
+
+  @override
+  String deleteSuccessCount(Object count) {
+    return 'Successfully deleted: $count files';
+  }
 
   @override
   String get deleteText => 'Delete';
@@ -824,7 +1484,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleting => 'Deleting...';
 
   @override
+  String get deletingBackups => 'Deleting backups...';
+
+  @override
+  String get deletingBackupsProgress => 'Deleting backup files, please wait...';
+
+  @override
   String get descending => 'Descending';
+
+  @override
+  String get descriptionLabel => 'Description';
 
   @override
   String get deselectAll => 'Deselect All';
@@ -833,7 +1502,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detail => 'Detail';
 
   @override
+  String get detailedError => 'Detailed error';
+
+  @override
+  String get detailedReport => 'Detailed Report';
+
+  @override
+  String get deviceInfo => 'Device Info';
+
+  @override
   String get dimensions => 'Dimensions';
+
+  @override
+  String get directSwitch => 'Switch Directly';
 
   @override
   String get disabled => 'Disabled';
@@ -881,10 +1562,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distribution => 'Distribution';
 
   @override
+  String get doNotCloseApp => 'Please do not close the application...';
+
+  @override
+  String get doNotCloseAppMessage => 'Do not close the application';
+
+  @override
   String get done => 'Done';
 
   @override
   String get dropToImportImages => 'Drop to Import Images';
+
+  @override
+  String get duplicateBackupFound => 'Duplicate Backup Found';
+
+  @override
+  String get duplicateBackupFoundDesc => 'The backup file you\'re importing is a duplicate of an existing backup:';
+
+  @override
+  String get duplicateFileImported => '(duplicate file imported)';
 
   @override
   String get dynasty => 'Dynasty';
@@ -913,6 +1609,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editOperations => 'Edit Operations';
+
+  @override
+  String get editTags => 'Edit Tags';
 
   @override
   String get editTitle => 'Edit Title';
@@ -969,6 +1668,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get endDate => 'End Date';
 
   @override
+  String get ensureCompleteTransfer => '• Ensure complete file transfer';
+
+  @override
+  String get ensureReadWritePermission => 'Ensure the new path has read/write permissions';
+
+  @override
+  String get enterBackupDescription => 'Enter backup description (optional):';
+
+  @override
   String get enterCategoryName => 'Enter Category Name';
 
   @override
@@ -980,22 +1688,91 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get errors => 'Errors';
+
+  @override
+  String get estimatedTime => 'Estimated Time';
+
+  @override
+  String get executingImportOperation => 'Executing import operation...';
+
+  @override
+  String existingBackupInfo(Object filename) {
+    return 'Existing backup: $filename';
+  }
+
+  @override
+  String get existingItem => 'Existing Item';
+
+  @override
   String get exit => 'Exit';
 
   @override
   String get exitBatchMode => 'Exit Batch Mode';
 
   @override
+  String get exitConfirm => 'Exit';
+
+  @override
   String get exitPreview => 'Exit Preview Mode';
+
+  @override
+  String get exitWizard => 'Exit Wizard';
 
   @override
   String get expand => 'Expand';
 
   @override
+  String expandFileList(Object count) {
+    return 'Click to expand and view $count backup files';
+  }
+
+  @override
   String get export => 'Export';
 
   @override
+  String get exportAllBackups => 'Export All Backups';
+
+  @override
+  String get exportAllBackupsButton => 'Export All Backups';
+
+  @override
   String get exportBackup => 'Export Backup';
+
+  @override
+  String get exportBackupFailed => 'Failed to export backup';
+
+  @override
+  String exportBackupFailedMessage(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get exportCharactersOnly => 'Export Characters Only';
+
+  @override
+  String get exportCharactersOnlyDescription => 'Contains only selected character data';
+
+  @override
+  String get exportCharactersWithWorks => 'Export Characters with Works (Recommended)';
+
+  @override
+  String get exportCharactersWithWorksDescription => 'Contains characters and their source works data';
+
+  @override
+  String exportCompleted(Object failed, Object success) {
+    return 'Export completed: $success successful$failed';
+  }
+
+  @override
+  String exportCompletedFormat(Object failedMessage, Object successCount) {
+    return 'Export completed: $successCount successful$failedMessage';
+  }
+
+  @override
+  String exportCompletedFormat2(Object failed, Object success) {
+    return '导出完成，成功: $success$failed';
+  }
 
   @override
   String get exportConfig => 'Export Configuration';
@@ -1009,103 +1786,72 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get exportEncodingIssue => '• Special character encoding issues during export';
+
+  @override
+  String get exportFailed => 'Export failed';
+
+  @override
+  String exportFailedPartFormat(Object failCount) {
+    return ', $failCount failed';
+  }
+
+  @override
+  String exportFailedPartFormat2(Object count) {
+    return ', 失败: $count';
+  }
+
+  @override
+  String exportFailedWith(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
   String get exportFailure => 'Backup Export Failed';
-
-  @override
-  String get exportNotImplemented => 'Configuration export feature is under development';
-
-  @override
-  String get exportSuccess => 'Backup Export Successful';
-
-  @override
-  String get exportType => 'Export Format';
 
   @override
   String get exportFormat => 'Export Format';
 
   @override
-  String get exportOptions => 'Export Options';
-
-  @override
-  String get exportSummary => 'Export Summary';
-
-  @override
-  String get selectedItems => 'Selected Items';
-
-  @override
-  String get exportLocation => 'Export Location';
-
-  @override
-  String get selectExportLocationHint => 'Select export location...';
-
-  @override
-  String get includeImages => 'Include Images';
-
-  @override
-  String get includeImagesDescription => 'Export related image files';
-
-  @override
-  String get includeMetadata => 'Include Metadata';
-
-  @override
-  String get includeMetadataDescription => 'Export creation time, tags and other metadata';
-
-  @override
-  String get compressData => 'Compress Data';
-
-  @override
-  String get compressDataDescription => 'Reduce export file size';
-
-  @override
-  String get exportWorksOnly => 'Export Works Only';
-
-  @override
-  String get exportWorksWithCharacters => 'Export Works with Characters (Recommended)';
-
-  @override
-  String get exportCharactersOnly => 'Export Characters Only';
-
-  @override
-  String get exportCharactersWithWorks => 'Export Characters with Works (Recommended)';
-
-  @override
   String get exportFullData => 'Full Data Export';
-
-  @override
-  String get exportWorksOnlyDescription => 'Contains only selected works data';
-
-  @override
-  String get exportWorksWithCharactersDescription => 'Contains works and their related character data';
-
-  @override
-  String get exportCharactersOnlyDescription => 'Contains only selected character data';
-
-  @override
-  String get exportCharactersWithWorksDescription => 'Contains characters and their source works data';
 
   @override
   String get exportFullDataDescription => 'Contains all related data';
 
   @override
-  String get jsonFile => 'JSON File';
+  String get exportLocation => 'Export Location';
 
   @override
-  String get zipFile => 'ZIP Archive';
+  String get exportNotImplemented => 'Configuration export feature is under development';
 
   @override
-  String get backupFile => 'Backup File';
+  String get exportOptions => 'Export Options';
 
   @override
-  String get hideDetails => 'Hide Details';
+  String get exportSuccess => 'Backup Export Successful';
 
   @override
-  String get showDetails => 'Show Details';
+  String exportSuccessMessage(Object path) {
+    return 'Export successful: $path';
+  }
 
   @override
-  String get exportingDescription => 'Exporting data, please wait...';
+  String get exportSummary => 'Export Summary';
 
   @override
-  String get importingDescription => 'Importing data, please wait...';
+  String get exportType => 'Export Format';
+
+  @override
+  String get exportWorksOnly => 'Export Works Only';
+
+  @override
+  String get exportWorksOnlyDescription => 'Contains only selected works data';
+
+  @override
+  String get exportWorksWithCharacters => 'Export Works with Characters (Recommended)';
+
+  @override
+  String get exportWorksWithCharactersDescription => 'Contains works and their related character data';
 
   @override
   String get exporting => 'Exporting, Please Wait...';
@@ -1114,10 +1860,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportingBackup => 'Exporting Backup...';
 
   @override
+  String get exportingBackupMessage => 'Exporting backup...';
+
+  @override
+  String exportingBackups(Object count) {
+    return 'Exporting $count backups...';
+  }
+
+  @override
+  String get exportingBackupsProgress => 'Exporting backups...';
+
+  @override
+  String exportingBackupsProgressFormat(Object count) {
+    return 'Exporting $count backups...';
+  }
+
+  @override
+  String get exportingDescription => 'Exporting data, please wait...';
+
+  @override
   String get extract => 'Extract';
 
   @override
   String get extractionError => 'Extraction Error';
+
+  @override
+  String failedCount(Object count) {
+    return ', $count failed';
+  }
 
   @override
   String get favorite => 'Favorite';
@@ -1126,7 +1896,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get favoritesOnly => 'Favorites Only';
 
   @override
+  String get fileCorrupted => '• File corrupted during transfer';
+
+  @override
+  String get fileCount => 'File Count';
+
+  @override
+  String get fileExistsTitle => 'File Already Exists';
+
+  @override
   String get fileExtension => 'File Extension';
+
+  @override
+  String get fileMigrationWarning => 'When not migrating files, old path backup files remain in original location';
 
   @override
   String get fileName => 'File Name';
@@ -1191,6 +1973,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flipVertical => 'Flip Vertical';
 
   @override
+  String get flutterVersion => 'Flutter Version';
+
+  @override
   String get folderImportComplete => 'Folder Import Complete';
 
   @override
@@ -1206,7 +1991,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fontStyle => 'Font Style';
 
   @override
+  String get fontTester => 'Font Tester';
+
+  @override
   String get fontWeight => 'Font Weight';
+
+  @override
+  String get fontWeightTester => 'Font Weight Tester';
 
   @override
   String get format => 'Format';
@@ -1230,7 +2021,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geometryProperties => 'Geometry Properties';
 
   @override
+  String get getHistoryPathsFailed => 'Failed to get history paths';
+
+  @override
+  String get getPathInfoFailed => 'Failed to get path information';
+
+  @override
+  String get getPathUsageTimeFailed => 'Failed to get path usage time';
+
+  @override
+  String get getStorageInfoFailed => 'Failed to get storage info';
+
+  @override
   String get getThumbnailSizeError => 'Get Thumbnail Size Error';
+
+  @override
+  String get gettingPathInfo => 'Getting path info...';
+
+  @override
+  String get gettingStorageInfo => 'Getting storage info...';
+
+  @override
+  String get gitBranch => 'Git Branch';
+
+  @override
+  String get gitCommit => 'Git Commit';
+
+  @override
+  String get goToBackup => 'Go to Backup';
 
   @override
   String get gridSettings => 'Grid Settings';
@@ -1272,6 +2090,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get help => 'Help';
 
   @override
+  String get hideDetails => 'Hide Details';
+
+  @override
   String get hideElement => 'Hide Element';
 
   @override
@@ -1282,6 +2103,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideThumbnails => 'Hide Page Thumbnails';
+
+  @override
+  String get historicalPaths => 'Historical Paths';
+
+  @override
+  String get historyDataPaths => 'Historical Data Paths';
+
+  @override
+  String get historyLabel => 'History';
+
+  @override
+  String get historyLocation => 'History Location';
+
+  @override
+  String get historyPath => 'History Path';
+
+  @override
+  String get historyPathBackup => 'Historical Path Backup';
+
+  @override
+  String get historyPathBackupDescription => 'Historical path backup';
+
+  @override
+  String get historyPathDeleted => 'History path record deleted';
+
+  @override
+  String get homePage => 'Home Page';
 
   @override
   String get horizontalAlignment => 'Horizontal Alignment';
@@ -1304,10 +2152,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get hoursAgo => 'hours ago';
+
+  @override
   String get image => 'Image';
 
   @override
   String get imageCount => 'Image Count';
+
+  @override
+  String get imageElement => 'Image Element';
 
   @override
   String get imageExportFailed => 'Image Export Failed';
@@ -1381,6 +2235,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageUpdated => 'Image Updated';
 
   @override
+  String get images => 'Images';
+
+  @override
   String get implementationComingSoon => 'This feature is under development, please stay tuned!';
 
   @override
@@ -1390,7 +2247,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importBackup => 'Import Backup';
 
   @override
+  String get importBackupFailed => 'Failed to import backup';
+
+  @override
+  String importBackupFailedMessage(Object error) {
+    return 'Failed to import backup: $error';
+  }
+
+  @override
   String get importConfig => 'Import Configuration';
+
+  @override
+  String get importError => 'Import Error';
+
+  @override
+  String get importErrorCauses => 'This issue is usually caused by the following reasons:';
 
   @override
   String importFailed(Object error) {
@@ -1413,10 +2284,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importNotImplemented => 'Configuration import feature is under development';
 
   @override
+  String get importOptions => 'Import Options';
+
+  @override
   String get importPreview => 'Import Preview';
 
   @override
   String get importRequirements => 'Import Requirements';
+
+  @override
+  String get importResultTitle => 'Import Result';
+
+  @override
+  String get importStatistics => 'Import Statistics';
 
   @override
   String get importSuccess => 'Backup Import Success';
@@ -1427,46 +2307,85 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get importResultTitle => 'Import Result';
+  String get importToCurrentPath => 'Import to Current Path';
 
   @override
-  String get importedWorks => 'Imported Works';
+  String get importToCurrentPathButton => 'Import to Current Path';
+
+  @override
+  String get importToCurrentPathDesc => 'This will copy the backup file to current path, original file remains unchanged.';
+
+  @override
+  String get importToCurrentPathDescription => 'This will copy the backup file to the current path, original file remains unchanged.';
+
+  @override
+  String get importToCurrentPathFailed => 'Failed to import backup to current path';
+
+  @override
+  String get importToCurrentPathMessage => 'Are you sure you want to import this backup to the current backup path?';
+
+  @override
+  String get importToCurrentPathSuccessMessage => 'Backup successfully imported to current path';
+
+  @override
+  String get importToCurrentPathTitle => 'Import to Current Path';
+
+  @override
+  String get importantReminder => 'Important Reminder';
+
+  @override
+  String get importedBackupDescription => 'Imported backup';
 
   @override
   String get importedCharacters => 'Imported Characters';
 
   @override
-  String get importedImages => 'Imported Images';
-
-  @override
   String get importedFile => 'Imported File';
 
   @override
-  String get importStatistics => 'Import Statistics';
+  String get importedImages => 'Imported Images';
 
   @override
-  String get processingDetails => 'Processing Details';
+  String get importedSuffix => 'Imported Backup';
 
   @override
-  String get skippedItems => 'Skipped Items';
-
-  @override
-  String get overwrittenItems => 'Overwritten Items';
-
-  @override
-  String get detailedReport => 'Detailed Report';
-
-  @override
-  String get viewDetails => 'View Details';
-
-  @override
-  String get warnings => 'Warnings';
-
-  @override
-  String get errors => 'Errors';
+  String get importedWorks => 'Imported Works';
 
   @override
   String get importing => 'Importing...';
+
+  @override
+  String get importingBackup => 'Importing backup...';
+
+  @override
+  String get importingBackupProgressMessage => 'Importing backup...';
+
+  @override
+  String get importingDescription => 'Importing data, please wait...';
+
+  @override
+  String get importingToCurrentPath => 'Importing to current path...';
+
+  @override
+  String get importingToCurrentPathMessage => 'Importing backup to current path...';
+
+  @override
+  String get importingWorks => 'Importing works...';
+
+  @override
+  String get includeImages => 'Include Images';
+
+  @override
+  String get includeImagesDescription => 'Export related image files';
+
+  @override
+  String get includeMetadata => 'Include Metadata';
+
+  @override
+  String get includeMetadataDescription => 'Export creation time, tags and other metadata';
+
+  @override
+  String get incompatibleCharset => '• Used incompatible character set';
 
   @override
   String initializationFailed(Object error) {
@@ -1512,15 +2431,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get isActive => 'Is Active';
 
   @override
+  String itemsCount(Object count) {
+    return '$count items';
+  }
+
+  @override
   String itemsPerPage(Object count) {
     return '$count items/page';
   }
+
+  @override
+  String get jsonFile => 'JSON File';
+
+  @override
+  String get justNow => 'just now';
 
   @override
   String get keepBackupCount => 'Keep Backup Count';
 
   @override
   String get keepBackupCountDescription => 'Number of backups to keep before deleting old ones';
+
+  @override
+  String get keepExisting => 'Keep Existing';
+
+  @override
+  String get keepExistingDescription => 'Keep existing data, skip import';
 
   @override
   String get key => 'Key';
@@ -1559,6 +2495,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEn => 'English';
 
   @override
+  String get languageJa => '日本語';
+
+  @override
+  String get languageKo => '한국어';
+
+  @override
   String get languageSystem => 'System';
 
   @override
@@ -1577,6 +2519,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get last90Days => 'Last 90 Days';
 
   @override
+  String get lastBackup => 'Last Backup';
+
+  @override
   String get lastBackupTime => 'Last Backup Time';
 
   @override
@@ -1584,6 +2529,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lastPage => 'Last Page';
+
+  @override
+  String get lastUsed => 'Last Used';
+
+  @override
+  String get lastUsedTime => 'Last used';
 
   @override
   String get lastWeek => 'Last Week';
@@ -1618,7 +2569,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get leave => 'Leave';
 
   @override
+  String get legacyBackupDescription => 'Legacy backup';
+
+  @override
+  String get legacyDataPathDescription => 'Legacy data path pending cleanup';
+
+  @override
   String get letterSpacing => 'Letter Spacing';
+
+  @override
+  String get library => 'Library';
 
   @override
   String get libraryCount => 'Library Count';
@@ -1636,10 +2596,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listView => 'List View';
 
   @override
+  String get loadBackupRegistryFailed => 'Failed to load backup registry';
+
+  @override
+  String loadCharacterDataFailed(Object error) {
+    return 'Failed to load character data: $error';
+  }
+
+  @override
   String get loadConfigFailed => 'Failed to load configuration';
 
   @override
+  String get loadCurrentBackupPathFailed => 'Failed to load current backup path';
+
+  @override
+  String get loadDataFailed => 'Failed to load data';
+
+  @override
   String get loadFailed => 'Load Failed';
+
+  @override
+  String get loadPathInfoFailed => 'Failed to load path information';
 
   @override
   String get loadPracticeSheetFailed => 'Load Practice Sheet Failed';
@@ -1669,6 +2646,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locked => 'Locked';
 
   @override
+  String get manualBackupDescription => 'Manually created backup';
+
+  @override
   String get marginBottom => 'Bottom';
 
   @override
@@ -1696,13 +2676,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryImageCacheCapacityDescription => 'Number of images to keep in memory';
 
   @override
+  String get mergeAndMigrateFiles => 'Merge and Migrate Files';
+
+  @override
+  String get mergeBackupInfo => 'Merge Backup Info';
+
+  @override
+  String get mergeBackupInfoDesc => 'Merge old path backup info into new path registry';
+
+  @override
+  String get mergeData => 'Merge Data';
+
+  @override
+  String get mergeDataDescription => 'Combine existing and imported data';
+
+  @override
+  String get mergeOnlyBackupInfo => 'Merge Backup Info Only';
+
+  @override
   String get metadata => 'Metadata';
+
+  @override
+  String get migrateBackupFiles => 'Migrate Backup Files';
+
+  @override
+  String get migrateBackupFilesDesc => 'Copy old path backup files to new path (recommended)';
+
+  @override
+  String get migratingData => 'Migrating Data';
 
   @override
   String get min => 'Min';
 
   @override
   String get monospace => 'Monospace';
+
+  @override
+  String get monthsAgo => 'months ago';
+
+  @override
+  String moreErrorsCount(Object count) {
+    return '...and $count more errors';
+  }
 
   @override
   String get moveDown => 'Move Down (Ctrl+Shift+B)';
@@ -1734,7 +2749,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navExpandSidebar => 'Expand Sidebar';
 
   @override
+  String get navigatedToBackupSettings => 'Navigated to backup settings page';
+
+  @override
+  String get navigationAttemptBack => '尝试返回上一个功能区';
+
+  @override
+  String get navigationAttemptToNewSection => '尝试导航到新功能区';
+
+  @override
+  String get navigationAttemptToSpecificItem => '尝试导航到特定历史记录项';
+
+  @override
   String get navigationBackToPrevious => 'Back to Previous Page';
+
+  @override
+  String get navigationClearHistory => 'Clear Navigation History';
+
+  @override
+  String get navigationClearHistoryFailed => 'Failed to clear navigation history';
+
+  @override
+  String get navigationFailedBack => '返回导航失败';
+
+  @override
+  String get navigationFailedSection => '导航切换失败';
+
+  @override
+  String get navigationFailedToSpecificItem => 'Failed to navigate to specific history item';
+
+  @override
+  String get navigationHistoryCleared => '导航历史记录已清空';
+
+  @override
+  String get navigationItemNotFound => '历史记录中未找到目标项，直接导航到该功能区';
 
   @override
   String get navigationNoHistory => 'No History';
@@ -1743,88 +2791,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationNoHistoryMessage => 'You have reached the beginning of the current functional area.';
 
   @override
-  String get navigationSelectPage => 'Which page do you want to return to?';
-
-  @override
-  String get navigationSectionWorkBrowse => 'Work Browse';
-
-  @override
-  String get navigationSectionCharacterManagement => 'Character Management';
-
-  @override
-  String get navigationSectionPracticeList => 'Practice List';
-
-  @override
-  String get navigationSectionGalleryManagement => 'Gallery Management';
-
-  @override
-  String get navigationSectionSettings => 'Settings';
-
-  @override
-  String get navigationClearHistory => 'Clear Navigation History';
-
-  @override
-  String get navigationHistoryCleared => '导航历史记录已清空';
-
-  @override
-  String get navigationClearHistoryFailed => 'Failed to clear navigation history';
-
-  @override
-  String get navigationAttemptToSpecificItem => '尝试导航到特定历史记录项';
-
-  @override
-  String get navigationItemNotFound => '历史记录中未找到目标项，直接导航到该功能区';
-
-  @override
-  String get navigationSuccessToSpecificItem => 'Successfully navigated to specific history item';
-
-  @override
-  String get navigationFailedToSpecificItem => 'Failed to navigate to specific history item';
-
-  @override
-  String get navigationAttemptBack => '尝试返回上一个功能区';
-
-  @override
-  String get navigationSuccessBack => 'Successfully navigated back to previous section';
-
-  @override
-  String get navigationFailedBack => '返回导航失败';
-
-  @override
-  String get navigationAttemptToNewSection => '尝试导航到新功能区';
-
-  @override
-  String get navigationSuccessToNewSection => 'Successfully navigated to new section';
-
-  @override
-  String get navigationFailedSection => '导航切换失败';
-
-  @override
   String get navigationRecordRoute => '记录功能区内路由变化';
 
   @override
   String get navigationRecordRouteFailed => '记录路由变化失败';
 
   @override
-  String get navigationSaveState => '保存导航状态';
+  String get navigationRestoreStateFailed => '恢复导航状态失败';
 
   @override
-  String get navigationStateSaved => '导航状态已保存';
+  String get navigationSaveState => '保存导航状态';
 
   @override
   String get navigationSaveStateFailed => '保存导航状态失败';
 
   @override
-  String get navigationToggleExpanded => '切换导航栏展开状态';
+  String get navigationSectionCharacterManagement => 'Character Management';
+
+  @override
+  String get navigationSectionGalleryManagement => 'Gallery Management';
+
+  @override
+  String get navigationSectionPracticeList => 'Practice List';
+
+  @override
+  String get navigationSectionSettings => 'Settings';
+
+  @override
+  String get navigationSectionWorkBrowse => 'Work Browse';
+
+  @override
+  String get navigationSelectPage => 'Which page do you want to return to?';
 
   @override
   String get navigationStateRestored => '导航状态已从存储恢复';
 
   @override
-  String get navigationRestoreStateFailed => '恢复导航状态失败';
+  String get navigationStateSaved => '导航状态已保存';
+
+  @override
+  String get navigationSuccessBack => 'Successfully navigated back to previous section';
+
+  @override
+  String get navigationSuccessToNewSection => 'Successfully navigated to new section';
+
+  @override
+  String get navigationSuccessToSpecificItem => 'Successfully navigated to specific history item';
+
+  @override
+  String get navigationToggleExpanded => '切换导航栏展开状态';
+
+  @override
+  String get needRestartApp => 'Need to Restart App';
 
   @override
   String get newConfigItem => 'New Configuration Item';
+
+  @override
+  String get newDataPath => 'New data path:';
 
   @override
   String get newItem => 'New';
@@ -1836,10 +2860,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextPage => 'Next Page';
 
   @override
+  String get nextStep => 'Next';
+
+  @override
   String get no => 'No';
 
   @override
+  String get noBackupExistsRecommendCreate => 'No backup exists yet, recommend creating backup first to ensure data safety';
+
+  @override
+  String get noBackupFilesInPath => 'No backup files in this path';
+
+  @override
+  String get noBackupFilesInPathMessage => 'No backup files in this path';
+
+  @override
+  String get noBackupFilesToExport => 'No backup files to export in this path';
+
+  @override
+  String get noBackupFilesToExportMessage => 'No backup files to export in this path';
+
+  @override
+  String get noBackupPathSetRecommendCreateBackup => 'No backup path set, recommend setting backup path and creating backup first';
+
+  @override
+  String get noBackupPaths => 'No backup paths';
+
+  @override
   String get noBackups => 'No Backups Available';
+
+  @override
+  String get noBackupsInPath => 'No backup files in this path';
+
+  @override
+  String get noBackupsToDelete => 'No backup files to delete';
 
   @override
   String get noCategories => 'No Categories';
@@ -1868,13 +2922,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noElementsSelected => 'No Elements Selected';
 
   @override
+  String get noHistoryPaths => 'No Historical Paths';
+
+  @override
+  String get noHistoryPathsDescription => 'No other data paths have been used yet';
+
+  @override
   String get noImageSelected => 'No Image Selected';
 
   @override
-  String get noItemsSelected => 'No Items Selected';
+  String get noImages => 'No Images';
 
   @override
-  String get noImages => 'No Images';
+  String get noItemsSelected => 'No Items Selected';
 
   @override
   String get noLayers => 'No Layers, Please Add a Layer';
@@ -1919,27 +2979,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noWorksHint => 'Try importing new works or changing the filter criteria';
 
   @override
-  String worksCount(Object count) {
-    return '$count works';
-  }
-
-  @override
-  String get works => 'Works';
-
-  @override
-  String get characters => 'Characters';
-
-  @override
-  String get images => 'Images';
-
-  @override
   String get noiseReduction => 'Noise Reduction';
 
   @override
   String get none => 'None';
 
   @override
+  String get notSet => 'Not set';
+
+  @override
+  String get note => 'Note';
+
+  @override
+  String get notesTitle => 'Notes:';
+
+  @override
+  String get noticeTitle => 'Notice';
+
+  @override
   String get ok => 'OK';
+
+  @override
+  String get oldBackupRecommendCreateNew => 'Last backup is over 24 hours old, recommend creating new backup';
+
+  @override
+  String get oldDataNotAutoDeleted => 'Old data will not be automatically deleted after path switching';
+
+  @override
+  String get oldDataNotDeleted => 'Old data will not be automatically deleted after path switching';
+
+  @override
+  String get oldDataWillNotBeDeleted => 'After switching, data in old path will not be automatically deleted';
+
+  @override
+  String get oldPathDataNotAutoDeleted => 'Old path data will not be automatically deleted after switching';
 
   @override
   String get onlyOneCharacter => 'Only one character is allowed';
@@ -1948,12 +3021,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get opacity => 'Opacity';
 
   @override
+  String get openBackupManagementFailed => 'Failed to open backup management';
+
+  @override
   String get openFolder => 'Open Folder';
 
   @override
   String openGalleryFailed(Object error) {
     return 'Open Gallery Failed: $error';
   }
+
+  @override
+  String get openPathFailed => 'Failed to open path';
+
+  @override
+  String get openPathSwitchWizardFailed => 'Failed to open data path switch wizard';
+
+  @override
+  String get operatingSystem => 'Operating System';
+
+  @override
+  String get operationCannotBeUndone => 'This operation cannot be undone, please confirm carefully';
+
+  @override
+  String get operationCannotUndo => 'This operation cannot be undone, please confirm carefully';
 
   @override
   String get optional => 'Optional';
@@ -1974,9 +3065,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get overwriteConfirm => 'Overwrite Confirmation';
 
   @override
+  String get overwriteExisting => 'Overwrite Existing';
+
+  @override
+  String get overwriteExistingDescription => 'Replace existing items with imported data';
+
+  @override
   String overwriteExistingPractice(Object title) {
     return 'A practice sheet named \"$title\" already exists. Do you want to overwrite it?';
   }
+
+  @override
+  String get overwriteFile => 'Overwrite File';
+
+  @override
+  String get overwriteFileAction => 'Overwrite File';
 
   @override
   String overwriteMessage(Object title) {
@@ -1984,7 +3087,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get overwrittenCharacters => 'Overwritten Characters';
+
+  @override
+  String get overwrittenItems => 'Overwritten Items';
+
+  @override
+  String get overwrittenWorks => 'Overwritten Works';
+
+  @override
   String get padding => 'Padding';
+
+  @override
+  String get pageBuildError => 'Page Build Error';
 
   @override
   String get pageMargins => 'Page Margins (cm)';
@@ -2011,10 +3126,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parentCategory => 'Parent Category (Optional)';
 
   @override
+  String get parsingImportData => 'Parsing import data...';
+
+  @override
   String get paste => 'Paste (Ctrl+Shift+V)';
 
   @override
   String get path => 'Path';
+
+  @override
+  String get pathAnalysis => 'Path Analysis';
+
+  @override
+  String get pathConfigError => 'Path configuration error';
+
+  @override
+  String get pathInfo => 'Path Info';
+
+  @override
+  String get pathInvalid => 'Path Invalid';
+
+  @override
+  String get pathNotExists => 'Path does not exist';
+
+  @override
+  String get pathSettings => 'Path Settings';
+
+  @override
+  String get pathSize => 'Path Size';
+
+  @override
+  String get pathSwitchCompleted => 'Data path switching completed!\\n\\nYou can view and clean up old path data in \"Data Path Management\".';
+
+  @override
+  String get pathSwitchCompletedMessage => 'Data path switch completed!\\n\\nYou can view and clean up old path data in Data Path Management.';
+
+  @override
+  String get pathSwitchFailed => 'Path Switch Failed';
+
+  @override
+  String get pathSwitchFailedMessage => 'Path switching failed';
+
+  @override
+  String pathValidationFailed(Object error) {
+    return 'Path validation failed: $error';
+  }
+
+  @override
+  String get pathValidationFailedGeneric => 'Path validation failed. Please check if the path is valid';
 
   @override
   String get pdfExportFailed => 'PDF Export Failed';
@@ -2031,7 +3190,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pixels => 'Pixels';
 
   @override
+  String get platformInfo => 'Platform Info';
+
+  @override
   String get pleaseEnterValidNumber => 'Please Enter Valid Number';
+
+  @override
+  String get pleaseSelectOperation => 'Please select an operation:';
+
+  @override
+  String get pleaseSetBackupPathFirst => 'Please set backup path first';
+
+  @override
+  String get pleaseWaitMessage => 'Please wait';
 
   @override
   String get portrait => 'Portrait';
@@ -2071,6 +3242,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String practiceSheetSavedMessage(Object title) {
+    return 'Practice sheet \"$title\" saved successfully';
+  }
+
+  @override
   String get practices => 'Practices';
 
   @override
@@ -2078,6 +3254,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get preparingSave => 'Preparing to Save...';
+
+  @override
+  String get preserveMetadata => 'Preserve Metadata';
+
+  @override
+  String get preserveMetadataDescription => 'Keep original creation time and metadata';
+
+  @override
+  String get preserveMetadataMandatory => 'Mandatory preservation of original creation time, author information and other metadata to ensure data consistency';
 
   @override
   String get presetSize => 'Preset Size';
@@ -2103,13 +3288,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previousPage => 'Previous Page';
 
   @override
+  String get previousStep => 'Previous';
+
+  @override
+  String processedCount(Object current, Object total) {
+    return 'Processed: $current / $total';
+  }
+
+  @override
+  String processedProgress(Object current, Object total) {
+    return 'Processed: $current / $total';
+  }
+
+  @override
   String get processing => 'Processing...';
+
+  @override
+  String get processingDetails => 'Processing Details';
 
   @override
   String get processingEraseData => 'Processing Erase Data...';
 
   @override
   String get processingImage => 'Processing Image...';
+
+  @override
+  String get processingPleaseWait => 'Processing, please wait...';
 
   @override
   String get properties => 'Properties';
@@ -2124,7 +3328,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qualityUltra => 'Ultra Quality (3x)';
 
   @override
+  String get quickRecoveryOnIssues => '• Quick recovery if issues occur during switching';
+
+  @override
+  String get reExportWork => '• Re-export the work';
+
+  @override
   String get recent => 'Recent';
+
+  @override
+  String get recentBackupCanSwitch => 'Recent backup exists, safe to switch directly';
+
+  @override
+  String get recommendConfirmBeforeCleanup => 'Recommend confirming new path data is normal before cleaning up old path';
+
+  @override
+  String get recommendConfirmNewDataBeforeClean => 'Recommend confirming new path data is normal before cleaning old path';
+
+  @override
+  String get recommendSufficientSpace => 'Choose a disk with sufficient free space';
 
   @override
   String get redo => 'Redo';
@@ -2159,10 +3381,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rename => 'Rename';
 
   @override
+  String get renameDuplicates => 'Rename Duplicates';
+
+  @override
+  String get renameDuplicatesDescription => 'Rename imported items to avoid conflicts';
+
+  @override
   String get renameLayer => 'Rename Layer';
 
   @override
   String get renderFailed => 'Render Failed';
+
+  @override
+  String get reselectFile => 'Reselect File';
 
   @override
   String get reset => 'Reset';
@@ -2178,6 +3409,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get resetDataPathToDefault => 'Reset to Default';
+
+  @override
   String get resetSettingsConfirmMessage => 'Are you sure you want to reset to default values?';
 
   @override
@@ -2185,6 +3419,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetToDefault => 'Reset to Default';
+
+  @override
+  String get resetToDefaultFailed => 'Failed to reset to default path';
+
+  @override
+  String resetToDefaultFailedWithError(Object error) {
+    return 'Failed to reset to default path: $error';
+  }
+
+  @override
+  String get resetToDefaultPathMessage => 'This will reset the data path to the default location. The application needs to restart to take effect. Are you sure you want to continue?';
 
   @override
   String get resetToDefaults => 'Reset to Defaults';
@@ -2202,10 +3447,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restartAfterRestored => 'Note: The application will restart automatically after recovery is complete';
 
   @override
+  String get restartLaterButton => 'Later';
+
+  @override
+  String get restartNeeded => 'Restart Needed';
+
+  @override
+  String get restartNow => 'Restart Now';
+
+  @override
+  String get restartNowButton => 'Restart Now';
+
+  @override
   String get restore => 'Restore';
 
   @override
   String get restoreBackup => 'Restore Backup';
+
+  @override
+  String get restoreBackupFailed => 'Failed to restore backup';
 
   @override
   String get restoreConfirmMessage => 'Are you sure you want to restore from this backup? This will replace all your current data.';
@@ -2217,7 +3477,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreFailure => 'Restore Failed';
 
   @override
+  String get restoreWarningMessage => 'Warning: Current data will be overwritten by backup data. This operation cannot be undone!';
+
+  @override
   String get restoringBackup => 'Restoring from Backup...';
+
+  @override
+  String get restoringBackupMessage => 'Restoring backup...';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get retryAction => 'Retry';
 
   @override
   String get rotateLeft => 'Rotate Left';
@@ -2227,6 +3499,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rotation => 'Rotation';
+
+  @override
+  String get safetyBackupBeforePathSwitch => 'Safety backup before data path switching';
+
+  @override
+  String get safetyBackupRecommendation => 'To ensure data safety, it\'s recommended to create a backup before switching data path:';
+
+  @override
+  String get safetyTip => '💡 Safety Tips:';
 
   @override
   String get sansSerif => 'Sans Serif';
@@ -2267,6 +3548,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scale => 'Scale';
 
   @override
+  String get scannedBackupFileDescription => 'Scanned backup file';
+
+  @override
   String get search => 'Search';
 
   @override
@@ -2297,6 +3581,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectBackup => 'Select Backup';
 
   @override
+  String get selectBackupFileToImportDialog => 'Select backup file to import';
+
+  @override
+  String get selectBackupStorageLocation => 'Select backup storage location';
+
+  @override
   String get selectCategoryToApply => 'Please select a category to apply:';
 
   @override
@@ -2314,16 +3604,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectExportLocation => 'Select Export Location';
 
   @override
-  String get selectImage => 'Select Image';
+  String get selectExportLocationDialog => 'Select export location';
 
   @override
-  String get selectImportFile => 'Select Backup File';
+  String get selectExportLocationHint => 'Select export location...';
 
   @override
   String get selectFileError => 'Failed to select file';
 
   @override
+  String get selectFolder => 'Select Folder';
+
+  @override
+  String get selectImage => 'Select Image';
+
+  @override
+  String get selectImages => 'Select Images';
+
+  @override
+  String get selectImagesWithCtrl => 'Select Images (Hold Ctrl for multiple selection)';
+
+  @override
+  String get selectImportFile => 'Select Backup File';
+
+  @override
+  String get selectNewDataPath => 'Select new data storage path:';
+
+  @override
+  String get selectNewDataPathDialog => 'Select new data storage path';
+
+  @override
+  String get selectNewDataPathTitle => 'Select new data storage path';
+
+  @override
+  String get selectNewPath => 'Select New Path';
+
+  @override
   String get selectParentCategory => 'Select Parent Category';
+
+  @override
+  String get selectPath => 'Select Path';
+
+  @override
+  String get selectPathButton => 'Select Path';
+
+  @override
+  String get selectPathFailed => 'Path selection failed';
+
+  @override
+  String get selectSufficientSpaceDisk => 'Recommend choosing a disk with sufficient free space';
 
   @override
   String get selectTargetLayer => 'Select Target Layer';
@@ -2343,10 +3672,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectedElementNotFound => 'Selected element not found';
 
   @override
+  String get selectedItems => 'Selected Items';
+
+  @override
+  String get selectedPath => 'Selected Path:';
+
+  @override
+  String get selectionMode => 'Selection Mode';
+
+  @override
   String get sendToBack => 'Send to Back (Ctrl+B)';
 
   @override
   String get serif => 'Serif';
+
+  @override
+  String get serviceNotReady => 'Service not ready, please try again later';
+
+  @override
+  String get setBackupPathFailed => 'Failed to set backup path';
 
   @override
   String get setCategory => 'Set Category';
@@ -2354,6 +3698,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String setCategoryForItems(Object count) {
     return 'Set Category ($count items)';
+  }
+
+  @override
+  String get setDataPathFailed => 'Failed to set data path. Please check path permissions and compatibility';
+
+  @override
+  String setDataPathFailedWithError(Object error) {
+    return 'Failed to set data path: $error';
   }
 
   @override
@@ -2367,6 +3719,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showContour => 'Show Contour';
+
+  @override
+  String get showDetails => 'Show Details';
 
   @override
   String get showElement => 'Show Element';
@@ -2384,6 +3739,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showThumbnails => 'Show Page Thumbnails';
 
   @override
+  String get skipBackup => 'Skip Backup';
+
+  @override
+  String get skipBackupConfirm => 'Skip Backup';
+
+  @override
+  String get skipBackupWarning => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
+
+  @override
+  String get skipBackupWarningMessage => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
+
+  @override
+  String get skipConflicts => 'Skip Conflicts';
+
+  @override
+  String get skipConflictsDescription => 'Skip items that already exist';
+
+  @override
+  String get skippedCharacters => 'Skipped Characters';
+
+  @override
+  String get skippedItems => 'Skipped Items';
+
+  @override
+  String get skippedWorks => 'Skipped Works';
+
+  @override
   String get sort => 'Sort';
 
   @override
@@ -2397,6 +3779,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sortByUpdateTime => 'Sort by Update Time';
+
+  @override
+  String get sortFailed => 'Sort failed';
 
   @override
   String get sortOrder => 'Sort Order';
@@ -2420,6 +3805,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortOrderRequired => 'Please enter sort order value';
 
   @override
+  String get sourceBackupFileNotFound => '源备份文件不存在';
+
+  @override
+  String sourceFileNotFound(Object path) {
+    return 'Source file not found: $path';
+  }
+
+  @override
+  String sourceFileNotFoundError(Object path) {
+    return 'Source file not found: $path';
+  }
+
+  @override
   String get sourceHanSansFont => 'Source Han Sans';
 
   @override
@@ -2429,13 +3827,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceInfo => 'Source Information';
 
   @override
+  String get startBackup => 'Start Backup';
+
+  @override
   String get startDate => 'Start Date';
 
   @override
   String get stateAndDisplay => 'State and Display';
 
   @override
+  String get statisticsInProgress => 'Calculating...';
+
+  @override
   String get status => 'Status';
+
+  @override
+  String get statusAvailable => 'Available';
+
+  @override
+  String get statusLabel => 'Status';
+
+  @override
+  String get statusUnavailable => 'Unavailable';
 
   @override
   String get storageDetails => 'Storage Details';
@@ -2461,7 +3874,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String successDeletedCount(Object count) {
+    return 'Successfully deleted $count backup files';
+  }
+
+  @override
+  String get suggestConfigureBackupPath => 'Suggestion: Configure backup path in settings first';
+
+  @override
+  String get suggestConfigureBackupPathFirst => 'Suggestion: Configure backup path in settings first';
+
+  @override
+  String get suggestRestartOrWait => 'Suggestion: Restart the app or wait for service initialization to complete';
+
+  @override
+  String get suggestRestartOrWaitService => 'Suggestion: Restart the app or wait for service initialization';
+
+  @override
+  String get suggestedSolutions => 'Suggested solutions:';
+
+  @override
   String get suggestedTags => 'Suggested Tags';
+
+  @override
+  String get switchSuccessful => 'Switch Successful';
 
   @override
   String get switchingPage => 'Switching to Character Page...';
@@ -2471,6 +3907,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get systemConfigItemNote => 'This is a system configuration item, key value cannot be modified';
+
+  @override
+  String get systemInfo => 'System Info';
 
   @override
   String get tabToNextField => 'Press Tab to Navigate to Next Field';
@@ -2501,6 +3940,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagsSelected => 'Selected Tags:';
 
   @override
+  String get targetLocationExists => 'A file with the same name already exists at the target location:';
+
+  @override
+  String get targetPathLabel => 'Please select an action:';
+
+  @override
   String get text => 'Text';
 
   @override
@@ -2508,6 +3953,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get textContent => 'Text Content';
+
+  @override
+  String get textElement => 'Text Element';
 
   @override
   String get textProperties => 'Text Properties';
@@ -2570,6 +4018,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeInfo => 'Time Information';
 
   @override
+  String get timeLabel => 'Time';
+
+  @override
   String get title => 'Title';
 
   @override
@@ -2608,9 +4059,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get total => 'Total';
 
   @override
+  String get totalBackups => 'Total Backups';
+
+  @override
   String totalItems(Object count) {
     return 'Total $count Items';
   }
+
+  @override
+  String get totalSize => 'Total Size';
 
   @override
   String get transformApplied => 'Transform Applied';
@@ -2675,10 +4132,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatedAt => 'Updated At';
 
   @override
+  String get usageInstructions => 'Usage Instructions';
+
+  @override
+  String get useDefaultPath => 'Use default path';
+
+  @override
   String get userConfig => 'User Configuration';
 
   @override
   String get validCharacter => 'Please Enter Valid Character';
+
+  @override
+  String get validPath => 'Valid path';
+
+  @override
+  String get validateData => 'Validate Data';
+
+  @override
+  String get validateDataDescription => 'Verify data integrity before import';
+
+  @override
+  String get validateDataMandatory => 'Mandatory validation of import file integrity and format to ensure data security';
+
+  @override
+  String get validatingImportFile => 'Validating import file...';
 
   @override
   String valueTooLarge(Object label, Object max) {
@@ -2691,6 +4169,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get versionDetails => 'Version Details';
+
+  @override
+  String get versionInfoCopied => 'Version info copied to clipboard';
+
+  @override
   String get verticalAlignment => 'Vertical Alignment';
 
   @override
@@ -2698,6 +4182,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verticalRightToLeft => 'Vertical Right to Left';
+
+  @override
+  String get viewAction => 'View';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get viewExportResultsButton => 'View';
 
   @override
   String get visibility => 'Visibility';
@@ -2710,6 +4203,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get visualSettings => 'Visual Settings';
+
+  @override
+  String get warningOverwriteData => 'Warning: This will overwrite all current data!';
+
+  @override
+  String get warnings => 'Warnings';
 
   @override
   String get widgetRefRequired => 'WidgetRef Required to Create CollectionPainter';
@@ -2728,9 +4227,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get work => 'Work';
-
-  @override
-  String get character => 'Character';
 
   @override
   String get workBrowseSearch => 'Search Works...';
@@ -2799,6 +4295,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormToolHelp => 'Primary tool used to create this work';
 
   @override
+  String get workIdCannotBeEmpty => 'Work ID cannot be empty';
+
+  @override
   String get workInfo => 'Work Information';
 
   @override
@@ -2826,10 +4325,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workToolOther => 'Other';
 
   @override
+  String get works => 'Works';
+
+  @override
+  String worksCount(Object count) {
+    return '$count works';
+  }
+
+  @override
   String get writingMode => 'Writing Mode';
 
   @override
   String get writingTool => 'Writing Tool';
+
+  @override
+  String get writingToolManagement => 'Writing Tool Management';
 
   @override
   String get writingToolText => 'Writing Tool';
@@ -2841,1507 +4351,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yesterday => 'Yesterday';
 
   @override
-  String get importOptions => 'Import Options';
-
-  @override
-  String get validateData => 'Validate Data';
-
-  @override
-  String get validateDataDescription => 'Verify data integrity before import';
-
-  @override
-  String get validateDataMandatory => 'Mandatory validation of import file integrity and format to ensure data security';
-
-  @override
-  String get createBackupBeforeImport => 'Create backup before import';
-
-  @override
-  String get preserveMetadata => 'Preserve Metadata';
-
-  @override
-  String get preserveMetadataDescription => 'Keep original creation time and metadata';
-
-  @override
-  String get preserveMetadataMandatory => 'Mandatory preservation of original creation time, author information and other metadata to ensure data consistency';
-
-  @override
-  String get conflictResolution => 'Conflict Resolution';
-
-  @override
-  String get skipConflicts => 'Skip Conflicts';
-
-  @override
-  String get skipConflictsDescription => 'Skip items that already exist';
-
-  @override
-  String get overwriteExisting => 'Overwrite Existing';
-
-  @override
-  String get overwriteExistingDescription => 'Replace existing items with imported data';
-
-  @override
-  String get conflictsFound => 'Conflicts Found';
-
-  @override
-  String conflictsCount(Object count) {
-    return 'Found $count conflicts';
-  }
-
-  @override
-  String get mergeData => 'Merge Data';
-
-  @override
-  String get mergeDataDescription => 'Combine existing and imported data';
-
-  @override
-  String get renameDuplicates => 'Rename Duplicates';
-
-  @override
-  String get renameDuplicatesDescription => 'Rename imported items to avoid conflicts';
-
-  @override
-  String get askUser => 'Ask User';
-
-  @override
-  String get askUserDescription => 'Ask user for each conflict';
-
-  @override
-  String get keepExisting => 'Keep Existing';
-
-  @override
-  String get keepExistingDescription => 'Keep existing data, skip import';
-
-  @override
-  String get conflictDetailsTitle => 'Conflict Resolution Details';
-
-  @override
-  String get skippedWorks => 'Skipped Works';
-
-  @override
-  String get overwrittenWorks => 'Overwritten Works';
-
-  @override
-  String get skippedCharacters => 'Skipped Characters';
-
-  @override
-  String get overwrittenCharacters => 'Overwritten Characters';
-
-  @override
-  String get conflictReason => 'Conflict Reason';
-
-  @override
-  String get existingItem => 'Existing Item';
-
-  @override
-  String get versionInfoCopied => 'Version info copied to clipboard';
-
-  @override
-  String get appVersion => 'App Version';
-
-  @override
-  String get buildNumber => 'Build Number';
-
-  @override
-  String get buildTime => 'Build Time';
-
-  @override
-  String get buildEnvironment => 'Build Environment';
-
-  @override
-  String get gitCommit => 'Git Commit';
-
-  @override
-  String get gitBranch => 'Git Branch';
-
-  @override
-  String get currentPath => 'Current Path';
-
-  @override
-  String get historicalPaths => 'Historical Paths';
-
-  @override
-  String backupCountFormat(Object count) {
-    return '$count backups';
-  }
-
-  @override
-  String get deletePathButton => 'Delete Path';
-
-  @override
-  String get exportAllBackupsButton => 'Export All Backups';
-
-  @override
-  String get noBackupFilesInPathMessage => 'No backup files in this path';
-
-  @override
-  String get importToCurrentPathButton => 'Import to Current Path';
-
-  @override
-  String get backupDescriptionInputLabel => 'Backup Description';
-
-  @override
-  String get backupDescriptionInputExample => 'e.g., Weekly backup, Pre-important update backup, etc.';
-
-  @override
-  String get creatingBackupProgressMessage => 'Creating backup...';
-
-  @override
-  String get creatingBackupPleaseWaitMessage => 'This may take a few minutes, please be patient';
-
-  @override
-  String createBackupFailedMessage(Object error) {
-    return 'Failed to create backup: $error';
-  }
-
-  @override
-  String get selectBackupFileToImportDialog => 'Select backup file to import';
-
-  @override
-  String get importingBackupProgressMessage => 'Importing backup...';
-
-  @override
-  String get pleaseWaitMessage => 'Please wait';
-
-  @override
-  String importBackupFailedMessage(String error) {
-    return 'Failed to import backup: $error';
-  }
-
-  @override
-  String get backupImportSuccessMessage => 'Backup imported successfully';
-
-  @override
-  String cleanupCompletedMessage(int count) {
-    return 'Cleanup completed, removed $count invalid paths';
-  }
-
-  @override
-  String cleanupFailedMessage(String error) {
-    return 'Cleanup failed: $error';
-  }
-
-  @override
-  String get dangerousOperationConfirmTitle => 'Dangerous Operation Confirmation';
-
-  @override
-  String deletePathConfirmContent(String path) {
-    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove this path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
-  }
-
-  @override
-  String get confirmDeleteButton => 'Confirm Delete';
-
-  @override
-  String get backupPathDeletedMessage => 'Backup path has been deleted';
-
-  @override
-  String deleteFailedMessage(String error) {
-    return 'Delete failed: $error';
-  }
-
-  @override
-  String get noBackupFilesToExportMessage => 'No backup files to export in this path';
-
-  @override
-  String get selectExportLocationDialog => 'Select export location';
-
-  @override
-  String exportingBackupsProgressFormat(int count) {
-    return 'Exporting $count backups...';
-  }
-
-  @override
-  String exportCompletedFormat(Object failedMessage, Object successCount) {
-    return 'Export completed: $successCount successful$failedMessage';
-  }
-
-  @override
-  String exportFailedPartFormat(Object failCount) {
-    return ', $failCount failed';
-  }
-
-  @override
-  String get viewExportResultsButton => 'View';
-
-  @override
-  String batchExportFailedMessage(String error) {
-    return 'Batch export failed: $error';
-  }
-
-  @override
-  String get confirmRestoreTitle => 'Confirm Restore';
-
-  @override
-  String get confirmRestoreMessage => 'Are you sure you want to restore this backup?';
-
-  @override
-  String backupFileLabel(String filename) {
-    return 'Backup: $filename';
-  }
-
-  @override
-  String backupDescriptionLabel(String description) {
-    return 'Description: $description';
-  }
-
-  @override
-  String backupTimeLabel(String time) {
-    return 'Time: $time';
-  }
-
-  @override
-  String get restoreWarningMessage => 'Warning: Current data will be overwritten by backup data. This operation cannot be undone!';
-
-  @override
-  String get appWillRestartMessage => 'Application will restart automatically after restore.';
-
-  @override
-  String get confirmRestoreButton => 'Confirm Restore';
-
-  @override
-  String get restoringBackupMessage => 'Restoring backup...';
-
-  @override
-  String get doNotCloseAppMessage => 'Do not close the application';
-
-  @override
-  String get backupRestoreSuccessMessage => 'Backup restored successfully, please restart the app to complete the restore';
-
-  @override
-  String backupRestoreFailedMessage(String error) {
-    return 'Failed to restore backup: $error';
-  }
-
-  @override
-  String get exportingBackupMessage => 'Exporting backup...';
-
-  @override
-  String exportSuccessMessage(String path) {
-    return 'Export successful: $path';
-  }
-
-  @override
-  String exportBackupFailedMessage(String error) {
-    return 'Export failed: $error';
-  }
-
-  @override
-  String get importToCurrentPathTitle => 'Import to Current Path';
-
-  @override
-  String get importToCurrentPathMessage => 'Are you sure you want to import this backup to the current backup path?';
-
-  @override
-  String get importToCurrentPathDescription => 'This will copy the backup file to the current path, original file remains unchanged.';
-
-  @override
-  String get confirmImportButton => 'Confirm Import';
-
-  @override
-  String get importingToCurrentPathMessage => 'Importing backup to current path...';
-
-  @override
-  String get importToCurrentPathSuccessMessage => 'Backup successfully imported to current path';
-
-  @override
-  String get currentBackupPathNotSet => 'Current backup path not set';
-
-  @override
-  String get sourceBackupFileNotFound => '源备份文件不存在';
-
-  @override
-  String get backupFileNotFound => '备份文件不存在';
-
-  @override
-  String get platformInfo => 'Platform Info';
-
-  @override
-  String get operatingSystem => 'Operating System';
-
-  @override
-  String get deviceInfo => 'Device Info';
-
-  @override
-  String get flutterVersion => 'Flutter Version';
-
-  @override
-  String get dartVersion => 'Dart Version';
-
-  @override
-  String get versionDetails => 'Version Details';
-
-  @override
-  String get systemInfo => 'System Info';
-
-  @override
-  String get about => 'About';
-
-  @override
-  String get appStartupFailed => 'App Startup Failed';
-
-  @override
-  String get criticalError => 'Critical Error';
-
-  @override
-  String appStartupFailedWith(Object error) {
-    return 'App startup failed: $error';
-  }
-
-  @override
-  String get collectionElement => 'Collection Element';
-
-  @override
-  String get imageElement => 'Image Element';
-
-  @override
-  String get textElement => 'Text Element';
-
-  @override
-  String get defaultEditableText => 'Editable Text in Property Panel';
-
-  @override
-  String get defaultLayer => 'Default Layer';
-
-  @override
-  String get currentTool => 'Current Tool';
-
-  @override
-  String get selectionMode => 'Selection Mode';
-
-  @override
-  String get defaultPage => 'Default Page';
-
-  @override
-  String get dayBeforeYesterday => 'Day Before Yesterday';
-
-  @override
-  String defaultLayerName(Object number) {
-    return 'Layer $number';
-  }
-
-  @override
-  String defaultPageName(Object number) {
-    return 'Page $number';
-  }
-
-  @override
-  String get importingWorks => 'Importing works...';
-
-  @override
-  String addingImagesToGallery(Object count) {
-    return 'Adding $count local images to gallery...';
-  }
-
-  @override
-  String copyFailed(Object error) {
-    return 'Copy failed: $error';
-  }
-
-  @override
-  String get selectImages => 'Select Images';
-
-  @override
-  String get selectImagesWithCtrl => 'Select Images (Hold Ctrl for multiple selection)';
-
-  @override
-  String deleteCharacterFailed(Object error) {
-    return 'Failed to delete character: $error';
-  }
-
-  @override
-  String loadCharacterDataFailed(Object error) {
-    return 'Failed to load character data: $error';
-  }
-
-  @override
-  String get basicProperties => 'Basic Properties';
-
-  @override
-  String practiceSheetSavedMessage(Object title) {
-    return 'Practice sheet \"$title\" saved successfully';
-  }
-
-  @override
-  String get workIdCannotBeEmpty => 'Work ID cannot be empty';
-
-  @override
-  String get collectionIdCannotBeEmpty => 'Collection ID cannot be empty';
-
-  @override
-  String get editTags => 'Edit Tags';
-
-  @override
-  String get dataPathSettings => 'Data Storage Path';
-
-  @override
-  String get dataPathSettingsDescription => 'Set the storage location for application data. Restart required after changes.';
-
-  @override
-  String get dataPath => 'Data Path';
-
-  @override
-  String get dataPathHint => 'Select data storage path';
-
-  @override
-  String get selectFolder => 'Select Folder';
-
-  @override
-  String get applyNewPath => 'Apply New Path';
-
-  @override
-  String get resetDataPathToDefault => 'Reset to Default';
-
-  @override
-  String get currentCustomPath => 'Currently using custom data path';
-
-  @override
-  String get currentDefaultPath => 'Currently using default data path';
-
-  @override
-  String get confirmChangeDataPath => 'Confirm Change Data Path';
-
-  @override
-  String get changeDataPathMessage => 'The application needs to restart after changing the data path to take effect.';
-
-  @override
-  String get note => 'Note';
-
-  @override
-  String get confirmContinue => 'Are you sure you want to continue?';
-
-  @override
-  String get confirmResetToDefaultPath => 'Confirm Reset to Default Path';
-
-  @override
-  String get resetToDefaultPathMessage => 'This will reset the data path to the default location. The application needs to restart to take effect. Are you sure you want to continue?';
-
-  @override
-  String get needRestartApp => 'Need to Restart App';
-
-  @override
-  String get dataPathChangedMessage => 'Data path has been changed. Please restart the application for changes to take effect.';
-
-  @override
-  String get restartNow => 'Restart Now';
-
-  @override
-  String get migratingData => 'Migrating Data';
-
-  @override
-  String get fileCount => 'File Count';
-
-  @override
-  String get dataSize => 'Data Size';
-
-  @override
-  String get estimatedTime => 'Estimated Time';
-
-  @override
-  String get doNotCloseApp => 'Please do not close the application...';
-
-  @override
-  String get setDataPathFailed => 'Failed to set data path. Please check path permissions and compatibility';
-
-  @override
-  String setDataPathFailedWithError(Object error) {
-    return 'Failed to set data path: $error';
-  }
-
-  @override
-  String get resetToDefaultFailed => 'Failed to reset to default path';
-
-  @override
-  String resetToDefaultFailedWithError(Object error) {
-    return 'Failed to reset to default path: $error';
-  }
-
-  @override
-  String pathValidationFailed(Object error) {
-    return 'Path validation failed: $error';
-  }
-
-  @override
-  String get pathValidationFailedGeneric => 'Path validation failed. Please check if the path is valid';
-
-  @override
-  String get dataPathManagement => 'Data Path Management';
-
-  @override
-  String get currentStorageInfo => 'Current Storage Info';
-
-  @override
-  String get dataPathSettingsSubtitle => 'Configure application data storage location';
-
-  @override
-  String get dataPathManagementSubtitle => 'Manage current and historical data paths';
-
-  @override
-  String get currentStorageInfoSubtitle => 'View current storage space usage';
-
-  @override
-  String get customPath => 'Custom Path';
-
-  @override
-  String get defaultPath => 'Default Path';
-
-  @override
-  String get gettingPathInfo => 'Getting path info...';
-
-  @override
-  String get pathConfigError => 'Path configuration error';
-
-  @override
-  String get totalSize => 'Total Size';
-
-  @override
-  String get statisticsInProgress => 'Calculating...';
-
-  @override
-  String get cannotGetStorageInfo => 'Cannot get storage info';
-
-  @override
-  String get currentStorageInfoTitle => 'Current Storage Info';
-
-  @override
-  String get databaseSize => 'Database Size';
-
-  @override
-  String get backups => 'Backups';
-
-  @override
-  String get gettingStorageInfo => 'Getting storage info...';
-
-  @override
-  String get getStorageInfoFailed => 'Failed to get storage info';
-
-  @override
-  String get backupPathSettings => 'Backup Path Settings';
-
-  @override
-  String get backupManagement => 'Backup Management';
-
-  @override
-  String get backupPathSettingsSubtitle => 'Configure and manage backup storage paths';
-
-  @override
-  String get backupManagementSubtitle => 'Create, restore, import, export and manage all backup files';
-
-  @override
-  String get backupNotAvailable => 'Backup Management Unavailable';
-
-  @override
-  String get backupNotAvailableMessage => 'Backup management requires database support.\n\nPossible reasons:\n• Database is initializing\n• Database initialization failed\n• Application is starting up\n\nPlease try again later or restart the app.';
-
-  @override
-  String get openBackupManagementFailed => 'Failed to open backup management';
-
-  @override
-  String get library => 'Library';
-
-  @override
-  String get countUnit => '';
-
-  @override
-  String get dataPathManagementTitle => 'Data Path Management';
-
-  @override
-  String get currentDataPath => 'Current Data Path';
-
-  @override
-  String get browsePath => 'Browse Path';
-
-  @override
-  String get pathSettings => 'Path Settings';
-
-  @override
-  String get historyDataPaths => 'Historical Data Paths';
-
-  @override
-  String get pathInfo => 'Path Info';
-
-  @override
-  String get lastUsed => 'Last Used';
-
-  @override
-  String get pathSize => 'Path Size';
-
-  @override
-  String get pathInvalid => 'Path Invalid';
-
-  @override
-  String get deletePath => 'Delete Path';
-
-  @override
-  String get noHistoryPaths => 'No Historical Paths';
-
-  @override
-  String get noHistoryPathsDescription => 'No other data paths have been used yet';
-
-  @override
-  String get getPathInfoFailed => 'Failed to get path information';
-
-  @override
-  String get openPathSwitchWizardFailed => 'Failed to open data path switch wizard';
-
-  @override
-  String get dataPathSwitchWizard => 'Data Path Switch Wizard';
-
-  @override
-  String get dataBackup => 'Data Backup';
-
-  @override
-  String get selectNewPath => 'Select New Path';
-
-  @override
-  String get confirmSwitch => 'Confirm Switch';
-
-  @override
-  String get dataSafetySuggestion => 'Data Safety Suggestion';
-
-  @override
-  String get safetyBackupRecommendation => 'To ensure data safety, it\'s recommended to create a backup before switching data path:';
-
-  @override
-  String get startBackup => 'Start Backup';
-
-  @override
-  String get skipBackup => 'Skip Backup';
-
-  @override
-  String get backupCompleted => '✓ Backup Completed';
-
-  @override
-  String get backupCreatedSuccessfully => 'Backup created successfully, you can safely proceed with path switching';
-
-  @override
-  String get selectNewDataPath => 'Select new data storage path:';
-
-  @override
-  String get selectPath => 'Select Path';
-
-  @override
-  String get selectedPath => 'Selected Path:';
-
-  @override
-  String get noticeTitle => 'Notice';
-
-  @override
-  String get recommendSufficientSpace => 'Choose a disk with sufficient free space';
-
-  @override
-  String get ensureReadWritePermission => 'Ensure the new path has read/write permissions';
-
-  @override
-  String get oldDataNotDeleted => 'Old data will not be automatically deleted after path switching';
-
-  @override
-  String get confirmSwitchToNewPath => 'Confirm switching to new data path';
-
-  @override
-  String get newDataPath => 'New data path:';
-
-  @override
-  String get importantReminder => 'Important Reminder';
-
-  @override
-  String get oldDataWillNotBeDeleted => 'After switching, data in old path will not be automatically deleted';
-
-  @override
-  String get canCleanupLaterViaManagement => 'You can clean up old data later via Data Path Management';
-
-  @override
-  String get recommendConfirmBeforeCleanup => 'Recommend confirming new path data is normal before cleaning up old path';
-
-  @override
-  String get operationCannotBeUndone => 'This operation cannot be undone, please confirm carefully';
-
-  @override
-  String get confirmSwitchButton => 'Confirm Switch';
-
-  @override
-  String get processingPleaseWait => 'Processing, please wait...';
-
-  @override
-  String get previousStep => 'Previous';
-
-  @override
-  String get nextStep => 'Next';
-
-  @override
-  String get exitWizard => 'Exit Wizard';
-
-  @override
-  String get confirmExitWizard => 'Are you sure you want to exit the data path switch wizard?';
-
-  @override
-  String get exitConfirm => 'Exit';
-
-  @override
-  String get switchSuccessful => 'Switch Successful';
-
-  @override
-  String get pathSwitchCompletedMessage => 'Data path switch completed!\\n\\nYou can view and clean up old path data in Data Path Management.';
-
-  @override
-  String get pathSwitchFailed => 'Path Switch Failed';
-
-  @override
-  String get backupServiceInitializing => 'Backup service is initializing, please wait and try again';
-
-  @override
-  String get backupServiceNotReady => 'Backup service is temporarily unavailable';
-
-  @override
-  String get suggestRestartOrWait => 'Suggestion: Restart the app or wait for service initialization to complete';
-
-  @override
-  String get backupPathNotSet => 'Please set backup path first';
-
-  @override
-  String get suggestConfigureBackupPath => 'Suggestion: Configure backup path in settings first';
-
-  @override
-  String get backupCreationFailed => 'Backup Creation Failed';
-
-  @override
-  String get skipBackupConfirm => 'Skip Backup';
-
-  @override
-  String get skipBackupWarning => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
-
-  @override
-  String get confirmSkip => 'Confirm Skip';
-
-  @override
-  String get dataSafetyRecommendation => 'Data Safety Recommendation';
-
-  @override
-  String get backupBeforeSwitchRecommendation => 'To ensure data safety, we recommend creating a backup before switching data paths:';
-
-  @override
-  String get backupSuccessCanSwitchPath => 'Backup created successfully, it\'s safe to proceed with path switching';
-
-  @override
-  String get selectPathButton => 'Select Path';
-
-  @override
-  String get selectSufficientSpaceDisk => 'Recommend choosing a disk with sufficient free space';
-
-  @override
-  String get oldDataNotAutoDeleted => 'Old data will not be automatically deleted after path switching';
-
-  @override
-  String get oldPathDataNotAutoDeleted => 'Old path data will not be automatically deleted after switching';
-
-  @override
-  String get canCleanOldDataLater => 'You can clean up old data later through \"Data Path Management\"';
-
-  @override
-  String get recommendConfirmNewDataBeforeClean => 'Recommend confirming new path data is normal before cleaning old path';
-
-  @override
-  String get operationCannotUndo => 'This operation cannot be undone, please confirm carefully';
-
-  @override
-  String get checkBackupRecommendationFailed => 'Failed to check backup recommendation';
-
-  @override
-  String get safetyBackupBeforePathSwitch => 'Safety backup before data path switching';
-
-  @override
-  String get createBackupFailed => 'Create backup failed';
-
-  @override
-  String get backupServiceNotAvailable => 'Backup service is temporarily unavailable';
-
-  @override
-  String get suggestRestartOrWaitService => 'Suggestion: Restart the app or wait for service initialization';
-
-  @override
-  String get backupPathNotSetUp => 'Backup path is not set up';
-
-  @override
-  String get suggestConfigureBackupPathFirst => 'Suggestion: Configure backup path in settings first';
-
-  @override
-  String get detailedError => 'Detailed error';
-
-  @override
-  String get retryAction => 'Retry';
-
-  @override
-  String get skipBackupWarningMessage => 'Are you sure you want to skip backup and proceed with path switching?\\n\\nThis may pose a risk of data loss.';
-
-  @override
-  String get confirmSkipAction => 'Confirm Skip';
-
-  @override
-  String get selectNewDataPathDialog => 'Select new data storage path';
-
-  @override
-  String get pathSwitchCompleted => 'Data path switching completed!\\n\\nYou can view and clean up old path data in \"Data Path Management\".';
-
-  @override
-  String get pathSwitchFailedMessage => 'Path switching failed';
-
-  @override
-  String get loadPathInfoFailed => 'Failed to load path information';
-
-  @override
-  String get getHistoryPathsFailed => 'Failed to get history paths';
-
-  @override
-  String get cannotReadPathContent => 'Cannot read path content';
-
-  @override
-  String get analyzePathInfoFailed => 'Failed to analyze path information';
-
-  @override
-  String get cannotReadPathFileInfo => 'Cannot read path file information';
-
-  @override
-  String get getPathUsageTimeFailed => 'Failed to get path usage time';
-
-  @override
-  String get defaultPathName => 'Default Path';
-
-  @override
-  String get useDefaultPath => 'Use default path';
-
-  @override
-  String get validPath => 'Valid path';
-
-  @override
-  String get lastUsedTime => 'Last used';
-
-  @override
-  String get statusLabel => 'Status';
-
-  @override
-  String get statusAvailable => 'Available';
-
-  @override
-  String get statusUnavailable => 'Unavailable';
-
-  @override
-  String get monthsAgo => 'months ago';
-
-  @override
-  String get daysAgo => 'days ago';
-
-  @override
-  String get hoursAgo => 'hours ago';
-
-  @override
-  String get justNow => 'just now';
-
-  @override
-  String get pathNotExists => 'Path does not exist';
-
-  @override
-  String get openPathFailed => 'Failed to open path';
-
-  @override
-  String get loadBackupRegistryFailed => 'Failed to load backup registry';
-
-  @override
-  String get loadCurrentBackupPathFailed => 'Failed to load current backup path';
-
-  @override
-  String get selectBackupStorageLocation => 'Select backup storage location';
-
-  @override
-  String get backupPathSetSuccessfully => 'Backup path set successfully';
-
-  @override
-  String get setBackupPathFailed => 'Failed to set backup path';
-
-  @override
-  String get backupStorageLocation => 'Backup Storage Location';
-
-  @override
-  String get notSet => 'Not set';
-
-  @override
-  String get changePath => 'Change Path';
-
-  @override
-  String get backupStatistics => 'Backup Statistics';
-
-  @override
-  String get totalBackups => 'Total Backups';
-
-  @override
-  String get currentLocation => 'Current Location';
-
-  @override
-  String get historyLocation => 'History Location';
-
-  @override
-  String get lastBackup => 'Last Backup';
-
-  @override
-  String get usageInstructions => 'Usage Instructions';
-
-  @override
-  String get backupLocationTips => '• Recommend choosing a disk with sufficient free space as backup location\\n• Backup location can be external storage devices (like external hard drives)\\n• After changing backup location, all backup information will be managed uniformly\\n• Historical backup files will not be moved automatically, but can be viewed in backup management';
-
-  @override
-  String get selectNewDataPathTitle => 'Select new data storage path';
-
-  @override
-  String get noBackupPathSetRecommendCreateBackup => 'No backup path set, recommend setting backup path and creating backup first';
-
-  @override
-  String get noBackupExistsRecommendCreate => 'No backup exists yet, recommend creating backup first to ensure data safety';
-
-  @override
-  String get oldBackupRecommendCreateNew => 'Last backup is over 24 hours old, recommend creating new backup';
-
-  @override
-  String get recentBackupCanSwitch => 'Recent backup exists, safe to switch directly';
-
-  @override
-  String get checkFailedRecommendBackup => 'Check failed, recommend creating backup first to ensure data safety';
-
-  @override
-  String get dataSafetySuggestions => 'Data Safety Suggestions';
-
-  @override
-  String get safetyTip => '💡 Safety Tips:';
-
-  @override
-  String get backupEnsuresDataSafety => '• Backup ensures data safety';
-
-  @override
-  String get quickRecoveryOnIssues => '• Quick recovery if issues occur during switching';
-
-  @override
-  String get canChooseDirectSwitch => '• You can also choose to switch directly';
-
-  @override
-  String get directSwitch => 'Switch Directly';
-
-  @override
-  String get backupFirst => 'Backup First';
-
-  @override
-  String get confirmDataPathSwitch => 'Confirm Data Path Switch';
-
-  @override
-  String get notesTitle => 'Notes:';
-
-  @override
-  String get canManuallyCleanLater => '• You can manually clean up old path data later';
-
-  @override
-  String get confirmDataNormalBeforeClean => '• Recommend confirming data is normal before cleaning old path';
-
-  @override
-  String get dataPathSwitchOptions => 'Data Path Switch Options';
-
-  @override
-  String get dataMergeOptions => 'Data Merge Options:';
-
-  @override
-  String get mergeOnlyBackupInfo => 'Merge Backup Info Only';
-
-  @override
-  String get mergeAndMigrateFiles => 'Merge and Migrate Files';
-
-  @override
-  String get mergeBackupInfo => 'Merge Backup Info';
-
-  @override
-  String get mergeBackupInfoDesc => 'Merge old path backup info into new path registry';
-
-  @override
-  String get migrateBackupFiles => 'Migrate Backup Files';
-
-  @override
-  String get migrateBackupFilesDesc => 'Copy old path backup files to new path (recommended)';
-
-  @override
-  String get fileMigrationWarning => 'When not migrating files, old path backup files remain in original location';
-
-  @override
-  String get legacyDataPathDescription => 'Legacy data path pending cleanup';
-
-  @override
-  String get noBackupPaths => 'No backup paths';
-
-  @override
-  String get createFirstBackup => 'Create first backup';
-
-  @override
-  String get backupOverview => 'Backup Overview';
-
-  @override
-  String get historyPath => 'History Path';
-
-  @override
-  String get backupsCount => 'backups';
-
-  @override
-  String get exportAllBackups => 'Export All Backups';
-
-  @override
-  String get importToCurrentPath => 'Import to Current Path';
-
-  @override
-  String get noBackupFilesInPath => 'No backup files in this path';
-
-  @override
-  String get enterBackupDescription => 'Enter backup description (optional):';
-
-  @override
-  String get importingBackup => 'Importing backup...';
-
-  @override
-  String get backupImportedSuccessfully => 'Backup imported successfully';
-
-  @override
-  String get importBackupFailed => 'Failed to import backup';
-
-  @override
-  String cleanupCompleted(Object count) {
-    return 'Cleanup completed, removed $count invalid paths';
-  }
-
-  @override
-  String get cleanupFailed => 'Cleanup failed';
-
-  @override
-  String get dangerousOperationConfirm => 'Dangerous Operation Confirmation';
-
-  @override
-  String confirmDeleteBackupPath(Object path) {
-    return 'Are you sure you want to delete the entire backup path?\\n\\nPath: $path\\n\\nThis will:\\n• Delete all backup files in this path\\n• Remove the path from history\\n• This operation cannot be undone\\n\\nPlease proceed with caution!';
-  }
-
-  @override
-  String get backupPathDeleted => 'Backup path deleted';
-
-  @override
-  String get noBackupFilesToExport => 'No backup files to export in this path';
-
-  @override
-  String exportingBackups(Object count) {
-    return 'Exporting $count backups...';
-  }
-
-  @override
-  String exportCompleted(Object failed, Object success) {
-    return 'Export completed: $success successful$failed';
-  }
-
-  @override
-  String failedCount(Object count) {
-    return ', $count failed';
-  }
-
-  @override
-  String get batchExportFailed => 'Batch export failed';
-
-  @override
-  String get confirmRestoreBackup => 'Are you sure you want to restore this backup?';
-
-  @override
-  String get warningOverwriteData => 'Warning: This will overwrite all current data!';
-
-  @override
-  String get appWillRestartAfterRestore => 'The app will restart automatically after restore.';
-
-  @override
-  String get confirmRestoreAction => 'Confirm Restore';
-
-  @override
-  String get backupRestoredSuccessfully => 'Backup restored successfully, please restart the app to complete restoration';
-
-  @override
-  String get restoreBackupFailed => 'Failed to restore backup';
-
-  @override
-  String backupExportedSuccessfully(Object filename) {
-    return 'Backup exported successfully: $filename';
-  }
-
-  @override
-  String get exportBackupFailed => 'Failed to export backup';
-
-  @override
-  String get importToCurrentPathDesc => 'This will copy the backup file to current path, original file remains unchanged.';
-
-  @override
-  String get confirmImportAction => 'Confirm Import';
-
-  @override
-  String get importingToCurrentPath => 'Importing to current path...';
-
-  @override
-  String get backupImportedToCurrentPath => 'Backup imported to current path';
-
-  @override
-  String get importToCurrentPathFailed => 'Failed to import backup to current path';
-
-  @override
-  String get confirmDeleteTitle => 'Confirm Delete';
-
-  @override
-  String confirmDeleteBackup(String filename, String description) {
-    return 'Are you sure you want to delete this backup?\\n\\nBackup: $filename\\nDescription: $description\\n\\nThis operation cannot be undone!';
-  }
-
-  @override
-  String get confirmDeleteAction => 'Confirm Delete';
-
-  @override
-  String get backupDeletedSuccessfully => 'Backup deleted successfully';
-
-  @override
-  String get deleteBackupFailed => 'Failed to delete backup';
-
-  @override
-  String get loadDataFailed => 'Failed to load data';
-
-  @override
-  String get backupServiceNotInitialized => 'Backup service not initialized';
-
-  @override
-  String get cleanupInvalidPaths => 'Cleanup Invalid Paths';
-
-  @override
-  String get viewAction => 'View';
-
-  @override
-  String get importedSuffix => 'Imported Backup';
-
-  @override
-  String get backupLabel => 'Backup';
-
-  @override
-  String get descriptionLabel => 'Description';
-
-  @override
-  String get timeLabel => 'Time';
-
-  @override
-  String get cancelAction => 'Cancel';
-
-  @override
-  String get scannedBackupFileDescription => 'Scanned backup file';
-
-  @override
-  String get pathAnalysis => 'Path Analysis';
-
-  @override
-  String get deleteHistoryPathRecord => 'Delete History Path Record';
-
-  @override
-  String get confirmDeleteHistoryPath => 'Are you sure you want to delete this history path record?';
-
-  @override
-  String get deleteHistoryPathNote => 'Note: This will only delete the record, not the actual folder and data.';
-
-  @override
-  String get historyPathDeleted => 'History path record deleted';
-
-  @override
-  String get cleanDuplicateRecords => 'Clean Duplicate Records';
-
-  @override
-  String get deleteAllBackups => 'Delete All Backups';
-
-  @override
-  String get noBackupsInPath => 'No backup files in this path';
-
-  @override
-  String get collapseFileList => 'Click to collapse file list';
-
-  @override
-  String expandFileList(int count) {
-    return 'Click to expand and view $count backup files';
-  }
-
-  @override
-  String backupFileListTitle(int count) {
-    return 'Backup File List ($count)';
-  }
-
-  @override
-  String get currentLabel => 'Current';
-
-  @override
-  String get historyLabel => 'History';
-
-  @override
-  String get continueImport => 'Continue Import';
-
-  @override
-  String get fileExistsTitle => 'File Already Exists';
-
-  @override
-  String get overwriteFile => 'Overwrite File';
-
-  @override
-  String get historyPathBackup => 'Historical Path Backup';
-
-  @override
-  String get currentPathBackup => 'Current Path Backup';
-
-  @override
-  String get noBackupsToDelete => 'No backup files to delete';
-
-  @override
-  String get confirmDeleteAllBackups => 'Confirm Delete All Backups';
-
-  @override
-  String get allBackupsDeleteWarning => 'This action cannot be undone! All backup data will be permanently lost.';
-
-  @override
-  String get deleteRangeTitle => 'Delete range includes:';
-
-  @override
-  String deleteRangeItem(String path, int count) {
-    return '• $path: $count files';
-  }
-
-  @override
-  String get confirmDeleteAllButton => 'Confirm Delete All';
-
-  @override
-  String get deletingBackups => 'Deleting backups...';
-
-  @override
-  String processedCount(int current, int total) {
-    return 'Processed: $current / $total';
-  }
-
-  @override
-  String get deleteCompleteTitle => 'Delete Complete';
-
-  @override
-  String deleteSuccessCount(int count) {
-    return 'Successfully deleted: $count files';
-  }
-
-  @override
-  String deleteFailCount(int count) {
-    return 'Failed to delete: $count files';
-  }
-
-  @override
-  String get deleteFailDetails => 'Failure details:';
-
-  @override
-  String moreErrorsCount(int count) {
-    return '...and $count more errors';
-  }
-
-  @override
-  String get duplicateBackupFound => 'Duplicate Backup Found';
-
-  @override
-  String get duplicateBackupFoundDesc => 'The backup file you\'re importing is a duplicate of an existing backup:';
-
-  @override
-  String existingBackupInfo(String filename) {
-    return 'Existing backup: $filename';
-  }
-
-  @override
-  String backupCreationTime(String time) {
-    return 'Creation time: $time';
-  }
-
-  @override
-  String backupSize(String size) {
-    return 'Size: $size';
-  }
-
-  @override
-  String backupChecksum(String checksum) {
-    return 'Checksum: $checksum...';
-  }
-
-  @override
-  String get continueDuplicateImport => 'Do you still want to continue importing this backup?';
-
-  @override
-  String get targetLocationExists => 'A file with the same name already exists at the target location:';
-
-  @override
-  String get targetPathLabel => 'Please select an action:';
-
-  @override
-  String get currentPathFileExists => 'A backup file with the same name already exists in the current path:';
-
-  @override
-  String get backupRestartWarning => 'Restart the app to apply changes';
-
-  @override
-  String get restartLaterButton => 'Later';
-
-  @override
-  String get restartNowButton => 'Restart Now';
-
-  @override
-  String get restartNeeded => 'Restart Needed';
-
-  @override
-  String successDeletedCount(int count) {
-    return 'Successfully deleted $count backup files';
-  }
-
-  @override
-  String exportCompletedFormat2(int success, String failed) {
-    return '导出完成，成功: $success$failed';
-  }
-
-  @override
-  String exportFailedPartFormat2(int count) {
-    return ', 失败: $count';
-  }
-
-  @override
-  String get backupFileCreationFailed => 'Failed to create backup file';
-
-  @override
-  String backupNotFound(String id) {
-    return 'Backup not found: $id';
-  }
-
-  @override
-  String get backupVerificationFailed => 'Backup file verification failed';
-
-  @override
-  String sourceFileNotFound(String path) {
-    return 'Source file not found: $path';
-  }
-
-  @override
-  String backupFileNotExist(String path) {
-    return 'Backup file does not exist: $path';
-  }
-
-  @override
-  String get pleaseSetBackupPathFirst => 'Please set backup path first';
-
-  @override
-  String backupPreCheckFailed(String error) {
-    return 'Backup pre-check failed: $error';
-  }
-
-  @override
-  String get backupOperationTimeoutError => 'Backup operation timed out, please check available storage space and retry';
-
-  @override
-  String get backupTimeoutDetailedError => 'Backup operation timed out. Possible causes:\n• Large amount of data\n• Insufficient storage space\n• Slow disk read/write speed\n\nPlease check storage space and retry.';
-
-  @override
-  String get backupMayTakeMinutes => 'Backup may take several minutes, please keep the app running';
-
-  @override
-  String get duplicateFileImported => '(duplicate file imported)';
-
-  @override
-  String get exportingBackupsProgress => 'Exporting backups...';
-
-  @override
-  String processedProgress(int current, int total) {
-    return 'Processed: $current / $total';
-  }
-
-  @override
-  String appWillRestartInSeconds(String message) {
-    return '$message\nApp will restart automatically in 3 seconds...';
-  }
-
-  @override
-  String get cleanDuplicateRecordsTitle => 'Clean Duplicate Records';
-
-  @override
-  String get cleanDuplicateRecordsDescription => 'This operation will clean duplicate backup records without deleting actual backup files.';
-
-  @override
-  String get continueQuestion => 'Continue?';
-
-  @override
-  String cleanupCompletedWithCount(int count) {
-    return 'Cleanup completed, removed $count duplicate records';
-  }
-
-  @override
-  String cleanupOperationFailed(String error) {
-    return 'Cleanup operation failed: $error';
-  }
-
-  @override
-  String get currentPathFileExistsMessage => 'A backup file with the same name already exists in the current path:';
-
-  @override
-  String get pleaseSelectOperation => 'Please select an operation:';
-
-  @override
-  String get overwriteFileAction => 'Overwrite File';
-
-  @override
-  String deleteBackupsCountMessage(int count) {
-    return 'You are about to delete $count backup files.';
-  }
-
-  @override
-  String get deletingBackupsProgress => 'Deleting backup files, please wait...';
-
-  @override
-  String get backupPathNotSetError => 'Please set backup path first';
-
-  @override
-  String get backupFileCreationFailedError => 'Backup file creation failed';
-
-  @override
-  String get manualBackupDescription => 'Manually created backup';
-
-  @override
-  String backupNotFoundError(String id) {
-    return 'Backup not found: $id';
-  }
-
-  @override
-  String get backupFileVerificationFailedError => 'Backup file verification failed';
-
-  @override
-  String get backupReadyRestartMessage => 'Backup file is ready, restart required to complete restore';
-
-  @override
-  String get backupFileNotExistError => 'Backup file does not exist';
-
-  @override
-  String get backupFileSizeMismatchError => 'Backup file size mismatch';
-
-  @override
-  String get backupFileChecksumMismatchError => 'Backup file checksum mismatch';
-
-  @override
-  String get backupFileMissingDirectoryStructureError => 'Backup file missing required directory structure';
-
-  @override
-  String get legacyBackupDescription => 'Legacy backup';
-
-  @override
-  String sourceFileNotFoundError(String path) {
-    return 'Source file not found: $path';
-  }
-
-  @override
-  String get importedBackupDescription => 'Imported backup';
-
-  @override
-  String get historyPathBackupDescription => 'Historical path backup';
-
-  @override
-  String get currentPathBackupDescription => 'Current path backup';
-
-  @override
-  String get backupRestoreSuccessWithRestartMessage => 'Backup restored successfully, restart required to apply changes.';
+  String get zipFile => 'ZIP Archive';
 }

@@ -11,7 +11,13 @@ enum AppLanguage {
   zh,
 
   /// English language
-  en;
+  en,
+
+  /// Japanese language
+  ja,
+
+  /// Korean language
+  ko;
 
   /// Get the icon for the language
   IconData get icon {
@@ -19,6 +25,8 @@ enum AppLanguage {
       AppLanguage.system => Icons.language,
       AppLanguage.zh => Icons.language,
       AppLanguage.en => Icons.language,
+      AppLanguage.ja => Icons.language,
+      AppLanguage.ko => Icons.language,
     };
   }
 
@@ -29,6 +37,8 @@ enum AppLanguage {
       AppLanguage.system => l10n.languageSystem,
       AppLanguage.zh => l10n.languageZh,
       AppLanguage.en => l10n.languageEn,
+      AppLanguage.ja => l10n.languageJa,
+      AppLanguage.ko => l10n.languageKo,
     };
   }
 
@@ -38,6 +48,8 @@ enum AppLanguage {
       AppLanguage.system => null, // null means follow system locale
       AppLanguage.zh => const Locale('zh'),
       AppLanguage.en => const Locale('en'),
+      AppLanguage.ja => const Locale('ja'),
+      AppLanguage.ko => const Locale('ko'),
     };
 
     debugPrint(
@@ -57,6 +69,8 @@ enum AppLanguage {
       'system' => AppLanguage.system,
       'zh' => AppLanguage.zh,
       'en' => AppLanguage.en,
+      'ja' => AppLanguage.ja,
+      'ko' => AppLanguage.ko,
       _ => AppLanguage.system, // Default to system if unknown
     };
     debugPrint('AppLanguage.fromString: 解析结果: $result');

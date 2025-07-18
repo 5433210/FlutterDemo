@@ -29,13 +29,13 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     AppLogger.info('开始构建MyApp', tag: 'UI');
-    
+
     // Listen to initialization provider to ensure everything is set up
     final initialization = ref.watch(appInitializationProvider);
     AppLogger.info('应用初始化状态', tag: 'UI', data: {
       'state': initialization.toString(),
     });
-    
+
     // 监听功能标志
     final featureFlags = ref.watch(featureFlagsProvider);
     AppLogger.debug('功能标志状态', tag: 'UI', data: {
@@ -61,16 +61,22 @@ class MyApp extends ConsumerWidget {
     } else if (platformLocale.startsWith('en')) {
       detectedSystemLocale = const Locale('en');
       debugPrint('【系统语言】检测到英文系统语言，设置为: en');
+    } else if (platformLocale.startsWith('ja')) {
+      detectedSystemLocale = const Locale('ja');
+      debugPrint('【系统语言】检测到日语系统语言，设置为: ja');
+    } else if (platformLocale.startsWith('ko')) {
+      detectedSystemLocale = const Locale('ko');
+      debugPrint('【系统语言】检测到韩语系统语言，设置为: ko');
     } else {
       // 默认使用中文
       detectedSystemLocale = const Locale('zh');
       debugPrint('【系统语言】未检测到支持的系统语言，默认使用中文');
     }
-    
+
     AppLogger.info('初始化状态分支判断前', tag: 'UI', data: {
       'state': initialization.toString(),
     });
-    
+
     return initialization.when(
       loading: () {
         AppLogger.info('应用处于加载状态，显示初始化屏幕', tag: 'UI');
@@ -108,7 +114,7 @@ class MyApp extends ConsumerWidget {
       },
       data: (_) {
         AppLogger.info('应用初始化成功，开始构建主界面', tag: 'UI');
-        
+
         // 获取用户语言设置
         final userLanguage =
             ref.watch(settingsProvider.select((s) => s.language));
@@ -127,15 +133,18 @@ class MyApp extends ConsumerWidget {
         // 获取当前语言环境的字符串表示
         final currentLocale = finalLocale?.languageCode;
         AppLogger.debug('最终使用的语言', tag: 'UI', data: {
-          'finalLocale': finalLocale?.languageCode ?? "null",
+          'finalLocale': finalLocale?.languageCode ?? 'null',
         });
 
         // 创建MaterialApp
         AppLogger.info('开始创建MaterialApp', tag: 'UI');
         final app = MaterialApp(
-          title: userLanguage == AppLanguage.en
-              ? 'Character As Gem'
-              : '字字珠玑', // 使用简单的条件判断设置标题
+          title: switch (userLanguage) {
+            AppLanguage.en => 'Character As Gem',
+            AppLanguage.ja => '字字珠玉',
+            AppLanguage.ko => '字字珠玑',
+            _ => '字字珠玑', // 中文和系统默认
+          },
           theme: AppTheme.lightM3(locale: currentLocale), // 传递当前语言环境
           darkTheme: AppTheme.darkM3(locale: currentLocale), // 传递当前语言环境
           themeMode: ref.watch(
@@ -167,7 +176,7 @@ class MyApp extends ConsumerWidget {
           // 直接设置 locale 值，而不是依赖回调
           locale: finalLocale,
         );
-        
+
         AppLogger.info('MaterialApp创建完成', tag: 'UI');
         return app;
       },

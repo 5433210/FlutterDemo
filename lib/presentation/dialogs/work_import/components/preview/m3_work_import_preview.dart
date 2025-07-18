@@ -115,8 +115,7 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                                   icon: const Icon(Icons.collections),
                                   label: isSmallWidth
                                       ? Text(l10n.fromGallery)
-                                      : Text(
-                                          l10n.fromGallery),
+                                      : Text(l10n.fromGallery),
                                 ),
                               ],
                             ),
@@ -285,7 +284,7 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
 
     final isLastImage = state.images.length == 1;
     String title = l10n.deleteImage;
-    String message = l10n.deleteMessage;
+    String message = l10n.deleteMessage(1);
 
     final confirmed = await showConfirmDialog(
       context: context,

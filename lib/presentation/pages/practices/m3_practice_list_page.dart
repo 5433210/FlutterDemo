@@ -163,7 +163,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteConfirm),
-        content: Text(l10n.deleteMessage),
+        content: Text(l10n.deleteMessage(1)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
