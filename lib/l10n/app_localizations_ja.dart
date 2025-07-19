@@ -2504,7 +2504,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get languageSystem => 'システム';
 
   @override
-  String get languageZh => '簡体字中国語';
+  String get languageZh => '简体中文';
+
+  @override
+  String get languageZhTw => '繁体中文';
 
   @override
   String get last30Days => '過去30日間';

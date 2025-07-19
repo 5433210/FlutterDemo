@@ -2504,7 +2504,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSystem => 'System';
 
   @override
-  String get languageZh => 'Simplified Chinese';
+  String get languageZh => '简体中文';
+
+  @override
+  String get languageZhTw => '繁體中文';
 
   @override
   String get last30Days => 'Last 30 Days';

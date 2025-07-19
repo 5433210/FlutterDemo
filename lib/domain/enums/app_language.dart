@@ -7,8 +7,11 @@ enum AppLanguage {
   /// System language (follows device settings)
   system,
 
-  /// Chinese language
+  /// Simplified Chinese language
   zh,
+
+  /// Traditional Chinese language
+  zhTw,
 
   /// English language
   en,
@@ -24,6 +27,7 @@ enum AppLanguage {
     return switch (this) {
       AppLanguage.system => Icons.language,
       AppLanguage.zh => Icons.language,
+      AppLanguage.zhTw => Icons.language,
       AppLanguage.en => Icons.language,
       AppLanguage.ja => Icons.language,
       AppLanguage.ko => Icons.language,
@@ -36,6 +40,7 @@ enum AppLanguage {
     return switch (this) {
       AppLanguage.system => l10n.languageSystem,
       AppLanguage.zh => l10n.languageZh,
+      AppLanguage.zhTw => l10n.languageZhTw,
       AppLanguage.en => l10n.languageEn,
       AppLanguage.ja => l10n.languageJa,
       AppLanguage.ko => l10n.languageKo,
@@ -47,6 +52,7 @@ enum AppLanguage {
     final locale = switch (this) {
       AppLanguage.system => null, // null means follow system locale
       AppLanguage.zh => const Locale('zh'),
+      AppLanguage.zhTw => const Locale('zh', 'TW'),
       AppLanguage.en => const Locale('en'),
       AppLanguage.ja => const Locale('ja'),
       AppLanguage.ko => const Locale('ko'),
@@ -68,6 +74,7 @@ enum AppLanguage {
     final result = switch (value?.toLowerCase()) {
       'system' => AppLanguage.system,
       'zh' => AppLanguage.zh,
+      'zhtw' => AppLanguage.zhTw,
       'en' => AppLanguage.en,
       'ja' => AppLanguage.ja,
       'ko' => AppLanguage.ko,

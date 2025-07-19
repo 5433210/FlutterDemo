@@ -2507,6 +2507,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get languageZh => '简体中文';
 
   @override
+  String get languageZhTw => '繁體中文';
+
+  @override
   String get last30Days => '최근 30일';
 
   @override

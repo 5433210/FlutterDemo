@@ -2507,6 +2507,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageZh => '简体中文';
 
   @override
+  String get languageZhTw => '繁體中文';
+
+  @override
   String get last30Days => '最近30天';
 
   @override
@@ -4352,4 +4355,4357 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 压缩包';
+}
+
+/// The translations for Chinese, as used in Taiwan (`zh_TW`).
+class AppLocalizationsZhTw extends AppLocalizationsZh {
+  AppLocalizationsZhTw(): super('zh_TW');
+
+  @override
+  String get a4Size => 'A4 (210×297mm)';
+
+  @override
+  String get a5Size => 'A5 (148×210mm)';
+
+  @override
+  String get about => '關於';
+
+  @override
+  String get activated => '啟用';
+
+  @override
+  String get activatedDescription => '啟用 - 在選擇器中顯示';
+
+  @override
+  String get activeStatus => '啟用狀態';
+
+  @override
+  String get add => '新增';
+
+  @override
+  String get addCategory => '新增分類';
+
+  @override
+  String addCategoryItem(Object category) {
+    return '新增$category';
+  }
+
+  @override
+  String get addConfigItem => '新增設定項';
+
+  @override
+  String addConfigItemHint(Object category) {
+    return '點擊右下角的按鈕新增$category設定項';
+  }
+
+  @override
+  String get addFavorite => '新增至我的最愛';
+
+  @override
+  String addFromGalleryFailed(Object error) {
+    return '從圖庫新增圖片失敗：$error';
+  }
+
+  @override
+  String get addImage => '新增圖片';
+
+  @override
+  String get addImageHint => '點擊以新增圖片';
+
+  @override
+  String get addImages => '新增圖片';
+
+  @override
+  String get addLayer => '新增圖層';
+
+  @override
+  String get addTag => '新增標籤';
+
+  @override
+  String get addWork => '新增作品';
+
+  @override
+  String get addedToCategory => '已新增至分類';
+
+  @override
+  String addingImagesToGallery(Object count) {
+    return '正在將 $count 張本機圖片新增至圖庫...';
+  }
+
+  @override
+  String get adjust => '調整';
+
+  @override
+  String get adjustGridSize => '調整網格大小';
+
+  @override
+  String get afterDate => '在某個日期之後';
+
+  @override
+  String get alignBottom => '靠下對齊';
+
+  @override
+  String get alignCenter => '置中';
+
+  @override
+  String get alignHorizontalCenter => '水平置中';
+
+  @override
+  String get alignLeft => '靠左對齊';
+
+  @override
+  String get alignMiddle => '置中';
+
+  @override
+  String get alignRight => '靠右對齊';
+
+  @override
+  String get alignTop => '靠上對齊';
+
+  @override
+  String get alignVerticalCenter => '垂直置中';
+
+  @override
+  String get alignmentAssist => '對齊輔助';
+
+  @override
+  String get alignmentGrid => '網格貼齊模式 - 點擊切換至參考線對齊';
+
+  @override
+  String get alignmentGuideline => '參考線對齊模式 - 點擊切換至無輔助';
+
+  @override
+  String get alignmentNone => '無輔助對齊 - 點擊啟用網格貼齊';
+
+  @override
+  String get alignmentOperations => '對齊操作';
+
+  @override
+  String get all => '全部';
+
+  @override
+  String get allBackupsDeleteWarning => '此操作無法復原！所有備份資料將永久遺失。';
+
+  @override
+  String get allCategories => '所有分類';
+
+  @override
+  String get allPages => '全部頁面';
+
+  @override
+  String get allTime => '所有時間';
+
+  @override
+  String get allTypes => '所有類型';
+
+  @override
+  String get analyzePathInfoFailed => '分析路徑資訊失敗';
+
+  @override
+  String get appRestartFailed => '應用程式重啟失敗，請手動重啟應用程式';
+
+  @override
+  String get appRestarting => '正在重新啟動應用程式';
+
+  @override
+  String get appRestartingMessage => '資料恢復成功，正在重新啟動應用程式...';
+
+  @override
+  String get appStartupFailed => '應用程式啟動失敗';
+
+  @override
+  String appStartupFailedWith(Object error) {
+    return '應用程式啟動失敗：$error';
+  }
+
+  @override
+  String get appTitle => '字字珠璣';
+
+  @override
+  String get appVersion => '應用程式版本';
+
+  @override
+  String get appVersionInfo => '應用程式版本資訊';
+
+  @override
+  String get appWillRestartAfterRestore => '還原後應用程式將自動重新啟動。';
+
+  @override
+  String appWillRestartInSeconds(Object message) {
+    return '$message\n應用程式將在 3 秒後自動重新啟動...';
+  }
+
+  @override
+  String get appWillRestartMessage => '還原完成後應用程式將自動重新啟動';
+
+  @override
+  String get apply => '套用';
+
+  @override
+  String get applyFormatBrush => '套用格式刷 (Alt+W)';
+
+  @override
+  String get applyNewPath => '套用新路徑';
+
+  @override
+  String get applyTransform => '套用變形';
+
+  @override
+  String get ascending => '升序';
+
+  @override
+  String get askUser => '詢問使用者';
+
+  @override
+  String get askUserDescription => '為每個衝突詢問使用者';
+
+  @override
+  String get author => '作者';
+
+  @override
+  String get autoBackup => '自動備份';
+
+  @override
+  String get autoBackupDescription => '定期自動備份您的資料';
+
+  @override
+  String get autoBackupInterval => '自動備份間隔';
+
+  @override
+  String get autoBackupIntervalDescription => '自動備份的頻率';
+
+  @override
+  String get autoCleanup => '自動清理';
+
+  @override
+  String get autoCleanupDescription => '自動清理舊的快取檔案';
+
+  @override
+  String get autoCleanupInterval => '自動清理間隔';
+
+  @override
+  String get autoCleanupIntervalDescription => '自動清理的執行頻率';
+
+  @override
+  String get autoDetect => '自動偵測';
+
+  @override
+  String get autoDetectPageOrientation => '自動偵測頁面方向';
+
+  @override
+  String get autoLineBreak => '自動換行';
+
+  @override
+  String get autoLineBreakDisabled => '已停用自動換行';
+
+  @override
+  String get autoLineBreakEnabled => '已啟用自動換行';
+
+  @override
+  String get availableCharacters => '可用字元';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get backgroundColor => '背景顏色';
+
+  @override
+  String get backupBeforeSwitchRecommendation => '為確保資料安全，建議在切換資料路徑前先建立備份：';
+
+  @override
+  String backupChecksum(Object checksum) {
+    return '校驗和：$checksum...';
+  }
+
+  @override
+  String get backupCompleted => '✓ 備份已完成';
+
+  @override
+  String backupCount(Object count) {
+    return '$count 個備份';
+  }
+
+  @override
+  String backupCountFormat(Object count) {
+    return '$count 個備份';
+  }
+
+  @override
+  String get backupCreatedSuccessfully => '備份建立成功，可以安全地進行路徑切換';
+
+  @override
+  String get backupCreationFailed => '備份建立失敗';
+
+  @override
+  String backupCreationTime(Object time) {
+    return '建立時間：$time';
+  }
+
+  @override
+  String get backupDeletedSuccessfully => '備份已成功刪除';
+
+  @override
+  String get backupDescription => '描述（可選）';
+
+  @override
+  String get backupDescriptionHint => '輸入此備份的描述';
+
+  @override
+  String get backupDescriptionInputExample => '例如：每週備份、重要更新前備份等';
+
+  @override
+  String get backupDescriptionInputLabel => '備份描述';
+
+  @override
+  String backupDescriptionLabel(Object description) {
+    return '備份描述：$description';
+  }
+
+  @override
+  String get backupEnsuresDataSafety => '• 備份可以確保資料安全';
+
+  @override
+  String backupExportedSuccessfully(Object filename) {
+    return '備份匯出成功：$filename';
+  }
+
+  @override
+  String get backupFailure => '建立備份失敗';
+
+  @override
+  String get backupFile => '備份檔案';
+
+  @override
+  String get backupFileChecksumMismatchError => '備份檔案校驗和不符';
+
+  @override
+  String get backupFileCreationFailed => '備份檔案建立失敗';
+
+  @override
+  String get backupFileCreationFailedError => '備份檔案建立失敗';
+
+  @override
+  String backupFileLabel(Object filename) {
+    return '備份檔案：$filename';
+  }
+
+  @override
+  String backupFileListTitle(Object count) {
+    return '備份檔案清單（$count 個）';
+  }
+
+  @override
+  String get backupFileMissingDirectoryStructureError => '備份檔案缺少必要的目錄結構';
+
+  @override
+  String backupFileNotExist(Object path) {
+    return '備份檔案不存在：$path';
+  }
+
+  @override
+  String get backupFileNotExistError => '備份檔案不存在';
+
+  @override
+  String get backupFileNotFound => '找不到備份檔案';
+
+  @override
+  String get backupFileSizeMismatchError => '備份檔案大小不符';
+
+  @override
+  String get backupFileVerificationFailedError => '備份檔案驗證失敗';
+
+  @override
+  String get backupFirst => '先備份';
+
+  @override
+  String get backupImportSuccessMessage => '備份匯入成功';
+
+  @override
+  String get backupImportedSuccessfully => '備份匯入成功';
+
+  @override
+  String get backupImportedToCurrentPath => '備份已匯入至目前路徑';
+
+  @override
+  String get backupLabel => '備份';
+
+  @override
+  String get backupList => '備份清單';
+
+  @override
+  String get backupLocationTips => '• 建議選擇剩餘空間充足的磁碟作為備份位置\n• 備份位置可以是外部儲存裝置（如行動硬碟）\n• 更換備份位置後，所有備份資訊將統一管理\n• 歷史備份檔案不會自動移動，但可以在備份管理中查看';
+
+  @override
+  String get backupManagement => '備份管理';
+
+  @override
+  String get backupManagementSubtitle => '建立、還原、匯入、匯出和管理所有備份檔案';
+
+  @override
+  String get backupMayTakeMinutes => '備份可能需要幾分鐘時間，請保持應用程式執行';
+
+  @override
+  String get backupNotAvailable => '備份管理暫時無法使用';
+
+  @override
+  String get backupNotAvailableMessage => '備份管理功能需要資料庫支援。\n\n可能原因：\n• 資料庫正在初始化中\n• 資料庫初始化失敗\n• 應用程式正在啟動中\n\n請稍後再試，或重新啟動應用程式。';
+
+  @override
+  String backupNotFound(Object id) {
+    return '找不到備份：$id';
+  }
+
+  @override
+  String backupNotFoundError(Object id) {
+    return '找不到備份：$id';
+  }
+
+  @override
+  String get backupOperationTimeoutError => '備份操作逾時，請檢查儲存空間並重試';
+
+  @override
+  String get backupOverview => '備份概覽';
+
+  @override
+  String get backupPathDeleted => '備份路徑已刪除';
+
+  @override
+  String get backupPathDeletedMessage => '備份路徑已刪除';
+
+  @override
+  String get backupPathNotSet => '請先設定備份路徑';
+
+  @override
+  String get backupPathNotSetError => '請先設定備份路徑';
+
+  @override
+  String get backupPathNotSetUp => '尚未設定備份路徑';
+
+  @override
+  String get backupPathSetSuccessfully => '備份路徑設定成功';
+
+  @override
+  String get backupPathSettings => '備份路徑設定';
+
+  @override
+  String get backupPathSettingsSubtitle => '設定和管理備份儲存路徑';
+
+  @override
+  String backupPreCheckFailed(Object error) {
+    return '備份前檢查失敗：$error';
+  }
+
+  @override
+  String get backupReadyRestartMessage => '備份檔案已準備就緒，需要重新啟動應用程式以完成還原';
+
+  @override
+  String get backupRecommendation => '建議在匯入前建立備份';
+
+  @override
+  String get backupRecommendationDescription => '為確保資料安全，建議在匯入前手動建立備份';
+
+  @override
+  String get backupRestartWarning => '重新啟動應用程式以套用變更';
+
+  @override
+  String backupRestoreFailedMessage(Object error) {
+    return '備份還原失敗：$error';
+  }
+
+  @override
+  String get backupRestoreSuccessMessage => '備份還原成功，請重新啟動應用程式以完成還原';
+
+  @override
+  String get backupRestoreSuccessWithRestartMessage => '備份還原成功，需要重新啟動應用程式以套用變更。';
+
+  @override
+  String get backupRestoredSuccessfully => '備份還原成功，請重新啟動應用程式以完成還原';
+
+  @override
+  String get backupServiceInitializing => '備份服務正在初始化中，請稍後再試';
+
+  @override
+  String get backupServiceNotAvailable => '備份服務暫時無法使用';
+
+  @override
+  String get backupServiceNotInitialized => '備份服務未初始化';
+
+  @override
+  String get backupServiceNotReady => '備份服務暫時無法使用';
+
+  @override
+  String get backupSettings => '備份與還原';
+
+  @override
+  String backupSize(Object size) {
+    return '大小：$size';
+  }
+
+  @override
+  String get backupStatistics => '備份統計';
+
+  @override
+  String get backupStorageLocation => '備份儲存位置';
+
+  @override
+  String get backupSuccess => '備份建立成功';
+
+  @override
+  String get backupSuccessCanSwitchPath => '備份建立成功，可以安全地進行路徑切換';
+
+  @override
+  String backupTimeLabel(Object time) {
+    return '備份時間：$time';
+  }
+
+  @override
+  String get backupTimeoutDetailedError => '備份操作逾時。可能原因：\n• 資料量過大\n• 儲存空間不足\n• 磁碟讀寫速度慢\n\n請檢查儲存空間並重試。';
+
+  @override
+  String get backupTimeoutError => '備份建立逾時或失敗，請檢查儲存空間是否足夠';
+
+  @override
+  String get backupVerificationFailed => '備份檔案驗證失敗';
+
+  @override
+  String get backups => '備份';
+
+  @override
+  String get backupsCount => '個備份';
+
+  @override
+  String get basicInfo => '基本資訊';
+
+  @override
+  String get basicProperties => '基本屬性';
+
+  @override
+  String batchDeleteMessage(Object count) {
+    return '即將刪除 $count 個項目，此操作無法復原。';
+  }
+
+  @override
+  String get batchExportFailed => '批次匯出失敗';
+
+  @override
+  String batchExportFailedMessage(Object error) {
+    return '批次匯出失敗：$error';
+  }
+
+  @override
+  String get batchImport => '批次匯入';
+
+  @override
+  String get batchMode => '批次模式';
+
+  @override
+  String get batchOperations => '批次操作';
+
+  @override
+  String get beforeDate => '在某個日期之前';
+
+  @override
+  String get border => '邊框';
+
+  @override
+  String get borderColor => '邊框顏色';
+
+  @override
+  String get borderWidth => '邊框寬度';
+
+  @override
+  String get boxRegion => '請在預覽區域框選字元';
+
+  @override
+  String get boxTool => '框選工具';
+
+  @override
+  String get bringLayerToFront => '圖層置於頂層';
+
+  @override
+  String get bringToFront => '置於頂層 (Ctrl+T)';
+
+  @override
+  String get browse => '瀏覽';
+
+  @override
+  String get browsePath => '瀏覽路徑';
+
+  @override
+  String get brushSize => '筆刷尺寸';
+
+  @override
+  String get buildEnvironment => '建置環境';
+
+  @override
+  String get buildNumber => '建置編號';
+
+  @override
+  String get buildTime => '建置時間';
+
+  @override
+  String get cacheClearedMessage => '快取已成功清除';
+
+  @override
+  String get cacheSettings => '快取設定';
+
+  @override
+  String get cacheSize => '快取大小';
+
+  @override
+  String get calligraphyStyle => '書法風格';
+
+  @override
+  String get calligraphyStyleText => '書法風格';
+
+  @override
+  String get canChooseDirectSwitch => '• 您也可以選擇直接切換';
+
+  @override
+  String get canCleanOldDataLater => '您可以稍後透過「資料路徑管理」清理舊資料';
+
+  @override
+  String get canCleanupLaterViaManagement => '您可以稍後透過資料路徑管理清理舊資料';
+
+  @override
+  String get canManuallyCleanLater => '• 您可以稍後手動清理舊路徑的資料';
+
+  @override
+  String get canNotPreview => '無法產生預覽';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get cancelAction => '取消';
+
+  @override
+  String get cannotApplyNoImage => '沒有可用的圖片';
+
+  @override
+  String get cannotApplyNoSizeInfo => '無法取得圖片尺寸資訊';
+
+  @override
+  String get cannotCapturePageImage => '無法擷取頁面影像';
+
+  @override
+  String get cannotDeleteOnlyPage => '無法刪除唯一的頁面';
+
+  @override
+  String get cannotGetStorageInfo => '無法取得儲存資訊';
+
+  @override
+  String get cannotReadPathContent => '無法讀取路徑內容';
+
+  @override
+  String get cannotReadPathFileInfo => '無法讀取路徑檔案資訊';
+
+  @override
+  String get cannotSaveMissingController => '無法儲存：缺少控制器';
+
+  @override
+  String get cannotSaveNoPages => '沒有頁面，無法儲存';
+
+  @override
+  String get canvasPixelSize => '畫布像素大小';
+
+  @override
+  String get canvasResetViewTooltip => '重設檢視位置';
+
+  @override
+  String get categories => '分類';
+
+  @override
+  String get categoryManagement => '分類管理';
+
+  @override
+  String get categoryName => '分類名稱';
+
+  @override
+  String get categoryNameCannotBeEmpty => '分類名稱不能為空';
+
+  @override
+  String get centimeter => '公分';
+
+  @override
+  String get changeDataPathMessage => '變更資料路徑後，應用程式需要重新啟動才能生效。';
+
+  @override
+  String get changePath => '更換路徑';
+
+  @override
+  String get character => '集字';
+
+  @override
+  String get characterCollection => '集字';
+
+  @override
+  String characterCollectionFindSwitchFailed(Object error) {
+    return '尋找並切換頁面失敗：$error';
+  }
+
+  @override
+  String get characterCollectionPreviewTab => '字元預覽';
+
+  @override
+  String get characterCollectionResultsTab => '擷取結果';
+
+  @override
+  String get characterCollectionSearchHint => '搜尋字元...';
+
+  @override
+  String get characterCollectionTitle => '字元擷取';
+
+  @override
+  String get characterCollectionToolBox => '框選工具 (Ctrl+B)';
+
+  @override
+  String get characterCollectionToolPan => '平移工具 (Ctrl+V)';
+
+  @override
+  String get characterCollectionUseBoxTool => '使用框選工具從影像中擷取字元';
+
+  @override
+  String get characterCount => '集字數量';
+
+  @override
+  String get characterDetailFormatBinary => '二值化';
+
+  @override
+  String get characterDetailFormatBinaryDesc => '黑白二值化影像';
+
+  @override
+  String get characterDetailFormatDescription => '描述';
+
+  @override
+  String get characterDetailFormatOutline => '輪廓';
+
+  @override
+  String get characterDetailFormatOutlineDesc => '僅顯示輪廓';
+
+  @override
+  String get characterDetailFormatSquareBinary => '方形二值化';
+
+  @override
+  String get characterDetailFormatSquareBinaryDesc => '規整為正方形的二值化影像';
+
+  @override
+  String get characterDetailFormatSquareOutline => '方形輪廓';
+
+  @override
+  String get characterDetailFormatSquareOutlineDesc => '規整為正方形的輪廓影像';
+
+  @override
+  String get characterDetailFormatSquareTransparent => '方形透明';
+
+  @override
+  String get characterDetailFormatSquareTransparentDesc => '規整為正方形的透明 PNG 影像';
+
+  @override
+  String get characterDetailFormatThumbnail => '縮圖';
+
+  @override
+  String get characterDetailFormatThumbnailDesc => '縮圖';
+
+  @override
+  String get characterDetailFormatTransparent => '透明';
+
+  @override
+  String get characterDetailFormatTransparentDesc => '去背景的透明 PNG 影像';
+
+  @override
+  String get characterDetailLoadError => '載入字元詳情失敗';
+
+  @override
+  String get characterDetailSimplifiedChar => '簡體字元';
+
+  @override
+  String get characterDetailTitle => '字元詳情';
+
+  @override
+  String characterEditSaveConfirmMessage(Object character) {
+    return '確認儲存「$character」？';
+  }
+
+  @override
+  String get characterUpdated => '字元已更新';
+
+  @override
+  String get characters => '集字';
+
+  @override
+  String charactersCount(Object count) {
+    return '$count 個集字';
+  }
+
+  @override
+  String charactersSelected(Object count) {
+    return '已選擇 $count 個字元';
+  }
+
+  @override
+  String get checkBackupRecommendationFailed => '檢查備份建議失敗';
+
+  @override
+  String get checkFailedRecommendBackup => '檢查失敗，建議先建立備份以確保資料安全';
+
+  @override
+  String get checkSpecialChars => '• 檢查作品標題是否包含特殊字元';
+
+  @override
+  String get cleanDuplicateRecords => '清理重複記錄';
+
+  @override
+  String get cleanDuplicateRecordsDescription => '此操作將清理重複的備份記錄，不會刪除實際的備份檔案。';
+
+  @override
+  String get cleanDuplicateRecordsTitle => '清理重複記錄';
+
+  @override
+  String cleanupCompleted(Object count) {
+    return '清理完成，移除了 $count 個無效路徑';
+  }
+
+  @override
+  String cleanupCompletedMessage(Object count) {
+    return '清理完成，移除了 $count 個無效路徑';
+  }
+
+  @override
+  String cleanupCompletedWithCount(Object count) {
+    return '清理完成，移除了 $count 個重複記錄';
+  }
+
+  @override
+  String get cleanupFailed => '清理失敗';
+
+  @override
+  String cleanupFailedMessage(Object error) {
+    return '清理失敗：$error';
+  }
+
+  @override
+  String get cleanupInvalidPaths => '清理無效路徑';
+
+  @override
+  String cleanupOperationFailed(Object error) {
+    return '清理操作失敗：$error';
+  }
+
+  @override
+  String get clearCache => '清除快取';
+
+  @override
+  String get clearCacheConfirmMessage => '確定要清除所有快取資料嗎？這將釋放磁碟空間，但可能會暫時降低應用程式的速度。';
+
+  @override
+  String get clearSelection => '取消選擇';
+
+  @override
+  String get close => '關閉';
+
+  @override
+  String get code => '程式碼';
+
+  @override
+  String get collapse => '收合';
+
+  @override
+  String get collapseFileList => '點擊以收合檔案清單';
+
+  @override
+  String get collectionDate => '擷取日期';
+
+  @override
+  String get collectionElement => '集字元素';
+
+  @override
+  String get collectionIdCannotBeEmpty => '集字 ID 不能為空';
+
+  @override
+  String get collectionTime => '擷取時間';
+
+  @override
+  String get color => '顏色';
+
+  @override
+  String get colorCode => '顏色代碼';
+
+  @override
+  String get colorCodeHelp => '輸入 6 位十六進位顏色代碼（例如：FF5500）';
+
+  @override
+  String get colorCodeInvalid => '無效的顏色代碼';
+
+  @override
+  String get colorInversion => '顏色反轉';
+
+  @override
+  String get colorPicker => '選擇顏色';
+
+  @override
+  String get colorSettings => '顏色設定';
+
+  @override
+  String get commonProperties => '通用屬性';
+
+  @override
+  String get commonTags => '常用標籤：';
+
+  @override
+  String get completingSave => '完成儲存...';
+
+  @override
+  String get compressData => '壓縮資料';
+
+  @override
+  String get compressDataDescription => '縮小匯出檔案大小';
+
+  @override
+  String get configInitFailed => '設定資料初始化失敗';
+
+  @override
+  String get configInitializationFailed => '設定初始化失敗';
+
+  @override
+  String get configInitializing => '正在初始化設定...';
+
+  @override
+  String get configKey => '設定金鑰';
+
+  @override
+  String get configManagement => '設定管理';
+
+  @override
+  String get configManagementDescription => '管理書法風格和書寫工具設定';
+
+  @override
+  String get configManagementTitle => '書法風格管理';
+
+  @override
+  String get confirm => '確定';
+
+  @override
+  String get confirmChangeDataPath => '確認變更資料路徑';
+
+  @override
+  String get confirmContinue => '確定要繼續嗎？';
+
+  @override
+  String get confirmDataNormalBeforeClean => '• 建議在清理舊路徑前確認資料是否正常';
+
+  @override
+  String get confirmDataPathSwitch => '確認資料路徑切換';
+
+  @override
+  String get confirmDelete => '確認刪除';
+
+  @override
+  String get confirmDeleteAction => '確認刪除';
+
+  @override
+  String get confirmDeleteAll => '確認全部刪除';
+
+  @override
+  String get confirmDeleteAllBackups => '確認刪除所有備份';
+
+  @override
+  String get confirmDeleteAllButton => '確認全部刪除';
+
+  @override
+  String confirmDeleteBackup(Object description, Object filename) {
+    return '確定要刪除備份檔案「$filename」（$description）嗎？\n此操作無法復原。';
+  }
+
+  @override
+  String confirmDeleteBackupPath(Object path) {
+    return '確定要刪除整個備份路徑嗎？\n\n路徑：$path\n\n這將會：\n• 刪除該路徑下的所有備份檔案\n• 從歷史記錄中移除該路徑\n• 此操作無法復原\n\n請謹慎操作！';
+  }
+
+  @override
+  String get confirmDeleteButton => '確認刪除';
+
+  @override
+  String get confirmDeleteHistoryPath => '確定要刪除此歷史路徑記錄嗎？';
+
+  @override
+  String get confirmDeleteTitle => '確認刪除';
+
+  @override
+  String get confirmExitWizard => '確定要退出資料路徑切換精靈嗎？';
+
+  @override
+  String get confirmImportAction => '確定匯入';
+
+  @override
+  String get confirmImportButton => '確認匯入';
+
+  @override
+  String get confirmOverwrite => '確認覆寫';
+
+  @override
+  String confirmRemoveFromCategory(Object count) {
+    return '確定要將選取的 $count 個項目從目前分類中移除嗎？';
+  }
+
+  @override
+  String get confirmResetToDefaultPath => '確認重設為預設路徑';
+
+  @override
+  String get confirmRestoreAction => '確定還原';
+
+  @override
+  String get confirmRestoreBackup => '確定要還原此備份嗎？';
+
+  @override
+  String get confirmRestoreButton => '確認還原';
+
+  @override
+  String get confirmRestoreMessage => '您即將還原以下備份：';
+
+  @override
+  String get confirmRestoreTitle => '確認還原';
+
+  @override
+  String get confirmShortcuts => '快捷鍵：Enter 確認，Esc 取消';
+
+  @override
+  String get confirmSkip => '確定略過';
+
+  @override
+  String get confirmSkipAction => '確定略過';
+
+  @override
+  String get confirmSwitch => '確認切換';
+
+  @override
+  String get confirmSwitchButton => '確認切換';
+
+  @override
+  String get confirmSwitchToNewPath => '確認切換至新的資料路徑';
+
+  @override
+  String get conflictDetailsTitle => '衝突處理明細';
+
+  @override
+  String get conflictReason => '衝突原因';
+
+  @override
+  String get conflictResolution => '衝突解決';
+
+  @override
+  String conflictsCount(Object count) {
+    return '發現 $count 個衝突';
+  }
+
+  @override
+  String get conflictsFound => '發現衝突';
+
+  @override
+  String get contentProperties => '內容屬性';
+
+  @override
+  String get contentSettings => '內容設定';
+
+  @override
+  String get continueDuplicateImport => '是否仍要繼續匯入此備份？';
+
+  @override
+  String get continueImport => '繼續匯入';
+
+  @override
+  String get continueQuestion => '是否繼續？';
+
+  @override
+  String get copy => '複製 (Ctrl+Shift+C)';
+
+  @override
+  String copyFailed(Object error) {
+    return '複製失敗：$error';
+  }
+
+  @override
+  String get copyFormat => '複製格式 (Alt+Q)';
+
+  @override
+  String get copySelected => '複製選取項目';
+
+  @override
+  String get copyVersionInfo => '複製版本資訊';
+
+  @override
+  String get couldNotGetFilePath => '無法取得檔案路徑';
+
+  @override
+  String get countUnit => '個';
+
+  @override
+  String get create => '建立';
+
+  @override
+  String get createBackup => '建立備份';
+
+  @override
+  String get createBackupBeforeImport => '匯入前建立備份';
+
+  @override
+  String get createBackupDescription => '建立新的資料備份';
+
+  @override
+  String get createBackupFailed => '建立備份失敗';
+
+  @override
+  String createBackupFailedMessage(Object error) {
+    return '建立備份失敗：$error';
+  }
+
+  @override
+  String createExportDirectoryFailed(Object error) {
+    return '建立匯出目錄失敗$error';
+  }
+
+  @override
+  String get createFirstBackup => '建立第一個備份';
+
+  @override
+  String get createTime => '建立時間';
+
+  @override
+  String get createdAt => '建立時間';
+
+  @override
+  String get creatingBackup => '正在建立備份...';
+
+  @override
+  String get creatingBackupPleaseWaitMessage => '這可能需要幾分鐘時間，請耐心等候';
+
+  @override
+  String get creatingBackupProgressMessage => '正在建立備份...';
+
+  @override
+  String get creationDate => '創作日期';
+
+  @override
+  String get criticalError => '嚴重錯誤';
+
+  @override
+  String get cropBottom => '底部裁剪';
+
+  @override
+  String get cropLeft => '左側裁剪';
+
+  @override
+  String get cropRight => '右側裁剪';
+
+  @override
+  String get cropTop => '頂部裁剪';
+
+  @override
+  String get cropping => '裁剪';
+
+  @override
+  String croppingApplied(Object bottom, Object left, Object right, Object top) {
+    return '（裁剪：左 ${left}px，上 ${top}px，右 ${right}px，下 ${bottom}px）';
+  }
+
+  @override
+  String get currentBackupPathNotSet => '目前備份路徑未設定';
+
+  @override
+  String get currentCharInversion => '目前字元反轉';
+
+  @override
+  String get currentCustomPath => '目前使用自訂資料路徑';
+
+  @override
+  String get currentDataPath => '目前資料路徑';
+
+  @override
+  String get currentDefaultPath => '目前使用預設資料路徑';
+
+  @override
+  String get currentLabel => '目前';
+
+  @override
+  String get currentLocation => '目前位置';
+
+  @override
+  String get currentPage => '目前頁面';
+
+  @override
+  String get currentPath => '目前路徑';
+
+  @override
+  String get currentPathBackup => '目前路徑備份';
+
+  @override
+  String get currentPathBackupDescription => '目前路徑備份';
+
+  @override
+  String get currentPathFileExists => '目前路徑下已存在同名備份檔案：';
+
+  @override
+  String get currentPathFileExistsMessage => '目前路徑下已存在同名備份檔案：';
+
+  @override
+  String get currentStorageInfo => '目前儲存資訊';
+
+  @override
+  String get currentStorageInfoSubtitle => '檢視目前儲存空間使用情況';
+
+  @override
+  String get currentStorageInfoTitle => '目前儲存資訊';
+
+  @override
+  String get currentTool => '目前工具';
+
+  @override
+  String get custom => '自訂';
+
+  @override
+  String get customPath => '自訂路徑';
+
+  @override
+  String get customRange => '自訂範圍';
+
+  @override
+  String get customSize => '自訂大小';
+
+  @override
+  String get cutSelected => '剪下選取項目';
+
+  @override
+  String get dangerZone => '危險區域';
+
+  @override
+  String get dangerousOperationConfirm => '危險操作確認';
+
+  @override
+  String get dangerousOperationConfirmTitle => '危險操作確認';
+
+  @override
+  String get dartVersion => 'Dart 版本';
+
+  @override
+  String get dataBackup => '資料備份';
+
+  @override
+  String get dataEmpty => '資料為空';
+
+  @override
+  String get dataIncomplete => '資料不完整';
+
+  @override
+  String get dataMergeOptions => '資料合併選項：';
+
+  @override
+  String get dataPath => '資料路徑';
+
+  @override
+  String get dataPathChangedMessage => '資料路徑已變更，請重新啟動應用程式以使變更生效。';
+
+  @override
+  String get dataPathHint => '選擇資料儲存路徑';
+
+  @override
+  String get dataPathManagement => '資料路徑管理';
+
+  @override
+  String get dataPathManagementSubtitle => '管理目前和歷史資料路徑';
+
+  @override
+  String get dataPathManagementTitle => '資料路徑管理';
+
+  @override
+  String get dataPathSettings => '資料儲存路徑';
+
+  @override
+  String get dataPathSettingsDescription => '設定應用程式資料的儲存位置。變更後需要重新啟動應用程式。';
+
+  @override
+  String get dataPathSettingsSubtitle => '設定應用程式資料的儲存位置';
+
+  @override
+  String get dataPathSwitchOptions => '資料路徑切換選項';
+
+  @override
+  String get dataPathSwitchWizard => '資料路徑切換精靈';
+
+  @override
+  String get dataSafetyRecommendation => '資料安全建議';
+
+  @override
+  String get dataSafetySuggestion => '資料安全建議';
+
+  @override
+  String get dataSafetySuggestions => '資料安全建議';
+
+  @override
+  String get dataSize => '資料大小';
+
+  @override
+  String get databaseSize => '資料庫大小';
+
+  @override
+  String get dayBeforeYesterday => '前天';
+
+  @override
+  String days(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 天',
+      one: '1 天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get daysAgo => '天前';
+
+  @override
+  String get defaultEditableText => '屬性面板編輯文字';
+
+  @override
+  String get defaultLayer => '預設圖層';
+
+  @override
+  String defaultLayerName(Object number) {
+    return '圖層 $number';
+  }
+
+  @override
+  String get defaultPage => '預設頁面';
+
+  @override
+  String defaultPageName(Object number) {
+    return '頁面 $number';
+  }
+
+  @override
+  String get defaultPath => '預設路徑';
+
+  @override
+  String get defaultPathName => '預設路徑';
+
+  @override
+  String get delete => '刪除 (Ctrl+D)';
+
+  @override
+  String get deleteAll => '全部刪除';
+
+  @override
+  String get deleteAllBackups => '刪除所有備份';
+
+  @override
+  String get deleteBackup => '刪除備份';
+
+  @override
+  String get deleteBackupFailed => '刪除備份失敗';
+
+  @override
+  String deleteBackupsCountMessage(Object count) {
+    return '您即將刪除 $count 個備份檔案。';
+  }
+
+  @override
+  String get deleteCategory => '刪除分類';
+
+  @override
+  String get deleteCategoryOnly => '僅刪除分類';
+
+  @override
+  String get deleteCategoryWithFiles => '刪除分類及檔案';
+
+  @override
+  String deleteCharacterFailed(Object error) {
+    return '刪除字元失敗：$error';
+  }
+
+  @override
+  String get deleteCompleteTitle => '刪除完成';
+
+  @override
+  String get deleteConfigItem => '刪除設定項';
+
+  @override
+  String get deleteConfigItemMessage => '確定要刪除此設定項嗎？此操作無法復原。';
+
+  @override
+  String get deleteConfirm => '確認刪除';
+
+  @override
+  String get deleteElementConfirmMessage => '確定要刪除這些元素嗎？';
+
+  @override
+  String deleteFailCount(Object count) {
+    return '刪除失敗：$count 個檔案';
+  }
+
+  @override
+  String get deleteFailDetails => '失敗詳情：';
+
+  @override
+  String deleteFailed(Object error) {
+    return '刪除失敗：$error';
+  }
+
+  @override
+  String deleteFailedMessage(Object error) {
+    return '刪除失敗：$error';
+  }
+
+  @override
+  String get deleteFailure => '備份刪除失敗';
+
+  @override
+  String get deleteGroup => '刪除群組';
+
+  @override
+  String get deleteGroupConfirm => '確認刪除群組';
+
+  @override
+  String get deleteHistoryPathNote => '注意：這只會刪除記錄，不會刪除實際的資料夾和資料。';
+
+  @override
+  String get deleteHistoryPathRecord => '刪除歷史路徑記錄';
+
+  @override
+  String get deleteImage => '刪除圖片';
+
+  @override
+  String get deleteLastMessage => '這是最後一個項目。確定要刪除嗎？';
+
+  @override
+  String get deleteLayer => '刪除圖層';
+
+  @override
+  String get deleteLayerConfirmMessage => '確定要刪除此圖層嗎？';
+
+  @override
+  String get deleteLayerMessage => '此圖層上的所有元素將被刪除。此操作無法復原。';
+
+  @override
+  String deleteMessage(Object count) {
+    return '即將刪除，此操作無法復原。';
+  }
+
+  @override
+  String get deletePage => '刪除頁面';
+
+  @override
+  String get deletePath => '刪除路徑';
+
+  @override
+  String get deletePathButton => '刪除路徑';
+
+  @override
+  String deletePathConfirmContent(Object path) {
+    return '確定要刪除備份路徑 $path 嗎？此操作無法復原，將刪除該路徑下的所有備份檔案。';
+  }
+
+  @override
+  String deleteRangeItem(Object count, Object path) {
+    return '• $path：$count 個檔案';
+  }
+
+  @override
+  String get deleteRangeTitle => '刪除範圍包括：';
+
+  @override
+  String get deleteSelected => '刪除所選';
+
+  @override
+  String get deleteSelectedArea => '刪除選取區域';
+
+  @override
+  String get deleteSelectedWithShortcut => '刪除所選 (Ctrl+D)';
+
+  @override
+  String get deleteSuccess => '備份刪除成功';
+
+  @override
+  String deleteSuccessCount(Object count) {
+    return '成功刪除：$count 個檔案';
+  }
+
+  @override
+  String get deleteText => '刪除';
+
+  @override
+  String get deleting => '正在刪除...';
+
+  @override
+  String get deletingBackups => '正在刪除備份...';
+
+  @override
+  String get deletingBackupsProgress => '正在刪除備份檔案，請稍候...';
+
+  @override
+  String get descending => '降序';
+
+  @override
+  String get descriptionLabel => '描述';
+
+  @override
+  String get deselectAll => '取消選擇';
+
+  @override
+  String get detail => '詳情';
+
+  @override
+  String get detailedError => '詳細錯誤';
+
+  @override
+  String get detailedReport => '詳細報告';
+
+  @override
+  String get deviceInfo => '裝置資訊';
+
+  @override
+  String get dimensions => '尺寸';
+
+  @override
+  String get directSwitch => '直接切換';
+
+  @override
+  String get disabled => '已停用';
+
+  @override
+  String get disabledDescription => '停用 - 在選擇器中隱藏';
+
+  @override
+  String get diskCacheSize => '磁碟快取大小';
+
+  @override
+  String get diskCacheSizeDescription => '磁碟快取的最大大小';
+
+  @override
+  String get diskCacheTtl => '磁碟快取生命週期';
+
+  @override
+  String get diskCacheTtlDescription => '快取檔案在磁碟上保留的時間';
+
+  @override
+  String get displayMode => '顯示模式';
+
+  @override
+  String get displayName => '顯示名稱';
+
+  @override
+  String get displayNameCannotBeEmpty => '顯示名稱不能為空';
+
+  @override
+  String get displayNameHint => '使用者介面中顯示的名稱';
+
+  @override
+  String get displayNameMaxLength => '顯示名稱最多 100 個字元';
+
+  @override
+  String get displayNameRequired => '請輸入顯示名稱';
+
+  @override
+  String get distributeHorizontally => '水平均分';
+
+  @override
+  String get distributeVertically => '垂直均分';
+
+  @override
+  String get distribution => '分佈';
+
+  @override
+  String get doNotCloseApp => '請不要關閉應用程式...';
+
+  @override
+  String get doNotCloseAppMessage => '請勿關閉應用程式，還原過程可能需要幾分鐘';
+
+  @override
+  String get done => '確定';
+
+  @override
+  String get dropToImportImages => '釋放滑鼠以匯入圖片';
+
+  @override
+  String get duplicateBackupFound => '發現重複備份';
+
+  @override
+  String get duplicateBackupFoundDesc => '偵測到要匯入的備份檔案與現有備份重複：';
+
+  @override
+  String get duplicateFileImported => '（重複檔案已匯入）';
+
+  @override
+  String get dynasty => '朝代';
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get editConfigItem => '編輯設定項';
+
+  @override
+  String editField(Object field) {
+    return '編輯 $field';
+  }
+
+  @override
+  String get editGroupContents => '編輯群組內容';
+
+  @override
+  String get editGroupContentsDescription => '編輯所選群組的內容';
+
+  @override
+  String editLabel(Object label) {
+    return '編輯 $label';
+  }
+
+  @override
+  String get editOperations => '編輯操作';
+
+  @override
+  String get editTags => '編輯標籤';
+
+  @override
+  String get editTitle => '編輯標題';
+
+  @override
+  String get elementCopied => '元素已複製到剪貼簿';
+
+  @override
+  String get elementCopiedToClipboard => '元素已複製到剪貼簿';
+
+  @override
+  String get elementHeight => '高';
+
+  @override
+  String get elementId => '元素 ID';
+
+  @override
+  String get elementSize => '大小';
+
+  @override
+  String get elementWidth => '寬';
+
+  @override
+  String get elements => '元素';
+
+  @override
+  String get empty => '空';
+
+  @override
+  String get emptyGroup => '空群組';
+
+  @override
+  String get emptyStateError => '載入失敗，請稍後再試';
+
+  @override
+  String get emptyStateNoCharacters => '沒有字體，從作品中擷取字體後可在此處檢視';
+
+  @override
+  String get emptyStateNoPractices => '沒有字帖，點擊新增按鈕建立新字帖';
+
+  @override
+  String get emptyStateNoResults => '找不到符合的結果，請嘗試變更搜尋條件';
+
+  @override
+  String get emptyStateNoSelection => '未選擇任何項目，點擊項目以選擇';
+
+  @override
+  String get emptyStateNoWorks => '沒有作品，點擊新增按鈕匯入作品';
+
+  @override
+  String get enabled => '已啟用';
+
+  @override
+  String get endDate => '結束日期';
+
+  @override
+  String get ensureCompleteTransfer => '• 確保檔案完整傳輸';
+
+  @override
+  String get ensureReadWritePermission => '確保新路徑有讀寫權限';
+
+  @override
+  String get enterBackupDescription => '請輸入備份描述（可選）：';
+
+  @override
+  String get enterCategoryName => '請輸入分類名稱';
+
+  @override
+  String get enterTagHint => '輸入標籤並按 Enter';
+
+  @override
+  String error(Object message) {
+    return '錯誤：$message';
+  }
+
+  @override
+  String get errors => '錯誤';
+
+  @override
+  String get estimatedTime => '預計時間';
+
+  @override
+  String get executingImportOperation => '正在執行匯入操作...';
+
+  @override
+  String existingBackupInfo(Object filename) {
+    return '現有備份：$filename';
+  }
+
+  @override
+  String get existingItem => '現有項目';
+
+  @override
+  String get exit => '退出';
+
+  @override
+  String get exitBatchMode => '退出批次模式';
+
+  @override
+  String get exitConfirm => '退出';
+
+  @override
+  String get exitPreview => '退出預覽模式';
+
+  @override
+  String get exitWizard => '退出精靈';
+
+  @override
+  String get expand => '展開';
+
+  @override
+  String expandFileList(Object count) {
+    return '點擊展開以檢視 $count 個備份檔案';
+  }
+
+  @override
+  String get export => '匯出';
+
+  @override
+  String get exportAllBackups => '匯出所有備份';
+
+  @override
+  String get exportAllBackupsButton => '匯出全部備份';
+
+  @override
+  String get exportBackup => '匯出備份';
+
+  @override
+  String get exportBackupFailed => '匯出備份失敗';
+
+  @override
+  String exportBackupFailedMessage(Object error) {
+    return '匯出備份失敗：$error';
+  }
+
+  @override
+  String get exportCharactersOnly => '僅匯出集字';
+
+  @override
+  String get exportCharactersOnlyDescription => '僅包含選取的集字資料';
+
+  @override
+  String get exportCharactersWithWorks => '匯出集字和來源作品（建議）';
+
+  @override
+  String get exportCharactersWithWorksDescription => '包含集字及其來源作品資料';
+
+  @override
+  String exportCompleted(Object failed, Object success) {
+    return '匯出完成：成功 $success 個$failed';
+  }
+
+  @override
+  String exportCompletedFormat(Object failedMessage, Object successCount) {
+    return '匯出完成：成功 $successCount 個$failedMessage';
+  }
+
+  @override
+  String exportCompletedFormat2(Object failed, Object success) {
+    return '匯出完成，成功：$success$failed';
+  }
+
+  @override
+  String get exportConfig => '匯出設定';
+
+  @override
+  String get exportDialogRangeExample => '例如：1-3,5,7-9';
+
+  @override
+  String exportDimensions(Object height, Object orientation, Object width) {
+    return '$width 公分 × $height 公分 ($orientation)';
+  }
+
+  @override
+  String get exportEncodingIssue => '• 匯出時存在特殊字元編碼問題';
+
+  @override
+  String get exportFailed => '匯出失敗';
+
+  @override
+  String exportFailedPartFormat(Object failCount) {
+    return '，失敗 $failCount 個';
+  }
+
+  @override
+  String exportFailedPartFormat2(Object count) {
+    return '，失敗：$count';
+  }
+
+  @override
+  String exportFailedWith(Object error) {
+    return '匯出失敗：$error';
+  }
+
+  @override
+  String get exportFailure => '備份匯出失敗';
+
+  @override
+  String get exportFormat => '匯出格式';
+
+  @override
+  String get exportFullData => '完整資料匯出';
+
+  @override
+  String get exportFullDataDescription => '包含所有相關資料';
+
+  @override
+  String get exportLocation => '匯出位置';
+
+  @override
+  String get exportNotImplemented => '設定匯出功能尚待實作';
+
+  @override
+  String get exportOptions => '匯出選項';
+
+  @override
+  String get exportSuccess => '備份匯出成功';
+
+  @override
+  String exportSuccessMessage(Object path) {
+    return '備份匯出成功：$path';
+  }
+
+  @override
+  String get exportSummary => '匯出摘要';
+
+  @override
+  String get exportType => '匯出格式';
+
+  @override
+  String get exportWorksOnly => '僅匯出作品';
+
+  @override
+  String get exportWorksOnlyDescription => '僅包含選取的作品資料';
+
+  @override
+  String get exportWorksWithCharacters => '匯出作品和關聯集字（建議）';
+
+  @override
+  String get exportWorksWithCharactersDescription => '包含作品及其相關的集字資料';
+
+  @override
+  String get exporting => '正在匯出，請稍候...';
+
+  @override
+  String get exportingBackup => '正在匯出備份...';
+
+  @override
+  String get exportingBackupMessage => '正在匯出備份...';
+
+  @override
+  String exportingBackups(Object count) {
+    return '正在匯出 $count 個備份...';
+  }
+
+  @override
+  String get exportingBackupsProgress => '正在匯出備份...';
+
+  @override
+  String exportingBackupsProgressFormat(Object count) {
+    return '正在匯出 $count 個備份檔案...';
+  }
+
+  @override
+  String get exportingDescription => '正在匯出資料，請稍候...';
+
+  @override
+  String get extract => '擷取';
+
+  @override
+  String get extractionError => '擷取時發生錯誤';
+
+  @override
+  String failedCount(Object count) {
+    return '，失敗 $count 個';
+  }
+
+  @override
+  String get favorite => '我的最愛';
+
+  @override
+  String get favoritesOnly => '僅顯示我的最愛';
+
+  @override
+  String get fileCorrupted => '• 檔案在傳輸過程中損毀';
+
+  @override
+  String get fileCount => '檔案數量';
+
+  @override
+  String get fileExistsTitle => '檔案已存在';
+
+  @override
+  String get fileExtension => '副檔名';
+
+  @override
+  String get fileMigrationWarning => '不遷移檔案時，舊路徑的備份檔案仍保留在原位置';
+
+  @override
+  String get fileName => '檔案名稱';
+
+  @override
+  String fileNotExist(Object path) {
+    return '檔案不存在：$path';
+  }
+
+  @override
+  String get fileRestored => '圖片已從圖庫中還原';
+
+  @override
+  String get fileSize => '檔案大小';
+
+  @override
+  String get fileUpdatedAt => '檔案修改時間';
+
+  @override
+  String get filenamePrefix => '輸入檔案名前綴（將自動新增頁碼）';
+
+  @override
+  String get files => '檔案數量';
+
+  @override
+  String get filter => '篩選';
+
+  @override
+  String get filterAndSort => '篩選與排序';
+
+  @override
+  String get filterClear => '清除';
+
+  @override
+  String get firstPage => '第一頁';
+
+  @override
+  String get fitContain => '包含';
+
+  @override
+  String get fitCover => '覆蓋';
+
+  @override
+  String get fitFill => '填滿';
+
+  @override
+  String get fitHeight => '符合高度';
+
+  @override
+  String get fitMode => '調整模式';
+
+  @override
+  String get fitWidth => '符合寬度';
+
+  @override
+  String get flip => '翻轉';
+
+  @override
+  String get flipHorizontal => '水平翻轉';
+
+  @override
+  String get flipVertical => '垂直翻轉';
+
+  @override
+  String get flutterVersion => 'Flutter 版本';
+
+  @override
+  String get folderImportComplete => '資料夾匯入完成';
+
+  @override
+  String get fontColor => '文字顏色';
+
+  @override
+  String get fontFamily => '字體';
+
+  @override
+  String get fontSize => '字體大小';
+
+  @override
+  String get fontStyle => '字體樣式';
+
+  @override
+  String get fontTester => '字體測試工具';
+
+  @override
+  String get fontWeight => '字體粗細';
+
+  @override
+  String get fontWeightTester => '字體粗細測試工具';
+
+  @override
+  String get format => '格式';
+
+  @override
+  String get formatBrushActivated => '格式刷已啟用，點擊目標元素以套用樣式';
+
+  @override
+  String get formatType => '格式類型';
+
+  @override
+  String get fromGallery => '從圖庫選擇';
+
+  @override
+  String get fromLocal => '從本機選擇';
+
+  @override
+  String get fullScreen => '全螢幕顯示';
+
+  @override
+  String get geometryProperties => '幾何屬性';
+
+  @override
+  String get getHistoryPathsFailed => '取得歷史路徑失敗';
+
+  @override
+  String get getPathInfoFailed => '無法取得路徑資訊';
+
+  @override
+  String get getPathUsageTimeFailed => '取得路徑使用時間失敗';
+
+  @override
+  String get getStorageInfoFailed => '取得儲存資訊失敗';
+
+  @override
+  String get getThumbnailSizeError => '取得縮圖大小失敗';
+
+  @override
+  String get gettingPathInfo => '正在取得路徑資訊...';
+
+  @override
+  String get gettingStorageInfo => '正在取得儲存資訊...';
+
+  @override
+  String get gitBranch => 'Git 分支';
+
+  @override
+  String get gitCommit => 'Git 提交';
+
+  @override
+  String get goToBackup => '前往備份';
+
+  @override
+  String get gridSettings => '網格設定';
+
+  @override
+  String get gridSize => '網格大小';
+
+  @override
+  String get gridSizeExtraLarge => '特大';
+
+  @override
+  String get gridSizeLarge => '大';
+
+  @override
+  String get gridSizeMedium => '中';
+
+  @override
+  String get gridSizeSmall => '小';
+
+  @override
+  String get gridView => '網格檢視';
+
+  @override
+  String get group => '群組 (Ctrl+J)';
+
+  @override
+  String get groupElements => '群組元素';
+
+  @override
+  String get groupOperations => '群組操作';
+
+  @override
+  String get groupProperties => '群組屬性';
+
+  @override
+  String get height => '高度';
+
+  @override
+  String get help => '說明';
+
+  @override
+  String get hideDetails => '隱藏詳情';
+
+  @override
+  String get hideElement => '隱藏元素';
+
+  @override
+  String get hideGrid => '隱藏網格 (Ctrl+G)';
+
+  @override
+  String get hideImagePreview => '隱藏圖片預覽';
+
+  @override
+  String get hideThumbnails => '隱藏頁面縮圖';
+
+  @override
+  String get historicalPaths => '歷史路徑';
+
+  @override
+  String get historyDataPaths => '歷史資料路徑';
+
+  @override
+  String get historyLabel => '歷史';
+
+  @override
+  String get historyLocation => '歷史位置';
+
+  @override
+  String get historyPath => '歷史路徑';
+
+  @override
+  String get historyPathBackup => '歷史路徑備份';
+
+  @override
+  String get historyPathBackupDescription => '歷史路徑備份';
+
+  @override
+  String get historyPathDeleted => '歷史路徑記錄已刪除';
+
+  @override
+  String get homePage => '首頁';
+
+  @override
+  String get horizontalAlignment => '水平對齊';
+
+  @override
+  String get horizontalLeftToRight => '橫排由左至右';
+
+  @override
+  String get horizontalRightToLeft => '橫排由右至左';
+
+  @override
+  String hours(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 小時',
+      one: '1 小時',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hoursAgo => '小時前';
+
+  @override
+  String get image => '圖片';
+
+  @override
+  String get imageCount => '影像數量';
+
+  @override
+  String get imageElement => '圖片元素';
+
+  @override
+  String get imageExportFailed => '圖片匯出失敗';
+
+  @override
+  String get imageFileNotExists => '圖片檔案不存在';
+
+  @override
+  String imageImportError(Object error) {
+    return '匯入影像失敗：$error';
+  }
+
+  @override
+  String get imageImportSuccess => '影像匯入成功';
+
+  @override
+  String get imageIndexError => '圖片索引錯誤';
+
+  @override
+  String get imageInvalid => '影像資料無效或已損毀';
+
+  @override
+  String get imageInvert => '影像反轉';
+
+  @override
+  String imageLoadError(Object error) {
+    return '載入影像失敗：$error...';
+  }
+
+  @override
+  String get imageLoadFailed => '圖片載入失敗';
+
+  @override
+  String imageProcessingPathError(Object error) {
+    return '處理路徑錯誤：$error';
+  }
+
+  @override
+  String get imageProperties => '影像屬性';
+
+  @override
+  String get imagePropertyPanelAutoImportNotice => '所選影像將自動匯入至您的圖庫以便更好地管理';
+
+  @override
+  String get imagePropertyPanelGeometryWarning => '這些屬性會調整整個元素框，而不是影像內容本身';
+
+  @override
+  String get imagePropertyPanelPreviewNotice => '注意：預覽期間顯示的重複日誌是正常的';
+
+  @override
+  String get imagePropertyPanelTransformWarning => '這些變形會修改影像內容本身，而不僅僅是元素框架';
+
+  @override
+  String get imageResetSuccess => '重設成功';
+
+  @override
+  String get imageRestoring => '正在還原圖片資料...';
+
+  @override
+  String get imageSelection => '圖片選擇';
+
+  @override
+  String get imageTransform => '影像變形';
+
+  @override
+  String imageTransformError(Object error) {
+    return '套用變形失敗：$error';
+  }
+
+  @override
+  String get imageUpdated => '圖片已更新';
+
+  @override
+  String get images => '圖片';
+
+  @override
+  String get implementationComingSoon => '此功能正在開發中，敬請期待！';
+
+  @override
+  String get import => '匯入';
+
+  @override
+  String get importBackup => '匯入備份';
+
+  @override
+  String get importBackupFailed => '匯入備份失敗';
+
+  @override
+  String importBackupFailedMessage(Object error) {
+    return '匯入備份失敗：$error';
+  }
+
+  @override
+  String get importConfig => '匯入設定';
+
+  @override
+  String get importError => '匯入錯誤';
+
+  @override
+  String get importErrorCauses => '此問題通常由以下原因引起：';
+
+  @override
+  String importFailed(Object error) {
+    return '匯入失敗：$error';
+  }
+
+  @override
+  String get importFailure => '備份匯入失敗';
+
+  @override
+  String get importFileSuccess => '成功匯入檔案';
+
+  @override
+  String get importFiles => '匯入檔案';
+
+  @override
+  String get importFolder => '匯入資料夾';
+
+  @override
+  String get importNotImplemented => '設定匯入功能尚待實作';
+
+  @override
+  String get importOptions => '匯入選項';
+
+  @override
+  String get importPreview => '匯入預覽';
+
+  @override
+  String get importRequirements => '匯入要求';
+
+  @override
+  String get importResultTitle => '匯入結果';
+
+  @override
+  String get importStatistics => '匯入統計';
+
+  @override
+  String get importSuccess => '備份匯入成功';
+
+  @override
+  String importSuccessMessage(Object count) {
+    return '成功匯入 $count 個檔案';
+  }
+
+  @override
+  String get importToCurrentPath => '匯入至目前路徑';
+
+  @override
+  String get importToCurrentPathButton => '匯入至目前路徑';
+
+  @override
+  String get importToCurrentPathDesc => '這會將備份檔案複製到目前路徑，原始檔案保持不變。';
+
+  @override
+  String get importToCurrentPathDescription => '匯入後，此備份將出現在目前路徑的備份清單中';
+
+  @override
+  String get importToCurrentPathFailed => '匯入備份至目前路徑失敗';
+
+  @override
+  String get importToCurrentPathMessage => '您即將將此備份檔案匯入至目前備份路徑：';
+
+  @override
+  String get importToCurrentPathSuccessMessage => '備份已成功匯入至目前路徑';
+
+  @override
+  String get importToCurrentPathTitle => '匯入至目前路徑';
+
+  @override
+  String get importantReminder => '重要提醒';
+
+  @override
+  String get importedBackupDescription => '匯入的備份';
+
+  @override
+  String get importedCharacters => '匯入的集字';
+
+  @override
+  String get importedFile => '匯入的檔案';
+
+  @override
+  String get importedImages => '匯入的圖片';
+
+  @override
+  String get importedSuffix => '匯入的備份';
+
+  @override
+  String get importedWorks => '匯入的作品';
+
+  @override
+  String get importing => '正在匯入...';
+
+  @override
+  String get importingBackup => '正在匯入備份...';
+
+  @override
+  String get importingBackupProgressMessage => '正在匯入備份...';
+
+  @override
+  String get importingDescription => '正在匯入資料，請稍候...';
+
+  @override
+  String get importingToCurrentPath => '正在匯入至目前路徑...';
+
+  @override
+  String get importingToCurrentPathMessage => '正在匯入至目前路徑...';
+
+  @override
+  String get importingWorks => '正在匯入作品...';
+
+  @override
+  String get includeImages => '包含圖片';
+
+  @override
+  String get includeImagesDescription => '匯出相關的圖片檔案';
+
+  @override
+  String get includeMetadata => '包含中繼資料';
+
+  @override
+  String get includeMetadataDescription => '匯出建立時間、標籤等中繼資料';
+
+  @override
+  String get incompatibleCharset => '• 使用了不相容的字元集';
+
+  @override
+  String initializationFailed(Object error) {
+    return '初始化失敗：$error';
+  }
+
+  @override
+  String get initializing => '正在初始化...';
+
+  @override
+  String get inputCharacter => '輸入字元';
+
+  @override
+  String get inputChineseContent => '請輸入漢字內容';
+
+  @override
+  String inputFieldHint(Object field) {
+    return '請輸入 $field';
+  }
+
+  @override
+  String get inputFileName => '輸入檔案名';
+
+  @override
+  String get inputHint => '在此輸入';
+
+  @override
+  String get inputNewTag => '輸入新標籤...';
+
+  @override
+  String get inputTitle => '請輸入字帖標題';
+
+  @override
+  String get invalidFilename => '檔案名稱不能包含以下字元：\\ / : * ? \" < > |';
+
+  @override
+  String get invalidNumber => '請輸入有效的數字';
+
+  @override
+  String get invertMode => '反轉模式';
+
+  @override
+  String get isActive => '是否啟用';
+
+  @override
+  String itemsCount(Object count) {
+    return '$count 個選項';
+  }
+
+  @override
+  String itemsPerPage(Object count) {
+    return '$count 項/頁';
+  }
+
+  @override
+  String get jsonFile => 'JSON 檔案';
+
+  @override
+  String get justNow => '剛剛';
+
+  @override
+  String get keepBackupCount => '保留備份數量';
+
+  @override
+  String get keepBackupCountDescription => '刪除舊備份前保留的備份數量';
+
+  @override
+  String get keepExisting => '保留現有';
+
+  @override
+  String get keepExistingDescription => '保留現有資料，略過匯入';
+
+  @override
+  String get key => '鍵';
+
+  @override
+  String get keyCannotBeEmpty => '鍵不能為空';
+
+  @override
+  String get keyExists => '設定金鑰已存在';
+
+  @override
+  String get keyHelperText => '只能包含字母、數字、底線和連字號';
+
+  @override
+  String get keyHint => '設定項的唯一識別碼';
+
+  @override
+  String get keyInvalidCharacters => '鍵只能包含字母、數字、底線和連字號';
+
+  @override
+  String get keyMaxLength => '鍵最多 50 個字元';
+
+  @override
+  String get keyMinLength => '鍵至少需要 2 個字元';
+
+  @override
+  String get keyRequired => '請輸入設定金鑰';
+
+  @override
+  String get landscape => '橫向';
+
+  @override
+  String get language => '語言';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get languageJa => '日本語';
+
+  @override
+  String get languageKo => '한국어';
+
+  @override
+  String get languageSystem => '系統';
+
+  @override
+  String get languageZh => '簡體中文';
+
+  @override
+  String get languageZhTw => '繁體中文';
+
+  @override
+  String get last30Days => '最近 30 天';
+
+  @override
+  String get last365Days => '最近 365 天';
+
+  @override
+  String get last7Days => '最近 7 天';
+
+  @override
+  String get last90Days => '最近 90 天';
+
+  @override
+  String get lastBackup => '上次備份';
+
+  @override
+  String get lastBackupTime => '上次備份時間';
+
+  @override
+  String get lastMonth => '上個月';
+
+  @override
+  String get lastPage => '最後一頁';
+
+  @override
+  String get lastUsed => '上次使用';
+
+  @override
+  String get lastUsedTime => '上次使用時間';
+
+  @override
+  String get lastWeek => '上週';
+
+  @override
+  String get lastYear => '去年';
+
+  @override
+  String get layer => '圖層';
+
+  @override
+  String get layer1 => '圖層 1';
+
+  @override
+  String get layerElements => '圖層元素';
+
+  @override
+  String get layerInfo => '圖層資訊';
+
+  @override
+  String layerName(Object index) {
+    return '圖層 $index';
+  }
+
+  @override
+  String get layerOperations => '圖層操作';
+
+  @override
+  String get layerProperties => '圖層屬性';
+
+  @override
+  String get leave => '離開';
+
+  @override
+  String get legacyBackupDescription => '歷史備份';
+
+  @override
+  String get legacyDataPathDescription => '需要清理的舊資料路徑';
+
+  @override
+  String get letterSpacing => '字元間距';
+
+  @override
+  String get library => '圖庫';
+
+  @override
+  String get libraryCount => '圖庫數量';
+
+  @override
+  String get libraryManagement => '圖庫';
+
+  @override
+  String get lineHeight => '行高';
+
+  @override
+  String get lineThrough => '刪除線';
+
+  @override
+  String get listView => '清單檢視';
+
+  @override
+  String get loadBackupRegistryFailed => '載入備份登錄檔失敗';
+
+  @override
+  String loadCharacterDataFailed(Object error) {
+    return '載入字元資料失敗：$error';
+  }
+
+  @override
+  String get loadConfigFailed => '載入設定失敗';
+
+  @override
+  String get loadCurrentBackupPathFailed => '載入目前備份路徑失敗';
+
+  @override
+  String get loadDataFailed => '載入資料失敗';
+
+  @override
+  String get loadFailed => '載入失敗';
+
+  @override
+  String get loadPathInfoFailed => '載入路徑資訊失敗';
+
+  @override
+  String get loadPracticeSheetFailed => '載入字帖失敗';
+
+  @override
+  String get loading => '載入中...';
+
+  @override
+  String get loadingImage => '正在載入影像...';
+
+  @override
+  String get location => '位置';
+
+  @override
+  String get lock => '鎖定';
+
+  @override
+  String get lockElement => '鎖定元素';
+
+  @override
+  String get lockStatus => '鎖定狀態';
+
+  @override
+  String get lockUnlockAllElements => '鎖定/解鎖所有元素';
+
+  @override
+  String get locked => '已鎖定';
+
+  @override
+  String get manualBackupDescription => '手動建立的備份';
+
+  @override
+  String get marginBottom => '下';
+
+  @override
+  String get marginLeft => '左';
+
+  @override
+  String get marginRight => '右';
+
+  @override
+  String get marginTop => '上';
+
+  @override
+  String get max => '最大';
+
+  @override
+  String get memoryDataCacheCapacity => '記憶體資料快取容量';
+
+  @override
+  String get memoryDataCacheCapacityDescription => '記憶體中保留的資料項目數量';
+
+  @override
+  String get memoryImageCacheCapacity => '記憶體影像快取容量';
+
+  @override
+  String get memoryImageCacheCapacityDescription => '記憶體中保留的影像數量';
+
+  @override
+  String get mergeAndMigrateFiles => '合併並遷移檔案';
+
+  @override
+  String get mergeBackupInfo => '合併備份資訊';
+
+  @override
+  String get mergeBackupInfoDesc => '將舊路徑的備份資訊合併到新路徑的登錄檔中';
+
+  @override
+  String get mergeData => '合併資料';
+
+  @override
+  String get mergeDataDescription => '合併現有資料和匯入資料';
+
+  @override
+  String get mergeOnlyBackupInfo => '僅合併備份資訊';
+
+  @override
+  String get metadata => '中繼資料';
+
+  @override
+  String get migrateBackupFiles => '遷移備份檔案';
+
+  @override
+  String get migrateBackupFilesDesc => '將舊路徑的備份檔案複製到新路徑（建議）';
+
+  @override
+  String get migratingData => '正在遷移資料';
+
+  @override
+  String get min => '最小';
+
+  @override
+  String get monospace => 'Monospace';
+
+  @override
+  String get monthsAgo => '個月前';
+
+  @override
+  String moreErrorsCount(Object count) {
+    return '...還有 $count 個錯誤';
+  }
+
+  @override
+  String get moveDown => '下移 (Ctrl+Shift+B)';
+
+  @override
+  String get moveLayerDown => '圖層下移';
+
+  @override
+  String get moveLayerUp => '圖層上移';
+
+  @override
+  String get moveUp => '上移 (Ctrl+Shift+T)';
+
+  @override
+  String get multiSelectTool => '多選工具';
+
+  @override
+  String multipleFilesNote(Object count) {
+    return '注意：將匯出 $count 個圖片檔案，檔案名稱將自動新增頁碼。';
+  }
+
+  @override
+  String get name => '名稱';
+
+  @override
+  String get navCollapseSidebar => '收合側邊欄';
+
+  @override
+  String get navExpandSidebar => '展開側邊欄';
+
+  @override
+  String get navigatedToBackupSettings => '已跳轉至備份設定頁面';
+
+  @override
+  String get navigationAttemptBack => '嘗試返回上一個功能區';
+
+  @override
+  String get navigationAttemptToNewSection => '嘗試導覽至新功能區';
+
+  @override
+  String get navigationAttemptToSpecificItem => '嘗試導覽至特定歷史記錄項目';
+
+  @override
+  String get navigationBackToPrevious => '返回上一頁';
+
+  @override
+  String get navigationClearHistory => '清除導覽歷史記錄';
+
+  @override
+  String get navigationClearHistoryFailed => '清除導覽歷史記錄失敗';
+
+  @override
+  String get navigationFailedBack => '返回導覽失敗';
+
+  @override
+  String get navigationFailedSection => '導覽切換失敗';
+
+  @override
+  String get navigationFailedToSpecificItem => '導覽至特定歷史記錄項目失敗';
+
+  @override
+  String get navigationHistoryCleared => '導覽歷史記錄已清除';
+
+  @override
+  String get navigationItemNotFound => '在歷史記錄中找不到目標項目，直接導覽至該功能區';
+
+  @override
+  String get navigationNoHistory => '無法返回';
+
+  @override
+  String get navigationNoHistoryMessage => '已到達目前功能區的起始頁面。';
+
+  @override
+  String get navigationRecordRoute => '記錄功能區內的路由變化';
+
+  @override
+  String get navigationRecordRouteFailed => '記錄路由變化失敗';
+
+  @override
+  String get navigationRestoreStateFailed => '還原導覽狀態失敗';
+
+  @override
+  String get navigationSaveState => '儲存導覽狀態';
+
+  @override
+  String get navigationSaveStateFailed => '儲存導覽狀態失敗';
+
+  @override
+  String get navigationSectionCharacterManagement => '字元管理';
+
+  @override
+  String get navigationSectionGalleryManagement => '圖庫管理';
+
+  @override
+  String get navigationSectionPracticeList => '字帖清單';
+
+  @override
+  String get navigationSectionSettings => '設定';
+
+  @override
+  String get navigationSectionWorkBrowse => '作品瀏覽';
+
+  @override
+  String get navigationSelectPage => '您想返回以下哪個頁面？';
+
+  @override
+  String get navigationStateRestored => '導覽狀態已從儲存空間還原';
+
+  @override
+  String get navigationStateSaved => '導覽狀態已儲存';
+
+  @override
+  String get navigationSuccessBack => '成功返回上一個功能區';
+
+  @override
+  String get navigationSuccessToNewSection => '成功導覽至新功能區';
+
+  @override
+  String get navigationSuccessToSpecificItem => '成功導覽至特定歷史記錄項目';
+
+  @override
+  String get navigationToggleExpanded => '切換導覽列展開狀態';
+
+  @override
+  String get needRestartApp => '需要重新啟動應用程式';
+
+  @override
+  String get newConfigItem => '新增設定項';
+
+  @override
+  String get newDataPath => '新的資料路徑：';
+
+  @override
+  String get newItem => '新增';
+
+  @override
+  String get nextField => '下一個欄位';
+
+  @override
+  String get nextPage => '下一頁';
+
+  @override
+  String get nextStep => '下一步';
+
+  @override
+  String get no => '否';
+
+  @override
+  String get noBackupExistsRecommendCreate => '尚未建立任何備份，建議先建立備份以確保資料安全';
+
+  @override
+  String get noBackupFilesInPath => '此路徑下沒有備份檔案';
+
+  @override
+  String get noBackupFilesInPathMessage => '此路徑下沒有備份檔案';
+
+  @override
+  String get noBackupFilesToExport => '此路徑下沒有可匯出的備份檔案';
+
+  @override
+  String get noBackupFilesToExportMessage => '沒有可匯出的備份檔案';
+
+  @override
+  String get noBackupPathSetRecommendCreateBackup => '未設定備份路徑，建議先設定備份路徑並建立備份';
+
+  @override
+  String get noBackupPaths => '沒有備份路徑';
+
+  @override
+  String get noBackups => '沒有可用的備份';
+
+  @override
+  String get noBackupsInPath => '此路徑下沒有備份檔案';
+
+  @override
+  String get noBackupsToDelete => '沒有可刪除的備份檔案';
+
+  @override
+  String get noCategories => '無分類';
+
+  @override
+  String get noCharacters => '找不到字元';
+
+  @override
+  String get noCharactersFound => '找不到符合的字元';
+
+  @override
+  String noConfigItems(Object category) {
+    return '暫無 $category 設定';
+  }
+
+  @override
+  String get noCropping => '（無裁剪）';
+
+  @override
+  String get noDisplayableImages => '沒有可顯示的圖片';
+
+  @override
+  String get noElementsInLayer => '此圖層中沒有元素';
+
+  @override
+  String get noElementsSelected => '未選擇元素';
+
+  @override
+  String get noHistoryPaths => '沒有歷史路徑';
+
+  @override
+  String get noHistoryPathsDescription => '尚未使用過其他資料路徑';
+
+  @override
+  String get noImageSelected => '未選擇圖片';
+
+  @override
+  String get noImages => '沒有圖片';
+
+  @override
+  String get noItemsSelected => '未選擇項目';
+
+  @override
+  String get noLayers => '無圖層，請新增圖層';
+
+  @override
+  String get noMatchingConfigItems => '找不到符合的設定項';
+
+  @override
+  String get noPageSelected => '未選擇頁面';
+
+  @override
+  String get noPagesToExport => '沒有可匯出的頁面';
+
+  @override
+  String get noPagesToPrint => '沒有可列印的頁面';
+
+  @override
+  String get noPreviewAvailable => '無有效預覽';
+
+  @override
+  String get noRegionBoxed => '未選擇區域';
+
+  @override
+  String get noRemarks => '無備註';
+
+  @override
+  String get noResults => '找不到結果';
+
+  @override
+  String get noTags => '無標籤';
+
+  @override
+  String get noTexture => '無紋理';
+
+  @override
+  String get noTopLevelCategory => '無（頂層分類）';
+
+  @override
+  String get noWorks => '找不到作品';
+
+  @override
+  String get noWorksHint => '嘗試匯入新作品或變更篩選條件';
+
+  @override
+  String get noiseReduction => '降噪';
+
+  @override
+  String get none => '無';
+
+  @override
+  String get notSet => '未設定';
+
+  @override
+  String get note => '注意';
+
+  @override
+  String get notesTitle => '注意事項：';
+
+  @override
+  String get noticeTitle => '注意事項';
+
+  @override
+  String get ok => '確定';
+
+  @override
+  String get oldBackupRecommendCreateNew => '上次備份時間超過 24 小時，建議建立新備份';
+
+  @override
+  String get oldDataNotAutoDeleted => '路徑切換後，舊資料不會自動刪除';
+
+  @override
+  String get oldDataNotDeleted => '路徑切換後，舊資料不會自動刪除';
+
+  @override
+  String get oldDataWillNotBeDeleted => '切換後，舊路徑的資料不會自動刪除';
+
+  @override
+  String get oldPathDataNotAutoDeleted => '切換後，舊路徑的資料不會自動刪除';
+
+  @override
+  String get onlyOneCharacter => '只允許一個字元';
+
+  @override
+  String get opacity => '不透明度';
+
+  @override
+  String get openBackupManagementFailed => '開啟備份管理失敗';
+
+  @override
+  String get openFolder => '開啟資料夾';
+
+  @override
+  String openGalleryFailed(Object error) {
+    return '開啟圖庫失敗：$error';
+  }
+
+  @override
+  String get openPathFailed => '開啟路徑失敗';
+
+  @override
+  String get openPathSwitchWizardFailed => '開啟資料路徑切換精靈失敗';
+
+  @override
+  String get operatingSystem => '作業系統';
+
+  @override
+  String get operationCannotBeUndone => '此操作無法復原，請謹慎確認';
+
+  @override
+  String get operationCannotUndo => '此操作無法復原，請謹慎確認';
+
+  @override
+  String get optional => '可選';
+
+  @override
+  String get original => '原始';
+
+  @override
+  String get originalImageDesc => '未經處理的原始影像';
+
+  @override
+  String get outputQuality => '輸出品質';
+
+  @override
+  String get overwrite => '覆寫';
+
+  @override
+  String get overwriteConfirm => '確認覆寫';
+
+  @override
+  String get overwriteExisting => '覆寫現有';
+
+  @override
+  String get overwriteExistingDescription => '用匯入資料取代現有項目';
+
+  @override
+  String overwriteExistingPractice(Object title) {
+    return '已存在名為「$title」的字帖，是否覆寫？';
+  }
+
+  @override
+  String get overwriteFile => '覆寫檔案';
+
+  @override
+  String get overwriteFileAction => '覆寫檔案';
+
+  @override
+  String overwriteMessage(Object title) {
+    return '已存在標題為「$title」的字帖，是否覆寫？';
+  }
+
+  @override
+  String get overwrittenCharacters => '覆寫的集字';
+
+  @override
+  String get overwrittenItems => '覆寫的項目';
+
+  @override
+  String get overwrittenWorks => '覆寫的作品';
+
+  @override
+  String get padding => '內邊距';
+
+  @override
+  String get pageBuildError => '頁面建置錯誤';
+
+  @override
+  String get pageMargins => '頁面邊距（公分）';
+
+  @override
+  String get pageNotImplemented => '頁面未實作';
+
+  @override
+  String get pageOrientation => '頁面方向';
+
+  @override
+  String get pageProperties => '頁面屬性';
+
+  @override
+  String get pageRange => '頁面範圍';
+
+  @override
+  String get pageSize => '頁面大小';
+
+  @override
+  String get pages => '頁';
+
+  @override
+  String get parentCategory => '父分類（可選）';
+
+  @override
+  String get parsingImportData => '正在解析匯入資料...';
+
+  @override
+  String get paste => '貼上 (Ctrl+Shift+V)';
+
+  @override
+  String get path => '路徑';
+
+  @override
+  String get pathAnalysis => '路徑分析';
+
+  @override
+  String get pathConfigError => '路徑設定錯誤';
+
+  @override
+  String get pathInfo => '路徑資訊';
+
+  @override
+  String get pathInvalid => '路徑無效';
+
+  @override
+  String get pathNotExists => '路徑不存在';
+
+  @override
+  String get pathSettings => '路徑設定';
+
+  @override
+  String get pathSize => '路徑大小';
+
+  @override
+  String get pathSwitchCompleted => '資料路徑切換完成！\n\n您可以在「資料路徑管理」中檢視和清理舊路徑的資料。';
+
+  @override
+  String get pathSwitchCompletedMessage => '資料路徑切換完成！\n\n您可以在資料路徑管理中檢視和清理舊路徑的資料。';
+
+  @override
+  String get pathSwitchFailed => '路徑切換失敗';
+
+  @override
+  String get pathSwitchFailedMessage => '路徑切換失敗';
+
+  @override
+  String pathValidationFailed(Object error) {
+    return '路徑驗證失敗：$error';
+  }
+
+  @override
+  String get pathValidationFailedGeneric => '路徑驗證失敗，請檢查路徑是否有效';
+
+  @override
+  String get pdfExportFailed => 'PDF 匯出失敗';
+
+  @override
+  String pdfExportSuccess(Object path) {
+    return 'PDF 匯出成功：$path';
+  }
+
+  @override
+  String get pinyin => '拼音';
+
+  @override
+  String get pixels => '像素';
+
+  @override
+  String get platformInfo => '平台資訊';
+
+  @override
+  String get pleaseEnterValidNumber => '請輸入有效的數字';
+
+  @override
+  String get pleaseSelectOperation => '請選擇操作：';
+
+  @override
+  String get pleaseSetBackupPathFirst => '請先設定備份路徑';
+
+  @override
+  String get pleaseWaitMessage => '請稍候';
+
+  @override
+  String get portrait => '縱向';
+
+  @override
+  String get position => '位置';
+
+  @override
+  String get ppiSetting => 'PPI 設定（每英吋像素數）';
+
+  @override
+  String get practiceEditCollection => '擷取';
+
+  @override
+  String get practiceEditDefaultLayer => '預設圖層';
+
+  @override
+  String practiceEditPracticeLoaded(Object title) {
+    return '字帖「$title」載入成功';
+  }
+
+  @override
+  String get practiceEditTitle => '字帖編輯';
+
+  @override
+  String get practiceListSearch => '搜尋字帖...';
+
+  @override
+  String get practiceListTitle => '字帖';
+
+  @override
+  String get practiceSheetNotExists => '字帖不存在';
+
+  @override
+  String practiceSheetSaved(Object title) {
+    return '字帖「$title」已儲存';
+  }
+
+  @override
+  String practiceSheetSavedMessage(Object title) {
+    return '字帖「$title」儲存成功';
+  }
+
+  @override
+  String get practices => '字帖';
+
+  @override
+  String get preparingPrint => '正在準備列印，請稍候...';
+
+  @override
+  String get preparingSave => '準備儲存...';
+
+  @override
+  String get preserveMetadata => '保留中繼資料';
+
+  @override
+  String get preserveMetadataDescription => '保留原始建立時間和中繼資料';
+
+  @override
+  String get preserveMetadataMandatory => '強制保留原始的建立時間、作者資訊等中繼資料，以確保資料一致性';
+
+  @override
+  String get presetSize => '預設大小';
+
+  @override
+  String get presets => '預設集';
+
+  @override
+  String get preview => '預覽';
+
+  @override
+  String get previewMode => '預覽模式';
+
+  @override
+  String previewPage(Object current, Object total) {
+    return '（第 $current/$total 頁）';
+  }
+
+  @override
+  String get previousField => '上一個欄位';
+
+  @override
+  String get previousPage => '上一頁';
+
+  @override
+  String get previousStep => '上一步';
+
+  @override
+  String processedCount(Object current, Object total) {
+    return '已處理：$current / $total';
+  }
+
+  @override
+  String processedProgress(Object current, Object total) {
+    return '已處理：$current / $total';
+  }
+
+  @override
+  String get processing => '處理中...';
+
+  @override
+  String get processingDetails => '處理詳情';
+
+  @override
+  String get processingEraseData => '正在處理清除資料...';
+
+  @override
+  String get processingImage => '正在處理影像...';
+
+  @override
+  String get processingPleaseWait => '正在處理中，請稍候...';
+
+  @override
+  String get properties => '屬性';
+
+  @override
+  String get qualityHigh => '高畫質 (2x)';
+
+  @override
+  String get qualityStandard => '標準 (1x)';
+
+  @override
+  String get qualityUltra => '超高畫質 (3x)';
+
+  @override
+  String get quickRecoveryOnIssues => '• 切換過程中如遇問題可快速還原';
+
+  @override
+  String get reExportWork => '• 重新匯出該作品';
+
+  @override
+  String get recent => '最近';
+
+  @override
+  String get recentBackupCanSwitch => '最近已有備份，可以直接切換';
+
+  @override
+  String get recommendConfirmBeforeCleanup => '建議在清理旧路徑前確認新路徑資料是否正常';
+
+  @override
+  String get recommendConfirmNewDataBeforeClean => '建議在清理旧路徑前確認新路徑資料是否正常';
+
+  @override
+  String get recommendSufficientSpace => '建議選擇剩餘空間充足的磁碟';
+
+  @override
+  String get redo => '重做';
+
+  @override
+  String get refresh => '重新整理';
+
+  @override
+  String refreshDataFailed(Object error) {
+    return '重新整理資料失敗：$error';
+  }
+
+  @override
+  String get reload => '重新載入';
+
+  @override
+  String get remarks => '備註';
+
+  @override
+  String get remarksHint => '新增備註資訊';
+
+  @override
+  String get remove => '移除';
+
+  @override
+  String get removeFavorite => '從我的最愛中移除';
+
+  @override
+  String get removeFromCategory => '從目前分類中移除';
+
+  @override
+  String get rename => '重新命名';
+
+  @override
+  String get renameDuplicates => '重新命名重複項目';
+
+  @override
+  String get renameDuplicatesDescription => '重新命名匯入項目以避免衝突';
+
+  @override
+  String get renameLayer => '重新命名圖層';
+
+  @override
+  String get renderFailed => '渲染失敗';
+
+  @override
+  String get reselectFile => '重新選擇檔案';
+
+  @override
+  String get reset => '重設';
+
+  @override
+  String resetCategoryConfig(Object category) {
+    return '重設 $category 設定';
+  }
+
+  @override
+  String resetCategoryConfigMessage(Object category) {
+    return '確定要將 $category 設定重設為預設值嗎？此操作無法復原。';
+  }
+
+  @override
+  String get resetDataPathToDefault => '重設為預設';
+
+  @override
+  String get resetSettingsConfirmMessage => '確定重設為預設值嗎？';
+
+  @override
+  String get resetSettingsConfirmTitle => '重設設定';
+
+  @override
+  String get resetToDefault => '重設為預設';
+
+  @override
+  String get resetToDefaultFailed => '重設為預設路徑失敗';
+
+  @override
+  String resetToDefaultFailedWithError(Object error) {
+    return '重設為預設路徑失敗：$error';
+  }
+
+  @override
+  String get resetToDefaultPathMessage => '這會將資料路徑重設為預設位置，應用程式需要重新啟動才能生效。確定要繼續嗎？';
+
+  @override
+  String get resetToDefaults => '重設為預設值';
+
+  @override
+  String get resetTransform => '重設變形';
+
+  @override
+  String get resetZoom => '重設縮放';
+
+  @override
+  String get resolution => '解析度';
+
+  @override
+  String get restartAfterRestored => '注意：還原完成後應用程式將自動重新啟動';
+
+  @override
+  String get restartLaterButton => '稍後';
+
+  @override
+  String get restartNeeded => '需要重新啟動';
+
+  @override
+  String get restartNow => '立即重新啟動';
+
+  @override
+  String get restartNowButton => '立即重新啟動';
+
+  @override
+  String get restore => '還原';
+
+  @override
+  String get restoreBackup => '還原備份';
+
+  @override
+  String get restoreBackupFailed => '還原備份失敗';
+
+  @override
+  String get restoreConfirmMessage => '確定要從此備份還原嗎？這將取代您目前的所有資料。';
+
+  @override
+  String get restoreConfirmTitle => '確認還原';
+
+  @override
+  String get restoreFailure => '還原失敗';
+
+  @override
+  String get restoreWarningMessage => '警告：此操作將覆寫目前所有資料！';
+
+  @override
+  String get restoringBackup => '正在從備份還原...';
+
+  @override
+  String get restoringBackupMessage => '正在還原備份...';
+
+  @override
+  String get retry => '重試';
+
+  @override
+  String get retryAction => '重試';
+
+  @override
+  String get rotateLeft => '向左旋轉';
+
+  @override
+  String get rotateRight => '向右旋轉';
+
+  @override
+  String get rotation => '旋轉';
+
+  @override
+  String get safetyBackupBeforePathSwitch => '資料路徑切換前的安全備份';
+
+  @override
+  String get safetyBackupRecommendation => '為確保資料安全，建議在切換資料路徑前先建立備份：';
+
+  @override
+  String get safetyTip => '💡 安全建議：';
+
+  @override
+  String get sansSerif => 'Sans Serif';
+
+  @override
+  String get save => '儲存';
+
+  @override
+  String get saveAs => '另存新檔';
+
+  @override
+  String get saveComplete => '儲存完成';
+
+  @override
+  String get saveFailed => '儲存失敗，請稍後重試';
+
+  @override
+  String saveFailedWithError(Object error) {
+    return '儲存失敗：$error';
+  }
+
+  @override
+  String get saveFailure => '儲存失敗';
+
+  @override
+  String get savePreview => '字元預覽：';
+
+  @override
+  String get saveSuccess => '儲存成功';
+
+  @override
+  String get saveTimeout => '儲存逾時';
+
+  @override
+  String get savingToStorage => '正在儲存至儲存空間...';
+
+  @override
+  String get scale => '縮放';
+
+  @override
+  String get scannedBackupFileDescription => '掃描發現的備份檔案';
+
+  @override
+  String get search => '搜尋';
+
+  @override
+  String get searchCategories => '搜尋分類...';
+
+  @override
+  String get searchConfigDialogTitle => '搜尋設定項';
+
+  @override
+  String get searchConfigHint => '輸入設定項名稱或鍵';
+
+  @override
+  String get searchConfigItems => '搜尋設定項';
+
+  @override
+  String get searching => '正在搜尋...';
+
+  @override
+  String get select => '選擇';
+
+  @override
+  String get selectAll => '全選';
+
+  @override
+  String get selectAllWithShortcut => '全選 (Ctrl+Shift+A)';
+
+  @override
+  String get selectBackup => '選擇備份';
+
+  @override
+  String get selectBackupFileToImportDialog => '選擇要匯入的備份檔案';
+
+  @override
+  String get selectBackupStorageLocation => '選擇備份儲存位置';
+
+  @override
+  String get selectCategoryToApply => '請選擇要套用的分類：';
+
+  @override
+  String get selectCharacterFirst => '請先選擇字元';
+
+  @override
+  String selectColor(Object type) {
+    return '選擇 $type';
+  }
+
+  @override
+  String get selectDate => '選擇日期';
+
+  @override
+  String get selectExportLocation => '選擇匯出位置';
+
+  @override
+  String get selectExportLocationDialog => '選擇匯出位置';
+
+  @override
+  String get selectExportLocationHint => '選擇匯出位置...';
+
+  @override
+  String get selectFileError => '選擇檔案失敗';
+
+  @override
+  String get selectFolder => '選擇資料夾';
+
+  @override
+  String get selectImage => '選擇圖片';
+
+  @override
+  String get selectImages => '選擇圖片';
+
+  @override
+  String get selectImagesWithCtrl => '選擇圖片（可按住 Ctrl 多選）';
+
+  @override
+  String get selectImportFile => '選擇備份檔案';
+
+  @override
+  String get selectNewDataPath => '選擇新的資料儲存路徑：';
+
+  @override
+  String get selectNewDataPathDialog => '選擇新的資料儲存路徑';
+
+  @override
+  String get selectNewDataPathTitle => '選擇新的資料儲存路徑';
+
+  @override
+  String get selectNewPath => '選擇新路徑';
+
+  @override
+  String get selectParentCategory => '選擇父分類';
+
+  @override
+  String get selectPath => '選擇路徑';
+
+  @override
+  String get selectPathButton => '選擇路徑';
+
+  @override
+  String get selectPathFailed => '選擇路徑失敗';
+
+  @override
+  String get selectSufficientSpaceDisk => '建議選擇剩餘空間充足的磁碟';
+
+  @override
+  String get selectTargetLayer => '選擇目標圖層';
+
+  @override
+  String get selected => '已選擇';
+
+  @override
+  String get selectedCharacter => '已選字元';
+
+  @override
+  String selectedCount(Object count) {
+    return '已選擇 $count 個';
+  }
+
+  @override
+  String get selectedElementNotFound => '找不到選取的元素';
+
+  @override
+  String get selectedItems => '選取項目';
+
+  @override
+  String get selectedPath => '已選擇的路徑：';
+
+  @override
+  String get selectionMode => '選擇模式';
+
+  @override
+  String get sendToBack => '置於底層 (Ctrl+B)';
+
+  @override
+  String get serif => 'Serif';
+
+  @override
+  String get serviceNotReady => '服務尚未就緒，請稍後再試';
+
+  @override
+  String get setBackupPathFailed => '設定備份路徑失敗';
+
+  @override
+  String get setCategory => '設定分類';
+
+  @override
+  String setCategoryForItems(Object count) {
+    return '設定分類（$count 個項目）';
+  }
+
+  @override
+  String get setDataPathFailed => '設定資料路徑失敗，請檢查路徑權限和相容性';
+
+  @override
+  String setDataPathFailedWithError(Object error) {
+    return '設定資料路徑失敗：$error';
+  }
+
+  @override
+  String get settings => '設定';
+
+  @override
+  String get settingsResetMessage => '設定已重設為預設值';
+
+  @override
+  String get shortcuts => '鍵盤快捷鍵';
+
+  @override
+  String get showContour => '顯示輪廓';
+
+  @override
+  String get showDetails => '顯示詳情';
+
+  @override
+  String get showElement => '顯示元素';
+
+  @override
+  String get showGrid => '顯示網格 (Ctrl+G)';
+
+  @override
+  String get showHideAllElements => '顯示/隱藏所有元素';
+
+  @override
+  String get showImagePreview => '顯示圖片預覽';
+
+  @override
+  String get showThumbnails => '顯示頁面縮圖';
+
+  @override
+  String get skipBackup => '略過備份';
+
+  @override
+  String get skipBackupConfirm => '略過備份';
+
+  @override
+  String get skipBackupWarning => '確定要略過備份直接進行路徑切換嗎？\n\n這可能存在資料遺失的風險。';
+
+  @override
+  String get skipBackupWarningMessage => '確定要略過備份直接進行路徑切換嗎？\n\n這可能存在資料遺失的風險。';
+
+  @override
+  String get skipConflicts => '略過衝突';
+
+  @override
+  String get skipConflictsDescription => '略過已存在的項目';
+
+  @override
+  String get skippedCharacters => '略過的集字';
+
+  @override
+  String get skippedItems => '略過的項目';
+
+  @override
+  String get skippedWorks => '略過的作品';
+
+  @override
+  String get sort => '排序';
+
+  @override
+  String get sortBy => '排序方式';
+
+  @override
+  String get sortByCreateTime => '按建立時間排序';
+
+  @override
+  String get sortByTitle => '按標題排序';
+
+  @override
+  String get sortByUpdateTime => '按更新時間排序';
+
+  @override
+  String get sortFailed => '排序失敗';
+
+  @override
+  String get sortOrder => '排序';
+
+  @override
+  String get sortOrderCannotBeEmpty => '排序順序不能為空';
+
+  @override
+  String get sortOrderHint => '數字越小排序越靠前';
+
+  @override
+  String get sortOrderLabel => '排序順序';
+
+  @override
+  String get sortOrderNumber => '排序值必須是數字';
+
+  @override
+  String get sortOrderRange => '排序順序必須介於 1-999 之間';
+
+  @override
+  String get sortOrderRequired => '請輸入排序值';
+
+  @override
+  String get sourceBackupFileNotFound => '找不到來源備份檔案';
+
+  @override
+  String sourceFileNotFound(Object path) {
+    return '找不到來源檔案：$path';
+  }
+
+  @override
+  String sourceFileNotFoundError(Object path) {
+    return '找不到來源檔案：$path';
+  }
+
+  @override
+  String get sourceHanSansFont => '思源黑體 (Source Han Sans)';
+
+  @override
+  String get sourceHanSerifFont => '思源宋體 (Source Han Serif)';
+
+  @override
+  String get sourceInfo => '出處資訊';
+
+  @override
+  String get startBackup => '開始備份';
+
+  @override
+  String get startDate => '開始日期';
+
+  @override
+  String get stateAndDisplay => '狀態與顯示';
+
+  @override
+  String get statisticsInProgress => '統計中...';
+
+  @override
+  String get status => '狀態';
+
+  @override
+  String get statusAvailable => '可用';
+
+  @override
+  String get statusLabel => '狀態';
+
+  @override
+  String get statusUnavailable => '不可用';
+
+  @override
+  String get storageDetails => '儲存詳情';
+
+  @override
+  String get storageLocation => '儲存位置';
+
+  @override
+  String get storageSettings => '儲存設定';
+
+  @override
+  String get storageUsed => '已使用儲存空間';
+
+  @override
+  String get stretch => '拉伸';
+
+  @override
+  String get strokeCount => '筆劃';
+
+  @override
+  String submitFailed(Object error) {
+    return '提交失敗：$error';
+  }
+
+  @override
+  String successDeletedCount(Object count) {
+    return '成功刪除 $count 個備份檔案';
+  }
+
+  @override
+  String get suggestConfigureBackupPath => '建議：先在設定中設定備份路徑';
+
+  @override
+  String get suggestConfigureBackupPathFirst => '建議：先在設定中設定備份路徑';
+
+  @override
+  String get suggestRestartOrWait => '建議：重新啟動應用程式或等待服務初始化完成後重試';
+
+  @override
+  String get suggestRestartOrWaitService => '建議：重新啟動應用程式或等待服務初始化完成後重試';
+
+  @override
+  String get suggestedSolutions => '建議解決方案：';
+
+  @override
+  String get suggestedTags => '建議標籤';
+
+  @override
+  String get switchSuccessful => '切換成功';
+
+  @override
+  String get switchingPage => '正在切換至字元頁面...';
+
+  @override
+  String get systemConfig => '系統設定';
+
+  @override
+  String get systemConfigItemNote => '這是系統設定項，鍵值不可修改';
+
+  @override
+  String get systemInfo => '系統資訊';
+
+  @override
+  String get tabToNextField => '按 Tab 導覽至下一個欄位';
+
+  @override
+  String tagAddError(Object error) {
+    return '新增標籤失敗：$error';
+  }
+
+  @override
+  String get tagHint => '輸入標籤名稱';
+
+  @override
+  String tagRemoveError(Object error) {
+    return '移除標籤失敗，錯誤：$error';
+  }
+
+  @override
+  String get tags => '標籤';
+
+  @override
+  String get tagsAddHint => '輸入標籤名稱並按 Enter';
+
+  @override
+  String get tagsHint => '輸入標籤...';
+
+  @override
+  String get tagsSelected => '已選標籤：';
+
+  @override
+  String get targetLocationExists => '目標位置已存在同名檔案：';
+
+  @override
+  String get targetPathLabel => '請選擇操作：';
+
+  @override
+  String get text => '文字';
+
+  @override
+  String get textAlign => '文字對齊';
+
+  @override
+  String get textContent => '文字內容';
+
+  @override
+  String get textElement => '文字元素';
+
+  @override
+  String get textProperties => '文字屬性';
+
+  @override
+  String get textSettings => '文字設定';
+
+  @override
+  String get textureFillMode => '紋理填滿模式';
+
+  @override
+  String get textureFillModeContain => '包含';
+
+  @override
+  String get textureFillModeCover => '覆蓋';
+
+  @override
+  String get textureFillModeRepeat => '重複';
+
+  @override
+  String get textureOpacity => '紋理不透明度';
+
+  @override
+  String get themeMode => '主題模式';
+
+  @override
+  String get themeModeDark => '深色';
+
+  @override
+  String get themeModeDescription => '使用深色主題以獲得更好的夜間觀看體驗';
+
+  @override
+  String get themeModeSystemDescription => '根據系統設定自動切換深色/淺色主題';
+
+  @override
+  String get thisMonth => '本月';
+
+  @override
+  String get thisWeek => '本週';
+
+  @override
+  String get thisYear => '今年';
+
+  @override
+  String get threshold => '閾值';
+
+  @override
+  String get thumbnailCheckFailed => '縮圖檢查失敗';
+
+  @override
+  String get thumbnailEmpty => '縮圖檔案為空';
+
+  @override
+  String get thumbnailLoadError => '載入縮圖失敗';
+
+  @override
+  String get thumbnailNotFound => '找不到縮圖';
+
+  @override
+  String get timeInfo => '時間資訊';
+
+  @override
+  String get timeLabel => '時間';
+
+  @override
+  String get title => '標題';
+
+  @override
+  String get titleAlreadyExists => '已存在相同標題的字帖，請使用其他標題';
+
+  @override
+  String get titleCannotBeEmpty => '標題不能為空';
+
+  @override
+  String get titleExists => '標題已存在';
+
+  @override
+  String get titleExistsMessage => '已存在同名字帖。是否覆寫？';
+
+  @override
+  String titleUpdated(Object title) {
+    return '標題已更新為「$title」';
+  }
+
+  @override
+  String get to => '至';
+
+  @override
+  String get today => '今天';
+
+  @override
+  String get toggleBackground => '切換背景';
+
+  @override
+  String get toolModePanTooltip => '拖曳工具 (Ctrl+V)';
+
+  @override
+  String get toolModeSelectTooltip => '框選工具 (Ctrl+B)';
+
+  @override
+  String get total => '總計';
+
+  @override
+  String get totalBackups => '總備份數';
+
+  @override
+  String totalItems(Object count) {
+    return '共 $count 個';
+  }
+
+  @override
+  String get totalSize => '總大小';
+
+  @override
+  String get transformApplied => '變形已套用';
+
+  @override
+  String get tryOtherKeywords => '嘗試使用其他關鍵詞搜尋';
+
+  @override
+  String get type => '類型';
+
+  @override
+  String get underline => '底線';
+
+  @override
+  String get undo => '復原';
+
+  @override
+  String get ungroup => '取消群組 (Ctrl+U)';
+
+  @override
+  String get ungroupConfirm => '確認解散群組';
+
+  @override
+  String get ungroupDescription => '確定要解散此群組嗎？';
+
+  @override
+  String get unknown => '未知';
+
+  @override
+  String get unknownCategory => '未知分類';
+
+  @override
+  String unknownElementType(Object type) {
+    return '未知元素類型：$type';
+  }
+
+  @override
+  String get unknownError => '未知錯誤';
+
+  @override
+  String get unlockElement => '解鎖元素';
+
+  @override
+  String get unlocked => '未鎖定';
+
+  @override
+  String get unnamedElement => '未命名元素';
+
+  @override
+  String get unnamedGroup => '未命名群組';
+
+  @override
+  String get unnamedLayer => '未命名圖層';
+
+  @override
+  String get unsavedChanges => '有未儲存的變更';
+
+  @override
+  String get updateTime => '更新時間';
+
+  @override
+  String get updatedAt => '更新時間';
+
+  @override
+  String get usageInstructions => '使用說明';
+
+  @override
+  String get useDefaultPath => '使用預設路徑';
+
+  @override
+  String get userConfig => '使用者設定';
+
+  @override
+  String get validCharacter => '請輸入有效的字元';
+
+  @override
+  String get validPath => '有效路徑';
+
+  @override
+  String get validateData => '驗證資料';
+
+  @override
+  String get validateDataDescription => '匯入前驗證資料完整性';
+
+  @override
+  String get validateDataMandatory => '強制驗證匯入檔案的完整性和格式，以確保資料安全';
+
+  @override
+  String get validatingImportFile => '正在驗證匯入檔案...';
+
+  @override
+  String valueTooLarge(Object label, Object max) {
+    return '$label 不能大於 $max';
+  }
+
+  @override
+  String valueTooSmall(Object label, Object min) {
+    return '$label 不能小於 $min';
+  }
+
+  @override
+  String get versionDetails => '版本詳情';
+
+  @override
+  String get versionInfoCopied => '版本資訊已複製到剪貼簿';
+
+  @override
+  String get verticalAlignment => '垂直對齊';
+
+  @override
+  String get verticalLeftToRight => '豎排由左至右';
+
+  @override
+  String get verticalRightToLeft => '豎排由右至左';
+
+  @override
+  String get viewAction => '檢視';
+
+  @override
+  String get viewDetails => '檢視詳情';
+
+  @override
+  String get viewExportResultsButton => '檢視';
+
+  @override
+  String get visibility => '可見性';
+
+  @override
+  String get visible => '可見';
+
+  @override
+  String get visualProperties => '視覺屬性';
+
+  @override
+  String get visualSettings => '視覺設定';
+
+  @override
+  String get warningOverwriteData => '警告：這將覆寫目前所有資料！';
+
+  @override
+  String get warnings => '警告';
+
+  @override
+  String get widgetRefRequired => '需要 WidgetRef 才能建立 CollectionPainter';
+
+  @override
+  String get width => '寬度';
+
+  @override
+  String get windowButtonMaximize => '最大化';
+
+  @override
+  String get windowButtonMinimize => '最小化';
+
+  @override
+  String get windowButtonRestore => '還原';
+
+  @override
+  String get work => '作品';
+
+  @override
+  String get workBrowseSearch => '搜尋作品...';
+
+  @override
+  String get workBrowseTitle => '作品';
+
+  @override
+  String get workCount => '作品數量';
+
+  @override
+  String get workDetailCharacters => '字元';
+
+  @override
+  String get workDetailOtherInfo => '其他資訊';
+
+  @override
+  String get workDetailTitle => '作品詳情';
+
+  @override
+  String get workFormAuthorHelp => '可選，作品的創作者';
+
+  @override
+  String get workFormAuthorHint => '輸入作者名稱';
+
+  @override
+  String get workFormAuthorMaxLength => '作者名稱不能超過 50 個字元';
+
+  @override
+  String get workFormAuthorTooltip => '按 Ctrl+A 快速跳轉至作者欄位';
+
+  @override
+  String get workFormCreationDateError => '創作日期不能超過目前日期';
+
+  @override
+  String get workFormDateHelp => '作品的完成日期';
+
+  @override
+  String get workFormRemarkHelp => '可選，關於作品的附加資訊';
+
+  @override
+  String get workFormRemarkMaxLength => '備註不能超過 500 個字元';
+
+  @override
+  String get workFormRemarkTooltip => '按 Ctrl+R 快速跳轉至備註欄位';
+
+  @override
+  String get workFormStyleHelp => '作品的主要風格類型';
+
+  @override
+  String get workFormTitleHelp => '作品的主標題，顯示在作品清單中';
+
+  @override
+  String get workFormTitleMaxLength => '標題不能超過 100 個字元';
+
+  @override
+  String get workFormTitleMinLength => '標題必須至少 2 個字元';
+
+  @override
+  String get workFormTitleRequired => '標題為必填項';
+
+  @override
+  String get workFormTitleTooltip => '按 Ctrl+T 快速跳轉至標題欄位';
+
+  @override
+  String get workFormToolHelp => '創作此作品使用的主要工具';
+
+  @override
+  String get workIdCannotBeEmpty => '作品 ID 不能為空';
+
+  @override
+  String get workInfo => '作品資訊';
+
+  @override
+  String get workStyleClerical => '隸書';
+
+  @override
+  String get workStyleCursive => '草書';
+
+  @override
+  String get workStyleRegular => '楷書';
+
+  @override
+  String get workStyleRunning => '行書';
+
+  @override
+  String get workStyleSeal => '篆書';
+
+  @override
+  String get workToolBrush => '毛筆';
+
+  @override
+  String get workToolHardPen => '硬筆';
+
+  @override
+  String get workToolOther => '其他';
+
+  @override
+  String get works => '作品';
+
+  @override
+  String worksCount(Object count) {
+    return '$count 個作品';
+  }
+
+  @override
+  String get writingMode => '書寫模式';
+
+  @override
+  String get writingTool => '書寫工具';
+
+  @override
+  String get writingToolManagement => '書寫工具管理';
+
+  @override
+  String get writingToolText => '書寫工具';
+
+  @override
+  String get yes => '是';
+
+  @override
+  String get yesterday => '昨天';
+
+  @override
+  String get zipFile => 'ZIP 壓縮檔';
 }

@@ -96,7 +96,8 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('ja'),
     Locale('ko'),
-    Locale('zh')
+    Locale('zh'),
+    Locale('zh', 'TW')
   ];
 
   /// No description provided for @a4Size.
@@ -4743,6 +4744,12 @@ abstract class AppLocalizations {
   /// **'简体中文'**
   String get languageZh;
 
+  /// No description provided for @languageZhTw.
+  ///
+  /// In zh, this message translates to:
+  /// **'繁體中文'**
+  String get languageZhTw;
+
   /// No description provided for @last30Days.
   ///
   /// In zh, this message translates to:
@@ -8307,6 +8314,15 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
 
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'zh': {
+  switch (locale.countryCode) {
+    case 'TW': return AppLocalizationsZhTw();
+   }
+  break;
+   }
+  }
 
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
