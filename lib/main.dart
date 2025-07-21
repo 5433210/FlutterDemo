@@ -59,7 +59,7 @@ void main() async {
     const appTitle = '字字珠玑'; // 默认使用中文标题
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(1280, 800),
+      size: Size(1400, 800),
       minimumSize: Size(800, 600),
       center: true,
       backgroundColor: Colors.white,

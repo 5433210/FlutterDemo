@@ -689,8 +689,8 @@ class WorkImageService with WorkServiceErrorHandler {
                 // 2. 处理并保存导入图片
                 final processedFile = await _processor.processImage(
                   file,
-                  maxWidth: 2400,
-                  maxHeight: 2400,
+                  maxWidth: 10000,
+                  maxHeight: 10000,
                   quality: 90,
                 );
                 final importedPath = await _storage.saveImportedImage(

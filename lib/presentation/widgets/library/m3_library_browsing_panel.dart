@@ -1,6 +1,4 @@
 // 图库浏览面板修复版本
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -365,9 +363,8 @@ class _M3LibraryBrowsingPanelState
     return DesktopDropWrapper(
       onFilesDropped: (files) async {
         if (files.isNotEmpty) {
-          for (final file in files) {
-            await _importFile(file);
-          }
+          // 显示导入进度对话框
+          await _showBatchImportDialog(files);
         }
       },
       child: _buildContentArea(state),
@@ -559,110 +556,6 @@ class _M3LibraryBrowsingPanelState
     ref.read(libraryManagementProvider.notifier).updateSearchQuery(query);
   }
 
-  // 处理导入文件
-  Future<void> _importFile(String filePath) async {
-    final importService = ref.read(libraryImportServiceProvider);
-    final state = ref.read(libraryManagementProvider);
-    final List<String> categories =
-        state.selectedCategoryId != null ? [state.selectedCategoryId!] : [];
-
-    // Ensure we have a valid BuildContext for the dialog
-    if (!mounted) {
-      return;
-    }
-
-    final BuildContext dialogContext = context;
-    BuildContext? dialogBuilderContext;
-
-    // Show loading dialog
-    showDialog(
-      context: dialogContext,
-      barrierDismissible: false,
-      builder: (builderContext) {
-        dialogBuilderContext = builderContext;
-        return PopScope(
-          canPop: false,
-          child: AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context).importing),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    // Create a function to safely close the dialog
-    void closeDialog() {
-      try {
-        if (mounted && dialogBuilderContext != null) {
-          Navigator.of(dialogBuilderContext!).pop();
-          dialogBuilderContext = null;
-        }
-      } catch (e) {
-        AppLogger.error('Error closing dialog: $e');
-      }
-    }
-
-    try {
-      // Normalize file path (this can help with some platform-specific path issues)
-      final normalizedPath = filePath.replaceAll(r'\', '/');
-
-      final file = File(normalizedPath);
-      final fileExists = await file.exists();
-
-      if (!fileExists) {
-        final originalFile = File(filePath);
-        if (!await originalFile.exists()) {
-          throw Exception('文件不存在或无法访问: $filePath');
-        }
-      }
-
-      // Use the path that worked
-      final pathToUse = fileExists ? normalizedPath : filePath;
-
-      // Import the file
-      final item = await importService.importFile(pathToUse);
-
-      // If import successful and categories are specified, update the item
-      if (item != null && categories.isNotEmpty) {
-        final updatedItem = item.copyWith(categories: categories);
-        await ref.read(libraryRepositoryProvider).update(updatedItem);
-      }
-
-      // Close the dialog before refreshing data
-      closeDialog();
-
-      // Refresh data
-      await _refreshData(); // Show success notification
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).importFileSuccess),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      // Close dialog in case of error
-      closeDialog();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context).importFailed(e.toString())),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
   // 刷新数据
   Future<void> _refreshData() async {
     if (!mounted) return;
@@ -693,5 +586,128 @@ class _M3LibraryBrowsingPanelState
     setState(() {
       _isFilterPanelExpanded = !_isFilterPanelExpanded;
     });
+  }
+
+  // 显示批量导入对话框
+  Future<void> _showBatchImportDialog(List<String> files) async {
+    if (!mounted) return;
+
+    final BuildContext dialogContext = context;
+    BuildContext? dialogBuilderContext;
+    int successCount = 0;
+    int failureCount = 0;
+    String? lastError;
+
+    // 显示导入进度对话框
+    showDialog(
+      context: dialogContext,
+      barrierDismissible: false,
+      builder: (builderContext) {
+        dialogBuilderContext = builderContext;
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context).importing),
+                const SizedBox(height: 8),
+                Text('正在处理 ${files.length} 个文件...'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // 安全关闭对话框的函数
+    void closeDialog() {
+      try {
+        if (mounted && dialogBuilderContext != null) {
+          Navigator.of(dialogBuilderContext!).pop();
+          dialogBuilderContext = null;
+        }
+      } catch (e) {
+        AppLogger.error('Error closing batch import dialog: $e');
+      }
+    }
+
+    try {
+      final importService = ref.read(libraryImportServiceProvider);
+      final state = ref.read(libraryManagementProvider);
+      final List<String> categories =
+          state.selectedCategoryId != null ? [state.selectedCategoryId!] : [];
+
+      // 逐个导入文件
+      for (final filePath in files) {
+        try {
+          final item = await importService.importFile(filePath);
+          if (item != null) {
+            // 如果指定了分类，更新项目
+            if (categories.isNotEmpty) {
+              final updatedItem = item.copyWith(categories: categories);
+              await ref.read(libraryRepositoryProvider).update(updatedItem);
+            }
+            successCount++;
+          }
+        } catch (e) {
+          failureCount++;
+          lastError = e.toString();
+          AppLogger.warning('导入文件失败: $filePath', error: e);
+        }
+      }
+
+      // 关闭对话框
+      closeDialog();
+
+      // 刷新数据
+      await _refreshData();
+
+      // 显示结果消息
+      if (mounted) {
+        if (successCount > 0 && failureCount == 0) {
+          // 全部成功
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('成功导入 $successCount 个文件'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (successCount > 0 && failureCount > 0) {
+          // 部分成功
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('导入完成：成功 $successCount 个，失败 $failureCount 个'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          // 全部失败
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('导入失败：${lastError ?? "未知错误"}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // 关闭对话框
+      closeDialog();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('批量导入失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }

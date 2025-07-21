@@ -559,23 +559,33 @@ class ImageProcessorImpl implements ImageProcessor {
       final image = img.decodeImage(bytes);
       if (image == null) throw Exception('Failed to decode image');
 
-      // 计算保持宽高比的尺寸
-      final aspectRatio = image.width / image.height;
-      var targetWidth = maxWidth;
-      var targetHeight = maxHeight;
+      // 检查是否需要缩放
+      final needsResize = image.width > maxWidth || image.height > maxHeight;
 
-      if (targetWidth / targetHeight > aspectRatio) {
-        targetWidth = (targetHeight * aspectRatio).round();
+      img.Image processed;
+
+      if (needsResize) {
+        // 只有当图片超过最大尺寸时才缩放
+        final aspectRatio = image.width / image.height;
+        var targetWidth = maxWidth;
+        var targetHeight = maxHeight;
+
+        if (targetWidth / targetHeight > aspectRatio) {
+          targetWidth = (targetHeight * aspectRatio).round();
+        } else {
+          targetHeight = (targetWidth / aspectRatio).round();
+        }
+
+        processed = img.copyResize(
+          image,
+          width: targetWidth,
+          height: targetHeight,
+          interpolation: img.Interpolation.linear,
+        );
       } else {
-        targetHeight = (targetWidth / aspectRatio).round();
+        // 保持原始尺寸，只进行质量压缩
+        processed = image;
       }
-
-      final processed = img.copyResize(
-        image,
-        width: targetWidth,
-        height: targetHeight,
-        interpolation: img.Interpolation.linear,
-      );
 
       final outPath = await _createTempFilePath('processed_');
       final outFile = File(outPath);
