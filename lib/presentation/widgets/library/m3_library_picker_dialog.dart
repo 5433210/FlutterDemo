@@ -12,6 +12,9 @@ class M3LibraryPickerDialog {
   /// 显示图库选择对话框的静态方法 (单选)
   static Future<LibraryItem?> show(BuildContext context,
       {String? title}) async {
+    // 在显示对话框前清除之前的选择状态
+    _clearPreviousSelections(context);
+
     // 使用 showDialog 而不是 showRootDialog 确保在当前对话框上下文中打开
     final result = await showDialog<_PickerResult>(
       context: context,
@@ -35,6 +38,9 @@ class M3LibraryPickerDialog {
   /// 显示图库选择对话框的静态方法 (多选)
   static Future<List<LibraryItem>?> showMulti(BuildContext context,
       {String? title}) async {
+    // 在显示对话框前清除之前的选择状态
+    _clearPreviousSelections(context);
+
     // 使用 showDialog 而不是 showRootDialog 确保在当前对话框上下文中打开
     AppLogger.debug('【M3LibraryPickerDialog】准备显示多选对话框: $title');
 
@@ -62,6 +68,31 @@ class M3LibraryPickerDialog {
     }
 
     return result.items;
+  }
+
+  /// 清除之前的选择状态
+  static void _clearPreviousSelections(BuildContext context) {
+    try {
+      // 使用 ProviderScope.containerOf 获取 ProviderContainer
+      final container = ProviderScope.containerOf(context);
+      final notifier = container.read(libraryManagementProvider.notifier);
+      final currentState = container.read(libraryManagementProvider);
+
+      // 清空选择状态
+      notifier.clearSelection();
+
+      // 如果处于批量模式，退出批量模式
+      if (currentState.isBatchMode) {
+        notifier.toggleBatchMode();
+      }
+
+      // 重置搜索条件
+      notifier.updateSearchQuery('');
+
+      AppLogger.debug('【M3LibraryPickerDialog】已清除之前的选择状态');
+    } catch (e) {
+      AppLogger.warning('清除之前的选择状态失败', error: e);
+    }
   }
 }
 
@@ -173,12 +204,16 @@ class _LibraryPickerDialogViewState
     Future.microtask(() {
       if (mounted) {
         final notifier = ref.read(libraryManagementProvider.notifier);
-        // 清空选择状态
+        // 完全重置选择状态
         notifier.clearSelection();
+        // 如果处于批量模式，退出批量模式
+        if (ref.read(libraryManagementProvider).isBatchMode) {
+          notifier.toggleBatchMode();
+        }
         // 重置搜索条件
         notifier.updateSearchQuery('');
         AppLogger.debug(
-            '【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态和搜索条件');
+            '【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态、批量模式和搜索条件');
       }
     });
   }
