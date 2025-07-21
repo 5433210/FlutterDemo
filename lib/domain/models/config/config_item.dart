@@ -50,14 +50,26 @@ class ConfigItem with _$ConfigItem {
           return localizedName;
         }
       }
-      // 如果没有对应语言，使用英文
-      if (localizedNames.containsKey('en')) {
-        final englishName = localizedNames['en'];
-        if (englishName != null && englishName.isNotEmpty) {
-          return englishName;
+    }
+
+    // 语言回退策略：优先级顺序
+    final fallbackLocales = [
+      'zh_TW', // 繁体中文
+      'zh', // 简体中文
+      'en', // 英文
+      'ja', // 日语
+      'ko', // 韩语
+    ];
+
+    for (final fallbackLocale in fallbackLocales) {
+      if (localizedNames.containsKey(fallbackLocale)) {
+        final localizedName = localizedNames[fallbackLocale];
+        if (localizedName != null && localizedName.isNotEmpty) {
+          return localizedName;
         }
       }
     }
+
     return displayName;
   }
 

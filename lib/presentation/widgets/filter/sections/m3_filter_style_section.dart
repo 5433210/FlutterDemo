@@ -26,8 +26,11 @@ class M3FilterStyleSection extends ConsumerWidget {
     final locale = Localizations.localeOf(context);
 
     final activeStyleItems = ref.watch(activeStyleItemsProvider);
+    final localeString = locale.countryCode != null
+        ? '${locale.languageCode}_${locale.countryCode}'
+        : locale.languageCode;
     final styleDisplayNames =
-        ref.watch(styleDisplayNamesWithLocaleProvider(locale.languageCode));
+        ref.watch(styleDisplayNamesWithLocaleProvider(localeString));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

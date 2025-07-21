@@ -141,9 +141,11 @@ class MyApp extends ConsumerWidget {
         final app = MaterialApp(
           title: switch (userLanguage) {
             AppLanguage.en => 'Character As Gem',
-            AppLanguage.ja => '字字珠玉',
-            AppLanguage.ko => '字字珠玑',
-            _ => '字字珠玑', // 中文和系统默认
+            AppLanguage.ja => '字字珠玉', // 日语：字字珠玉
+            AppLanguage.ko => '字字珠玑', // 韩语：字字珠玑
+            AppLanguage.zhTw => '字字珠璣', // 繁体中文
+            AppLanguage.zh => '字字珠玑', // 简体中文
+            _ => '字字珠玑', // 系统默认
           },
           theme: AppTheme.lightM3(locale: currentLocale), // 传递当前语言环境
           darkTheme: AppTheme.darkM3(locale: currentLocale), // 传递当前语言环境

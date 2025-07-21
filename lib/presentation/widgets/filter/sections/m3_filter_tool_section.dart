@@ -26,8 +26,11 @@ class M3FilterToolSection extends ConsumerWidget {
     final locale = Localizations.localeOf(context);
 
     final activeToolItems = ref.watch(activeToolItemsProvider);
+    final localeString = locale.countryCode != null
+        ? '${locale.languageCode}_${locale.countryCode}'
+        : locale.languageCode;
     final toolDisplayNames =
-        ref.watch(toolDisplayNamesWithLocaleProvider(locale.languageCode));
+        ref.watch(toolDisplayNamesWithLocaleProvider(localeString));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

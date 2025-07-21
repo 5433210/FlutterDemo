@@ -85,26 +85,46 @@ class _ConfigManagementPageState extends ConsumerState<ConfigManagementPage>
   String _getLocalizedDisplayName(ConfigItem item) {
     // 获取当前语言设置
     final locale = Localizations.localeOf(context);
-    final languageCode = locale.languageCode;
+    final localeString = locale.countryCode != null
+        ? '${locale.languageCode}_${locale.countryCode}'
+        : locale.languageCode;
 
     // 如果本地化名称为空，直接返回原始显示名称
     if (item.localizedNames.isEmpty) {
       return item.displayName;
     }
 
-    // 优先使用用户设置的语言
-    if (item.localizedNames.containsKey(languageCode)) {
-      final localizedName = item.localizedNames[languageCode];
+    // 优先使用完整的语言区域代码（如 zh_TW）
+    if (item.localizedNames.containsKey(localeString)) {
+      final localizedName = item.localizedNames[localeString];
       if (localizedName != null && localizedName.isNotEmpty) {
         return localizedName;
       }
     }
 
-    // 如果没有对应语言，使用英文
-    if (item.localizedNames.containsKey('en')) {
-      final englishName = item.localizedNames['en'];
-      if (englishName != null && englishName.isNotEmpty) {
-        return englishName;
+    // 如果没有完整的语言区域代码，尝试使用语言代码
+    if (item.localizedNames.containsKey(locale.languageCode)) {
+      final localizedName = item.localizedNames[locale.languageCode];
+      if (localizedName != null && localizedName.isNotEmpty) {
+        return localizedName;
+      }
+    }
+
+    // 语言回退策略：优先级顺序
+    final fallbackLocales = [
+      'zh_TW', // 繁体中文
+      'zh', // 简体中文
+      'en', // 英文
+      'ja', // 日语
+      'ko', // 韩语
+    ];
+
+    for (final fallbackLocale in fallbackLocales) {
+      if (item.localizedNames.containsKey(fallbackLocale)) {
+        final localizedName = item.localizedNames[fallbackLocale];
+        if (localizedName != null && localizedName.isNotEmpty) {
+          return localizedName;
+        }
       }
     }
 

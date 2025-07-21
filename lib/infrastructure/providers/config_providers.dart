@@ -32,18 +32,20 @@ final toolDisplayNamesWithLocaleProvider =
 String getLocalizedConfigDisplayName(BuildContext context, WidgetRef ref,
     String category, String itemKey, String fallback) {
   final locale = Localizations.localeOf(context);
-  final languageCode = locale.languageCode;
+  final localeString = locale.countryCode != null
+      ? '${locale.languageCode}_${locale.countryCode}'
+      : locale.languageCode;
 
   if (category == ConfigCategories.style) {
     return ref
-        .watch(styleDisplayNamesWithLocaleProvider(languageCode))
+        .watch(styleDisplayNamesWithLocaleProvider(localeString))
         .maybeWhen(
           data: (names) => names[itemKey] ?? fallback,
           orElse: () => fallback,
         );
   } else if (category == ConfigCategories.tool) {
     return ref
-        .watch(toolDisplayNamesWithLocaleProvider(languageCode))
+        .watch(toolDisplayNamesWithLocaleProvider(localeString))
         .maybeWhen(
           data: (names) => names[itemKey] ?? fallback,
           orElse: () => fallback,

@@ -228,7 +228,7 @@ const migrations = [
     updateTime
   ) VALUES (
     'temp',
-    '临时工作项',
+    'Temp Work',
     'system',
     'draft',
     datetime('now'),
@@ -566,12 +566,12 @@ const migrations = [
   END;  
   
   -- 7. 初始化书法风格配置到settings表
-  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES 
-  ('style_configs', '{"category": "style", "displayName": "书法风格", "updateTime": null, "items": [{"key": "regular", "displayName": "楷书", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Regular Script", "zh": "楷书"}, "createTime": null, "updateTime": null}, {"key": "running", "displayName": "行书", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Running Script", "zh": "行书"}, "createTime": null, "updateTime": null}, {"key": "cursive", "displayName": "草书", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Cursive Script", "zh": "草书"}, "createTime": null, "updateTime": null}, {"key": "clerical", "displayName": "隶书", "sortOrder": 4, "isSystem": true, "isActive": true, "localizedNames": {"en": "Clerical Script", "zh": "隶书"}, "createTime": null, "updateTime": null}, {"key": "seal", "displayName": "篆书", "sortOrder": 5, "isSystem": true, "isActive": true, "localizedNames": {"en": "Seal Script", "zh": "篆书"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 6, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他"}, "createTime": null, "updateTime": null}]}', datetime('now'));
+  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES
+  ('style_configs', '{"category": "style", "displayName": "书法风格", "updateTime": null, "items": [{"key": "regular", "displayName": "楷书", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Regular Script", "zh": "楷书", "zh_TW": "楷書", "ja": "楷書体", "ko": "해서"}, "createTime": null, "updateTime": null}, {"key": "running", "displayName": "行书", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Running Script", "zh": "行书", "zh_TW": "行書", "ja": "行書体", "ko": "행서"}, "createTime": null, "updateTime": null}, {"key": "cursive", "displayName": "草书", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Cursive Script", "zh": "草书", "zh_TW": "草書", "ja": "草書体", "ko": "초서"}, "createTime": null, "updateTime": null}, {"key": "clerical", "displayName": "隶书", "sortOrder": 4, "isSystem": true, "isActive": true, "localizedNames": {"en": "Clerical Script", "zh": "隶书", "zh_TW": "隸書", "ja": "隷書体", "ko": "예서"}, "createTime": null, "updateTime": null}, {"key": "seal", "displayName": "篆书", "sortOrder": 5, "isSystem": true, "isActive": true, "localizedNames": {"en": "Seal Script", "zh": "篆书", "zh_TW": "篆書", "ja": "篆書体", "ko": "전서"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 6, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他", "zh_TW": "其他", "ja": "その他", "ko": "기타"}, "createTime": null, "updateTime": null}]}', datetime('now'));
 
   -- 8. 初始化书写工具配置到settings表
-  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES 
-  ('tool_configs', '{"category": "tool", "displayName": "书写工具", "updateTime": null, "items": [{"key": "brush", "displayName": "毛笔", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Brush", "zh": "毛笔"}, "createTime": null, "updateTime": null}, {"key": "hardPen", "displayName": "硬笔", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Hard Pen", "zh": "硬笔"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他"}, "createTime": null, "updateTime": null}]}', datetime('now'));
+  INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES
+  ('tool_configs', '{"category": "tool", "displayName": "书写工具", "updateTime": null, "items": [{"key": "brush", "displayName": "毛笔", "sortOrder": 1, "isSystem": true, "isActive": true, "localizedNames": {"en": "Brush", "zh": "毛笔", "zh_TW": "毛筆", "ja": "筆", "ko": "붓"}, "createTime": null, "updateTime": null}, {"key": "hardPen", "displayName": "硬笔", "sortOrder": 2, "isSystem": true, "isActive": true, "localizedNames": {"en": "Hard Pen", "zh": "硬笔", "zh_TW": "硬筆", "ja": "硬筆", "ko": "경필"}, "createTime": null, "updateTime": null}, {"key": "other", "displayName": "其他", "sortOrder": 3, "isSystem": true, "isActive": true, "localizedNames": {"en": "Other", "zh": "其他", "zh_TW": "其他", "ja": "その他", "ko": "기타"}, "createTime": null, "updateTime": null}]}', datetime('now'));
 
   -- 9. 更新CharacterView视图（移除creationTime映射）
   DROP VIEW IF EXISTS CharacterView;

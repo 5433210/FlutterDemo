@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "wailik" "\0"
-            VALUE "FileDescription", "字字珠玑" "\0"
+            VALUE "FileDescription", "Char As Gem" "\0"
             VALUE "FileVersion", "0.0.0.0"
             VALUE "InternalName", "charasgem" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 wailik. All rights reserved." "\0"
             VALUE "OriginalFilename", "charasgem.exe" "\0"
-            VALUE "ProductName", "字字珠玑" "\0"
+            VALUE "ProductName", "charasgem" "\0"
             VALUE "ProductVersion", "0.0.0.0"
         END
     END
