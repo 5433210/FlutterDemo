@@ -161,13 +161,17 @@ class M3CharacterGridView extends ConsumerWidget {
             },
           ),
         ), // 分页控制
-        if (gridState.totalPages > 1)
+        if (gridState.characters.isNotEmpty)
           M3PaginationControls(
             currentPage: gridState.currentPage,
-            pageSize: 20, // 使用固定的每页显示数量
-            totalItems: gridState.totalPages * 20, // 估算总项目数
+            pageSize: gridState.pageSize,
+            totalItems: gridState.characters.length, // 使用实际的字符总数
             onPageChanged: (page) =>
                 ref.read(characterGridProvider(workId).notifier).setPage(page),
+            onPageSizeChanged: (pageSize) => ref
+                .read(characterGridProvider(workId).notifier)
+                .setPageSize(pageSize),
+            availablePageSizes: const [8, 12, 16, 20, 24, 32, 48, 64],
           ),
       ],
     );

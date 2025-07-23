@@ -122,6 +122,14 @@ class CharacterService {
         'imageDataLength': imageData.length,
       });
 
+      // 添加详细的调试信息
+      AppLogger.debug('传递给图像处理器的擦除数据', data: {
+        'hasEraseData': eraseData != null,
+        'eraseDataCount': eraseData?.length ?? 0,
+        'eraseDataSample': eraseData?.take(1).toList(),
+        'eraseDataFull': eraseData, // 完整的擦除数据
+      });
+
       // 如果提供了处理结果，就直接使用，否则处理图像
       final result = await _imageProcessor.processForSave(
         imageData,

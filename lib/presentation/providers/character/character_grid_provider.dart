@@ -72,6 +72,7 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
       filteredCharacters: [],
       totalPages: 1,
       currentPage: 1,
+      pageSize: 16, // 保持默认页面大小
       loading: false,
       isInitialLoad: false,
     );
@@ -124,8 +125,8 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
           viewModels[i] = vm.copyWith(thumbnailPath: path);
         }
 
-        // 计算分页信息（假设每页16项）
-        const itemsPerPage = 16;
+        // 计算分页信息
+        final itemsPerPage = state.pageSize;
         final totalPages = (viewModels.length / itemsPerPage).ceil();
 
         state = state.copyWith(
@@ -152,6 +153,16 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
     if (page < 1 || page > state.totalPages) return;
 
     state = state.copyWith(currentPage: page);
+    _applyFilters();
+  }
+
+  void setPageSize(int pageSize) {
+    if (pageSize < 1) return;
+
+    state = state.copyWith(
+      pageSize: pageSize,
+      currentPage: 1, // 重置到第一页
+    );
     _applyFilters();
   }
 
@@ -213,7 +224,7 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
     }
 
     // Calculate pagination
-    const itemsPerPage = 16;
+    final itemsPerPage = state.pageSize;
     final totalPages = (filtered.length / itemsPerPage).ceil();
     final validCurrentPage = state.currentPage > totalPages
         ? (totalPages > 0 ? totalPages : 1)

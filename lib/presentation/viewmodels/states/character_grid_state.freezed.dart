@@ -29,6 +29,7 @@ mixin _$CharacterGridState {
       throw _privateConstructorUsedError; // Keeping for transition period
   int get currentPage => throw _privateConstructorUsedError;
   int get totalPages => throw _privateConstructorUsedError;
+  int get pageSize => throw _privateConstructorUsedError; // 每页显示数量，默认16
   bool get loading => throw _privateConstructorUsedError;
   bool get isInitialLoad =>
       throw _privateConstructorUsedError; // 添加初始加载标志，默认为true
@@ -58,6 +59,7 @@ abstract class $CharacterGridStateCopyWith<$Res> {
       Set<String> selectedIds,
       int currentPage,
       int totalPages,
+      int pageSize,
       bool loading,
       bool isInitialLoad,
       String? error});
@@ -85,6 +87,7 @@ class _$CharacterGridStateCopyWithImpl<$Res, $Val extends CharacterGridState>
     Object? selectedIds = null,
     Object? currentPage = null,
     Object? totalPages = null,
+    Object? pageSize = null,
     Object? loading = null,
     Object? isInitialLoad = null,
     Object? error = freezed,
@@ -118,6 +121,10 @@ class _$CharacterGridStateCopyWithImpl<$Res, $Val extends CharacterGridState>
           ? _value.totalPages
           : totalPages // ignore: cast_nullable_to_non_nullable
               as int,
+      pageSize: null == pageSize
+          ? _value.pageSize
+          : pageSize // ignore: cast_nullable_to_non_nullable
+              as int,
       loading: null == loading
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
@@ -150,6 +157,7 @@ abstract class _$$CharacterGridStateImplCopyWith<$Res>
       Set<String> selectedIds,
       int currentPage,
       int totalPages,
+      int pageSize,
       bool loading,
       bool isInitialLoad,
       String? error});
@@ -175,6 +183,7 @@ class __$$CharacterGridStateImplCopyWithImpl<$Res>
     Object? selectedIds = null,
     Object? currentPage = null,
     Object? totalPages = null,
+    Object? pageSize = null,
     Object? loading = null,
     Object? isInitialLoad = null,
     Object? error = freezed,
@@ -208,6 +217,10 @@ class __$$CharacterGridStateImplCopyWithImpl<$Res>
           ? _value.totalPages
           : totalPages // ignore: cast_nullable_to_non_nullable
               as int,
+      pageSize: null == pageSize
+          ? _value.pageSize
+          : pageSize // ignore: cast_nullable_to_non_nullable
+              as int,
       loading: null == loading
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
@@ -235,6 +248,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
       final Set<String> selectedIds = const {},
       this.currentPage = 1,
       this.totalPages = 1,
+      this.pageSize = 16,
       this.loading = false,
       this.isInitialLoad = true,
       this.error})
@@ -288,6 +302,10 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
   final int totalPages;
   @override
   @JsonKey()
+  final int pageSize;
+// 每页显示数量，默认16
+  @override
+  @JsonKey()
   final bool loading;
   @override
   @JsonKey()
@@ -298,7 +316,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
 
   @override
   String toString() {
-    return 'CharacterGridState(characters: $characters, filteredCharacters: $filteredCharacters, searchTerm: $searchTerm, filterType: $filterType, selectedIds: $selectedIds, currentPage: $currentPage, totalPages: $totalPages, loading: $loading, isInitialLoad: $isInitialLoad, error: $error)';
+    return 'CharacterGridState(characters: $characters, filteredCharacters: $filteredCharacters, searchTerm: $searchTerm, filterType: $filterType, selectedIds: $selectedIds, currentPage: $currentPage, totalPages: $totalPages, pageSize: $pageSize, loading: $loading, isInitialLoad: $isInitialLoad, error: $error)';
   }
 
   @override
@@ -320,6 +338,8 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
                 other.currentPage == currentPage) &&
             (identical(other.totalPages, totalPages) ||
                 other.totalPages == totalPages) &&
+            (identical(other.pageSize, pageSize) ||
+                other.pageSize == pageSize) &&
             (identical(other.loading, loading) || other.loading == loading) &&
             (identical(other.isInitialLoad, isInitialLoad) ||
                 other.isInitialLoad == isInitialLoad) &&
@@ -337,6 +357,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
       const DeepCollectionEquality().hash(_selectedIds),
       currentPage,
       totalPages,
+      pageSize,
       loading,
       isInitialLoad,
       error);
@@ -367,6 +388,7 @@ abstract class _CharacterGridState implements CharacterGridState {
       final Set<String> selectedIds,
       final int currentPage,
       final int totalPages,
+      final int pageSize,
       final bool loading,
       final bool isInitialLoad,
       final String? error}) = _$CharacterGridStateImpl;
@@ -388,6 +410,8 @@ abstract class _CharacterGridState implements CharacterGridState {
   int get currentPage;
   @override
   int get totalPages;
+  @override
+  int get pageSize; // 每页显示数量，默认16
   @override
   bool get loading;
   @override

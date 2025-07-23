@@ -13,6 +13,7 @@ class CharacterGridState with _$CharacterGridState {
     @Default({}) Set<String> selectedIds, // Keeping for transition period
     @Default(1) int currentPage,
     @Default(1) int totalPages,
+    @Default(16) int pageSize, // 每页显示数量，默认16
     @Default(false) bool loading,
     @Default(true) bool isInitialLoad, // 添加初始加载标志，默认为true
     String? error,

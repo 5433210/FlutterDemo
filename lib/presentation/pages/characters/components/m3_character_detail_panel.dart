@@ -14,8 +14,9 @@ import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../../utils/chinese_font_helper.dart';
 import '../../../providers/character/character_detail_provider.dart';
-import '../../../widgets/layout/flexible_row.dart';
+import '../../../utils/image_validator.dart';
 import '../../../widgets/common/cross_platform_svg_picture.dart';
+import '../../../widgets/layout/flexible_row.dart';
 
 /// 图片尺寸信息类
 class ImageDimensions {
@@ -383,16 +384,22 @@ class _M3CharacterDetailPanelState
     final isSvg = extension == 'svg';
     final l10n = AppLocalizations.of(context);
 
-    // 直接使用硬编码的尺寸信息，以便快速测试
+    // 获取实际的图像尺寸信息
     return FutureBuilder<ImageDimensions?>(
-      future: Future.value(
-          const ImageDimensions(width: 300, height: 300, isSvg: false)),
+      future: _getImageDimensions(imagePath, isSvg),
       builder: (context, snapshot) {
         // 构建基本的提示文本
         String tooltipText = _getFormatTooltip(format);
 
         // 添加多语言支持的尺寸信息到提示文本中
-        tooltipText += '\n${l10n.dimensions}: 300×300 px';
+        if (snapshot.hasData && snapshot.data != null) {
+          final dimensions = snapshot.data!;
+          tooltipText +=
+              '\n${l10n.dimensions}: ${dimensions.width}×${dimensions.height} px';
+        } else {
+          // 如果无法获取尺寸，显示加载中或默认信息
+          tooltipText += '\n${l10n.dimensions}: ${l10n.loading}...';
+        }
 
         return Tooltip(
           message: tooltipText,
@@ -937,5 +944,31 @@ class _M3CharacterDetailPanelState
     } catch (e) {
       throw Exception('SVG验证失败: $e');
     }
+  }
+
+  /// 获取图像尺寸信息
+  Future<ImageDimensions?> _getImageDimensions(
+      String imagePath, bool isSvg) async {
+    try {
+      if (isSvg) {
+        // 对于SVG文件，我们需要解析SVG内容来获取尺寸
+        // 这里先返回一个默认值，因为SVG尺寸解析比较复杂
+        return const ImageDimensions(width: 1000, height: 1000, isSvg: true);
+      } else {
+        // 对于其他图像格式，使用ImageValidator获取尺寸
+        final imageInfo = await ImageValidator.getImageInfo(imagePath);
+        if (imageInfo != null) {
+          return ImageDimensions(
+            width: imageInfo.width,
+            height: imageInfo.height,
+            isSvg: false,
+          );
+        }
+      }
+    } catch (e) {
+      // 如果获取尺寸失败，返回null
+      debugPrint('获取图像尺寸失败: $e');
+    }
+    return null;
   }
 }

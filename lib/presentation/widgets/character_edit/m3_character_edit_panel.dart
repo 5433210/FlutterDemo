@@ -1936,27 +1936,41 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     });
   }
 
-  // Set dynamic brush size based on selected region size
+  // Set dynamic brush size based on character cropped image resolution
   Future<void> _setDynamicBrushSize() async {
     if (widget.imageData != null) {
       try {
-        // Use the selected region's dimensions rather than the entire image
-        final rect = widget.selectedRegion.rect;
-        final width = rect.width.toInt();
-        final height = rect.height.toInt();
+        // Get the actual cropped image resolution from the image processor
+        final imageProcessor = ref.read(characterImageProcessorProvider);
+
+        // Use processForPreview to get the actual character image dimensions
+        // This gives us the exact resolution of the character image after cropping and rotation
+        final preview = await imageProcessor.processForPreview(
+          widget.imageData!,
+          widget.selectedRegion.rect,
+          const ProcessingOptions(), // Use default options for size calculation
+          null, // No erase paths for size calculation
+          rotation: widget.selectedRegion.rotation,
+        );
+
+        // Use the actual processed character image dimensions
+        final width = preview.processedImage.width;
+        final height = preview.processedImage.height;
         final area = width * height;
 
-        // Calculate brush size as 1/10000 of selected region pixels, with minimum and maximum constraints
+        // Calculate brush size as 1/10000 of character image pixels, with minimum and maximum constraints
         // 万分之一 (1/10000) is the desired ratio per the requirements
         final calculatedSize = area / 10000;
         final dynamicBrushSize = calculatedSize.clamp(1.0, 50.0);
 
-        AppLogger.debug('设置动态笔刷大小', data: {
-          'regionWidth': width,
-          'regionHeight': height,
-          'regionPixels': area,
+        AppLogger.debug('设置动态笔刷大小（基于字符截取图像分辨率）', data: {
+          'characterImageWidth': width,
+          'characterImageHeight': height,
+          'characterImagePixels': area,
           'calculatedSize': calculatedSize,
           'dynamicBrushSize': dynamicBrushSize,
+          'regionWidth': widget.selectedRegion.rect.width.toInt(),
+          'regionHeight': widget.selectedRegion.rect.height.toInt(),
         }); // Update brush size
         ref
             .read(erase.eraseStateProvider.notifier)
@@ -1968,15 +1982,34 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  '笔刷大小已根据图像尺寸自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}'),
+                  '笔刷大小已根据字符截取图像分辨率自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}'),
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
-              width: 300,
+              width: 350,
             ),
           );
         }
       } catch (e) {
         AppLogger.error('计算动态笔刷大小时出错', error: e);
+        // Fallback to the original logic if image processing fails
+        try {
+          final rect = widget.selectedRegion.rect;
+          final width = rect.width.toInt();
+          final height = rect.height.toInt();
+          final area = width * height;
+          final calculatedSize = area / 10000;
+          final dynamicBrushSize = calculatedSize.clamp(1.0, 50.0);
+
+          ref
+              .read(erase.eraseStateProvider.notifier)
+              .setBrushSize(dynamicBrushSize);
+
+          AppLogger.debug('使用备用方法设置笔刷大小', data: {
+            'fallbackBrushSize': dynamicBrushSize,
+          });
+        } catch (fallbackError) {
+          AppLogger.error('备用笔刷大小计算也失败', error: fallbackError);
+        }
       }
     }
   }
