@@ -95,19 +95,45 @@ class _CharacterInputValidator {
       return _ValidationResult.failure(l10n.inputCharacter);
     }
 
-    if (input.length > 1) {
-      return _ValidationResult.failure(l10n.onlyOneCharacter);
-    }
+    // 取第一个字符进行验证，适配各种输入法
+    final firstChar = _getFirstCharacter(input);
 
     // Validate if it's a valid printable character
     // Support Chinese, Japanese, Korean, Latin, Cyrillic, Arabic, and other Unicode characters
     final RegExp validCharRegExp =
         RegExp(r'^[\p{L}\p{N}\p{M}\p{S}\p{P}]$', unicode: true);
-    if (!validCharRegExp.hasMatch(input)) {
+    if (!validCharRegExp.hasMatch(firstChar)) {
       return _ValidationResult.failure(l10n.validCharacter);
     }
 
     return _ValidationResult.success;
+  }
+
+  /// 获取字符串的第一个字符，支持Unicode字符
+  static String _getFirstCharacter(String input) {
+    if (input.isEmpty) return '';
+
+    // 对于简单的ASCII字符，直接返回第一个字符
+    if (input.length == 1) return input;
+
+    // 对于复杂的Unicode字符，尝试获取第一个字符
+    // 这里使用简单的方法，取第一个字符
+    // 对于大多数输入法场景，这应该足够了
+    final firstCodeUnit = input.codeUnitAt(0);
+
+    // 检查是否是高代理项（surrogate pair的一部分）
+    if (firstCodeUnit >= 0xD800 &&
+        firstCodeUnit <= 0xDBFF &&
+        input.length > 1) {
+      // 这是一个代理对，需要包含下一个代码单元
+      final secondCodeUnit = input.codeUnitAt(1);
+      if (secondCodeUnit >= 0xDC00 && secondCodeUnit <= 0xDFFF) {
+        return input.substring(0, 2);
+      }
+    }
+
+    // 对于其他情况，返回第一个字符
+    return input.substring(0, 1);
   }
 }
 
@@ -529,19 +555,32 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             controller: _characterController,
             focusNode: _inputFocusNode,
             autofocus: true,
-            maxLength: 1,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 24, color: colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: l10n.inputHint,
-              counterText: '',
               border: const OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: colorScheme.primary, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            onSubmitted: (_) => _restoreMainPanelFocus(),
+            onChanged: (value) {
+              // 输入过程中不限制字符长度，适配各种输入法
+              // 但在输入完成后会只保留第一个字符
+            },
+            onSubmitted: (value) {
+              // 输入完成后，只保留第一个字符
+              if (value.isNotEmpty) {
+                final firstChar =
+                    _CharacterInputValidator._getFirstCharacter(value);
+                _characterController.text = firstChar;
+                _characterController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: firstChar.length),
+                );
+              }
+              _restoreMainPanelFocus();
+            },
           ),
           const SizedBox(height: 12),
           Row(
@@ -1457,9 +1496,15 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
     final l10n = AppLocalizations.of(context);
 
+    // 确保只使用第一个字符
+    final inputText = _characterController.text;
+    final characterToSave = inputText.isNotEmpty
+        ? _CharacterInputValidator._getFirstCharacter(inputText)
+        : '';
+
     // Validate input
-    final validation = _CharacterInputValidator.validateCharacter(
-        _characterController.text, l10n);
+    final validation =
+        _CharacterInputValidator.validateCharacter(characterToSave, l10n);
     if (!validation.isValid) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1470,6 +1515,14 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       return;
     }
 
+    // 更新控制器为只包含第一个字符
+    if (inputText != characterToSave) {
+      _characterController.text = characterToSave;
+      _characterController.selection = TextSelection.fromPosition(
+        TextPosition(offset: characterToSave.length),
+      );
+    }
+
     // Initialize save state
     final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
     final collectionNotifier = ref.read(characterCollectionProvider.notifier);
@@ -1478,7 +1531,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Show confirmation dialog
       final confirmed = await showM3SaveConfirmationDialog(
         context,
-        character: _characterController.text,
+        character: characterToSave,
       );
 
       // Handle dialog result
@@ -1585,7 +1638,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Update region information, save erase path data
       final updatedRegion = selectedRegion.copyWith(
         pageId: widget.pageId,
-        character: _characterController.text,
+        character: characterToSave,
         options: processingOptions,
         isModified: false,
         eraseData: eraseData.isNotEmpty ? eraseData : null,
@@ -1810,8 +1863,19 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   // Ensure main panel focus is triggered after closing or submitting input
   void _restoreMainPanelFocus() {
-    // Save the current input value before closing
-    final currentText = _characterController.text;
+    // Save the current input value before closing, 只使用第一个字符
+    final inputText = _characterController.text;
+    final currentText = inputText.isNotEmpty
+        ? _CharacterInputValidator._getFirstCharacter(inputText)
+        : '';
+
+    // 更新控制器为只包含第一个字符
+    if (inputText != currentText) {
+      _characterController.text = currentText;
+      _characterController.selection = TextSelection.fromPosition(
+        TextPosition(offset: currentText.length),
+      );
+    }
 
     setState(() => _isEditing = false);
     // Delay execution to ensure state is updated before handling focus

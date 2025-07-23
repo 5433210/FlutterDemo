@@ -4,9 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../../utils/config/edit_page_logging_config.dart';
-
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
 import '../../../image/cached_image.dart';
@@ -205,7 +204,8 @@ class ImagePropertyVisualPanel extends StatelessWidget {
                         label: '${(opacity * 100).toStringAsFixed(0)}%',
                         activeColor: colorScheme.primary,
                         thumbColor: colorScheme.primary,
-                        onChanged: (value) => onPropertyUpdate('opacity', value),
+                        onChanged: (value) =>
+                            onPropertyUpdate('opacity', value),
                       ),
                     ),
                     const SizedBox(width: 8.0),
@@ -251,7 +251,8 @@ class ImagePropertyVisualPanel extends StatelessWidget {
                             final argb = color.toARGB32();
                             final hexColor =
                                 '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
-                            onContentPropertyUpdate('backgroundColor', hexColor);
+                            onContentPropertyUpdate(
+                                'backgroundColor', hexColor);
                           }
                         }
                       },
@@ -491,22 +492,21 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12.0),
-                  margin: const EdgeInsets.only(bottom: 12.0),
-                  decoration: BoxDecoration(
-                    color: colorScheme.tertiaryContainer
-                        .withAlpha((0.3 * 255).toInt()),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Text(
-                    l10n.imagePropertyPanelPreviewNotice,
-                    style: TextStyle(
-                        fontSize: 12, color: colorScheme.tertiary),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+                // Container(
+                //   width: double.infinity,
+                //   padding: const EdgeInsets.all(12.0),
+                //   margin: const EdgeInsets.only(bottom: 12.0),
+                //   decoration: BoxDecoration(
+                //     color: colorScheme.tertiaryContainer
+                //         .withAlpha((0.3 * 255).toInt()),
+                //     borderRadius: BorderRadius.circular(8.0),
+                //   ),
+                //   child: Text(
+                //     l10n.imagePropertyPanelPreviewNotice,
+                //     style: TextStyle(fontSize: 12, color: colorScheme.tertiary),
+                //     textAlign: TextAlign.center,
+                //   ),
+                // ),
                 _buildImagePreviewWithTransformBox(context),
               ],
             ),
@@ -627,10 +627,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                       const Icon(Icons.error, color: Colors.red, size: 48),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.imageLoadError(error
-                            .toString()
-                            .substring(
-                                0, math.min(error.toString().length, 50))),
+                        l10n.imageLoadError(error.toString().substring(
+                            0, math.min(error.toString().length, 50))),
                         style: const TextStyle(color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
@@ -907,28 +905,28 @@ class ImagePropertyTransformPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Warning message
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  decoration: BoxDecoration(
-                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: colorScheme.tertiary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.imagePropertyPanelTransformWarning,
-                          style: TextStyle(
-                              fontSize: 14, color: colorScheme.tertiary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Container(
+                //   padding: const EdgeInsets.all(12.0),
+                //   margin: const EdgeInsets.only(bottom: 16.0),
+                //   decoration: BoxDecoration(
+                //     color: colorScheme.tertiaryContainer.withValues(alpha: 0.3),
+                //     borderRadius: BorderRadius.circular(8.0),
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       Icon(Icons.info_outline,
+                //           color: colorScheme.tertiary, size: 20),
+                //       const SizedBox(width: 8),
+                //       Expanded(
+                //         child: Text(
+                //           l10n.imagePropertyPanelTransformWarning,
+                //           style: TextStyle(
+                //               fontSize: 14, color: colorScheme.tertiary),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
                 // Crop settings
                 Text(l10n.cropping,
@@ -1184,4 +1182,4 @@ class ImagePropertyTransformPanel extends StatelessWidget {
       tooltip: label,
     );
   }
-} 
+}
