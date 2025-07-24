@@ -4909,7 +4909,7 @@ abstract class AppLocalizations {
   /// No description provided for @lineHeight.
   ///
   /// In zh, this message translates to:
-  /// **'行高'**
+  /// **'行间距'**
   String get lineHeight;
 
   /// No description provided for @lineThrough.
@@ -8295,6 +8295,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'ZIP 压缩包'**
   String get zipFile;
+
+  /// No description provided for @backgroundTexture.
+  ///
+  /// In zh, this message translates to:
+  /// **'背景纹理'**
+  String get backgroundTexture;
+
+  /// No description provided for @texturePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'纹理预览'**
+  String get texturePreview;
+
+  /// No description provided for @textureSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'纹理尺寸'**
+  String get textureSize;
+
+  /// No description provided for @restoreDefaultSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认尺寸'**
+  String get restoreDefaultSize;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

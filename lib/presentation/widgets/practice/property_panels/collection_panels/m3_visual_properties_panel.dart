@@ -167,10 +167,10 @@ class _M3VisualPropertiesPanelState
             Expanded(
               flex: 3,
               child: Slider(
-                value: padding,
+                value: padding.clamp(0, 500),
                 min: 0,
-                max: 100,
-                divisions: 100,
+                max: 500,
+                divisions: 500,
                 label: '${padding.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -187,7 +187,7 @@ class _M3VisualPropertiesPanelState
                 value: padding,
                 suffix: 'px',
                 min: 0,
-                max: 100,
+                max: 500,
                 decimalPlaces: 0,
                 onChanged: (value) {
                   widget.onContentPropertyChanged('padding', value);

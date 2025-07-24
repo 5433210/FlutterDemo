@@ -104,13 +104,11 @@ class _M3BackgroundTexturePanelState
     return M3PanelStyles.buildPersistentPanelCard(
       context: context,
       panelId: 'background_texture_subpanel',
-      title:
-          'Background Texture', // Use English fallback for background texture
+      title: l10n.backgroundTexture,
       defaultExpanded: false,
       children: [
         // 1. Texture preview and management
-        M3PanelStyles.buildSectionTitle(context,
-            'Texture Preview'), // Use English fallback for texture preview
+        M3PanelStyles.buildSectionTitle(context, l10n.texturePreview),
         Row(
           children: [
             Container(
@@ -249,8 +247,7 @@ class _M3BackgroundTexturePanelState
         const SizedBox(height: 16.0),
 
         // 4. Texture Size Settings with restore default button
-        M3PanelStyles.buildSectionTitle(
-            context, 'Texture Size'), // Use English fallback for texture size
+        M3PanelStyles.buildSectionTitle(context, l10n.textureSize),
         Row(
           children: [
             Expanded(
@@ -283,8 +280,7 @@ class _M3BackgroundTexturePanelState
             const SizedBox(width: 8.0),
             IconButton(
               icon: const Icon(Icons.restore),
-              tooltip:
-                  'Restore Default Size', // Use English fallback for restore default size
+              tooltip: l10n.restoreDefaultSize,
               onPressed: () {
                 _updateTextureProperty('textureWidth', defaultWidth);
                 _updateTextureProperty('textureHeight', defaultHeight);

@@ -800,7 +800,7 @@
   "library": "圖庫",
   "libraryCount": "圖庫數量",
   "libraryManagement": "圖庫",
-  "lineHeight": "行高",
+  "lineHeight": "行間距",
   "lineThrough": "刪除線",
   "listView": "清單檢視",
   "loadBackupRegistryFailed": "載入備份登錄檔失敗",
@@ -1364,5 +1364,9 @@
   "writingToolText": "書寫工具",
   "yes": "是",
   "yesterday": "昨天",
-  "zipFile": "ZIP 壓縮檔"
+  "zipFile": "ZIP 壓縮檔",
+  "backgroundTexture": "背景紋理",
+  "texturePreview": "紋理預覽",
+  "textureSize": "紋理尺寸",
+  "restoreDefaultSize": "恢復預設尺寸"
 }

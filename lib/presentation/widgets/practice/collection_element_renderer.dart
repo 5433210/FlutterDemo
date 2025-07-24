@@ -77,7 +77,7 @@ class CollectionElementRenderer {
     if (characters.isEmpty && !hasCharacterTexture) {
       return Center(
           child: Text(AppLocalizations.of(context).defaultEditableText,
-              style: const TextStyle(color: Colors.grey)));
+              style: const TextStyle(color: Colors.grey, fontSize: 35)));
     }
 
     // 检查是否为空字符情况

@@ -2590,7 +2590,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get libraryManagement => '라이브러리';
 
   @override
-  String get lineHeight => '줄 높이';
+  String get lineHeight => '줄 간격';
 
   @override
   String get lineThrough => '취소선';
@@ -4355,4 +4355,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 압축 파일';
+
+  @override
+  String get backgroundTexture => '배경 텍스처';
+
+  @override
+  String get texturePreview => '텍스처 미리보기';
+
+  @override
+  String get textureSize => '텍스처 크기';
+
+  @override
+  String get restoreDefaultSize => '기본 크기로 복원';
 }

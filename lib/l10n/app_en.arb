@@ -799,7 +799,7 @@
   "library": "Library",
   "libraryCount": "Library Count",
   "libraryManagement": "Gallery",
-  "lineHeight": "Line Height",
+  "lineHeight": "Line Spacing",
   "lineThrough": "Line Through",
   "listView": "List View",
   "loadBackupRegistryFailed": "Failed to load backup registry",
@@ -1354,5 +1354,9 @@
   "writingToolText": "Writing Tool",
   "yes": "Yes",
   "yesterday": "Yesterday",
-  "zipFile": "ZIP Archive"
+  "zipFile": "ZIP Archive",
+  "backgroundTexture": "Background Texture",
+  "texturePreview": "Texture Preview",
+  "textureSize": "Texture Size",
+  "restoreDefaultSize": "Restore Default Size"
 }

@@ -2590,7 +2590,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryManagement => 'Gallery';
 
   @override
-  String get lineHeight => 'Line Height';
+  String get lineHeight => 'Line Spacing';
 
   @override
   String get lineThrough => 'Line Through';
@@ -4355,4 +4355,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP Archive';
+
+  @override
+  String get backgroundTexture => 'Background Texture';
+
+  @override
+  String get texturePreview => 'Texture Preview';
+
+  @override
+  String get textureSize => 'Texture Size';
+
+  @override
+  String get restoreDefaultSize => 'Restore Default Size';
 }

@@ -232,7 +232,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': l10n!.textElement,
       'content': {
         'text': l10n!.defaultEditableText,
-        'fontSize': 50.0,
+        'fontSize': 35.0,
         'fontColor': '#000000',
         'backgroundColor': 'transparent',
         'textAlign': 'left',
@@ -260,7 +260,7 @@ mixin ElementManagementMixin on ChangeNotifier
       'name': l10n!.textElement, // 默认名称
       'content': {
         'text': l10n!.defaultEditableText, 'fontFamily': 'sans-serif',
-        'fontSize': 50.0,
+        'fontSize': 35.0,
         'fontColor': '#000000', // 修改为fontColor以匹配渲染器
         'backgroundColor': '#FFFFFF',
         'textAlign': 'left', // 修改为textAlign以匹配渲染器

@@ -800,7 +800,7 @@
   "library": "图库",
   "libraryCount": "图库数量",
   "libraryManagement": "图库",
-  "lineHeight": "行高",
+  "lineHeight": "行间距",
   "lineThrough": "删除线",
   "listView": "列表视图",
   "loadBackupRegistryFailed": "加载备份注册表失败",
@@ -1364,5 +1364,9 @@
   "writingToolText": "书写工具",
   "yes": "是",
   "yesterday": "昨天",
-  "zipFile": "ZIP 压缩包"
+  "zipFile": "ZIP 压缩包",
+  "backgroundTexture": "背景纹理",
+  "texturePreview": "纹理预览",
+  "textureSize": "纹理尺寸",
+  "restoreDefaultSize": "恢复默认尺寸"
 }

@@ -2590,7 +2590,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get libraryManagement => 'ライブラリ';
 
   @override
-  String get lineHeight => '行の高さ';
+  String get lineHeight => '行間隔';
 
   @override
   String get lineThrough => '取り消し線';
@@ -4355,4 +4355,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP圧縮ファイル';
+
+  @override
+  String get backgroundTexture => '背景テクスチャ';
+
+  @override
+  String get texturePreview => 'テクスチャプレビュー';
+
+  @override
+  String get textureSize => 'テクスチャサイズ';
+
+  @override
+  String get restoreDefaultSize => 'デフォルトサイズに戻す';
 }

@@ -2590,7 +2590,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryManagement => '图库';
 
   @override
-  String get lineHeight => '行高';
+  String get lineHeight => '行间距';
 
   @override
   String get lineThrough => '删除线';
@@ -4355,6 +4355,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 压缩包';
+
+  @override
+  String get backgroundTexture => '背景纹理';
+
+  @override
+  String get texturePreview => '纹理预览';
+
+  @override
+  String get textureSize => '纹理尺寸';
+
+  @override
+  String get restoreDefaultSize => '恢复默认尺寸';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6943,7 +6955,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get libraryManagement => '圖庫';
 
   @override
-  String get lineHeight => '行高';
+  String get lineHeight => '行間距';
 
   @override
   String get lineThrough => '刪除線';
@@ -8708,4 +8720,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get zipFile => 'ZIP 壓縮檔';
+
+  @override
+  String get backgroundTexture => '背景紋理';
+
+  @override
+  String get texturePreview => '紋理預覽';
+
+  @override
+  String get textureSize => '紋理尺寸';
+
+  @override
+  String get restoreDefaultSize => '恢復預設尺寸';
 }

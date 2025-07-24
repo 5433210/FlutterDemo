@@ -951,9 +951,8 @@ class _M3CharacterDetailPanelState
       String imagePath, bool isSvg) async {
     try {
       if (isSvg) {
-        // 对于SVG文件，我们需要解析SVG内容来获取尺寸
-        // 这里先返回一个默认值，因为SVG尺寸解析比较复杂
-        return const ImageDimensions(width: 1000, height: 1000, isSvg: true);
+        // 对于SVG文件，解析SVG内容来获取真实尺寸
+        return await _parseSvgDimensions(imagePath);
       } else {
         // 对于其他图像格式，使用ImageValidator获取尺寸
         final imageInfo = await ImageValidator.getImageInfo(imagePath);
@@ -970,5 +969,75 @@ class _M3CharacterDetailPanelState
       debugPrint('获取图像尺寸失败: $e');
     }
     return null;
+  }
+
+  /// 解析SVG文件的真实尺寸
+  Future<ImageDimensions?> _parseSvgDimensions(String svgPath) async {
+    try {
+      final file = File(svgPath);
+      if (!await file.exists()) {
+        return null;
+      }
+
+      final svgContent = await file.readAsString();
+
+      // 使用正则表达式解析SVG的width和height属性
+      // 支持不同的属性顺序
+      final widthRegex = RegExp(r'width="([^"]*)"', caseSensitive: false);
+      final heightRegex = RegExp(r'height="([^"]*)"', caseSensitive: false);
+
+      final widthMatch = widthRegex.firstMatch(svgContent);
+      final heightMatch = heightRegex.firstMatch(svgContent);
+
+      if (widthMatch != null && heightMatch != null) {
+        final widthStr = widthMatch.group(1);
+        final heightStr = heightMatch.group(1);
+
+        if (widthStr != null && heightStr != null) {
+          // 尝试解析数值，移除可能的单位
+          final width =
+              double.tryParse(widthStr.replaceAll(RegExp(r'[^0-9.]'), ''));
+          final height =
+              double.tryParse(heightStr.replaceAll(RegExp(r'[^0-9.]'), ''));
+
+          if (width != null && height != null) {
+            return ImageDimensions(
+              width: width.round(),
+              height: height.round(),
+              isSvg: true,
+            );
+          }
+        }
+      }
+
+      // 如果无法解析width和height属性，尝试解析viewBox
+      final viewBoxRegex = RegExp(r'viewBox="([^"]*)"', caseSensitive: false);
+      final viewBoxMatch = viewBoxRegex.firstMatch(svgContent);
+
+      if (viewBoxMatch != null) {
+        final viewBoxStr = viewBoxMatch.group(1);
+        if (viewBoxStr != null) {
+          final values = viewBoxStr.split(RegExp(r'\s+'));
+          if (values.length >= 4) {
+            final width = double.tryParse(values[2]);
+            final height = double.tryParse(values[3]);
+
+            if (width != null && height != null) {
+              return ImageDimensions(
+                width: width.round(),
+                height: height.round(),
+                isSvg: true,
+              );
+            }
+          }
+        }
+      }
+
+      // 如果都无法解析，返回默认值
+      return const ImageDimensions(width: 500, height: 500, isSvg: true);
+    } catch (e) {
+      debugPrint('解析SVG尺寸失败: $e');
+      return const ImageDimensions(width: 500, height: 500, isSvg: true);
+    }
   }
 }

@@ -46,7 +46,8 @@ class M3TextFormatPanel extends StatelessWidget {
               child: Slider(
                 value: fontSize.clamp(10, 500), // Clamp for slider range
                 min: 10,
-                max: 500, // Slider max 500 for usability, but input field allows up to 2000
+                max:
+                    500, // Slider max 500 for usability, but input field allows up to 2000
                 divisions: 490,
                 label: '${fontSize.round()}px',
                 activeColor: colorScheme.primary,
@@ -89,10 +90,10 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 3,
               child: Slider(
-                value: letterSpacing,
+                value: letterSpacing.clamp(0, 500),
                 min: 0,
-                max: 50,
-                divisions: 50,
+                max: 500,
+                divisions: 500,
                 label: '${letterSpacing.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -109,7 +110,7 @@ class M3TextFormatPanel extends StatelessWidget {
                 value: letterSpacing,
                 suffix: 'px',
                 min: 0,
-                max: 100,
+                max: 500,
                 decimalPlaces: 1,
                 onChanged: (value) {
                   onContentPropertyChanged('letterSpacing', value);
@@ -135,10 +136,10 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 3,
               child: Slider(
-                value: lineSpacing,
+                value: lineSpacing.clamp(0, 500),
                 min: 0,
-                max: 50,
-                divisions: 50,
+                max: 500,
+                divisions: 500,
                 label: '${lineSpacing.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -155,7 +156,7 @@ class M3TextFormatPanel extends StatelessWidget {
                 value: lineSpacing,
                 suffix: 'px',
                 min: 0,
-                max: 100,
+                max: 500,
                 decimalPlaces: 1,
                 onChanged: (value) {
                   onContentPropertyChanged('lineSpacing', value);

@@ -798,7 +798,7 @@
   "library": "라이브러리",
   "libraryCount": "라이브러리 수",
   "libraryManagement": "라이브러리",
-  "lineHeight": "줄 높이",
+  "lineHeight": "줄 간격",
   "lineThrough": "취소선",
   "listView": "목록 보기",
   "loadBackupRegistryFailed": "백업 레지스트리 로드 실패",
@@ -1364,5 +1364,9 @@
   "yesterday": "어제",
   "zipFile": "ZIP 압축 파일",
   "languageJa": "日本語",
-  "languageKo": "한국어"
+  "languageKo": "한국어",
+  "backgroundTexture": "배경 텍스처",
+  "texturePreview": "텍스처 미리보기",
+  "textureSize": "텍스처 크기",
+  "restoreDefaultSize": "기본 크기로 복원"
 }

@@ -386,7 +386,7 @@ class PracticeElement with _$PracticeElement {
 
     // 文本特有属性
     @Default('') String text,
-    @Default(14.0) double fontSize,
+    @Default(100.0) double fontSize,
     @Default('Arial') String fontFamily,
     @Default('#000000') String fontColor,
     @Default('#FFFFFF') String backgroundColor,

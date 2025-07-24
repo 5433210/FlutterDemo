@@ -798,7 +798,7 @@
   "library": "ライブラリ",
   "libraryCount": "ライブラリ数",
   "libraryManagement": "ライブラリ",
-  "lineHeight": "行の高さ",
+  "lineHeight": "行間隔",
   "lineThrough": "取り消し線",
   "listView": "リストビュー",
   "loadBackupRegistryFailed": "バックアップレジストリの読み込みに失敗しました",
@@ -1364,5 +1364,9 @@
   "yesterday": "昨日",
   "zipFile": "ZIP圧縮ファイル",
   "languageJa": "日本語",
-  "languageKo": "한국어"
+  "languageKo": "한국어",
+  "backgroundTexture": "背景テクスチャ",
+  "texturePreview": "テクスチャプレビュー",
+  "textureSize": "テクスチャサイズ",
+  "restoreDefaultSize": "デフォルトサイズに戻す"
 }

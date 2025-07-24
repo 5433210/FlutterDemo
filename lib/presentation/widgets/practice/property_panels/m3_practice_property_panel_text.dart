@@ -241,7 +241,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     // 文本特有属性
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final text = content['text'] as String? ?? '';
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 100.0;
     final fontFamily = content['fontFamily'] as String? ?? 'sans-serif';
     final fontWeight = content['fontWeight'] as String? ?? 'normal';
     final fontStyle = content['fontStyle'] as String? ?? 'normal';
@@ -889,10 +889,10 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 3,
               child: Slider(
-                value: letterSpacing,
+                value: letterSpacing.clamp(-5.0, 500.0),
                 min: -5.0,
-                max: 20.0,
-                divisions: 250,
+                max: 500.0,
+                divisions: 505,
                 label: '${letterSpacing.toStringAsFixed(1)}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -910,7 +910,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 value: letterSpacing,
                 suffix: 'px',
                 min: -5.0,
-                max: 20.0,
+                max: 500.0,
                 decimalPlaces: 1,
                 onChanged: (value) {
                   _updateContentProperty('letterSpacing', value);
@@ -929,11 +929,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 3,
               child: Slider(
-                value: lineHeight,
-                min: 0.5,
-                max: 3.0,
-                divisions: 25,
-                label: '${lineHeight.toStringAsFixed(1)}x',
+                value: lineHeight.clamp(0.0, 500.0),
+                min: 0.0,
+                max: 500.0,
+                divisions: 500,
+                label: '${lineHeight.toStringAsFixed(1)}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
@@ -948,9 +948,9 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
               child: EditableNumberField(
                 label: l10n.lineHeight,
                 value: lineHeight,
-                suffix: 'x',
-                min: 0.5,
-                max: 3.0,
+                suffix: 'px',
+                min: 0.0,
+                max: 500.0,
                 decimalPlaces: 1,
                 onChanged: (value) {
                   _updateContentProperty('lineHeight', value);
@@ -1034,10 +1034,10 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 3,
               child: Slider(
-                value: padding,
+                value: padding.clamp(0, 500),
                 min: 0,
-                max: 50,
-                divisions: 50,
+                max: 500,
+                divisions: 500,
                 label: '${padding.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -1055,7 +1055,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 value: padding,
                 suffix: 'px',
                 min: 0,
-                max: 100,
+                max: 500,
                 decimalPlaces: 0,
                 onChanged: (value) {
                   _updateContentProperty('padding', value);
