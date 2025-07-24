@@ -740,12 +740,36 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         List<Map<String, dynamic>> erasePaths = [];
         if (pathRenderData.completedPaths.isNotEmpty) {
           erasePaths = pathRenderData.completedPaths.map((p) {
-            final points = _extractPointsFromPath(p.path);
+            final viewportPoints = _extractPointsFromPath(p.path);
+
+            // 将视口坐标转换为图像坐标
+            final imagePoints = viewportPoints.map((viewportPoint) {
+              final imagePoint =
+                  _transformer.viewportToImageCoordinate(viewportPoint);
+              return {
+                'dx': imagePoint.dx,
+                'dy': imagePoint.dy,
+                'x': imagePoint.dx,
+                'y': imagePoint.dy,
+              };
+            }).toList();
+
+            AppLogger.debug('擦除路径坐标转换', data: {
+              '视口点数量': viewportPoints.length,
+              '图像点数量': imagePoints.length,
+              '第一个视口点': viewportPoints.isNotEmpty
+                  ? '(${viewportPoints.first.dx}, ${viewportPoints.first.dy})'
+                  : 'none',
+              '第一个图像点': imagePoints.isNotEmpty
+                  ? '(${imagePoints.first['dx']}, ${imagePoints.first['dy']})'
+                  : 'none',
+            });
+
             return {
               'brushSize': p.brushSize,
               'brushColor': p.brushColor
                   .toARGB32(), // Use toARGB32() instead of deprecated .value
-              'points': points,
+              'points': imagePoints,
               'pathId': p.hashCode.toString(),
             };
           }).toList();

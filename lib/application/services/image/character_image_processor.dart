@@ -25,6 +25,7 @@ final characterImageProcessorProvider =
 /// 字符图像处理器
 class CharacterImageProcessor {
   static const int maxPreviewSize = 800;
+  static const int targetSize = 500; // 统一的目标尺寸
   final ImageProcessor _processor;
   final ICache<String, Uint8List> _binaryCache;
 
@@ -102,14 +103,17 @@ class CharacterImageProcessor {
       final croppedImage =
           _rotateAndCropImage(sourceImage, params.region, params.rotation);
 
+      // 分辨率增强处理
+      final enhancedImage = _enhanceResolution(croppedImage);
+
       // 应用对比度和亮度调整
-      img.Image finalImage = croppedImage;
+      img.Image finalImage = enhancedImage;
       if (params.options.contrast != 1.0 || params.options.brightness != 0.0) {
         final adjustedImage =
-            img.Image(width: croppedImage.width, height: croppedImage.height);
-        for (var y = 0; y < croppedImage.height; y++) {
-          for (var x = 0; x < croppedImage.width; x++) {
-            final pixel = croppedImage.getPixel(x, y);
+            img.Image(width: enhancedImage.width, height: enhancedImage.height);
+        for (var y = 0; y < enhancedImage.height; y++) {
+          for (var x = 0; x < enhancedImage.width; x++) {
+            final pixel = enhancedImage.getPixel(x, y);
             final r = ((pixel.r - 128) * params.options.contrast +
                     128 +
                     params.options.brightness)
@@ -195,15 +199,18 @@ class CharacterImageProcessor {
       // 保存原始裁剪图像（PNG格式）
       final originalCropBytes = Uint8List.fromList(img.encodePng(croppedImage));
 
+      // 分辨率增强处理
+      final enhancedImage = _enhanceResolution(croppedImage);
+
       // 应用对比度和亮度调整
       img.Image finalImage =
-          croppedImage.clone(); // Create a copy for binary processing
+          enhancedImage.clone(); // Create a copy for binary processing
       if (params.options.contrast != 1.0 || params.options.brightness != 0.0) {
         final adjustedImage =
-            img.Image(width: croppedImage.width, height: croppedImage.height);
-        for (var y = 0; y < croppedImage.height; y++) {
-          for (var x = 0; x < croppedImage.width; x++) {
-            final pixel = croppedImage.getPixel(x, y);
+            img.Image(width: enhancedImage.width, height: enhancedImage.height);
+        for (var y = 0; y < enhancedImage.height; y++) {
+          for (var x = 0; x < enhancedImage.width; x++) {
+            final pixel = enhancedImage.getPixel(x, y);
             final r = ((pixel.r - 128) * params.options.contrast +
                     128 +
                     params.options.brightness * 255)
@@ -248,7 +255,7 @@ class CharacterImageProcessor {
 
       // 生成去背景透明图像 (使用二值图像作为参考改进背景去除)
       Uint8List transparentPng = _createBetterTransparentPng(
-          croppedImage, binaryImage, outline, options.inverted);
+          enhancedImage, binaryImage, outline, options.inverted); // 使用分辨率增强后的图像
 
       // 生成正方形版本的图像 - 使用修正后的计算逻辑
       Uint8List squareBinary;
@@ -258,7 +265,7 @@ class CharacterImageProcessor {
       if (outline.contourPoints.isNotEmpty) {
         // 使用改进的方法创建正方形图像 - 确保保持正方形且图像居中
         final squareResults = _createProperSquareImages(
-            originalImage: croppedImage,
+            originalImage: enhancedImage, // 使用分辨率增强后的图像
             binaryImage: binaryImage,
             outline: outline,
             options: params.options);
@@ -279,8 +286,8 @@ class CharacterImageProcessor {
         squareBinary = _createProperSquareBinaryWithoutContour(
             binaryImage, options.inverted);
         squareSvgOutline = null;
-        squareTransparentPng =
-            _createProperSquareTransparentWithoutContour(croppedImage);
+        squareTransparentPng = _createProperSquareTransparentWithoutContour(
+            enhancedImage); // 使用分辨率增强后的图像
       }
 
       // 生成保持宽高比的缩略图 (100x100)
@@ -315,6 +322,11 @@ class CharacterImageProcessor {
     List<Map<String, dynamic>> erasePaths,
     ProcessingOptions options,
   ) {
+    AppLogger.debug('_applyErase开始', data: {
+      'erasePaths数量': erasePaths.length,
+      'imageSize': '${source.width}x${source.height}',
+    });
+
     final result =
         img.copyResize(source, width: source.width, height: source.height);
 
@@ -327,7 +339,13 @@ class CharacterImageProcessor {
 
       // 确保最小有效半径，解决小笔刷被忽略的问题
       // 对于小于2.0的笔刷，使用1.0作为最小有效半径
-      final effectiveRadius = math.max(brushSize / 2, 1.0); // 获取路径的颜色，默认为白色
+      final effectiveRadius = math.max(brushSize / 2, 1.0);
+
+      AppLogger.debug('处理擦除路径', data: {
+        'points数量': points.length,
+        'brushSize': brushSize,
+        'effectiveRadius': effectiveRadius,
+      }); // 获取路径的颜色，默认为白色
       // 支持 int 类型和 String 类型的 brushColor
       final brushColorRaw = pathData['brushColor'];
       int? brushColorValue;
@@ -1036,6 +1054,44 @@ class ProcessingParams {
       region.top >= 0 &&
       region.width > 0 &&
       region.height > 0;
+}
+
+/// 分辨率增强处理
+img.Image _enhanceResolution(img.Image originalImage) {
+  final originalWidth = originalImage.width;
+  final originalHeight = originalImage.height;
+
+  // 计算缩放比例，确保最大边不超过目标尺寸
+  final maxDimension = math.max(originalWidth, originalHeight);
+  if (maxDimension >= CharacterImageProcessor.targetSize) {
+    // 如果已经达到或超过目标尺寸，直接返回
+    return originalImage;
+  }
+
+  final scale = CharacterImageProcessor.targetSize / maxDimension;
+  final newWidth = (originalWidth * scale).round();
+  final newHeight = (originalHeight * scale).round();
+
+  AppLogger.debug('开始分辨率增强处理', data: {
+    'originalSize': '${originalWidth}x$originalHeight',
+    'targetSize': CharacterImageProcessor.targetSize,
+    'scale': scale,
+    'newSize': '${newWidth}x$newHeight',
+  });
+
+  // 使用高质量的双三次插值进行缩放
+  final enhancedImage = img.copyResize(
+    originalImage,
+    width: newWidth,
+    height: newHeight,
+    interpolation: img.Interpolation.cubic,
+  );
+
+  AppLogger.debug('分辨率增强完成', data: {
+    'enhancedSize': '${enhancedImage.width}x${enhancedImage.height}',
+  });
+
+  return enhancedImage;
 }
 
 /// 正方形图像生成结果
