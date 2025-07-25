@@ -65,6 +65,11 @@ class _M3CharacterDetailPanelState
   final TextEditingController _tagController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
@@ -81,6 +86,12 @@ class _M3CharacterDetailPanelState
         child: detailAsync.when(
           data: (state) {
             if (state == null || state.character == null) {
+              // Character doesn't exist (likely deleted), close the panel
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && widget.onClose != null) {
+                  widget.onClose!();
+                }
+              });
               return Center(
                 child: Text(l10n.characterDetailLoadError),
               );
@@ -270,12 +281,20 @@ class _M3CharacterDetailPanelState
           loading: () => const Center(
             child: CircularProgressIndicator(),
           ),
-          error: (error, stack) => Center(
-            child: Text(
-              '${l10n.characterDetailLoadError}: $error',
-              style: TextStyle(color: theme.colorScheme.error),
-            ),
-          ),
+          error: (error, stack) {
+            // Character loading failed (likely deleted), close the panel
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && widget.onClose != null) {
+                widget.onClose!();
+              }
+            });
+            return Center(
+              child: Text(
+                '${l10n.characterDetailLoadError}: $error',
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            );
+          },
         ),
       ),
     );

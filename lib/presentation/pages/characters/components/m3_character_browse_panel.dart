@@ -433,6 +433,15 @@ class _M3CharacterBrowsePanelState
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
+
+              // If deleting the currently selected character, close detail panel first
+              final currentState = ref.read(characterManagementProvider);
+              if (currentState.selectedCharacterId == characterId) {
+                ref
+                    .read(characterManagementProvider.notifier)
+                    .closeDetailPanel();
+              }
+
               ref
                   .read(characterManagementProvider.notifier)
                   .deleteCharacter(characterId);

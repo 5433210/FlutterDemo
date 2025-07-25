@@ -185,6 +185,14 @@ class _M3CharacterManagementPageState
             onPressed: () {
               Navigator.of(context).pop();
               if (mounted) {
+                // If deleting the currently selected character, close detail panel first
+                final currentState = ref.read(characterManagementProvider);
+                if (currentState.selectedCharacterId == characterId) {
+                  ref
+                      .read(characterManagementProvider.notifier)
+                      .closeDetailPanel();
+                }
+
                 // Check again after dialog is closed
                 ref
                     .read(characterManagementProvider.notifier)

@@ -15,6 +15,7 @@ import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart' as cache;
 import '../../viewmodels/states/character_management_state.dart';
+import 'character_detail_provider.dart';
 
 /// Provider for character management state
 final characterManagementProvider = StateNotifierProvider<
@@ -24,6 +25,7 @@ final characterManagementProvider = StateNotifierProvider<
     characterViewRepository: ref.watch(characterViewRepositoryProvider),
     characterImageService: ref.watch(characterImageServiceProvider),
     imageCacheService: ref.watch(cache.imageCacheServiceProvider),
+    ref: ref,
   ),
 );
 
@@ -34,16 +36,19 @@ class CharacterManagementNotifier
   final CharacterViewRepository _characterViewRepository;
   final CharacterImageService _characterImageService;
   final ImageCacheService _imageCacheService;
+  final Ref _ref;
 
   CharacterManagementNotifier({
     required CharacterService characterService,
     required CharacterViewRepository characterViewRepository,
     required CharacterImageService characterImageService,
     required ImageCacheService imageCacheService,
+    required Ref ref,
   })  : _characterService = characterService,
         _characterViewRepository = characterViewRepository,
         _characterImageService = characterImageService,
         _imageCacheService = imageCacheService,
+        _ref = ref,
         super(CharacterManagementState.initial());
 
   /// Change current page
@@ -131,6 +136,9 @@ class CharacterManagementNotifier
           isDetailOpen: false,
         );
       }
+
+      // Invalidate the character detail provider for the deleted character
+      _ref.invalidate(characterDetailProvider(characterId));
 
       state = state.copyWith(isLoading: false);
       await loadCharacters();
@@ -250,6 +258,9 @@ class CharacterManagementNotifier
     state = state.copyWith(
       isBatchMode: newBatchMode,
       selectedCharacters: newBatchMode ? state.selectedCharacters : {},
+      // 进入批次模式时自动关闭详情面板
+      isDetailOpen: newBatchMode ? false : state.isDetailOpen,
+      selectedCharacterId: newBatchMode ? null : state.selectedCharacterId,
     );
   }
 
