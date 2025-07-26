@@ -22,6 +22,7 @@ releases/
 *.msix
 *.exe
 *.msi
+~$*.*
 
 # OS generated files #
 ######################

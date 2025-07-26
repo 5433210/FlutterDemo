@@ -11,6 +11,7 @@ import '../../infrastructure/logging/logger.dart';
 import 'backup_registry_manager.dart';
 import 'backup_service.dart';
 import 'data_path_config_service.dart';
+import 'unified_upgrade_service.dart';
 
 /// 增强的备份服务
 /// 基于配置文件的备份管理，支持多位置备份统一管理
@@ -574,9 +575,75 @@ class EnhancedBackupService {
         'fileCount': archive.length,
       });
 
+      // 检查并处理数据版本兼容性
+      await _processBackupVersionCompatibility(tempRestoreDir, currentDataPath);
+
       return tempRestoreDir;
     } catch (e, stack) {
       AppLogger.error('解压备份文件到临时目录失败',
+          error: e, stackTrace: stack, tag: 'EnhancedBackupService');
+      rethrow;
+    }
+  }
+
+  /// 处理备份版本兼容性和数据升级
+  Future<void> _processBackupVersionCompatibility(
+      String tempRestoreDir, String currentDataPath) async {
+    try {
+      // 检查是否存在 backup_info.json 文件
+      final backupInfoFile =
+          File(path.join(tempRestoreDir, 'backup_info.json'));
+
+      if (!await backupInfoFile.exists()) {
+        AppLogger.warning('备份信息文件不存在，跳过版本兼容性检查', tag: 'EnhancedBackupService');
+        return;
+      }
+
+      // 读取备份信息
+      final backupInfoContent = await backupInfoFile.readAsString();
+      final backupInfo = json.decode(backupInfoContent) as Map<String, dynamic>;
+
+      final backupDataVersion = backupInfo['dataVersion'] as String?;
+
+      if (backupDataVersion == null) {
+        AppLogger.warning('备份信息中缺少数据版本信息，跳过版本兼容性检查',
+            tag: 'EnhancedBackupService');
+        return;
+      }
+
+      AppLogger.info('开始处理备份版本兼容性', tag: 'EnhancedBackupService', data: {
+        'backupDataVersion': backupDataVersion,
+      });
+
+      // 使用统一升级服务处理版本兼容性
+      final upgradeResult = await UnifiedUpgradeService.upgradeForRestore(
+        currentDataPath,
+        backupDataVersion,
+      );
+
+      switch (upgradeResult.status) {
+        case RestoreUpgradeStatus.compatible:
+          AppLogger.info('备份数据版本兼容，无需升级', tag: 'EnhancedBackupService');
+          break;
+
+        case RestoreUpgradeStatus.upgraded:
+          AppLogger.info('备份数据已成功升级', tag: 'EnhancedBackupService', data: {
+            'fromVersion': upgradeResult.fromVersion,
+            'toVersion': upgradeResult.toVersion,
+          });
+          break;
+
+        case RestoreUpgradeStatus.appUpgradeRequired:
+          throw Exception('需要升级应用程序才能恢复此备份。备份数据版本: $backupDataVersion');
+
+        case RestoreUpgradeStatus.incompatible:
+          throw Exception('备份数据版本不兼容，无法恢复。备份数据版本: $backupDataVersion');
+
+        case RestoreUpgradeStatus.error:
+          throw Exception('处理备份版本兼容性时发生错误: ${upgradeResult.errorMessage}');
+      }
+    } catch (e, stack) {
+      AppLogger.error('处理备份版本兼容性失败',
           error: e, stackTrace: stack, tag: 'EnhancedBackupService');
       rethrow;
     }

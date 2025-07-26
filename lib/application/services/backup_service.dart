@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
 import 'backup_progress_manager.dart';
+import 'data_version_mapping_service.dart';
 
 /// 备份信息
 class BackupInfo {
@@ -241,12 +242,10 @@ class BackupService {
       await _backupAppData(tempPath);
       AppLogger.info('应用数据备份完成', tag: 'BackupService');
 
-      // 创建备份描述文件
-      if (description != null) {
-        AppLogger.info('创建备份描述文件', tag: 'BackupService');
-        progressManager.updateStep('创建描述文件...', detail: '正在保存备份信息');
-        await _createBackupInfo(tempPath, description);
-      }
+      // 创建备份信息文件（无论是否有描述都要创建）
+      AppLogger.info('创建备份信息文件', tag: 'BackupService');
+      progressManager.updateStep('创建信息文件...', detail: '正在保存备份信息');
+      await _createBackupInfo(tempPath, description);
 
       // 创建ZIP文件
       AppLogger.info('开始创建ZIP文件', tag: 'BackupService', data: {
@@ -962,20 +961,18 @@ class BackupService {
   }
 
   /// 创建备份信息文件
-  Future<void> _createBackupInfo(String tempPath, String description) async {
+  Future<void> _createBackupInfo(String tempPath, String? description) async {
     try {
       final infoPath = p.join(tempPath, 'backup_info.json');
+
+      // 获取当前数据版本
+      final currentDataVersion = await _getCurrentDataVersion();
+
       final info = {
         'timestamp': DateTime.now().toIso8601String(),
-        'description': description,
-        'backupVersion': '1.1', // 备份格式版本
-        'appVersion': '1.0.0', // 应用版本
+        'description': description ?? '', // 如果没有描述则使用空字符串
+        'dataVersion': currentDataVersion, // 使用统一的数据版本
         'platform': Platform.operatingSystem,
-        'compatibility': {
-          'minAppVersion': '1.0.0', // 最低支持的应用版本
-          'maxAppVersion': '2.0.0', // 最高支持的应用版本
-          'dataFormat': 'v1', // 数据格式版本
-        },
         'excludedDirectories': ['temp', 'cache'], // 记录排除的目录
         'includedDirectories': [
           'works',
@@ -997,6 +994,18 @@ class BackupService {
       AppLogger.error('创建备份信息文件失败',
           error: e, stackTrace: stack, tag: 'BackupService');
       // 不抛出异常，备份信息文件不是必须的
+    }
+  }
+
+  /// 获取当前数据版本
+  Future<String> _getCurrentDataVersion() async {
+    try {
+      return DataVersionMappingService.getCurrentDataVersion();
+    } catch (e, stack) {
+      AppLogger.error('获取当前数据版本失败',
+          error: e, stackTrace: stack, tag: 'BackupService');
+      // 返回默认版本
+      return 'v4'; // 默认使用最新版本
     }
   }
 

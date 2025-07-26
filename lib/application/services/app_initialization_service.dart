@@ -7,6 +7,7 @@ import '../../infrastructure/logging/logger.dart';
 import '../providers/data_path_provider.dart';
 import '../providers/unified_path_provider.dart' as unified;
 import 'data_path_config_service.dart';
+import 'unified_upgrade_service.dart';
 
 /// 应用启动初始化服务
 ///
@@ -27,7 +28,15 @@ class AppInitializationService {
         );
       }
 
-      // 2. 验证数据完整性
+      // 2. 执行应用启动升级检查
+      final upgradeResult = await _performStartupUpgrade(ref);
+      if (!upgradeResult.isSuccess) {
+        return AppInitializationResult.failure(
+          '应用升级检查失败: ${upgradeResult.errorMessage}',
+        );
+      }
+
+      // 3. 验证数据完整性
       final dataIntegrityResult = await _verifyDataIntegrity(ref);
       if (!dataIntegrityResult.isSuccess) {
         AppLogger.warning('数据完整性检查失败: ${dataIntegrityResult.errorMessage}',
@@ -35,7 +44,7 @@ class AppInitializationService {
         // 数据完整性问题不应该阻止应用启动，只记录警告
       }
 
-      // 3. 初始化存储服务
+      // 4. 初始化存储服务
       try {
         await ref.read(unified.actualDataPathProvider.future);
         AppLogger.debug('存储服务预加载完成', tag: 'AppInit');
@@ -203,6 +212,58 @@ class AppInitializationService {
         lastInitialized: DateTime.now(),
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  /// 执行应用启动升级检查
+  static Future<_InitResult> _performStartupUpgrade(WidgetRef ref) async {
+    try {
+      AppLogger.debug('开始应用启动升级检查', tag: 'AppInit');
+
+      // 获取当前数据路径
+      final dataPathConfig = await DataPathConfigService.readConfig();
+      final currentDataPath = await dataPathConfig.getActualDataPath();
+
+      // 执行统一升级服务的启动升级检查
+      final upgradeResult =
+          await UnifiedUpgradeService.checkAndUpgradeOnStartup(currentDataPath);
+
+      switch (upgradeResult.status) {
+        case UpgradeCheckStatus.compatible:
+        case UpgradeCheckStatus.newDataDirectory:
+          AppLogger.debug('无需升级', tag: 'AppInit');
+          return _InitResult.success();
+
+        case UpgradeCheckStatus.upgraded:
+          AppLogger.info('应用启动升级完成', tag: 'AppInit', data: {
+            'fromVersion': upgradeResult.fromVersion,
+            'toVersion': upgradeResult.toVersion,
+          });
+          return _InitResult.success();
+
+        case UpgradeCheckStatus.appUpgradeRequired:
+          AppLogger.info('需要升级应用程序', tag: 'AppInit');
+          return _InitResult.failure('需要升级应用程序才能继续使用');
+
+        case UpgradeCheckStatus.incompatible:
+          AppLogger.error('数据版本不兼容', tag: 'AppInit');
+          return _InitResult.failure('数据版本不兼容，无法启动应用');
+
+        case UpgradeCheckStatus.unsupportedUpgradePath:
+          AppLogger.error('不支持的升级路径', tag: 'AppInit');
+          return _InitResult.failure('不支持的升级路径');
+
+        case UpgradeCheckStatus.upgradeFailed:
+        case UpgradeCheckStatus.error:
+          AppLogger.error('应用启动升级失败', tag: 'AppInit', data: {
+            'errorMessage': upgradeResult.errorMessage,
+          });
+          return _InitResult.failure('升级失败: ${upgradeResult.errorMessage}');
+      }
+    } catch (e, stack) {
+      AppLogger.error('应用启动升级检查过程中发生错误',
+          error: e, stackTrace: stack, tag: 'AppInit');
+      return _InitResult.failure('升级检查失败: $e');
     }
   }
 }
