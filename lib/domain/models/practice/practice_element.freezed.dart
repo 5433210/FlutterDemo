@@ -2310,7 +2310,7 @@ class _$TextElementImpl extends TextElement {
       this.isLocked = false,
       this.opacity = 1.0,
       this.text = '',
-      this.fontSize = 14.0,
+      this.fontSize = 100.0,
       this.fontFamily = 'Arial',
       this.fontColor = '#000000',
       this.backgroundColor = '#FFFFFF',

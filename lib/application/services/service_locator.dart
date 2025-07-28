@@ -85,7 +85,7 @@ class ServiceLocator {
     register<FilePickerService>(FilePickerServiceImpl());
 
     // 注册导入服务
-    register<ImportService>(const ImportServiceImpl());
+    register<ImportService>(ImportServiceImpl());
 
     // 如果提供了存储接口，注册备份相关服务
     if (storage != null) {
@@ -107,7 +107,7 @@ class ServiceLocator {
     register<FilePickerService>(FilePickerServiceImpl());
 
     // 注册导入服务
-    register<ImportService>(const ImportServiceImpl());
+    register<ImportService>(ImportServiceImpl());
 
     // 如果提供了存储接口，注册存储和备份相关服务
     if (storage != null) {

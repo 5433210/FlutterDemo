@@ -7,7 +7,7 @@ import '../database_migration_integration.dart';
 
 /// v1 到 v2 数据版本适配器
 /// 主要变化：添加练习功能相关的数据结构和配置
-class DataAdapter_v1_to_v2 implements DataVersionAdapter {
+class DataAdapterV1ToV2 implements DataVersionAdapter {
   @override
   bool get requiresRestart => true;
   @override

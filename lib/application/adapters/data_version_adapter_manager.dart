@@ -8,8 +8,8 @@ import 'data_versions/adapter_v2_to_v3.dart';
 /// 负责管理所有数据版本适配器，提供适配器查找和执行功能
 class DataVersionAdapterManager {
   static final Map<String, DataVersionAdapter> _adapters = {
-    'v1->v2': DataAdapter_v1_to_v2(),
-    'v2->v3': DataAdapter_v2_to_v3(),
+    'v1->v2': DataAdapterV1ToV2(),
+    'v2->v3': DataAdapterV2ToV3(),
     // 可以继续添加更多适配器
     // 'v3->v4': DataAdapter_v3_to_v4(),
   };

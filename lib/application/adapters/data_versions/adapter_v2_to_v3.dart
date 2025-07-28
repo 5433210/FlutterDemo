@@ -7,7 +7,7 @@ import '../database_migration_integration.dart';
 
 /// v2 到 v3 数据版本适配器
 /// 主要变化：增强作品管理，添加元数据支持
-class DataAdapter_v2_to_v3 implements DataVersionAdapter {
+class DataAdapterV2ToV3 implements DataVersionAdapter {
   @override
   bool get requiresRestart => true;
   @override

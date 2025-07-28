@@ -32,8 +32,8 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
     try {
       // 重要：使用read而不是watch来获取provider
       // 这样可以避免在异步操作中使用watch导致的依赖变化问题
-      final unifiedConfigProvider =
-          ref.read(unified.unifiedPathConfigProvider.notifier);
+      // final unifiedConfigProvider =
+      //     ref.read(unified.unifiedPathConfigProvider.notifier);
 
       // 先检查当前状态
       final currentState = ref.read(unified.unifiedPathConfigProvider);

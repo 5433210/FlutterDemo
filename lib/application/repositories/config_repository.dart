@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../domain/models/config/config_item.dart';
 import '../../domain/services/config_service.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/persistence/database_interface.dart';
 
 /// 配置仓储实现
@@ -84,7 +85,8 @@ class ConfigRepository {
           categories.add(ConfigCategory.fromJson(configData));
         } catch (e) {
           // 记录解析失败的配置，但不中断整个操作
-          print('Failed to parse config for key: ${row['key']}, error: $e');
+          AppLogger.warning('Failed to parse config for key: ${row['key']}',
+              tag: 'ConfigRepository', error: e);
         }
       }
 

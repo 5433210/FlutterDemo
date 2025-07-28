@@ -18,6 +18,7 @@ import '../../domain/services/export_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
 import '../../utils/path_privacy_helper.dart';
+import 'import_export_version_mapping_service.dart';
 
 /// 导出服务的具体实现
 class ExportServiceImpl implements ExportService {
@@ -25,7 +26,7 @@ class ExportServiceImpl implements ExportService {
   final WorkImageRepository _workImageRepository;
   final CharacterRepository _characterRepository;
   final IStorage _storage;
-  
+
   // 临时保存原始workImages数据，用于文件操作
   List<WorkImage>? _originalWorkImages;
 
@@ -35,10 +36,10 @@ class ExportServiceImpl implements ExportService {
     required CharacterRepository characterRepository,
     required PracticeRepository practiceRepository, // 保留参数但不存储
     required IStorage storage,
-  }) : _workRepository = workRepository,
-       _workImageRepository = workImageRepository,
-       _characterRepository = characterRepository,
-       _storage = storage;
+  })  : _workRepository = workRepository,
+        _workImageRepository = workImageRepository,
+        _characterRepository = characterRepository,
+        _storage = storage;
 
   @override
   Future<ExportManifest> exportWorks(
@@ -49,59 +50,59 @@ class ExportServiceImpl implements ExportService {
     ExportProgressCallback? progressCallback,
   }) async {
     final exportId = _generateExportId();
-    
+
     try {
       progressCallback?.call(0.0, '开始导出作品...', {'exportId': exportId});
-      
+
       // 简化实现：创建基本的导出数据
       final works = <WorkEntity>[];
       final workImages = <WorkImage>[];
       final characters = <CharacterEntity>[];
-      
+
       // 模拟数据查询
       for (final workId in workIds) {
         final work = await _workRepository.get(workId);
         if (work != null) {
           works.add(work);
         }
-        
+
         final images = await _workImageRepository.getAllByWorkId(workId);
         workImages.addAll(images);
-        
+
         if (exportType == ExportType.worksWithCharacters) {
           final workCharacters = await _characterRepository.getByWorkId(workId);
           characters.addAll(workCharacters);
         }
       }
-      
+
       if (works.isEmpty) {
         throw const ExportException(
           ImportExportErrorCodes.exportDataQueryFailed,
           '未找到要导出的作品数据',
         );
       }
-      
+
       progressCallback?.call(0.5, '生成导出数据...', null);
-      
+
       // 保存原始workImages用于文件操作
       _originalWorkImages = workImages;
-      
+
       // 创建导出数据模型
       final exportData = _createExportDataModel(
-        works, 
-        workImages, 
-        characters, 
+        works,
+        workImages,
+        characters,
         options,
         exportType: exportType,
       );
-      
+
       progressCallback?.call(0.8, '创建导出文件...', null);
-      
+
       // 创建简化的导出文件
       await _createExportFile(exportData, targetPath);
-      
+
       progressCallback?.call(1.0, '导出完成', {'outputPath': targetPath});
-      
+
       AppLogger.info(
         '作品导出完成',
         data: {
@@ -113,9 +114,8 @@ class ExportServiceImpl implements ExportService {
         },
         tag: 'export',
       );
-      
+
       return exportData.manifest;
-      
     } catch (e, stackTrace) {
       AppLogger.error(
         '作品导出失败',
@@ -128,7 +128,7 @@ class ExportServiceImpl implements ExportService {
         },
         tag: 'export',
       );
-      
+
       if (e is ExportException) {
         rethrow;
       } else {
@@ -149,30 +149,30 @@ class ExportServiceImpl implements ExportService {
     ExportProgressCallback? progressCallback,
   }) async {
     final exportId = _generateExportId();
-    
+
     try {
       progressCallback?.call(0.0, '开始导出集字...', {'exportId': exportId});
-      
+
       // 简化实现：创建基本的导出数据
       final characters = <CharacterEntity>[];
       final works = <WorkEntity>[];
       final workImages = <WorkImage>[];
       final processedWorkIds = <String>{};
-      
+
       // 模拟数据查询
       for (final characterId in characterIds) {
         final character = await _characterRepository.get(characterId);
         if (character != null) {
           characters.add(character);
-          
+
           // 总是包含关联的作品和图片数据
-          if (character.workId != null && !processedWorkIds.contains(character.workId!)) {
-            processedWorkIds.add(character.workId!);
-            
-            final work = await _workRepository.get(character.workId!);
+          if (!processedWorkIds.contains(character.workId)) {
+            processedWorkIds.add(character.workId);
+
+            final work = await _workRepository.get(character.workId);
             if (work != null) {
               works.add(work);
-              
+
               // 获取该作品的所有图片
               final images = await _workImageRepository.getAllByWorkId(work.id);
               workImages.addAll(images);
@@ -180,35 +180,35 @@ class ExportServiceImpl implements ExportService {
           }
         }
       }
-      
+
       if (characters.isEmpty) {
         throw const ExportException(
           ImportExportErrorCodes.exportDataQueryFailed,
           '未找到要导出的集字数据',
         );
       }
-      
+
       progressCallback?.call(0.5, '生成导出数据...', null);
-      
+
       // 保存原始workImages用于文件操作
       _originalWorkImages = workImages;
-      
+
       // 创建导出数据模型
       final exportData = _createExportDataModel(
-        works, 
-        workImages, 
-        characters, 
+        works,
+        workImages,
+        characters,
         options,
         exportType: exportType,
       );
-      
+
       progressCallback?.call(0.8, '创建导出文件...', null);
-      
+
       // 创建简化的导出文件
       await _createExportFile(exportData, targetPath);
-      
+
       progressCallback?.call(1.0, '导出完成', {'outputPath': targetPath});
-      
+
       AppLogger.info(
         '集字导出完成',
         data: {
@@ -221,9 +221,8 @@ class ExportServiceImpl implements ExportService {
         },
         tag: 'export',
       );
-      
+
       return exportData.manifest;
-      
     } catch (e, stackTrace) {
       AppLogger.error(
         '集字导出失败',
@@ -236,7 +235,7 @@ class ExportServiceImpl implements ExportService {
         },
         tag: 'export',
       );
-      
+
       if (e is ExportException) {
         rethrow;
       } else {
@@ -260,9 +259,10 @@ class ExportServiceImpl implements ExportService {
   }
 
   @override
-  Future<List<ExportValidation>> validateExportData(ExportDataModel exportData) async {
+  Future<List<ExportValidation>> validateExportData(
+      ExportDataModel exportData) async {
     final validations = <ExportValidation>[];
-    
+
     // 验证作品数据
     for (final work in exportData.works) {
       if (work.id.isEmpty) {
@@ -275,7 +275,7 @@ class ExportServiceImpl implements ExportService {
         ));
       }
     }
-    
+
     // 验证集字数据
     for (final character in exportData.characters) {
       if (character.id.isEmpty) {
@@ -288,7 +288,7 @@ class ExportServiceImpl implements ExportService {
         ));
       }
     }
-    
+
     return validations;
   }
 
@@ -311,7 +311,7 @@ class ExportServiceImpl implements ExportService {
       if (!await directory.exists()) {
         return false;
       }
-      
+
       // 简化实现：假设总是有足够空间
       return true;
     } catch (e) {
@@ -366,21 +366,28 @@ class ExportServiceImpl implements ExportService {
     ExportOptions options, {
     ExportType exportType = ExportType.worksOnly,
   }) {
+    // 获取当前应用版本对应的数据版本
+    const currentAppVersion = '1.3.0'; // 从配置获取
+    final dataVersion = ImportExportVersionMappingService.getDataVersionForApp(
+        currentAppVersion);
+
     final metadata = ExportMetadata(
       version: '1.0',
       platform: 'flutter',
       exportTime: DateTime.now(),
       options: options,
       exportType: exportType,
-      appVersion: '1.0.0',
+      appVersion: currentAppVersion,
+      dataFormatVersion: dataVersion, // 使用数据版本
       compatibility: const CompatibilityInfo(
         minSupportedVersion: '1.0.0',
-        recommendedVersion: '1.0.0',
+        recommendedVersion: '1.3.0',
       ),
     );
 
     // 创建路径隐私保护的WorkImage副本用于JSON序列化
-    final sanitizedWorkImages = workImages.map((image) => _sanitizeWorkImagePaths(image)).toList();
+    final sanitizedWorkImages =
+        workImages.map((image) => _sanitizeWorkImagePaths(image)).toList();
 
     final summary = ExportSummary(
       workCount: works.length,
@@ -389,12 +396,12 @@ class ExportServiceImpl implements ExportService {
       totalSize: 0,
     );
 
-    final statistics = ExportStatistics(
-      customConfigs: const CustomConfigStatistics(),
+    const statistics = ExportStatistics(
+      customConfigs: CustomConfigStatistics(),
     );
 
     final fileInfos = <ExportFileInfo>[];
-    
+
     // 添加作品文件信息
     for (final work in works) {
       fileInfos.add(ExportFileInfo(
@@ -405,7 +412,7 @@ class ExportServiceImpl implements ExportService {
         checksum: '',
       ));
     }
-    
+
     // 添加集字文件信息
     for (final character in characters) {
       fileInfos.add(ExportFileInfo(
@@ -442,16 +449,18 @@ class ExportServiceImpl implements ExportService {
     );
   }
 
-  Future<void> _createExportFile(ExportDataModel exportData, String targetPath) async {
+  Future<void> _createExportFile(
+      ExportDataModel exportData, String targetPath) async {
     // 确保使用绝对路径，并根据格式生成正确的文件路径
-    final absolutePath = await _resolveAbsolutePath(targetPath, exportData.metadata.options.format);
-    
+    final absolutePath = await _resolveAbsolutePath(
+        targetPath, exportData.metadata.options.format);
+
     // 确保目标目录存在
     final targetDir = Directory(path.dirname(absolutePath));
     if (!await targetDir.exists()) {
       await targetDir.create(recursive: true);
     }
-    
+
     AppLogger.info(
       '开始创建导出文件',
       data: {
@@ -461,25 +470,28 @@ class ExportServiceImpl implements ExportService {
       },
       tag: 'export',
     );
-    
+
     switch (exportData.metadata.options.format) {
       case ExportFormat.json:
         await _createJsonFile(exportData, absolutePath);
         break;
       case ExportFormat.zip:
-        await _createZipFile(exportData, absolutePath, _originalWorkImages ?? []);
+        await _createZipFile(
+            exportData, absolutePath, _originalWorkImages ?? []);
         break;
       case ExportFormat.backup:
-        await _createBackupFile(exportData, absolutePath, _originalWorkImages ?? []);
+        await _createBackupFile(
+            exportData, absolutePath, _originalWorkImages ?? []);
         break;
     }
   }
 
   /// 创建JSON文件
-  Future<void> _createJsonFile(ExportDataModel exportData, String filePath) async {
+  Future<void> _createJsonFile(
+      ExportDataModel exportData, String filePath) async {
     final file = File(filePath);
     await file.writeAsString(jsonEncode(exportData.toJson()));
-    
+
     AppLogger.info(
       'JSON文件创建完成',
       data: {
@@ -491,34 +503,37 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 创建ZIP文件
-  Future<void> _createZipFile(ExportDataModel exportData, String filePath, List<WorkImage> workImages) async {
+  Future<void> _createZipFile(ExportDataModel exportData, String filePath,
+      List<WorkImage> workImages) async {
     final archive = Archive();
-    
+
     // 添加主数据文件 - 使用UTF-8编码
     final dataJson = jsonEncode(exportData.toJson());
     final dataBytes = utf8.encode(dataJson);
-    final dataFile = ArchiveFile('export_data.json', dataBytes.length, dataBytes);
+    final dataFile =
+        ArchiveFile('export_data.json', dataBytes.length, dataBytes);
     archive.addFile(dataFile);
-    
+
     // 添加清单文件 - 使用UTF-8编码
     final manifestJson = jsonEncode(exportData.manifest.toJson());
     final manifestBytes = utf8.encode(manifestJson);
-    final manifestFile = ArchiveFile('manifest.json', manifestBytes.length, manifestBytes);
+    final manifestFile =
+        ArchiveFile('manifest.json', manifestBytes.length, manifestBytes);
     archive.addFile(manifestFile);
-    
+
     // 添加作品图片文件
     await _addImageFilesToArchive(archive, exportData, workImages);
-    
+
     // 添加集字图片文件
     await _addCharacterImageFilesToArchive(archive, exportData.characters);
-    
+
     // 压缩并保存
     final encoder = ZipEncoder();
     final compressedBytes = encoder.encode(archive);
-    
+
     final file = File(filePath);
     await file.writeAsBytes(compressedBytes);
-    
+
     AppLogger.info(
       'ZIP文件创建完成',
       data: {
@@ -531,9 +546,10 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 创建备份文件（增强版ZIP，包含更多元数据和完整性校验）
-  Future<void> _createBackupFile(ExportDataModel exportData, String filePath, List<WorkImage> workImages) async {
+  Future<void> _createBackupFile(ExportDataModel exportData, String filePath,
+      List<WorkImage> workImages) async {
     final archive = Archive();
-    
+
     // 添加备份元数据文件
     final backupMetadata = {
       'backupVersion': '1.0',
@@ -548,30 +564,33 @@ class ExportServiceImpl implements ExportService {
       },
       'backupFlags': ['complete_data', 'with_metadata', 'integrity_verified'],
     };
-    
+
     final backupMetadataJson = jsonEncode(backupMetadata);
     final backupMetadataBytes = utf8.encode(backupMetadataJson);
-    final backupMetadataFile = ArchiveFile('backup_metadata.json', backupMetadataBytes.length, backupMetadataBytes);
+    final backupMetadataFile = ArchiveFile('backup_metadata.json',
+        backupMetadataBytes.length, backupMetadataBytes);
     archive.addFile(backupMetadataFile);
-    
+
     // 添加主数据文件 - 使用UTF-8编码
     final dataJson = jsonEncode(exportData.toJson());
     final dataBytes = utf8.encode(dataJson);
-    final dataFile = ArchiveFile('export_data.json', dataBytes.length, dataBytes);
+    final dataFile =
+        ArchiveFile('export_data.json', dataBytes.length, dataBytes);
     archive.addFile(dataFile);
-    
+
     // 添加清单文件 - 使用UTF-8编码
     final manifestJson = jsonEncode(exportData.manifest.toJson());
     final manifestBytes = utf8.encode(manifestJson);
-    final manifestFile = ArchiveFile('manifest.json', manifestBytes.length, manifestBytes);
+    final manifestFile =
+        ArchiveFile('manifest.json', manifestBytes.length, manifestBytes);
     archive.addFile(manifestFile);
-    
+
     // 添加作品图片文件
     await _addImageFilesToArchive(archive, exportData, workImages);
-    
+
     // 添加集字图片文件
     await _addCharacterImageFilesToArchive(archive, exportData.characters);
-    
+
     // 添加完整性校验文件
     final checksumData = {
       'dataChecksum': _calculateChecksum(dataJson),
@@ -579,19 +598,20 @@ class ExportServiceImpl implements ExportService {
       'backupMetadataChecksum': _calculateChecksum(backupMetadataJson),
       'totalFiles': archive.length + 1, // +1 for this checksum file itself
     };
-    
+
     final checksumJson = jsonEncode(checksumData);
     final checksumBytes = utf8.encode(checksumJson);
-    final checksumFile = ArchiveFile('integrity.json', checksumBytes.length, checksumBytes);
+    final checksumFile =
+        ArchiveFile('integrity.json', checksumBytes.length, checksumBytes);
     archive.addFile(checksumFile);
-    
+
     // 使用更高的压缩级别进行备份
     final encoder = ZipEncoder();
     final compressedBytes = encoder.encode(archive);
-    
+
     final file = File(filePath);
     await file.writeAsBytes(compressedBytes);
-    
+
     AppLogger.info(
       '备份文件创建完成',
       data: {
@@ -606,34 +626,38 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 添加图片文件到归档
-  Future<void> _addImageFilesToArchive(Archive archive, ExportDataModel exportData, List<WorkImage> workImages) async {
+  Future<void> _addImageFilesToArchive(Archive archive,
+      ExportDataModel exportData, List<WorkImage> workImages) async {
     int addedImages = 0;
     int skippedImages = 0;
-    
+
     // 按作品分组图片，用于处理封面
     final imagesByWork = <String, List<WorkImage>>{};
     for (final workImage in workImages) {
       imagesByWork.putIfAbsent(workImage.workId, () => []).add(workImage);
     }
-    
+
     for (final workImage in workImages) {
       try {
         // 添加原始图片
-        if (await _addImageFileToArchive(archive, workImage.originalPath, 'images/${workImage.workId}/${workImage.id}/original${path.extension(workImage.originalPath)}')) {
+        if (await _addImageFileToArchive(archive, workImage.originalPath,
+            'images/${workImage.workId}/${workImage.id}/original${path.extension(workImage.originalPath)}')) {
           addedImages++;
         } else {
           skippedImages++;
         }
-        
+
         // 添加处理后的图片
-        if (await _addImageFileToArchive(archive, workImage.path, 'images/${workImage.workId}/${workImage.id}/imported${path.extension(workImage.path)}')) {
+        if (await _addImageFileToArchive(archive, workImage.path,
+            'images/${workImage.workId}/${workImage.id}/imported${path.extension(workImage.path)}')) {
           addedImages++;
         } else {
           skippedImages++;
         }
-        
+
         // 添加缩略图
-        if (await _addImageFileToArchive(archive, workImage.thumbnailPath, 'images/${workImage.workId}/${workImage.id}/thumbnail${path.extension(workImage.thumbnailPath)}')) {
+        if (await _addImageFileToArchive(archive, workImage.thumbnailPath,
+            'images/${workImage.workId}/${workImage.id}/thumbnail${path.extension(workImage.thumbnailPath)}')) {
           addedImages++;
         } else {
           skippedImages++;
@@ -651,10 +675,11 @@ class ExportServiceImpl implements ExportService {
         skippedImages++;
       }
     }
-    
+
     // 添加作品封面文件
-    await _addWorkCoverFilesToArchive(archive, imagesByWork, addedImages, skippedImages);
-    
+    await _addWorkCoverFilesToArchive(
+        archive, imagesByWork, addedImages, skippedImages);
+
     AppLogger.info(
       '图片文件添加完成',
       data: {
@@ -667,7 +692,11 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 添加作品封面文件到归档
-  Future<void> _addWorkCoverFilesToArchive(Archive archive, Map<String, List<WorkImage>> imagesByWork, int addedImages, int skippedImages) async {
+  Future<void> _addWorkCoverFilesToArchive(
+      Archive archive,
+      Map<String, List<WorkImage>> imagesByWork,
+      int addedImages,
+      int skippedImages) async {
     AppLogger.info(
       '开始添加作品封面文件',
       data: {
@@ -675,19 +704,21 @@ class ExportServiceImpl implements ExportService {
       },
       tag: 'export',
     );
-    
+
     for (final entry in imagesByWork.entries) {
       final workId = entry.key;
       final workImages = entry.value;
-      
+
       if (workImages.isEmpty) continue;
-      
+
       try {
         final baseDir = _getAppDataPath();
-        
+
         // 封面导入图路径
-        final coverImportedPath = path.join(baseDir, 'works', workId, 'cover', 'imported.png');
-        if (await _addImageFileToArchive(archive, coverImportedPath, 'covers/$workId/imported.png')) {
+        final coverImportedPath =
+            path.join(baseDir, 'works', workId, 'cover', 'imported.png');
+        if (await _addImageFileToArchive(
+            archive, coverImportedPath, 'covers/$workId/imported.png')) {
           addedImages++;
           AppLogger.debug(
             '封面导入图已添加',
@@ -700,10 +731,12 @@ class ExportServiceImpl implements ExportService {
         } else {
           skippedImages++;
         }
-        
+
         // 封面缩略图路径
-        final coverThumbnailPath = path.join(baseDir, 'works', workId, 'cover', 'thumbnail.jpg');
-        if (await _addImageFileToArchive(archive, coverThumbnailPath, 'covers/$workId/thumbnail.jpg')) {
+        final coverThumbnailPath =
+            path.join(baseDir, 'works', workId, 'cover', 'thumbnail.jpg');
+        if (await _addImageFileToArchive(
+            archive, coverThumbnailPath, 'covers/$workId/thumbnail.jpg')) {
           addedImages++;
           AppLogger.debug(
             '封面缩略图已添加',
@@ -724,7 +757,6 @@ class ExportServiceImpl implements ExportService {
             tag: 'export',
           );
         }
-        
       } catch (e) {
         AppLogger.error(
           '添加作品封面文件失败',
@@ -737,7 +769,7 @@ class ExportServiceImpl implements ExportService {
         skippedImages++;
       }
     }
-    
+
     AppLogger.info(
       '作品封面文件添加完成',
       data: {
@@ -750,11 +782,12 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 添加单个图片文件到归档（使用相对路径）
-  Future<bool> _addImageFileToArchive(Archive archive, String sourcePath, String archivePath) async {
+  Future<bool> _addImageFileToArchive(
+      Archive archive, String sourcePath, String archivePath) async {
     try {
       // 将绝对路径转换为相对路径以保护隐私
       final relativeSourcePath = _convertToRelativePath(sourcePath);
-      
+
       final file = File(sourcePath);
       if (!await file.exists()) {
         AppLogger.warning(
@@ -767,11 +800,11 @@ class ExportServiceImpl implements ExportService {
         );
         return false;
       }
-      
+
       final bytes = await file.readAsBytes();
       final archiveFile = ArchiveFile(archivePath, bytes.length, bytes);
       archive.addFile(archiveFile);
-      
+
       AppLogger.debug(
         '图片文件已添加到归档',
         data: {
@@ -781,7 +814,7 @@ class ExportServiceImpl implements ExportService {
         },
         tag: 'export',
       );
-      
+
       return true;
     } catch (e) {
       AppLogger.error(
@@ -813,12 +846,13 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 解析绝对路径
-  Future<String> _resolveAbsolutePath(String targetPath, [ExportFormat? format]) async {
+  Future<String> _resolveAbsolutePath(String targetPath,
+      [ExportFormat? format]) async {
     // 如果已经是绝对路径，检查是否需要添加文件扩展名
     if (path.isAbsolute(targetPath)) {
       return _ensureProperFileExtension(targetPath, format);
     }
-    
+
     // 处理相对路径
     try {
       // 尝试获取下载目录
@@ -834,12 +868,12 @@ class ExportServiceImpl implements ExportService {
           baseDir = await getTemporaryDirectory();
         }
       }
-      
+
       if (baseDir != null) {
         final fileName = path.basename(targetPath);
         final absolutePath = path.join(baseDir.path, fileName);
         final finalPath = _ensureProperFileExtension(absolutePath, format);
-        
+
         AppLogger.info(
           '路径解析完成',
           data: {
@@ -850,7 +884,7 @@ class ExportServiceImpl implements ExportService {
           },
           tag: 'export',
         );
-        
+
         return finalPath;
       }
     } catch (e) {
@@ -863,7 +897,7 @@ class ExportServiceImpl implements ExportService {
         tag: 'export',
       );
     }
-    
+
     // 如果所有方法都失败，返回原路径
     return _ensureProperFileExtension(targetPath, format);
   }
@@ -871,26 +905,26 @@ class ExportServiceImpl implements ExportService {
   /// 确保文件路径有正确的扩展名
   String _ensureProperFileExtension(String filePath, ExportFormat? format) {
     if (format == null) return filePath;
-    
+
     // 如果路径是目录，生成文件名
     if (Directory(filePath).existsSync() || filePath.endsWith(path.separator)) {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'export_$timestamp.${_getFileExtension(format)}';
       return path.join(filePath, fileName);
     }
-    
+
     // 检查文件是否有正确的扩展名
     final currentExtension = path.extension(filePath).toLowerCase();
     final expectedExtension = '.${_getFileExtension(format)}';
-    
+
     if (currentExtension != expectedExtension) {
       // 移除现有扩展名（如果有）并添加正确的扩展名
-      final baseName = currentExtension.isNotEmpty 
+      final baseName = currentExtension.isNotEmpty
           ? filePath.substring(0, filePath.length - currentExtension.length)
           : filePath;
       return '$baseName$expectedExtension';
     }
-    
+
     return filePath;
   }
 
@@ -907,10 +941,11 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 添加集字图片文件到归档
-  Future<void> _addCharacterImageFilesToArchive(Archive archive, List<CharacterEntity> characters) async {
+  Future<void> _addCharacterImageFilesToArchive(
+      Archive archive, List<CharacterEntity> characters) async {
     int addedImages = 0;
     int skippedImages = 0;
-    
+
     AppLogger.info(
       '开始添加集字图片文件',
       data: {
@@ -918,13 +953,13 @@ class ExportServiceImpl implements ExportService {
       },
       tag: 'export',
     );
-    
+
     for (final character in characters) {
       try {
         final characterId = character.id;
         final baseDir = _getAppDataPath();
         final characterDir = path.join(baseDir, 'characters', characterId);
-        
+
         // 定义所有可能的集字图片文件
         final imageFiles = [
           {
@@ -932,7 +967,7 @@ class ExportServiceImpl implements ExportService {
             'archivePath': 'characters/$characterId/original.png',
           },
           {
-            'filename': '$characterId-binary.png', 
+            'filename': '$characterId-binary.png',
             'archivePath': 'characters/$characterId/binary.png',
           },
           {
@@ -960,19 +995,18 @@ class ExportServiceImpl implements ExportService {
             'archivePath': 'characters/$characterId/square-outline.svg',
           },
         ];
-        
+
         // 添加每个存在的图片文件
         for (final imageFile in imageFiles) {
           final sourcePath = path.join(characterDir, imageFile['filename']!);
           final archivePath = imageFile['archivePath']!;
-          
+
           if (await _addImageFileToArchive(archive, sourcePath, archivePath)) {
             addedImages++;
           } else {
             skippedImages++;
           }
         }
-        
       } catch (e) {
         AppLogger.warning(
           '添加集字图片文件失败',
@@ -986,7 +1020,7 @@ class ExportServiceImpl implements ExportService {
         skippedImages++;
       }
     }
-    
+
     AppLogger.info(
       '集字图片文件添加完成',
       data: {
@@ -1002,4 +1036,4 @@ class ExportServiceImpl implements ExportService {
   String _getAppDataPath() {
     return _storage.getAppDataPath();
   }
-} 
+}

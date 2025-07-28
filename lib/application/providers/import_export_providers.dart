@@ -6,6 +6,7 @@ import '../../domain/repositories/work_image_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../domain/services/export_service.dart';
 import '../../domain/services/import_service.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/providers/database_providers.dart' as db_providers;
 import '../../infrastructure/providers/storage_providers.dart';
 import '../services/export_service_impl.dart';
@@ -71,8 +72,9 @@ final serviceLocatorProvider = FutureProvider<ServiceLocator>((ref) async {
     await serviceLocator.initialize(storage: storage);
 
     // 记录详细的错误信息，便于调试
-    print('数据库初始化失败，但备份服务仍可用: $e');
-    print('用户可以使用备份功能，但其他功能可能受限');
+    AppLogger.error('数据库初始化失败，但备份服务仍可用',
+        tag: 'ImportExportProviders', error: e);
+    AppLogger.warning('用户可以使用备份功能，但其他功能可能受限', tag: 'ImportExportProviders');
   }
 
   return serviceLocator;

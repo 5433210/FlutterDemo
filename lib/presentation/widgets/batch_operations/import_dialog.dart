@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../l10n/app_localizations.dart';
 
-import '../../providers/batch_selection_provider.dart';
-import '../../providers/navigation/global_navigation_provider.dart';
 import '../../../application/services/file_picker_service.dart';
 import '../../../domain/models/import_export/import_data_model.dart';
-import '../../../domain/models/import_export/export_data_model.dart';
+import '../../../domain/models/import_export/import_export_compatibility.dart';
 import '../../../infrastructure/logging/logger.dart';
-import 'progress_dialog.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../providers/batch_selection_provider.dart';
+import '../../providers/navigation/global_navigation_provider.dart';
 
 /// 导入对话框
 class ImportDialog extends ConsumerStatefulWidget {
   /// 页面类型
   final PageType pageType;
-  
+
   /// 导入回调
   final Function(ImportOptions options, String filePath) onImport;
 
@@ -35,10 +34,16 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
   ImportDataModel? _previewData;
   bool _isLoading = false;
 
+  // 版本兼容性信息
+  ImportExportCompatibility? _compatibility;
+  String? _sourceVersion;
+  String? _targetVersion;
+  String? _compatibilityMessage;
+
   @override
   void initState() {
     super.initState();
-    
+
     AppLogger.info(
       '打开导入对话框',
       data: {
@@ -56,8 +61,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
+    final l10n = AppLocalizations.of(context);
+
     return AlertDialog(
       title: Text(l10n.import),
       content: SizedBox(
@@ -69,28 +74,28 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             children: [
               // 文件选择
               _buildFileSelectionSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 强制选项说明
               _buildMandatoryOptionsSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 冲突处理（简化为两个选项）
               _buildConflictResolutionSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 备份跳转按钮
               _buildBackupSection(l10n),
-              
+
               if (_previewData != null) ...[
                 const SizedBox(height: 16),
                 // 预览信息
                 _buildPreviewSection(l10n),
               ],
-              
+
               if (_isLoading) ...[
                 const SizedBox(height: 16),
                 const Center(child: CircularProgressIndicator()),
@@ -178,21 +183,24 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
               Text(
                 l10n.importRequirements,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          _buildRequirementItem(l10n, Icons.verified_user, l10n.validateData, l10n.validateDataMandatory),
-          _buildRequirementItem(l10n, Icons.history, l10n.preserveMetadata, l10n.preserveMetadataMandatory),
+          _buildRequirementItem(l10n, Icons.verified_user, l10n.validateData,
+              l10n.validateDataMandatory),
+          _buildRequirementItem(l10n, Icons.history, l10n.preserveMetadata,
+              l10n.preserveMetadataMandatory),
         ],
       ),
     );
   }
 
   /// 构建要求项
-  Widget _buildRequirementItem(AppLocalizations l10n, IconData icon, String title, String description) {
+  Widget _buildRequirementItem(
+      AppLocalizations l10n, IconData icon, String title, String description) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -211,14 +219,14 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
@@ -249,7 +257,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
               setState(() {
                 _conflictResolution = value;
               });
-              
+
               AppLogger.debug(
                 '选择冲突处理策略：跳过',
                 data: {
@@ -271,7 +279,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
               setState(() {
                 _conflictResolution = value;
               });
-              
+
               AppLogger.debug(
                 '选择冲突处理策略：覆盖',
                 data: {
@@ -292,7 +300,10 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -312,14 +323,14 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
                 Text(
                   l10n.backupRecommendation,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 Text(
                   l10n.backupRecommendationDescription,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
@@ -338,11 +349,14 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
   /// 构建预览区域
   Widget _buildPreviewSection(AppLocalizations l10n) {
     if (_previewData == null) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -356,22 +370,25 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          _buildPreviewRow(l10n.works, '${_previewData!.exportData.works.length}'),
-          _buildPreviewRow(l10n.characters, '${_previewData!.exportData.characters.length}'),
-          _buildPreviewRow(l10n.images, '${_previewData!.exportData.workImages.length}'),
+          _buildPreviewRow(
+              l10n.works, '${_previewData!.exportData.works.length}'),
+          _buildPreviewRow(
+              l10n.characters, '${_previewData!.exportData.characters.length}'),
+          _buildPreviewRow(
+              l10n.images, '${_previewData!.exportData.workImages.length}'),
           if (_previewData!.conflicts.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               l10n.conflictsFound,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
             ),
             Text(
               l10n.conflictsCount(_previewData!.conflicts.length),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
             ),
           ],
         ],
@@ -391,8 +408,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
             child: Text(
               '$label:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           Expanded(
@@ -415,17 +432,17 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       },
       tag: 'import_dialog',
     );
-    
+
     Navigator.of(context).pop(); // 关闭导入对话框
-    
+
     // 导航到设置功能区（索引为4）
     final ref = ProviderScope.containerOf(context).read;
     ref(globalNavigationProvider.notifier).navigateToSection(4);
-    
+
     // 显示成功导航的提示
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(context)!.navigatedToBackupSettings),
+        content: Text(AppLocalizations.of(context).navigatedToBackupSettings),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
       ),
@@ -437,17 +454,17 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     try {
       final filePickerService = FilePickerServiceImpl();
       final selectedFile = await filePickerService.pickFile(
-        dialogTitle: AppLocalizations.of(context)!.selectImportFile,
+        dialogTitle: AppLocalizations.of(context).selectImportFile,
         allowedExtensions: ['zip'], // 只支持ZIP格式
       );
-      
+
       if (selectedFile != null) {
         setState(() {
           _isLoading = true;
           _filePath = selectedFile;
           _pathController.text = selectedFile;
         });
-        
+
         AppLogger.info(
           '选择导入文件',
           data: {
@@ -456,10 +473,10 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
           },
           tag: 'import_dialog',
         );
-        
+
         // 模拟文件预览加载
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // 模拟预览数据 - 实际实现中应该调用导入服务解析文件
         setState(() {
           _isLoading = false;
@@ -471,7 +488,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       setState(() {
         _isLoading = false;
       });
-      
+
       AppLogger.error(
         '选择导入文件失败',
         data: {
@@ -481,11 +498,11 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
         tag: 'import_dialog',
         error: e,
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.selectFileError),
+            content: Text(AppLocalizations.of(context).selectFileError),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -495,8 +512,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
 
   /// 处理导入
   void _handleImport() {
-    final l10n = AppLocalizations.of(context)!;
-    
+    final l10n = AppLocalizations.of(context);
+
     // 创建简化的导入选项
     final options = ImportOptions(
       defaultConflictResolution: _conflictResolution,
@@ -505,7 +522,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       autoFixErrors: true,
       overwriteExisting: _conflictResolution == ConflictResolution.overwrite,
     );
-    
+
     AppLogger.info(
       '开始导入',
       data: {
@@ -520,8 +537,8 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       },
       tag: 'import_dialog',
     );
-    
+
     Navigator.of(context).pop();
     widget.onImport(options, _filePath);
   }
-} 
+}

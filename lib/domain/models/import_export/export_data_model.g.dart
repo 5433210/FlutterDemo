@@ -245,6 +245,9 @@ const _$ExportValidationTypeEnumMap = {
   ExportValidationType.relationships: 'relationships',
   ExportValidationType.format: 'format',
   ExportValidationType.sizeLimit: 'sizeLimit',
+  ExportValidationType.incrementalSync: 'incrementalSync',
+  ExportValidationType.cloudIntegration: 'cloudIntegration',
+  ExportValidationType.performance: 'performance',
 };
 
 const _$ValidationStatusEnumMap = {
