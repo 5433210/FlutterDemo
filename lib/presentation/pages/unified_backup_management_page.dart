@@ -898,7 +898,7 @@ class _UnifiedBackupManagementPageState
     final result = await FilePicker.platform.pickFiles(
       dialogTitle: l10n.selectBackupFileToImportDialog,
       type: FileType.custom,
-      allowedExtensions: ['zip'],
+      allowedExtensions: ['cgb', 'zip'], // 支持新备份格式和旧格式
     );
 
     if (result == null || result.files.isEmpty) {

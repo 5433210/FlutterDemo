@@ -455,7 +455,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
       final filePickerService = FilePickerServiceImpl();
       final selectedFile = await filePickerService.pickFile(
         dialogTitle: AppLocalizations.of(context).selectImportFile,
-        allowedExtensions: ['zip'], // 只支持ZIP格式
+        allowedExtensions: ['cgw', 'cgc', 'cgb', 'zip'], // 支持新格式和旧格式
       );
 
       if (selectedFile != null) {

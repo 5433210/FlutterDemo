@@ -34,7 +34,7 @@ class ExportDialogWithVersion extends ConsumerStatefulWidget {
 class _ExportDialogWithVersionState
     extends ConsumerState<ExportDialogWithVersion> {
   ExportType _exportType = ExportType.worksOnly;
-  final ExportFormat _exportFormat = ExportFormat.zip;
+  final ExportFormat _exportFormat = ExportFormat.sevenZip;
   bool _includeImages = true;
   bool _includeMetadata = true;
   bool _compressData = true;

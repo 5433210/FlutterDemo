@@ -4,20 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/services/file_picker_service.dart';
 import '../../../application/services/import_export_version_mapping_service.dart';
 import '../../../application/services/unified_import_export_upgrade_service.dart';
-import '../../../domain/interfaces/import_export_data_adapter.dart';
-import '../../../domain/models/import_export/export_data_model.dart';
 import '../../../domain/models/import_export/import_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/batch_selection_provider.dart';
-import '../../providers/navigation/global_navigation_provider.dart';
-import 'progress_dialog.dart';
 
 /// 带版本兼容性检查的导入对话框
 class ImportDialogWithVersion extends ConsumerStatefulWidget {
   /// 页面类型
   final PageType pageType;
-  
+
   /// 导入回调
   final Function(ImportOptions options, String filePath) onImport;
 
@@ -28,29 +24,31 @@ class ImportDialogWithVersion extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ImportDialogWithVersion> createState() => _ImportDialogWithVersionState();
+  ConsumerState<ImportDialogWithVersion> createState() =>
+      _ImportDialogWithVersionState();
 }
 
-class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersion> {
+class _ImportDialogWithVersionState
+    extends ConsumerState<ImportDialogWithVersion> {
   String _filePath = '';
   final _pathController = TextEditingController();
   ConflictResolution _conflictResolution = ConflictResolution.skip;
   ImportDataModel? _previewData;
   bool _isLoading = false;
-  
+
   // 版本兼容性信息
   ImportExportCompatibility? _compatibility;
   String? _sourceVersion;
   String? _targetVersion;
   String? _compatibilityMessage;
-  
+
   late final UnifiedImportExportUpgradeService _upgradeService;
 
   @override
   void initState() {
     super.initState();
     _upgradeService = UnifiedImportExportUpgradeService();
-    
+
     AppLogger.info(
       '打开导入对话框（带版本检查）',
       data: {
@@ -68,8 +66,8 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
+    final l10n = AppLocalizations.of(context);
+
     return AlertDialog(
       title: Text(l10n.import),
       content: SizedBox(
@@ -81,26 +79,26 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
             children: [
               // 文件选择
               _buildFileSelectionSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               // 版本兼容性信息
               if (_compatibility != null) ...[
                 _buildVersionCompatibilitySection(l10n),
                 const SizedBox(height: 16),
               ],
-              
+
               // 冲突处理
               _buildConflictResolutionSection(l10n),
-              
+
               const SizedBox(height: 16),
-              
+
               if (_previewData != null) ...[
                 const SizedBox(height: 16),
                 // 预览信息
                 _buildPreviewSection(l10n),
               ],
-              
+
               if (_isLoading) ...[
                 const SizedBox(height: 16),
                 const Center(child: CircularProgressIndicator()),
@@ -276,7 +274,10 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
@@ -300,13 +301,13 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
   /// 检查是否可以导入
   bool _canImport() {
     if (_filePath.isEmpty || _isLoading) return false;
-    
+
     // 检查版本兼容性
     if (_compatibility == ImportExportCompatibility.incompatible ||
         _compatibility == ImportExportCompatibility.appUpgradeRequired) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -315,10 +316,10 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
     try {
       final filePickerService = FilePickerServiceImpl();
       final selectedFile = await filePickerService.pickFile(
-        dialogTitle: AppLocalizations.of(context)!.selectImportFile,
-        allowedExtensions: ['zip'],
+        dialogTitle: AppLocalizations.of(context).selectImportFile,
+        allowedExtensions: ['cgw', 'cgc', 'cgb', 'zip'], // 支持新格式和旧格式
       );
-      
+
       if (selectedFile != null) {
         setState(() {
           _isLoading = true;
@@ -329,9 +330,9 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
           _targetVersion = null;
           _compatibilityMessage = null;
         });
-        
+
         await _checkVersionCompatibility(selectedFile);
-        
+
         setState(() {
           _isLoading = false;
         });
@@ -340,7 +341,7 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
       setState(() {
         _isLoading = false;
       });
-      
+
       AppLogger.error(
         '选择导入文件失败',
         error: e,
@@ -354,16 +355,16 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
     try {
       await _upgradeService.initialize();
       const currentAppVersion = '1.3.0';
-      
+
       final compatibility = await _upgradeService.checkImportCompatibility(
           filePath, currentAppVersion);
-      
+
       setState(() {
         _compatibility = compatibility;
         // 这里可以添加更多版本信息的获取
         _compatibilityMessage = _getCompatibilityMessage(compatibility);
       });
-      
+
       AppLogger.info(
         '版本兼容性检查完成',
         data: {
@@ -378,7 +379,7 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
         error: e,
         tag: 'import_dialog_version',
       );
-      
+
       setState(() {
         _compatibility = ImportExportCompatibility.incompatible;
         _compatibilityMessage = '无法检查版本兼容性: ${e.toString()}';
@@ -409,7 +410,7 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
       autoFixErrors: true,
       overwriteExisting: _conflictResolution == ConflictResolution.overwrite,
     );
-    
+
     AppLogger.info(
       '开始导入（带版本检查）',
       data: {
@@ -420,7 +421,7 @@ class _ImportDialogWithVersionState extends ConsumerState<ImportDialogWithVersio
       },
       tag: 'import_dialog_version',
     );
-    
+
     Navigator.of(context).pop();
     widget.onImport(options, _filePath);
   }

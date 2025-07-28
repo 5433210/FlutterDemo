@@ -372,8 +372,11 @@ enum ExportFormat {
   /// JSON 文件
   json,
 
-  /// ZIP 压缩包
+  /// ZIP 压缩包（兼容性保留）
   zip,
+
+  /// 7zip 压缩包（推荐格式）
+  sevenZip,
 
   /// 备份文件
   backup,

@@ -313,5 +313,6 @@ Map<String, dynamic> _$$ExportOptionsImplToJson(_$ExportOptionsImpl instance) =>
 const _$ExportFormatEnumMap = {
   ExportFormat.json: 'json',
   ExportFormat.zip: 'zip',
+  ExportFormat.sevenZip: 'sevenZip',
   ExportFormat.backup: 'backup',
 };

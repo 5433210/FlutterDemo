@@ -452,8 +452,8 @@ class ExportServiceImpl implements ExportService {
   Future<void> _createExportFile(
       ExportDataModel exportData, String targetPath) async {
     // 确保使用绝对路径，并根据格式生成正确的文件路径
-    final absolutePath = await _resolveAbsolutePath(
-        targetPath, exportData.metadata.options.format);
+    final absolutePath = await _resolveAbsolutePath(targetPath,
+        exportData.metadata.options.format, exportData.metadata.exportType);
 
     // 确保目标目录存在
     final targetDir = Directory(path.dirname(absolutePath));
@@ -477,6 +477,10 @@ class ExportServiceImpl implements ExportService {
         break;
       case ExportFormat.zip:
         await _createZipFile(
+            exportData, absolutePath, _originalWorkImages ?? []);
+        break;
+      case ExportFormat.sevenZip:
+        await _createSevenZipFile(
             exportData, absolutePath, _originalWorkImages ?? []);
         break;
       case ExportFormat.backup:
@@ -847,10 +851,10 @@ class ExportServiceImpl implements ExportService {
 
   /// 解析绝对路径
   Future<String> _resolveAbsolutePath(String targetPath,
-      [ExportFormat? format]) async {
+      [ExportFormat? format, ExportType? exportType]) async {
     // 如果已经是绝对路径，检查是否需要添加文件扩展名
     if (path.isAbsolute(targetPath)) {
-      return _ensureProperFileExtension(targetPath, format);
+      return _ensureProperFileExtension(targetPath, format, exportType);
     }
 
     // 处理相对路径
@@ -872,7 +876,8 @@ class ExportServiceImpl implements ExportService {
       if (baseDir != null) {
         final fileName = path.basename(targetPath);
         final absolutePath = path.join(baseDir.path, fileName);
-        final finalPath = _ensureProperFileExtension(absolutePath, format);
+        final finalPath =
+            _ensureProperFileExtension(absolutePath, format, exportType);
 
         AppLogger.info(
           '路径解析完成',
@@ -899,23 +904,27 @@ class ExportServiceImpl implements ExportService {
     }
 
     // 如果所有方法都失败，返回原路径
-    return _ensureProperFileExtension(targetPath, format);
+    return _ensureProperFileExtension(targetPath, format, exportType);
   }
 
   /// 确保文件路径有正确的扩展名
-  String _ensureProperFileExtension(String filePath, ExportFormat? format) {
+  String _ensureProperFileExtension(String filePath, ExportFormat? format,
+      [ExportType? exportType]) {
     if (format == null) return filePath;
 
     // 如果路径是目录，生成文件名
     if (Directory(filePath).existsSync() || filePath.endsWith(path.separator)) {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'export_$timestamp.${_getFileExtension(format)}';
+      final now = DateTime.now();
+      final timestamp =
+          '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+      final fileName =
+          'export_$timestamp.${_getFileExtension(format, exportType)}';
       return path.join(filePath, fileName);
     }
 
     // 检查文件是否有正确的扩展名
     final currentExtension = path.extension(filePath).toLowerCase();
-    final expectedExtension = '.${_getFileExtension(format)}';
+    final expectedExtension = '.${_getFileExtension(format, exportType)}';
 
     if (currentExtension != expectedExtension) {
       // 移除现有扩展名（如果有）并添加正确的扩展名
@@ -929,14 +938,31 @@ class ExportServiceImpl implements ExportService {
   }
 
   /// 获取格式对应的文件扩展名
-  String _getFileExtension(ExportFormat format) {
+  String _getFileExtension(ExportFormat format, [ExportType? exportType]) {
     switch (format) {
       case ExportFormat.json:
         return 'json';
       case ExportFormat.zip:
         return 'zip';
+      case ExportFormat.sevenZip:
+        return _getSevenZipExtension(exportType);
       case ExportFormat.backup:
-        return 'bak'; // 备份文件使用 .bak 扩展名
+        return 'cgb'; // 备份文件使用新的 .cgb 扩展名
+    }
+  }
+
+  /// 获取7zip格式的文件扩展名
+  String _getSevenZipExtension(ExportType? exportType) {
+    switch (exportType) {
+      case ExportType.worksOnly:
+      case ExportType.worksWithCharacters:
+      case ExportType.fullData:
+        return 'cgw'; // 作品导出文件
+      case ExportType.charactersOnly:
+      case ExportType.charactersWithWorks:
+        return 'cgc'; // 集字导出文件
+      default:
+        return 'cgw'; // 默认使用作品格式
     }
   }
 
@@ -959,6 +985,16 @@ class ExportServiceImpl implements ExportService {
         final characterId = character.id;
         final baseDir = _getAppDataPath();
         final characterDir = path.join(baseDir, 'characters', characterId);
+
+        AppLogger.debug(
+          '处理集字图片文件',
+          data: {
+            'characterId': characterId,
+            'character': character.character,
+            'characterDir': characterDir,
+          },
+          tag: 'export',
+        );
 
         // 定义所有可能的集字图片文件
         final imageFiles = [
@@ -996,17 +1032,59 @@ class ExportServiceImpl implements ExportService {
           },
         ];
 
+        int characterFilesAdded = 0;
+
         // 添加每个存在的图片文件
         for (final imageFile in imageFiles) {
           final sourcePath = path.join(characterDir, imageFile['filename']!);
           final archivePath = imageFile['archivePath']!;
 
+          AppLogger.debug(
+            '尝试添加集字图片文件',
+            data: {
+              'sourcePath': sourcePath,
+              'archivePath': archivePath,
+              'characterId': characterId,
+            },
+            tag: 'export',
+          );
+
           if (await _addImageFileToArchive(archive, sourcePath, archivePath)) {
             addedImages++;
+            characterFilesAdded++;
+            AppLogger.debug(
+              '集字图片文件添加成功',
+              data: {
+                'filename': imageFile['filename'],
+                'archivePath': archivePath,
+                'characterId': characterId,
+              },
+              tag: 'export',
+            );
           } else {
             skippedImages++;
+            AppLogger.debug(
+              '集字图片文件跳过（文件不存在）',
+              data: {
+                'filename': imageFile['filename'],
+                'sourcePath': sourcePath,
+                'characterId': characterId,
+              },
+              tag: 'export',
+            );
           }
         }
+
+        AppLogger.info(
+          '集字图片文件处理完成',
+          data: {
+            'characterId': characterId,
+            'character': character.character,
+            'addedFiles': characterFilesAdded,
+            'totalFiles': imageFiles.length,
+          },
+          tag: 'export',
+        );
       } catch (e) {
         AppLogger.warning(
           '添加集字图片文件失败',
@@ -1030,6 +1108,55 @@ class ExportServiceImpl implements ExportService {
       },
       tag: 'export',
     );
+  }
+
+  /// 创建7zip文件（使用原有的Archive结构，然后用7zip压缩）
+  Future<void> _createSevenZipFile(ExportDataModel exportData, String filePath,
+      List<WorkImage> workImages) async {
+    final archive = Archive();
+
+    // 添加主数据文件 - 使用UTF-8编码
+    final dataJson = jsonEncode(exportData.toJson());
+    final dataBytes = utf8.encode(dataJson);
+    final dataFile =
+        ArchiveFile('export_data.json', dataBytes.length, dataBytes);
+    archive.addFile(dataFile);
+
+    // 添加清单文件 - 使用UTF-8编码
+    final manifestJson = jsonEncode(exportData.manifest.toJson());
+    final manifestBytes = utf8.encode(manifestJson);
+    final manifestFile =
+        ArchiveFile('manifest.json', manifestBytes.length, manifestBytes);
+    archive.addFile(manifestFile);
+
+    // 添加作品图片文件（保持原有结构）
+    await _addImageFilesToArchive(archive, exportData, workImages);
+
+    // 添加集字图片文件（保持原有结构）
+    await _addCharacterImageFilesToArchive(archive, exportData.characters);
+
+    // 直接使用ZIP编码器创建文件（SevenZipService实际上也是使用ZIP格式）
+    try {
+      final encoder = ZipEncoder();
+      final compressedBytes = encoder.encode(archive);
+
+      final file = File(filePath);
+      await file.writeAsBytes(compressedBytes);
+
+      AppLogger.info(
+        '7zip格式文件创建完成',
+        data: {
+          'filePath': filePath,
+          'fileSize': await file.length(),
+          'archiveFileCount': archive.length,
+          'format': '7z-compatible ZIP',
+        },
+        tag: 'export',
+      );
+    } catch (e) {
+      AppLogger.error('创建7zip文件失败', error: e, tag: 'export');
+      rethrow;
+    }
   }
 
   /// 获取应用数据目录路径

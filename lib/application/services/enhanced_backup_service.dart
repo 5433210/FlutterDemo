@@ -876,7 +876,8 @@ class EnhancedBackupService {
 
       // 2. 扫描文件系统中的备份文件（补充注册表中可能缺失的文件）
       await for (final entity in directory.list()) {
-        if (entity is File && entity.path.endsWith('.zip')) {
+        if (entity is File &&
+            (entity.path.endsWith('.zip') || entity.path.endsWith('.cgb'))) {
           final filename = path.basename(entity.path);
           final fullPath = entity.path;
 

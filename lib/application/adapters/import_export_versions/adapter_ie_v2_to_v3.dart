@@ -298,7 +298,22 @@ class ImportExportAdapterV2ToV3 implements ImportExportDataAdapter {
     final originalFile = File(originalPath);
     final directory = originalFile.parent;
     final baseName = path.basenameWithoutExtension(originalPath);
-    final outputPath = path.join(directory.path, '${baseName}_v3.zip');
+
+    // 根据原始文件扩展名确定输出文件扩展名
+    final originalExtension = path.extension(originalPath).toLowerCase();
+    String outputExtension;
+    switch (originalExtension) {
+      case '.cgw':
+      case '.cgc':
+      case '.cgb':
+        outputExtension = originalExtension;
+        break;
+      default:
+        outputExtension = '.zip'; // 向后兼容
+    }
+
+    final outputPath =
+        path.join(directory.path, '${baseName}_v3$outputExtension');
 
     final archive = Archive();
 

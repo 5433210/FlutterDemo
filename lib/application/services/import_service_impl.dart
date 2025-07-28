@@ -16,6 +16,7 @@ import '../../domain/repositories/character_repository.dart';
 import '../../domain/repositories/work_image_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../domain/services/import_service.dart';
+import '../../infrastructure/integrity/file_integrity_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../utils/path_privacy_helper.dart';
 import 'import_export_version_mapping_service.dart';
@@ -66,8 +67,13 @@ class ImportServiceImpl implements ImportService {
       }
 
       // 基础文件扩展名检查
-      if (!filePath.toLowerCase().endsWith('.zip')) {
-        return ModelFactories.createFailedValidationResult('不支持的文件格式，请选择ZIP文件');
+      final extension = filePath.toLowerCase();
+      if (!extension.endsWith('.zip') &&
+          !extension.endsWith('.cgw') &&
+          !extension.endsWith('.cgc') &&
+          !extension.endsWith('.cgb')) {
+        return ModelFactories.createFailedValidationResult(
+            '不支持的文件格式，请选择支持的压缩文件(.cgw, .cgc, .cgb, .zip)');
       }
 
       // 尝试打开ZIP文件进行基本验证
@@ -392,6 +398,44 @@ class ImportServiceImpl implements ImportService {
     ImportUpgradeResult? upgradeResult;
 
     try {
+      // 步骤0：文件完整性校验
+      if (sourceFilePath != null) {
+        progressCallback?.call(0.02, '验证文件完整性...', {'step': 'integrity_check'});
+
+        final integrityResult =
+            await FileIntegrityService.verifyFileIntegrity(sourceFilePath);
+
+        if (!integrityResult.isValid) {
+          final errorMessage =
+              '文件完整性校验失败: ${integrityResult.errors.join(', ')}';
+          AppLogger.error(errorMessage,
+              data: {
+                'transactionId': transactionId,
+                'filePath': sourceFilePath,
+                'errors': integrityResult.errors,
+                'warnings': integrityResult.warnings,
+              },
+              tag: 'import');
+
+          return ImportResult(
+            success: false,
+            transactionId: transactionId,
+            errors: [errorMessage],
+            duration: DateTime.now().difference(startTime).inMilliseconds,
+          );
+        }
+
+        AppLogger.info('文件完整性校验通过',
+            data: {
+              'transactionId': transactionId,
+              'filePath': sourceFilePath,
+              'verificationTime':
+                  integrityResult.verificationTime.inMilliseconds,
+              'details': integrityResult.details,
+            },
+            tag: 'import');
+      }
+
       // 步骤1：准备导入和版本升级
       progressCallback?.call(0.05, '准备导入...', {'step': 'preparing'});
       await Future.delayed(const Duration(milliseconds: 100));
@@ -1100,7 +1144,7 @@ class ImportServiceImpl implements ImportService {
 
   @override
   List<String> getSupportedFormats() {
-    return ['zip'];
+    return ['cgw', 'cgc', 'cgb', 'zip'];
   }
 
   @override
@@ -1425,8 +1469,11 @@ class ImportServiceImpl implements ImportService {
           extension = '.png';
       }
 
-      // 构建归档内的文件路径
+      // 构建归档内的文件路径（新版本嵌套结构）
       final archivePath = 'characters/$characterId/$imageType$extension';
+      // 构建旧版本扁平结构的备用路径
+      final fallbackArchivePath =
+          'characters/$characterId-$imageType$extension';
 
       // 构建目标路径
       final targetPath = _convertToAbsolutePath(
@@ -1436,6 +1483,7 @@ class ImportServiceImpl implements ImportService {
         '尝试提取集字图片文件',
         data: {
           'archivePath': archivePath,
+          'fallbackArchivePath': fallbackArchivePath,
           'targetPath': targetPath,
           'imageType': imageType,
           'operation': 'extract_character_image_file',
@@ -1443,21 +1491,46 @@ class ImportServiceImpl implements ImportService {
         tag: 'import',
       );
 
-      // 在归档中查找文件
-      final archiveFile = archive.files.firstWhere(
-        (f) => f.name == archivePath,
-        orElse: () {
+      // 首先尝试新的嵌套结构
+      ArchiveFile? archiveFile = archive.files.cast<ArchiveFile?>().firstWhere(
+            (f) => f?.name == archivePath,
+            orElse: () => null,
+          );
+
+      // 如果找不到，尝试旧的扁平结构
+      if (archiveFile == null) {
+        archiveFile = archive.files.cast<ArchiveFile?>().firstWhere(
+              (f) => f?.name == fallbackArchivePath,
+              orElse: () => null,
+            );
+
+        if (archiveFile != null) {
           AppLogger.debug(
-            '在归档中找不到集字图片文件（可能不存在）',
+            '使用旧版本扁平结构路径',
             data: {
               'requestedPath': archivePath,
+              'foundPath': fallbackArchivePath,
+              'imageType': imageType,
               'operation': 'extract_character_image_file',
             },
             tag: 'import',
           );
-          throw Exception('文件不存在: $archivePath');
-        },
-      );
+        }
+      }
+
+      // 如果两种路径都找不到文件
+      if (archiveFile == null) {
+        AppLogger.debug(
+          '在归档中找不到集字图片文件（可能不存在）',
+          data: {
+            'requestedPath': archivePath,
+            'fallbackPath': fallbackArchivePath,
+            'operation': 'extract_character_image_file',
+          },
+          tag: 'import',
+        );
+        throw Exception('文件不存在: $archivePath 或 $fallbackArchivePath');
+      }
 
       // 确保目标目录存在
       final targetFile = File(targetPath);
@@ -1918,24 +1991,31 @@ class ImportServiceImpl implements ImportService {
   Future<bool> _extractImageFile(
       Archive archive, WorkImage image, String type) async {
     try {
-      // 构建归档内的文件路径 - 修复路径构建逻辑
+      // 构建归档内的文件路径 - 支持新旧两种结构
       String archivePath;
+      String fallbackArchivePath; // 用于兼容旧版本的扁平结构
       String targetPath;
 
       switch (type) {
         case 'original':
           archivePath =
               'images/${image.workId}/${image.id}/original${path.extension(image.originalPath)}';
+          fallbackArchivePath =
+              'images/${image.id}${path.extension(image.originalPath)}';
           targetPath = image.originalPath;
           break;
         case 'imported':
           archivePath =
               'images/${image.workId}/${image.id}/imported${path.extension(image.path)}';
+          fallbackArchivePath =
+              'images/${image.id}${path.extension(image.path)}';
           targetPath = image.path;
           break;
         case 'thumbnail':
           archivePath =
               'images/${image.workId}/${image.id}/thumbnail${path.extension(image.thumbnailPath)}';
+          fallbackArchivePath =
+              'images/${image.id}${path.extension(image.thumbnailPath)}';
           targetPath = image.thumbnailPath;
           break;
         default:
@@ -1955,6 +2035,7 @@ class ImportServiceImpl implements ImportService {
         '尝试提取图片文件',
         data: {
           'archivePath': archivePath,
+          'fallbackArchivePath': fallbackArchivePath,
           'targetPath': targetPath,
           'type': type,
           'operation': 'extract_image_file',
@@ -1962,25 +2043,50 @@ class ImportServiceImpl implements ImportService {
         tag: 'import',
       );
 
-      // 在归档中查找文件
-      final archiveFile = archive.files.firstWhere(
-        (f) => f.name == archivePath,
-        orElse: () {
-          // 如果找不到文件，记录所有可用的文件名用于调试
-          final availableFiles = archive.files.map((f) => f.name).toList();
-          AppLogger.warning(
-            '在归档中找不到指定文件',
+      // 首先尝试新的嵌套结构
+      ArchiveFile? archiveFile = archive.files.cast<ArchiveFile?>().firstWhere(
+            (f) => f?.name == archivePath,
+            orElse: () => null,
+          );
+
+      // 如果找不到，尝试旧的扁平结构
+      if (archiveFile == null) {
+        archiveFile = archive.files.cast<ArchiveFile?>().firstWhere(
+              (f) => f?.name == fallbackArchivePath,
+              orElse: () => null,
+            );
+
+        if (archiveFile != null) {
+          AppLogger.debug(
+            '使用旧版本扁平结构路径',
             data: {
               'requestedPath': archivePath,
-              'availableFiles': availableFiles.take(10).toList(), // 只显示前10个文件
-              'totalFiles': availableFiles.length,
+              'foundPath': fallbackArchivePath,
+              'type': type,
               'operation': 'extract_image_file',
             },
             tag: 'import',
           );
-          throw Exception('文件不存在: $archivePath');
-        },
-      );
+        }
+      }
+
+      // 如果两种路径都找不到文件
+      if (archiveFile == null) {
+        // 记录所有可用的文件名用于调试
+        final availableFiles = archive.files.map((f) => f.name).toList();
+        AppLogger.warning(
+          '在归档中找不到指定文件',
+          data: {
+            'requestedPath': archivePath,
+            'fallbackPath': fallbackArchivePath,
+            'availableFiles': availableFiles.take(10).toList(), // 只显示前10个文件
+            'totalFiles': availableFiles.length,
+            'operation': 'extract_image_file',
+          },
+          tag: 'import',
+        );
+        throw Exception('文件不存在: $archivePath 或 $fallbackArchivePath');
+      }
 
       // 确保目标目录存在
       final targetFile = File(targetPath);

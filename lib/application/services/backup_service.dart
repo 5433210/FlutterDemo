@@ -191,7 +191,7 @@ class BackupService {
 
       // 生成备份文件名
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final backupFileName = 'backup_$timestamp.zip';
+      final backupFileName = 'backup_$timestamp.cgb';
       final backupPath = p.join(_backupDir, backupFileName);
 
       // 为整个备份过程添加超时机制
@@ -369,13 +369,15 @@ class BackupService {
       // 获取所有备份文件
       final files = await _storage.listDirectoryFiles(_backupDir);
 
-      // 过滤出ZIP文件
-      final zipFiles =
-          files.where((file) => file.toLowerCase().endsWith('.zip')).toList();
+      // 过滤出备份文件（支持.zip和.cgb扩展名）
+      final backupFiles = files.where((file) {
+        final lowerFile = file.toLowerCase();
+        return lowerFile.endsWith('.zip') || lowerFile.endsWith('.cgb');
+      }).toList();
 
       // 创建备份信息列表
       final backups = <BackupInfo>[];
-      for (final file in zipFiles) {
+      for (final file in backupFiles) {
         try {
           final backupFile = File(file);
 

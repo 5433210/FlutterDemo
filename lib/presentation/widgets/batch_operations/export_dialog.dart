@@ -53,8 +53,8 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         break;
     }
 
-    // 默认使用ZIP格式
-    _exportFormat = ExportFormat.zip;
+    // 默认使用7zip格式（新推荐格式）
+    _exportFormat = ExportFormat.sevenZip;
 
     // 导出选项全选且固定
     _includeImages = true;
@@ -443,14 +443,28 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
     try {
       final filePickerService = FilePickerServiceImpl();
 
-      // 固定选择ZIP文件保存路径
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final suggestedName = 'export_${widget.pageType.name}_$timestamp.zip';
+      // 根据导出类型选择文件扩展名
+      final now = DateTime.now();
+      final timestamp =
+          '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+
+      // 根据页面类型确定文件扩展名
+      String extension;
+      switch (widget.pageType) {
+        case PageType.works:
+          extension = 'cgw';
+          break;
+        case PageType.characters:
+          extension = 'cgc';
+          break;
+      }
+
+      final suggestedName = 'export_$timestamp.$extension';
 
       final selectedPath = await filePickerService.pickSaveFile(
         dialogTitle: 'Select Export Location',
         suggestedName: suggestedName,
-        allowedExtensions: ['zip'],
+        allowedExtensions: [extension, 'zip'], // 支持新格式和旧格式
       );
 
       if (selectedPath != null) {
