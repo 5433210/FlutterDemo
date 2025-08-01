@@ -9,7 +9,7 @@ import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
 import '../../../image/cached_image.dart';
-import 'image_transform_painter.dart';
+import 'interactive_crop_overlay.dart';
 
 /// 几何属性面板
 class ImagePropertyGeometryPanel extends StatelessWidget {
@@ -440,10 +440,10 @@ class ImagePropertyFitModePanel extends StatelessWidget {
 class ImagePropertyPreviewPanel extends StatelessWidget {
   final String imageUrl;
   final String fitMode;
-  final double cropTop;
-  final double cropBottom;
-  final double cropLeft;
-  final double cropRight;
+  final double cropX;       // Left edge of crop area in pixels
+  final double cropY;       // Top edge of crop area in pixels
+  final double cropWidth;   // Width of crop area in pixels
+  final double cropHeight;  // Height of crop area in pixels
   final bool flipHorizontal;
   final bool flipVertical;
   final double contentRotation;
@@ -451,15 +451,16 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
   final Size? imageSize;
   final Size? renderSize;
   final Function(Size, Size) onImageSizeAvailable;
+  final Function(double, double, double, double)? onCropChanged; // (x, y, width, height)
 
   const ImagePropertyPreviewPanel({
     super.key,
     required this.imageUrl,
     required this.fitMode,
-    required this.cropTop,
-    required this.cropBottom,
-    required this.cropLeft,
-    required this.cropRight,
+    required this.cropX,
+    required this.cropY,
+    required this.cropWidth,
+    required this.cropHeight,
     required this.flipHorizontal,
     required this.flipVertical,
     required this.contentRotation,
@@ -467,6 +468,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     required this.imageSize,
     required this.renderSize,
     required this.onImageSizeAvailable,
+    this.onCropChanged,
   });
 
   @override
@@ -558,11 +560,20 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                       ),
                     ),
 
-                    // Transform preview rectangle
-                    if (imageSize != null && renderSize != null)
-                      _buildTransformPreviewRect(
-                        context: context,
-                        containerConstraints: constraints,
+                    // Interactive crop overlay
+                    if (imageSize != null && renderSize != null && onCropChanged != null)
+                      Positioned.fill(
+                        child: InteractiveCropOverlay(
+                          imageSize: imageSize!,
+                          renderSize: renderSize!,
+                          cropX: cropX,
+                          cropY: cropY,
+                          cropWidth: cropWidth,
+                          cropHeight: cropHeight,
+                          contentRotation: contentRotation,
+                          onCropChanged: onCropChanged!,
+                          enabled: true,
+                        ),
                       ),
                   ],
                 );
@@ -763,31 +774,6 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     }
   }
 
-  Widget _buildTransformPreviewRect({
-    required BuildContext context,
-    required BoxConstraints containerConstraints,
-  }) {
-    return SizedBox(
-      width: containerConstraints.maxWidth,
-      height: containerConstraints.maxHeight,
-      child: CustomPaint(
-        painter: ImageTransformPreviewPainter(
-          context: context,
-          imageSize: imageSize!,
-          renderSize: renderSize!,
-          cropTop: cropTop,
-          cropBottom: cropBottom,
-          cropLeft: cropLeft,
-          cropRight: cropRight,
-          flipHorizontal: flipHorizontal,
-          flipVertical: flipVertical,
-          contentRotation: contentRotation,
-          isTransformApplied: isTransformApplied,
-        ),
-      ),
-    );
-  }
-
   Size _calculateRenderSize(
       Size imageSize, Size containerSize, String fitMode) {
     final imageRatio = imageSize.width / imageSize.height;
@@ -848,16 +834,13 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
 
 /// 图像变换面板
 class ImagePropertyTransformPanel extends StatelessWidget {
-  final double cropTop;
-  final double cropBottom;
-  final double cropLeft;
-  final double cropRight;
+  final double cropX;       // Left edge of crop area in pixels
+  final double cropY;       // Top edge of crop area in pixels
+  final double cropWidth;   // Width of crop area in pixels
+  final double cropHeight;  // Height of crop area in pixels
   final bool flipHorizontal;
   final bool flipVertical;
   final double contentRotation;
-  final double maxCropWidth;
-  final double maxCropHeight;
-  final Function(String, double) onCropChanged;
   final Function(String, dynamic) onFlipChanged;
   final Function(double) onRotationChanged;
   final VoidCallback onApplyTransform;
@@ -865,16 +848,13 @@ class ImagePropertyTransformPanel extends StatelessWidget {
 
   const ImagePropertyTransformPanel({
     super.key,
-    required this.cropTop,
-    required this.cropBottom,
-    required this.cropLeft,
-    required this.cropRight,
+    required this.cropX,
+    required this.cropY,
+    required this.cropWidth,
+    required this.cropHeight,
     required this.flipHorizontal,
     required this.flipVertical,
     required this.contentRotation,
-    required this.maxCropWidth,
-    required this.maxCropHeight,
-    required this.onCropChanged,
     required this.onFlipChanged,
     required this.onRotationChanged,
     required this.onApplyTransform,
@@ -928,39 +908,63 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                 //   ),
                 // ),
 
-                // Crop settings
+                // Interactive cropping info
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withAlpha((0.3 * 255).toInt()),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.crop_free, color: colorScheme.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '在上方预览图中拖动选框和控制点来调整裁剪区域',
+                          style: TextStyle(fontSize: 14, color: colorScheme.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Current crop values display
                 Text(l10n.cropping,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8.0),
-
-                // Crop sliders
-                _buildCropSlider(
-                  context: context,
-                  label: l10n.cropTop,
-                  cropKey: 'cropTop',
-                  value: cropTop,
-                  max: maxCropHeight,
-                ),
-                _buildCropSlider(
-                  context: context,
-                  label: l10n.cropBottom,
-                  cropKey: 'cropBottom',
-                  value: cropBottom,
-                  max: maxCropHeight,
-                ),
-                _buildCropSlider(
-                  context: context,
-                  label: l10n.cropLeft,
-                  cropKey: 'cropLeft',
-                  value: cropLeft,
-                  max: maxCropWidth,
-                ),
-                _buildCropSlider(
-                  context: context,
-                  label: l10n.cropRight,
-                  cropKey: 'cropRight',
-                  value: cropRight,
-                  max: maxCropWidth,
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text('X: ${cropX.round()}px'),
+                            ),
+                            Expanded(
+                              child: Text('Y: ${cropY.round()}px'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text('宽度: ${cropWidth.round()}px'),
+                            ),
+                            Expanded(
+                              child: Text('高度: ${cropHeight.round()}px'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 16.0),
@@ -1114,63 +1118,6 @@ class ImagePropertyTransformPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCropSlider({
-    required BuildContext context,
-    required String label,
-    required String cropKey,
-    required double value,
-    required double max,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    // Ensure max is at least 1.0 to avoid Slider min/max issues
-    final safeMax = max > 0 ? max : 1.0;
-    // Ensure value is in valid range
-    final safeValue = value.clamp(0.0, safeMax);
-    // Calculate percentage
-    final percentage = max > 0 ? (safeValue / safeMax * 100).round() : 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Slider(
-                value: safeValue,
-                min: 0,
-                max: safeMax,
-                activeColor: colorScheme.primary,
-                thumbColor: colorScheme.primary,
-                label: '$percentage%',
-                onChanged: (newValue) => onCropChanged(cropKey, newValue),
-              ),
-            ),
-            const SizedBox(width: 8.0),
-            Expanded(
-              flex: 2,
-              child: EditableNumberField(
-                label: label,
-                value: percentage.toDouble(),
-                suffix: '%',
-                min: 0,
-                max: 100,
-                decimalPlaces: 0,
-                onChanged: (newPercentage) {
-                  // Convert percentage back to absolute value
-                  final newValue = (newPercentage / 100) * safeMax;
-                  onCropChanged(cropKey, newValue);
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 

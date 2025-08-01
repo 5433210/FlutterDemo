@@ -53,51 +53,37 @@ mixin ImageTransformHandler {
     final renderSize = this.renderSize;
 
     if (imageSize != null && renderSize != null) {
-      final maxCropWidth = renderSize.width / 2;
-      final maxCropHeight = renderSize.height / 2;
-
-      final safeCropTop =
-          (content['cropTop'] as num?)?.toDouble().clamp(0.0, maxCropHeight) ??
-              0.0;
-      final safeCropBottom = (content['cropBottom'] as num?)
-              ?.toDouble()
-              .clamp(0.0, maxCropHeight) ??
-          0.0;
-      final safeCropLeft =
-          (content['cropLeft'] as num?)?.toDouble().clamp(0.0, maxCropWidth) ??
-              0.0;
-      final safeCropRight =
-          (content['cropRight'] as num?)?.toDouble().clamp(0.0, maxCropWidth) ??
-              0.0;
+      // Use new coordinate system directly
+      final cropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
+      final cropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
+      final cropWidth = (content['cropWidth'] as num?)?.toDouble() ?? imageSize.width;
+      final cropHeight = (content['cropHeight'] as num?)?.toDouble() ?? imageSize.height;
 
       final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
       final flipVertical = content['isFlippedVertically'] as bool? ?? false;
       final contentRotation = (content['rotation'] as num?)?.toDouble() ?? 0.0;
 
-      final originalCropLeft = safeCropLeft;
-      final originalCropTop = safeCropTop;
-      final originalCropRight = safeCropRight;
-      final originalCropBottom = safeCropBottom;
-
       content['transformRect'] = {
-        'x': safeCropLeft,
-        'y': safeCropTop,
-        'width': renderSize.width - safeCropLeft - safeCropRight,
-        'height': renderSize.height - safeCropTop - safeCropBottom,
-        'originalWidth': renderSize.width,
-        'originalHeight': renderSize.height,
+        'x': cropX,
+        'y': cropY,
+        'width': cropWidth,
+        'height': cropHeight,
+        'originalWidth': imageSize.width,
+        'originalHeight': imageSize.height,
       };
 
-      content['cropTop'] = originalCropTop;
-      content['cropBottom'] = originalCropBottom;
-      content['cropLeft'] = originalCropLeft;
-      content['cropRight'] = originalCropRight;
+      content['cropX'] = cropX;
+      content['cropY'] = cropY;
+      content['cropWidth'] = cropWidth;
+      content['cropHeight'] = cropHeight;
 
       final bool hasOtherTransforms =
           flipHorizontal || flipVertical || contentRotation != 0.0;
       final bool invalidCropping =
-          safeCropLeft + safeCropRight >= imageSize.width ||
-              safeCropTop + safeCropBottom >= imageSize.height;
+          cropX < 0 || cropY < 0 || 
+          cropX + cropWidth > imageSize.width ||
+          cropY + cropHeight > imageSize.height ||
+          cropWidth <= 0 || cropHeight <= 0;
 
       if (invalidCropping) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -110,10 +96,10 @@ mixin ImageTransformHandler {
         return;
       }
 
-      final bool noCropping = safeCropLeft == 0 &&
-          safeCropRight == 0 &&
-          safeCropTop == 0 &&
-          safeCropBottom == 0;
+      final bool noCropping = cropX == 0 &&
+          cropY == 0 &&
+          cropWidth == imageSize.width &&
+          cropHeight == imageSize.height;
       final bool isInitialState = noCropping && !hasOtherTransforms;
 
       if (isInitialState) {
@@ -124,10 +110,10 @@ mixin ImageTransformHandler {
         content['transformRect'] = {
           'x': 0,
           'y': 0,
-          'width': renderSize.width,
-          'height': renderSize.height,
-          'originalWidth': renderSize.width,
-          'originalHeight': renderSize.height,
+          'width': imageSize.width,
+          'height': imageSize.height,
+          'originalWidth': imageSize.width,
+          'originalHeight': imageSize.height,
         };
 
         updateProperty('content', content);
@@ -143,42 +129,8 @@ mixin ImageTransformHandler {
 
       Future(() async {
         try {
-          final widthRatio = imageSize.width / renderSize.width;
-          final heightRatio = imageSize.height / renderSize.height;
-
-          final cropAreaLeft = safeCropLeft * widthRatio;
-          final cropAreaTop = safeCropTop * heightRatio;
-          final cropAreaRight = safeCropRight * widthRatio;
-          final cropAreaBottom = safeCropBottom * heightRatio;
-
-          var left = cropAreaLeft;
-          var top = cropAreaTop;
-          var right = imageSize.width - cropAreaRight;
-          var bottom = imageSize.height - cropAreaBottom;
-
-          final minWidth = imageSize.width * 0.01;
-          final minHeight = imageSize.height * 0.01;
-
-          if (right - left < minWidth) {
-            right = left + minWidth;
-            if (right > imageSize.width) {
-              right = imageSize.width;
-              left = right - minWidth;
-            }
-          }
-
-          if (bottom - top < minHeight) {
-            bottom = top + minHeight;
-            if (bottom > imageSize.height) {
-              bottom = imageSize.height;
-              top = bottom - minHeight;
-            }
-          }
-
-          if (right <= left) right = left + 1;
-          if (bottom <= top) bottom = top + 1;
-
-          final cropRect = Rect.fromLTRB(left, top, right, bottom);
+          // Create crop rectangle using new coordinate system
+          final cropRect = Rect.fromLTWH(cropX, cropY, cropWidth, cropHeight);
 
           Uint8List? imageData = await _loadImageFromUrl(imageUrl);
 
@@ -225,11 +177,7 @@ mixin ImageTransformHandler {
           if (noCropping) {
             message += l10n.noCropping;
           } else {
-            message += l10n.croppingApplied(
-                originalCropLeft.toInt().toString(),
-                originalCropTop.toInt().toString(),
-                originalCropRight.toInt().toString(),
-                originalCropBottom.toInt().toString());
+            message += 'Cropping applied: x=${cropX.toInt()}, y=${cropY.toInt()}, width=${cropWidth.toInt()}, height=${cropHeight.toInt()}';
           }
 
           if (context.mounted) {
@@ -249,10 +197,10 @@ mixin ImageTransformHandler {
             data: {
               'operation': 'apply_transform',
               'imageUrl': imageUrl,
-              'cropLeft': safeCropLeft,
-              'cropTop': safeCropTop,
-              'cropRight': safeCropRight,
-              'cropBottom': safeCropBottom,
+              'cropX': cropX,
+              'cropY': cropY,
+              'cropWidth': cropWidth,
+              'cropHeight': cropHeight,
               'flipHorizontal': flipHorizontal,
               'flipVertical': flipVertical,
               'contentRotation': contentRotation,
@@ -284,14 +232,27 @@ mixin ImageTransformHandler {
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
 
-    content['cropTop'] = 0.0;
-    content['cropBottom'] = 0.0;
-    content['cropLeft'] = 0.0;
-    content['cropRight'] = 0.0;
+    // Reset to new coordinate system defaults
+    content['cropX'] = 0.0;
+    content['cropY'] = 0.0;
+    if (imageSize != null) {
+      content['cropWidth'] = imageSize!.width;
+      content['cropHeight'] = imageSize!.height;
+    } else {
+      content['cropWidth'] = 100.0;
+      content['cropHeight'] = 100.0;
+    }
+    
     content['isFlippedHorizontally'] = false;
     content['isFlippedVertically'] = false;
     content['rotation'] = 0.0;
     content['isTransformApplied'] = false;
+
+    // Remove old coordinate system properties if they exist
+    content.remove('cropTop');
+    content.remove('cropBottom');
+    content.remove('cropLeft');
+    content.remove('cropRight');
 
     content.remove('transformedImageData');
     content.remove('transformedImageUrl');

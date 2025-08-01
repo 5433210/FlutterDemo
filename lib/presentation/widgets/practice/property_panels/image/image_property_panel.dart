@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -96,11 +98,13 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
 
-    // Cropping properties
-    final cropTop = (content['cropTop'] as num?)?.toDouble() ?? 0.0;
-    final cropBottom = (content['cropBottom'] as num?)?.toDouble() ?? 0.0;
-    final cropLeft = (content['cropLeft'] as num?)?.toDouble() ?? 0.0;
-    final cropRight = (content['cropRight'] as num?)?.toDouble() ?? 0.0;
+    // Cropping properties - use new coordinate format directly  
+    final cropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
+    final cropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
+    final cropWidth = (content['cropWidth'] as num?)?.toDouble() ?? 
+        (imageSize?.width ?? 100.0);
+    final cropHeight = (content['cropHeight'] as num?)?.toDouble() ?? 
+        (imageSize?.height ?? 100.0);
 
     // Flip properties
     final isFlippedHorizontally =
@@ -164,10 +168,10 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         ImagePropertyPreviewPanel(
           imageUrl: imageUrl,
           fitMode: fitMode,
-          cropTop: cropTop,
-          cropBottom: cropBottom,
-          cropLeft: cropLeft,
-          cropRight: cropRight,
+          cropX: cropX,
+          cropY: cropY,
+          cropWidth: cropWidth,
+          cropHeight: cropHeight,
           flipHorizontal: isFlippedHorizontally,
           flipVertical: isFlippedVertically,
           contentRotation: contentRotation,
@@ -175,20 +179,24 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           imageSize: imageSize,
           renderSize: renderSize,
           onImageSizeAvailable: updateImageState,
+          onCropChanged: (x, y, width, height) {
+            // Use new coordinate format directly
+            updateCropValue('cropX', x);
+            updateCropValue('cropY', y);
+            updateCropValue('cropWidth', width);
+            updateCropValue('cropHeight', height);
+          },
         ),
 
         // Image transform section
         ImagePropertyTransformPanel(
-          cropTop: cropTop,
-          cropBottom: cropBottom,
-          cropLeft: cropLeft,
-          cropRight: cropRight,
+          cropX: cropX,
+          cropY: cropY,
+          cropWidth: cropWidth,
+          cropHeight: cropHeight,
           flipHorizontal: isFlippedHorizontally,
           flipVertical: isFlippedVertically,
           contentRotation: contentRotation,
-          maxCropWidth: maxCropWidth,
-          maxCropHeight: maxCropHeight,
-          onCropChanged: updateCropValue,
           onFlipChanged: updateContentProperty,
           onRotationChanged: (value) =>
               updateContentProperty('rotation', value),
