@@ -138,6 +138,7 @@ class PersistentPanelCard extends ConsumerWidget {
     final notifier = ref.read(expansionTileProvider.notifier);
 
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),

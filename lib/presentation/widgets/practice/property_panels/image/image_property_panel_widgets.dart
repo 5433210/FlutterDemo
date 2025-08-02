@@ -38,21 +38,25 @@ class ImagePropertyGeometryPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        title: Text(l10n.geometryProperties),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
+          title: Text(l10n.geometryProperties),
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Information alert
                 Container(
                   padding: const EdgeInsets.all(12.0),
@@ -149,6 +153,7 @@ class ImagePropertyGeometryPanel extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -176,9 +181,13 @@ class ImagePropertyVisualPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.visualSettings),
         initiallyExpanded: true,
         children: [
@@ -287,6 +296,7 @@ class ImagePropertyVisualPanel extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -310,12 +320,16 @@ class ImagePropertySelectionPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.imageSelection),
         initiallyExpanded: true,
         children: [
@@ -349,6 +363,7 @@ class ImagePropertySelectionPanel extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -372,12 +387,16 @@ class ImagePropertyFitModePanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.fitMode),
         initiallyExpanded: true,
         children: [
@@ -432,6 +451,7 @@ class ImagePropertyFitModePanel extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -480,12 +500,16 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.preview),
         initiallyExpanded: true,
         children: [
@@ -505,6 +529,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -917,12 +942,16 @@ class ImagePropertyTransformPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.imageTransform),
         initiallyExpanded: true,
         children: [
@@ -1208,6 +1237,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -1273,12 +1303,16 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
         title: Text(l10n.imageAlignment),
         initiallyExpanded: false,
         children: [
@@ -1357,6 +1391,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
