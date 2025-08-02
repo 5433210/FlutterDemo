@@ -104,32 +104,9 @@ mixin ImageTransformHandler {
           cropY == 0 &&
           cropWidth == imageSize.width &&
           cropHeight == imageSize.height;
-      final bool isInitialState = noCropping && !hasOtherTransforms;
-
-      if (isInitialState) {
-        content['isTransformApplied'] = true;
-        content.remove('transformedImageData');
-        content.remove('transformedImageUrl');
-
-        content['transformRect'] = {
-          'x': 0,
-          'y': 0,
-          'width': imageSize.width,
-          'height': imageSize.height,
-          'originalWidth': imageSize.width,
-          'originalHeight': imageSize.height,
-        };
-
-        updateProperty('content', content);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.transformApplied + l10n.noCropping),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
+      
+      // 总是执行图像处理，即使是初始状态
+      // 这样用户的期望更一致
 
       Future(() async {
         try {

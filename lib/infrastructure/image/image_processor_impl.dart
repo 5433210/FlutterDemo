@@ -851,7 +851,7 @@ class ImageProcessorImpl implements ImageProcessor {
       'rotation': rotation,
     });
     
-    // 先应用翻转变换到整个原图像
+    // 步骤1: 先应用翻转变换到整个原图像
     img.Image transformedImage = sourceImage;
     
     // 应用水平翻转
@@ -866,112 +866,151 @@ class ImageProcessorImpl implements ImageProcessor {
       AppLogger.info('Applied vertical flip');
     }
     
-    // 如果有翻转，我们已经翻转了图像，现在直接使用原始坐标裁剪
-    // 这样用户在UI中看到的裁剪框对应的就是翻转后图像中的相同位置
-    Rect adjustedRegion = region;
-    
-    AppLogger.info('Using crop region directly on flipped image', data: {
-      'region': '${region.left},${region.top},${region.width}x${region.height}',
-      'explanation': 'No coordinate adjustment needed - crop at same visual position on flipped image',
-    });
-
-    // 如果没有旋转，直接裁剪翻转后的图像
-    if (rotation == 0) {
-      final result = img.copyCrop(
-        transformedImage,
-        x: adjustedRegion.left.round(),
-        y: adjustedRegion.top.round(),
-        width: adjustedRegion.width.round(),
-        height: adjustedRegion.height.round(),
-      );
+    // 步骤2: 如果有旋转，对整个翻转后的图像进行旋转
+    if (rotation != 0) {
+      // 计算旋转后图像的尺寸
+      final radians = rotation;
+      final cos = math.cos(radians).abs();
+      final sin = math.sin(radians).abs();
+      final newWidth = (transformedImage.width * cos + transformedImage.height * sin).ceil();
+      final newHeight = (transformedImage.width * sin + transformedImage.height * cos).ceil();
       
-      AppLogger.info('Crop completed', data: {
-        'resultSize': '${result.width}x${result.height}',
+      AppLogger.info('Rotating entire image', data: {
+        'originalSize': '${transformedImage.width}x${transformedImage.height}',
+        'newSize': '${newWidth}x${newHeight}',
+        'rotationRadians': rotation,
       });
       
-      return result;
-    }
-
-    // 有旋转的情况：对翻转后的图像进行旋转裁剪
-    final center = Offset(
-      adjustedRegion.left + adjustedRegion.width / 2, 
-      adjustedRegion.top + adjustedRegion.height / 2
-    );
-
-    // 创建目标图像
-    final result = img.Image(
-      width: adjustedRegion.width.round(), 
-      height: adjustedRegion.height.round()
-    );
-
-    // 创建变换矩阵 - 转换旋转角度为弧度
-    final radians = rotation;
-    final cos = math.cos(radians);
-    final sin = math.sin(radians);
-
-    // 使用仿射变换进行旋转裁剪
-    for (int y = 0; y < result.height; y++) {
-      for (int x = 0; x < result.width; x++) {
-        // 将目标坐标映射回源图像坐标 - 应用旋转变换
-        final srcX = cos * (x - adjustedRegion.width / 2) -
-            sin * (y - adjustedRegion.height / 2) +
-            center.dx;
-        final srcY = sin * (x - adjustedRegion.width / 2) +
-            cos * (y - adjustedRegion.height / 2) +
-            center.dy;
-
-        // 双线性插值获取像素值
-        if (srcX >= 0 &&
-            srcX < transformedImage.width - 1 &&
-            srcY >= 0 &&
-            srcY < transformedImage.height - 1) {
-          // 获取周围四个像素点
-          final x0 = srcX.floor();
-          final y0 = srcY.floor();
-          final x1 = x0 + 1;
-          final y1 = y0 + 1;
-
-          // 计算插值权重
-          final wx = srcX - x0;
-          final wy = srcY - y0;
-
-          // 获取四个角的像素值
-          final p00 = transformedImage.getPixel(x0, y0);
-          final p01 = transformedImage.getPixel(x0, y1);
-          final p10 = transformedImage.getPixel(x1, y0);
-          final p11 = transformedImage.getPixel(x1, y1);
-
-          // 进行双线性插值
-          final r = ((1 - wx) * (1 - wy) * p00.r +
-                  wx * (1 - wy) * p10.r +
-                  (1 - wx) * wy * p01.r +
-                  wx * wy * p11.r)
-              .round();
-          final g = ((1 - wx) * (1 - wy) * p00.g +
-                  wx * (1 - wy) * p10.g +
-                  (1 - wx) * wy * p01.g +
-                  wx * wy * p11.g)
-              .round();
-          final b = ((1 - wx) * (1 - wy) * p00.b +
-                  wx * (1 - wy) * p10.b +
-                  (1 - wx) * wy * p01.b +
-                  wx * wy * p11.b)
-              .round();
-          final a = ((1 - wx) * (1 - wy) * p00.a +
-                  wx * (1 - wy) * p10.a +
-                  (1 - wx) * wy * p01.a +
-                  wx * wy * p11.a)
-              .round();
-
-          result.setPixelRgba(x, y, r, g, b, a);
+      // 创建旋转后的图像
+      final rotatedImage = img.Image(width: newWidth, height: newHeight);
+      
+      // 计算偏移量（将旋转后的图像居中）
+      final offsetX = (newWidth - transformedImage.width) / 2;
+      final offsetY = (newHeight - transformedImage.height) / 2;
+      
+      // 原图像中心
+      final centerX = transformedImage.width / 2;
+      final centerY = transformedImage.height / 2;
+      
+      // 新图像中心
+      final newCenterX = newWidth / 2;
+      final newCenterY = newHeight / 2;
+      
+      // 旋转矩阵
+      final cosR = math.cos(-rotation);
+      final sinR = math.sin(-rotation);
+      
+      // 对每个像素进行反向映射
+      for (int y = 0; y < newHeight; y++) {
+        for (int x = 0; x < newWidth; x++) {
+          // 将新图像坐标转换为原图像坐标
+          final dx = x - newCenterX;
+          final dy = y - newCenterY;
+          
+          final srcX = cosR * dx - sinR * dy + centerX;
+          final srcY = sinR * dx + cosR * dy + centerY;
+          
+          // 检查是否在原图像范围内
+          if (srcX >= 0 && srcX < transformedImage.width - 1 && 
+              srcY >= 0 && srcY < transformedImage.height - 1) {
+            // 双线性插值
+            final x0 = srcX.floor();
+            final y0 = srcY.floor();
+            final x1 = x0 + 1;
+            final y1 = y0 + 1;
+            
+            final wx = srcX - x0;
+            final wy = srcY - y0;
+            
+            final p00 = transformedImage.getPixel(x0, y0);
+            final p01 = transformedImage.getPixel(x0, y1);
+            final p10 = transformedImage.getPixel(x1, y0);
+            final p11 = transformedImage.getPixel(x1, y1);
+            
+            final r = ((1 - wx) * (1 - wy) * p00.r +
+                    wx * (1 - wy) * p10.r +
+                    (1 - wx) * wy * p01.r +
+                    wx * wy * p11.r)
+                .round();
+            final g = ((1 - wx) * (1 - wy) * p00.g +
+                    wx * (1 - wy) * p10.g +
+                    (1 - wx) * wy * p01.g +
+                    wx * wy * p11.g)
+                .round();
+            final b = ((1 - wx) * (1 - wy) * p00.b +
+                    wx * (1 - wy) * p10.b +
+                    (1 - wx) * wy * p01.b +
+                    wx * wy * p11.b)
+                .round();
+            final a = ((1 - wx) * (1 - wy) * p00.a +
+                    wx * (1 - wy) * p10.a +
+                    (1 - wx) * wy * p01.a +
+                    wx * wy * p11.a)
+                .round();
+            
+            rotatedImage.setPixelRgba(x, y, r, g, b, a);
+          }
         }
       }
+      
+      transformedImage = rotatedImage;
+      
+      // 步骤3: 调整裁剪区域以适应旋转后的图像
+      // 计算原始裁剪区域在旋转后图像中的位置
+      final regionCenterX = region.left + region.width / 2;
+      final regionCenterY = region.top + region.height / 2;
+      
+      // 将原始区域中心相对于原图像中心进行旋转
+      final dx = regionCenterX - centerX;
+      final dy = regionCenterY - centerY;
+      
+      final rotatedRegionCenterX = math.cos(rotation) * dx - math.sin(rotation) * dy + newCenterX;
+      final rotatedRegionCenterY = math.sin(rotation) * dx + math.cos(rotation) * dy + newCenterY;
+      
+      // 新的裁剪区域（在旋转后的图像中）
+      final newRegionLeft = rotatedRegionCenterX - region.width / 2;
+      final newRegionTop = rotatedRegionCenterY - region.height / 2;
+      
+      region = Rect.fromLTWH(newRegionLeft, newRegionTop, region.width, region.height);
+      
+      AppLogger.info('Adjusted crop region for rotated image', data: {
+        'originalRegionCenter': '${regionCenterX},${regionCenterY}',
+        'rotatedRegionCenter': '${rotatedRegionCenterX},${rotatedRegionCenterY}',
+        'newRegion': '${region.left},${region.top},${region.width}x${region.height}',
+      });
     }
-
-    AppLogger.info('Rotation and crop completed', data: {
-      'resultSize': '${result.width}x${result.height}',
+    
+    // 步骤4: 在变换后的图像上进行裁剪
+    AppLogger.info('Using crop region on transformed image', data: {
+      'region': '${region.left},${region.top},${region.width}x${region.height}',
+      'transformedImageSize': '${transformedImage.width}x${transformedImage.height}',
     });
 
+    // 确保裁剪区域在图像范围内
+    final clampedLeft = math.max(0, region.left).toInt();
+    final clampedTop = math.max(0, region.top).toInt();
+    final clampedRight = math.min(transformedImage.width.toDouble(), region.right).toInt();
+    final clampedBottom = math.min(transformedImage.height.toDouble(), region.bottom).toInt();
+    
+    if (clampedRight <= clampedLeft || clampedBottom <= clampedTop) {
+      AppLogger.warning('Invalid crop region after clamping');
+      // 返回一个最小的有效图像
+      return img.Image(width: 1, height: 1);
+    }
+    
+    final result = img.copyCrop(
+      transformedImage,
+      x: clampedLeft,
+      y: clampedTop,
+      width: clampedRight - clampedLeft,
+      height: clampedBottom - clampedTop,
+    );
+    
+    AppLogger.info('Final crop completed', data: {
+      'clampedRegion': '${clampedLeft},${clampedTop},${clampedRight - clampedLeft}x${clampedBottom - clampedTop}',
+      'resultSize': '${result.width}x${result.height}',
+    });
+    
     return result;
   }
 

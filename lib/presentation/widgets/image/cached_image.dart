@@ -14,6 +14,9 @@ class CachedImage extends ConsumerStatefulWidget {
   /// How the image should be inscribed into the box
   final BoxFit? fit;
 
+  /// How the image should be aligned within its bounds
+  final Alignment? alignment;
+
   /// Width of the image
   final double? width;
 
@@ -31,6 +34,7 @@ class CachedImage extends ConsumerStatefulWidget {
     super.key,
     required this.path,
     this.fit,
+    this.alignment,
     this.width,
     this.height,
     this.errorBuilder,
@@ -60,6 +64,7 @@ class _CachedImageState extends ConsumerState<CachedImage> {
     return Image(
       image: _imageProvider!,
       fit: widget.fit,
+      alignment: widget.alignment ?? Alignment.center,
       width: widget.width,
       height: widget.height,
       errorBuilder: widget.errorBuilder,

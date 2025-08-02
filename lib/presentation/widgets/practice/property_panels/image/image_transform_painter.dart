@@ -48,7 +48,7 @@ class ImageTransformPreviewPainter extends CustomPainter {
     final canvasRect = Rect.fromLTWH(0, 0, size.width, size.height);
     canvas.drawRect(canvasRect, canvasBorderPaint);
 
-    // Calculate scale for image in canvas
+    // 计算原始图像在预览区域中的显示
     final scaleX = size.width / imageSize.width;
     final scaleY = size.height / imageSize.height;
     final scale = math.min(scaleX, scaleY);
@@ -59,76 +59,77 @@ class ImageTransformPreviewPainter extends CustomPainter {
     final offsetX = (size.width - scaledImageWidth) / 2;
     final offsetY = (size.height - scaledImageHeight) / 2;
 
-    final actualImageRect =
-        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+    final imageRect = Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
 
-    // Draw image area border
+    // 保存画布状态用于图像变换
+    canvas.save();
+
+    // 如果有旋转，围绕图像中心旋转整个图像显示
+    if (contentRotation != 0) {
+      final imageCenterX = imageRect.center.dx;
+      final imageCenterY = imageRect.center.dy;
+      
+      canvas.translate(imageCenterX, imageCenterY);
+      canvas.rotate(contentRotation * (math.pi / 180.0));
+      canvas.translate(-imageCenterX, -imageCenterY);
+    }
+
+    // 应用翻转变换
+    if (flipHorizontal || flipVertical) {
+      final imageCenterX = imageRect.center.dx;
+      final imageCenterY = imageRect.center.dy;
+      
+      canvas.translate(imageCenterX, imageCenterY);
+      canvas.scale(
+        flipHorizontal ? -1.0 : 1.0, 
+        flipVertical ? -1.0 : 1.0
+      );
+      canvas.translate(-imageCenterX, -imageCenterY);
+    }
+
+    // Draw image area border (representing the transformed image)
     final imageBorderPaint = Paint()
       ..color = colorScheme.tertiary.withAlpha(150)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    canvas.drawRect(actualImageRect, imageBorderPaint);
+    canvas.drawRect(imageRect, imageBorderPaint);
 
-    // Calculate crop area
-    final displayWidth = actualImageRect.width;
-    final displayHeight = actualImageRect.height;
+    // 恢复画布状态，这样裁剪区域不会跟着图像变换
+    canvas.restore();
 
-    final uiToDisplayScaleX = displayWidth / renderSize.width;
-    final uiToDisplayScaleY = displayHeight / renderSize.height;
+    // ===== 在正常坐标系下绘制裁剪区域 =====
+    
+    // 计算裁剪区域在原始图像坐标系中的位置
+    final cropX = cropLeft;
+    final cropY = cropTop;
+    final cropWidth = renderSize.width - cropLeft - cropRight;
+    final cropHeight = renderSize.height - cropTop - cropBottom;
 
-    final cropRectLeft = actualImageRect.left + (cropLeft * uiToDisplayScaleX);
-    final cropRectTop = actualImageRect.top + (cropTop * uiToDisplayScaleY);
-    final cropRectRight =
-        actualImageRect.right - (cropRight * uiToDisplayScaleX);
-    final cropRectBottom =
-        actualImageRect.bottom - (cropBottom * uiToDisplayScaleY);
+    // 将裁剪区域映射到显示坐标系（基于原始图像，不受变换影响）
+    final displayScaleX = scaledImageWidth / imageSize.width;
+    final displayScaleY = scaledImageHeight / imageSize.height;
 
-    final cropRect =
-        Rect.fromLTRB(cropRectLeft, cropRectTop, cropRectRight, cropRectBottom);
+    final displayCropRect = Rect.fromLTWH(
+      imageRect.left + (cropX * displayScaleX),
+      imageRect.top + (cropY * displayScaleY),
+      cropWidth * displayScaleX,
+      cropHeight * displayScaleY,
+    );
 
     // Only draw crop area if it's valid
-    if (cropRect.width > 0 && cropRect.height > 0) {
-      // Get center of crop area (for rotation)
-      final centerX = cropRect.center.dx;
-      final centerY = cropRect.center.dy;
-
-      // Create path for rotated crop area
-      Path rotatedCropPath = Path();
-
-      if (contentRotation != 0) {
-        final rotationRadians = contentRotation * (math.pi / 180.0);
-
-        final matrix4 = Matrix4.identity()
-          ..translate(centerX, centerY)
-          ..rotateZ(rotationRadians)
-          ..translate(-centerX, -centerY);
-
-        rotatedCropPath.addRect(cropRect);
-        rotatedCropPath = rotatedCropPath.transform(matrix4.storage);
-      } else {
-        rotatedCropPath.addRect(cropRect);
-      }
-
-      // Draw mask
+    if (displayCropRect.width > 0 && displayCropRect.height > 0) {
+      // Draw mask (everything outside crop area)
       final maskPaint = Paint()
         ..color = Colors.black.withAlpha(100)
         ..style = PaintingStyle.fill;
 
-      final maskPath = Path()..addRect(actualImageRect);
-      maskPath.addPath(rotatedCropPath, Offset.zero);
+      final maskPath = Path()..addRect(imageRect);
+      final cropPath = Path()..addRect(displayCropRect);
+      maskPath.addPath(cropPath, Offset.zero);
       maskPath.fillType = PathFillType.evenOdd;
 
       canvas.drawPath(maskPath, maskPaint);
-
-      // Draw crop area border and markers
-      canvas.save();
-
-      if (contentRotation != 0) {
-        canvas.translate(centerX, centerY);
-        canvas.rotate(contentRotation * (math.pi / 180.0));
-        canvas.translate(-centerX, -centerY);
-      }
 
       // Draw crop border
       final borderPaint = Paint()
@@ -136,7 +137,7 @@ class ImageTransformPreviewPainter extends CustomPainter {
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke;
 
-      canvas.drawRect(cropRect, borderPaint);
+      canvas.drawRect(displayCropRect, borderPaint);
 
       // Draw corner markers
       const cornerSize = 8.0;
@@ -146,29 +147,47 @@ class ImageTransformPreviewPainter extends CustomPainter {
 
       // Top-left corner
       canvas.drawRect(
-          Rect.fromLTWH(cropRect.left - cornerSize / 2,
-              cropRect.top - cornerSize / 2, cornerSize, cornerSize),
+          Rect.fromLTWH(displayCropRect.left - cornerSize / 2,
+              displayCropRect.top - cornerSize / 2, cornerSize, cornerSize),
           cornerPaint);
 
       // Top-right corner
       canvas.drawRect(
-          Rect.fromLTWH(cropRect.right - cornerSize / 2,
-              cropRect.top - cornerSize / 2, cornerSize, cornerSize),
+          Rect.fromLTWH(displayCropRect.right - cornerSize / 2,
+              displayCropRect.top - cornerSize / 2, cornerSize, cornerSize),
           cornerPaint);
 
       // Bottom-left corner
       canvas.drawRect(
-          Rect.fromLTWH(cropRect.left - cornerSize / 2,
-              cropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
+          Rect.fromLTWH(displayCropRect.left - cornerSize / 2,
+              displayCropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
           cornerPaint);
 
       // Bottom-right corner
       canvas.drawRect(
-          Rect.fromLTWH(cropRect.right - cornerSize / 2,
-              cropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
+          Rect.fromLTWH(displayCropRect.right - cornerSize / 2,
+              displayCropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
           cornerPaint);
-
-      canvas.restore();
+    }
+    
+    // 在右下角显示变换信息（在画布变换之外绘制，保持正常方向）
+    if (flipHorizontal || flipVertical || contentRotation != 0) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: 'H:${flipHorizontal ? "Y" : "N"} V:${flipVertical ? "Y" : "N"} R:${contentRotation.toStringAsFixed(0)}°',
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(size.width - textPainter.width - 4, size.height - textPainter.height - 4),
+      );
     }
   }
 

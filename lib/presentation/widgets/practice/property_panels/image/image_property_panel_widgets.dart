@@ -541,27 +541,44 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
               builder: (context, constraints) {
                 return Stack(
                   children: [
-                    // Original image display
+                    // Layer 1: Transformed image (background)
                     Positioned.fill(
                       child: ClipRect(
-                        child: Transform(
-                          transform: Matrix4.identity()
-                            ..scale(
-                              flipHorizontal ? -1.0 : 1.0,
-                              flipVertical ? -1.0 : 1.0,
+                        child: IgnorePointer(  // 防止变换后的图像接收触摸事件
+                          child: Transform(
+                            transform: Matrix4.identity()
+                              ..translate(constraints.maxWidth / 2, constraints.maxHeight / 2)
+                              ..rotateZ(contentRotation * (math.pi / 180.0))
+                              ..scale(
+                                flipHorizontal ? -1.0 : 1.0,
+                                flipVertical ? -1.0 : 1.0,
+                              )
+                              ..translate(-constraints.maxWidth / 2, -constraints.maxHeight / 2),
+                            child: _buildImageWithSizeListener(
+                              context: context,
+                              imageUrl: imageUrl,
+                              fitMode: _getFitMode(previewFitMode),
+                              onImageSizeAvailable: onImageSizeAvailable,
                             ),
-                          alignment: Alignment.center,
-                          child: _buildImageWithSizeListener(
-                            context: context,
-                            imageUrl: imageUrl,
-                            fitMode: _getFitMode(previewFitMode),
-                            onImageSizeAvailable: onImageSizeAvailable,
                           ),
                         ),
                       ),
                     ),
-
-                    // Interactive crop overlay
+                    
+                    // Layer 2: Normal image (invisible) for coordinate mapping
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.0,  // 完全透明，只用于坐标参考
+                        child: _buildImageWithSizeListener(
+                          context: context,
+                          imageUrl: imageUrl,
+                          fitMode: _getFitMode(previewFitMode),
+                          onImageSizeAvailable: (_, __) {}, // 避免重复调用
+                        ),
+                      ),
+                    ),
+                    
+                    // Layer 3: Crop overlay (在正常坐标系中，不应用旋转)
                     if (imageSize != null &&
                         renderSize != null &&
                         onCropChanged != null)
@@ -573,7 +590,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                           cropY: cropY,
                           cropWidth: cropWidth,
                           cropHeight: cropHeight,
-                          contentRotation: contentRotation,
+                          contentRotation: 0.0, // 强制设为0，不让裁剪框旋转
                           onCropChanged: onCropChanged!,
                           enabled: true,
                         ),
@@ -1134,5 +1151,170 @@ class ImagePropertyTransformPanel extends StatelessWidget {
       icon: Text(label),
       tooltip: label,
     );
+  }
+}
+
+/// 图像对齐方式面板
+class ImagePropertyAlignmentPanel extends StatelessWidget {
+  final String alignment;
+  final Function(String) onAlignmentChanged;
+
+  const ImagePropertyAlignmentPanel({
+    super.key,
+    required this.alignment,
+    required this.onAlignmentChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        title: Text('对齐方式'),
+        initiallyExpanded: false,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 紧凑的工具栏风格按钮组 - 3x3网格布局
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(6.0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 第一行：上对齐
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildCompactAlignmentButton(context, 'topLeft', Icons.north_west),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'topCenter', Icons.north),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'topRight', Icons.north_east),
+                          ],
+                        ),
+                        const SizedBox(height: 2.0),
+                        
+                        // 第二行：中对齐
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildCompactAlignmentButton(context, 'centerLeft', Icons.west),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'center', Icons.center_focus_strong),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'centerRight', Icons.east),
+                          ],
+                        ),
+                        const SizedBox(height: 2.0),
+                        
+                        // 第三行：下对齐
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildCompactAlignmentButton(context, 'bottomLeft', Icons.south_west),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'bottomCenter', Icons.south),
+                            const SizedBox(width: 2.0),
+                            _buildCompactAlignmentButton(context, 'bottomRight', Icons.south_east),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                
+                // 当前选择显示
+                Center(
+                  child: Text(
+                    _getAlignmentDisplayName(alignment),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactAlignmentButton(
+    BuildContext context, 
+    String alignmentValue, 
+    IconData icon,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isSelected = alignment == alignmentValue;
+
+    return Container(
+      width: 32.0,
+      height: 32.0,
+      decoration: BoxDecoration(
+        color: isSelected ? colorScheme.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(6.0),
+        border: isSelected ? null : Border.all(
+          color: colorScheme.outline.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6.0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6.0),
+          onTap: () => onAlignmentChanged(alignmentValue),
+          child: Tooltip(
+            message: _getAlignmentDisplayName(alignmentValue),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 14,
+                color: isSelected 
+                  ? colorScheme.onPrimary 
+                  : colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getAlignmentDisplayName(String alignment) {
+    switch (alignment) {
+      case 'topLeft': return '左上角';
+      case 'topCenter': return '顶部居中';
+      case 'topRight': return '右上角';
+      case 'centerLeft': return '左侧居中';
+      case 'center': return '中心';
+      case 'centerRight': return '右侧居中';
+      case 'bottomLeft': return '左下角';
+      case 'bottomCenter': return '底部居中';
+      case 'bottomRight': return '右下角';
+      default: return '未知';
+    }
   }
 }

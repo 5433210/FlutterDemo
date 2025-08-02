@@ -340,6 +340,7 @@ class ElementRenderers {
     final transformedImageUrl = content['transformedImageUrl'] as String?;
     final fitMode = content['fitMode'] as String? ?? 'contain';
     final backgroundColor = content['backgroundColor'] as String?;
+    final imageAlignment = content['alignment'] as String? ?? 'center';
 
     // 新增支持：直接存储图像数据
     final String? base64ImageData = content['base64ImageData'] as String?;
@@ -386,6 +387,7 @@ class ElementRenderers {
           child: _buildImageWidget(
             imageUrl: transformedImageUrl ?? imageUrl,
             fitMode: fitMode,
+            imageAlignment: imageAlignment,
             transformedImageData: transformedImageData,
             base64ImageData: base64ImageData,
             rawImageData: rawImageData,
@@ -511,17 +513,27 @@ class ElementRenderers {
   static Widget _buildImageWidget({
     required String imageUrl,
     required String fitMode,
+    required String imageAlignment,
     Uint8List? transformedImageData,
     Uint8List? rawImageData,
     String? base64ImageData,
   }) {
     final BoxFit fit = _getFitMode(fitMode);
+    final Alignment alignment = _getAlignment(imageAlignment);
+
+    // 添加调试日志以确认对齐设置
+    EditPageLogger.rendererDebug('图像对齐设置', data: {
+      'fitMode': fitMode,
+      'imageAlignment': imageAlignment,
+      'alignment': alignment.toString(),
+    });
 
     // 优先使用转换后的图像数据
     if (transformedImageData != null) {
       return Image.memory(
         transformedImageData,
         fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
@@ -536,6 +548,7 @@ class ElementRenderers {
       return Image.memory(
         rawImageData,
         fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
@@ -553,6 +566,7 @@ class ElementRenderers {
         return Image.memory(
           decodedBytes,
           fit: fit,
+          alignment: alignment,
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
@@ -580,6 +594,7 @@ class ElementRenderers {
       return CachedImage(
         path: filePath,
         fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
@@ -592,6 +607,7 @@ class ElementRenderers {
       return Image.network(
         imageUrl,
         fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
@@ -614,6 +630,32 @@ class ElementRenderers {
         return BoxFit.none;
       default:
         return BoxFit.contain;
+    }
+  }
+
+  /// 获取图片对齐方式
+  static Alignment _getAlignment(String alignment) {
+    switch (alignment) {
+      case 'topLeft':
+        return Alignment.topLeft;
+      case 'topCenter':
+        return Alignment.topCenter;
+      case 'topRight':
+        return Alignment.topRight;
+      case 'centerLeft':
+        return Alignment.centerLeft;
+      case 'center':
+        return Alignment.center;
+      case 'centerRight':
+        return Alignment.centerRight;
+      case 'bottomLeft':
+        return Alignment.bottomLeft;
+      case 'bottomCenter':
+        return Alignment.bottomCenter;
+      case 'bottomRight':
+        return Alignment.bottomRight;
+      default:
+        return Alignment.center;
     }
   }
 

@@ -116,6 +116,9 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
     // Fit mode
     final fitMode = content['fitMode'] as String? ?? 'contain';
+    
+    // Image alignment
+    final imageAlignment = content['alignment'] as String? ?? 'center';
 
     // Transform applied state
     final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
@@ -161,6 +164,12 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         ImagePropertyFitModePanel(
           fitMode: fitMode,
           onFitModeChanged: (mode) => updateContentProperty('fitMode', mode),
+        ),
+
+        // Image alignment section
+        ImagePropertyAlignmentPanel(
+          alignment: imageAlignment,
+          onAlignmentChanged: (alignment) => updateContentProperty('alignment', alignment),
         ),
 
         // Image preview section
