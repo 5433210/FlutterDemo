@@ -4424,4 +4424,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cropAdjustmentHint => 'Drag the selection box and control points in the preview above to adjust the crop area';
+
+  @override
+  String get binarizationProcessing => 'Binarization Processing';
+
+  @override
+  String get binarizationToggle => 'Binarization Toggle';
+
+  @override
+  String get binarizationParameters => 'Binarization Parameters';
+
+  @override
+  String get enableBinarization => 'Enable Binarization';
+
+  @override
+  String get binaryThreshold => 'Binary Threshold';
+
+  @override
+  String get noiseReductionToggle => 'Noise Reduction Toggle';
+
+  @override
+  String get noiseReductionLevel => 'Noise Reduction Level';
 }

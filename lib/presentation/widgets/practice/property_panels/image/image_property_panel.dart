@@ -120,6 +120,12 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     // Image alignment
     final imageAlignment = content['alignment'] as String? ?? 'center';
 
+    // Binarization properties
+    final isBinarizationEnabled = content['isBinarizationEnabled'] as bool? ?? false;
+    final binaryThreshold = (content['binaryThreshold'] as num?)?.toDouble() ?? 128.0;
+    final isNoiseReductionEnabled = content['isNoiseReductionEnabled'] as bool? ?? false;
+    final noiseReductionLevel = (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
+
     // Transform applied state
     final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
 
@@ -244,6 +250,15 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
               updateContentProperty('rotation', value),
           onApplyTransform: () => applyTransform(context),
           onResetTransform: () => resetTransform(context),
+        ),
+
+        // Binarization processing section
+        ImagePropertyBinarizationPanel(
+          isBinarizationEnabled: isBinarizationEnabled,
+          threshold: binaryThreshold,
+          isNoiseReductionEnabled: isNoiseReductionEnabled,
+          noiseReductionLevel: noiseReductionLevel,
+          onContentPropertyUpdate: updateContentProperty,
         ),
       ],
     );

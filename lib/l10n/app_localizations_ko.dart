@@ -4424,4 +4424,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get cropAdjustmentHint => '위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요';
+
+  @override
+  String get binarizationProcessing => '이진화 처리';
+
+  @override
+  String get binarizationToggle => '이진화 토글';
+
+  @override
+  String get binarizationParameters => '이진화 매개변수';
+
+  @override
+  String get enableBinarization => '이진화 활성화';
+
+  @override
+  String get binaryThreshold => '이진화 임계값';
+
+  @override
+  String get noiseReductionToggle => '노이즈 감소 토글';
+
+  @override
+  String get noiseReductionLevel => '노이즈 감소 레벨';
 }

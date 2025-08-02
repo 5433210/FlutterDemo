@@ -4424,6 +4424,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cropAdjustmentHint => '在上方预览图中拖动选框和控制点来调整裁剪区域';
+
+  @override
+  String get binarizationProcessing => '二值化处理';
+
+  @override
+  String get binarizationToggle => '二值化开关';
+
+  @override
+  String get binarizationParameters => '二值化参数';
+
+  @override
+  String get enableBinarization => '启用二值化';
+
+  @override
+  String get binaryThreshold => '二值化阈值';
+
+  @override
+  String get noiseReductionToggle => '降噪开关';
+
+  @override
+  String get noiseReductionLevel => '降噪强度';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8846,4 +8867,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get cropAdjustmentHint => '在上方預覽圖中拖拉選取框和控制點來調整裁剪區域';
+
+  @override
+  String get binarizationProcessing => '二值化處理';
+
+  @override
+  String get binarizationToggle => '二值化開關';
+
+  @override
+  String get binarizationParameters => '二值化參數';
+
+  @override
+  String get enableBinarization => '啟用二值化';
+
+  @override
+  String get binaryThreshold => '二值化閾值';
+
+  @override
+  String get noiseReductionToggle => '降噪開關';
+
+  @override
+  String get noiseReductionLevel => '降噪強度';
 }

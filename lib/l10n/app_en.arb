@@ -1377,5 +1377,12 @@
   "bottomCenter": "Bottom Center",
   "bottomRight": "Bottom Right",
   "alignmentCenter": "Center",
-  "cropAdjustmentHint": "Drag the selection box and control points in the preview above to adjust the crop area"
+  "cropAdjustmentHint": "Drag the selection box and control points in the preview above to adjust the crop area",
+  "binarizationProcessing": "Binarization Processing",
+  "binarizationToggle": "Binarization Toggle", 
+  "binarizationParameters": "Binarization Parameters",
+  "enableBinarization": "Enable Binarization",
+  "binaryThreshold": "Binary Threshold",
+  "noiseReductionToggle": "Noise Reduction Toggle",
+  "noiseReductionLevel": "Noise Reduction Level"
 }

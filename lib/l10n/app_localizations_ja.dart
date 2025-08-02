@@ -4424,4 +4424,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get cropAdjustmentHint => '上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください';
+
+  @override
+  String get binarizationProcessing => '二値化処理';
+
+  @override
+  String get binarizationToggle => '二値化切り替え';
+
+  @override
+  String get binarizationParameters => '二値化パラメータ';
+
+  @override
+  String get enableBinarization => '二値化を有効にする';
+
+  @override
+  String get binaryThreshold => '二値化しきい値';
+
+  @override
+  String get noiseReductionToggle => 'ノイズリダクション切り替え';
+
+  @override
+  String get noiseReductionLevel => 'ノイズリダクションレベル';
 }

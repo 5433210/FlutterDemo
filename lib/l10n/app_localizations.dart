@@ -8433,6 +8433,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'在上方预览图中拖动选框和控制点来调整裁剪区域'**
   String get cropAdjustmentHint;
+
+  /// No description provided for @binarizationProcessing.
+  ///
+  /// In zh, this message translates to:
+  /// **'二值化处理'**
+  String get binarizationProcessing;
+
+  /// No description provided for @binarizationToggle.
+  ///
+  /// In zh, this message translates to:
+  /// **'二值化开关'**
+  String get binarizationToggle;
+
+  /// No description provided for @binarizationParameters.
+  ///
+  /// In zh, this message translates to:
+  /// **'二值化参数'**
+  String get binarizationParameters;
+
+  /// No description provided for @enableBinarization.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用二值化'**
+  String get enableBinarization;
+
+  /// No description provided for @binaryThreshold.
+  ///
+  /// In zh, this message translates to:
+  /// **'二值化阈值'**
+  String get binaryThreshold;
+
+  /// No description provided for @noiseReductionToggle.
+  ///
+  /// In zh, this message translates to:
+  /// **'降噪开关'**
+  String get noiseReductionToggle;
+
+  /// No description provided for @noiseReductionLevel.
+  ///
+  /// In zh, this message translates to:
+  /// **'降噪强度'**
+  String get noiseReductionLevel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

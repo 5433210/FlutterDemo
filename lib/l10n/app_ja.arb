@@ -1387,5 +1387,12 @@
   "bottomCenter": "下中央",
   "bottomRight": "右下",
   "alignmentCenter": "中央",
-  "cropAdjustmentHint": "上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください"
+  "cropAdjustmentHint": "上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください",
+  "binarizationProcessing": "二値化処理",
+  "binarizationToggle": "二値化切り替え",
+  "binarizationParameters": "二値化パラメータ",
+  "enableBinarization": "二値化を有効にする",
+  "binaryThreshold": "二値化しきい値",
+  "noiseReductionToggle": "ノイズリダクション切り替え",
+  "noiseReductionLevel": "ノイズリダクションレベル"
 }

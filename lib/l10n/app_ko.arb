@@ -1387,5 +1387,12 @@
   "bottomCenter": "아래쪽 가운데",
   "bottomRight": "오른쪽 아래",
   "alignmentCenter": "가운데",
-  "cropAdjustmentHint": "위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요"
+  "cropAdjustmentHint": "위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요",
+  "binarizationProcessing": "이진화 처리",
+  "binarizationToggle": "이진화 토글",
+  "binarizationParameters": "이진화 매개변수",
+  "enableBinarization": "이진화 활성화",
+  "binaryThreshold": "이진화 임계값",
+  "noiseReductionToggle": "노이즈 감소 토글",
+  "noiseReductionLevel": "노이즈 감소 레벨"
 }

@@ -1455,3 +1455,192 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
     }
   }
 }
+
+/// 图像二值化处理面板
+class ImagePropertyBinarizationPanel extends StatelessWidget {
+  final bool isBinarizationEnabled;
+  final double threshold;
+  final bool isNoiseReductionEnabled; 
+  final double noiseReductionLevel;
+  final Function(String, dynamic) onContentPropertyUpdate;
+
+  const ImagePropertyBinarizationPanel({
+    super.key,
+    required this.isBinarizationEnabled,
+    required this.threshold,
+    required this.isNoiseReductionEnabled,
+    required this.noiseReductionLevel,
+    required this.onContentPropertyUpdate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
+          title: Text(l10n.binarizationProcessing),
+          initiallyExpanded: false,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 二值化开关
+                  Row(
+                    children: [
+                      Icon(Icons.tune, size: 16, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.enableBinarization,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Switch(
+                        value: isBinarizationEnabled,
+                        onChanged: (value) => onContentPropertyUpdate('isBinarizationEnabled', value),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 二值化参数组（仅在开关打开时启用）
+                  AnimatedOpacity(
+                    opacity: isBinarizationEnabled ? 1.0 : 0.5,
+                    duration: const Duration(milliseconds: 200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 二值化阈值
+                        Text(l10n.binaryThreshold,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8.0),
+                        
+                        Card(
+                          elevation: 0,
+                          color: colorScheme.surfaceContainerHighest,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              children: [
+                                Icon(Icons.contrast, size: 16, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 3,
+                                  child: Slider(
+                                    value: threshold.clamp(0.0, 255.0),
+                                    min: 0.0,
+                                    max: 255.0,
+                                    divisions: 255,
+                                    label: threshold.toStringAsFixed(0),
+                                    activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                    thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                    onChanged: isBinarizationEnabled ? (value) => onContentPropertyUpdate('binaryThreshold', value) : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 40,
+                                  child: Text(
+                                    threshold.toStringAsFixed(0),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isBinarizationEnabled ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withOpacity(0.38),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+
+                        // 降噪开关
+                        Row(
+                          children: [
+                            Icon(Icons.blur_on, size: 16, color: colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.noiseReductionToggle,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Switch(
+                              value: isNoiseReductionEnabled,
+                              onChanged: isBinarizationEnabled ? (value) => onContentPropertyUpdate('isNoiseReductionEnabled', value) : null,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8.0),
+
+                        // 降噪强度（仅在降噪开关打开时启用）
+                        AnimatedOpacity(
+                          opacity: (isBinarizationEnabled && isNoiseReductionEnabled) ? 1.0 : 0.5,
+                          duration: const Duration(milliseconds: 200),
+                          child: Card(
+                            elevation: 0,
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.tune, size: 16, color: colorScheme.onSurfaceVariant),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Slider(
+                                      value: noiseReductionLevel.clamp(0.0, 10.0),
+                                      min: 0.0,
+                                      max: 10.0,
+                                      divisions: 100,
+                                      label: noiseReductionLevel.toStringAsFixed(1),
+                                      activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                      thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                      onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) => onContentPropertyUpdate('noiseReductionLevel', value) : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  SizedBox(
+                                    width: 40,
+                                    child: Text(
+                                      noiseReductionLevel.toStringAsFixed(1),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withOpacity(0.38),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

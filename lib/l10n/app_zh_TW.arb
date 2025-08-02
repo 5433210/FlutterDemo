@@ -1387,5 +1387,12 @@
   "bottomCenter": "底部置中",
   "bottomRight": "右下角",
   "alignmentCenter": "中心",
-  "cropAdjustmentHint": "在上方預覽圖中拖拉選取框和控制點來調整裁剪區域"
+  "cropAdjustmentHint": "在上方預覽圖中拖拉選取框和控制點來調整裁剪區域",
+  "binarizationProcessing": "二值化處理",
+  "binarizationToggle": "二值化開關",
+  "binarizationParameters": "二值化參數",
+  "enableBinarization": "啟用二值化",
+  "binaryThreshold": "二值化閾值",
+  "noiseReductionToggle": "降噪開關",
+  "noiseReductionLevel": "降噪強度"
 }
