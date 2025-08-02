@@ -334,6 +334,10 @@ class ElementRenderers {
   /// 构建图片元素
   static Widget buildImageElement(Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
+    print('🔍 buildImageElement 被调用');
+    print('  - 元素ID: ${element['id']}');
+    print('  - isPreviewMode: $isPreviewMode');
+    
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
@@ -341,6 +345,9 @@ class ElementRenderers {
     final fitMode = content['fitMode'] as String? ?? 'contain';
     final backgroundColor = content['backgroundColor'] as String?;
     final imageAlignment = content['alignment'] as String? ?? 'center';
+
+    print('  - imageUrl: $imageUrl');
+    print('  - content keys: ${content.keys.toList()}');
 
     // 新增支持：直接存储图像数据
     final String? base64ImageData = content['base64ImageData'] as String?;
@@ -353,6 +360,50 @@ class ElementRenderers {
       transformedImageData = rawTransformedData;
     } else if (rawTransformedData is List<int>) {
       transformedImageData = Uint8List.fromList(rawTransformedData);
+    }
+
+    // 处理binarizedImageData，可能是Uint8List或List<int>
+    Uint8List? binarizedImageData;
+    final dynamic rawBinarizedData = content['binarizedImageData'];
+    
+    // 🔍 简化调试：检查二值化数据状态
+    print('🔍 渲染器 - 二值化数据检查:');
+    print('  - 数据类型: ${rawBinarizedData?.runtimeType}');
+    print('  - 数据存在: ${rawBinarizedData != null}');
+    print('  - isBinarizationEnabled: ${content['isBinarizationEnabled'] ?? false}');
+    
+    if (rawBinarizedData is Uint8List) {
+      binarizedImageData = rawBinarizedData;
+      print('  - ✅ 直接使用Uint8List: ${binarizedImageData.length} bytes');
+    } else if (rawBinarizedData is List<int>) {
+      binarizedImageData = Uint8List.fromList(rawBinarizedData);
+      print('  - ⚠️ 从List<int>转换: ${binarizedImageData.length} bytes');
+    } else if (rawBinarizedData is List) {
+      // 处理可能的List<dynamic>情况
+      try {
+        final intList = rawBinarizedData.cast<int>();
+        binarizedImageData = Uint8List.fromList(intList);
+        print('  - ⚠️ 从List<dynamic>转换: ${binarizedImageData.length} bytes');
+      } catch (e) {
+        print('  - ❌ List转换失败: $e');
+      }
+    } else if (rawBinarizedData != null) {
+      print('  - ❌ 未知数据类型，无法处理');
+    } else {
+      print('  - 💡 无二值化数据，将使用原始/变换图像');
+    }
+    
+    // 添加调试信息
+    if (binarizedImageData != null) {
+      EditPageLogger.rendererDebug('检测到二值化图像数据', data: {
+        'dataSize': binarizedImageData.length,
+        'imageUrl': imageUrl,
+      });
+    } else {
+      EditPageLogger.rendererDebug('未检测到二值化图像数据', data: {
+        'rawBinarizedData': rawBinarizedData?.toString(),
+        'imageUrl': imageUrl,
+      });
     } // 解析背景颜色
     Color? bgColor;
     if (backgroundColor != null && backgroundColor.isNotEmpty) {
@@ -367,7 +418,8 @@ class ElementRenderers {
     if (imageUrl.isEmpty &&
         base64ImageData == null &&
         rawImageData == null &&
-        transformedImageData == null) {
+        transformedImageData == null &&
+        binarizedImageData == null) {
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -375,7 +427,7 @@ class ElementRenderers {
         color: bgColor ?? Colors.grey.shade200,
         child: const Icon(Icons.image, size: 48, color: Colors.grey),
       );
-    } // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
+    } // 优先级：二值化图像数据 > 转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
     return Container(
         width: double.infinity,
         height: double.infinity,
@@ -388,6 +440,7 @@ class ElementRenderers {
             imageUrl: transformedImageUrl ?? imageUrl,
             fitMode: fitMode,
             imageAlignment: imageAlignment,
+            binarizedImageData: binarizedImageData,
             transformedImageData: transformedImageData,
             base64ImageData: base64ImageData,
             rawImageData: rawImageData,
@@ -514,6 +567,7 @@ class ElementRenderers {
     required String imageUrl,
     required String fitMode,
     required String imageAlignment,
+    Uint8List? binarizedImageData,
     Uint8List? transformedImageData,
     Uint8List? rawImageData,
     String? base64ImageData,
@@ -528,8 +582,45 @@ class ElementRenderers {
       'alignment': alignment.toString(),
     });
 
-    // 优先使用转换后的图像数据
+    // 优先使用二值化图像数据（处理管线的最终结果）
+    if (binarizedImageData != null) {
+      EditPageLogger.rendererDebug('🎯 使用二值化图像数据（黑白效果）', data: {
+        'dataSize': binarizedImageData.length,
+        'imageUrl': imageUrl,
+        'priority': 'highest'
+      });
+      
+      print('🎯 准备显示二值化图像 (${binarizedImageData.length} bytes)');
+      
+      return Image.memory(
+        binarizedImageData,
+        fit: fit,
+        alignment: alignment,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          EditPageLogger.rendererError('二值化图像显示失败', error: error);
+          print('❌ 二值化图像显示失败: $error');
+          return _buildImageErrorWidget('二值化图像显示失败');
+        },
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (frame != null) {
+            print('✅ 二值化图像已成功显示');
+          }
+          return child;
+        },
+      );
+    } else {
+      print('💡 没有二值化数据，使用原始/变换图像');
+    }
+
+    // 其次使用转换后的图像数据（中间处理结果）
     if (transformedImageData != null) {
+      EditPageLogger.rendererDebug('🔄 使用变换后图像数据（中间处理结果）', data: {
+        'dataSize': transformedImageData.length,
+        'imageUrl': imageUrl,
+        'priority': 'high'
+      });
       return Image.memory(
         transformedImageData,
         fit: fit,
@@ -543,8 +634,13 @@ class ElementRenderers {
       );
     }
 
-    // 其次使用原始图像数据（raw形式）
+    // 其次使用原始图像数据（raw形式，原始数据）
     if (rawImageData != null) {
+      EditPageLogger.rendererDebug('📁 使用原始RAW图像数据', data: {
+        'dataSize': rawImageData.length,
+        'imageUrl': imageUrl,
+        'priority': 'medium'
+      });
       return Image.memory(
         rawImageData,
         fit: fit,
@@ -558,8 +654,13 @@ class ElementRenderers {
       );
     }
 
-    // 再次使用Base64编码的图像数据
+    // 再次使用Base64编码的图像数据（原始数据）
     if (base64ImageData != null && base64ImageData.isNotEmpty) {
+      EditPageLogger.rendererDebug('📄 使用Base64图像数据', data: {
+        'dataLength': base64ImageData.length,
+        'imageUrl': imageUrl,
+        'priority': 'low'
+      });
       try {
         // 解码Base64数据为二进制
         final Uint8List decodedBytes = base64Decode(base64ImageData);
@@ -580,13 +681,21 @@ class ElementRenderers {
       }
     }
 
-    // 最后使用URL（文件或网络）
+    // 最后使用URL（文件或网络，原始来源）
     if (imageUrl.isEmpty) {
+      EditPageLogger.rendererDebug('❌ 没有可用的图像数据', data: {
+        'imageUrl': imageUrl,
+        'priority': 'none'
+      });
       return _buildImageErrorWidget('没有可用的图像数据');
     }
 
-    // 检查是否是本地文件路径
+    // 检查是否是本地文件路径（原始来源）
     if (imageUrl.startsWith('file://')) {
+      EditPageLogger.rendererDebug('🗂️ 使用本地文件URL', data: {
+        'imageUrl': imageUrl,
+        'priority': 'lowest'
+      });
       // 提取文件路径（去掉file://前缀）
       final filePath = imageUrl.substring(7);
 
@@ -603,6 +712,10 @@ class ElementRenderers {
         },
       );
     } else {
+      EditPageLogger.rendererDebug('🌐 使用网络图片URL', data: {
+        'imageUrl': imageUrl,
+        'priority': 'lowest'
+      });
       // 使用网络图片加载
       return Image.network(
         imageUrl,

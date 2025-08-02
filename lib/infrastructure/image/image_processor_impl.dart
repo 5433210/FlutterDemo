@@ -158,23 +158,48 @@ class ImageProcessorImpl implements ImageProcessor {
   @override
   img.Image binarizeImage(
       img.Image source, double threshold, bool invertColors) {
+    print('🎯 开始二值化处理');
+    print('  - 输入图像: ${source.width}x${source.height}');
+    print('  - 阈值: $threshold');
+    print('  - 反转颜色: $invertColors');
+    
     final gray = img.grayscale(source);
-
+    print('  - 灰度化完成');
+    
+    // 🔍 调试：采样原始图像的像素值
+    final originalSamples = <int>[];
+    final processedSamples = <int>[];
+    
     for (int y = 0; y < gray.height; y++) {
       for (int x = 0; x < gray.width; x++) {
         final pixel = gray.getPixel(x, y);
         final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
-        gray.setPixel(
-          x,
-          y,
-          luminance > threshold
-              ? img.ColorRgb8(255, 255, 255)
-              : img.ColorRgb8(0, 0, 0),
-        );
+        
+        // 采样部分像素用于调试
+        if (originalSamples.length < 10 && (x + y) % (gray.width ~/ 5) == 0) {
+          originalSamples.add(luminance.toInt());
+        }
+        
+        final newColor = luminance > threshold
+            ? img.ColorRgb8(255, 255, 255)
+            : img.ColorRgb8(0, 0, 0);
+            
+        gray.setPixel(x, y, newColor);
+        
+        // 采样处理后的像素
+        if (processedSamples.length < 10 && (x + y) % (gray.width ~/ 5) == 0) {
+          processedSamples.add(newColor.r.toInt());
+        }
       }
     }
+    
+    print('  - 原始亮度采样: ${originalSamples.join(', ')}');
+    print('  - 处理后采样: ${processedSamples.join(', ')}');
 
-    return invertColors ? img.invert(gray) : gray;
+    final result = invertColors ? img.invert(gray) : gray;
+    print('  - 二值化处理完成，反转: $invertColors');
+    
+    return result;
   }
 
   @override

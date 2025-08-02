@@ -182,6 +182,12 @@ mixin ElementManagementMixin on ChangeNotifier
         'imageUrl': imageUrl,
         'fit': 'contain',
         'aspectRatio': 1.0,
+        // 二值化相关属性的默认值
+        'isBinarizationEnabled': false,
+        'binaryThreshold': 128.0,
+        'isNoiseReductionEnabled': false,
+        'noiseReductionLevel': 3.0,
+        'binarizedImageData': null,
       },
     };
 
@@ -208,6 +214,12 @@ mixin ElementManagementMixin on ChangeNotifier
         'imageUrl': imageUrl,
         'fit': 'contain',
         'aspectRatio': 1.0,
+        // 二值化相关属性的默认值
+        'isBinarizationEnabled': false,
+        'binaryThreshold': 128.0,
+        'isNoiseReductionEnabled': false,
+        'noiseReductionLevel': 3.0,
+        'binarizedImageData': null,
       },
     };
 
@@ -736,10 +748,68 @@ mixin ElementManagementMixin on ChangeNotifier
       properties.forEach((key, value) {
         if (key == 'content' && element.containsKey('content')) {
           // 对于content对象，合并而不是替换
-          newProperties['content'] = {
-            ...(element['content'] as Map<String, dynamic>),
-            ...(value as Map<String, dynamic>),
-          };
+          print('🔍 element_management_mixin - 合并content');
+          print('  - 原始content keys: ${(element['content'] as Map<String, dynamic>).keys.toList()}');
+          print('  - 新content keys: ${(value as Map<String, dynamic>).keys.toList()}');
+          
+          final originalContent = element['content'] as Map<String, dynamic>;
+          final newContent = value as Map<String, dynamic>;
+          
+          // 检查binarizedImageData
+          if (originalContent.containsKey('binarizedImageData')) {
+            print('  - 原始content[binarizedImageData]: ${originalContent['binarizedImageData']?.runtimeType}');
+          }
+          if (newContent.containsKey('binarizedImageData')) {
+            print('  - 新content[binarizedImageData]: ${newContent['binarizedImageData']?.runtimeType}');
+            if (newContent['binarizedImageData'] is List<int>) {
+              print('  - List<int>大小: ${(newContent['binarizedImageData'] as List<int>).length}');
+            }
+          } else {
+            print('  - 新content中没有binarizedImageData，将从合并结果中移除');
+          }
+          
+          // 🔧 修复合并逻辑：当新content中删除了某个键时，确保从合并结果中也删除该键
+          final mergedContent = Map<String, dynamic>.from(originalContent);
+          
+          // 添加或更新新content中的所有键值
+          newContent.forEach((k, v) {
+            mergedContent[k] = v;
+          });
+          
+          // 🔧 关键修复：检查是否有键在新content中被明确删除（通过特殊标记或缺失来判断）
+          // 如果原始content有binarizedImageData，但新content没有，则明确删除它
+          if (originalContent.containsKey('binarizedImageData') && !newContent.containsKey('binarizedImageData')) {
+            print('  - 🗑️ 明确删除binarizedImageData（新content中已移除）');
+            mergedContent.remove('binarizedImageData');
+          }
+          
+          // 🔧 关键修复：检查transformedImageData的删除情况
+          if (originalContent.containsKey('transformedImageData') && !newContent.containsKey('transformedImageData')) {
+            print('  - 🗑️ 明确删除transformedImageData（新content中已移除）');
+            mergedContent.remove('transformedImageData');
+          }
+          
+          // 🔧 关键修复：检查其他变换相关数据的删除情况
+          final transformKeys = ['transformedImageUrl', 'transformRect', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight'];
+          for (final key in transformKeys) {
+            if (originalContent.containsKey(key) && !newContent.containsKey(key)) {
+              print('  - 🗑️ 明确删除$key（新content中已移除）');
+              mergedContent.remove(key);
+            }
+          }
+          
+          newProperties['content'] = mergedContent;
+          
+          // 检查合并后的结果
+          print('  - 合并后content keys: ${mergedContent.keys.toList()}');
+          if (mergedContent.containsKey('binarizedImageData')) {
+            print('  - 合并后content[binarizedImageData]: ${mergedContent['binarizedImageData']?.runtimeType}');
+            if (mergedContent['binarizedImageData'] is List<int>) {
+              print('  - 合并后List<int>大小: ${(mergedContent['binarizedImageData'] as List<int>).length}');
+            }
+          } else {
+            print('  - 💡 合并后binarizedImageData已被成功移除');
+          }
         } else {
           newProperties[key] = value;
         }

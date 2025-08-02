@@ -209,11 +209,21 @@ mixin ImagePropertyUpdaters {
   }
 
   /// 更新内容属性
-  void updateContentProperty(String key, dynamic value) {
+  void updateContentProperty(String key, dynamic value, {bool createUndoOperation = true}) {
+    print('🔍 updateContentProperty 被调用');
+    print('  - key: $key');
+    print('  - value: $value');
+    print('  - createUndoOperation: $createUndoOperation');
+    
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+    
+    print('  - 更新前 content[$key]: ${content[key]}');
     content[key] = value;
-    updateProperty('content', content);
+    print('  - 更新后 content[$key]: ${content[key]}');
+    
+    updateProperty('content', content, createUndoOperation: createUndoOperation);
+    print('  - updateProperty 已调用');
   }
 
   /// 更新裁剪值

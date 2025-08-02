@@ -11,6 +11,7 @@ import '../../../../../application/providers/service_providers.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
+import 'image_binarization_handler.dart';
 
 /// 图像变换处理器混合类
 mixin ImageTransformHandler {
@@ -164,6 +165,12 @@ mixin ImageTransformHandler {
 
           if (context.mounted) {
             updateProperty('content', content);
+            
+            // 🔑 关键改进：变换完成后，检查是否需要重新进行二值化处理
+            if (this is ImageBinarizationHandler) {
+              await (this as ImageBinarizationHandler).triggerBinarizationIfEnabled();
+            }
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),

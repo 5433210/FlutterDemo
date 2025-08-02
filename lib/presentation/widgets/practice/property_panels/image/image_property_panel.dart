@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../practice_edit_controller.dart';
 import '../m3_element_common_property_panel.dart';
 import '../m3_layer_info_panel.dart';
+import 'image_processing_pipeline.dart';
 import 'image_property_panel_mixins.dart';
 import 'image_property_panel_widgets.dart';
 import 'image_selection_handler.dart';
-import 'image_transform_handler.dart';
 
 /// Material 3 图像属性面板组件
 class M3ImagePropertyPanel extends StatefulWidget {
@@ -35,7 +35,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         ImagePropertyAccessors,
         ImagePropertyUpdaters,
         ImageSelectionHandler,
-        ImageTransformHandler {
+        ImageProcessingPipeline {
   // 内部状态
   late final ValueNotifier<bool> _isImageLoadedNotifier;
   bool _isImporting = false;
@@ -120,11 +120,32 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     // Image alignment
     final imageAlignment = content['alignment'] as String? ?? 'center';
 
-    // Binarization properties
+    // Binarization properties - 确保现有元素有正确的默认值
     final isBinarizationEnabled = content['isBinarizationEnabled'] as bool? ?? false;
     final binaryThreshold = (content['binaryThreshold'] as num?)?.toDouble() ?? 128.0;
     final isNoiseReductionEnabled = content['isNoiseReductionEnabled'] as bool? ?? false;
     final noiseReductionLevel = (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
+
+    // 🔧 修复：如果现有元素缺少二值化属性，则添加默认值
+    if (!content.containsKey('isBinarizationEnabled')) {
+      content['isBinarizationEnabled'] = false;
+      content['binaryThreshold'] = 128.0;
+      content['isNoiseReductionEnabled'] = false;
+      content['noiseReductionLevel'] = 3.0;
+      content['binarizedImageData'] = null;
+      
+      // 立即更新元素数据以确保持久化
+      updateProperty('content', content, createUndoOperation: false);
+      
+      print('🔧 已为现有图像元素添加二值化默认属性');
+    }
+
+    // 🔍 调试日志：检查二值化开关状态
+    print('=== 二值化属性调试 ===');
+    print('isBinarizationEnabled: $isBinarizationEnabled');
+    print('content[isBinarizationEnabled]: ${content['isBinarizationEnabled']}');
+    print('element id: ${element['id']}');
+    print('=== 调试结束 ===');
 
     // Transform applied state
     final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
@@ -245,9 +266,18 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           flipHorizontal: isFlippedHorizontally,
           flipVertical: isFlippedVertically,
           contentRotation: contentRotation,
-          onFlipChanged: updateContentProperty,
-          onRotationChanged: (value) =>
-              updateContentProperty('rotation', value),
+          onFlipChanged: (key, value) {
+            print('🔍 翻转参数变化: $key = $value');
+            // 🔧 修复：只更新属性，不立即执行处理管线
+            // 用户需要点击"应用变换"按钮才会应用变换
+            updateContentProperty(key, value, createUndoOperation: false);
+          },
+          onRotationChanged: (value) {
+            print('🔍 旋转参数变化: rotation = $value');
+            // 🔧 修复：只更新属性，不立即执行处理管线
+            // 用户需要点击"应用变换"按钮才会应用变换
+            updateContentProperty('rotation', value, createUndoOperation: false);
+          },
           onApplyTransform: () => applyTransform(context),
           onResetTransform: () => resetTransform(context),
         ),
@@ -259,6 +289,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           isNoiseReductionEnabled: isNoiseReductionEnabled,
           noiseReductionLevel: noiseReductionLevel,
           onContentPropertyUpdate: updateContentProperty,
+          onBinarizationToggle: handleBinarizationToggle,
+          onBinarizationParameterChange: handleBinarizationParameterChange,
         ),
       ],
     );

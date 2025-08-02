@@ -1463,6 +1463,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
   final bool isNoiseReductionEnabled; 
   final double noiseReductionLevel;
   final Function(String, dynamic) onContentPropertyUpdate;
+  final Function(bool) onBinarizationToggle;
+  final Function(String, dynamic) onBinarizationParameterChange;
 
   const ImagePropertyBinarizationPanel({
     super.key,
@@ -1471,6 +1473,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
     required this.isNoiseReductionEnabled,
     required this.noiseReductionLevel,
     required this.onContentPropertyUpdate,
+    required this.onBinarizationToggle,
+    required this.onBinarizationParameterChange,
   });
 
   @override
@@ -1512,7 +1516,16 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                       ),
                       Switch(
                         value: isBinarizationEnabled,
-                        onChanged: (value) => onContentPropertyUpdate('isBinarizationEnabled', value),
+                        onChanged: (value) {
+                          print('🔍 二值化开关被点击');
+                          print('  - 当前值: $isBinarizationEnabled');
+                          print('  - 新值: $value');
+                          
+                          // 只调用 onBinarizationToggle，它会处理所有必要的属性更新
+                          onBinarizationToggle(value);
+                          
+                          print('  - onBinarizationToggle 已调用');
+                        },
                       ),
                     ],
                   ),
@@ -1549,7 +1562,14 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     label: threshold.toStringAsFixed(0),
                                     activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                     thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
-                                    onChanged: isBinarizationEnabled ? (value) => onContentPropertyUpdate('binaryThreshold', value) : null,
+                                    onChanged: isBinarizationEnabled ? (value) {
+                                      // 拖拽过程中只更新属性值，不触发图像处理
+                                      onContentPropertyUpdate('binaryThreshold', value);
+                                    } : null,
+                                    onChangeEnd: isBinarizationEnabled ? (value) {
+                                      // 滑块释放时才触发图像处理
+                                      onBinarizationParameterChange('binaryThreshold', value);
+                                    } : null,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1583,7 +1603,10 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                             ),
                             Switch(
                               value: isNoiseReductionEnabled,
-                              onChanged: isBinarizationEnabled ? (value) => onContentPropertyUpdate('isNoiseReductionEnabled', value) : null,
+                              onChanged: isBinarizationEnabled ? (value) {
+                                onContentPropertyUpdate('isNoiseReductionEnabled', value);
+                                onBinarizationParameterChange('isNoiseReductionEnabled', value);
+                              } : null,
                             ),
                           ],
                         ),
@@ -1612,7 +1635,14 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                       label: noiseReductionLevel.toStringAsFixed(1),
                                       activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                       thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
-                                      onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) => onContentPropertyUpdate('noiseReductionLevel', value) : null,
+                                      onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
+                                        // 拖拽过程中只更新属性值，不触发图像处理
+                                        onContentPropertyUpdate('noiseReductionLevel', value);
+                                      } : null,
+                                      onChangeEnd: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
+                                        // 滑块释放时才触发图像处理
+                                        onBinarizationParameterChange('noiseReductionLevel', value);
+                                      } : null,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
