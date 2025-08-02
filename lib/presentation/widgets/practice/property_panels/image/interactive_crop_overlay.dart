@@ -1,16 +1,21 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
+import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../utils/config/edit_page_logging_config.dart';
 
 /// Interactive crop selection overlay with 8 control points
 class InteractiveCropOverlay extends StatefulWidget {
   final Size imageSize;
   final Size renderSize;
-  final double cropX;       // Left edge of crop area in pixels
-  final double cropY;       // Top edge of crop area in pixels  
-  final double cropWidth;   // Width of crop area in pixels
-  final double cropHeight;  // Height of crop area in pixels
+  final double cropX; // Left edge of crop area in pixels
+  final double cropY; // Top edge of crop area in pixels
+  final double cropWidth; // Width of crop area in pixels
+  final double cropHeight; // Height of crop area in pixels
   final double contentRotation; // Rotation angle in degrees
-  final Function(double, double, double, double) onCropChanged; // (x, y, width, height)
+  final Function(double, double, double, double, {bool isDragging})
+      onCropChanged; // (x, y, width, height, isDragging)
   final bool enabled;
 
   const InteractiveCropOverlay({
@@ -35,10 +40,9 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
   late double _currentCropY;
   late double _currentCropWidth;
   late double _currentCropHeight;
-  
+
   _DragHandle? _activeDragHandle;
   Offset? _lastPanPosition;
-  bool _isDragging = false;  // 添加拖动状态标识
 
   @override
   void initState() {
@@ -49,13 +53,52 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
   @override
   void didUpdateWidget(InteractiveCropOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 只有在不处于拖动状态时才更新本地状态
-    if (!_isDragging &&
-        (oldWidget.cropX != widget.cropX ||
+
+    EditPageLogger.propertyPanelDebug(
+      'InteractiveCropOverlay didUpdateWidget',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'oldValues': {
+          'cropX': oldWidget.cropX.toStringAsFixed(1),
+          'cropY': oldWidget.cropY.toStringAsFixed(1),
+          'cropWidth': oldWidget.cropWidth.toStringAsFixed(1),
+          'cropHeight': oldWidget.cropHeight.toStringAsFixed(1),
+        },
+        'newValues': {
+          'cropX': widget.cropX.toStringAsFixed(1),
+          'cropY': widget.cropY.toStringAsFixed(1),
+          'cropWidth': widget.cropWidth.toStringAsFixed(1),
+          'cropHeight': widget.cropHeight.toStringAsFixed(1),
+        },
+        'hasChanged': oldWidget.cropX != widget.cropX ||
+            oldWidget.cropY != widget.cropY ||
+            oldWidget.cropWidth != widget.cropWidth ||
+            oldWidget.cropHeight != widget.cropHeight,
+      },
+    );
+
+    // 始终更新本地状态以确保同步
+    if (oldWidget.cropX != widget.cropX ||
         oldWidget.cropY != widget.cropY ||
         oldWidget.cropWidth != widget.cropWidth ||
-        oldWidget.cropHeight != widget.cropHeight)) {
+        oldWidget.cropHeight != widget.cropHeight) {
+      print('=== 检测到外部状态变化，更新本地状态 ===');
+      print(
+          '变化: cropX ${oldWidget.cropX.toStringAsFixed(1)} -> ${widget.cropX.toStringAsFixed(1)}');
+      print(
+          '变化: cropY ${oldWidget.cropY.toStringAsFixed(1)} -> ${widget.cropY.toStringAsFixed(1)}');
+      print(
+          '变化: cropWidth ${oldWidget.cropWidth.toStringAsFixed(1)} -> ${widget.cropWidth.toStringAsFixed(1)}');
+      print(
+          '变化: cropHeight ${oldWidget.cropHeight.toStringAsFixed(1)} -> ${widget.cropHeight.toStringAsFixed(1)}');
+
       _updateCurrentCropValues();
+
+      print('更新后本地状态:');
+      print('_currentCropX: ${_currentCropX.toStringAsFixed(1)}');
+      print('_currentCropY: ${_currentCropY.toStringAsFixed(1)}');
+      print('_currentCropWidth: ${_currentCropWidth.toStringAsFixed(1)}');
+      print('_currentCropHeight: ${_currentCropHeight.toStringAsFixed(1)}');
     }
   }
 
@@ -104,9 +147,9 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
 
   void _onPanStart(DragStartDetails details) {
     final containerSize = context.size!;
-    _activeDragHandle = _getHandleAtPosition(details.localPosition, containerSize);
+    _activeDragHandle =
+        _getHandleAtPosition(details.localPosition, containerSize);
     _lastPanPosition = details.localPosition;
-    _isDragging = true;  // 设置拖动状态
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -116,29 +159,108 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     final delta = details.localPosition - _lastPanPosition!;
     _lastPanPosition = details.localPosition;
 
+    // 记录拖拽前的值
+    final oldCropX = _currentCropX;
+    final oldCropY = _currentCropY;
+    final oldCropWidth = _currentCropWidth;
+    final oldCropHeight = _currentCropHeight;
+
     _updateCropFromDrag(_activeDragHandle!, delta, containerSize);
-    
-    // 实时更新父组件状态
+
+    // 记录拖拽后的值变化
+    EditPageLogger.propertyPanelDebug(
+      '裁剪拖拽更新',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'handle': _activeDragHandle.toString(),
+        'delta':
+            '${delta.dx.toStringAsFixed(2)}, ${delta.dy.toStringAsFixed(2)}',
+        'before': {
+          'x': oldCropX.toStringAsFixed(1),
+          'y': oldCropY.toStringAsFixed(1),
+          'width': oldCropWidth.toStringAsFixed(1),
+          'height': oldCropHeight.toStringAsFixed(1),
+        },
+        'after': {
+          'x': _currentCropX.toStringAsFixed(1),
+          'y': _currentCropY.toStringAsFixed(1),
+          'width': _currentCropWidth.toStringAsFixed(1),
+          'height': _currentCropHeight.toStringAsFixed(1),
+        },
+        'containerSize':
+            '${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}',
+      },
+    );
+
+    // 实时更新父组件状态 - 标记为拖动中
+    EditPageLogger.propertyPanelDebug(
+      '调用 onCropChanged (拖拽中)',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'x': _currentCropX.toStringAsFixed(1),
+        'y': _currentCropY.toStringAsFixed(1),
+        'width': _currentCropWidth.toStringAsFixed(1),
+        'height': _currentCropHeight.toStringAsFixed(1),
+        'isDragging': true,
+      },
+    );
+
     widget.onCropChanged(
       _currentCropX,
       _currentCropY,
       _currentCropWidth,
       _currentCropHeight,
+      isDragging: true,
     );
   }
 
   void _onPanEnd(DragEndDetails details) {
+    EditPageLogger.propertyPanelDebug(
+      '拖拽结束',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'handle': _activeDragHandle.toString(),
+        'finalValues': {
+          'x': _currentCropX.toStringAsFixed(1),
+          'y': _currentCropY.toStringAsFixed(1),
+          'width': _currentCropWidth.toStringAsFixed(1),
+          'height': _currentCropHeight.toStringAsFixed(1),
+        },
+      },
+    );
+
     _activeDragHandle = null;
     _lastPanPosition = null;
-    _isDragging = false;  // 清除拖动状态
-    
-    // 最终确认更新父组件状态
+
+    // 最终确认更新父组件状态 - 标记为拖动结束
+    EditPageLogger.propertyPanelDebug(
+      '调用 onCropChanged (拖拽结束)',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'x': _currentCropX.toStringAsFixed(1),
+        'y': _currentCropY.toStringAsFixed(1),
+        'width': _currentCropWidth.toStringAsFixed(1),
+        'height': _currentCropHeight.toStringAsFixed(1),
+        'isDragging': false,
+      },
+    );
+
     widget.onCropChanged(
       _currentCropX,
       _currentCropY,
       _currentCropWidth,
       _currentCropHeight,
+      isDragging: false,
     );
+
+    // 确保下一帧后同步状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          // 强制重建以同步状态
+        });
+      }
+    });
   }
 
   _DragHandle? _getHandleAtPosition(Offset position, Size containerSize) {
@@ -158,14 +280,15 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         offsetY + scaledImageHeight / 2,
       );
 
-      final rotationRadians = -widget.contentRotation * math.pi / 180; // Inverse rotation
-      
+      final rotationRadians =
+          -widget.contentRotation * math.pi / 180; // Inverse rotation
+
       // Translate to origin (image center)
       final translatedPosition = Offset(
         position.dx - imageCenter.dx,
         position.dy - imageCenter.dy,
       );
-      
+
       // Apply inverse rotation
       final cos = math.cos(rotationRadians);
       final sin = math.sin(rotationRadians);
@@ -173,7 +296,7 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         translatedPosition.dx * cos - translatedPosition.dy * sin,
         translatedPosition.dx * sin + translatedPosition.dy * cos,
       );
-      
+
       // Translate back
       adjustedPosition = Offset(
         rotatedPosition.dx + imageCenter.dx,
@@ -182,11 +305,37 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     }
 
     final cropRect = _calculateCropRect(containerSize);
-    const handleSize = 12.0;
-    
+    const handleSize = 16.0; // 增加句柄大小以便更容易点击
+
     final handles = _getHandlePositions(cropRect);
-    
+
+    // 首先检测句柄，角落句柄优先级更高
+    final cornerHandles = [
+      _DragHandle.topLeft,
+      _DragHandle.topRight,
+      _DragHandle.bottomLeft,
+      _DragHandle.bottomRight,
+    ];
+
+    // 优先检测角落句柄
+    for (final handleType in cornerHandles) {
+      final handleCenter = handles[handleType];
+      if (handleCenter != null) {
+        final handleRect = Rect.fromCenter(
+          center: handleCenter,
+          width: handleSize,
+          height: handleSize,
+        );
+        if (handleRect.contains(adjustedPosition)) {
+          return handleType;
+        }
+      }
+    }
+
+    // 然后检测边缘句柄
     for (final entry in handles.entries) {
+      if (cornerHandles.contains(entry.key)) continue; // 跳过已检测的角落句柄
+
       final handleRect = Rect.fromCenter(
         center: entry.value,
         width: handleSize,
@@ -230,7 +379,8 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     final offsetX = (containerSize.width - scaledImageWidth) / 2;
     final offsetY = (containerSize.height - scaledImageHeight) / 2;
 
-    final imageRect = Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+    final imageRect =
+        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
 
     // Convert crop coordinates from image pixels to display coordinates
     // Scale factor: display pixels per image pixel
@@ -247,16 +397,16 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     if (widget.contentRotation != 0.0) {
       final rotationRadians = widget.contentRotation * math.pi / 180;
       final imageCenter = imageRect.center;
-      
+
       // Calculate the rotated crop rectangle corners
       final cropCenter = cropRect.center;
-      
+
       // Translate to origin (image center)
       final translatedCropCenter = Offset(
         cropCenter.dx - imageCenter.dx,
         cropCenter.dy - imageCenter.dy,
       );
-      
+
       // Apply rotation
       final cos = math.cos(rotationRadians);
       final sin = math.sin(rotationRadians);
@@ -264,13 +414,13 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         translatedCropCenter.dx * cos - translatedCropCenter.dy * sin,
         translatedCropCenter.dx * sin + translatedCropCenter.dy * cos,
       );
-      
+
       // Translate back
       final finalCropCenter = Offset(
         rotatedCropCenter.dx + imageCenter.dx,
         rotatedCropCenter.dy + imageCenter.dy,
       );
-      
+
       return Rect.fromCenter(
         center: finalCropCenter,
         width: cropRect.width,
@@ -281,16 +431,18 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     return cropRect;
   }
 
-  void _updateCropFromDrag(_DragHandle handle, Offset delta, Size containerSize) {
+  void _updateCropFromDrag(
+      _DragHandle handle, Offset delta, Size containerSize) {
     // Calculate the scale factor for converting display coordinates to image coordinates
     final scaleX = containerSize.width / widget.imageSize.width;
     final scaleY = containerSize.height / widget.imageSize.height;
     final scale = math.min(scaleX, scaleY);
-    
+
     // Transform delta to account for rotation
     Offset transformedDelta = delta;
     if (widget.contentRotation != 0.0) {
-      final rotationRadians = -widget.contentRotation * math.pi / 180; // Inverse rotation
+      final rotationRadians =
+          -widget.contentRotation * math.pi / 180; // Inverse rotation
       final cos = math.cos(rotationRadians);
       final sin = math.sin(rotationRadians);
       transformedDelta = Offset(
@@ -298,9 +450,9 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         delta.dx * sin + delta.dy * cos,
       );
     }
-    
+
     // Convert screen delta to image coordinate delta
-    final deltaX = transformedDelta.dx / scale;  
+    final deltaX = transformedDelta.dx / scale;
     final deltaY = transformedDelta.dy / scale;
 
     // Define minimum crop area (e.g., 10x10 pixels)
@@ -366,7 +518,7 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
       // Apply constraints to ensure valid crop area
       final validatedCrop = _validateCropArea(
         newCropX,
-        newCropY, 
+        newCropY,
         newCropWidth,
         newCropHeight,
         minCropSize,
@@ -390,11 +542,11 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     // Ensure crop area stays within image bounds
     x = x.clamp(0.0, widget.imageSize.width);
     y = y.clamp(0.0, widget.imageSize.height);
-    
+
     // Ensure minimum dimensions
     width = width.clamp(minSize, widget.imageSize.width);
     height = height.clamp(minSize, widget.imageSize.height);
-    
+
     // Adjust position if crop area extends beyond image bounds
     if (x + width > widget.imageSize.width) {
       x = widget.imageSize.width - width;
@@ -402,11 +554,11 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     if (y + height > widget.imageSize.height) {
       y = widget.imageSize.height - height;
     }
-    
+
     // Final validation to ensure values are within bounds
     x = x.clamp(0.0, widget.imageSize.width - minSize);
     y = y.clamp(0.0, widget.imageSize.height - minSize);
-    
+
     // Ensure final width and height don't exceed image bounds
     width = width.clamp(minSize, widget.imageSize.width - x);
     height = height.clamp(minSize, widget.imageSize.height - y);
@@ -418,7 +570,6 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
       'height': height,
     };
   }
-
 }
 
 enum _DragHandle {
@@ -438,10 +589,10 @@ class InteractiveCropPainter extends CustomPainter {
   final BuildContext context;
   final Size imageSize;
   final Size renderSize;
-  final double cropX;       // Left edge of crop area in pixels
-  final double cropY;       // Top edge of crop area in pixels
-  final double cropWidth;   // Width of crop area in pixels
-  final double cropHeight;  // Height of crop area in pixels
+  final double cropX; // Left edge of crop area in pixels
+  final double cropY; // Top edge of crop area in pixels
+  final double cropWidth; // Width of crop area in pixels
+  final double cropHeight; // Height of crop area in pixels
   final double contentRotation; // Rotation angle in degrees
   final Size containerSize;
 
@@ -475,7 +626,8 @@ class InteractiveCropPainter extends CustomPainter {
     final offsetX = (size.width - scaledImageWidth) / 2;
     final offsetY = (size.height - scaledImageHeight) / 2;
 
-    final imageRect = Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+    final imageRect =
+        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
 
     // Save canvas state before applying rotation
     canvas.save();
@@ -498,7 +650,8 @@ class InteractiveCropPainter extends CustomPainter {
     final cropRectWidth = cropWidth * imageToDisplayScale;
     final cropRectHeight = cropHeight * imageToDisplayScale;
 
-    final cropRect = Rect.fromLTWH(cropRectLeft, cropRectTop, cropRectWidth, cropRectHeight);
+    final cropRect =
+        Rect.fromLTWH(cropRectLeft, cropRectTop, cropRectWidth, cropRectHeight);
 
     if (cropRect.width > 0 && cropRect.height > 0) {
       // Draw mask over non-cropped areas
@@ -553,10 +706,7 @@ class InteractiveCropPainter extends CustomPainter {
       );
 
       // Draw 8 control handles
-      const handleSize = 12.0;
-      final handlePaint = Paint()
-        ..color = colorScheme.primary
-        ..style = PaintingStyle.fill;
+      const handleSize = 16.0; // 与检测大小保持一致
 
       final handleBorderPaint = Paint()
         ..color = Colors.white
@@ -564,7 +714,7 @@ class InteractiveCropPainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
 
       final handles = [
-        // Corner handles
+        // Corner handles (larger and more prominent)
         cropRect.topLeft,
         cropRect.topRight,
         cropRect.bottomLeft,
@@ -576,28 +726,46 @@ class InteractiveCropPainter extends CustomPainter {
         Offset(cropRect.right, cropRect.center.dy),
       ];
 
-      for (final handleCenter in handles) {
+      for (int i = 0; i < handles.length; i++) {
+        final handleCenter = handles[i];
+        final isCornerHandle = i < 4; // 前4个是角落句柄
+
+        final currentHandleSize =
+            isCornerHandle ? handleSize : handleSize * 0.8;
+
         final handleRect = Rect.fromCenter(
           center: handleCenter,
-          width: handleSize,
-          height: handleSize,
+          width: currentHandleSize,
+          height: currentHandleSize,
         );
-        
-        // Draw handle background
+
+        // Draw handle background (white border)
         canvas.drawRRect(
-          RRect.fromRectAndRadius(handleRect, const Radius.circular(2)),
+          RRect.fromRectAndRadius(
+            handleRect,
+            Radius.circular(isCornerHandle ? 3 : 2),
+          ),
           handleBorderPaint,
         );
+
+        // Draw handle fill with different colors for corners
+        final fillPaint = Paint()
+          ..color = isCornerHandle ? colorScheme.primary : colorScheme.secondary
+          ..style = PaintingStyle.fill;
+
         canvas.drawRRect(
-          RRect.fromRectAndRadius(handleRect, const Radius.circular(2)),
-          handlePaint,
+          RRect.fromRectAndRadius(
+            handleRect,
+            Radius.circular(isCornerHandle ? 3 : 2),
+          ),
+          fillPaint,
         );
       }
 
       // Draw crop area dimensions (if crop area is reasonably large)
       if (cropRect.width > 60 && cropRect.height > 40) {
         final dimensionText = '${cropWidth.round()}x${cropHeight.round()}';
-        
+
         final textPainter = TextPainter(
           text: TextSpan(
             text: dimensionText,
@@ -616,15 +784,15 @@ class InteractiveCropPainter extends CustomPainter {
           ),
           textDirection: TextDirection.ltr,
         );
-        
+
         textPainter.layout();
-        
+
         // Position text in the center of crop area
         final textPosition = Offset(
           cropRect.center.dx - textPainter.width / 2,
           cropRect.center.dy - textPainter.height / 2,
         );
-        
+
         textPainter.paint(canvas, textPosition);
       }
     }

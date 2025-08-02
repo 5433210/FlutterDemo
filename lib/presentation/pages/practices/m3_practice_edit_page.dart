@@ -1055,15 +1055,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
           // 检查文本是否可能是JSON格式（简单预检查）
           if (!text.startsWith('{') && !text.startsWith('[')) {
-            // 不是JSON格式，按普通文本处理
-            AppLogger.debug(
-              '检查剪贴板: 文本不是JSON格式，按普通文本处理',
-              tag: 'PracticeEdit',
-              data: {
-                'textPreview':
-                    text.length > 50 ? '${text.substring(0, 50)}...' : text
-              },
-            );
+            // 不是JSON格式，按普通文本处理 - 屏蔽日志输出
+            // AppLogger.debug(
+            //   '检查剪贴板: 文本不是JSON格式，按普通文本处理',
+            //   tag: 'PracticeEdit',
+            //   data: {
+            //     'textPreview':
+            //         text.length > 50 ? '${text.substring(0, 50)}...' : text
+            //   },
+            // );
             return true;
           }
 
@@ -1137,11 +1137,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           }
         }
       } catch (e) {
-        AppLogger.warning(
-          '检查系统剪贴板图片数据错误',
-          tag: 'PracticeEdit',
-          error: e,
-        );
+        // 屏蔽警告日志
+        // AppLogger.warning(
+        //   '检查系统剪贴板图片数据错误',
+        //   tag: 'PracticeEdit',
+        //   error: e,
+        // );
       }
       return hasText;
     } catch (e) {
@@ -1975,28 +1976,31 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// 在剪贴板变化时检查并输出详细日志  /// Detailed inspection of clipboard contents for debugging
   Future<void> _inspectClipboard() async {
-    AppLogger.debug(
-      '开始剪贴板详细检查',
-      tag: 'PracticeEdit-Debug',
-    );
+    // 屏蔽调试日志，避免输出过多信息
+    // AppLogger.debug(
+    //   '开始剪贴板详细检查',
+    //   tag: 'PracticeEdit-Debug',
+    // );
 
     // 检查内部剪贴板
     if (_clipboardElement != null) {
       final type = _clipboardElement?['type'];
-      AppLogger.debug(
-        '内部剪贴板内容类型',
-        tag: 'PracticeEdit-Debug',
-        data: {'type': type},
-      );
+      // 屏蔽调试日志
+      // AppLogger.debug(
+      //   '内部剪贴板内容类型',
+      //   tag: 'PracticeEdit-Debug',
+      //   data: {'type': type},
+      // );
 
       // 根据类型显示不同的信息
       if (type == 'characters' || type == 'character') {
         if (_clipboardElement!.containsKey('characterIds')) {
-          AppLogger.debug(
-            '字符IDs',
-            tag: 'PracticeEdit-Debug',
-            data: {'characterIds': _clipboardElement!['characterIds']},
-          );
+          // 屏蔽调试日志
+          // AppLogger.debug(
+          //   '字符IDs',
+          //   tag: 'PracticeEdit-Debug',
+          //   data: {'characterIds': _clipboardElement!['characterIds']},
+          // );
         } else if (_clipboardElement!.containsKey('data') &&
             _clipboardElement!['data'] is Map &&
             _clipboardElement!['data'].containsKey('characterId')) {
@@ -2129,17 +2133,19 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           );
         }
       } else {
-        AppLogger.debug(
-          '系统剪贴板为空',
-          tag: 'PracticeEdit-Debug',
-        );
+        // 屏蔽调试日志
+        // AppLogger.debug(
+        //   '系统剪贴板为空',
+        //   tag: 'PracticeEdit-Debug',
+        // );
       }
     } catch (e) {
-      AppLogger.error(
-        '检查系统剪贴板时出错',
-        tag: 'PracticeEdit-Debug',
-        error: e,
-      );
+      // 屏蔽错误日志
+      // AppLogger.error(
+      //   '检查系统剪贴板时出错',
+      //   tag: 'PracticeEdit-Debug',
+      //   error: e,
+      // );
     }
 
     // 检查系统剪贴板图片
@@ -2148,27 +2154,30 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       for (final format in ['image/png', 'image/jpeg', 'image/gif']) {
         final imageData = await Clipboard.getData(format);
         if (imageData != null) {
-          AppLogger.debug(
-            '系统剪贴板有图片数据',
-            tag: 'PracticeEdit-Debug',
-            data: {'format': format},
-          );
+          // 屏蔽调试日志
+          // AppLogger.debug(
+          //   '系统剪贴板有图片数据',
+          //   tag: 'PracticeEdit-Debug',
+          //   data: {'format': format},
+          // );
           break; // 找到一种格式即可
         }
       }
     } catch (e) {
-      AppLogger.error(
-        '检查系统剪贴板图片错误',
-        tag: 'PracticeEdit-Debug',
-        error: e,
-      );
+      // 屏蔽错误日志，避免输出过多无关信息
+      // AppLogger.error(
+      //   '检查系统剪贴板图片错误',
+      //   tag: 'PracticeEdit-Debug',
+      //   error: e,
+      // );
     }
 
-    AppLogger.debug(
-      '剪贴板检查完成',
-      tag: 'PracticeEdit-Debug',
-      data: {'canPaste': _clipboardHasContent},
-    );
+    // 屏蔽调试日志
+    // AppLogger.debug(
+    //   '剪贴板检查完成',
+    //   tag: 'PracticeEdit-Debug',
+    //   data: {'canPaste': _clipboardHasContent},
+    // );
   }
 
   /// Load practice

@@ -27,7 +27,8 @@ mixin ImageTransformHandler {
   Size? get renderSize;
 
   /// 更新属性
-  void updateProperty(String key, dynamic value);
+  void updateProperty(String key, dynamic value,
+      {bool createUndoOperation = true});
 
   /// 更新图像状态
   void updateImageState(Size? imageSize, Size? renderSize);
@@ -56,8 +57,10 @@ mixin ImageTransformHandler {
       // Use new coordinate system directly
       final cropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
       final cropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
-      final cropWidth = (content['cropWidth'] as num?)?.toDouble() ?? imageSize.width;
-      final cropHeight = (content['cropHeight'] as num?)?.toDouble() ?? imageSize.height;
+      final cropWidth =
+          (content['cropWidth'] as num?)?.toDouble() ?? imageSize.width;
+      final cropHeight =
+          (content['cropHeight'] as num?)?.toDouble() ?? imageSize.height;
 
       final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
       final flipVertical = content['isFlippedVertically'] as bool? ?? false;
@@ -79,11 +82,12 @@ mixin ImageTransformHandler {
 
       final bool hasOtherTransforms =
           flipHorizontal || flipVertical || contentRotation != 0.0;
-      final bool invalidCropping =
-          cropX < 0 || cropY < 0 || 
+      final bool invalidCropping = cropX < 0 ||
+          cropY < 0 ||
           cropX + cropWidth > imageSize.width ||
           cropY + cropHeight > imageSize.height ||
-          cropWidth <= 0 || cropHeight <= 0;
+          cropWidth <= 0 ||
+          cropHeight <= 0;
 
       if (invalidCropping) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -177,7 +181,8 @@ mixin ImageTransformHandler {
           if (noCropping) {
             message += l10n.noCropping;
           } else {
-            message += 'Cropping applied: x=${cropX.toInt()}, y=${cropY.toInt()}, width=${cropWidth.toInt()}, height=${cropHeight.toInt()}';
+            message +=
+                'Cropping applied: x=${cropX.toInt()}, y=${cropY.toInt()}, width=${cropWidth.toInt()}, height=${cropHeight.toInt()}';
           }
 
           if (context.mounted) {
@@ -242,7 +247,7 @@ mixin ImageTransformHandler {
       content['cropWidth'] = 100.0;
       content['cropHeight'] = 100.0;
     }
-    
+
     content['isFlippedHorizontally'] = false;
     content['isFlippedVertically'] = false;
     content['rotation'] = 0.0;

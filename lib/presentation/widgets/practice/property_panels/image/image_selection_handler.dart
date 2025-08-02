@@ -32,7 +32,8 @@ mixin ImageSelectionHandler {
   set dialogContext(BuildContext? value);
 
   /// 更新属性
-  void updateProperty(String key, dynamic value);
+  void updateProperty(String key, dynamic value,
+      {bool createUndoOperation = true});
 
   /// 选择图片事件回调
   void onSelectImage();

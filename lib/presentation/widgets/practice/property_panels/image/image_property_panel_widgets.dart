@@ -440,10 +440,10 @@ class ImagePropertyFitModePanel extends StatelessWidget {
 class ImagePropertyPreviewPanel extends StatelessWidget {
   final String imageUrl;
   final String fitMode;
-  final double cropX;       // Left edge of crop area in pixels
-  final double cropY;       // Top edge of crop area in pixels
-  final double cropWidth;   // Width of crop area in pixels
-  final double cropHeight;  // Height of crop area in pixels
+  final double cropX; // Left edge of crop area in pixels
+  final double cropY; // Top edge of crop area in pixels
+  final double cropWidth; // Width of crop area in pixels
+  final double cropHeight; // Height of crop area in pixels
   final bool flipHorizontal;
   final bool flipVertical;
   final double contentRotation;
@@ -451,7 +451,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
   final Size? imageSize;
   final Size? renderSize;
   final Function(Size, Size) onImageSizeAvailable;
-  final Function(double, double, double, double)? onCropChanged; // (x, y, width, height)
+  final Function(double, double, double, double, {bool isDragging})?
+      onCropChanged; // (x, y, width, height, isDragging)
 
   const ImagePropertyPreviewPanel({
     super.key,
@@ -561,7 +562,9 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                     ),
 
                     // Interactive crop overlay
-                    if (imageSize != null && renderSize != null && onCropChanged != null)
+                    if (imageSize != null &&
+                        renderSize != null &&
+                        onCropChanged != null)
                       Positioned.fill(
                         child: InteractiveCropOverlay(
                           imageSize: imageSize!,
@@ -834,10 +837,10 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
 
 /// 图像变换面板
 class ImagePropertyTransformPanel extends StatelessWidget {
-  final double cropX;       // Left edge of crop area in pixels
-  final double cropY;       // Top edge of crop area in pixels
-  final double cropWidth;   // Width of crop area in pixels
-  final double cropHeight;  // Height of crop area in pixels
+  final double cropX; // Left edge of crop area in pixels
+  final double cropY; // Top edge of crop area in pixels
+  final double cropWidth; // Width of crop area in pixels
+  final double cropHeight; // Height of crop area in pixels
   final bool flipHorizontal;
   final bool flipVertical;
   final double contentRotation;
@@ -913,17 +916,20 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                   padding: const EdgeInsets.all(12.0),
                   margin: const EdgeInsets.only(bottom: 16.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withAlpha((0.3 * 255).toInt()),
+                    color: colorScheme.primaryContainer
+                        .withAlpha((0.3 * 255).toInt()),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.crop_free, color: colorScheme.primary, size: 20),
+                      Icon(Icons.crop_free,
+                          color: colorScheme.primary, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '在上方预览图中拖动选框和控制点来调整裁剪区域',
-                          style: TextStyle(fontSize: 14, color: colorScheme.primary),
+                          style: TextStyle(
+                              fontSize: 14, color: colorScheme.primary),
                         ),
                       ),
                     ],
