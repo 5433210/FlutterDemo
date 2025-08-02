@@ -4367,4 +4367,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restoreDefaultSize => 'Restore Default Size';
+
+  @override
+  String get alignment => 'Alignment';
+
+  @override
+  String get imageAlignment => 'Image Alignment';
+
+  @override
+  String get imageSizeInfo => 'Image Size';
+
+  @override
+  String get imageNameInfo => 'Image Name';
+
+  @override
+  String get rotationFineControl => 'Fine Rotation Control';
+
+  @override
+  String get rotateClockwise => 'Rotate Clockwise';
+
+  @override
+  String get rotateCounterclockwise => 'Rotate Counterclockwise';
+
+  @override
+  String get degrees => 'Degrees';
+
+  @override
+  String get fineRotation => 'Fine Rotation';
+
+  @override
+  String get topLeft => 'Top Left';
+
+  @override
+  String get topCenter => 'Top Center';
+
+  @override
+  String get topRight => 'Top Right';
+
+  @override
+  String get centerLeft => 'Center Left';
+
+  @override
+  String get centerRight => 'Center Right';
+
+  @override
+  String get bottomLeft => 'Bottom Left';
+
+  @override
+  String get bottomCenter => 'Bottom Center';
+
+  @override
+  String get bottomRight => 'Bottom Right';
+
+  @override
+  String get alignmentCenter => 'Center';
+
+  @override
+  String get cropAdjustmentHint => 'Drag the selection box and control points in the preview above to adjust the crop area';
 }

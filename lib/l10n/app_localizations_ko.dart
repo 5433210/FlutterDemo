@@ -4367,4 +4367,61 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get restoreDefaultSize => '기본 크기로 복원';
+
+  @override
+  String get alignment => '정렬';
+
+  @override
+  String get imageAlignment => '이미지 정렬';
+
+  @override
+  String get imageSizeInfo => '이미지 크기';
+
+  @override
+  String get imageNameInfo => '이미지 이름';
+
+  @override
+  String get rotationFineControl => '각도 미세 조정';
+
+  @override
+  String get rotateClockwise => '시계 방향 회전';
+
+  @override
+  String get rotateCounterclockwise => '시계 반대 방향 회전';
+
+  @override
+  String get degrees => '도';
+
+  @override
+  String get fineRotation => '미세 회전';
+
+  @override
+  String get topLeft => '왼쪽 위';
+
+  @override
+  String get topCenter => '위쪽 가운데';
+
+  @override
+  String get topRight => '오른쪽 위';
+
+  @override
+  String get centerLeft => '왼쪽 가운데';
+
+  @override
+  String get centerRight => '오른쪽 가운데';
+
+  @override
+  String get bottomLeft => '왼쪽 아래';
+
+  @override
+  String get bottomCenter => '아래쪽 가운데';
+
+  @override
+  String get bottomRight => '오른쪽 아래';
+
+  @override
+  String get alignmentCenter => '가운데';
+
+  @override
+  String get cropAdjustmentHint => '위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요';
 }

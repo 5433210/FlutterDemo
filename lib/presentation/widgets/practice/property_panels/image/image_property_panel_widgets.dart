@@ -495,23 +495,51 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Container(
-                //   width: double.infinity,
-                //   padding: const EdgeInsets.all(12.0),
-                //   margin: const EdgeInsets.only(bottom: 12.0),
-                //   decoration: BoxDecoration(
-                //     color: colorScheme.tertiaryContainer
-                //         .withAlpha((0.3 * 255).toInt()),
-                //     borderRadius: BorderRadius.circular(8.0),
-                //   ),
-                //   child: Text(
-                //     l10n.imagePropertyPanelPreviewNotice,
-                //     style: TextStyle(fontSize: 12, color: colorScheme.tertiary),
-                //     textAlign: TextAlign.center,
-                //   ),
-                // ),
+                // 图片信息显示区域
+                if (imageUrl.isNotEmpty && imageSize != null)
+                  _buildImageInfo(context, l10n, colorScheme),
+                const SizedBox(height: 8.0),
+                
                 _buildImagePreviewWithTransformBox(context),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建图片信息显示区域
+  Widget _buildImageInfo(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+    final sizeText = imageSize != null 
+        ? '${imageSize!.width.toInt()} × ${imageSize!.height.toInt()} px'
+        : l10n.unknown;
+
+    return Container(
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.aspect_ratio, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            l10n.imageSizeInfo,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            sizeText,
+            style: TextStyle(
+              fontSize: 12,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -944,7 +972,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '在上方预览图中拖动选框和控制点来调整裁剪区域',
+                          l10n.cropAdjustmentHint,
                           style: TextStyle(
                               fontSize: 14, color: colorScheme.primary),
                         ),
@@ -978,10 +1006,10 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text('宽度: ${cropWidth.round()}px'),
+                              child: Text('${l10n.width}: ${cropWidth.round()}px'),
                             ),
                             Expanded(
-                              child: Text('高度: ${cropHeight.round()}px'),
+                              child: Text('${l10n.height}: ${cropHeight.round()}px'),
                             ),
                           ],
                         ),
@@ -1058,11 +1086,50 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                         suffix: '°',
                         min: -180,
                         max: 180,
-                        decimalPlaces: 0,
+                        decimalPlaces: 1,
                         onChanged: onRotationChanged,
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 8.0),
+
+                // 精细角度控制
+                Text(l10n.fineRotation,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8.0),
+                
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildFineRotationButton(context, l10n, '-0.1°', () {
+                          double newRotation = contentRotation - 0.1;
+                          // 确保在范围内
+                          while (newRotation < -180) {
+                            newRotation += 360;
+                          }
+                          onRotationChanged(newRotation);
+                        }),
+                        _buildFineRotationButton(context, l10n, '+0.1°', () {
+                          double newRotation = contentRotation + 0.1;
+                          // 确保在范围内
+                          while (newRotation > 180) {
+                            newRotation -= 360;
+                          }
+                          onRotationChanged(newRotation);
+                        }),
+                      ],
+                    ),
+                  ),
                 ),
 
                 // Quick rotation buttons
@@ -1152,6 +1219,39 @@ class ImagePropertyTransformPanel extends StatelessWidget {
       tooltip: label,
     );
   }
+
+  Widget _buildFineRotationButton(
+      BuildContext context, AppLocalizations l10n, String label, VoidCallback onPressed) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    return Container(
+      width: 60,
+      height: 32,
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(6.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6.0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6.0),
+          onTap: onPressed,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// 图像对齐方式面板
@@ -1167,6 +1267,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -1178,7 +1279,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        title: Text('对齐方式'),
+        title: Text(l10n.imageAlignment),
         initiallyExpanded: false,
         children: [
           Padding(
@@ -1202,11 +1303,11 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildCompactAlignmentButton(context, 'topLeft', Icons.north_west),
+                            _buildCompactAlignmentButton(context, l10n, 'topLeft', Icons.north_west),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'topCenter', Icons.north),
+                            _buildCompactAlignmentButton(context, l10n, 'topCenter', Icons.north),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'topRight', Icons.north_east),
+                            _buildCompactAlignmentButton(context, l10n, 'topRight', Icons.north_east),
                           ],
                         ),
                         const SizedBox(height: 2.0),
@@ -1215,11 +1316,11 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildCompactAlignmentButton(context, 'centerLeft', Icons.west),
+                            _buildCompactAlignmentButton(context, l10n, 'centerLeft', Icons.west),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'center', Icons.center_focus_strong),
+                            _buildCompactAlignmentButton(context, l10n, 'center', Icons.center_focus_strong),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'centerRight', Icons.east),
+                            _buildCompactAlignmentButton(context, l10n, 'centerRight', Icons.east),
                           ],
                         ),
                         const SizedBox(height: 2.0),
@@ -1228,11 +1329,11 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildCompactAlignmentButton(context, 'bottomLeft', Icons.south_west),
+                            _buildCompactAlignmentButton(context, l10n, 'bottomLeft', Icons.south_west),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'bottomCenter', Icons.south),
+                            _buildCompactAlignmentButton(context, l10n, 'bottomCenter', Icons.south),
                             const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, 'bottomRight', Icons.south_east),
+                            _buildCompactAlignmentButton(context, l10n, 'bottomRight', Icons.south_east),
                           ],
                         ),
                       ],
@@ -1244,7 +1345,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
                 // 当前选择显示
                 Center(
                   child: Text(
-                    _getAlignmentDisplayName(alignment),
+                    _getAlignmentDisplayName(l10n, alignment),
                     style: TextStyle(
                       fontSize: 11,
                       color: colorScheme.primary,
@@ -1262,6 +1363,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
 
   Widget _buildCompactAlignmentButton(
     BuildContext context, 
+    AppLocalizations l10n,
     String alignmentValue, 
     IconData icon,
   ) {
@@ -1287,7 +1389,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
           borderRadius: BorderRadius.circular(6.0),
           onTap: () => onAlignmentChanged(alignmentValue),
           child: Tooltip(
-            message: _getAlignmentDisplayName(alignmentValue),
+            message: _getAlignmentDisplayName(l10n, alignmentValue),
             child: Center(
               child: Icon(
                 icon,
@@ -1303,18 +1405,18 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
     );
   }
 
-  String _getAlignmentDisplayName(String alignment) {
+  String _getAlignmentDisplayName(AppLocalizations l10n, String alignment) {
     switch (alignment) {
-      case 'topLeft': return '左上角';
-      case 'topCenter': return '顶部居中';
-      case 'topRight': return '右上角';
-      case 'centerLeft': return '左侧居中';
-      case 'center': return '中心';
-      case 'centerRight': return '右侧居中';
-      case 'bottomLeft': return '左下角';
-      case 'bottomCenter': return '底部居中';
-      case 'bottomRight': return '右下角';
-      default: return '未知';
+      case 'topLeft': return l10n.topLeft;
+      case 'topCenter': return l10n.topCenter;
+      case 'topRight': return l10n.topRight;
+      case 'centerLeft': return l10n.centerLeft;
+      case 'center': return l10n.alignmentCenter;
+      case 'centerRight': return l10n.centerRight;
+      case 'bottomLeft': return l10n.bottomLeft;
+      case 'bottomCenter': return l10n.bottomCenter;
+      case 'bottomRight': return l10n.bottomRight;
+      default: return l10n.unknown;
     }
   }
 }

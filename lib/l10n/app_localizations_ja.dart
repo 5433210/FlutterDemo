@@ -4367,4 +4367,61 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get restoreDefaultSize => 'デフォルトサイズに戻す';
+
+  @override
+  String get alignment => '配置';
+
+  @override
+  String get imageAlignment => '画像配置';
+
+  @override
+  String get imageSizeInfo => '画像サイズ';
+
+  @override
+  String get imageNameInfo => '画像名';
+
+  @override
+  String get rotationFineControl => '角度微調整';
+
+  @override
+  String get rotateClockwise => '時計回り';
+
+  @override
+  String get rotateCounterclockwise => '反時計回り';
+
+  @override
+  String get degrees => '度';
+
+  @override
+  String get fineRotation => '微細回転';
+
+  @override
+  String get topLeft => '左上';
+
+  @override
+  String get topCenter => '上中央';
+
+  @override
+  String get topRight => '右上';
+
+  @override
+  String get centerLeft => '左中央';
+
+  @override
+  String get centerRight => '右中央';
+
+  @override
+  String get bottomLeft => '左下';
+
+  @override
+  String get bottomCenter => '下中央';
+
+  @override
+  String get bottomRight => '右下';
+
+  @override
+  String get alignmentCenter => '中央';
+
+  @override
+  String get cropAdjustmentHint => '上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください';
 }

@@ -4367,6 +4367,63 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restoreDefaultSize => '恢复默认尺寸';
+
+  @override
+  String get alignment => '对齐方式';
+
+  @override
+  String get imageAlignment => '图像对齐';
+
+  @override
+  String get imageSizeInfo => '图像尺寸';
+
+  @override
+  String get imageNameInfo => '图像名称';
+
+  @override
+  String get rotationFineControl => '角度微调';
+
+  @override
+  String get rotateClockwise => '顺时针旋转';
+
+  @override
+  String get rotateCounterclockwise => '逆时针旋转';
+
+  @override
+  String get degrees => '度';
+
+  @override
+  String get fineRotation => '精细旋转';
+
+  @override
+  String get topLeft => '左上角';
+
+  @override
+  String get topCenter => '顶部居中';
+
+  @override
+  String get topRight => '右上角';
+
+  @override
+  String get centerLeft => '左侧居中';
+
+  @override
+  String get centerRight => '右侧居中';
+
+  @override
+  String get bottomLeft => '左下角';
+
+  @override
+  String get bottomCenter => '底部居中';
+
+  @override
+  String get bottomRight => '右下角';
+
+  @override
+  String get alignmentCenter => '中心';
+
+  @override
+  String get cropAdjustmentHint => '在上方预览图中拖动选框和控制点来调整裁剪区域';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8732,4 +8789,61 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get restoreDefaultSize => '恢復預設尺寸';
+
+  @override
+  String get alignment => '對齊方式';
+
+  @override
+  String get imageAlignment => '圖像對齊';
+
+  @override
+  String get imageSizeInfo => '圖像尺寸';
+
+  @override
+  String get imageNameInfo => '圖像名稱';
+
+  @override
+  String get rotationFineControl => '角度微調';
+
+  @override
+  String get rotateClockwise => '順時針旋轉';
+
+  @override
+  String get rotateCounterclockwise => '逆時針旋轉';
+
+  @override
+  String get degrees => '度';
+
+  @override
+  String get fineRotation => '精細旋轉';
+
+  @override
+  String get topLeft => '左上角';
+
+  @override
+  String get topCenter => '頂部置中';
+
+  @override
+  String get topRight => '右上角';
+
+  @override
+  String get centerLeft => '左側置中';
+
+  @override
+  String get centerRight => '右側置中';
+
+  @override
+  String get bottomLeft => '左下角';
+
+  @override
+  String get bottomCenter => '底部置中';
+
+  @override
+  String get bottomRight => '右下角';
+
+  @override
+  String get alignmentCenter => '中心';
+
+  @override
+  String get cropAdjustmentHint => '在上方預覽圖中拖拉選取框和控制點來調整裁剪區域';
 }

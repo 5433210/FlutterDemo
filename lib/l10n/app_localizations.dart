@@ -8319,6 +8319,120 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'恢复默认尺寸'**
   String get restoreDefaultSize;
+
+  /// No description provided for @alignment.
+  ///
+  /// In zh, this message translates to:
+  /// **'对齐方式'**
+  String get alignment;
+
+  /// No description provided for @imageAlignment.
+  ///
+  /// In zh, this message translates to:
+  /// **'图像对齐'**
+  String get imageAlignment;
+
+  /// No description provided for @imageSizeInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'图像尺寸'**
+  String get imageSizeInfo;
+
+  /// No description provided for @imageNameInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'图像名称'**
+  String get imageNameInfo;
+
+  /// No description provided for @rotationFineControl.
+  ///
+  /// In zh, this message translates to:
+  /// **'角度微调'**
+  String get rotationFineControl;
+
+  /// No description provided for @rotateClockwise.
+  ///
+  /// In zh, this message translates to:
+  /// **'顺时针旋转'**
+  String get rotateClockwise;
+
+  /// No description provided for @rotateCounterclockwise.
+  ///
+  /// In zh, this message translates to:
+  /// **'逆时针旋转'**
+  String get rotateCounterclockwise;
+
+  /// No description provided for @degrees.
+  ///
+  /// In zh, this message translates to:
+  /// **'度'**
+  String get degrees;
+
+  /// No description provided for @fineRotation.
+  ///
+  /// In zh, this message translates to:
+  /// **'精细旋转'**
+  String get fineRotation;
+
+  /// No description provided for @topLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'左上角'**
+  String get topLeft;
+
+  /// No description provided for @topCenter.
+  ///
+  /// In zh, this message translates to:
+  /// **'顶部居中'**
+  String get topCenter;
+
+  /// No description provided for @topRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'右上角'**
+  String get topRight;
+
+  /// No description provided for @centerLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'左侧居中'**
+  String get centerLeft;
+
+  /// No description provided for @centerRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'右侧居中'**
+  String get centerRight;
+
+  /// No description provided for @bottomLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'左下角'**
+  String get bottomLeft;
+
+  /// No description provided for @bottomCenter.
+  ///
+  /// In zh, this message translates to:
+  /// **'底部居中'**
+  String get bottomCenter;
+
+  /// No description provided for @bottomRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'右下角'**
+  String get bottomRight;
+
+  /// No description provided for @alignmentCenter.
+  ///
+  /// In zh, this message translates to:
+  /// **'中心'**
+  String get alignmentCenter;
+
+  /// No description provided for @cropAdjustmentHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'在上方预览图中拖动选框和控制点来调整裁剪区域'**
+  String get cropAdjustmentHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
