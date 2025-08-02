@@ -114,6 +114,21 @@ abstract class ImageProcessor {
       img.Image sourceImage, Rect region, double rotation,
       {bool? flipHorizontal, bool? flipVertical});
 
+  /// 对图像进行翻转后再裁剪和旋转处理
+  /// 
+  /// 与rotateAndCropImage不同，此方法先对原图像应用翻转变换，
+  /// 然后调整裁剪区域坐标，最后进行裁剪和旋转
+  ///
+  /// [sourceImage] 源图像
+  /// [region] 选区矩形（基于原图像坐标系）
+  /// [rotation] 旋转角度
+  /// [flipHorizontal] 是否水平翻转
+  /// [flipVertical] 是否垂直翻转
+  /// 返回处理后的图像
+  img.Image flipThenCropImage(
+      img.Image sourceImage, Rect region, double rotation,
+      {bool? flipHorizontal, bool? flipVertical});
+
   /// 旋转图片
   ///
   /// [degrees] 旋转角度(90, 180, 270)

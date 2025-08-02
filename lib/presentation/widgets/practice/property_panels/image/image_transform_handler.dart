@@ -164,7 +164,7 @@ mixin ImageTransformHandler {
           }
 
           final croppedImage =
-              ref.read(imageProcessorProvider).rotateAndCropImage(
+              ref.read(imageProcessorProvider).flipThenCropImage(
                     image,
                     cropRect,
                     (contentRotation / 180) * math.pi,
