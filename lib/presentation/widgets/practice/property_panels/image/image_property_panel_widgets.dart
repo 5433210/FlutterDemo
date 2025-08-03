@@ -726,9 +726,12 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 // 图像加载完成后获取尺寸
                 final imageSize = size;
 
-                // 计算渲染尺寸
+                // 🔧 修复：计算动态边界尺寸用于裁剪框计算
+                final dynamicBounds = _calculateDynamicBounds(imageSize, contentRotation, flipHorizontal, flipVertical);
+                
+                // 计算渲染尺寸（基于动态边界）
                 final renderSize = _calculateRenderSize(
-                    imageSize,
+                    dynamicBounds, // 使用动态边界而不是原始图像尺寸
                     constraints.biggest,
                     fitMode == BoxFit.contain
                         ? 'contain'
@@ -779,8 +782,11 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 info.image.height.toDouble(),
               );
 
+              // 🔧 修复：计算动态边界尺寸用于裁剪框计算
+              final dynamicBounds = _calculateDynamicBounds(imageSize, contentRotation, flipHorizontal, flipVertical);
+              
               final renderSize = _calculateRenderSize(
-                imageSize,
+                dynamicBounds, // 使用动态边界而不是原始图像尺寸
                 constraints.biggest,
                 fitMode == BoxFit.contain
                     ? 'contain'
@@ -904,6 +910,22 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
       default:
         return BoxFit.contain;
     }
+  }
+
+  /// 计算动态边界尺寸（考虑旋转变换）
+  Size _calculateDynamicBounds(Size originalSize, double rotation, bool flipH, bool flipV) {
+    if (rotation == 0) {
+      return originalSize;
+    }
+    
+    final rotationRadians = rotation * (math.pi / 180.0);
+    final cos = math.cos(rotationRadians).abs();
+    final sin = math.sin(rotationRadians).abs();
+    
+    final newWidth = originalSize.width * cos + originalSize.height * sin;
+    final newHeight = originalSize.width * sin + originalSize.height * cos;
+    
+    return Size(newWidth, newHeight);
   }
 }
 
