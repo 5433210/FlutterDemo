@@ -631,7 +631,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                       ),
                     ),
                     
-                    // Layer 3: Crop overlay (在正常坐标系中，不应用旋转)
+                    // Layer 3: Crop overlay (使用实际旋转角度，支持动态边界调整)
                     if (imageSize != null &&
                         renderSize != null &&
                         onCropChanged != null)
@@ -643,7 +643,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                           cropY: cropY,
                           cropWidth: cropWidth,
                           cropHeight: cropHeight,
-                          contentRotation: 0.0, // 强制设为0，不让裁剪框旋转
+                          contentRotation: contentRotation, // 🔧 使用实际旋转角度，不再强制为0
                           flipHorizontal: flipHorizontal,
                           flipVertical: flipVertical,
                           onCropChanged: onCropChanged!,

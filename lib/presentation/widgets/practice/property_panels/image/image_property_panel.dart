@@ -116,15 +116,19 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
     // Fit mode
     final fitMode = content['fitMode'] as String? ?? 'contain';
-    
+
     // Image alignment
     final imageAlignment = content['alignment'] as String? ?? 'center';
 
     // Binarization properties - 确保现有元素有正确的默认值
-    final isBinarizationEnabled = content['isBinarizationEnabled'] as bool? ?? false;
-    final binaryThreshold = (content['binaryThreshold'] as num?)?.toDouble() ?? 128.0;
-    final isNoiseReductionEnabled = content['isNoiseReductionEnabled'] as bool? ?? false;
-    final noiseReductionLevel = (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
+    final isBinarizationEnabled =
+        content['isBinarizationEnabled'] as bool? ?? false;
+    final binaryThreshold =
+        (content['binaryThreshold'] as num?)?.toDouble() ?? 128.0;
+    final isNoiseReductionEnabled =
+        content['isNoiseReductionEnabled'] as bool? ?? false;
+    final noiseReductionLevel =
+        (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
 
     // 🔧 修复：如果现有元素缺少二值化属性，则添加默认值
     if (!content.containsKey('isBinarizationEnabled')) {
@@ -133,17 +137,18 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       content['isNoiseReductionEnabled'] = false;
       content['noiseReductionLevel'] = 3.0;
       content['binarizedImageData'] = null;
-      
+
       // 立即更新元素数据以确保持久化
       updateProperty('content', content, createUndoOperation: false);
-      
+
       print('🔧 已为现有图像元素添加二值化默认属性');
     }
 
     // 🔍 调试日志：检查二值化开关状态
     print('=== 二值化属性调试 ===');
     print('isBinarizationEnabled: $isBinarizationEnabled');
-    print('content[isBinarizationEnabled]: ${content['isBinarizationEnabled']}');
+    print(
+        'content[isBinarizationEnabled]: ${content['isBinarizationEnabled']}');
     print('element id: ${element['id']}');
     print('=== 调试结束 ===');
 
@@ -196,7 +201,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         // Image alignment section
         ImagePropertyAlignmentPanel(
           alignment: imageAlignment,
-          onAlignmentChanged: (alignment) => updateContentProperty('alignment', alignment),
+          onAlignmentChanged: (alignment) =>
+              updateContentProperty('alignment', alignment),
         ),
 
         // Image preview section
@@ -268,7 +274,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
             print('🔍 旋转参数变化: rotation = $value');
             // 🔧 修复：只更新属性，不立即执行处理管线
             // 用户需要点击"应用变换"按钮才会应用变换
-            updateContentProperty('rotation', value, createUndoOperation: false);
+            updateContentProperty('rotation', value,
+                createUndoOperation: false);
           },
           onApplyTransform: () => applyTransform(context),
           onResetTransform: () => resetTransform(context),
@@ -284,11 +291,11 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
             print('  - flipHorizontal: $isFlippedHorizontally');
             print('  - flipVertical: $isFlippedVertically');
             print('  - 尝试设置 $key = $value');
-            
+
             // 🔧 大幅简化：翻转现在在画布渲染阶段处理，只需要更新属性
             print('  - 💡 翻转现在在画布渲染阶段处理，只更新元素属性');
             updateContentProperty(key, value, createUndoOperation: true);
-            
+
             print('🔍 翻转属性更新完成，无需执行图像处理管线');
           },
         ),
@@ -324,20 +331,23 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   void handlePropertyChange(Map<String, dynamic> updates,
       {bool createUndoOperation = true}) {
     print('=== handlePropertyChange ===');
-    print('updates: $updates');
+    // print('updates: $updates');
     print('createUndoOperation: $createUndoOperation');
 
     // 🔧 特别检查翻转相关的更新
     if (updates.containsKey('content')) {
       final content = updates['content'] as Map<String, dynamic>;
-      if (content.containsKey('isFlippedHorizontally') || content.containsKey('isFlippedVertically')) {
+      if (content.containsKey('isFlippedHorizontally') ||
+          content.containsKey('isFlippedVertically')) {
         print('🔍 检测到翻转状态更新:');
-        print('  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
-        print('  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
-        
+        print(
+            '  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
+        print(
+            '  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
+
         final flipH = content['isFlippedHorizontally'] as bool? ?? false;
         final flipV = content['isFlippedVertically'] as bool? ?? false;
-        
+
         if (!flipH && !flipV) {
           print('  - 🎯 即将更新状态：两个翻转都为false');
         }

@@ -1976,7 +1976,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flipOptions => '뒤집기 옵션';
 
   @override
-  String get imagePropertyPanelFlipInfo => '뒤집기 효과는 즉시 적용되며 미리보기에는 표시되지 않고 캔버스 렌더링 시에만 적용됩니다. 뒤집기 처리는 이미지 변환 후에 수행됩니다.';
+  String get imagePropertyPanelFlipInfo => '뒤집기 효과는 캔버스 렌더링 단계에서 처리되어 이미지 데이터를 다시 처리하지 않고 즉시 적용됩니다. 뒤집기는 순수한 시각적 변환으로, 이미지 처리 파이프라인과 독립적입니다.';
 
   @override
   String get flutterVersion => 'Flutter 버전';

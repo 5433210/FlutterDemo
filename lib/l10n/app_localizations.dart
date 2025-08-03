@@ -3745,7 +3745,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelFlipInfo.
   ///
   /// In zh, this message translates to:
-  /// **'翻转效果即时生效，不会在预览中显示，只在画布渲染时应用。翻转处理在图像变换之后进行。'**
+  /// **'翻转效果在画布渲染阶段处理，即时生效，无需重新处理图像数据。翻转是纯视觉变换，独立于图像处理管线。'**
   String get imagePropertyPanelFlipInfo;
 
   /// No description provided for @flutterVersion.

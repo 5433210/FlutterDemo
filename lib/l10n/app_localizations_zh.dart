@@ -1976,7 +1976,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flipOptions => '翻转选项';
 
   @override
-  String get imagePropertyPanelFlipInfo => '翻转效果即时生效，不会在预览中显示，只在画布渲染时应用。翻转处理在图像变换之后进行。';
+  String get imagePropertyPanelFlipInfo => '翻转效果在画布渲染阶段处理，即时生效，无需重新处理图像数据。翻转是纯视觉变换，独立于图像处理管线。';
 
   @override
   String get flutterVersion => 'Flutter版本';
@@ -6425,7 +6425,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get flipOptions => '翻轉選項';
 
   @override
-  String get imagePropertyPanelFlipInfo => '翻轉效果即時生效，不會在預覽中顯示，僅在畫布繪製時套用。翻轉處理在影像變換之後進行。';
+  String get imagePropertyPanelFlipInfo => '翻轉效果在畫布繪製階段處理，即時生效，無需重新處理影像資料。翻轉是純視覺變換，獨立於影像處理管線。';
 
   @override
   String get flutterVersion => 'Flutter 版本';

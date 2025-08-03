@@ -1976,7 +1976,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flipOptions => 'Flip Options';
 
   @override
-  String get imagePropertyPanelFlipInfo => 'Flip effects take effect immediately and are not shown in preview, only applied during canvas rendering. Flip processing occurs after image transformation.';
+  String get imagePropertyPanelFlipInfo => 'Flip effects are processed at the canvas rendering stage and take effect immediately without reprocessing image data. Flip is a pure visual transformation, independent of the image processing pipeline.';
 
   @override
   String get flutterVersion => 'Flutter Version';

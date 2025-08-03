@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../infrastructure/image/dynamic_image_bounds.dart';
 import '../../../../../infrastructure/image/image_transform_coordinator.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
@@ -49,7 +48,7 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
 
   _DragHandle? _activeDragHandle;
   Offset? _lastPanPosition;
-  
+
   // 动态边界坐标协调器
   late ImageTransformCoordinator _coordinator;
 
@@ -84,9 +83,10 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
             oldWidget.cropY != widget.cropY ||
             oldWidget.cropWidth != widget.cropWidth ||
             oldWidget.cropHeight != widget.cropHeight,
-        'transformsChanged': oldWidget.contentRotation != widget.contentRotation ||
-            oldWidget.flipHorizontal != widget.flipHorizontal ||
-            oldWidget.flipVertical != widget.flipVertical,
+        'transformsChanged':
+            oldWidget.contentRotation != widget.contentRotation ||
+                oldWidget.flipHorizontal != widget.flipHorizontal ||
+                oldWidget.flipVertical != widget.flipVertical,
       },
     );
 
@@ -95,7 +95,19 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         oldWidget.flipHorizontal != widget.flipHorizontal ||
         oldWidget.flipVertical != widget.flipVertical ||
         oldWidget.imageSize != widget.imageSize) {
+      print('🔄 旋转/翻转/尺寸发生变化，重新初始化坐标协调器');
+      print(
+          '  - 旋转角度: ${oldWidget.contentRotation}° → ${widget.contentRotation}°');
+      print(
+          '  - 翻转状态: H=${oldWidget.flipHorizontal}→${widget.flipHorizontal}, V=${oldWidget.flipVertical}→${widget.flipVertical}');
+
       _initializeCoordinator();
+
+      // 🔧 新增：当旋转角度变化时，自动调整裁剪框到新的动态边界
+      if (oldWidget.contentRotation != widget.contentRotation) {
+        _adjustCropToNewRotation(
+            oldWidget.contentRotation, widget.contentRotation);
+      }
     }
 
     // 始终更新本地状态以确保同步
@@ -137,6 +149,285 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
     _currentCropY = widget.cropY;
     _currentCropWidth = widget.cropWidth;
     _currentCropHeight = widget.cropHeight;
+  }
+
+  /// 🔧 新增方法：当旋转角度变化时，自动调整裁剪框到新的动态边界
+  void _adjustCropToNewRotation(double oldRotation, double newRotation) {
+    try {
+      print('🎯 开始调整裁剪框以适应新的旋转角度');
+      print('  - 旧旋转: ${oldRotation.toStringAsFixed(1)}°');
+      print('  - 新旋转: ${newRotation.toStringAsFixed(1)}°');
+
+      // 🔧 安全检查：验证输入参数
+      if (!oldRotation.isFinite || !newRotation.isFinite) {
+        print('  - ⚠️ 警告：旋转角度无效，跳过调整');
+        return;
+      }
+
+      // 获取新的动态边界
+      final newDynamicBounds = _coordinator.dynamicBounds;
+      final validCropBounds = _coordinator.getValidDynamicCropBounds();
+
+      // 🔧 安全检查：验证边界数据
+      if (!newDynamicBounds.width.isFinite || 
+          !newDynamicBounds.height.isFinite ||
+          newDynamicBounds.width <= 0 || 
+          newDynamicBounds.height <= 0) {
+        print('  - ⚠️ 警告：动态边界无效，跳过调整');
+        return;
+      }
+
+      print(
+          '  - 新动态边界尺寸: ${newDynamicBounds.width.toStringAsFixed(1)} × ${newDynamicBounds.height.toStringAsFixed(1)}');
+      print('  - 有效裁剪边界: ${validCropBounds.toString()}');
+
+      // 🔧 安全检查：验证当前裁剪值
+      if (!_currentCropX.isFinite || !_currentCropY.isFinite ||
+          !_currentCropWidth.isFinite || !_currentCropHeight.isFinite ||
+          _currentCropWidth <= 0 || _currentCropHeight <= 0) {
+        print('  - ⚠️ 警告：当前裁剪值无效，跳过调整');
+        return;
+      }
+
+      // 🔧 重要修复：如果当前裁剪框覆盖了整个原始图像，重新设置为合适的大小
+      final originalImageSize = widget.imageSize;
+      final isFullImageCrop = (_currentCropX == 0 && _currentCropY == 0 && 
+                              _currentCropWidth >= originalImageSize.width - 1 && 
+                              _currentCropHeight >= originalImageSize.height - 1);
+
+      if (isFullImageCrop) {
+        print('  - 🔧 检测到全图裁剪，重设为紧贴动态边界的裁剪框');
+        
+        // 使用动态边界的80%作为默认裁剪框
+        final defaultCropScale = 0.9;
+        final newCropWidth = newDynamicBounds.width * defaultCropScale;
+        final newCropHeight = newDynamicBounds.height * defaultCropScale;
+        final newCropX = (newDynamicBounds.width - newCropWidth) / 2;
+        final newCropY = (newDynamicBounds.height - newCropHeight) / 2;
+
+        // 直接在动态坐标系中设置，然后转换回原始坐标系
+        final adjustedOriginalParams = _coordinator.dynamicToOriginalCropParams(
+          cropX: newCropX,
+          cropY: newCropY,
+          cropWidth: newCropWidth,
+          cropHeight: newCropHeight,
+        );
+
+        final adjCropX = adjustedOriginalParams['cropX'];
+        final adjCropY = adjustedOriginalParams['cropY']; 
+        final adjCropWidth = adjustedOriginalParams['cropWidth'];
+        final adjCropHeight = adjustedOriginalParams['cropHeight'];
+
+        if (adjCropX != null && adjCropY != null && 
+            adjCropWidth != null && adjCropHeight != null &&
+            adjCropWidth > 0 && adjCropHeight > 0 &&
+            adjCropX.isFinite && adjCropY.isFinite &&
+            adjCropWidth.isFinite && adjCropHeight.isFinite) {
+
+          print('  - 设置新的默认裁剪框（原始坐标）: (${adjCropX.toStringAsFixed(1)}, ${adjCropY.toStringAsFixed(1)}, ${adjCropWidth.toStringAsFixed(1)}, ${adjCropHeight.toStringAsFixed(1)})');
+
+          // 🔧 在setState前进行最后的验证
+          if (!mounted) {
+            print('  - ⚠️ 警告：组件已卸载，跳过状态更新');
+            return;
+          }
+
+          // 更新裁剪框并通知父组件
+          setState(() {
+            _currentCropX = adjCropX;
+            _currentCropY = adjCropY;
+            _currentCropWidth = adjCropWidth;
+            _currentCropHeight = adjCropHeight;
+          });
+
+          // 🔧 异步通知父组件，避免在构建过程中触发
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.onCropChanged(
+                _currentCropX,
+                _currentCropY,
+                _currentCropWidth,
+                _currentCropHeight,
+                isDragging: false,
+              );
+            }
+          });
+
+          print('  - ✅ 全图裁剪框重设完成');
+          return;
+        }
+      }
+
+      // 原有的边界检查和调整逻辑...
+      // 获取当前裁剪区域在新的动态坐标系中的位置
+      final currentDynamicCropParams = _coordinator.originalToDynamicCropParams(
+        cropX: _currentCropX,
+        cropY: _currentCropY,
+        cropWidth: _currentCropWidth,
+        cropHeight: _currentCropHeight,
+      );
+
+      // 🔧 验证转换结果
+      final dynCropX = currentDynamicCropParams['cropX'];
+      final dynCropY = currentDynamicCropParams['cropY'];
+      final dynCropWidth = currentDynamicCropParams['cropWidth'];
+      final dynCropHeight = currentDynamicCropParams['cropHeight'];
+
+      if (dynCropX == null || dynCropY == null || 
+          dynCropWidth == null || dynCropHeight == null ||
+          !dynCropX.isFinite || !dynCropY.isFinite ||
+          !dynCropWidth.isFinite || !dynCropHeight.isFinite ||
+          dynCropWidth <= 0 || dynCropHeight <= 0) {
+        print('  - ⚠️ 警告：动态坐标转换结果无效，跳过调整');
+        return;
+      }
+
+      final currentDynamicRect = Rect.fromLTWH(
+        dynCropX,
+        dynCropY,
+        dynCropWidth,
+        dynCropHeight,
+      );
+
+      print('  - 当前裁剪区域（动态坐标）: ${currentDynamicRect.toString()}');
+
+      // 检查当前裁剪区域是否超出新的有效边界
+      // 🔧 优化边界检查逻辑，避免边界情况导致的异常
+      final isOutOfBounds = currentDynamicRect.left < validCropBounds.left ||
+          currentDynamicRect.top < validCropBounds.top ||
+          currentDynamicRect.right > validCropBounds.right ||
+          currentDynamicRect.bottom > validCropBounds.bottom ||
+          currentDynamicRect.width > validCropBounds.width ||
+          currentDynamicRect.height > validCropBounds.height ||
+          currentDynamicRect.width <= 0 ||
+          currentDynamicRect.height <= 0;
+
+      if (isOutOfBounds) {
+        print('  - 🔧 裁剪框超出新边界，需要调整');
+
+        // 🔧 安全检查：确保有效边界有效
+        if (validCropBounds.width <= 0 || validCropBounds.height <= 0 ||
+            !validCropBounds.width.isFinite || !validCropBounds.height.isFinite) {
+          print('  - ⚠️ 警告：有效边界无效，跳过调整');
+          return;
+        }
+
+        // 自动调整裁剪框：保持相对比例，但限制在有效边界内
+        final scaleX = validCropBounds.width / newDynamicBounds.width;
+        final scaleY = validCropBounds.height / newDynamicBounds.height;
+        final uniformScale = math.min(scaleX, scaleY) * 0.8; // 留一些边距
+
+        // 🔧 确保缩放值有效
+        if (uniformScale <= 0 || !uniformScale.isFinite) {
+          print('  - ⚠️ 警告：计算出的缩放值无效 ($uniformScale)，跳过调整');
+          return;
+        }
+
+        final newCropWidth = newDynamicBounds.width * uniformScale;
+        final newCropHeight = newDynamicBounds.height * uniformScale;
+        final newCropX = (validCropBounds.width - newCropWidth) / 2;
+        final newCropY = (validCropBounds.height - newCropHeight) / 2;
+
+        // 🔧 验证计算结果
+        if (newCropWidth <= 0 ||
+            newCropHeight <= 0 ||
+            !newCropWidth.isFinite ||
+            !newCropHeight.isFinite ||
+            !newCropX.isFinite ||
+            !newCropY.isFinite) {
+          print('  - ⚠️ 警告：计算出的裁剪框尺寸无效，跳过调整');
+          print('    newCropWidth: $newCropWidth, newCropHeight: $newCropHeight');
+          print('    newCropX: $newCropX, newCropY: $newCropY');
+          return;
+        }
+
+        print(
+            '  - 调整后裁剪框（动态坐标）: (${newCropX.toStringAsFixed(1)}, ${newCropY.toStringAsFixed(1)}, ${newCropWidth.toStringAsFixed(1)}, ${newCropHeight.toStringAsFixed(1)})');
+
+        // 转换回原始坐标系
+        final adjustedOriginalParams = _coordinator.dynamicToOriginalCropParams(
+          cropX: newCropX,
+          cropY: newCropY,
+          cropWidth: newCropWidth,
+          cropHeight: newCropHeight,
+        );
+
+        // 🔧 验证转换后的原始坐标
+        final adjCropX = adjustedOriginalParams['cropX'];
+        final adjCropY = adjustedOriginalParams['cropY'];
+        final adjCropWidth = adjustedOriginalParams['cropWidth'];
+        final adjCropHeight = adjustedOriginalParams['cropHeight'];
+
+        if (adjCropX == null || adjCropY == null || 
+            adjCropWidth == null || adjCropHeight == null ||
+            adjCropWidth <= 0 ||
+            adjCropHeight <= 0 ||
+            !adjCropX.isFinite ||
+            !adjCropY.isFinite ||
+            !adjCropWidth.isFinite ||
+            !adjCropHeight.isFinite) {
+          print('  - ⚠️ 警告：转换后的原始坐标无效，跳过调整');
+          print('    adjCropX: $adjCropX, adjCropY: $adjCropY');
+          print('    adjCropWidth: $adjCropWidth, adjCropHeight: $adjCropHeight');
+          return;
+        }
+
+        print(
+            '  - 调整后裁剪框（原始坐标）: (${adjCropX.toStringAsFixed(1)}, ${adjCropY.toStringAsFixed(1)}, ${adjCropWidth.toStringAsFixed(1)}, ${adjCropHeight.toStringAsFixed(1)})');
+
+        // 🔧 在setState前进行最后的验证
+        if (!mounted) {
+          print('  - ⚠️ 警告：组件已卸载，跳过状态更新');
+          return;
+        }
+
+        // 更新裁剪框并通知父组件
+        setState(() {
+          _currentCropX = adjCropX;
+          _currentCropY = adjCropY;
+          _currentCropWidth = adjCropWidth;
+          _currentCropHeight = adjCropHeight;
+        });
+
+        // 🔧 异步通知父组件，避免在构建过程中触发
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            widget.onCropChanged(
+              _currentCropX,
+              _currentCropY,
+              _currentCropWidth,
+              _currentCropHeight,
+              isDragging: false,
+            );
+          }
+        });
+
+        print('  - ✅ 裁剪框调整完成');
+      } else {
+        print('  - ✅ 裁剪框在有效边界内，无需调整');
+      }
+    } catch (e, stackTrace) {
+      print('  - ❌ 裁剪框调整过程中发生异常: $e');
+      print('  - 堆栈跟踪: $stackTrace');
+      
+      EditPageLogger.propertyPanelError(
+        '裁剪框自动调整异常',
+        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        error: e,
+        stackTrace: stackTrace,
+        data: {
+          'operation': 'crop_adjustment_on_rotation',
+          'oldRotation': oldRotation,
+          'newRotation': newRotation,
+          'currentCrop': {
+            'x': _currentCropX,
+            'y': _currentCropY,
+            'width': _currentCropWidth,
+            'height': _currentCropHeight,
+          },
+        },
+      );
+    }
   }
 
   @override
@@ -400,155 +691,287 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
   }
 
   Rect _calculateCropRect(Size containerSize) {
-    // 🔧 使用动态边界坐标系统
-    // 将原始图像坐标系的裁剪区域转换为动态边界坐标系
-    final dynamicCropParams = _coordinator.originalToDynamicCropParams(
-      cropX: _currentCropX,
-      cropY: _currentCropY,
-      cropWidth: _currentCropWidth,
-      cropHeight: _currentCropHeight,
-    );
-    
-    final dynamicCropRect = Rect.fromLTWH(
-      dynamicCropParams['cropX']!,
-      dynamicCropParams['cropY']!,
-      dynamicCropParams['cropWidth']!,
-      dynamicCropParams['cropHeight']!,
-    );
-    
-    // 验证并调整动态边界中的裁剪区域
-    final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicCropRect);
-    
-    // 将动态边界坐标转换为显示坐标
-    final dynamicBounds = _coordinator.dynamicBounds;
-    
-    // Calculate scale for dynamic bounds in container - 使用contain模式
-    final scaleX = containerSize.width / dynamicBounds.width;
-    final scaleY = containerSize.height / dynamicBounds.height;
-    final scale = math.min(scaleX, scaleY);
+    try {
+      // 🔧 安全检查：验证容器尺寸
+      if (containerSize.width <= 0 || containerSize.height <= 0 ||
+          !containerSize.width.isFinite || !containerSize.height.isFinite) {
+        return Rect.zero;
+      }
 
-    final scaledDynamicWidth = dynamicBounds.width * scale;
-    final scaledDynamicHeight = dynamicBounds.height * scale;
+      // 🔧 安全检查：验证当前裁剪值
+      if (!_currentCropX.isFinite || !_currentCropY.isFinite ||
+          !_currentCropWidth.isFinite || !_currentCropHeight.isFinite ||
+          _currentCropWidth <= 0 || _currentCropHeight <= 0) {
+        return Rect.zero;
+      }
 
-    final offsetX = (containerSize.width - scaledDynamicWidth) / 2;
-    final offsetY = (containerSize.height - scaledDynamicHeight) / 2;
-
-    // Convert dynamic crop coordinates to display coordinates
-    final displayCropRect = Rect.fromLTWH(
-      offsetX + (clampedDynamicRect.left * scale),
-      offsetY + (clampedDynamicRect.top * scale),
-      clampedDynamicRect.width * scale,
-      clampedDynamicRect.height * scale,
-    );
-
-    return displayCropRect;
-  }
-
-  void _updateCropFromDrag(
-      _DragHandle handle, Offset delta, Size containerSize) {
-    // 🔧 使用动态边界坐标系统计算拖拽变换
-    final dynamicBounds = _coordinator.dynamicBounds;
-    
-    // Calculate scale for dynamic bounds in container
-    final scaleX = containerSize.width / dynamicBounds.width;
-    final scaleY = containerSize.height / dynamicBounds.height;
-    final scale = math.min(scaleX, scaleY);
-
-    // Convert screen delta to dynamic boundary coordinate delta
-    final deltaX = delta.dx / scale;
-    final deltaY = delta.dy / scale;
-
-    // Define minimum crop area (e.g., 10x10 pixels in dynamic coordinates)
-    const minCropSize = 10.0;
-
-    setState(() {
-      // 获取当前在动态边界坐标系中的裁剪参数
-      final currentDynamicCropParams = _coordinator.originalToDynamicCropParams(
+      // 🔧 使用动态边界坐标系统
+      // 将原始图像坐标系的裁剪区域转换为动态边界坐标系
+      final dynamicCropParams = _coordinator.originalToDynamicCropParams(
         cropX: _currentCropX,
         cropY: _currentCropY,
         cropWidth: _currentCropWidth,
         cropHeight: _currentCropHeight,
       );
-      
-      // Calculate new crop values in dynamic boundary coordinates
-      double newDynamicCropX = currentDynamicCropParams['cropX']!;
-      double newDynamicCropY = currentDynamicCropParams['cropY']!;
-      double newDynamicCropWidth = currentDynamicCropParams['cropWidth']!;
-      double newDynamicCropHeight = currentDynamicCropParams['cropHeight']!;
 
-      switch (handle) {
-        case _DragHandle.topLeft:
-          // Moving top-left corner: adjust x, y, width, height
-          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
-          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
-          break;
-        case _DragHandle.topCenter:
-          // Moving top edge: adjust y and height
-          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
-          break;
-        case _DragHandle.topRight:
-          // Moving top-right corner: adjust y, width, height
-          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
-          break;
-        case _DragHandle.centerLeft:
-          // Moving left edge: adjust x and width
-          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
-          break;
-        case _DragHandle.centerRight:
-          // Moving right edge: adjust width
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
-          break;
-        case _DragHandle.bottomLeft:
-          // Moving bottom-left corner: adjust x, width, height
-          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
-          break;
-        case _DragHandle.bottomCenter:
-          // Moving bottom edge: adjust height
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
-          break;
-        case _DragHandle.bottomRight:
-          // Moving bottom-right corner: adjust width and height
-          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
-          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
-          break;
-        case _DragHandle.move:
-          // Move entire crop area: adjust x and y, keep width and height
-          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
-          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
-          break;
+      // 🔧 验证转换结果
+      final dynCropX = dynamicCropParams['cropX'];
+      final dynCropY = dynamicCropParams['cropY'];
+      final dynCropWidth = dynamicCropParams['cropWidth'];
+      final dynCropHeight = dynamicCropParams['cropHeight'];
+
+      if (dynCropX == null || dynCropY == null || 
+          dynCropWidth == null || dynCropHeight == null ||
+          !dynCropX.isFinite || !dynCropY.isFinite ||
+          !dynCropWidth.isFinite || !dynCropHeight.isFinite ||
+          dynCropWidth <= 0 || dynCropHeight <= 0) {
+        return Rect.zero;
       }
 
-      // Validate dynamic boundary crop area
-      final dynamicRect = Rect.fromLTWH(
-        newDynamicCropX, 
-        newDynamicCropY, 
-        newDynamicCropWidth, 
-        newDynamicCropHeight
-      );
-      final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicRect);
-      
-      // Convert back to original image coordinates
-      final originalCropParams = _coordinator.dynamicToOriginalCropParams(
-        cropX: clampedDynamicRect.left,
-        cropY: clampedDynamicRect.top,
-        cropWidth: clampedDynamicRect.width,
-        cropHeight: clampedDynamicRect.height,
+      final dynamicCropRect = Rect.fromLTWH(
+        dynCropX,
+        dynCropY,
+        dynCropWidth,
+        dynCropHeight,
       );
 
-      _currentCropX = originalCropParams['cropX']!;
-      _currentCropY = originalCropParams['cropY']!;
-      _currentCropWidth = originalCropParams['cropWidth']!;
-      _currentCropHeight = originalCropParams['cropHeight']!;
-    });
-}
+      // 验证并调整动态边界中的裁剪区域
+      final clampedDynamicRect =
+          _coordinator.clampDynamicCropRect(dynamicCropRect);
+
+      // 将动态边界坐标转换为显示坐标
+      final dynamicBounds = _coordinator.dynamicBounds;
+
+      // 🔧 验证动态边界
+      if (!dynamicBounds.width.isFinite || !dynamicBounds.height.isFinite ||
+          dynamicBounds.width <= 0 || dynamicBounds.height <= 0) {
+        return Rect.zero;
+      }
+
+      // Calculate scale for dynamic bounds in container - 使用contain模式
+      final scaleX = containerSize.width / dynamicBounds.width;
+      final scaleY = containerSize.height / dynamicBounds.height;
+      final scale = math.min(scaleX, scaleY);
+
+      // 🔧 验证缩放值
+      if (!scale.isFinite || scale <= 0) {
+        return Rect.zero;
+      }
+
+      final scaledDynamicWidth = dynamicBounds.width * scale;
+      final scaledDynamicHeight = dynamicBounds.height * scale;
+
+      final offsetX = (containerSize.width - scaledDynamicWidth) / 2;
+      final offsetY = (containerSize.height - scaledDynamicHeight) / 2;
+
+      // 🔧 验证偏移量
+      if (!offsetX.isFinite || !offsetY.isFinite) {
+        return Rect.zero;
+      }
+
+      // Convert dynamic crop coordinates to display coordinates
+      final left = offsetX + (clampedDynamicRect.left * scale);
+      final top = offsetY + (clampedDynamicRect.top * scale);
+      final width = clampedDynamicRect.width * scale;
+      final height = clampedDynamicRect.height * scale;
+
+      // 🔧 最终验证
+      if (!left.isFinite || !top.isFinite || !width.isFinite || !height.isFinite ||
+          width <= 0 || height <= 0) {
+        return Rect.zero;
+      }
+
+      final displayCropRect = Rect.fromLTWH(left, top, width, height);
+
+      return displayCropRect;
+    } catch (e) {
+      print('❌ _calculateCropRect 异常: $e');
+      return Rect.zero;
+    }
+  }
+
+  void _updateCropFromDrag(
+      _DragHandle handle, Offset delta, Size containerSize) {
+    try {
+      // 🔧 安全检查：验证输入参数
+      if (!delta.dx.isFinite || !delta.dy.isFinite ||
+          containerSize.width <= 0 || containerSize.height <= 0 ||
+          !containerSize.width.isFinite || !containerSize.height.isFinite) {
+        return;
+      }
+
+      // 🔧 使用动态边界坐标系统计算拖拽变换
+      final dynamicBounds = _coordinator.dynamicBounds;
+
+      // 🔧 验证动态边界
+      if (!dynamicBounds.width.isFinite || !dynamicBounds.height.isFinite ||
+          dynamicBounds.width <= 0 || dynamicBounds.height <= 0) {
+        return;
+      }
+
+      // Calculate scale for dynamic bounds in container
+      final scaleX = containerSize.width / dynamicBounds.width;
+      final scaleY = containerSize.height / dynamicBounds.height;
+      final scale = math.min(scaleX, scaleY);
+
+      // 🔧 验证缩放值
+      if (!scale.isFinite || scale <= 0) {
+        return;
+      }
+
+      // Convert screen delta to dynamic boundary coordinate delta
+      final deltaX = delta.dx / scale;
+      final deltaY = delta.dy / scale;
+
+      // 🔧 验证增量值
+      if (!deltaX.isFinite || !deltaY.isFinite) {
+        return;
+      }
+
+      // Define minimum crop area (e.g., 10x10 pixels in dynamic coordinates)
+      const minCropSize = 10.0;
+
+      setState(() {
+        // 🔧 验证当前裁剪值
+        if (!_currentCropX.isFinite || !_currentCropY.isFinite ||
+            !_currentCropWidth.isFinite || !_currentCropHeight.isFinite ||
+            _currentCropWidth <= 0 || _currentCropHeight <= 0) {
+          return;
+        }
+
+        // 获取当前在动态边界坐标系中的裁剪参数
+        final currentDynamicCropParams = _coordinator.originalToDynamicCropParams(
+          cropX: _currentCropX,
+          cropY: _currentCropY,
+          cropWidth: _currentCropWidth,
+          cropHeight: _currentCropHeight,
+        );
+
+        // 🔧 验证转换结果
+        final currentDynCropX = currentDynamicCropParams['cropX'];
+        final currentDynCropY = currentDynamicCropParams['cropY'];
+        final currentDynCropWidth = currentDynamicCropParams['cropWidth'];
+        final currentDynCropHeight = currentDynamicCropParams['cropHeight'];
+
+        if (currentDynCropX == null || currentDynCropY == null || 
+            currentDynCropWidth == null || currentDynCropHeight == null ||
+            !currentDynCropX.isFinite || !currentDynCropY.isFinite ||
+            !currentDynCropWidth.isFinite || !currentDynCropHeight.isFinite ||
+            currentDynCropWidth <= 0 || currentDynCropHeight <= 0) {
+          return;
+        }
+
+        // Calculate new crop values in dynamic boundary coordinates
+        double newDynamicCropX = currentDynCropX;
+        double newDynamicCropY = currentDynCropY;
+        double newDynamicCropWidth = currentDynCropWidth;
+        double newDynamicCropHeight = currentDynCropHeight;
+
+        switch (handle) {
+          case _DragHandle.topLeft:
+            // Moving top-left corner: adjust x, y, width, height
+            newDynamicCropX = currentDynCropX + deltaX;
+            newDynamicCropY = currentDynCropY + deltaY;
+            newDynamicCropWidth = currentDynCropWidth - deltaX;
+            newDynamicCropHeight = currentDynCropHeight - deltaY;
+            break;
+          case _DragHandle.topCenter:
+            // Moving top edge: adjust y and height
+            newDynamicCropY = currentDynCropY + deltaY;
+            newDynamicCropHeight = currentDynCropHeight - deltaY;
+            break;
+          case _DragHandle.topRight:
+            // Moving top-right corner: adjust y, width, height
+            newDynamicCropY = currentDynCropY + deltaY;
+            newDynamicCropWidth = currentDynCropWidth + deltaX;
+            newDynamicCropHeight = currentDynCropHeight - deltaY;
+            break;
+          case _DragHandle.centerLeft:
+            // Moving left edge: adjust x and width
+            newDynamicCropX = currentDynCropX + deltaX;
+            newDynamicCropWidth = currentDynCropWidth - deltaX;
+            break;
+          case _DragHandle.centerRight:
+            // Moving right edge: adjust width
+            newDynamicCropWidth = currentDynCropWidth + deltaX;
+            break;
+          case _DragHandle.bottomLeft:
+            // Moving bottom-left corner: adjust x, width, height
+            newDynamicCropX = currentDynCropX + deltaX;
+            newDynamicCropWidth = currentDynCropWidth - deltaX;
+            newDynamicCropHeight = currentDynCropHeight + deltaY;
+            break;
+          case _DragHandle.bottomCenter:
+            // Moving bottom edge: adjust height
+            newDynamicCropHeight = currentDynCropHeight + deltaY;
+            break;
+          case _DragHandle.bottomRight:
+            // Moving bottom-right corner: adjust width and height
+            newDynamicCropWidth = currentDynCropWidth + deltaX;
+            newDynamicCropHeight = currentDynCropHeight + deltaY;
+            break;
+          case _DragHandle.move:
+            // Move entire crop area: adjust x and y, keep width and height
+            newDynamicCropX = currentDynCropX + deltaX;
+            newDynamicCropY = currentDynCropY + deltaY;
+            break;
+        }
+
+        // 🔧 验证计算结果
+        if (!newDynamicCropX.isFinite || !newDynamicCropY.isFinite ||
+            !newDynamicCropWidth.isFinite || !newDynamicCropHeight.isFinite ||
+            newDynamicCropWidth <= 0 || newDynamicCropHeight <= 0) {
+          return;
+        }
+
+        // Validate dynamic boundary crop area
+        final dynamicRect = Rect.fromLTWH(newDynamicCropX, newDynamicCropY,
+            newDynamicCropWidth, newDynamicCropHeight);
+        final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicRect);
+
+        // Convert back to original image coordinates
+        final originalCropParams = _coordinator.dynamicToOriginalCropParams(
+          cropX: clampedDynamicRect.left,
+          cropY: clampedDynamicRect.top,
+          cropWidth: clampedDynamicRect.width,
+          cropHeight: clampedDynamicRect.height,
+        );
+
+        // 🔧 验证最终结果
+        final finalCropX = originalCropParams['cropX'];
+        final finalCropY = originalCropParams['cropY'];
+        final finalCropWidth = originalCropParams['cropWidth'];
+        final finalCropHeight = originalCropParams['cropHeight'];
+
+        if (finalCropX == null || finalCropY == null || 
+            finalCropWidth == null || finalCropHeight == null ||
+            !finalCropX.isFinite || !finalCropY.isFinite ||
+            !finalCropWidth.isFinite || !finalCropHeight.isFinite ||
+            finalCropWidth <= 0 || finalCropHeight <= 0) {
+          return;
+        }
+
+        _currentCropX = finalCropX;
+        _currentCropY = finalCropY;
+        _currentCropWidth = finalCropWidth;
+        _currentCropHeight = finalCropHeight;
+      });
+    } catch (e) {
+      print('❌ _updateCropFromDrag 异常: $e');
+      
+      EditPageLogger.propertyPanelError(
+        '裁剪框拖拽更新异常',
+        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        error: e,
+        data: {
+          'operation': 'crop_drag_update',
+          'handle': handle.toString(),
+          'delta': '${delta.dx}, ${delta.dy}',
+          'containerSize': '${containerSize.width}x${containerSize.height}',
+        },
+      );
+    }
+  }
 }
 
 enum _DragHandle {
@@ -613,20 +1036,21 @@ class InteractiveCropPainter extends CustomPainter {
       cropWidth: cropWidth,
       cropHeight: cropHeight,
     );
-    
+
     final dynamicCropRect = Rect.fromLTWH(
       dynamicCropParams['cropX']!,
       dynamicCropParams['cropY']!,
       dynamicCropParams['cropWidth']!,
       dynamicCropParams['cropHeight']!,
     );
-    
+
     // 验证并调整动态边界中的裁剪区域
-    final clampedDynamicRect = coordinator.clampDynamicCropRect(dynamicCropRect);
-    
+    final clampedDynamicRect =
+        coordinator.clampDynamicCropRect(dynamicCropRect);
+
     // 获取动态边界大小
     final dynamicBounds = coordinator.dynamicBounds;
-    
+
     // Calculate scale for dynamic bounds in container
     final scaleX = size.width / dynamicBounds.width;
     final scaleY = size.height / dynamicBounds.height;
@@ -639,7 +1063,8 @@ class InteractiveCropPainter extends CustomPainter {
     final offsetY = (size.height - scaledDynamicHeight) / 2;
 
     // Dynamic bounds display rectangle
-    final dynamicBoundsRect = Rect.fromLTWH(offsetX, offsetY, scaledDynamicWidth, scaledDynamicHeight);
+    final dynamicBoundsRect = Rect.fromLTWH(
+        offsetX, offsetY, scaledDynamicWidth, scaledDynamicHeight);
 
     // Convert dynamic crop coordinates to display coordinates
     final displayCropRect = Rect.fromLTWH(
