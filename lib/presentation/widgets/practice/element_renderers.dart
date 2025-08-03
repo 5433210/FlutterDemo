@@ -346,8 +346,13 @@ class ElementRenderers {
     final backgroundColor = content['backgroundColor'] as String?;
     final imageAlignment = content['alignment'] as String? ?? 'center';
 
+    // 🔧 新增：获取翻转参数（现在在画布渲染阶段处理）
+    final isFlippedHorizontally = content['isFlippedHorizontally'] as bool? ?? false;
+    final isFlippedVertically = content['isFlippedVertically'] as bool? ?? false;
+
     print('  - imageUrl: $imageUrl');
     print('  - content keys: ${content.keys.toList()}');
+    print('  - 🔄 翻转状态: H=$isFlippedHorizontally, V=$isFlippedVertically');
 
     // 新增支持：直接存储图像数据
     final String? base64ImageData = content['base64ImageData'] as String?;
@@ -428,6 +433,34 @@ class ElementRenderers {
         child: const Icon(Icons.image, size: 48, color: Colors.grey),
       );
     } // 优先级：二值化图像数据 > 转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
+    
+    Widget imageWidget = _buildImageWidget(
+      imageUrl: transformedImageUrl ?? imageUrl,
+      fitMode: fitMode,
+      imageAlignment: imageAlignment,
+      binarizedImageData: binarizedImageData,
+      transformedImageData: transformedImageData,
+      base64ImageData: base64ImageData,
+      rawImageData: rawImageData,
+    );
+
+    // 🔧 关键修改：在画布渲染阶段应用翻转变换
+    if (isFlippedHorizontally || isFlippedVertically) {
+      print('  - 🎯 应用画布级翻转变换: H=$isFlippedHorizontally, V=$isFlippedVertically');
+      
+      imageWidget = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..scale(
+            isFlippedHorizontally ? -1.0 : 1.0,
+            isFlippedVertically ? -1.0 : 1.0,
+          ),
+        child: imageWidget,
+      );
+    } else {
+      print('  - 💡 无翻转变换，直接使用原始图像');
+    }
+    
     return Container(
         width: double.infinity,
         height: double.infinity,
@@ -436,15 +469,7 @@ class ElementRenderers {
             (bgColor != null && bgColor != Colors.transparent) ? bgColor : null,
         child: Opacity(
           opacity: opacity,
-          child: _buildImageWidget(
-            imageUrl: transformedImageUrl ?? imageUrl,
-            fitMode: fitMode,
-            imageAlignment: imageAlignment,
-            binarizedImageData: binarizedImageData,
-            transformedImageData: transformedImageData,
-            base64ImageData: base64ImageData,
-            rawImageData: rawImageData,
-          ),
+          child: imageWidget,
         ));
   }
 

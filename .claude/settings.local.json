@@ -5,7 +5,8 @@
       "Bash(flutter test:*)",
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
-      "Bash(flutter:*)"
+      "Bash(flutter:*)",
+      "Bash(dart analyze:*)"
     ],
     "deny": []
   }

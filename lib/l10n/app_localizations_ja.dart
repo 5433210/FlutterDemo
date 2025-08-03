@@ -1973,6 +1973,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flipVertical => '垂直反転';
 
   @override
+  String get flipOptions => '反転オプション';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '反転効果は即座に有効になり、プレビューには表示されず、キャンバスレンダリング時にのみ適用されます。反転処理は画像変換の後に行われます。';
+
+  @override
   String get flutterVersion => 'Flutterバージョン';
 
   @override

@@ -11,6 +11,8 @@ import 'package:xml/xml.dart';
 
 import '../../domain/models/character/detected_outline.dart';
 import '../../infrastructure/logging/logger.dart';
+import './dynamic_image_bounds.dart';
+import './image_transform_coordinator.dart';
 import './image_processor.dart';
 
 /// 图片处理器实现
@@ -876,164 +878,135 @@ class ImageProcessorImpl implements ImageProcessor {
       'rotation': rotation,
     });
     
-    // 步骤1: 先应用翻转变换到整个原图像
-    img.Image transformedImage = sourceImage;
+    // 🔧 实现用户建议的动态边界逻辑
+    // 关键理解：当前传入的region参数是相对于原始图像坐标系的
+    // 我们需要正确处理这个坐标系统
     
-    // 应用水平翻转
-    if (flipHorizontal == true) {
-      transformedImage = img.flip(transformedImage, direction: img.FlipDirection.horizontal);
-      AppLogger.info('Applied horizontal flip');
+    // 如果没有任何变换，直接裁剪
+    if (rotation == 0 && flipHorizontal != true && flipVertical != true) {
+      AppLogger.info('No transforms applied, direct crop');
+      return img.copyCrop(
+        sourceImage,
+        x: region.left.round(),
+        y: region.top.round(),
+        width: region.width.round(),
+        height: region.height.round(),
+      );
     }
-    
-    // 应用垂直翻转
-    if (flipVertical == true) {
-      transformedImage = img.flip(transformedImage, direction: img.FlipDirection.vertical);
-      AppLogger.info('Applied vertical flip');
-    }
-    
-    // 步骤2: 如果有旋转，对整个翻转后的图像进行旋转
-    if (rotation != 0) {
-      // 计算旋转后图像的尺寸
-      final radians = rotation;
-      final cos = math.cos(radians).abs();
-      final sin = math.sin(radians).abs();
-      final newWidth = (transformedImage.width * cos + transformedImage.height * sin).ceil();
-      final newHeight = (transformedImage.width * sin + transformedImage.height * cos).ceil();
-      
-      AppLogger.info('Rotating entire image', data: {
-        'originalSize': '${transformedImage.width}x${transformedImage.height}',
-        'newSize': '${newWidth}x${newHeight}',
-        'rotationRadians': rotation,
-      });
-      
-      // 创建旋转后的图像
-      final rotatedImage = img.Image(width: newWidth, height: newHeight);
-      
-      // 计算偏移量（将旋转后的图像居中）
-      final offsetX = (newWidth - transformedImage.width) / 2;
-      final offsetY = (newHeight - transformedImage.height) / 2;
-      
-      // 原图像中心
-      final centerX = transformedImage.width / 2;
-      final centerY = transformedImage.height / 2;
-      
-      // 新图像中心
-      final newCenterX = newWidth / 2;
-      final newCenterY = newHeight / 2;
-      
-      // 旋转矩阵
-      final cosR = math.cos(-rotation);
-      final sinR = math.sin(-rotation);
-      
-      // 对每个像素进行反向映射
-      for (int y = 0; y < newHeight; y++) {
-        for (int x = 0; x < newWidth; x++) {
-          // 将新图像坐标转换为原图像坐标
-          final dx = x - newCenterX;
-          final dy = y - newCenterY;
-          
-          final srcX = cosR * dx - sinR * dy + centerX;
-          final srcY = sinR * dx + cosR * dy + centerY;
-          
-          // 检查是否在原图像范围内
-          if (srcX >= 0 && srcX < transformedImage.width - 1 && 
-              srcY >= 0 && srcY < transformedImage.height - 1) {
-            // 双线性插值
-            final x0 = srcX.floor();
-            final y0 = srcY.floor();
-            final x1 = x0 + 1;
-            final y1 = y0 + 1;
-            
-            final wx = srcX - x0;
-            final wy = srcY - y0;
-            
-            final p00 = transformedImage.getPixel(x0, y0);
-            final p01 = transformedImage.getPixel(x0, y1);
-            final p10 = transformedImage.getPixel(x1, y0);
-            final p11 = transformedImage.getPixel(x1, y1);
-            
-            final r = ((1 - wx) * (1 - wy) * p00.r +
-                    wx * (1 - wy) * p10.r +
-                    (1 - wx) * wy * p01.r +
-                    wx * wy * p11.r)
-                .round();
-            final g = ((1 - wx) * (1 - wy) * p00.g +
-                    wx * (1 - wy) * p10.g +
-                    (1 - wx) * wy * p01.g +
-                    wx * wy * p11.g)
-                .round();
-            final b = ((1 - wx) * (1 - wy) * p00.b +
-                    wx * (1 - wy) * p10.b +
-                    (1 - wx) * wy * p01.b +
-                    wx * wy * p11.b)
-                .round();
-            final a = ((1 - wx) * (1 - wy) * p00.a +
-                    wx * (1 - wy) * p10.a +
-                    (1 - wx) * wy * p01.a +
-                    wx * wy * p11.a)
-                .round();
-            
-            rotatedImage.setPixelRgba(x, y, r, g, b, a);
-          }
-        }
-      }
-      
-      transformedImage = rotatedImage;
-      
-      // 步骤3: 调整裁剪区域以适应旋转后的图像
-      // 计算原始裁剪区域在旋转后图像中的位置
-      final regionCenterX = region.left + region.width / 2;
-      final regionCenterY = region.top + region.height / 2;
-      
-      // 将原始区域中心相对于原图像中心进行旋转
-      final dx = regionCenterX - centerX;
-      final dy = regionCenterY - centerY;
-      
-      final rotatedRegionCenterX = math.cos(rotation) * dx - math.sin(rotation) * dy + newCenterX;
-      final rotatedRegionCenterY = math.sin(rotation) * dx + math.cos(rotation) * dy + newCenterY;
-      
-      // 新的裁剪区域（在旋转后的图像中）
-      final newRegionLeft = rotatedRegionCenterX - region.width / 2;
-      final newRegionTop = rotatedRegionCenterY - region.height / 2;
-      
-      region = Rect.fromLTWH(newRegionLeft, newRegionTop, region.width, region.height);
-      
-      AppLogger.info('Adjusted crop region for rotated image', data: {
-        'originalRegionCenter': '${regionCenterX},${regionCenterY}',
-        'rotatedRegionCenter': '${rotatedRegionCenterX},${rotatedRegionCenterY}',
-        'newRegion': '${region.left},${region.top},${region.width}x${region.height}',
-      });
-    }
-    
-    // 步骤4: 在变换后的图像上进行裁剪
-    AppLogger.info('Using crop region on transformed image', data: {
-      'region': '${region.left},${region.top},${region.width}x${region.height}',
-      'transformedImageSize': '${transformedImage.width}x${transformedImage.height}',
-    });
 
-    // 确保裁剪区域在图像范围内
-    final clampedLeft = math.max(0, region.left).toInt();
-    final clampedTop = math.max(0, region.top).toInt();
-    final clampedRight = math.min(transformedImage.width.toDouble(), region.right).toInt();
-    final clampedBottom = math.min(transformedImage.height.toDouble(), region.bottom).toInt();
-    
-    if (clampedRight <= clampedLeft || clampedBottom <= clampedTop) {
-      AppLogger.warning('Invalid crop region after clamping');
-      // 返回一个最小的有效图像
-      return img.Image(width: 1, height: 1);
-    }
-    
-    final result = img.copyCrop(
-      transformedImage,
-      x: clampedLeft,
-      y: clampedTop,
-      width: clampedRight - clampedLeft,
-      height: clampedBottom - clampedTop,
+    // 🔧 步骤1: 创建变换协调器
+    final coordinator = ImageTransformCoordinator(
+      originalImageSize: Size(sourceImage.width.toDouble(), sourceImage.height.toDouble()),
+      rotation: rotation,
+      flipHorizontal: flipHorizontal ?? false,
+      flipVertical: flipVertical ?? false,
     );
     
-    AppLogger.info('Final crop completed', data: {
-      'clampedRegion': '${clampedLeft},${clampedTop},${clampedRight - clampedLeft}x${clampedBottom - clampedTop}',
+    AppLogger.info('Transform coordinator created', data: coordinator.getDebugInfo());
+
+    // 🔧 步骤2: 将原始坐标系的裁剪区域转换为动态边界坐标系
+    final dynamicCropParams = coordinator.originalToDynamicCropParams(
+      cropX: region.left,
+      cropY: region.top,
+      cropWidth: region.width,
+      cropHeight: region.height,
+    );
+    
+    final dynamicCropRect = Rect.fromLTWH(
+      dynamicCropParams['cropX']!,
+      dynamicCropParams['cropY']!,
+      dynamicCropParams['cropWidth']!,
+      dynamicCropParams['cropHeight']!,
+    );
+    
+    AppLogger.info('Coordinate conversion completed', data: {
+      'originalRegion': '${region.left},${region.top},${region.width}x${region.height}',
+      'dynamicCropRect': '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
+    });
+
+    // 🔧 步骤3: 验证并调整动态边界中的裁剪区域
+    final clampedDynamicRect = coordinator.clampDynamicCropRect(dynamicCropRect);
+    
+    AppLogger.info('Dynamic crop rect clamped', data: {
+      'beforeClamp': '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
+      'afterClamp': '${clampedDynamicRect.left},${clampedDynamicRect.top},${clampedDynamicRect.width}x${clampedDynamicRect.height}',
+    });
+
+    // 🔧 步骤4: 创建结果图像
+    final result = img.Image(
+      width: clampedDynamicRect.width.round(), 
+      height: clampedDynamicRect.height.round()
+    );
+    
+    AppLogger.info('Created result image', data: {
       'resultSize': '${result.width}x${result.height}',
+    });
+
+    // 🔧 步骤5: 对结果图像的每个像素进行映射
+    final bounds = coordinator.bounds;
+    
+    for (int resultY = 0; resultY < result.height; resultY++) {
+      for (int resultX = 0; resultX < result.width; resultX++) {
+        
+        // 5a. 计算该像素在动态边界中的坐标
+        final dynamicX = clampedDynamicRect.left + resultX;
+        final dynamicY = clampedDynamicRect.top + resultY;
+        
+        // 5b. 将动态边界坐标映射到原始图像坐标
+        final originalPixel = bounds.mapDynamicToImagePixel(Offset(dynamicX, dynamicY));
+        
+        // 5c. 检查原始图像坐标是否有效并采样
+        if (originalPixel.dx >= 0 && originalPixel.dx < sourceImage.width - 1 && 
+            originalPixel.dy >= 0 && originalPixel.dy < sourceImage.height - 1) {
+          
+          // 双线性插值获取像素值
+          final x0 = originalPixel.dx.floor();
+          final y0 = originalPixel.dy.floor();
+          final x1 = x0 + 1;
+          final y1 = y0 + 1;
+          
+          final wx = originalPixel.dx - x0;
+          final wy = originalPixel.dy - y0;
+          
+          final p00 = sourceImage.getPixel(x0, y0);
+          final p01 = sourceImage.getPixel(x0, y1);
+          final p10 = sourceImage.getPixel(x1, y0);
+          final p11 = sourceImage.getPixel(x1, y1);
+          
+          final r = ((1 - wx) * (1 - wy) * p00.r +
+                  wx * (1 - wy) * p10.r +
+                  (1 - wx) * wy * p01.r +
+                  wx * wy * p11.r)
+              .round();
+          final g = ((1 - wx) * (1 - wy) * p00.g +
+                  wx * (1 - wy) * p10.g +
+                  (1 - wx) * wy * p01.g +
+                  wx * wy * p11.g)
+              .round();
+          final b = ((1 - wx) * (1 - wy) * p00.b +
+                  wx * (1 - wy) * p10.b +
+                  (1 - wx) * wy * p01.b +
+                  wx * wy * p11.b)
+              .round();
+          final a = ((1 - wx) * (1 - wy) * p00.a +
+                  wx * (1 - wy) * p10.a +
+                  (1 - wx) * wy * p01.a +
+                  wx * wy * p11.a)
+              .round();
+          
+          result.setPixelRgba(resultX, resultY, r, g, b, a);
+        }
+        // 如果原始坐标超出范围，像素保持默认（透明）
+      }
+    }
+    
+    AppLogger.info('Dynamic bounds mapping completed', data: {
+      'appliedRotation': rotation,
+      'appliedFlipH': flipHorizontal,
+      'appliedFlipV': flipVertical,
+      'resultSize': '${result.width}x${result.height}',
+      'mappingMethod': 'coordinatedDynamicBounds',
+      'coordinatorInfo': coordinator.toString(),
     });
     
     return result;

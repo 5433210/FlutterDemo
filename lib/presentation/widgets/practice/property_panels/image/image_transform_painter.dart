@@ -74,18 +74,8 @@ class ImageTransformPreviewPainter extends CustomPainter {
       canvas.translate(-imageCenterX, -imageCenterY);
     }
 
-    // 应用翻转变换
-    if (flipHorizontal || flipVertical) {
-      final imageCenterX = imageRect.center.dx;
-      final imageCenterY = imageRect.center.dy;
-      
-      canvas.translate(imageCenterX, imageCenterY);
-      canvas.scale(
-        flipHorizontal ? -1.0 : 1.0, 
-        flipVertical ? -1.0 : 1.0
-      );
-      canvas.translate(-imageCenterX, -imageCenterY);
-    }
+    // 注意：翻转变换不在预览中显示，只影响画布中的最终渲染
+    // 这里不应用翻转变换，以保持预览与原始图像一致
 
     // Draw image area border (representing the transformed image)
     final imageBorderPaint = Paint()

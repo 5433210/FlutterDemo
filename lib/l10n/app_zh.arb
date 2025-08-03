@@ -605,6 +605,8 @@
   "flip": "翻转",
   "flipHorizontal": "水平翻转",
   "flipVertical": "垂直翻转",
+  "flipOptions": "翻转选项",
+  "imagePropertyPanelFlipInfo": "翻转效果在画布渲染阶段处理，即时生效，无需重新处理图像数据。翻转是纯视觉变换，独立于图像处理管线。",
   "flutterVersion": "Flutter版本",
   "folderImportComplete": "文件夹导入完成",
   "fontColor": "文本颜色",

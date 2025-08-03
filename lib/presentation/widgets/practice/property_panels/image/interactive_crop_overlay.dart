@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../../infrastructure/image/dynamic_image_bounds.dart';
+import '../../../../../infrastructure/image/image_transform_coordinator.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
 
@@ -14,6 +16,8 @@ class InteractiveCropOverlay extends StatefulWidget {
   final double cropWidth; // Width of crop area in pixels
   final double cropHeight; // Height of crop area in pixels
   final double contentRotation; // Rotation angle in degrees
+  final bool flipHorizontal; // Horizontal flip state
+  final bool flipVertical; // Vertical flip state
   final Function(double, double, double, double, {bool isDragging})
       onCropChanged; // (x, y, width, height, isDragging)
   final bool enabled;
@@ -27,6 +31,8 @@ class InteractiveCropOverlay extends StatefulWidget {
     required this.cropWidth,
     required this.cropHeight,
     required this.contentRotation,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
     required this.onCropChanged,
     this.enabled = true,
   });
@@ -43,10 +49,14 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
 
   _DragHandle? _activeDragHandle;
   Offset? _lastPanPosition;
+  
+  // 动态边界坐标协调器
+  late ImageTransformCoordinator _coordinator;
 
   @override
   void initState() {
     super.initState();
+    _initializeCoordinator();
     _updateCurrentCropValues();
   }
 
@@ -74,8 +84,19 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
             oldWidget.cropY != widget.cropY ||
             oldWidget.cropWidth != widget.cropWidth ||
             oldWidget.cropHeight != widget.cropHeight,
+        'transformsChanged': oldWidget.contentRotation != widget.contentRotation ||
+            oldWidget.flipHorizontal != widget.flipHorizontal ||
+            oldWidget.flipVertical != widget.flipVertical,
       },
     );
+
+    // 检查是否需要重新初始化坐标协调器
+    if (oldWidget.contentRotation != widget.contentRotation ||
+        oldWidget.flipHorizontal != widget.flipHorizontal ||
+        oldWidget.flipVertical != widget.flipVertical ||
+        oldWidget.imageSize != widget.imageSize) {
+      _initializeCoordinator();
+    }
 
     // 始终更新本地状态以确保同步
     if (oldWidget.cropX != widget.cropX ||
@@ -100,6 +121,15 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
       print('_currentCropWidth: ${_currentCropWidth.toStringAsFixed(1)}');
       print('_currentCropHeight: ${_currentCropHeight.toStringAsFixed(1)}');
     }
+  }
+
+  void _initializeCoordinator() {
+    _coordinator = ImageTransformCoordinator(
+      originalImageSize: widget.imageSize,
+      rotation: widget.contentRotation * (math.pi / 180.0), // 转换为弧度
+      flipHorizontal: widget.flipHorizontal,
+      flipVertical: widget.flipVertical,
+    );
   }
 
   void _updateCurrentCropValues() {
@@ -129,6 +159,8 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
                 cropWidth: _currentCropWidth,
                 cropHeight: _currentCropHeight,
                 contentRotation: widget.contentRotation,
+                flipHorizontal: widget.flipHorizontal,
+                flipVertical: widget.flipVertical,
                 containerSize: constraints.biggest,
               ),
               size: constraints.biggest,
@@ -368,208 +400,155 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
   }
 
   Rect _calculateCropRect(Size containerSize) {
-    // Calculate scale for image in container
-    final scaleX = containerSize.width / widget.imageSize.width;
-    final scaleY = containerSize.height / widget.imageSize.height;
+    // 🔧 使用动态边界坐标系统
+    // 将原始图像坐标系的裁剪区域转换为动态边界坐标系
+    final dynamicCropParams = _coordinator.originalToDynamicCropParams(
+      cropX: _currentCropX,
+      cropY: _currentCropY,
+      cropWidth: _currentCropWidth,
+      cropHeight: _currentCropHeight,
+    );
+    
+    final dynamicCropRect = Rect.fromLTWH(
+      dynamicCropParams['cropX']!,
+      dynamicCropParams['cropY']!,
+      dynamicCropParams['cropWidth']!,
+      dynamicCropParams['cropHeight']!,
+    );
+    
+    // 验证并调整动态边界中的裁剪区域
+    final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicCropRect);
+    
+    // 将动态边界坐标转换为显示坐标
+    final dynamicBounds = _coordinator.dynamicBounds;
+    
+    // Calculate scale for dynamic bounds in container - 使用contain模式
+    final scaleX = containerSize.width / dynamicBounds.width;
+    final scaleY = containerSize.height / dynamicBounds.height;
     final scale = math.min(scaleX, scaleY);
 
-    final scaledImageWidth = widget.imageSize.width * scale;
-    final scaledImageHeight = widget.imageSize.height * scale;
+    final scaledDynamicWidth = dynamicBounds.width * scale;
+    final scaledDynamicHeight = dynamicBounds.height * scale;
 
-    final offsetX = (containerSize.width - scaledImageWidth) / 2;
-    final offsetY = (containerSize.height - scaledImageHeight) / 2;
+    final offsetX = (containerSize.width - scaledDynamicWidth) / 2;
+    final offsetY = (containerSize.height - scaledDynamicHeight) / 2;
 
-    final imageRect =
-        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+    // Convert dynamic crop coordinates to display coordinates
+    final displayCropRect = Rect.fromLTWH(
+      offsetX + (clampedDynamicRect.left * scale),
+      offsetY + (clampedDynamicRect.top * scale),
+      clampedDynamicRect.width * scale,
+      clampedDynamicRect.height * scale,
+    );
 
-    // Convert crop coordinates from image pixels to display coordinates
-    // Scale factor: display pixels per image pixel
-    final imageToDisplayScale = scale;
-
-    final cropLeft = imageRect.left + (_currentCropX * imageToDisplayScale);
-    final cropTop = imageRect.top + (_currentCropY * imageToDisplayScale);
-    final cropWidth = _currentCropWidth * imageToDisplayScale;
-    final cropHeight = _currentCropHeight * imageToDisplayScale;
-
-    final cropRect = Rect.fromLTWH(cropLeft, cropTop, cropWidth, cropHeight);
-
-    // Apply rotation transform if needed
-    if (widget.contentRotation != 0.0) {
-      final rotationRadians = widget.contentRotation * math.pi / 180;
-      final imageCenter = imageRect.center;
-
-      // Calculate the rotated crop rectangle corners
-      final cropCenter = cropRect.center;
-
-      // Translate to origin (image center)
-      final translatedCropCenter = Offset(
-        cropCenter.dx - imageCenter.dx,
-        cropCenter.dy - imageCenter.dy,
-      );
-
-      // Apply rotation
-      final cos = math.cos(rotationRadians);
-      final sin = math.sin(rotationRadians);
-      final rotatedCropCenter = Offset(
-        translatedCropCenter.dx * cos - translatedCropCenter.dy * sin,
-        translatedCropCenter.dx * sin + translatedCropCenter.dy * cos,
-      );
-
-      // Translate back
-      final finalCropCenter = Offset(
-        rotatedCropCenter.dx + imageCenter.dx,
-        rotatedCropCenter.dy + imageCenter.dy,
-      );
-
-      return Rect.fromCenter(
-        center: finalCropCenter,
-        width: cropRect.width,
-        height: cropRect.height,
-      );
-    }
-
-    return cropRect;
+    return displayCropRect;
   }
 
   void _updateCropFromDrag(
       _DragHandle handle, Offset delta, Size containerSize) {
-    // Calculate the scale factor for converting display coordinates to image coordinates
-    final scaleX = containerSize.width / widget.imageSize.width;
-    final scaleY = containerSize.height / widget.imageSize.height;
+    // 🔧 使用动态边界坐标系统计算拖拽变换
+    final dynamicBounds = _coordinator.dynamicBounds;
+    
+    // Calculate scale for dynamic bounds in container
+    final scaleX = containerSize.width / dynamicBounds.width;
+    final scaleY = containerSize.height / dynamicBounds.height;
     final scale = math.min(scaleX, scaleY);
 
-    // Transform delta to account for rotation
-    Offset transformedDelta = delta;
-    if (widget.contentRotation != 0.0) {
-      final rotationRadians =
-          -widget.contentRotation * math.pi / 180; // Inverse rotation
-      final cos = math.cos(rotationRadians);
-      final sin = math.sin(rotationRadians);
-      transformedDelta = Offset(
-        delta.dx * cos - delta.dy * sin,
-        delta.dx * sin + delta.dy * cos,
-      );
-    }
+    // Convert screen delta to dynamic boundary coordinate delta
+    final deltaX = delta.dx / scale;
+    final deltaY = delta.dy / scale;
 
-    // Convert screen delta to image coordinate delta
-    final deltaX = transformedDelta.dx / scale;
-    final deltaY = transformedDelta.dy / scale;
-
-    // Define minimum crop area (e.g., 10x10 pixels)
+    // Define minimum crop area (e.g., 10x10 pixels in dynamic coordinates)
     const minCropSize = 10.0;
 
     setState(() {
-      // Calculate new crop values based on handle type
-      double newCropX = _currentCropX;
-      double newCropY = _currentCropY;
-      double newCropWidth = _currentCropWidth;
-      double newCropHeight = _currentCropHeight;
+      // 获取当前在动态边界坐标系中的裁剪参数
+      final currentDynamicCropParams = _coordinator.originalToDynamicCropParams(
+        cropX: _currentCropX,
+        cropY: _currentCropY,
+        cropWidth: _currentCropWidth,
+        cropHeight: _currentCropHeight,
+      );
+      
+      // Calculate new crop values in dynamic boundary coordinates
+      double newDynamicCropX = currentDynamicCropParams['cropX']!;
+      double newDynamicCropY = currentDynamicCropParams['cropY']!;
+      double newDynamicCropWidth = currentDynamicCropParams['cropWidth']!;
+      double newDynamicCropHeight = currentDynamicCropParams['cropHeight']!;
 
       switch (handle) {
         case _DragHandle.topLeft:
           // Moving top-left corner: adjust x, y, width, height
-          newCropX = _currentCropX + deltaX;
-          newCropY = _currentCropY + deltaY;
-          newCropWidth = _currentCropWidth - deltaX;
-          newCropHeight = _currentCropHeight - deltaY;
+          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
+          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
           break;
         case _DragHandle.topCenter:
           // Moving top edge: adjust y and height
-          newCropY = _currentCropY + deltaY;
-          newCropHeight = _currentCropHeight - deltaY;
+          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
           break;
         case _DragHandle.topRight:
           // Moving top-right corner: adjust y, width, height
-          newCropY = _currentCropY + deltaY;
-          newCropWidth = _currentCropWidth + deltaX;
-          newCropHeight = _currentCropHeight - deltaY;
+          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! - deltaY;
           break;
         case _DragHandle.centerLeft:
           // Moving left edge: adjust x and width
-          newCropX = _currentCropX + deltaX;
-          newCropWidth = _currentCropWidth - deltaX;
+          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
           break;
         case _DragHandle.centerRight:
           // Moving right edge: adjust width
-          newCropWidth = _currentCropWidth + deltaX;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
           break;
         case _DragHandle.bottomLeft:
           // Moving bottom-left corner: adjust x, width, height
-          newCropX = _currentCropX + deltaX;
-          newCropWidth = _currentCropWidth - deltaX;
-          newCropHeight = _currentCropHeight + deltaY;
+          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! - deltaX;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
           break;
         case _DragHandle.bottomCenter:
           // Moving bottom edge: adjust height
-          newCropHeight = _currentCropHeight + deltaY;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
           break;
         case _DragHandle.bottomRight:
           // Moving bottom-right corner: adjust width and height
-          newCropWidth = _currentCropWidth + deltaX;
-          newCropHeight = _currentCropHeight + deltaY;
+          newDynamicCropWidth = currentDynamicCropParams['cropWidth']! + deltaX;
+          newDynamicCropHeight = currentDynamicCropParams['cropHeight']! + deltaY;
           break;
         case _DragHandle.move:
           // Move entire crop area: adjust x and y, keep width and height
-          newCropX = _currentCropX + deltaX;
-          newCropY = _currentCropY + deltaY;
+          newDynamicCropX = currentDynamicCropParams['cropX']! + deltaX;
+          newDynamicCropY = currentDynamicCropParams['cropY']! + deltaY;
           break;
       }
 
-      // Apply constraints to ensure valid crop area
-      final validatedCrop = _validateCropArea(
-        newCropX,
-        newCropY,
-        newCropWidth,
-        newCropHeight,
-        minCropSize,
+      // Validate dynamic boundary crop area
+      final dynamicRect = Rect.fromLTWH(
+        newDynamicCropX, 
+        newDynamicCropY, 
+        newDynamicCropWidth, 
+        newDynamicCropHeight
+      );
+      final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicRect);
+      
+      // Convert back to original image coordinates
+      final originalCropParams = _coordinator.dynamicToOriginalCropParams(
+        cropX: clampedDynamicRect.left,
+        cropY: clampedDynamicRect.top,
+        cropWidth: clampedDynamicRect.width,
+        cropHeight: clampedDynamicRect.height,
       );
 
-      _currentCropX = validatedCrop['x']!;
-      _currentCropY = validatedCrop['y']!;
-      _currentCropWidth = validatedCrop['width']!;
-      _currentCropHeight = validatedCrop['height']!;
+      _currentCropX = originalCropParams['cropX']!;
+      _currentCropY = originalCropParams['cropY']!;
+      _currentCropWidth = originalCropParams['cropWidth']!;
+      _currentCropHeight = originalCropParams['cropHeight']!;
     });
-  }
-
-  /// Validates and adjusts crop values to ensure a valid crop area
-  Map<String, double> _validateCropArea(
-    double x,
-    double y,
-    double width,
-    double height,
-    double minSize,
-  ) {
-    // Ensure crop area stays within image bounds
-    x = x.clamp(0.0, widget.imageSize.width);
-    y = y.clamp(0.0, widget.imageSize.height);
-
-    // Ensure minimum dimensions
-    width = width.clamp(minSize, widget.imageSize.width);
-    height = height.clamp(minSize, widget.imageSize.height);
-
-    // Adjust position if crop area extends beyond image bounds
-    if (x + width > widget.imageSize.width) {
-      x = widget.imageSize.width - width;
-    }
-    if (y + height > widget.imageSize.height) {
-      y = widget.imageSize.height - height;
-    }
-
-    // Final validation to ensure values are within bounds
-    x = x.clamp(0.0, widget.imageSize.width - minSize);
-    y = y.clamp(0.0, widget.imageSize.height - minSize);
-
-    // Ensure final width and height don't exceed image bounds
-    width = width.clamp(minSize, widget.imageSize.width - x);
-    height = height.clamp(minSize, widget.imageSize.height - y);
-
-    return {
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-    };
-  }
+}
 }
 
 enum _DragHandle {
@@ -594,6 +573,8 @@ class InteractiveCropPainter extends CustomPainter {
   final double cropWidth; // Width of crop area in pixels
   final double cropHeight; // Height of crop area in pixels
   final double contentRotation; // Rotation angle in degrees
+  final bool flipHorizontal; // Horizontal flip state
+  final bool flipVertical; // Vertical flip state
   final Size containerSize;
 
   const InteractiveCropPainter({
@@ -605,6 +586,8 @@ class InteractiveCropPainter extends CustomPainter {
     required this.cropWidth,
     required this.cropHeight,
     required this.contentRotation,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
     required this.containerSize,
   });
 
@@ -615,52 +598,65 @@ class InteractiveCropPainter extends CustomPainter {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Calculate scale for image in container
-    final scaleX = size.width / imageSize.width;
-    final scaleY = size.height / imageSize.height;
+    // 🔧 使用动态边界坐标系统
+    final coordinator = ImageTransformCoordinator(
+      originalImageSize: imageSize,
+      rotation: contentRotation * (math.pi / 180.0), // 转换为弧度
+      flipHorizontal: flipHorizontal,
+      flipVertical: flipVertical,
+    );
+
+    // 将原始图像坐标系的裁剪区域转换为动态边界坐标系
+    final dynamicCropParams = coordinator.originalToDynamicCropParams(
+      cropX: cropX,
+      cropY: cropY,
+      cropWidth: cropWidth,
+      cropHeight: cropHeight,
+    );
+    
+    final dynamicCropRect = Rect.fromLTWH(
+      dynamicCropParams['cropX']!,
+      dynamicCropParams['cropY']!,
+      dynamicCropParams['cropWidth']!,
+      dynamicCropParams['cropHeight']!,
+    );
+    
+    // 验证并调整动态边界中的裁剪区域
+    final clampedDynamicRect = coordinator.clampDynamicCropRect(dynamicCropRect);
+    
+    // 获取动态边界大小
+    final dynamicBounds = coordinator.dynamicBounds;
+    
+    // Calculate scale for dynamic bounds in container
+    final scaleX = size.width / dynamicBounds.width;
+    final scaleY = size.height / dynamicBounds.height;
     final scale = math.min(scaleX, scaleY);
 
-    final scaledImageWidth = imageSize.width * scale;
-    final scaledImageHeight = imageSize.height * scale;
+    final scaledDynamicWidth = dynamicBounds.width * scale;
+    final scaledDynamicHeight = dynamicBounds.height * scale;
 
-    final offsetX = (size.width - scaledImageWidth) / 2;
-    final offsetY = (size.height - scaledImageHeight) / 2;
+    final offsetX = (size.width - scaledDynamicWidth) / 2;
+    final offsetY = (size.height - scaledDynamicHeight) / 2;
 
-    final imageRect =
-        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+    // Dynamic bounds display rectangle
+    final dynamicBoundsRect = Rect.fromLTWH(offsetX, offsetY, scaledDynamicWidth, scaledDynamicHeight);
 
-    // Save canvas state before applying rotation
-    canvas.save();
+    // Convert dynamic crop coordinates to display coordinates
+    final displayCropRect = Rect.fromLTWH(
+      offsetX + (clampedDynamicRect.left * scale),
+      offsetY + (clampedDynamicRect.top * scale),
+      clampedDynamicRect.width * scale,
+      clampedDynamicRect.height * scale,
+    );
 
-    // Apply image rotation around image center
-    if (contentRotation != 0.0) {
-      final rotationRadians = contentRotation * math.pi / 180;
-      final imageCenter = imageRect.center;
-      canvas.translate(imageCenter.dx, imageCenter.dy);
-      canvas.rotate(rotationRadians);
-      canvas.translate(-imageCenter.dx, -imageCenter.dy);
-    }
-
-    // Convert crop coordinates from image pixels to display coordinates
-    // Use the same scale factor as the image scaling
-    final imageToDisplayScale = scale;
-
-    final cropRectLeft = imageRect.left + (cropX * imageToDisplayScale);
-    final cropRectTop = imageRect.top + (cropY * imageToDisplayScale);
-    final cropRectWidth = cropWidth * imageToDisplayScale;
-    final cropRectHeight = cropHeight * imageToDisplayScale;
-
-    final cropRect =
-        Rect.fromLTWH(cropRectLeft, cropRectTop, cropRectWidth, cropRectHeight);
-
-    if (cropRect.width > 0 && cropRect.height > 0) {
+    if (displayCropRect.width > 0 && displayCropRect.height > 0) {
       // Draw mask over non-cropped areas
       final maskPaint = Paint()
         ..color = Colors.black.withAlpha(100)
         ..style = PaintingStyle.fill;
 
-      final maskPath = Path()..addRect(imageRect);
-      maskPath.addRect(cropRect);
+      final maskPath = Path()..addRect(dynamicBoundsRect);
+      maskPath.addRect(displayCropRect);
       maskPath.fillType = PathFillType.evenOdd;
 
       canvas.drawPath(maskPath, maskPaint);
@@ -671,7 +667,7 @@ class InteractiveCropPainter extends CustomPainter {
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke;
 
-      canvas.drawRect(cropRect, borderPaint);
+      canvas.drawRect(displayCropRect, borderPaint);
 
       // Draw grid lines
       final gridPaint = Paint()
@@ -680,28 +676,28 @@ class InteractiveCropPainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
 
       // Horizontal grid lines
-      final gridHeight = cropRect.height / 3;
+      final gridHeight = displayCropRect.height / 3;
       canvas.drawLine(
-        Offset(cropRect.left, cropRect.top + gridHeight),
-        Offset(cropRect.right, cropRect.top + gridHeight),
+        Offset(displayCropRect.left, displayCropRect.top + gridHeight),
+        Offset(displayCropRect.right, displayCropRect.top + gridHeight),
         gridPaint,
       );
       canvas.drawLine(
-        Offset(cropRect.left, cropRect.top + gridHeight * 2),
-        Offset(cropRect.right, cropRect.top + gridHeight * 2),
+        Offset(displayCropRect.left, displayCropRect.top + gridHeight * 2),
+        Offset(displayCropRect.right, displayCropRect.top + gridHeight * 2),
         gridPaint,
       );
 
       // Vertical grid lines
-      final gridWidth = cropRect.width / 3;
+      final gridWidth = displayCropRect.width / 3;
       canvas.drawLine(
-        Offset(cropRect.left + gridWidth, cropRect.top),
-        Offset(cropRect.left + gridWidth, cropRect.bottom),
+        Offset(displayCropRect.left + gridWidth, displayCropRect.top),
+        Offset(displayCropRect.left + gridWidth, displayCropRect.bottom),
         gridPaint,
       );
       canvas.drawLine(
-        Offset(cropRect.left + gridWidth * 2, cropRect.top),
-        Offset(cropRect.left + gridWidth * 2, cropRect.bottom),
+        Offset(displayCropRect.left + gridWidth * 2, displayCropRect.top),
+        Offset(displayCropRect.left + gridWidth * 2, displayCropRect.bottom),
         gridPaint,
       );
 
@@ -715,15 +711,15 @@ class InteractiveCropPainter extends CustomPainter {
 
       final handles = [
         // Corner handles (larger and more prominent)
-        cropRect.topLeft,
-        cropRect.topRight,
-        cropRect.bottomLeft,
-        cropRect.bottomRight,
+        displayCropRect.topLeft,
+        displayCropRect.topRight,
+        displayCropRect.bottomLeft,
+        displayCropRect.bottomRight,
         // Edge handles
-        Offset(cropRect.center.dx, cropRect.top),
-        Offset(cropRect.center.dx, cropRect.bottom),
-        Offset(cropRect.left, cropRect.center.dy),
-        Offset(cropRect.right, cropRect.center.dy),
+        Offset(displayCropRect.center.dx, displayCropRect.top),
+        Offset(displayCropRect.center.dx, displayCropRect.bottom),
+        Offset(displayCropRect.left, displayCropRect.center.dy),
+        Offset(displayCropRect.right, displayCropRect.center.dy),
       ];
 
       for (int i = 0; i < handles.length; i++) {
@@ -763,7 +759,7 @@ class InteractiveCropPainter extends CustomPainter {
       }
 
       // Draw crop area dimensions (if crop area is reasonably large)
-      if (cropRect.width > 60 && cropRect.height > 40) {
+      if (displayCropRect.width > 60 && displayCropRect.height > 40) {
         final dimensionText = '${cropWidth.round()}x${cropHeight.round()}';
 
         final textPainter = TextPainter(
@@ -789,16 +785,13 @@ class InteractiveCropPainter extends CustomPainter {
 
         // Position text in the center of crop area
         final textPosition = Offset(
-          cropRect.center.dx - textPainter.width / 2,
-          cropRect.center.dy - textPainter.height / 2,
+          displayCropRect.center.dx - textPainter.width / 2,
+          displayCropRect.center.dy - textPainter.height / 2,
         );
 
         textPainter.paint(canvas, textPosition);
       }
     }
-
-    // Restore canvas state
-    canvas.restore();
   }
 
   @override
@@ -810,6 +803,8 @@ class InteractiveCropPainter extends CustomPainter {
         cropWidth != oldDelegate.cropWidth ||
         cropHeight != oldDelegate.cropHeight ||
         contentRotation != oldDelegate.contentRotation ||
+        flipHorizontal != oldDelegate.flipHorizontal ||
+        flipVertical != oldDelegate.flipVertical ||
         containerSize != oldDelegate.containerSize;
   }
 }

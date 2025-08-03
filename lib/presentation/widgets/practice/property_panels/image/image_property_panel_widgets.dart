@@ -644,6 +644,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                           cropWidth: cropWidth,
                           cropHeight: cropHeight,
                           contentRotation: 0.0, // 强制设为0，不让裁剪框旋转
+                          flipHorizontal: flipHorizontal,
+                          flipVertical: flipVertical,
                           onCropChanged: onCropChanged!,
                           enabled: true,
                         ),
@@ -905,16 +907,13 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
   }
 }
 
-/// 图像变换面板
+/// 图像变换面板 (只包含裁剪和旋转)
 class ImagePropertyTransformPanel extends StatelessWidget {
   final double cropX; // Left edge of crop area in pixels
   final double cropY; // Top edge of crop area in pixels
   final double cropWidth; // Width of crop area in pixels
   final double cropHeight; // Height of crop area in pixels
-  final bool flipHorizontal;
-  final bool flipVertical;
   final double contentRotation;
-  final Function(String, dynamic) onFlipChanged;
   final Function(double) onRotationChanged;
   final VoidCallback onApplyTransform;
   final VoidCallback onResetTransform;
@@ -925,10 +924,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
     required this.cropY,
     required this.cropWidth,
     required this.cropHeight,
-    required this.flipHorizontal,
-    required this.flipVertical,
     required this.contentRotation,
-    required this.onFlipChanged,
     required this.onRotationChanged,
     required this.onApplyTransform,
     required this.onResetTransform,
@@ -1041,43 +1037,6 @@ class ImagePropertyTransformPanel extends StatelessWidget {
                               child: Text('${l10n.height}: ${cropHeight.round()}px'),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16.0),
-
-                // Flip buttons
-                Text(l10n.flip,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8.0),
-
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Wrap(
-                      spacing: 8,
-                      children: [
-                        FilterChip(
-                          label: Text(l10n.flipHorizontal),
-                          selected: flipHorizontal,
-                          onSelected: (value) =>
-                              onFlipChanged('isFlippedHorizontally', value),
-                          avatar: const Icon(Icons.flip),
-                        ),
-                        FilterChip(
-                          label: Text(l10n.flipVertical),
-                          selected: flipVertical,
-                          onSelected: (value) =>
-                              onFlipChanged('isFlippedVertically', value),
-                          avatar: const Icon(Icons.flip),
                         ),
                       ],
                     ),
@@ -1670,6 +1629,162 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 图像翻转面板 (独立面板，翻转即时生效)
+class ImagePropertyFlipPanel extends StatelessWidget {
+  final bool flipHorizontal;
+  final bool flipVertical;
+  final Function(String, dynamic) onFlipChanged;
+
+  const ImagePropertyFlipPanel({
+    super.key,
+    required this.flipHorizontal,
+    required this.flipVertical,
+    required this.onFlipChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
+        title: Text(l10n.flip),
+        initiallyExpanded: false,
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Information alert about flip processing order
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  decoration: BoxDecoration(
+                    color: colorScheme.tertiaryContainer
+                        .withAlpha((0.3 * 255).toInt()),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: colorScheme.tertiary, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.imagePropertyPanelFlipInfo,
+                          style: TextStyle(
+                              fontSize: 14, color: colorScheme.tertiary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Flip options (immediately effective)
+                Text(l10n.flipOptions,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8.0),
+
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        // 水平翻转选项
+                        Row(
+                          children: [
+                            const Icon(Icons.flip),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                l10n.flipHorizontal,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            Switch(
+                              value: flipHorizontal,
+                              onChanged: (value) {
+                                print('🔍 [Switch] 水平翻转开关点击: $value');
+                                print('  - 当前状态: flipHorizontal=$flipHorizontal, flipVertical=$flipVertical');
+                                print('  - 期望状态: flipHorizontal=$value, flipVertical=$flipVertical');
+                                
+                                // 🔧 测试：检查是否两个都为false的情况
+                                if (!value && !flipVertical) {
+                                  print('  - 🎯 即将设置为两个翻转都关闭的状态！');
+                                }
+                                
+                                onFlipChanged('isFlippedHorizontally', value);
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // 垂直翻转选项
+                        Row(
+                          children: [
+                            Transform.rotate(
+                              angle: 1.5708, // 90 degrees in radians (π/2)
+                              child: const Icon(Icons.flip),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                l10n.flipVertical,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            Switch(
+                              value: flipVertical,
+                              onChanged: (value) {
+                                print('🔍 [Switch] 垂直翻转开关点击: $value');
+                                print('  - 当前状态: flipHorizontal=$flipHorizontal, flipVertical=$flipVertical');
+                                print('  - 期望状态: flipHorizontal=$flipHorizontal, flipVertical=$value');
+                                
+                                // 🔧 测试：检查是否两个都为false的情况
+                                if (!flipHorizontal && !value) {
+                                  print('  - 🎯 即将设置为两个翻转都关闭的状态！');
+                                }
+                                
+                                onFlipChanged('isFlippedVertically', value);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16.0),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }

@@ -1973,6 +1973,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flipVertical => '垂直翻转';
 
   @override
+  String get flipOptions => '翻转选项';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '翻转效果即时生效，不会在预览中显示，只在画布渲染时应用。翻转处理在图像变换之后进行。';
+
+  @override
   String get flutterVersion => 'Flutter版本';
 
   @override
@@ -6414,6 +6420,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get flipVertical => '垂直翻轉';
+
+  @override
+  String get flipOptions => '翻轉選項';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '翻轉效果即時生效，不會在預覽中顯示，僅在畫布繪製時套用。翻轉處理在影像變換之後進行。';
 
   @override
   String get flutterVersion => 'Flutter 版本';

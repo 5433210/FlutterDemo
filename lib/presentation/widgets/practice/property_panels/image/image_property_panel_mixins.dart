@@ -222,6 +222,20 @@ mixin ImagePropertyUpdaters {
     content[key] = value;
     print('  - 更新后 content[$key]: ${content[key]}');
     
+    // 🔧 特别检查翻转状态
+    if (key == 'isFlippedHorizontally' || key == 'isFlippedVertically') {
+      print('🔍 翻转状态特别检查:');
+      print('  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
+      print('  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
+      
+      final flipH = content['isFlippedHorizontally'] as bool? ?? false;
+      final flipV = content['isFlippedVertically'] as bool? ?? false;
+      
+      if (!flipH && !flipV) {
+        print('  - 🎯 检测到两个翻转都为false，这应该是允许的！');
+      }
+    }
+    
     updateProperty('content', content, createUndoOperation: createUndoOperation);
     print('  - updateProperty 已调用');
   }

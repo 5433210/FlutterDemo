@@ -602,6 +602,8 @@
   "flip": "Flip",
   "flipHorizontal": "Flip Horizontal",
   "flipVertical": "Flip Vertical",
+  "flipOptions": "Flip Options",
+  "imagePropertyPanelFlipInfo": "Flip effects are processed at the canvas rendering stage and take effect immediately without reprocessing image data. Flip is a pure visual transformation, independent of the image processing pipeline.",
   "flutterVersion": "Flutter Version",
   "folderImportComplete": "Folder Import Complete",
   "fontColor": "Font Color",

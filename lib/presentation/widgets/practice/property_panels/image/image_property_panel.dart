@@ -257,21 +257,13 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           },
         ),
 
-        // Image transform section
+        // Image transform section (裁剪和旋转)
         ImagePropertyTransformPanel(
           cropX: cropX,
           cropY: cropY,
           cropWidth: cropWidth,
           cropHeight: cropHeight,
-          flipHorizontal: isFlippedHorizontally,
-          flipVertical: isFlippedVertically,
           contentRotation: contentRotation,
-          onFlipChanged: (key, value) {
-            print('🔍 翻转参数变化: $key = $value');
-            // 🔧 修复：只更新属性，不立即执行处理管线
-            // 用户需要点击"应用变换"按钮才会应用变换
-            updateContentProperty(key, value, createUndoOperation: false);
-          },
           onRotationChanged: (value) {
             print('🔍 旋转参数变化: rotation = $value');
             // 🔧 修复：只更新属性，不立即执行处理管线
@@ -280,6 +272,25 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           },
           onApplyTransform: () => applyTransform(context),
           onResetTransform: () => resetTransform(context),
+        ),
+
+        // Image flip section (独立的翻转面板，翻转即时生效，现在在画布渲染阶段处理)
+        ImagePropertyFlipPanel(
+          flipHorizontal: isFlippedHorizontally,
+          flipVertical: isFlippedVertically,
+          onFlipChanged: (key, value) {
+            print('🔍 翻转参数变化: $key = $value');
+            print('🔍 当前状态:');
+            print('  - flipHorizontal: $isFlippedHorizontally');
+            print('  - flipVertical: $isFlippedVertically');
+            print('  - 尝试设置 $key = $value');
+            
+            // 🔧 大幅简化：翻转现在在画布渲染阶段处理，只需要更新属性
+            print('  - 💡 翻转现在在画布渲染阶段处理，只更新元素属性');
+            updateContentProperty(key, value, createUndoOperation: true);
+            
+            print('🔍 翻转属性更新完成，无需执行图像处理管线');
+          },
         ),
 
         // Binarization processing section
@@ -313,8 +324,25 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   void handlePropertyChange(Map<String, dynamic> updates,
       {bool createUndoOperation = true}) {
     print('=== handlePropertyChange ===');
-    // print('updates: $updates');
+    print('updates: $updates');
     print('createUndoOperation: $createUndoOperation');
+
+    // 🔧 特别检查翻转相关的更新
+    if (updates.containsKey('content')) {
+      final content = updates['content'] as Map<String, dynamic>;
+      if (content.containsKey('isFlippedHorizontally') || content.containsKey('isFlippedVertically')) {
+        print('🔍 检测到翻转状态更新:');
+        print('  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
+        print('  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
+        
+        final flipH = content['isFlippedHorizontally'] as bool? ?? false;
+        final flipV = content['isFlippedVertically'] as bool? ?? false;
+        
+        if (!flipH && !flipV) {
+          print('  - 🎯 即将更新状态：两个翻转都为false');
+        }
+      }
+    }
 
     if (createUndoOperation) {
       print('调用 widget.onElementPropertiesChanged (创建撤销)');
@@ -325,6 +353,13 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       // 使用现有的无撤销更新方法
       final elementId = widget.element['id'];
       widget.controller.updateElementPropertiesWithoutUndo(elementId, updates);
+    }
+
+    // 🔧 修复：强制触发UI重建以确保翻转选项状态立即更新
+    if (mounted) {
+      setState(() {
+        // 触发重建以显示最新的翻转状态
+      });
     }
 
     print('=== handlePropertyChange 结束 ===');

@@ -3736,6 +3736,18 @@ abstract class AppLocalizations {
   /// **'垂直翻转'**
   String get flipVertical;
 
+  /// No description provided for @flipOptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻转选项'**
+  String get flipOptions;
+
+  /// No description provided for @imagePropertyPanelFlipInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻转效果即时生效，不会在预览中显示，只在画布渲染时应用。翻转处理在图像变换之后进行。'**
+  String get imagePropertyPanelFlipInfo;
+
   /// No description provided for @flutterVersion.
   ///
   /// In zh, this message translates to:

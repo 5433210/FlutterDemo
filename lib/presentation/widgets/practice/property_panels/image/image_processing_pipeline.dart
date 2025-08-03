@@ -48,6 +48,13 @@ mixin ImageProcessingPipeline {
     final content = Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
     final imageUrl = content['imageUrl'] as String? ?? '';
     
+    // 🔍 调试：打印翻转参数状态（翻转现在在画布渲染阶段处理）
+    print('🔍 [处理管线] 开始执行，检查参数状态:');
+    // print('  - isFlippedHorizontally: ${content['isFlippedHorizontally']}'); // 🔧 移除翻转状态日志
+    // print('  - isFlippedVertically: ${content['isFlippedVertically']}'); // 🔧 移除翻转状态日志
+    print('  - 💡 翻转参数现在在画布渲染阶段处理，不影响图像处理管线');
+    print('  - triggerByTransform: $triggerByTransform');
+    
     EditPageLogger.editPageInfo(
       '开始执行图像处理管线',
       tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
@@ -57,6 +64,8 @@ mixin ImageProcessingPipeline {
         'changedParameter': changedParameter,
         'imageUrl': imageUrl,
         'currentBinarizationState': content['isBinarizationEnabled'], // 添加调试信息
+        'flipHorizontal': content['isFlippedHorizontally'], // 添加翻转状态调试
+        'flipVertical': content['isFlippedVertically'], // 添加翻转状态调试
       }
     );
 
@@ -249,18 +258,36 @@ mixin ImageProcessingPipeline {
     final cropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
     final cropWidth = (content['cropWidth'] as num?)?.toDouble() ?? (imageSize?.width ?? 100.0);
     final cropHeight = (content['cropHeight'] as num?)?.toDouble() ?? (imageSize?.height ?? 100.0);
-    final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
-    final flipVertical = content['isFlippedVertically'] as bool? ?? false;
+    // 🔧 移除翻转逻辑 - 翻转现在在画布渲染阶段处理
+    // final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
+    // final flipVertical = content['isFlippedVertically'] as bool? ?? false;
     final contentRotation = (content['rotation'] as num?)?.toDouble() ?? 0.0;
 
-    // 检查是否有任何变换操作
+    // 检查是否有任何变换操作（移除翻转检查）
     final hasCropping = !(cropX == 0 && cropY == 0 && 
                          cropWidth == (imageSize?.width ?? 100.0) && 
                          cropHeight == (imageSize?.height ?? 100.0));
-    final hasFlipping = flipHorizontal || flipVertical;
+    // final hasFlipping = flipHorizontal || flipVertical; // 🔧 移除翻转检查
     final hasRotation = contentRotation != 0.0;
 
-    return hasCropping || hasFlipping || hasRotation;
+    // 🔧 关键修复：检查是否有已应用的变换需要清除
+    final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
+    final hasTransformedImageData = content.containsKey('transformedImageData') && content['transformedImageData'] != null;
+    
+    // 如果当前有变换操作，或者之前有已应用的变换需要清除，都需要重新处理
+    final needsTransformProcessing = hasCropping || hasRotation || 
+                                   (isTransformApplied && hasTransformedImageData);
+
+    print('🔍 _shouldApplyTransform 检查:');
+    print('  - hasCropping: $hasCropping');
+    // print('  - hasFlipping: $hasFlipping'); // 🔧 移除翻转日志
+    print('  - hasRotation: $hasRotation');
+    print('  - isTransformApplied: $isTransformApplied');
+    print('  - hasTransformedImageData: $hasTransformedImageData');
+    print('  - needsTransformProcessing: $needsTransformProcessing');
+    print('  - 💡 翻转处理已移至画布渲染阶段');
+
+    return needsTransformProcessing;
   }
 
   /// 检查是否需要应用二值化
@@ -268,24 +295,34 @@ mixin ImageProcessingPipeline {
     return content['isBinarizationEnabled'] as bool? ?? false;
   }
 
-  /// 应用图像变换
+  /// 应用图像变换（注意：翻转参数已移除，翻转现在在画布渲染阶段处理）
   Future<img.Image> _applyImageTransform(img.Image sourceImage, Map<String, dynamic> content) async {
     final cropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
     final cropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
     final cropWidth = (content['cropWidth'] as num?)?.toDouble() ?? sourceImage.width.toDouble();
     final cropHeight = (content['cropHeight'] as num?)?.toDouble() ?? sourceImage.height.toDouble();
-    final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
-    final flipVertical = content['isFlippedVertically'] as bool? ?? false;
+    // 🔧 移除翻转参数 - 翻转现在在画布渲染阶段处理
+    // final flipHorizontal = content['isFlippedHorizontally'] as bool? ?? false;
+    // final flipVertical = content['isFlippedVertically'] as bool? ?? false;
     final contentRotation = (content['rotation'] as num?)?.toDouble() ?? 0.0;
+
+    // 🔍 调试：打印传递给图像处理器的参数
+    print('🔍 [图像变换] 传递给图像处理器的参数:');
+    print('  - cropRect: ($cropX, $cropY, $cropWidth, $cropHeight)');
+    // print('  - flipHorizontal: $flipHorizontal'); // 🔧 移除翻转参数日志
+    // print('  - flipVertical: $flipVertical'); // 🔧 移除翻转参数日志
+    print('  - rotation: $contentRotation');
+    print('  - 💡 翻转参数已移除，现在在画布渲染阶段处理');
 
     final cropRect = Rect.fromLTWH(cropX, cropY, cropWidth, cropHeight);
     
+    // 注意：翻转参数已移除，现在只处理裁剪和旋转
     return ref.read(imageProcessorProvider).flipThenCropImage(
       sourceImage,
       cropRect,
       (contentRotation / 180) * math.pi,
-      flipHorizontal: flipHorizontal,
-      flipVertical: flipVertical,
+      flipHorizontal: false, // 🔧 强制设为false，翻转在画布渲染阶段处理
+      flipVertical: false,   // 🔧 强制设为false，翻转在画布渲染阶段处理
     );
   }
 
@@ -741,14 +778,16 @@ mixin ImageProcessingPipeline {
 
     print('  - 重置前参数: cropX=${content['cropX']}, cropY=${content['cropY']}');
     print('  - 重置前参数: cropWidth=${content['cropWidth']}, cropHeight=${content['cropHeight']}');
-    print('  - 重置前参数: rotation=${content['rotation']}, flipH=${content['isFlippedHorizontally']}');
+    print('  - 重置前参数: rotation=${content['rotation']}');
+    print('  - 💡 翻转参数现在在画布渲染阶段处理，不在此重置');
 
-    // Reset to new coordinate system defaults
+    // Reset to new coordinate system defaults (移除翻转重置)
     final resetValues = <String, dynamic>{
       'cropX': 0.0,
       'cropY': 0.0,
-      'isFlippedHorizontally': false,
-      'isFlippedVertically': false,
+      // 🔧 移除翻转重置 - 翻转现在在画布渲染阶段处理
+      // 'isFlippedHorizontally': false,
+      // 'isFlippedVertically': false,
       'rotation': 0.0,
       'isTransformApplied': false,
     };
@@ -785,7 +824,8 @@ mixin ImageProcessingPipeline {
 
     print('  - 重置后参数: cropX=${content['cropX']}, cropY=${content['cropY']}');
     print('  - 重置后参数: cropWidth=${content['cropWidth']}, cropHeight=${content['cropHeight']}');
-    print('  - 重置后参数: rotation=${content['rotation']}, flipH=${content['isFlippedHorizontally']}');
+    print('  - 重置后参数: rotation=${content['rotation']}');
+    print('  - 💡 翻转参数保持不变，由画布渲染阶段处理');
 
     print('🔍 准备调用updateProperty更新content (createUndoOperation=false)');
     updateProperty('content', content, createUndoOperation: false); // 不创建撤销操作，避免冲突

@@ -105,7 +105,7 @@ mixin ImageTransformHandler {
           cropY == 0 &&
           cropWidth == imageSize.width &&
           cropHeight == imageSize.height;
-      
+
       // 总是执行图像处理，即使是初始状态
       // 这样用户的期望更一致
 
@@ -165,12 +165,13 @@ mixin ImageTransformHandler {
 
           if (context.mounted) {
             updateProperty('content', content);
-            
+
             // 🔑 关键改进：变换完成后，检查是否需要重新进行二值化处理
             if (this is ImageBinarizationHandler) {
-              await (this as ImageBinarizationHandler).triggerBinarizationIfEnabled();
+              await (this as ImageBinarizationHandler)
+                  .triggerBinarizationIfEnabled();
             }
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
