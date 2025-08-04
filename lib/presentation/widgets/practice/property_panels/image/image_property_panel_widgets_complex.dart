@@ -496,14 +496,14 @@ class ImagePropertyFitModePanel extends StatelessWidget {
   }
 }
 
-/// 图像预览面板 - 简化版本，去掉缩放平移功能
-class ImagePropertyPreviewPanel extends StatelessWidget {
+/// 图像预览面板
+class ImagePropertyPreviewPanel extends StatefulWidget {
   final String imageUrl;
   final String fitMode;
-  final double cropX;
-  final double cropY;
-  final double cropWidth;
-  final double cropHeight;
+  final double cropX; // Left edge of crop area in pixels
+  final double cropY; // Top edge of crop area in pixels
+  final double cropWidth; // Width of crop area in pixels
+  final double cropHeight; // Height of crop area in pixels
   final bool flipHorizontal;
   final bool flipVertical;
   final double contentRotation;
@@ -511,7 +511,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
   final Size? imageSize;
   final Size? renderSize;
   final Function(Size, Size) onImageSizeAvailable;
-  final Function(double, double, double, double, {bool isDragging})? onCropChanged;
+  final Function(double, double, double, double, {bool isDragging})?
+      onCropChanged; // (x, y, width, height, isDragging)
 
   const ImagePropertyPreviewPanel({
     super.key,
@@ -530,6 +531,73 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     required this.onImageSizeAvailable,
     this.onCropChanged,
   });
+
+  @override
+  State<ImagePropertyPreviewPanel> createState() => _ImagePropertyPreviewPanelState();
+}
+
+class _ImagePropertyPreviewPanelState extends State<ImagePropertyPreviewPanel> {
+  // 缩放和平移状态
+  double _zoomScale = 1.0;
+  Offset _panOffset = Offset.zero;
+  late TransformationController _transformationController;
+
+  // 缩放范围
+  static const double minZoom = 0.5;
+  static const double maxZoom = 5.0;
+  static const double zoomStep = 0.2;
+
+  @override
+  void initState() {
+    super.initState();
+    _transformationController = TransformationController();
+    _transformationController.addListener(_onTransformationChanged);
+  }
+
+  @override
+  void dispose() {
+    _transformationController.removeListener(_onTransformationChanged);
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  void _onTransformationChanged() {
+    final matrix = _transformationController.value;
+    setState(() {
+      _zoomScale = matrix.getMaxScaleOnAxis();
+      // Extract translation from the matrix
+      final translation = matrix.getTranslation();
+      _panOffset = Offset(translation.x, translation.y);
+    });
+  }
+
+  void _zoomIn() {
+    final newScale = (_zoomScale + zoomStep).clamp(minZoom, maxZoom);
+    _setZoom(newScale);
+  }
+
+  void _zoomOut() {
+    final newScale = (_zoomScale - zoomStep).clamp(minZoom, maxZoom);
+    _setZoom(newScale);
+  }
+
+  void _resetZoom() {
+    _transformationController.value = Matrix4.identity();
+  }
+
+  void _setZoom(double scale) {
+    // Use dynamic preview center based on actual container size
+    final containerSize = context.size ?? const Size(320, 320);
+    final previewCenter = Offset(containerSize.width / 2, containerSize.height / 2);
+    
+    // Calculate zoom transformation around the preview center
+    final matrix = Matrix4.identity()
+      ..translate(previewCenter.dx, previewCenter.dy)
+      ..scale(scale)
+      ..translate(-previewCenter.dx, -previewCenter.dy)
+      ..translate(_panOffset.dx, _panOffset.dy);
+    _transformationController.value = matrix;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -559,11 +627,15 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 图片信息显示区域
-                if (imageUrl.isNotEmpty && imageSize != null)
+                if (widget.imageUrl.isNotEmpty && widget.imageSize != null)
                   _buildImageInfo(context, l10n, colorScheme),
                 const SizedBox(height: 8.0),
                 
-                _buildImagePreview(context),
+                // 缩放控制按钮
+                _buildZoomControls(context, colorScheme),
+                const SizedBox(height: 8.0),
+                
+                _buildImagePreviewWithTransformBox(context),
               ],
             ),
           ),
@@ -573,10 +645,89 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     );
   }
 
+  /// 构建缩放控制按钮
+  Widget _buildZoomControls(BuildContext context, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        // 4个独立按钮，支持自动换行和居中对齐
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8.0,
+          runSpacing: 8.0,
+          children: [
+            // 缩小按钮
+            IconButton(
+              onPressed: _zoomScale > minZoom ? _zoomOut : null,
+              icon: const Icon(Icons.zoom_out),
+              tooltip: '缩小',
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                foregroundColor: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            
+            // 放大按钮
+            IconButton(
+              onPressed: _zoomScale < maxZoom ? _zoomIn : null,
+              icon: const Icon(Icons.zoom_in),
+              tooltip: '放大',
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                foregroundColor: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            
+            // 重置按钮
+            IconButton(
+              onPressed: _resetZoom,
+              icon: const Icon(Icons.fit_screen),
+              tooltip: '重置缩放',
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                foregroundColor: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            
+            // 缩放比例显示
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '${(_zoomScale * 100).round()}%',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // 提示文本
+        Center(
+          child: Text(
+            '支持手势缩放和拖拽',
+            style: TextStyle(
+              fontSize: 11,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 构建图片信息显示区域
   Widget _buildImageInfo(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
-    final sizeText = imageSize != null 
-        ? '${imageSize!.width.toInt()} × ${imageSize!.height.toInt()} px'
+    final sizeText = widget.imageSize != null 
+        ? '${widget.imageSize!.width.toInt()} × ${widget.imageSize!.height.toInt()} px'
         : l10n.unknown;
 
     return Container(
@@ -611,70 +762,174 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildImagePreview(BuildContext context) {
+  Widget _buildImagePreviewWithTransformBox(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    print('🔍 === _buildImagePreviewWithTransformBox ===');
+    print('  - imageUrl: ${widget.imageUrl}');
+    print('  - contentRotation: ${widget.contentRotation}°');
+    print('  - imageSize: ${widget.imageSize?.width.toStringAsFixed(1)}×${widget.imageSize?.height.toStringAsFixed(1)}');
+    print('  - renderSize: ${widget.renderSize?.width.toStringAsFixed(1)}×${widget.renderSize?.height.toStringAsFixed(1)}');
+    print('  - zoomScale: ${_zoomScale.toStringAsFixed(2)}');
+    print('  - panOffset: ${_panOffset.dx.toStringAsFixed(1)}, ${_panOffset.dy.toStringAsFixed(1)}');
+
+    // Preview should use the selected fit mode, not hardcoded "contain"
+    final previewFitMode = widget.fitMode;
+
     return Container(
-      height: 320,
-      width: double.infinity,
+      height: 320, // 🔧 增加高度以更好适应旋转后的图像
+      width: double.infinity,  // 🔧 使用可变宽度，非固定宽度
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline),
         borderRadius: BorderRadius.circular(12.0),
-        color: colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
+        color:
+            colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
       ),
-      child: imageUrl.isNotEmpty
+      child: widget.imageUrl.isNotEmpty
           ? LayoutBuilder(
               builder: (context, constraints) {
-                Size? currentImageSize = imageSize;
-                Size? currentRenderSize = renderSize;
+                print('🔍 LayoutBuilder constraints: ${constraints.maxWidth.toStringAsFixed(1)}×${constraints.maxHeight.toStringAsFixed(1)}');
+                
+                // 🔧 使用原始的imageSize和renderSize，不再基于动态边界重新计算
+                // 因为裁剪框应该与Transform变换后的视觉效果匹配，而不是动态边界
+                Size? currentImageSize = widget.imageSize;
+                Size? currentRenderSize = widget.renderSize;
 
                 return Stack(
                   children: [
-                    // Simple centered image with Transform
+                    // Layer 1: Transformed image (background)
                     Positioned.fill(
-                      child: Center(
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..rotateZ(contentRotation * (math.pi / 180.0))
-                            ..scale(
-                              flipHorizontal ? -1.0 : 1.0,
-                              flipVertical ? -1.0 : 1.0,
-                            ),
-                          child: _buildImageWithSizeListener(
-                            context: context,
-                            imageUrl: imageUrl,
-                            fitMode: _getFitMode(fitMode),
-                            onImageSizeAvailable: (detectedImageSize, detectedRenderSize) {
-                              // Only call on first load
-                              if (imageSize == null) {
-                                onImageSizeAvailable(detectedImageSize, detectedRenderSize);
+                      child: InteractiveViewer(
+                        transformationController: _transformationController,
+                        minScale: minZoom,
+                        maxScale: maxZoom,
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        boundaryMargin: EdgeInsets.zero,
+                        constrained: false,
+                        clipBehavior: Clip.hardEdge,
+                          child: Builder(
+                            builder: (context) {
+                              // 🔍 Transform矩陣計算日誌
+                              final centerX = constraints.maxWidth / 2;
+                              final centerY = constraints.maxHeight / 2;
+                              final rotationRadians = widget.contentRotation * (math.pi / 180.0);
+                              
+                              print('🔍 === Transform矩陣構建 ===');
+                              print('  - 容器尺寸: ${constraints.maxWidth.toStringAsFixed(1)}×${constraints.maxHeight.toStringAsFixed(1)}');
+                              print('  - 旋轉中心: (${centerX.toStringAsFixed(1)}, ${centerY.toStringAsFixed(1)})');
+                              print('  - 旋轉角度: ${widget.contentRotation}° = ${rotationRadians.toStringAsFixed(4)} radians');
+                              print('  - 翻轉狀態: flipH=${widget.flipHorizontal}, flipV=${widget.flipVertical}');
+                              
+                              // 構建變換矩陣
+                              final transformMatrix = Matrix4.identity()
+                                ..translate(centerX, centerY)
+                                ..rotateZ(rotationRadians)
+                                ..scale(
+                                  widget.flipHorizontal ? -1.0 : 1.0,
+                                  widget.flipVertical ? -1.0 : 1.0,
+                                )
+                                ..translate(-centerX, -centerY);
+                              
+                              print('  - 變換順序: translate(${centerX.toStringAsFixed(1)}, ${centerY.toStringAsFixed(1)}) → rotateZ(${rotationRadians.toStringAsFixed(4)}) → scale(${widget.flipHorizontal ? -1.0 : 1.0}, ${widget.flipVertical ? -1.0 : 1.0}) → translate(-${centerX.toStringAsFixed(1)}, -${centerY.toStringAsFixed(1)})');
+                              
+                              // 測試角點變換
+                              if (widget.renderSize != null) {
+                                final imageLeft = (constraints.maxWidth - widget.renderSize!.width) / 2;
+                                final imageTop = (constraints.maxHeight - widget.renderSize!.height) / 2;
+                                final imageRight = imageLeft + widget.renderSize!.width;
+                                final imageBottom = imageTop + widget.renderSize!.height;
+                                
+                                print('  - 📍 原始圖像區域: Rect.fromLTWH(${imageLeft.toStringAsFixed(1)}, ${imageTop.toStringAsFixed(1)}, ${widget.renderSize!.width.toStringAsFixed(1)}, ${widget.renderSize!.height.toStringAsFixed(1)})');
+                                
+                                if (widget.contentRotation != 0) {
+                                  // 計算四個角點變換後的位置
+                                  final corners = [
+                                    {'name': '左上', 'point': [imageLeft, imageTop]},
+                                    {'name': '右上', 'point': [imageRight, imageTop]},
+                                    {'name': '右下', 'point': [imageRight, imageBottom]},
+                                    {'name': '左下', 'point': [imageLeft, imageBottom]},
+                                  ];
+                                  
+                                  double minX = double.infinity, maxX = double.negativeInfinity;
+                                  double minY = double.infinity, maxY = double.negativeInfinity;
+                                  
+                                  print('  - 🔄 角點變換計算:');
+                                  for (final corner in corners) {
+                                    final point = corner['point'] as List<double>;
+                                    final x = point[0];
+                                    final y = point[1];
+                                    
+                                    // 簡化的90度旋轉計算（用於日誌對比）
+                                    if (widget.contentRotation.abs() == 90 || widget.contentRotation.abs() == 270) {
+                                      final deltaX = x - centerX;
+                                      final deltaY = y - centerY;
+                                      final newX = widget.contentRotation == 90 ? -deltaY + centerX : deltaY + centerX;
+                                      final newY = widget.contentRotation == 90 ? deltaX + centerY : -deltaX + centerY;
+                                      
+                                      print('    - ${corner['name']}: (${x.toStringAsFixed(1)}, ${y.toStringAsFixed(1)}) → (${newX.toStringAsFixed(1)}, ${newY.toStringAsFixed(1)})');
+                                      
+                                      minX = math.min(minX, newX);
+                                      maxX = math.max(maxX, newX);
+                                      minY = math.min(minY, newY);
+                                      maxY = math.max(maxY, newY);
+                                    }
+                                  }
+                                  
+                                  if (widget.contentRotation.abs() == 90 || widget.contentRotation.abs() == 270) {
+                                    print('  - 📍 變換後邊界框: Rect.fromLTRB(${minX.toStringAsFixed(1)}, ${minY.toStringAsFixed(1)}, ${maxX.toStringAsFixed(1)}, ${maxY.toStringAsFixed(1)})');
+                                    print('  - 📍 變換後尺寸: ${(maxX - minX).toStringAsFixed(1)}×${(maxY - minY).toStringAsFixed(1)}');
+                                  }
+                                }
                               }
+                              
+                              print('🔍 === Transform矩陣構建結束 ===\n');
+                              
+                              return Transform(
+                                transform: transformMatrix,
+                                child: _buildImageWithSizeListener(
+                                  context: context,
+                                  imageUrl: widget.imageUrl,
+                                  fitMode: _getFitMode(previewFitMode),
+                                  onImageSizeAvailable: (detectedImageSize, detectedRenderSize) {
+                                    print('🔧 图像监听器回调 - 原始检测');
+                                    print('  - detectedImageSize: ${detectedImageSize.width.toStringAsFixed(1)}×${detectedImageSize.height.toStringAsFixed(1)}');
+                                    print('  - detectedRenderSize: ${detectedRenderSize.width.toStringAsFixed(1)}×${detectedRenderSize.height.toStringAsFixed(1)}');
+                                    
+                                    // 只在首次加载时调用
+                                    if (widget.imageSize == null) {
+                                      print('🔧 首次图像加载，使用检测到的尺寸');
+                                      widget.onImageSizeAvailable(detectedImageSize, detectedRenderSize);
+                                    }
+                                  },
+                                ),
+                              );
                             },
                           ),
                         ),
-                      ),
                     ),
                     
-                    // Simple crop overlay
+                    // Layer 2: Crop overlay (使用zoom-aware版本支持缩放)
                     if (currentImageSize != null &&
                         currentRenderSize != null &&
-                        onCropChanged != null)
+                        widget.onCropChanged != null)
                       Positioned.fill(
-                        child: InteractiveCropOverlay(
+                        child: ZoomedCropOverlay(
                           imageSize: currentImageSize,
                           renderSize: currentRenderSize,
-                          cropX: cropX,
-                          cropY: cropY,
-                          cropWidth: cropWidth,
-                          cropHeight: cropHeight,
-                          contentRotation: contentRotation,
-                          flipHorizontal: flipHorizontal,
-                          flipVertical: flipVertical,
-                          onCropChanged: onCropChanged!,
+                          cropX: widget.cropX,
+                          cropY: widget.cropY,
+                          cropWidth: widget.cropWidth,
+                          cropHeight: widget.cropHeight,
+                          contentRotation: widget.contentRotation, // 🔧 使用实际旋转角度，不再强制为0
+                          flipHorizontal: widget.flipHorizontal,
+                          flipVertical: widget.flipVertical,
+                          onCropChanged: widget.onCropChanged!,
                           enabled: true,
+                          zoomScale: _zoomScale,
+                          panOffset: _panOffset,
                         ),
                       ),
                   ],
@@ -750,12 +1005,20 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 );
               },
               onImageLoaded: (Size size) {
-                // Simple image size calculation for contain mode
+                print('🔍 === onImageLoaded 开始 ===');
+                // 图像加载完成后获取尺寸
                 final imageSize = size;
+                print('  - 原始图像尺寸: ${imageSize.width.toStringAsFixed(1)}×${imageSize.height.toStringAsFixed(1)}');
+                print('  - contentRotation: ${widget.contentRotation}°');
+                print('  - flipHorizontal: ${widget.flipHorizontal}, flipVertical: ${widget.flipVertical}');
+
+                // 🔧 修复：计算动态边界尺寸用于裁剪框计算
+                final dynamicBounds = _calculateDynamicBounds(imageSize, widget.contentRotation, widget.flipHorizontal, widget.flipVertical);
+                print('  - 计算得到的动态边界: ${dynamicBounds.width.toStringAsFixed(1)}×${dynamicBounds.height.toStringAsFixed(1)}');
                 
-                // Calculate render size based on container and fit mode
+                // 计算渲染尺寸（基于动态边界）
                 final renderSize = _calculateRenderSize(
-                    imageSize,
+                    dynamicBounds, // 使用动态边界而不是原始图像尺寸
                     constraints.biggest,
                     fitMode == BoxFit.contain
                         ? 'contain'
@@ -765,9 +1028,15 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                                 ? 'fill'
                                 : 'none');
 
+                print('  - constraints.biggest: ${constraints.biggest.width.toStringAsFixed(1)}×${constraints.biggest.height.toStringAsFixed(1)}');
+                print('  - 计算得到的 renderSize: ${renderSize.width.toStringAsFixed(1)}×${renderSize.height.toStringAsFixed(1)}');
+
+                // 检查当前 widget 是否仍然挂载
                 if (context.mounted) {
+                  print('  - 调用 onImageSizeAvailable(imageSize=$imageSize, renderSize=$renderSize)');
                   onImageSizeAvailable(imageSize, renderSize);
                 }
+                print('🔍 === onImageLoaded 结束 ===\n');
               },
             );
           },
@@ -792,7 +1061,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
       // Handle network images
       return LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          final imageProvider = NetworkImage(imageUrl);
+          final imageProvider = NetworkImage(widget.imageUrl);
 
           final imageStream = imageProvider.resolve(ImageConfiguration(
             size: constraints.biggest,
@@ -800,13 +1069,21 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
 
           imageStream.addListener(ImageStreamListener(
             (ImageInfo info, bool _) {
+              print('🔍 === Network Image onImageLoaded 开始 ===');
               final imageSize = Size(
                 info.image.width.toDouble(),
                 info.image.height.toDouble(),
               );
+              print('  - 原始图像尺寸: ${imageSize.width.toStringAsFixed(1)}×${imageSize.height.toStringAsFixed(1)}');
+              print('  - contentRotation: ${widget.contentRotation}°');
+              print('  - flipHorizontal: ${widget.flipHorizontal}, flipVertical: ${widget.flipVertical}');
+
+              // 🔧 修复：计算动态边界尺寸用于裁剪框计算
+              final dynamicBounds = _calculateDynamicBounds(imageSize, widget.contentRotation, widget.flipHorizontal, widget.flipVertical);
+              print('  - 计算得到的动态边界: ${dynamicBounds.width.toStringAsFixed(1)}×${dynamicBounds.height.toStringAsFixed(1)}');
               
               final renderSize = _calculateRenderSize(
-                imageSize,
+                dynamicBounds, // 使用动态边界而不是原始图像尺寸
                 constraints.biggest,
                 fitMode == BoxFit.contain
                     ? 'contain'
@@ -816,12 +1093,17 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                             ? 'fill'
                             : 'none',
               );
+              print('  - constraints.biggest: ${constraints.biggest.width.toStringAsFixed(1)}×${constraints.biggest.height.toStringAsFixed(1)}');
+              print('  - 计算得到的 renderSize: ${renderSize.width.toStringAsFixed(1)}×${renderSize.height.toStringAsFixed(1)}');
               
               WidgetsBinding.instance.addPostFrameCallback((_) {
+                // 检查当前 widget 是否仍然挂载
                 if (context.mounted) {
+                  print('  - 调用 onImageSizeAvailable(imageSize=$imageSize, renderSize=$renderSize)');
                   onImageSizeAvailable(imageSize, renderSize);
                 }
               });
+              print('🔍 === Network Image onImageLoaded 结束 ===\n');
             },
             onError: (exception, stackTrace) {
               EditPageLogger.propertyPanelError(
@@ -877,24 +1159,34 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
 
   Size _calculateRenderSize(
       Size imageSize, Size containerSize, String fitMode) {
+    print('🔧 === _calculateRenderSize 开始 ===');
+    print('  - imageSize: ${imageSize.width.toStringAsFixed(1)}×${imageSize.height.toStringAsFixed(1)}');
+    print('  - containerSize: ${containerSize.width.toStringAsFixed(1)}×${containerSize.height.toStringAsFixed(1)}');
+    print('  - fitMode: $fitMode');
+    
     final imageRatio = imageSize.width / imageSize.height;
     final containerRatio = containerSize.width / containerSize.height;
+    
+    print('  - imageRatio: ${imageRatio.toStringAsFixed(3)}');
+    print('  - containerRatio: ${containerRatio.toStringAsFixed(3)}');
 
     Size result;
     switch (fitMode) {
       case 'contain':
         if (imageRatio > containerRatio) {
-          // Image is wider, fit by width
+          // 图像更宽，按宽度适配
           result = Size(
             containerSize.width,
             containerSize.width / imageRatio,
           );
+          print('  - 图像更宽，按宽度适配');
         } else {
-          // Image is taller, fit by height
+          // 图像更高，按高度适配
           result = Size(
             containerSize.height * imageRatio,
             containerSize.height,
           );
+          print('  - 图像更高，按高度适配');
         }
         break;
       case 'cover':
@@ -924,6 +1216,12 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
         break;
     }
     
+    // 🔧 计算空间利用率
+    final spaceUtilization = (result.width * result.height) / (containerSize.width * containerSize.height);
+    print('  - 计算结果: ${result.width.toStringAsFixed(1)}×${result.height.toStringAsFixed(1)}');
+    print('  - 空间利用率: ${(spaceUtilization * 100).toStringAsFixed(1)}%');
+    print('🔧 === _calculateRenderSize 结束 ===\n');
+    
     return result;
   }
 
@@ -940,6 +1238,41 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
       default:
         return BoxFit.contain;
     }
+  }
+
+  /// 计算动态边界尺寸（考虑旋转变换）
+  Size _calculateDynamicBounds(Size originalSize, double rotation, bool flipH, bool flipV) {
+    print('🔧 === _calculateDynamicBounds 開始 ===');
+    print('  - originalSize: ${originalSize.width.toStringAsFixed(1)}×${originalSize.height.toStringAsFixed(1)}');
+    print('  - rotation: ${rotation}°');
+    
+    // 對於90度的倍數，直接交換寬高（更精確）
+    if (rotation == 90 || rotation == 270 || rotation == -90 || rotation == -270) {
+      final result = Size(originalSize.height, originalSize.width);
+      print('  - 90度倍數旋轉，直接交換寬高: ${result.width.toStringAsFixed(1)}×${result.height.toStringAsFixed(1)}');
+      print('🔧 === _calculateDynamicBounds 結束 ===\n');
+      return result;
+    }
+    
+    if (rotation == 0 || rotation == 180 || rotation == -180) {
+      print('  - 0度或180度旋轉，保持原始尺寸: ${originalSize.width.toStringAsFixed(1)}×${originalSize.height.toStringAsFixed(1)}');
+      print('🔧 === _calculateDynamicBounds 結束 ===\n');
+      return originalSize;
+    }
+    
+    // 對於其他角度，計算包圍框
+    final rotationRadians = rotation * (math.pi / 180.0);
+    final cos = math.cos(rotationRadians).abs();
+    final sin = math.sin(rotationRadians).abs();
+    
+    final newWidth = originalSize.width * cos + originalSize.height * sin;
+    final newHeight = originalSize.width * sin + originalSize.height * cos;
+    
+    final result = Size(newWidth, newHeight);
+    print('  - 任意角度包圍框計算: ${result.width.toStringAsFixed(1)}×${result.height.toStringAsFixed(1)}');
+    print('🔧 === _calculateDynamicBounds 結束 ===\n');
+    
+    return result;
   }
 }
 
@@ -989,6 +1322,30 @@ class ImagePropertyTransformPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Warning message
+                // Container(
+                //   padding: const EdgeInsets.all(12.0),
+                //   margin: const EdgeInsets.only(bottom: 16.0),
+                //   decoration: BoxDecoration(
+                //     color: colorScheme.tertiaryContainer.withValues(alpha: 0.3),
+                //     borderRadius: BorderRadius.circular(8.0),
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       Icon(Icons.info_outline,
+                //           color: colorScheme.tertiary, size: 20),
+                //       const SizedBox(width: 8),
+                //       Expanded(
+                //         child: Text(
+                //           l10n.imagePropertyPanelTransformWarning,
+                //           style: TextStyle(
+                //               fontSize: 14, color: colorScheme.tertiary),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
+
                 // Interactive cropping info
                 Container(
                   padding: const EdgeInsets.all(12.0),
@@ -1373,7 +1730,14 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                       Switch(
                         value: isBinarizationEnabled,
                         onChanged: (value) {
+                          print('🔍 二值化开关被点击');
+                          print('  - 当前值: $isBinarizationEnabled');
+                          print('  - 新值: $value');
+                          
+                          // 只调用 onBinarizationToggle，它会处理所有必要的属性更新
                           onBinarizationToggle(value);
+                          
+                          print('  - onBinarizationToggle 已调用');
                         },
                       ),
                     ],
@@ -1412,9 +1776,11 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                     thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                     onChanged: isBinarizationEnabled ? (value) {
+                                      // 拖拽过程中只更新属性值，不触发图像处理
                                       onContentPropertyUpdate('binaryThreshold', value);
                                     } : null,
                                     onChangeEnd: isBinarizationEnabled ? (value) {
+                                      // 滑块释放时才触发图像处理
                                       onBinarizationParameterChange('binaryThreshold', value);
                                     } : null,
                                   ),
@@ -1483,9 +1849,11 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                       activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                       thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
                                       onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
+                                        // 拖拽过程中只更新属性值，不触发图像处理
                                         onContentPropertyUpdate('noiseReductionLevel', value);
                                       } : null,
                                       onChangeEnd: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
+                                        // 滑块释放时才触发图像处理
                                         onBinarizationParameterChange('noiseReductionLevel', value);
                                       } : null,
                                     ),
@@ -1614,6 +1982,15 @@ class ImagePropertyFlipPanel extends StatelessWidget {
                             Switch(
                               value: flipHorizontal,
                               onChanged: (value) {
+                                print('🔍 [Switch] 水平翻转开关点击: $value');
+                                print('  - 当前状态: flipHorizontal=$flipHorizontal, flipVertical=$flipVertical');
+                                print('  - 期望状态: flipHorizontal=$value, flipVertical=$flipVertical');
+                                
+                                // 🔧 测试：检查是否两个都为false的情况
+                                if (!value && !flipVertical) {
+                                  print('  - 🎯 即将设置为两个翻转都关闭的状态！');
+                                }
+                                
                                 onFlipChanged('isFlippedHorizontally', value);
                               },
                             ),
@@ -1637,6 +2014,15 @@ class ImagePropertyFlipPanel extends StatelessWidget {
                             Switch(
                               value: flipVertical,
                               onChanged: (value) {
+                                print('🔍 [Switch] 垂直翻转开关点击: $value');
+                                print('  - 当前状态: flipHorizontal=$flipHorizontal, flipVertical=$flipVertical');
+                                print('  - 期望状态: flipHorizontal=$flipHorizontal, flipVertical=$value');
+                                
+                                // 🔧 测试：检查是否两个都为false的情况
+                                if (!flipHorizontal && !value) {
+                                  print('  - 🎯 即将设置为两个翻转都关闭的状态！');
+                                }
+                                
                                 onFlipChanged('isFlippedVertically', value);
                               },
                             ),

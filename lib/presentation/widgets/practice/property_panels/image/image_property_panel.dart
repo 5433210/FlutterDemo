@@ -263,20 +263,12 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           },
         ),
 
-        // Image transform section (裁剪和旋转)
+        // Image transform section (裁剪)
         ImagePropertyTransformPanel(
           cropX: cropX,
           cropY: cropY,
           cropWidth: cropWidth,
           cropHeight: cropHeight,
-          contentRotation: contentRotation,
-          onRotationChanged: (value) {
-            print('🔍 旋转参数变化: rotation = $value');
-            // 🔧 修复：只更新属性，不立即执行处理管线
-            // 用户需要点击"应用变换"按钮才会应用变换
-            updateContentProperty('rotation', value,
-                createUndoOperation: false);
-          },
           onApplyTransform: () => applyTransform(context),
           onResetTransform: () => resetTransform(context),
         ),
