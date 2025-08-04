@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/service_providers.dart';
@@ -220,6 +224,40 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     super.dispose();
   }
 
+  /// Go to previous page
+  void _goToPreviousPage() {
+    final currentIndex = _controller.state.currentPageIndex;
+    if (currentIndex > 0) {
+      _controller.switchToPage(currentIndex - 1);
+      AppLogger.info(
+        '切换到上一页',
+        tag: 'PracticeEdit',
+        data: {
+          'previousIndex': currentIndex,
+          'newIndex': currentIndex - 1,
+          'totalPages': _controller.state.pages.length,
+        },
+      );
+    }
+  }
+
+  /// Go to next page
+  void _goToNextPage() {
+    final currentIndex = _controller.state.currentPageIndex;
+    if (currentIndex < _controller.state.pages.length - 1) {
+      _controller.switchToPage(currentIndex + 1);
+      AppLogger.info(
+        '切换到下一页',
+        tag: 'PracticeEdit',
+        data: {
+          'previousIndex': currentIndex,
+          'newIndex': currentIndex + 1,
+          'totalPages': _controller.state.pages.length,
+        },
+      );
+    }
+  }
+
   /// 强制刷新剪贴板状态（调试用）
   Future<void> _forceRefreshClipboardState() async {
     try {
@@ -359,8 +397,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Add a new page
   void _addNewPage() {
-    // Use controller's mixin method which includes proper state management
-    _controller.addNewPage();
+    // Use enhanced version with template inheritance from previous page
+    PracticeEditUtils.addNewPage(_controller, context);
     // The controller will notify listeners automatically through intelligent notification
   }
 
@@ -463,7 +501,24 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             'fit',
             'isFlippedHorizontally',
             'isFlippedVertically',
-            'rotation'
+            'rotation',
+            // 🆕 添加二值化处理参数（只应用设置，不应用数据）
+            'isBinarizationEnabled',
+            'binaryThreshold',
+            'isNoiseReductionEnabled',
+            'noiseReductionLevel',
+            // 注意：不应用 binarizedImageData，因为这是处理后的数据，不是格式设置
+            // 🆕 添加其他图像处理参数
+            'fitMode',
+            'alignment',
+            'cropX',
+            'cropY',
+            'cropWidth',
+            'cropHeight',
+            'cropTop',
+            'cropBottom',
+            'cropLeft',
+            'cropRight',
           ];
 
           // 应用所有指定的样式属性
@@ -583,6 +638,79 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             // 更新元素属性
             elements[elementIndex] = properties;
 
+            // 🆕 对图像元素触发图像处理管道
+            if (properties['type'] == 'image') {
+              final content = properties['content'] as Map<String, dynamic>?;
+              if (content != null) {
+                // 检查是否有二值化相关的参数变化
+                final hasBinarizationSettings = content.containsKey('isBinarizationEnabled') ||
+                    content.containsKey('binaryThreshold') ||
+                    content.containsKey('isNoiseReductionEnabled') ||
+                    content.containsKey('noiseReductionLevel');
+                
+                // 检查是否有翻转参数变化
+                final hasFlipSettings = content.containsKey('isFlippedHorizontally') ||
+                    content.containsKey('isFlippedVertically');
+                
+                if (hasBinarizationSettings || hasFlipSettings) {
+                  // 标记需要重新处理图像
+                  content['needsReprocessing'] = true;
+                  content['triggerImageProcessing'] = true; // 🆕 添加特殊标记
+                  
+                  // 清除现有的处理后数据，强制重新处理
+                  content.remove('binarizedImageData');
+                  content.remove('processedImageData');
+                  content.remove('cachedProcessedImage');
+                  
+                  AppLogger.info(
+                    '格式刷应用后触发图像重新处理',
+                    tag: 'PracticeEdit',
+                    data: {
+                      'elementId': elementId,
+                      'hasBinarizationSettings': hasBinarizationSettings,
+                      'hasFlipSettings': hasFlipSettings,
+                      'isBinarizationEnabled': content['isBinarizationEnabled'],
+                      'binaryThreshold': content['binaryThreshold'],
+                    },
+                  );
+                  
+                  // 🔥 关键修复：直接执行图像处理
+                  // 使用微任务确保属性更新完成后再处理
+                  Future.microtask(() async {
+                    try {
+                      AppLogger.info(
+                        '开始执行格式刷触发的图像处理',
+                        tag: 'PracticeEdit',
+                        data: {
+                          'elementId': elementId,
+                          'isBinarizationEnabled': content['isBinarizationEnabled'],
+                        },
+                      );
+                      
+                      // 🔥 直接执行图像二值化处理
+                      if (content['isBinarizationEnabled'] == true) {
+                        await _executeDirectImageBinarization(elementId, content);
+                      }
+                      
+                      AppLogger.info(
+                        '格式刷图像处理完成',
+                        tag: 'PracticeEdit',
+                        data: {'elementId': elementId},
+                      );
+                      
+                    } catch (e) {
+                      AppLogger.error(
+                        '格式刷图像处理失败',
+                        tag: 'PracticeEdit',
+                        error: e,
+                        data: {'elementId': elementId},
+                      );
+                    }
+                  });
+                }
+              }
+            }
+
             // 如果是当前选中的元素，同时更新selectedElement
             if (_controller.state.selectedElementIds.contains(elementId)) {
               _controller.state.selectedElement = properties;
@@ -599,6 +727,29 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     // 添加到撤销/重做管理器
     _controller.undoRedoManager.addOperation(formatPainterOperation);
+    
+    // 🆕 触发智能状态分发，确保画布重新渲染
+    _controller.intelligentNotify(
+      changeType: 'format_brush_applied',
+      eventData: {
+        'targetElementIds': targetElementIds,
+        'elementCount': selectedElements.length,
+        'hasImageElements': targetElementIds.any((id) {
+          final element = _controller.state.currentPageElements.firstWhere(
+            (e) => e['id'] == id,
+            orElse: () => <String, dynamic>{},
+          );
+          return element['type'] == 'image';
+        }),
+        'operation': 'apply_format_brush',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      operation: 'apply_format_brush',
+      affectedElements: targetElementIds,
+      affectedLayers: ['content', 'rendering'],
+      affectedUIComponents: ['canvas', 'property_panel'],
+    );
+    
     stopwatch.stop();
     AppLogger.debug(
       '批量应用格式刷样式',
@@ -1418,12 +1569,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'isFlippedHorizontally',
           'isFlippedVertically',
           'rotation',
-          // 🆕 添加二值化处理参数
+          // 🆕 添加二值化处理参数（只复制设置，不复制数据）
           'isBinarizationEnabled',
           'binaryThreshold',
           'isNoiseReductionEnabled',
           'noiseReductionLevel',
-          'binarizedImageData',
+          // 注意：不复制 binarizedImageData，因为这是处理后的数据，不是格式设置
           // 🆕 添加其他图像处理参数
           'fitMode',
           'alignment',
@@ -2252,6 +2403,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       copyElementFormatting: _copyElementFormatting,
       applyFormatBrush: _applyFormatBrush,
       resetViewPosition: () => _controller.resetViewPosition(),
+      goToPreviousPage: _goToPreviousPage,
+      goToNextPage: _goToNextPage,
       // Add tool selection callback to connect keyboard shortcuts with toolbar
       onSelectTool: (tool) {
         setState(() {
@@ -3557,6 +3710,114 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           },
         );
       }
+    }
+  }
+
+  /// 🔥 直接执行图像二值化处理
+  Future<void> _executeDirectImageBinarization(String elementId, Map<String, dynamic> content) async {
+    try {
+      final imageUrl = content['imageUrl'] as String?;
+      if (imageUrl == null || imageUrl.isEmpty) {
+        AppLogger.warning('图像URL为空，无法执行二值化处理', tag: 'PracticeEdit');
+        return;
+      }
+
+      // 获取图像处理器
+      final imageProcessor = ref.read(imageProcessorProvider);
+      
+      // 获取二值化参数
+      final threshold = (content['binaryThreshold'] as num?)?.toDouble() ?? 128.0;
+      final isNoiseReductionEnabled = content['isNoiseReductionEnabled'] as bool? ?? false;
+      final noiseReductionLevel = (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
+
+      AppLogger.info(
+        '开始直接二值化处理',
+        tag: 'PracticeEdit',
+        data: {
+          'elementId': elementId,
+          'imageUrl': imageUrl,
+          'threshold': threshold,
+          'noiseReduction': isNoiseReductionEnabled,
+          'noiseLevel': noiseReductionLevel,
+        },
+      );
+
+      // 加载原始图像
+      Uint8List? imageData;
+      if (imageUrl.startsWith('file://')) {
+        final filePath = imageUrl.substring(7);
+        final file = File(filePath);
+        if (await file.exists()) {
+          imageData = await file.readAsBytes();
+        }
+      } else {
+        final response = await http.get(Uri.parse(imageUrl));
+        if (response.statusCode == 200) {
+          imageData = response.bodyBytes;
+        }
+      }
+
+      if (imageData == null) {
+        AppLogger.error('无法加载图像数据', tag: 'PracticeEdit');
+        return;
+      }
+
+      // 解码图像
+      final img.Image? sourceImage = img.decodeImage(imageData);
+      if (sourceImage == null) {
+        AppLogger.error('无法解码图像', tag: 'PracticeEdit');
+        return;
+      }
+
+      AppLogger.info(
+        '成功加载图像，开始二值化处理',
+        tag: 'PracticeEdit',
+        data: {
+          'imageSize': '${sourceImage.width}x${sourceImage.height}',
+          'threshold': threshold,
+        },
+      );
+
+      // 执行二值化处理
+      img.Image processedImage = sourceImage;
+
+      // 降噪处理（如果启用）
+      if (isNoiseReductionEnabled && noiseReductionLevel > 0) {
+        processedImage = imageProcessor.denoiseImage(processedImage, noiseReductionLevel);
+      }
+
+      // 二值化处理
+      processedImage = imageProcessor.binarizeImage(processedImage, threshold, false);
+
+      // 编码为PNG
+      final binarizedImageData = Uint8List.fromList(img.encodePng(processedImage));
+
+      AppLogger.info(
+        '二值化处理完成',
+        tag: 'PracticeEdit',
+        data: {
+          'elementId': elementId,
+          'resultSize': '${processedImage.width}x${processedImage.height}',
+          'dataSize': binarizedImageData.length,
+        },
+      );
+
+      // 更新元素content
+      setState(() {
+        content['binarizedImageData'] = binarizedImageData;
+        _controller.state.hasUnsavedChanges = true;
+      });
+
+      AppLogger.info('二值化数据已更新到元素', tag: 'PracticeEdit');
+
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        '直接二值化处理失败',
+        tag: 'PracticeEdit',
+        error: e,
+        stackTrace: stackTrace,
+        data: {'elementId': elementId},
+      );
     }
   }
 }

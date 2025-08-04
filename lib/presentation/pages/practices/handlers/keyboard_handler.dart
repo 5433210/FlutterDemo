@@ -64,6 +64,10 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 /// Movement:
 /// - Arrow keys: Move selected items
 /// - Ctrl+Arrow keys: Move selected items by larger distance
+///
+/// Page Navigation:
+/// - Ctrl+Left Arrow: Previous page (when no elements selected)
+/// - Ctrl+Right Arrow: Next page (when no elements selected)
 class KeyboardHandler {
   final PracticeEditController controller;
 
@@ -104,6 +108,8 @@ class KeyboardHandler {
   final Function() applyFormatBrush;
   final Function(double dx, double dy) moveSelectedElements;
   final Function() resetViewPosition; // Added callback for reset view position
+  final Function() goToPreviousPage; // Added callback for previous page navigation
+  final Function() goToNextPage; // Added callback for next page navigation
   KeyboardHandler({
     required this.controller,
     required this.onTogglePreviewMode,
@@ -132,6 +138,8 @@ class KeyboardHandler {
     required this.copyElementFormatting,
     required this.applyFormatBrush,
     required this.resetViewPosition, // Added parameter for reset view position
+    required this.goToPreviousPage, // Added parameter for previous page navigation
+    required this.goToNextPage, // Added parameter for next page navigation
     this.onSelectTool,
   });
 
@@ -427,8 +435,9 @@ class KeyboardHandler {
         }
       }
 
-      // Handle arrow keys: Move selected items
+      // Handle arrow keys
       if (controller.state.selectedElementIds.isNotEmpty) {
+        // Move selected items when elements are selected
         final moveDistance = _isCtrlPressed
             ? 10.0
             : 1.0; // Move larger distance when Ctrl is pressed
@@ -448,6 +457,19 @@ class KeyboardHandler {
 
           case LogicalKeyboardKey.arrowRight:
             moveSelectedElements(moveDistance, 0);
+            return true;
+        }
+      } else if (_isCtrlPressed) {
+        // Handle page navigation when no elements are selected and Ctrl is pressed
+        switch (event.logicalKey) {
+          case LogicalKeyboardKey.arrowLeft:
+            EditPageLogger.editPageDebug('通过Ctrl+Left切换到上一页');
+            goToPreviousPage();
+            return true;
+
+          case LogicalKeyboardKey.arrowRight:
+            EditPageLogger.editPageDebug('通过Ctrl+Right切换到下一页');
+            goToNextPage();
             return true;
         }
       }
