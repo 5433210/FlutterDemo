@@ -1396,5 +1396,6 @@
   "enableBinarization": "启用二值化",
   "binaryThreshold": "二值化阈值",
   "noiseReductionToggle": "降噪开关",
-  "noiseReductionLevel": "降噪强度"
+  "noiseReductionLevel": "降噪强度",
+  "crossPagePasteSuccess": "跨页面粘贴成功"
 }

@@ -4451,4 +4451,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noiseReductionLevel => 'ノイズリダクションレベル';
+
+  @override
+  String get crossPagePasteSuccess => 'ページ間ペースト成功';
 }

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
@@ -14,11 +15,74 @@ class PracticeEditUtils {
   /// Add a new page
   static void addNewPage(
       PracticeEditController controller, BuildContext context) {
-    // 使用 PageOperations 创建新页面
-    final newPage = PageOperations.addPage(controller.state.pages, null);
+    AppLogger.info(
+      '开始添加新页面',
+      tag: 'PracticeEdit',
+      data: {
+        'currentPageCount': controller.state.pages.length,
+        'currentPageIndex': controller.state.currentPageIndex,
+      },
+    );
+    
+    // 🆕 获取前一页作为模板（如果存在）
+    Map<String, dynamic>? template;
+    if (controller.state.pages.isNotEmpty) {
+      // 使用前一页（当前页面或最后一页）作为模板
+      final templateIndex = controller.state.currentPageIndex >= 0
+          ? controller.state.currentPageIndex
+          : controller.state.pages.length - 1;
+      
+      final previousPage = controller.state.pages[templateIndex];
+      
+      AppLogger.info(
+        '使用前一页作为模板',
+        tag: 'PracticeEdit',
+        data: {
+          'templateIndex': templateIndex,
+          'templatePageName': previousPage['name'],
+          'templateWidth': previousPage['width'],
+          'templateHeight': previousPage['height'],
+          'hasLayers': previousPage.containsKey('layers'),
+          'layerCount': previousPage.containsKey('layers') 
+              ? (previousPage['layers'] as List).length : 0,
+        },
+      );
+      
+      // 创建模板，包含页面设置但不包含元素
+      template = {
+        'width': previousPage['width'],
+        'height': previousPage['height'],
+        'background': Map<String, dynamic>.from(previousPage['background'] ?? {}),
+        'margin': Map<String, dynamic>.from(previousPage['margin'] ?? {}),
+        'gridSettings': previousPage.containsKey('gridSettings') 
+            ? Map<String, dynamic>.from(previousPage['gridSettings']) : null,
+        'guidelineSettings': previousPage.containsKey('guidelineSettings')
+            ? Map<String, dynamic>.from(previousPage['guidelineSettings']) : null,
+        'layers': previousPage.containsKey('layers')
+            ? List<Map<String, dynamic>>.from(
+                (previousPage['layers'] as List).map((layer) => {
+                  'id': 'layer_${DateTime.now().millisecondsSinceEpoch}_${(previousPage['layers'] as List).indexOf(layer)}',
+                  'name': layer['name'],
+                  'isVisible': layer['isVisible'],
+                  'isLocked': layer['isLocked'],
+                }))
+            : null,
+      };
+      
+      // 移除null值
+      template.removeWhere((key, value) => value == null);
+    } else {
+      AppLogger.info(
+        '没有前一页，将使用默认设置创建新页面',
+        tag: 'PracticeEdit',
+      );
+    }
+    
+    // 使用 PageOperations 创建新页面，传递模板
+    final newPage = PageOperations.addPage(controller.state.pages, template);
 
-    // 添加默认图层
-    if (!newPage.containsKey('layers')) {
+    // 添加默认图层（如果模板中没有图层）
+    if (!newPage.containsKey('layers') || (newPage['layers'] as List).isEmpty) {
       newPage['layers'] = [
         {
           'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
@@ -27,6 +91,11 @@ class PracticeEditUtils {
           'isLocked': false,
         }
       ];
+      
+      AppLogger.info(
+        '为新页面添加默认图层',
+        tag: 'PracticeEdit',
+      );
     }
 
     // 添加到页面列表
@@ -37,6 +106,18 @@ class PracticeEditUtils {
 
     // 标记有未保存的更改
     controller.state.hasUnsavedChanges = true;
+    
+    AppLogger.info(
+      '新页面创建完成',
+      tag: 'PracticeEdit',
+      data: {
+        'newPageIndex': controller.state.currentPageIndex,
+        'newPageName': newPage['name'],
+        'totalPages': controller.state.pages.length,
+        'inheritedFromTemplate': template != null,
+        'layerCount': (newPage['layers'] as List).length,
+      },
+    );
   }
 
   /// Bring element to front

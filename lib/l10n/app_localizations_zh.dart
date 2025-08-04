@@ -4451,6 +4451,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noiseReductionLevel => '降噪强度';
+
+  @override
+  String get crossPagePasteSuccess => '跨页面粘贴成功';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

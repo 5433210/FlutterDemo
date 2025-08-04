@@ -1396,5 +1396,6 @@
   "enableBinarization": "이진화 활성화",
   "binaryThreshold": "이진화 임계값",
   "noiseReductionToggle": "노이즈 감소 토글",
-  "noiseReductionLevel": "노이즈 감소 레벨"
+  "noiseReductionLevel": "노이즈 감소 레벨",
+  "crossPagePasteSuccess": "페이지 간 붙여넣기 성공"
 }

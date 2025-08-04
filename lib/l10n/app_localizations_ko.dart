@@ -4451,4 +4451,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noiseReductionLevel => '노이즈 감소 레벨';
+
+  @override
+  String get crossPagePasteSuccess => '페이지 간 붙여넣기 성공';
 }

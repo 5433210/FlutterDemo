@@ -1396,5 +1396,6 @@
   "enableBinarization": "二値化を有効にする",
   "binaryThreshold": "二値化しきい値",
   "noiseReductionToggle": "ノイズリダクション切り替え",
-  "noiseReductionLevel": "ノイズリダクションレベル"
+  "noiseReductionLevel": "ノイズリダクションレベル",
+  "crossPagePasteSuccess": "ページ間ペースト成功"
 }

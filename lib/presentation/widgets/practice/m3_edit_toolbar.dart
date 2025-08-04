@@ -188,7 +188,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: Icons.copy,
-                tooltip: l10n.copy,
+                tooltip: '${l10n.copy} (Ctrl+Shift+C)',
                 onPressed: hasSelection
                     ? () {
                         EditPageLogger.editPageDebug(
@@ -207,7 +207,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               _buildToolbarButton(
                 context: context,
                 icon: Icons.paste,
-                tooltip: l10n.paste,
+                tooltip: '${l10n.paste} (Ctrl+Shift+V)',
                 onPressed: canPaste
                     ? () {
                         EditPageLogger.editPageDebug(

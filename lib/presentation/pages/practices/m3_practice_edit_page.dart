@@ -85,7 +85,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   // Keyboard handler
   late KeyboardHandler _keyboardHandler;
-  // 格式刷相关变量
+  // 页面切换跟踪变量
+  int _lastPageIndex = -1;
   Map<String, dynamic>? _formatBrushStyles;
   bool _isFormatBrushActive = false;
   // Track whether the practice has been loaded to prevent multiple loads
@@ -217,6 +218,44 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     _clipboardNotifier.dispose();
 
     super.dispose();
+  }
+
+  /// 强制刷新剪贴板状态（调试用）
+  Future<void> _forceRefreshClipboardState() async {
+    try {
+      AppLogger.info(
+        '强制刷新剪贴板状态',
+        tag: 'PracticeEdit',
+        data: {
+          'currentState': _clipboardHasContent,
+          'notifierValue': _clipboardNotifier.value,
+          'internalClipboard': _clipboardElement != null ? _clipboardElement!['type'] : 'null',
+        },
+      );
+      
+      final hasContent = await _checkClipboardContent();
+      
+      if (mounted) {
+        _clipboardHasContent = hasContent;
+        _clipboardNotifier.value = hasContent;
+        setState(() {});
+        
+        AppLogger.info(
+          '剪贴板状态刷新完成',
+          tag: 'PracticeEdit',
+          data: {
+            'newState': hasContent,
+            'notifierValue': _clipboardNotifier.value,
+          },
+        );
+      }
+    } catch (e) {
+      AppLogger.error(
+        '强制刷新剪贴板状态失败',
+        tag: 'PracticeEdit',
+        error: e,
+      );
+    }
   }
 
   /// 生成随机字符串
@@ -668,62 +707,91 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   Widget _buildEditToolbar() {
     return Column(
       children: [
-        ValueListenableBuilder<bool>(
-          valueListenable: _clipboardNotifier,
-          builder: (context, canPaste, _) {
-            return M3EditToolbar(
-              controller: _controller,
-              gridVisible: _controller.state.gridVisible,
-              snapEnabled: _controller.state.snapEnabled,
-              alignmentMode: _controller.state.alignmentMode,
-              onToggleGrid: _toggleGrid,
-              onToggleSnap: _toggleSnap,
-              onToggleAlignmentMode: _toggleAlignmentMode,
-              onCopy: _copySelectedElement,
-              onPaste: _pasteElement,
-              canPaste: canPaste,
-              onGroupElements: _groupSelectedElements,
-              onUngroupElements: _ungroupElements,
-              onBringToFront: _bringElementToFront,
-              onSendToBack: _sendElementToBack,
-              onMoveUp: _moveElementUp,
-              onMoveDown: _moveElementDown,
-              onDelete: _deleteSelectedElements,
-              onCopyFormatting: _copyElementFormatting,
-              onApplyFormatBrush: _applyFormatBrush,
-              // 选择操作相关回调
-              onSelectAll: _selectAllElements,
-              onDeselectAll: _deselectAllElements,
-              // 添加元素工具按钮相关参数
-              currentTool: _currentTool,
-              onSelectTool: (tool) {
-                setState(() {
-                  // 如果当前已经是select模式，再次点击select按钮则退出select模式
-                  if (_currentTool == 'select' && tool == 'select') {
-                    _currentTool = '';
-                    _controller.exitSelectMode();
-                  } else {
-                    _currentTool = tool;
-                    // 同步到controller的状态
-                    _controller.setCurrentTool(tool);
-                    AppLogger.info(
-                      '工具切换',
-                      tag: 'PracticeEdit',
-                      data: {
-                        'tool': tool,
-                        'timestamp': DateTime.now().toIso8601String(),
-                      },
-                    );
-                  }
-                });
+        // 🆕 使用AnimatedBuilder直接监听controller状态变化，确保页面切换时能及时更新剪贴板状态
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            // 检查剪贴板状态，确保与当前状态一致
+            final shouldHaveClipboard = _clipboardElement != null;
+            if (shouldHaveClipboard != _clipboardHasContent) {
+              // 异步更新剪贴板状态，避免在build期间调用setState
+              Future.microtask(() async {
+                final hasContent = await _checkClipboardContent();
+                if (mounted && hasContent != _clipboardHasContent) {
+                  _clipboardHasContent = hasContent;
+                  _clipboardNotifier.value = hasContent;
+                  setState(() {});
+                  
+                  AppLogger.info(
+                    '工具栏构建时修正剪贴板状态',
+                    tag: 'PracticeEdit',
+                    data: {
+                      'hasContent': hasContent,
+                      'currentPageIndex': _controller.state.currentPageIndex,
+                    },
+                  );
+                }
+              });
+            }
+            
+            return ValueListenableBuilder<bool>(
+              valueListenable: _clipboardNotifier,
+              builder: (context, canPaste, _) {
+                return M3EditToolbar(
+                  controller: _controller,
+                  gridVisible: _controller.state.gridVisible,
+                  snapEnabled: _controller.state.snapEnabled,
+                  alignmentMode: _controller.state.alignmentMode,
+                  onToggleGrid: _toggleGrid,
+                  onToggleSnap: _toggleSnap,
+                  onToggleAlignmentMode: _toggleAlignmentMode,
+                  onCopy: _copySelectedElement,
+                  onPaste: _pasteElement,
+                  canPaste: canPaste,
+                  onGroupElements: _groupSelectedElements,
+                  onUngroupElements: _ungroupElements,
+                  onBringToFront: _bringElementToFront,
+                  onSendToBack: _sendElementToBack,
+                  onMoveUp: _moveElementUp,
+                  onMoveDown: _moveElementDown,
+                  onDelete: _deleteSelectedElements,
+                  onCopyFormatting: _copyElementFormatting,
+                  onApplyFormatBrush: _applyFormatBrush,
+                  // 选择操作相关回调
+                  onSelectAll: _selectAllElements,
+                  onDeselectAll: _deselectAllElements,
+                  // 添加元素工具按钮相关参数
+                  currentTool: _currentTool,
+                  onSelectTool: (tool) {
+                    setState(() {
+                      // 如果当前已经是select模式，再次点击select按钮则退出select模式
+                      if (_currentTool == 'select' && tool == 'select') {
+                        _currentTool = '';
+                        _controller.exitSelectMode();
+                      } else {
+                        _currentTool = tool;
+                        // 同步到controller的状态
+                        _controller.setCurrentTool(tool);
+                        AppLogger.info(
+                          '工具切换',
+                          tag: 'PracticeEdit',
+                          data: {
+                            'tool': tool,
+                            'timestamp': DateTime.now().toIso8601String(),
+                          },
+                        );
+                      }
+                    });
+                  },
+                  onDragElementStart: (context, elementType) {
+                    // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
+                  },
+                  // 元素创建回调
+                  onCreateTextElement: () => _createTextElement(),
+                  onCreateImageElement: () => _createImageElement(),
+                  onCreateCollectionElement: () => _createCollectionElement(),
+                );
               },
-              onDragElementStart: (context, elementType) {
-                // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
-              },
-              // 元素创建回调
-              onCreateTextElement: () => _createTextElement(),
-              onCreateImageElement: () => _createImageElement(),
-              onCreateCollectionElement: () => _createCollectionElement(),
             );
           },
         ),
@@ -1019,8 +1087,83 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         tag: 'PracticeEdit',
         data: {'type': type},
       );
-      // Additional validation for specific types if needed
-      if (type == 'characters' || type == 'character') {
+      
+      // 🔧 修复：正确区分不同类型的剪贴板内容
+      if (type == 'text' || type == 'collection' || type == 'group') {
+        // 直接复制的文本、集字、组合元素 - 检查ID
+        final hasId = _clipboardElement!.containsKey('id') && 
+                     _clipboardElement!['id'] != null && 
+                     _clipboardElement!['id'].toString().isNotEmpty;
+        AppLogger.debug(
+          '检查剪贴板: 直接复制元素内容有效性',
+          tag: 'PracticeEdit',
+          data: {
+            'type': type,
+            'hasId': hasId,
+            'elementId': _clipboardElement!['id'],
+          },
+        );
+        return hasId;
+      } else if (type == 'image') {
+        // 图像元素需要特殊判断：可能是直接复制的元素，也可能是图库项目
+        
+        // 1. 检查是否是直接复制的图像元素（有完整的元素结构）
+        if (_clipboardElement!.containsKey('id') && 
+            _clipboardElement!.containsKey('content') &&
+            _clipboardElement!.containsKey('x') && 
+            _clipboardElement!.containsKey('y')) {
+          final hasId = _clipboardElement!['id'] != null && 
+                       _clipboardElement!['id'].toString().isNotEmpty;
+          AppLogger.debug(
+            '检查剪贴板: 直接复制的图像元素',
+            tag: 'PracticeEdit',
+            data: {
+              'type': type,
+              'hasId': hasId,
+              'elementId': _clipboardElement!['id'],
+              'hasContent': _clipboardElement!.containsKey('content'),
+            },
+          );
+          return hasId;
+        }
+        
+        // 2. 检查是否是图库项目（只有imageUrl或itemIds）
+        else if (_clipboardElement!.containsKey('imageUrl') || 
+                 _clipboardElement!.containsKey('itemIds')) {
+          final hasImageUrl = _clipboardElement!.containsKey('imageUrl') &&
+                             _clipboardElement!['imageUrl'] != null;
+          final hasItemIds = _clipboardElement!.containsKey('itemIds') &&
+                            _clipboardElement!['itemIds'] is List &&
+                            (_clipboardElement!['itemIds'] as List).isNotEmpty;
+          
+          AppLogger.debug(
+            '检查剪贴板: 图库项目内容',
+            tag: 'PracticeEdit',
+            data: {
+              'type': type,
+              'hasImageUrl': hasImageUrl,
+              'hasItemIds': hasItemIds,
+              'imageUrl': hasImageUrl ? _clipboardElement!['imageUrl'] : null,
+              'itemCount': hasItemIds ? (_clipboardElement!['itemIds'] as List).length : 0,
+            },
+          );
+          return hasImageUrl || hasItemIds;
+        }
+        
+        // 3. 其他情况，可能是不完整的数据
+        else {
+          AppLogger.warning(
+            '检查剪贴板: 图像类型但结构不完整',
+            tag: 'PracticeEdit',
+            data: {
+              'type': type,
+              'keys': _clipboardElement!.keys.toList(),
+            },
+          );
+          return false;
+        }
+      } else if (type == 'characters' || type == 'character') {
+        // 字符类型 - 检查字符IDs
         final hasIds = _clipboardElement!.containsKey('characterIds') ||
             (_clipboardElement!.containsKey('data') &&
                 _clipboardElement!['data'] is Map &&
@@ -1031,20 +1174,41 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           data: {'hasIds': hasIds},
         );
         return hasIds;
-      } else if (type == 'library_items' || type == 'image') {
-        final hasIds = _clipboardElement!.containsKey('itemIds') ||
-            (_clipboardElement!.containsKey('imageUrl') &&
-                _clipboardElement!['imageUrl'] != null);
+      } else if (type == 'library_items') {
+        // 图库项目类型 - 检查项目IDs
+        final hasIds = _clipboardElement!.containsKey('itemIds') &&
+                      _clipboardElement!['itemIds'] is List &&
+                      (_clipboardElement!['itemIds'] as List).isNotEmpty;
         AppLogger.debug(
-          '检查剪贴板: 图库内容有效性',
+          '检查剪贴板: 图库项目有效性',
           tag: 'PracticeEdit',
-          data: {'hasIds': hasIds},
+          data: {
+            'hasIds': hasIds,
+            'itemCount': hasIds ? (_clipboardElement!['itemIds'] as List).length : 0,
+          },
         );
         return hasIds;
+      } else if (type == 'multi_elements') {
+        // 多元素类型 - 检查元素列表
+        final elements = _clipboardElement!['elements'];
+        final hasElements = elements != null && elements is List && elements.isNotEmpty;
+        AppLogger.debug(
+          '检查剪贴板: 多元素内容有效性',
+          tag: 'PracticeEdit',
+          data: {'hasElements': hasElements, 'elementCount': hasElements ? elements.length : 0},
+        );
+        return hasElements;
       }
+      
       // For other types, just check if it exists
+      AppLogger.debug(
+        '检查剪贴板: 其他类型，默认有效',
+        tag: 'PracticeEdit',
+        data: {'type': type},
+      );
       return true;
     }
+    
     // Then check system clipboard
     try {
       // Check for text data
@@ -1100,6 +1264,20 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
                 data: {'itemIds': itemIds, 'hasIds': hasIds},
               );
               return hasIds;
+            } else if (type == 'practice_elements') {
+              // 🆕 处理跨页面复制的字帖编辑元素
+              final data = json['data'];
+              if (data != null && data is Map<String, dynamic>) {
+                AppLogger.debug(
+                  '检查剪贴板: 识别到跨页面字帖元素',
+                  tag: 'PracticeEdit',
+                  data: {
+                    'elementType': data['type'],
+                    'source': json['source'],
+                  },
+                );
+                return true;
+              }
             } else if (json.containsKey('id') &&
                 (type == 'text' || type == 'image' || type == 'collection')) {
               AppLogger.debug(
@@ -1239,7 +1417,24 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'fit',
           'isFlippedHorizontally',
           'isFlippedVertically',
-          'rotation'
+          'rotation',
+          // 🆕 添加二值化处理参数
+          'isBinarizationEnabled',
+          'binaryThreshold',
+          'isNoiseReductionEnabled',
+          'noiseReductionLevel',
+          'binarizedImageData',
+          // 🆕 添加其他图像处理参数
+          'fitMode',
+          'alignment',
+          'cropX',
+          'cropY',
+          'cropWidth',
+          'cropHeight',
+          'cropTop',
+          'cropBottom',
+          'cropLeft',
+          'cropRight',
         ];
 
         // 复制所有指定的样式属性
@@ -1372,6 +1567,38 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'type': _clipboardElement != null ? _clipboardElement!['type'] : null,
         },
       );
+      
+      // 🆕 将复制的元素数据也保存到系统剪贴板，支持跨页面复制粘贴
+      if (_clipboardElement != null) {
+        try {
+          // 为跨页面复制创建完整的数据包
+          final crossPageData = {
+            'type': 'practice_elements', // 标识这是字帖编辑元素
+            'source': 'practice_edit_page', // 来源标识
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+            'data': _clipboardElement,
+          };
+          
+          final jsonString = jsonEncode(crossPageData);
+          await Clipboard.setData(ClipboardData(text: jsonString));
+          
+          AppLogger.info(
+            '元素数据已保存到系统剪贴板，支持跨页面复制粘贴',
+            tag: 'PracticeEdit',
+            data: {
+              'dataSize': jsonString.length,
+              'elementType': _clipboardElement!['type'],
+            },
+          );
+        } catch (e) {
+          AppLogger.warning(
+            '保存到系统剪贴板失败，仅支持当前页面内复制粘贴',
+            tag: 'PracticeEdit',
+            error: e,
+          );
+        }
+      }
+      
       if (mounted) {
         _clipboardHasContent = _clipboardElement != null;
         _clipboardNotifier.value = _clipboardElement != null;
@@ -2522,6 +2749,70 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             '图库项目数据处理完成',
             tag: 'PracticeEdit',
           );
+        } else if (type == 'practice_elements') {
+          // 🆕 处理从其他字帖编辑页面复制的元素（跨页面复制粘贴）
+          AppLogger.debug(
+            '处理字帖编辑元素类型数据（跨页面复制粘贴）',
+            tag: 'PracticeEdit',
+            data: {
+              'source': json['source'],
+              'timestamp': json['timestamp'],
+            },
+          );
+          
+          final elementData = json['data'];
+          if (elementData != null) {
+            try {
+              // Get services for cache warming
+              final characterImageService = ref.read(characterImageServiceProvider);
+              final imageCacheService = ref.read(imageCacheServiceProvider);
+
+              // Use enhanced paste with cache warming for cross-page elements
+              await PracticeEditUtils.pasteElementWithCacheWarming(
+                _controller,
+                elementData,
+                characterImageService: characterImageService,
+                imageCacheService: imageCacheService,
+              );
+              
+              setState(() {
+                // UI state will be updated by the paste operation
+              });
+              
+              AppLogger.info(
+                '跨页面字帖元素粘贴成功',
+                tag: 'PracticeEdit',
+                data: {
+                  'elementType': elementData['type'],
+                  'source': json['source'],
+                },
+              );
+              
+              // 显示成功提示
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context).crossPagePasteSuccess),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            } catch (e) {
+              AppLogger.warning(
+                '跨页面字帖元素粘贴失败',
+                tag: 'PracticeEdit',
+                error: e,
+              );
+              // Fallback to regular paste
+              PracticeEditUtils.pasteElement(_controller, elementData);
+              setState(() {});
+            }
+          }
+          
+          AppLogger.info(
+            '跨页面字帖元素数据处理完成',
+            tag: 'PracticeEdit',
+          );
         } else {
           // 尝试作为通用 JSON 元素处理
           AppLogger.debug(
@@ -3029,9 +3320,68 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           'optimization': 'local_sync_without_rebuild',
         },
       );
-
-      // 🚀 完全移除setState调用，依赖智能状态分发器
-      // 工具相关的UI组件应该自己监听智能状态分发器的工具变化事件
+    }
+    
+    // 🆕 检测页面切换并更新剪贴板状态
+    final currentPageIndex = _controller.state.currentPageIndex;
+    
+    if (_lastPageIndex != currentPageIndex) {
+      final oldPageIndex = _lastPageIndex;
+      _lastPageIndex = currentPageIndex;
+      
+      AppLogger.debug(
+        '检测到页面切换，立即更新剪贴板状态',
+        tag: 'PracticeEdit',
+        data: {
+          'oldPageIndex': oldPageIndex,
+          'newPageIndex': currentPageIndex,
+        },
+      );
+      
+      // 🔧 立即检查剪贴板内容并强制更新按钮状态
+      // 使用scheduleMicrotask确保在当前帧结束后立即执行
+      scheduleMicrotask(() async {
+        try {
+          final hasContent = await _checkClipboardContent();
+          
+          AppLogger.debug(
+            '页面切换剪贴板检查结果',
+            tag: 'PracticeEdit',
+            data: {
+              'hasContent': hasContent,
+              'oldState': _clipboardHasContent,
+              'pageIndex': currentPageIndex,
+              'clipboardElement': _clipboardElement != null ? _clipboardElement!['type'] : 'null',
+            },
+          );
+          
+          if (mounted) {
+            // 强制更新状态，无论是否有变化
+            _clipboardHasContent = hasContent;
+            _clipboardNotifier.value = hasContent;
+            
+            AppLogger.info(
+              '页面切换后强制更新剪贴板状态',
+              tag: 'PracticeEdit',
+              data: {
+                'hasContent': hasContent,
+                'pageIndex': currentPageIndex,
+                'forceUpdate': true,
+                'notifierValue': _clipboardNotifier.value,
+              },
+            );
+            
+            // 使用setState确保UI更新
+            setState(() {});
+          }
+        } catch (e) {
+          AppLogger.error(
+            '页面切换时检查剪贴板状态失败',
+            tag: 'PracticeEdit',
+            error: e,
+          );
+        }
+      });
     }
   }
 

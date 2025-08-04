@@ -1386,5 +1386,6 @@
   "enableBinarization": "Enable Binarization",
   "binaryThreshold": "Binary Threshold",
   "noiseReductionToggle": "Noise Reduction Toggle",
-  "noiseReductionLevel": "Noise Reduction Level"
+  "noiseReductionLevel": "Noise Reduction Level",
+  "crossPagePasteSuccess": "Cross-page paste successful"
 }

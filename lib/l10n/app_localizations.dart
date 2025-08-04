@@ -8487,6 +8487,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'降噪强度'**
   String get noiseReductionLevel;
+
+  /// No description provided for @crossPagePasteSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'跨页面粘贴成功'**
+  String get crossPagePasteSuccess;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
