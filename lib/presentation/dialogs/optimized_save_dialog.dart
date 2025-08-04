@@ -24,7 +24,8 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
   double _progress = 0.0;
-  final String _message = '';
+  String _currentStage = '';
+  String _stageDetail = '';
   bool _completed = false;
   bool _hasError = false;
   String? _errorMessage;
@@ -65,7 +66,16 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
   }
 
   Future<void> _startSaving() async {
+    final l10n = AppLocalizations.of(context);
+    
     try {
+      // 更新保存阶段信息
+      setState(() {
+        _progress = 0.1;
+        _currentStage = l10n.savingToStorage;
+        _stageDetail = l10n.savingToStorage;
+      });
+
       final result = await widget.saveFuture;
 
       if (!mounted) return;
@@ -74,8 +84,13 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
         _progress = 1.0;
         _completed = true;
         _hasError = !result.success;
-        if (!result.success) {
-          _errorMessage = result.message ?? '保存失败';
+        if (result.success) {
+          _currentStage = l10n.saveSuccess;
+          _stageDetail = l10n.saveComplete;
+        } else {
+          _currentStage = l10n.saveFailure;
+          _stageDetail = result.message ?? l10n.saveFailed;
+          _errorMessage = result.message ?? l10n.saveFailed;
         }
       });
 
@@ -104,6 +119,8 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
         _progress = 1.0;
         _completed = true;
         _hasError = true;
+        _currentStage = l10n.saveFailure;
+        _stageDetail = l10n.saveFailed;
         _errorMessage = errorMessage;
       });
 
@@ -229,15 +246,29 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
 
             const SizedBox(height: 16),
 
-            // 状态消息
-            Text(
-              _message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: _hasError
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.onSurface,
+            // 状态消息 - 显示当前阶段和详细信息
+            if (_currentStage.isNotEmpty) ...[
+              Text(
+                _currentStage,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: _hasError
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+              if (_stageDetail.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _stageDetail,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: _hasError
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ],
 
             // 错误详情
             if (_hasError && _errorMessage != null) ...[
@@ -253,17 +284,6 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onErrorContainer,
                   ),
-                ),
-              ),
-            ],
-
-            // 进度百分比
-            if (!_completed) ...[
-              const SizedBox(height: 8),
-              Text(
-                '${(_progress * 100).toInt()}%',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

@@ -720,6 +720,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               onDragElementStart: (context, elementType) {
                 // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
               },
+              // 元素创建回调
+              onCreateTextElement: () => _createTextElement(),
+              onCreateImageElement: () => _createImageElement(),
+              onCreateCollectionElement: () => _createCollectionElement(),
             );
           },
         ),
@@ -1406,11 +1410,64 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
-  /// 创建文本元素
-  void _createTextElement(String text) {
-    if (text.isEmpty) return; // 创建新元素ID
-    final newId = const Uuid().v4();
+  /// 创建文本元素（工具栏按钮调用）
+  void _createTextElement() {
+    _controller.addTextElement();
+    
+    AppLogger.info(
+      '通过工具栏创建文本元素',
+      tag: 'PracticeEdit',
+      data: {
+        'action': 'create_text_element',
+        'source': 'toolbar_button',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+  }
 
+  /// 创建图片元素（工具栏按钮调用）
+  void _createImageElement() {
+    // 使用默认图片URL创建图片元素，用户之后可以更换
+    const defaultImageUrl = 'assets/images/placeholder_image.png';
+    _controller.addImageElement(defaultImageUrl);
+    
+    AppLogger.info(
+      '通过工具栏创建图片元素',
+      tag: 'PracticeEdit',
+      data: {
+        'action': 'create_image_element',
+        'source': 'toolbar_button',
+        'defaultImageUrl': defaultImageUrl,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  /// 创建采集元素（工具栏按钮调用）
+  void _createCollectionElement() {
+    // 使用默认字符创建采集元素，用户之后可以修改
+    const defaultCharacters = '字';
+    _controller.addCollectionElement(defaultCharacters);
+    
+    AppLogger.info(
+      '通过工具栏创建采集元素',
+      tag: 'PracticeEdit',
+      data: {
+        'action': 'create_collection_element',
+        'source': 'toolbar_button',
+        'defaultCharacters': defaultCharacters,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  /// 创建文本元素（用于粘贴纯文本时调用）
+  void _createTextElementFromText(String text) {
+    if (text.isEmpty) return;
+    
+    // 创建新元素ID
+    final newId = const Uuid().v4();
+    
     // 创建文本元素
     final newElement = {
       'id': newId,
@@ -1421,22 +1478,44 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       'height': 100.0,
       'rotation': 0.0,
       'opacity': 1.0,
-      'visible': true,
-      'locked': false,
-      'text': text,
-      'fontSize': 24.0,
-      'fontWeight': 'normal',
-      'fontStyle': 'normal',
-      'textColor': '#000000',
-      'textAlign': 'left',
-      // 其他必要的文本元素属性
+      'layerId': _controller.state.selectedLayerId ?? _controller.state.layers.first['id'],
+      'isLocked': false,
+      'isHidden': false,
+      'name': '文本元素',
+      'content': {
+        'text': text,
+        'fontSize': 24.0,
+        'fontWeight': 'normal',
+        'fontStyle': 'normal',
+        'fontColor': '#000000',
+        'textAlign': 'left',
+        'verticalAlign': 'top',
+        'fontFamily': 'System',
+        'letterSpacing': 0.0,
+        'lineHeight': 1.2,
+        'padding': 8.0,
+        'backgroundColor': 'transparent',
+        'writingMode': 'horizontal-tb',
+      },
     };
 
     // 添加到当前页面
     setState(() {
       _controller.state.currentPageElements.add(newElement);
       _controller.selectElement(newId);
+      _controller.state.hasUnsavedChanges = true;
     });
+    
+    AppLogger.info(
+      '通过粘贴文本创建文本元素',
+      tag: 'PracticeEdit',
+      data: {
+        'action': 'create_text_element_from_paste',
+        'textLength': text.length,
+        'elementId': newId,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   /// 深拷贝元素，确保嵌套的Map也被正确拷贝
@@ -2499,7 +2578,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           tag: 'PracticeEdit',
           error: e,
         );
-        _createTextElement(text);
+        _createTextElementFromText(text);
       }
 
       // Refresh clipboard state after pasting

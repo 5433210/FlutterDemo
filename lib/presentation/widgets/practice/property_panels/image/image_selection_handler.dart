@@ -59,15 +59,26 @@ mixin ImageSelectionHandler {
           content['sourceType'] = 'library';
           content['libraryItem'] = selectedItem; // 保存图库项的完整引用
 
-          // 重置变换属性
+          // 重置变换属性和裁剪区域
           content['cropTop'] = 0.0;
           content['cropBottom'] = 0.0;
           content['cropLeft'] = 0.0;
           content['cropRight'] = 0.0;
+          // 重置新的坐标格式裁剪区域
+          content['cropX'] = 0.0;
+          content['cropY'] = 0.0;
+          content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+          content.remove('cropHeight');
           content['isFlippedHorizontally'] = false;
           content['isFlippedVertically'] = false;
           content['rotation'] = 0.0;
           content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+
+          // 清除之前的图片尺寸信息，让系统重新检测
+          content.remove('originalWidth');
+          content.remove('originalHeight');
+          content.remove('renderWidth');
+          content.remove('renderHeight');
 
           content.remove('transformedImageData');
           content.remove('transformedImageUrl');
@@ -298,15 +309,26 @@ mixin ImageSelectionHandler {
       content['sourceType'] = 'library';
       content['libraryItem'] = importedItem;
 
-      // 重置变换属性
+      // 重置变换属性和裁剪区域
       content['cropTop'] = 0.0;
       content['cropBottom'] = 0.0;
       content['cropLeft'] = 0.0;
       content['cropRight'] = 0.0;
+      // 重置新的坐标格式裁剪区域
+      content['cropX'] = 0.0;
+      content['cropY'] = 0.0;
+      content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+      content.remove('cropHeight');
       content['isFlippedHorizontally'] = false;
       content['isFlippedVertically'] = false;
       content['rotation'] = 0.0;
       content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+
+      // 清除之前的图片尺寸信息，让系统重新检测
+      content.remove('originalWidth');
+      content.remove('originalHeight');
+      content.remove('renderWidth');
+      content.remove('renderHeight');
       content.remove('transformedImageData');
       content.remove('transformedImageUrl');
       content.remove('transformRect');

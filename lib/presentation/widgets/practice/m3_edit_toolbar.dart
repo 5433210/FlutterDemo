@@ -32,6 +32,11 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final String? currentTool;
   final Function(String)? onSelectTool;
   final Function(BuildContext, String)? onDragElementStart;
+  
+  // 元素创建相关参数
+  final VoidCallback? onCreateTextElement;
+  final VoidCallback? onCreateImageElement;
+  final VoidCallback? onCreateCollectionElement;
 
   // 选择相关的操作
   final VoidCallback? onSelectAll;
@@ -61,6 +66,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     this.currentTool,
     this.onSelectTool,
     this.onDragElementStart,
+    this.onCreateTextElement,
+    this.onCreateImageElement,
+    this.onCreateCollectionElement,
     this.onSelectAll,
     this.onDeselectAll,
   });
@@ -108,20 +116,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.text} (Alt+T)',
                   toolName: 'text',
                   isSelected: currentTool == 'text',
-                  onPressed: () {
-                    EditPageLogger.editPageDebug(
-                      'Toolbar: Select text tool',
-                      data: {
-                        'selectedTool': 'text',
-                        'previousTool': currentTool,
-                        'operation': 'tool_select',
-                      },
-                    );
-                    onSelectTool!('text');
-                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'text')
                       : null,
+                  onCreateElement: onCreateTextElement,
                 ),
                 _buildElementButton(
                   context: context,
@@ -129,20 +127,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.image} (Alt+I)',
                   toolName: 'image',
                   isSelected: currentTool == 'image',
-                  onPressed: () {
-                    EditPageLogger.editPageDebug(
-                      'Toolbar: Select image tool',
-                      data: {
-                        'selectedTool': 'image',
-                        'previousTool': currentTool,
-                        'operation': 'tool_select',
-                      },
-                    );
-                    onSelectTool!('image');
-                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'image')
                       : null,
+                  onCreateElement: onCreateImageElement,
                 ),
                 _buildElementButton(
                   context: context,
@@ -150,20 +138,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: '${l10n.practiceEditCollection} (Alt+C)',
                   toolName: 'collection',
                   isSelected: currentTool == 'collection',
-                  onPressed: () {
-                    EditPageLogger.editPageDebug(
-                      'Toolbar: Select collection tool',
-                      data: {
-                        'selectedTool': 'collection',
-                        'previousTool': currentTool,
-                        'operation': 'tool_select',
-                      },
-                    );
-                    onSelectTool!('collection');
-                  },
                   onDragStart: onDragElementStart != null
                       ? () => onDragElementStart!(context, 'collection')
                       : null,
+                  onCreateElement: onCreateCollectionElement,
                 ),
                 _buildToolbarButton(
                   context: context,
@@ -356,10 +334,11 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required String tooltip,
     required String toolName,
     required bool isSelected,
-    required VoidCallback onPressed,
     VoidCallback? onDragStart,
+    VoidCallback? onCreateElement,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     Widget button = Tooltip(
       message: tooltip,
@@ -369,20 +348,22 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         child: InkWell(
           onTap: () {
             EditPageLogger.editPageDebug(
-              'Toolbar element tool switch',
+              'Toolbar element click - create element',
               data: {
                 'toolName': toolName,
-                'isSelected': isSelected,
-                'tooltip': tooltip,
+                'action': 'click_to_create',
               },
             );
-            onPressed();
+            // 点击直接创建元素，而不是切换工具
+            if (onCreateElement != null) {
+              onCreateElement();
+            }
           },
           borderRadius: BorderRadius.circular(8.0),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 36), // 确保有足够的最小宽度
+              constraints: const BoxConstraints(minWidth: 36),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -395,7 +376,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    tooltip,
+                    tooltip.split(' ').first, // 只显示工具名称，不显示快捷键
                     style: TextStyle(
                       fontSize: 12,
                       overflow: TextOverflow.ellipsis,
@@ -428,18 +409,39 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 18, color: colorScheme.onPrimaryContainer),
+                Icon(
+                  icon,
+                  size: 18,
+                  color: colorScheme.onPrimaryContainer,
+                ),
                 const SizedBox(width: 4),
                 Text(
-                  tooltip,
+                  tooltip.split(' ').first,
                   style: TextStyle(
-                      fontSize: 12, color: colorScheme.onPrimaryContainer),
+                    fontSize: 12,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
                 ),
               ],
             ),
           ),
         ),
-        onDragStarted: onDragStart,
+        childWhenDragging: Opacity(
+          opacity: 0.5,
+          child: button,
+        ),
+        onDragStarted: () {
+          EditPageLogger.editPageDebug(
+            'Toolbar element drag started',
+            data: {
+              'toolName': toolName,
+              'action': 'drag_to_create',
+            },
+          );
+          if (onDragStart != null) {
+            onDragStart();
+          }
+        },
         child: button,
       );
     }
