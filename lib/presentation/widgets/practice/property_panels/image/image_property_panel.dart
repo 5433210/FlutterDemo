@@ -138,10 +138,14 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       content['noiseReductionLevel'] = 3.0;
       content['binarizedImageData'] = null;
 
-      // 立即更新元素数据以确保持久化
-      updateProperty('content', content, createUndoOperation: false);
-
       print('🔧 已为现有图像元素添加二值化默认属性');
+      
+      // 延迟到构建完成后再更新属性，避免在build过程中调用setState
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          updateProperty('content', content, createUndoOperation: false);
+        }
+      });
     }
 
     // 🔍 调试日志：检查二值化开关状态
@@ -357,12 +361,14 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       widget.controller.updateElementPropertiesWithoutUndo(elementId, updates);
     }
 
-    // 🔧 修复：强制触发UI重建以确保翻转选项状态立即更新
-    if (mounted) {
-      setState(() {
-        // 触发重建以显示最新的翻转状态
-      });
-    }
+    // 🔧 修复：延迟UI重建到构建完成后，避免setState during build错误
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          // 触发重建以显示最新的翻转状态
+        });
+      }
+    });
 
     print('=== handlePropertyChange 结束 ===');
   }

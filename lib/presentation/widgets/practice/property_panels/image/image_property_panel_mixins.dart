@@ -201,10 +201,18 @@ mixin ImagePropertyUpdaters {
     final updates = {key: value};
     handlePropertyChange(updates, createUndoOperation: createUndoOperation);
 
-    final currentImageSize = imageSize;
-    final currentRenderSize = renderSize;
-    if (currentImageSize != null && currentRenderSize != null) {
-      updateImageState(currentImageSize, currentRenderSize);
+    // 只有当更新的是content且可能影响图像尺寸时，才检查图像状态
+    // 避免不必要的图像状态检查导致预览重置
+    if (key == 'content') {
+      final content = value as Map<String, dynamic>;
+      // 只有当content包含图像URL变化时才检查图像状态
+      if (content.containsKey('imageUrl')) {
+        final currentImageSize = imageSize;
+        final currentRenderSize = renderSize;
+        if (currentImageSize != null && currentRenderSize != null) {
+          updateImageState(currentImageSize, currentRenderSize);
+        }
+      }
     }
   }
 
@@ -433,62 +441,48 @@ mixin ImagePropertyUpdaters {
     content['renderWidth'] = renderSize.width;
     content['renderHeight'] = renderSize.height;
 
-    // 如果裁剪属性未初始化，则使用图像的完整尺寸作为初始裁剪区域
-    bool needsInitialization = false;
+    // 强制重新初始化裁剪区域，确保新图片加载时使用新的尺寸
+    content['cropX'] = 0.0;
+    content['cropY'] = 0.0;
+    content['cropWidth'] = imageSize.width;
+    content['cropHeight'] = imageSize.height;
 
-    if (content['cropX'] == null) {
-      content['cropX'] = 0.0;
-      needsInitialization = true;
-    }
-    if (content['cropY'] == null) {
-      content['cropY'] = 0.0;
-      needsInitialization = true;
-    }
-    if (content['cropWidth'] == null) {
-      content['cropWidth'] = imageSize.width;
-      needsInitialization = true;
-    }
-    if (content['cropHeight'] == null) {
-      content['cropHeight'] = imageSize.height;
-      needsInitialization = true;
-    }
-
-    // 验证现有的裁剪值是否合理
-    final currentCropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
-    final currentCropY = (content['cropY'] as num?)?.toDouble() ?? 0.0;
-    final currentCropWidth =
-        (content['cropWidth'] as num?)?.toDouble() ?? imageSize.width;
-    final currentCropHeight =
-        (content['cropHeight'] as num?)?.toDouble() ?? imageSize.height;
-
-    // 如果现有值超出了图像边界，需要修正
-    if (currentCropX + currentCropWidth > imageSize.width ||
-        currentCropY + currentCropHeight > imageSize.height ||
-        currentCropX < 0 ||
-        currentCropY < 0 ||
-        currentCropWidth <= 0 ||
-        currentCropHeight <= 0) {
-      content['cropX'] = 0.0;
-      content['cropY'] = 0.0;
-      content['cropWidth'] = imageSize.width;
-      content['cropHeight'] = imageSize.height;
-      needsInitialization = true;
-    }
-
-    if (needsInitialization) {
-      EditPageLogger.propertyPanelDebug(
-        '初始化或修正裁剪区域',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
-        data: {
-          'operation': 'initialize_crop_area',
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-          'cropArea':
-              '${content['cropX']},${content['cropY']},${content['cropWidth']},${content['cropHeight']}',
-        },
-      );
-    }
+    EditPageLogger.propertyPanelDebug(
+      '更新图像尺寸信息并重置裁剪区域',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'operation': 'update_image_size_and_reset_crop',
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'renderSize': '${renderSize.width}x${renderSize.height}',
+        'cropArea': '0,0,${imageSize.width},${imageSize.height}',
+      },
+    );
 
     updateProperty('content', content);
+  }
+
+  /// 仅更新图像尺寸信息，不重置裁剪区域（用于避免预览重复重置）
+  void updateImageSizeInfoOnly(Size imageSize, Size renderSize) {
+    final content =
+        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+
+    // 只更新图像尺寸信息，保持现有的裁剪区域设置
+    content['originalWidth'] = imageSize.width;
+    content['originalHeight'] = imageSize.height;
+    content['renderWidth'] = renderSize.width;
+    content['renderHeight'] = renderSize.height;
+
+    EditPageLogger.propertyPanelDebug(
+      '仅更新图像尺寸信息（保持裁剪区域）',
+      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      data: {
+        'operation': 'update_image_size_only',
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'renderSize': '${renderSize.width}x${renderSize.height}',
+      },
+    );
+
+    updateProperty('content', content, createUndoOperation: false);
   }
 
   /// 更新图像状态
@@ -497,30 +491,30 @@ mixin ImagePropertyUpdaters {
       return;
     }
 
-    final currentImageSize = this.imageSize;
-    final currentRenderSize = this.renderSize;
-
-    // 检查是否需要更新
-    bool needsUpdate = false;
-
-    if (currentImageSize == null || currentRenderSize == null) {
-      needsUpdate = true;
-    } else if (currentImageSize != imageSize ||
-        currentRenderSize != renderSize) {
-      needsUpdate = true;
-    }
-
-    // 检查裁剪属性是否已初始化
+    // 检查图像尺寸是否真的改变了
     final content = element['content'] as Map<String, dynamic>;
-    if (content['cropX'] == null ||
-        content['cropY'] == null ||
-        content['cropWidth'] == null ||
-        content['cropHeight'] == null) {
-      needsUpdate = true;
-    }
+    final currentImageWidth = (content['originalWidth'] as num?)?.toDouble();
+    final currentImageHeight = (content['originalHeight'] as num?)?.toDouble();
+    final currentRenderWidth = (content['renderWidth'] as num?)?.toDouble();
+    final currentRenderHeight = (content['renderHeight'] as num?)?.toDouble();
 
-    if (needsUpdate) {
-      updateImageSizeInfo(imageSize, renderSize);
+    // 只有当图像尺寸确实改变时才更新并重置裁剪区域
+    final imageSizeChanged = currentImageWidth != imageSize.width || 
+                            currentImageHeight != imageSize.height;
+    final renderSizeChanged = currentRenderWidth != renderSize.width || 
+                             currentRenderHeight != renderSize.height;
+
+    if (imageSizeChanged || renderSizeChanged) {
+      print('🔍 图像尺寸发生变化，需要更新和重置裁剪区域');
+      print('  - 原图像尺寸: ${currentImageWidth ?? 'null'}x${currentImageHeight ?? 'null'} -> ${imageSize.width}x${imageSize.height}');
+      print('  - 渲染尺寸: ${currentRenderWidth ?? 'null'}x${currentRenderHeight ?? 'null'} -> ${renderSize.width}x${renderSize.height}');
+      
+      // 🔧 修复：延迟到构建完成后再更新图像状态，避免setState during build错误
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        updateImageSizeInfo(imageSize, renderSize);
+      });
+    } else {
+      print('🔍 图像尺寸未改变，跳过更新');
     }
   }
 

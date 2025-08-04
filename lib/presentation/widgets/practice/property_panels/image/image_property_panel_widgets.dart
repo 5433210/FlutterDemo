@@ -648,10 +648,10 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                             imageUrl: imageUrl,
                             fitMode: _getFitMode(fitMode),
                             onImageSizeAvailable: (detectedImageSize, detectedRenderSize) {
-                              // Only call on first load
-                              if (imageSize == null) {
-                                onImageSizeAvailable(detectedImageSize, detectedRenderSize);
-                              }
+                              // Always call when image size is detected
+                              // This ensures that when a new image is loaded, 
+                              // the size information gets updated properly
+                              onImageSizeAvailable(detectedImageSize, detectedRenderSize);
                             },
                           ),
                         ),
@@ -765,9 +765,12 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                                 ? 'fill'
                                 : 'none');
 
-                if (context.mounted) {
-                  onImageSizeAvailable(imageSize, renderSize);
-                }
+                // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted) {
+                    onImageSizeAvailable(imageSize, renderSize);
+                  }
+                });
               },
             );
           },
@@ -817,6 +820,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                             : 'none',
               );
               
+              // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
                   onImageSizeAvailable(imageSize, renderSize);
