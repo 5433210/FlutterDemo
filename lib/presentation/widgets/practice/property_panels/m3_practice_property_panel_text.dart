@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../../common/editable_number_field.dart';
 import '../../common/m3_color_picker.dart';
 import '../practice_edit_controller.dart';
@@ -1117,30 +1119,77 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     return 400; // 默认值
   }
 
-  // 更新内容属性
+  // 更新内容属性 - 使用智能日志记录和性能监控
   void _updateContentProperty(String key, dynamic value) {
-    EditPageLogger.editPageDebug(
-      '更新文本内容属性',
-      data: {
-        'key': key,
-        'value': value,
-        'currentWritingMode': element['content']?['writingMode'],
-      },
+    // 性能监控包装
+    final timer = PerformanceTimer('文本属性更新: $key',
+      customThreshold: EditPageLoggingConfig.operationPerformanceThreshold,
     );
+    
+    // 只对重要的属性变化记录日志
+    if (_shouldLogPropertyChange(key, value)) {
+      EditPageLogger.propertyPanelDebug(
+        '文本属性更新',
+        tag: EditPageLoggingConfig.TAG_TEXT_PANEL,
+        data: {
+          'propertyKey': key,
+          'propertyValue': _formatPropertyValue(key, value),
+          'operation': 'content_property_update',
+        },
+      );
+    }
 
     final content = Map<String, dynamic>.from(
         element['content'] as Map<String, dynamic>? ?? {});
     content[key] = value;
     _updateProperty('content', content);
-
-    EditPageLogger.editPageDebug(
-      '文本内容属性更新完成',
-      data: {'updatedContent': content},
-    );
+    
+    timer.finish();
   }
 
   void _updateProperty(String key, dynamic value) {
     final updates = {key: value};
     onElementPropertiesChanged(updates);
+  }
+  
+  /// 判断是否应该记录属性变化日志
+  /// 只记录重要的属性变化，避免高频日志噪音
+  bool _shouldLogPropertyChange(String key, dynamic value) {
+    // 只记录特定的重要属性变化
+    const importantProperties = {
+      'text', // 文本内容变化
+      'fontFamily', // 字体族变化
+      'writingMode', // 书写方向变化
+      'textAlign', // 对齐方式变化
+      'fontColor', // 颜色变化
+      'backgroundColor', // 背景颜色变化
+    };
+    
+    // 字号变化只在较大距离时记录
+    if (key == 'fontSize') {
+      final currentFontSize = (element['content']?['fontSize'] as num?)?.toDouble() ?? 100.0;
+      final newFontSize = (value as num).toDouble();
+      return (newFontSize - currentFontSize).abs() >= 5.0; // 字号差距大于5px才记录
+    }
+    
+    return importantProperties.contains(key);
+  }
+  
+  /// 格式化属性值用于日志输出
+  String _formatPropertyValue(String key, dynamic value) {
+    switch (key) {
+      case 'fontSize':
+        return '${value}px';
+      case 'letterSpacing':
+      case 'lineHeight':
+      case 'padding':
+        return '${value}px';
+      case 'text':
+        // 文本内容截断显示
+        final text = value.toString();
+        return text.length > 50 ? '${text.substring(0, 50)}...' : text;
+      default:
+        return value.toString();
+    }
   }
 }

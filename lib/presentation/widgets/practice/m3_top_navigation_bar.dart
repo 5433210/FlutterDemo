@@ -170,14 +170,6 @@ class M3TopNavigationBar extends StatelessWidget
   Future<void> _editTitle(BuildContext context, AppLocalizations l10n) async {
     final currentTitle = controller.practiceTitle;
     
-    EditPageLogger.editPageDebug(
-      '开始编辑标题',
-      data: {
-        'currentTitle': currentTitle,
-        'operation': 'title_edit_start',
-      },
-    );
-    
     final newTitle = await showDialog<String>(
       context: context,
       builder: (context) => PracticeTitleEditDialog(
@@ -187,23 +179,13 @@ class M3TopNavigationBar extends StatelessWidget
     );
 
     if (newTitle != null && newTitle.isNotEmpty) {
-      EditPageLogger.editPageDebug(
-        '标题编辑确认',
-        data: {
-          'oldTitle': currentTitle,
-          'newTitle': newTitle,
-          'operation': 'title_edit_confirmed',
-        },
-      );
-      
       try {
         controller.updatePracticeTitle(newTitle);
         
-        EditPageLogger.editPageDebug(
-          '标题更新成功',
+        EditPageLogger.editPageInfo(
+          '標題更新成功',
           data: {
             'newTitle': newTitle,
-            'operation': 'title_update_success',
           },
         );
         
@@ -214,23 +196,14 @@ class M3TopNavigationBar extends StatelessWidget
         }
       } catch (error, stackTrace) {
         EditPageLogger.editPageError(
-          '标题更新失败',
+          '標題更新失敗',
           error: error,
           stackTrace: stackTrace,
           data: {
             'newTitle': newTitle,
-            'operation': 'title_update_error',
           },
         );
       }
-    } else {
-      EditPageLogger.editPageDebug(
-        '标题编辑取消',
-        data: {
-          'currentTitle': currentTitle,
-          'operation': 'title_edit_cancelled',
-        },
-      );
     }
   }
 
@@ -248,24 +221,8 @@ class M3TopNavigationBar extends StatelessWidget
 
   /// Handle back button
   Future<void> _handleBackButton(
-      BuildContext context, AppLocalizations l10n) async {
-    EditPageLogger.editPageDebug(
-      '导航返回按钮点击',
-      data: {
-        'hasUnsavedChanges': controller.state.hasUnsavedChanges,
-        'pageCount': controller.state.pages.length,
-        'operation': 'navigation_back_pressed',
-      },
-    );
-    
+      BuildContext context, AppLocalizations l10n) async {    
     if (controller.state.hasUnsavedChanges) {
-      EditPageLogger.editPageDebug(
-        '显示未保存更改确认对话框',
-        data: {
-          'operation': 'unsaved_changes_dialog_show',
-        },
-      );
-      
       final bool? result = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
@@ -275,24 +232,13 @@ class M3TopNavigationBar extends StatelessWidget
             actions: <Widget>[
               TextButton(
                 child: Text(l10n.cancel),
-                onPressed: () {
-                  EditPageLogger.editPageDebug(
-                    '取消离开编辑页',
-                    data: {
-                      'operation': 'navigation_back_cancelled',
-                    },
-                  );
-                  Navigator.of(context).pop(false);
-                },
+                onPressed: () => Navigator.of(context).pop(false),
               ),
               TextButton(
                 child: Text(l10n.leave),
                 onPressed: () {
-                  EditPageLogger.editPageDebug(
-                    '确认离开编辑页（丢弃更改）',
-                    data: {
-                      'operation': 'navigation_back_confirmed_discard',
-                    },
+                  EditPageLogger.editPageInfo(
+                    '用戶確認丟棄更改並離開',
                   );
                   Navigator.of(context).pop(true);
                 },
@@ -305,26 +251,12 @@ class M3TopNavigationBar extends StatelessWidget
       if (result == true && context.mounted) {
         // Check if we can safely pop
         if (Navigator.canPop(context)) {
-          EditPageLogger.editPageDebug(
-            '离开编辑页面',
-            data: {
-              'reason': 'user_confirmed_discard_changes',
-              'operation': 'navigation_exit',
-            },
-          );
           Navigator.of(context).pop();
         }
       }
     } else if (context.mounted) {
       // Check if we can safely pop
       if (Navigator.canPop(context)) {
-        EditPageLogger.editPageDebug(
-          '离开编辑页面',
-          data: {
-            'reason': 'no_unsaved_changes',
-            'operation': 'navigation_exit',
-          },
-        );
         Navigator.of(context).pop();
       }
     }
@@ -343,17 +275,7 @@ class M3TopNavigationBar extends StatelessWidget
   /// Save practice
   Future<void> _savePractice(
       BuildContext context, AppLocalizations l10n) async {
-    EditPageLogger.editPageDebug(
-      '保存字帖练习',
-      data: {
-        'practiceId': practiceId,
-        'hasTitle': controller.practiceTitle != null,
-        'pageCount': controller.state.pages.length,
-        'hasUnsavedChanges': controller.state.hasUnsavedChanges,
-      },
-    );
-    
-    // 使用优化的保存服务
+    // 使用優化的保存服務
     await FileOperations.savePracticeOptimized(
       context,
       controller,

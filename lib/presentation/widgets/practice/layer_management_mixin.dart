@@ -645,30 +645,21 @@ mixin LayerManagementMixin on ChangeNotifier
   void updateLayerProperties(String layerId, Map<String, dynamic> properties) {
     checkDisposed();
 
-    EditPageLogger.controllerDebug(
-        '🔧 LayerManagementMixin: updateLayerProperties called');
-    EditPageLogger.controllerDebug('  - layerId: $layerId');
-    EditPageLogger.controllerDebug('  - properties: $properties');
-
     // 确保有当前页面
     if (state.currentPage == null ||
         !state.currentPage!.containsKey('layers')) {
-      EditPageLogger.controllerDebug('  ❌ No current page or layers');
       return;
     }
 
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex == -1) {
-      EditPageLogger.controllerDebug('  ❌ Layer not found with id: $layerId');
+      EditPageLogger.controllerWarning('图层不存在', data: {'layerId': layerId});
       return;
     }
 
     final oldProperties = <String, dynamic>{};
     final layer = layers[layerIndex] as Map<String, dynamic>;
-
-    EditPageLogger.controllerDebug('  - Layer found at index: $layerIndex');
-    EditPageLogger.controllerDebug('  - Current layer data: $layer');
 
     // 保存旧值
     for (final key in properties.keys) {
@@ -677,57 +668,32 @@ mixin LayerManagementMixin on ChangeNotifier
       }
     }
 
-    EditPageLogger.controllerDebug('  - Old properties: $oldProperties');
-
     final operation = UpdateLayerPropertyOperation(
       layerId: layerId,
       oldProperties: oldProperties,
       newProperties: properties,
       updateLayer: (id, props) {
-        EditPageLogger.controllerDebug('🔄 Executing layer property update');
-        EditPageLogger.controllerDebug('  - layerId: $id');
-        EditPageLogger.controllerDebug('  - props: $props');
-
         if (state.currentPage != null &&
             state.currentPage!.containsKey('layers')) {
           final currentLayers = state.currentPage!['layers'] as List<dynamic>;
           final index = currentLayers.indexWhere((l) => l['id'] == id);
           if (index >= 0) {
             final targetLayer = currentLayers[index] as Map<String, dynamic>;
-            EditPageLogger.controllerDebug(
-                '  - Updating layer at index $index: $targetLayer');
-
             props.forEach((key, value) {
-              final oldValue = targetLayer[key];
               targetLayer[key] = value;
-              EditPageLogger.controllerDebug(
-                  '    ✅ Updated $key: $oldValue -> $value');
             });
-
-            EditPageLogger.controllerDebug(
-                '  - Layer after update: $targetLayer');
             state.hasUnsavedChanges = true;
-          } else {
-            EditPageLogger.controllerDebug(
-                '  ❌ Layer not found during update with id: $id');
           }
-        } else {
-          EditPageLogger.controllerDebug('  ❌ No current page during update');
         }
       },
     );
 
     // 立即执行操作
-    EditPageLogger.controllerDebug(
-        '🚀 Executing layer update operation immediately');
     operation.execute();
 
     // 然后添加到撤销管理器
     undoRedoManager.addOperation(operation);
     markUnsaved();
-
-    EditPageLogger.controllerDebug(
-        '🔚 LayerManagementMixin: updateLayerProperties completed');
 
     // 🚀 使用智能状态分发器通知图层属性更新
     intelligentNotify(

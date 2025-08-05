@@ -76,17 +76,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        EditPageLogger.editPageDebug(
-                          '添加新页面',
-                          data: {
-                            'currentPageCount': widget.pages.length,
-                            'currentPageIndex': widget.currentPageIndex,
-                            'operation': 'page_add',
-                          },
-                        );
-                        widget.onAddPage();
-                      },
+                      onTap: widget.onAddPage, // 簡化，直接呼叫回調
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         width: 60,
@@ -181,37 +171,24 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
       },
       onReorder: (oldIndex, newIndex) {
         if (widget.onReorderPages != null) {
-          EditPageLogger.editPageDebug(
-            '页面拖拽排序',
-            data: {
-              'fromIndex': oldIndex,
-              'toIndex': newIndex,
-              'totalPages': widget.pages.length,
-              'movedPageId': widget.pages[oldIndex]['id'],
-              'operation': 'page_reorder',
-            },
-          );
-          
           try {
             widget.onReorderPages!(oldIndex, newIndex);
             
-            EditPageLogger.editPageDebug(
-              '页面排序成功',
+            EditPageLogger.editPageInfo(
+              '頁面排序成功',
               data: {
                 'fromIndex': oldIndex,
                 'toIndex': newIndex,
-                'operation': 'page_reorder_success',
               },
             );
           } catch (error, stackTrace) {
             EditPageLogger.editPageError(
-              '页面排序失败',
+              '頁面排序失敗',
               error: error,
               stackTrace: stackTrace,
               data: {
                 'fromIndex': oldIndex,
                 'toIndex': newIndex,
-                'operation': 'page_reorder_error',
               },
             );
           }
@@ -226,18 +203,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
           key: ValueKey('page_${page['id']}'),
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () {
-              EditPageLogger.editPageDebug(
-                '页面缩略图选择(可排序列表)',
-                data: {
-                  'selectedIndex': index,
-                  'currentIndex': widget.currentPageIndex,
-                  'totalPages': widget.pages.length,
-                  'pageId': page['id'],
-                },
-              );
-              widget.onPageSelected(index);
-            },
+            onTap: () => widget.onPageSelected(index), // 簡化選擇操作
             child: MouseRegion(
               cursor: SystemMouseCursors.grab,
               child: Stack(
@@ -332,19 +298,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
         return Padding(
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () {
-              EditPageLogger.editPageDebug(
-                '页面缩略图选择(简单列表)',
-                data: {
-                  'selectedIndex': index,
-                  'currentIndex': widget.currentPageIndex,
-                  'totalPages': widget.pages.length,
-                  'pageId': page['id'],
-                  'pageName': page['name'] as String? ?? 'Page ${index + 1}',
-                },
-              );
-              widget.onPageSelected(index);
-            },
+            onTap: () => widget.onPageSelected(index), // 簡化選擇操作
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

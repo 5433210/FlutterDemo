@@ -59,33 +59,36 @@ class IntelligentStateDispatcher {
     final dispatchStartTime = DateTime.now();
     _dispatchCount++;
 
-    // 🔍[TRACKING] 分发开始跟踪
-    EditPageLogger.performanceInfo(
-      '智能状态分发开始',
-      data: {
-        'dispatchNumber': _dispatchCount,
-        'changeType': changeType,
-        'operation': operation,
-        'affectedElements': affectedElements?.length ?? 0,
-        'affectedLayers': affectedLayers?.length ?? 0,
-        'affectedUIComponents': affectedUIComponents?.length ?? 0,
-        'timestamp': dispatchStartTime.toIso8601String(),
-        'optimization': 'intelligent_dispatch_tracking',
-      },
-    );
+    // 🚀 优化：只在重要里程碑或错误时记录分发开始跨信息
+    if (_dispatchCount % 25 == 0 || changeType.contains('error')) {
+      EditPageLogger.performanceInfo(
+        '智能状态分发里程碑',
+        data: {
+          'dispatchNumber': _dispatchCount,
+          'changeType': changeType,
+          'operation': operation,
+          'affectedElements': affectedElements?.length ?? 0,
+          'optimization': 'intelligent_dispatch_milestone',
+        },
+      );
+    }
 
     // 检查状态是否实际发生变化
     if (_hasNoActualChange(changeType, eventData)) {
       _skippedDispatches++;
-      EditPageLogger.performanceInfo(
-        '智能状态分发跳过（无变化）',
-        data: {
-          'dispatchNumber': _dispatchCount,
-          'changeType': changeType,
-          'skipReason': 'no_actual_change',
-          'optimization': 'intelligent_dispatch_skip',
-        },
-      );
+      // 🚀 优化：减少跳过分发的日志频率
+      if (_skippedDispatches % 10 == 0) {
+        EditPageLogger.performanceInfo(
+          '智能状态分发跳过里程碑',
+          data: {
+            'dispatchNumber': _dispatchCount,
+            'changeType': changeType,
+            'skippedCount': _skippedDispatches,
+            'skipReason': 'no_actual_change',
+            'optimization': 'intelligent_dispatch_skip_milestone',
+          },
+        );
+      }
       return;
     }
 
@@ -191,27 +194,25 @@ class IntelligentStateDispatcher {
       _skippedDispatches--;
     }
 
-    // 🔍[TRACKING] 分发完成跟踪
-    EditPageLogger.performanceInfo(
-      '智能状态分发完成',
-      data: {
-        'dispatchNumber': _dispatchCount,
-        'changeType': changeType,
-        'operation': operation,
-        'hasListeners': hasListeners,
-        'notificationCount': notificationCount,
-        'notificationDetails': notificationDetails,
-        'dispatchDurationMs': dispatchDuration.inMilliseconds,
-        'stats': {
-          'totalDispatches': _totalDispatches,
-          'skippedDispatches': _skippedDispatches,
-          'skipRate': _totalDispatches > 0
-              ? _skippedDispatches / _totalDispatches
-              : 0.0,
+    // 🚀 优化：只在重要里程碑、错误或性能问题时记录分发完成
+    final shouldLogCompletion = _dispatchCount % 25 == 0 || 
+                               changeType.contains('error') ||
+                               dispatchDuration.inMilliseconds > 5;
+    
+    if (shouldLogCompletion) {
+      EditPageLogger.performanceInfo(
+        '智能状态分发完成里程碑',
+        data: {
+          'dispatchNumber': _dispatchCount,
+          'changeType': changeType,
+          'operation': operation,
+          'hasListeners': hasListeners,
+          'notificationCount': notificationCount,
+          'dispatchDurationMs': dispatchDuration.inMilliseconds,
+          'optimization': 'intelligent_dispatch_milestone_complete',
         },
-        'optimization': 'intelligent_dispatch_complete',
-      },
-    );
+      );
+    }
   }
 
   /// 🚀 分发拖拽变化 - 只影响拖拽预览层

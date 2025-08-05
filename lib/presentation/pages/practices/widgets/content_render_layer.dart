@@ -164,17 +164,20 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final elementOrderChanged =
         _hasElementOrderChanged(oldElements, currentElements);
 
-    EditPageLogger.rendererDebug('ContentRenderLayer变化分析', data: {
-      'oldElementsCount': oldElements.length,
-      'currentElementsCount': currentElements.length,
-      'oldLayersCount': oldLayers.length,
-      'currentLayersCount': currentLayers.length,
-      'elementsChanged': elementsChanged,
-      'layersChanged': layersChanged,
-      'elementOrderChanged': elementOrderChanged,
-      'didUpdateCount': _didUpdateWidgetCount,
-      'optimization': 'content_layer_comprehensive_diff',
-    });
+    // 🚀 优化：只在实际发生变化或重要里程碑时记录变化分析
+    final hasActualChanges = elementsChanged || layersChanged || elementOrderChanged;
+    if (hasActualChanges || _didUpdateWidgetCount % 50 == 0) {
+      EditPageLogger.rendererDebug('ContentRenderLayer变化分析', data: {
+        'oldElementsCount': oldElements.length,
+        'currentElementsCount': currentElements.length,
+        'elementsChanged': elementsChanged,
+        'layersChanged': layersChanged,
+        'elementOrderChanged': elementOrderChanged,
+        'didUpdateCount': _didUpdateWidgetCount,
+        'changeDetected': hasActualChanges,
+        'optimization': hasActualChanges ? 'content_layer_actual_change' : 'content_layer_milestone',
+      });
+    }
 
     // 如果图层发生了变化，强制清理缓存以确保重绘
     if (layersChanged) {
@@ -724,18 +727,13 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   /// 检查元素顺序是否发生了变化
   bool _hasElementOrderChanged(List<Map<String, dynamic>> oldElements,
       List<Map<String, dynamic>> currentElements) {
-    // 🔧 添加详细调试日志
-    EditPageLogger.rendererDebug('🔧 检查元素顺序变化', data: {
-      'oldCount': oldElements.length,
-      'currentCount': currentElements.length,
-      'oldElementIds': oldElements.map((e) => e['id'] as String).toList(),
-      'currentElementIds':
-          currentElements.map((e) => e['id'] as String).toList(),
-    });
+    // 🚀 优化：减少元素顺序检查的详细日志
+    // 只在实际发生顺序变化或元素数量变化时记录
 
     // 如果数量不同，不是单纯的顺序变化
     if (oldElements.length != currentElements.length) {
-      EditPageLogger.rendererDebug('🔧 元素数量不同，不是顺序变化', data: {
+      // 🚀 优化：只在元素数量变化时记录
+      EditPageLogger.rendererDebug('🔧 元素数量变化', data: {
         'oldCount': oldElements.length,
         'currentCount': currentElements.length,
       });
@@ -749,7 +747,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       final currentElementId = currentElements[i]['id'] as String?;
 
       if (oldElementId != currentElementId) {
-        EditPageLogger.rendererDebug('🔧 发现位置 $i 的元素ID不同', data: {
+        // 🚀 优化：只在发现实际顺序变化时记录
+        EditPageLogger.rendererDebug('🔧 发现元素顺序变化', data: {
           'position': i,
           'oldElementId': oldElementId,
           'currentElementId': currentElementId,
@@ -760,7 +759,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     }
 
     if (!orderChanged) {
-      EditPageLogger.rendererDebug('🔧 所有位置元素ID相同，无顺序变化');
+      // 🚀 优化：移除“无顺序变化”的重复日志
       return false;
     }
 

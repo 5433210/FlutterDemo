@@ -7,6 +7,7 @@ import '../../../../application/providers/service_providers.dart';
 import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../utils/config/edit_page_logging_config.dart';
 import '../practice_edit_controller.dart';
@@ -314,7 +315,7 @@ class _M3CollectionPropertyPanelState
           '自动更新缺失字符图像完成',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
-            'charCount': characters.length,
+            'updatedCharCount': hasUpdates ? characters.length : 0,
             'operation': 'auto_update_missing_images',
           },
         );
@@ -419,13 +420,13 @@ class _M3CollectionPropertyPanelState
         updatedContent['characterImages'] = characterImages;
         _updateProperty('content', updatedContent);
 
-        // Log cleanup info
+        // 优化日志记录：只在有实际清理操作时才记录
         if (keysToRemove.isNotEmpty) {
           EditPageLogger.propertyPanelDebug(
             '清理字符图像信息无效键',
             tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
             data: {
-              'removedKeys': keysToRemove,
+              'removedKeyCount': keysToRemove.length,
               'operation': 'cleanup_character_images',
             },
           );
@@ -765,16 +766,19 @@ class _M3CollectionPropertyPanelState
         // Update property
         widget.onElementPropertiesChanged({'content': updatedContent});
 
-        // Log
-        EditPageLogger.propertyPanelDebug(
-          '文本更新并重新映射字符图像信息',
-          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
-          data: {
-            'newText': value,
-            'textLength': value.length,
-            'operation': 'text_update_remap',
-          },
-        );
+        // 优化日志：只记录有意义的文本更新，避免高频日志
+        if (value.length != oldCharacters.length || 
+            (value.isNotEmpty && oldCharacters.isNotEmpty && value != oldCharacters)) {
+          EditPageLogger.propertyPanelDebug(
+            '文本内容更新并重新映射字符图像',
+            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            data: {
+              'oldLength': oldCharacters.length,
+              'newLength': value.length,
+              'operation': 'text_content_remap',
+            },
+          );
+        }
       } else {
         // If no characterImages, update text directly
         widget.onUpdateChars(value);
@@ -1024,8 +1028,12 @@ class _M3CollectionPropertyPanelState
     }
   }
 
-  // 更新内容属性 - 完全重写版本，防止嵌套问题
+  // 更新内容属性 - 完全重写版本，防止嵌套问题，添加性能监控
   void _updateContentProperty(String key, dynamic value) {
+    final timer = PerformanceTimer('集字内容属性更新: $key',
+      customThreshold: EditPageLoggingConfig.operationPerformanceThreshold,
+    );
+    
     try {
       // 获取当前元素的内容
       final Map<String, dynamic> originalContent = Map<String, dynamic>.from(
@@ -1061,7 +1069,7 @@ class _M3CollectionPropertyPanelState
           '处理content更新：已扁平化并合并属性',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
-            'key': key,
+            'propertyKey': key,
             'operation': 'content_update_flatten',
           },
         );
@@ -1074,10 +1082,10 @@ class _M3CollectionPropertyPanelState
       if (newContent.containsKey('content')) {
         newContent.remove('content');
         EditPageLogger.propertyPanelDebug(
-          'Warning: Nested content removed in final processing',
+          'Warning: 移除嵌套content属性',
           tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
           data: {
-            'key': key,
+            'propertyKey': key,
             'operation': 'remove_nested_content',
           },
         );
@@ -1090,18 +1098,21 @@ class _M3CollectionPropertyPanelState
         '更新内容属性完成',
         tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
         data: {
-          'key': key,
+          'propertyKey': key,
           'propertyCount': newContent.length,
           'operation': 'update_content_property_complete',
         },
       );
+      
+      timer.finish();
     } catch (e) {
+      timer.finish(); // 确保异常情况下也完成计时
       EditPageLogger.propertyPanelError(
         '更新内容属性时出错',
         tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
         error: e,
         data: {
-          'key': key,
+          'propertyKey': key,
           'operation': 'update_content_property',
         },
       );

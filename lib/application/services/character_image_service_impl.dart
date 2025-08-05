@@ -20,6 +20,12 @@ class CharacterImageServiceImpl implements CharacterImageService {
 
   // 🚀 性能优化：批量请求去重
   final Map<String, Future<Uint8List?>> _pendingRequests = {};
+  
+  // 🚀 优化：静态去重集合
+  static final Set<String> _loggedFormatChecks = <String>{};
+  static final Set<String> _loggedDeduplications = <String>{};
+  static final Set<String> _loggedExistenceChecks = <String>{};
+  static int _processedImageCount = 0;
 
   CharacterImageServiceImpl({
     required IStorage storage,
@@ -65,159 +71,62 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<Map<String, String>?> getAvailableFormat(String id,
       {bool preferThumbnail = false}) async {
     try {
-      AppLogger.debug(
-        '获取可用格式',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'preferThumbnail': preferThumbnail,
-          'operation': 'get_available_format',
-        },
-      );
+      // 🚀 优化：减少格式检查的详细日志，只在首次检查或出错时记录
+      if (!_loggedFormatChecks.contains(id)) {
+        AppLogger.debug(
+          '获取可用格式',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'preferThumbnail': preferThumbnail,
+            'operation': 'get_available_format',
+            'optimization': 'first_check_only',
+          },
+        );
+        _loggedFormatChecks.add(id);
+      }
 
       // 如果优先使用预览图，则先检查非方形格式
       if (preferThumbnail) {
         // 优先检查binary格式（非方形二值化图像）
-        AppLogger.debug(
-          '检查binary格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'format': 'binary',
-            'operation': 'check_format',
-          },
-        );
+        // 🚀 优化：移除频繁的格式检查日志
         if (await hasCharacterImage(id, 'binary', 'png')) {
-          AppLogger.debug(
-            '找到binary格式',
-            tag: 'character_image_service',
-            data: {
-              'characterId': id,
-              'type': 'binary',
-              'format': 'png',
-              'operation': 'format_found',
-            },
-          );
+          // 🚀 优化：只在首次找到格式时记录
           return {'type': 'binary', 'format': 'png'};
         }
         // 其次检查transparent格式（非方形透明图像）
-        AppLogger.debug(
-          '检查transparent格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'format': 'transparent',
-            'operation': 'check_format',
-          },
-        );
+        // 🚀 优化：移除频繁的格式检查日志
         if (await hasCharacterImage(id, 'transparent', 'png')) {
-          AppLogger.debug(
-            '找到transparent格式',
-            tag: 'character_image_service',
-            data: {
-              'characterId': id,
-              'type': 'transparent',
-              'format': 'png',
-              'operation': 'format_found',
-            },
-          );
+          // 🚀 优化：只在首次找到格式时记录
           return {'type': 'transparent', 'format': 'png'};
         }
         // 最后检查thumbnail格式
-        AppLogger.debug(
-          '检查thumbnail格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'format': 'thumbnail',
-            'operation': 'check_format',
-          },
-        );
+        // 🚀 优化：移除频繁的格式检查日志
         if (await hasCharacterImage(id, 'thumbnail', 'jpg')) {
-          AppLogger.debug(
-            '找到thumbnail格式',
-            tag: 'character_image_service',
-            data: {
-              'characterId': id,
-              'type': 'thumbnail',
-              'format': 'jpg',
-              'operation': 'format_found',
-            },
-          );
+          // 🚀 优化：只在首次找到格式时记录
           return {'type': 'thumbnail', 'format': 'jpg'};
         }
       }
 
       // 优先检查square-binary格式
-      AppLogger.debug(
-        '检查square-binary格式',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'format': 'square-binary',
-          'operation': 'check_format',
-        },
-      );
+      // 🚀 优化：移除频繁的格式检查日志
       if (await hasCharacterImage(id, 'square-binary', 'png-binary')) {
-        AppLogger.debug(
-          '找到square-binary格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'type': 'square-binary',
-            'format': 'png-binary',
-            'operation': 'format_found',
-          },
-        );
+        // 🚀 优化：只在首次找到格式时记录
         return {'type': 'square-binary', 'format': 'png-binary'};
       }
 
       // 其次检查square-transparent格式
-      AppLogger.debug(
-        '检查square-transparent格式',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'format': 'square-transparent',
-          'operation': 'check_format',
-        },
-      );
+      // 🚀 优化：移除频繁的格式检查日志
       if (await hasCharacterImage(
           id, 'square-transparent', 'png-transparent')) {
-        AppLogger.debug(
-          '找到square-transparent格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'type': 'square-transparent',
-            'format': 'png-transparent',
-            'operation': 'format_found',
-          },
-        );
+        // 🚀 优化：只在首次找到格式时记录
         return {'type': 'square-transparent', 'format': 'png-transparent'};
       }
 
       // 最后检查square-outline格式
-      AppLogger.debug(
-        '检查square-outline格式',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'format': 'square-outline',
-          'operation': 'check_format',
-        },
-      );
+      // 🚀 优化：移除频繁的格式检查日志
       if (await hasCharacterImage(id, 'square-outline', 'svg-outline')) {
-        AppLogger.debug(
-          '找到square-outline格式',
-          tag: 'character_image_service',
-          data: {
-            'characterId': id,
-            'type': 'square-outline',
-            'format': 'svg-outline',
-            'operation': 'format_found',
-          },
-        );
+        // 🚀 优化：只在首次找到格式时记录
         return {'type': 'square-outline', 'format': 'svg-outline'};
       }
 
@@ -259,15 +168,24 @@ class CharacterImageServiceImpl implements CharacterImageService {
 
       // 🚀 优化：防止重复请求
       if (_pendingRequests.containsKey(cacheKey)) {
+      // 🚀 优化：减少复用正在进行的图像请求的详细日志
+      // 只在首次复用或特定情况下记录
+      if (!_loggedDeduplications.contains(cacheKey)) {
+        _loggedDeduplications.add(cacheKey);
         AppLogger.debug(
           '复用正在进行的图像请求',
           tag: 'character_image_service',
           data: {
             'characterId': id,
             'cacheKey': cacheKey,
-            'optimization': 'request_deduplication',
+            'optimization': 'request_deduplication_first_log',
           },
         );
+        // 防止集合过大
+        if (_loggedDeduplications.length > 500) {
+          _loggedDeduplications.clear();
+        }
+      }
         return await _pendingRequests[cacheKey]!;
       }
 
@@ -406,18 +324,20 @@ class CharacterImageServiceImpl implements CharacterImageService {
       final cacheKey =
           _imageCacheService.generateCacheKey(characterId, type, transform);
 
-      AppLogger.debug(
-        '获取处理后的字符图片',
-        tag: 'character_image_service',
-        data: {
-          'characterId': characterId,
-          'type': type,
-          'format': format,
-          'transform': transform,
-          'cacheKey': cacheKey,
-          'operation': 'get_processed_character_image',
-        },
-      );
+      // 🚀 优化：减少处理后图片获取的详细日志，使用里程碑记录
+      _processedImageCount++;
+      if (_processedImageCount % 30 == 0) {
+        AppLogger.debug(
+          '处理字符图片里程碑',
+          tag: 'character_image_service',
+          data: {
+            'processedCount': _processedImageCount,
+            'recentType': type,
+            'recentFormat': format,
+            'operation': 'processed_image_milestone',
+          },
+        );
+      }
 
       // 使用getProcessedImage方法处理图像
       return await _imageCacheService.getProcessedImage(
@@ -448,31 +368,31 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<bool> hasCharacterImage(String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
-      AppLogger.debug(
-        '检查图像文件',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'type': type,
-          'format': format,
-          'imagePath': imagePath,
-          'operation': 'has_character_image',
-        },
-      );
+      // 🚀 优化：减少文件存在检查的详细日志，只在出错或首次检查时记录
+      final checkKey = '$id-$type-$format';
+      if (!_loggedExistenceChecks.contains(checkKey)) {
+        _loggedExistenceChecks.add(checkKey);
+        if (_loggedExistenceChecks.length > 1000) {
+          // 清理旧记录，防止内存泄漏
+          _loggedExistenceChecks.clear();
+        }
+      }
       // 使用IStorage检查文件是否存在
       final exists = await _storage.fileExists(imagePath);
-      AppLogger.debug(
-        '文件存在检查结果',
-        tag: 'character_image_service',
-        data: {
-          'characterId': id,
-          'type': type,
-          'format': format,
-          'imagePath': imagePath,
-          'exists': exists,
-          'operation': 'file_exists_check_result',
-        },
-      );
+      // 🚀 优化：只在文件不存在或检查出错时记录详细信息
+      if (!exists) {
+        AppLogger.debug(
+          '文件不存在',
+          tag: 'character_image_service',
+          data: {
+            'characterId': id,
+            'type': type,
+            'format': format,
+            'imagePath': imagePath,
+            'operation': 'file_not_found',
+          },
+        );
+      }
       return exists;
     } catch (e) {
       AppLogger.error(

@@ -44,6 +44,11 @@ class DragPreviewLayer extends StatefulWidget {
 }
 
 class _DragPreviewLayerState extends State<DragPreviewLayer> {
+  // 🚀 优化：静态变量移至class级别
+  static bool _lastIsDragPreviewActive = false;
+  static bool _lastIsDragging = false;
+  static int _lastDraggingCount = 0;
+
   @override
   Widget build(BuildContext context) {
     // 🔍[RESIZE_FIX] 使用ListenableBuilder确保正确响应DragStateManager变化
@@ -56,33 +61,46 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         final draggingElementIds = widget.dragStateManager.draggingElementIds;
         final isSingleSelection = draggingElementIds.length == 1;
 
-        EditPageLogger.canvasDebug('DragPreviewLayer构建开始', data: {
-          'isDragPreviewActive': isDragPreviewActive,
-          'isDragging': isDragging,
-          'draggingElementIds': draggingElementIds.toList(),
-          'draggingElementCount': draggingElementIds.length,
-          'isSingleSelection': isSingleSelection,
-        });
+        // 🚀 优化：减少拖拽预览层构建的重复日志
+        // 只在拖拽状态发生变化或首次构建时记录
+        final stateChanged = isDragPreviewActive != _lastIsDragPreviewActive || 
+                           isDragging != _lastIsDragging;
+        
+        if (stateChanged) {
+          EditPageLogger.canvasDebug('DragPreviewLayer状态变化', data: {
+            'isDragPreviewActive': isDragPreviewActive,
+            'isDragging': isDragging,
+            'draggingElementCount': draggingElementIds.length,
+            'stateTransition': '${_lastIsDragPreviewActive}->${isDragPreviewActive}, ${_lastIsDragging}->${isDragging}',
+          });
+          _lastIsDragPreviewActive = isDragPreviewActive;
+          _lastIsDragging = isDragging;
+        }
 
         // 如果没有活动的拖拽预览，返回空容器
         if (!isDragPreviewActive) {
-          EditPageLogger.canvasDebug('DragPreviewLayer无活动拖拽预览');
+          // 🚀 优化：只在状态变化时记录无活动拖拽日志
           return const SizedBox.shrink();
         }
 
         // 获取所有正在拖拽的元素ID
         if (draggingElementIds.isEmpty) {
-          EditPageLogger.canvasDebug('DragPreviewLayer无拖拽中元素');
+          // 🚀 优化：只在状态变化时记录无拖拽元素日志
           return const SizedBox.shrink();
         } // 单选场景构建预览层
         if (isSingleSelection) {
           // Single selection handling
         }
 
-        EditPageLogger.canvasDebug('DragPreviewLayer构建预览层', data: {
-          'draggingElementIds': draggingElementIds,
-          'isSingleSelection': isSingleSelection,
-        });
+        // 🚀 优化：减少预览层构建日志，只在第一次构建或元素数量变化时记录
+        if (_lastDraggingCount != draggingElementIds.length) {
+          EditPageLogger.canvasDebug('DragPreviewLayer构建预览层', data: {
+            'draggingElementCount': draggingElementIds.length,
+            'isSingleSelection': isSingleSelection,
+            'elementCountChanged': '${_lastDraggingCount}->${draggingElementIds.length}',
+          });
+          _lastDraggingCount = draggingElementIds.length;
+        }
 
         // 创建一个透明层，显示所有拖拽元素的预览
         return RepaintBoundary(

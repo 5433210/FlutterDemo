@@ -12,6 +12,10 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final PracticeEditController controller;
 
+  // 🚀 优化：静态变量移至class级别
+  static int _buildCount = 0;
+  static String _lastElementId = '';
+
   const M3ElementCommonPropertyPanel({
     Key? key,
     required this.element,
@@ -35,19 +39,24 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
     // 获取图层数据
     final layers = controller.state.layers;
 
-    EditPageLogger.propertyPanelDebug(
-      '元素通用属性面板构建',
-      data: {
-        'elementId': id,
-        'elementType': type,
-        'elementName': name,
-        'currentLayerId': layerId,
-        'isLocked': isLocked,
-        'isHidden': isHidden,
-        'availableLayersCount': layers.length,
-        'operation': 'panel_build',
-      },
-    );
+    // 🚀 优化：减少元素通用属性面板的重复构建日志
+    _buildCount++;
+    final hasSignificantChange = id != _lastElementId || _buildCount % 30 == 0;
+    
+    if (hasSignificantChange) {
+      EditPageLogger.propertyPanelDebug(
+        '元素通用属性面板构建',
+        data: {
+          'elementId': id,
+          'elementType': type,
+          'buildCount': _buildCount,
+          'changeType': id != _lastElementId ? 'element_change' : 'milestone',
+          'optimization': 'common_panel_build_optimized',
+        },
+      );
+      
+      _lastElementId = id;
+    }
 
     // 获取元素类型显示名称
     String typeDisplayName;

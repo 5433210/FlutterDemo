@@ -45,6 +45,10 @@ class _M3GroupPropertyPanelContent extends StatefulWidget {
 
 class _M3GroupPropertyPanelContentState
     extends State<_M3GroupPropertyPanelContent> {
+  // 🚀 优化：静态变量移至class级别
+  static int _buildCount = 0;
+  static String _lastGroupId = '';
+
   // 组名编辑控制器
   late TextEditingController _nameController;
   late FocusNode _nameFocusNode;
@@ -71,19 +75,25 @@ class _M3GroupPropertyPanelContentState
     // 获取组内元素
     final children = _getGroupChildren(widget.element['id'] as String);
 
-    EditPageLogger.propertyPanelDebug(
-      '分组属性面板构建',
-      data: {
-        'groupId': widget.element['id'],
-        'groupName': name,
-        'childrenCount': children.length,
-        'layerId': layerId,
-        'isLocked': isLocked,
-        'isHidden': isHidden,
-        'opacity': opacity,
-        'operation': 'group_panel_build',
-      },
-    );
+    // 🚀 优化：减少分组属性面板的重复构建日志
+    _buildCount++;
+    final groupId = widget.element['id'] as String;
+    final hasSignificantChange = groupId != _lastGroupId || _buildCount % 30 == 0;
+    
+    if (hasSignificantChange) {
+      EditPageLogger.propertyPanelDebug(
+        '分组属性面板构建',
+        data: {
+          'groupId': groupId,
+          'childrenCount': children.length,
+          'buildCount': _buildCount,
+          'changeType': groupId != _lastGroupId ? 'group_change' : 'milestone',
+          'optimization': 'group_panel_build_optimized',
+        },
+      );
+      
+      _lastGroupId = groupId;
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

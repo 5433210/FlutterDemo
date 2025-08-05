@@ -55,6 +55,7 @@ class OptimizedCollectionElementRenderer {
       final timeSinceLastRender = now.difference(lastRenderTime);
       if (timeSinceLastRender < _minRenderInterval) {
         _renderSkips++;
+        // 🚀 使用批量日志系统，避免大量重复的渲染跳过日志
         EditPageLogger.performanceInfo(
           '跳过重复渲染请求',
           data: {
@@ -83,6 +84,7 @@ class OptimizedCollectionElementRenderer {
     final cachedState = _renderStateCache[stateKey];
     if (cachedState != null && !_shouldRerender(cachedState, config)) {
       _cacheHits++;
+      // 🚀 使用批量日志系统，避免大量重复的缓存命中日志
       EditPageLogger.performanceInfo(
         '跳过元素重建',
         data: {
@@ -125,6 +127,7 @@ class OptimizedCollectionElementRenderer {
       final timeSincePreload = now.difference(lastPreload);
       if (timeSincePreload.inMinutes < 5 &&
           preloadedSet.containsAll(uniqueChars)) {
+        // 🚀 使用批量日志系统，避免大量重复的预加载跳过日志
         EditPageLogger.performanceInfo(
           '跳过重复预加载',
           data: {
@@ -276,16 +279,14 @@ class OptimizedCollectionElementRenderer {
     try {
       _renderCount++;
 
-      EditPageLogger.performanceInfo(
-        '开始处理渲染请求',
-        data: {
-          'elementId': request.elementId,
-          'characters': request.characters.length > 10
-              ? '${request.characters.substring(0, 10)}...'
-              : request.characters,
-          'optimization': 'render_processing',
-        },
-      );
+      // 🚀 使用里程碑式日志记录，减少频繁的处理日志
+      EditPageLogger.performanceMilestone('render_request_processing', data: {
+        'elementId': request.elementId,
+        'characters': request.characters.length > 10
+            ? '${request.characters.substring(0, 10)}...'
+            : request.characters,
+        'optimization': 'render_processing',
+      });
 
       // 执行实际渲染逻辑
       await _executeRender(request);
@@ -314,13 +315,11 @@ class OptimizedCollectionElementRenderer {
         });
       } else {
         // 🚀 性能优化：跳过非关键回调以避免额外的Canvas重建
-        EditPageLogger.performanceInfo(
-          '跳过渲染完成回调（性能优化）',
-          data: {
-            'elementId': request.elementId,
-            'optimization': 'skip_callback_for_performance',
-          },
-        );
+        // 使用里程碑式日志记录，避免大量重复的跳过回调日志
+        EditPageLogger.performanceMilestone('render_callback_skip', data: {
+          'elementId': request.elementId,
+          'optimization': 'skip_callback_for_performance',
+        });
       }
     } catch (e) {
       EditPageLogger.rendererError(

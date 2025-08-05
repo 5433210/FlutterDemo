@@ -201,22 +201,20 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> properties,
   }) {
-    EditPageLogger.canvasDebug('初始化元素属性跟踪', data: {
-      'elementId': elementId,
-      'properties': properties.keys.join(', ')
-    });
+    // 🚀 优化：移除单个元素初始化的详细日志
     _lastKnownProperties[elementId] = Map.from(properties);
   }
 
   /// Initialize multiple elements at once
   void initializeElements(List<Map<String, dynamic>> elements) {
-    EditPageLogger.canvasDebug('批量初始化元素',
-        data: {'elementCount': elements.length});
+    // 🚀 优化：仅在第一次初始化或大量元素时记录
+    if (elements.length > 10) {
+      EditPageLogger.canvasDebug('批量初始化大量元素',
+          data: {'elementCount': elements.length});
+    }
+    
     for (final element in elements) {
       final elementId = element['id'] as String;
-      final elementType = element['type'] as String?;
-      EditPageLogger.canvasDebug('初始化元素',
-          data: {'elementId': elementId, 'type': elementType});
       _lastKnownProperties[elementId] = Map.from(element);
     }
   }
@@ -260,10 +258,7 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> newProperties,
   }) {
-    EditPageLogger.canvasDebug('元素属性变更通知', data: {
-      'elementId': elementId,
-      'newProperties': newProperties.keys.join(', ')
-    });
+    // 🚀 优化：简化元素变更通知日志
 
     final oldProperties =
         _lastKnownProperties[elementId] ?? <String, dynamic>{};
@@ -292,10 +287,7 @@ class ContentRenderController extends ChangeNotifier {
     // Notify through stream only (avoid triggering broad notifyListeners)
     _changeStreamController.add(changeInfo);
 
-    EditPageLogger.canvasDebug('元素变更类型', data: {
-      'changeType': '${changeInfo.changeType}',
-      'elementId': elementId
-    });
+    // 🚀 优化：只在发生错误或特殊情况时记录变更类型
   }
 
   /// Notify about element creation
@@ -322,7 +314,7 @@ class ContentRenderController extends ChangeNotifier {
 
     _changeStreamController.add(changeInfo);
 
-    EditPageLogger.canvasDebug('元素创建通知', data: {'elementId': elementId});
+    // 元素创建完成
   }
 
   /// Notify about element deletion

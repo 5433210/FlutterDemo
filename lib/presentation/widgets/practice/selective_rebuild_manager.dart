@@ -199,9 +199,11 @@ class SelectiveRebuildManager extends ChangeNotifier {
   /// Skip rebuild for an element (used when reusing cached widget)
   void skipElementRebuild(String elementId, String reason) {
     _skippedRebuilds++;
-    EditPageLogger.performanceInfo('跳过元素重建', data: {
+    // 🚀 使用里程碑式日志记录，减少重复日志噪音
+    EditPageLogger.performanceMilestone('element_rebuild_skip', data: {
       'elementId': elementId,
-      'reason': reason
+      'reason': reason,
+      'optimization': 'selective_rebuild_skip',
     });
   }
 

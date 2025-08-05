@@ -42,6 +42,10 @@ class _M3BackgroundTexturePanelState
   // 🚀 性能优化：纹理查询结果缓存
   static final Map<String, Map<String, dynamic>?> _textureQueryCache = {};
   static String? _lastQueryKey;
+  
+  // 🚀 优化：纹理预览构建状态缓存
+  static String? _lastPreviewKey;
+  static int _previewBuildCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -335,25 +339,50 @@ class _M3BackgroundTexturePanelState
   Widget _buildTexturePreview(Map<String, dynamic> content) {
     // 递归查找纹理数据
     final texture = _findTextureData(content);
-
-    AppLogger.debug(
-      '构建纹理预览',
-      tag: 'texture_panel',
-      data: {
-        'hasTexture': texture != null,
-        'operation': 'build_texture_preview',
-      },
-    );
-
-    if (texture == null || texture.isEmpty) {
+    
+    // 🚀 优化：减少纹理预览构建的重复日志
+    final previewKey = '${texture?.hashCode ?? 'null'}_${content.hashCode}';
+    _previewBuildCount++;
+    
+    if (_lastPreviewKey != previewKey) {
       AppLogger.debug(
-        '无纹理数据',
+        '构建纹理预览',
         tag: 'texture_panel',
         data: {
-          'reason': 'no_valid_texture_data',
-          'operation': 'texture_preview_empty',
+          'hasTexture': texture != null,
+          'buildCount': _previewBuildCount,
+          'changeType': _lastPreviewKey == null ? 'first_build' : 'content_changed',
+          'operation': 'build_texture_preview',
+          'optimization': 'texture_preview_optimized',
         },
       );
+      _lastPreviewKey = previewKey;
+    } else if (_previewBuildCount % 20 == 0) {
+      // 里程碑记录，避免完全静默
+      AppLogger.debug(
+        '纹理预览构建里程碑',
+        tag: 'texture_panel',
+        data: {
+          'hasTexture': texture != null,
+          'buildCount': _previewBuildCount,
+          'operation': 'texture_preview_milestone',
+        },
+      );
+    }
+
+    if (texture == null || texture.isEmpty) {
+      // 🚀 优化：只在首次或状态变化时记录无纹理信息
+      if (_lastPreviewKey != previewKey) {
+        AppLogger.debug(
+          '无纹理数据',
+          tag: 'texture_panel',
+          data: {
+            'reason': 'no_valid_texture_data',
+            'operation': 'texture_preview_empty',
+            'optimization': 'no_texture_state_changed',
+          },
+        );
+      }
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

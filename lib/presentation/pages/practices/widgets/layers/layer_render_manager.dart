@@ -95,7 +95,6 @@ class LayerRenderManager {
 
   /// Dispose the layer manager
   void dispose() {
-    EditPageLogger.canvasDebug('LayerRenderManager资源释放');
     _isDisposed = true;
     _updateController.close();
     _layerConfigs.clear();
@@ -120,8 +119,6 @@ class LayerRenderManager {
 
   /// Get layer widget
   Widget? getLayerWidget(RenderLayerType type) {
-    EditPageLogger.canvasDebug('请求构建层级', data: {'type': type.toString()});
-    
     final config = _layerConfigs[type];
     final builder = _layerBuilders[type];
 
@@ -131,21 +128,10 @@ class LayerRenderManager {
     }
 
     if (!config.shouldRender) {
-      EditPageLogger.canvasDebug('层级跳过渲染', data: {
-        'type': type.toString(),
-        'shouldRender': false
-      });
       return const SizedBox.shrink();
     }
 
-    EditPageLogger.canvasDebug('调用层级构建器', data: {'type': type.toString()});
-    final widget = builder(config);
-    EditPageLogger.canvasDebug('层级widget构建完成', data: {
-      'type': type.toString(),
-      'widgetType': widget.runtimeType.toString()
-    });
-    
-    return widget;
+    return builder(config);
   }
 
   /// Get performance summary for all layers
@@ -176,10 +162,6 @@ class LayerRenderManager {
   void markLayerDirty(RenderLayerType type, {String? reason}) {
     if (_isDisposed) return;
 
-    EditPageLogger.canvasDebug('层级标记为脏状态', data: {
-      'type': type.toString(),
-      'reason': reason ?? 'no reason provided'
-    });
     _notifyLayerUpdate(LayerUpdateEvent.needsRebuild(type, reason));
   }
 
@@ -206,7 +188,7 @@ class LayerRenderManager {
               visibility: LayerVisibility.optimized,
             ));
 
-        EditPageLogger.canvasDebug('自动优化层级性能', data: {
+        EditPageLogger.editPageInfo('自动优化层级性能', data: {
           'layerType': layerType.toString()
         });
       }
@@ -224,7 +206,6 @@ class LayerRenderManager {
     _layerConfigs[type] = config;
     _layerBuilders[type] = builder;
 
-    EditPageLogger.canvasDebug('注册层级', data: {'type': type.toString()});
     _notifyLayerUpdate(LayerUpdateEvent.registered(type, config));
   }
 
@@ -256,7 +237,6 @@ class LayerRenderManager {
     final oldConfig = _layerConfigs[type];
     if (oldConfig != null && oldConfig != newConfig) {
       _layerConfigs[type] = newConfig;
-      EditPageLogger.canvasDebug('更新层级配置', data: {'type': type.toString()});
       _notifyLayerUpdate(
           LayerUpdateEvent.configChanged(type, oldConfig, newConfig));
     }
@@ -268,12 +248,7 @@ class LayerRenderManager {
     if (_isDisposed) return;
 
     _layerMetrics[type] = metrics;
-    // Note: Performance metrics are stored in _layerMetrics for layer-specific tracking
-    EditPageLogger.canvasDebug('更新层级性能指标', data: {
-      'type': type.toString(),
-      'averageRenderTime': '${metrics.averageRenderTime.inMilliseconds}ms',
-      'cacheHitRatio': '${(metrics.cacheHitRatio * 100).toStringAsFixed(1)}%'
-    });
+    // 性能指标存储在 _layerMetrics 中用于层级特定跟踪
   }
 
   /// Update viewport for culling optimization
@@ -293,19 +268,9 @@ class LayerRenderManager {
   void _notifyLayerUpdate(LayerUpdateEvent event) {
     if (_isDisposed) return;
 
-    // 🚀 优化：跳过LayerRenderManager通知机制，避免额外的ContentRenderLayer重建
-    // 分层架构的重建应该完全依靠didUpdateWidget和智能状态分发器
-    EditPageLogger.canvasDebug(
-      'LayerRenderManager跳过通知（优化版）',
-      data: {
-        'layerType': event.layerType.toString(),
-        'updateType': event.updateType.toString(),
-        'reason': event.reason,
-        'optimization': 'skip_layer_manager_notification',
-        'avoidedExtraRebuild': true,
-      },
-    );
-
+    // 🚀 优化：禁用LayerRenderManager通知机制，优化重建性能
+    // 分层架构重建依赖didUpdateWidget和智能状态分发器
+    // 只在调试需要时记录日志
     // _updateController.add(event); // 🚀 已禁用
     // _updateNotifier.value++; // 🚀 已禁用以避免额外重建
   }

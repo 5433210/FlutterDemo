@@ -61,14 +61,21 @@ class ImageCacheService {
 
   /// 缓存UI图像对象
   Future<void> cacheUiImage(String key, ui.Image image) async {
+    // 检查是否已存在于内存缓存中，避免重复日志
+    final isNewCache = !_inMemoryUiImageCache.containsKey(key);
+    
     // 同时存入内存缓存和持久化缓存
     _inMemoryUiImageCache[key] = image;
     await _uiImageCache.put(key, image);
-    AppLogger.debug('图像已缓存', data: {
-      'key': key,
-      'imageSize': '${image.width}x${image.height}',
-      'inMemoryCount': _inMemoryUiImageCache.length,
-    });
+    
+    // 🚀 优化：只在新增缓存时记录日志，避免重复缓存的频繁日志
+    if (isNewCache) {
+      AppLogger.debug('图像已缓存', data: {
+        'key': key,
+        'imageSize': '${image.width}x${image.height}',
+        'inMemoryCount': _inMemoryUiImageCache.length,
+      });
+    }
   }
 
   /// 清除所有图像缓存

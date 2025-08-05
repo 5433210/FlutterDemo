@@ -334,9 +334,6 @@ class ElementRenderers {
   /// 构建图片元素
   static Widget buildImageElement(Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
-    print('🔍 buildImageElement 被调用');
-    print('  - 元素ID: ${element['id']}');
-    print('  - isPreviewMode: $isPreviewMode');
     
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
@@ -350,9 +347,12 @@ class ElementRenderers {
     final isFlippedHorizontally = content['isFlippedHorizontally'] as bool? ?? false;
     final isFlippedVertically = content['isFlippedVertically'] as bool? ?? false;
 
-    print('  - imageUrl: $imageUrl');
-    print('  - content keys: ${content.keys.toList()}');
-    print('  - 🔄 翻转状态: H=$isFlippedHorizontally, V=$isFlippedVertically');
+    // 记录图像元素基本信息（仅在需要时）
+    EditPageLogger.rendererDebug('构建图像元素', data: {
+      'elementId': element['id'],
+      'isPreviewMode': isPreviewMode,
+      'hasFlip': isFlippedHorizontally || isFlippedVertically,
+    });
 
     // 新增支持：直接存储图像数据
     final String? base64ImageData = content['base64ImageData'] as String?;
@@ -371,31 +371,30 @@ class ElementRenderers {
     Uint8List? binarizedImageData;
     final dynamic rawBinarizedData = content['binarizedImageData'];
     
-    // 🔍 简化调试：检查二值化数据状态
-    print('🔍 渲染器 - 二值化数据检查:');
-    print('  - 数据类型: ${rawBinarizedData?.runtimeType}');
-    print('  - 数据存在: ${rawBinarizedData != null}');
-    print('  - isBinarizationEnabled: ${content['isBinarizationEnabled'] ?? false}');
+    // 记录二值化数据状态
+    if (rawBinarizedData != null) {
+      EditPageLogger.rendererDebug('二值化数据检测', data: {
+        'dataType': rawBinarizedData.runtimeType.toString(),
+        'elementId': element['id'],
+        'enabled': content['isBinarizationEnabled'] ?? false,
+      });
+    }
     
     if (rawBinarizedData is Uint8List) {
       binarizedImageData = rawBinarizedData;
-      print('  - ✅ 直接使用Uint8List: ${binarizedImageData.length} bytes');
     } else if (rawBinarizedData is List<int>) {
       binarizedImageData = Uint8List.fromList(rawBinarizedData);
-      print('  - ⚠️ 从List<int>转换: ${binarizedImageData.length} bytes');
     } else if (rawBinarizedData is List) {
       // 处理可能的List<dynamic>情况
       try {
         final intList = rawBinarizedData.cast<int>();
         binarizedImageData = Uint8List.fromList(intList);
-        print('  - ⚠️ 从List<dynamic>转换: ${binarizedImageData.length} bytes');
       } catch (e) {
-        print('  - ❌ List转换失败: $e');
+        EditPageLogger.rendererError('数据类型转换失败', error: e, data: {
+          'elementId': element['id'],
+          'dataType': rawBinarizedData.runtimeType.toString(),
+        });
       }
-    } else if (rawBinarizedData != null) {
-      print('  - ❌ 未知数据类型，无法处理');
-    } else {
-      print('  - 💡 无二值化数据，将使用原始/变换图像');
     }
     
     // 添加调试信息
@@ -444,9 +443,13 @@ class ElementRenderers {
       rawImageData: rawImageData,
     );
 
-    // 🔧 关键修改：在画布渲染阶段应用翻转变换
+    // 在画布渲染阶段应用翻转变换
     if (isFlippedHorizontally || isFlippedVertically) {
-      print('  - 🎯 应用画布级翻转变换: H=$isFlippedHorizontally, V=$isFlippedVertically');
+      EditPageLogger.rendererDebug('应用图像翻转变换', data: {
+        'elementId': element['id'],
+        'horizontal': isFlippedHorizontally,
+        'vertical': isFlippedVertically,
+      });
       
       imageWidget = Transform(
         alignment: Alignment.center,
@@ -457,8 +460,6 @@ class ElementRenderers {
           ),
         child: imageWidget,
       );
-    } else {
-      print('  - 💡 无翻转变换，直接使用原始图像');
     }
     
     return Container(
@@ -609,13 +610,11 @@ class ElementRenderers {
 
     // 优先使用二值化图像数据（处理管线的最终结果）
     if (binarizedImageData != null) {
-      EditPageLogger.rendererDebug('🎯 使用二值化图像数据（黑白效果）', data: {
+      EditPageLogger.rendererDebug('使用二值化图像数据', data: {
         'dataSize': binarizedImageData.length,
         'imageUrl': imageUrl,
         'priority': 'highest'
       });
-      
-      print('🎯 准备显示二值化图像 (${binarizedImageData.length} bytes)');
       
       return Image.memory(
         binarizedImageData,
@@ -625,18 +624,9 @@ class ElementRenderers {
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
           EditPageLogger.rendererError('二值化图像显示失败', error: error);
-          print('❌ 二值化图像显示失败: $error');
           return _buildImageErrorWidget('二值化图像显示失败');
         },
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (frame != null) {
-            print('✅ 二值化图像已成功显示');
-          }
-          return child;
-        },
       );
-    } else {
-      print('💡 没有二值化数据，使用原始/变换图像');
     }
 
     // 其次使用转换后的图像数据（中间处理结果）

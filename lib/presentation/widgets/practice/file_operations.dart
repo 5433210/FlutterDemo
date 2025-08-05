@@ -23,14 +23,6 @@ class FileOperations {
     PracticeEditController controller,
     String defaultFileName,
   ) async {
-    EditPageLogger.editPageDebug(
-      '开始导出字帖',
-      data: {
-        'pageCount': pages.length,
-        'defaultFileName': defaultFileName,
-      },
-    );
-
     if (pages.isEmpty) {
       EditPageLogger.editPageError('没有可导出的页面');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,8 +30,6 @@ class FileOperations {
       );
       return;
     }
-
-    debugPrint('显示导出对话框');
 
     // 显示导出对话框
     final result = await showDialog<Map<String, dynamic>>(
@@ -50,8 +40,6 @@ class FileOperations {
         currentPageIndex: controller.state.currentPageIndex,
         controller: controller,
         onExport: (outputPath, exportType, fileName, pixelRatio, extraParams) {
-          debugPrint(
-              '用户选择了导出参数: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio, 额外参数=$extraParams');
           // 返回导出参数
           return {
             'outputPath': outputPath,
@@ -65,17 +53,14 @@ class FileOperations {
     );
 
     if (result == null) {
-      EditPageLogger.editPageDebug('用户取消了导出');
-      return;
+      return; // 用户取消导出
     }
-
-    debugPrint('导出对话框返回结果: $result');
 
     // 检查结果是否包含所需的键
     if (!result.containsKey('outputPath') ||
         !result.containsKey('exportType') ||
         !result.containsKey('fileName')) {
-      debugPrint('错误: 导出对话框返回的结果缺少必要的键');
+      EditPageLogger.editPageError('导出参数错误：缺少必要的键');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).exportFailure)),
@@ -110,13 +95,11 @@ class FileOperations {
     try {
       // 根据导出类型调用不同的导出方法
       if (exportType == ExportType.pdf) {
-        debugPrint('开始导出PDF');
+        EditPageLogger.fileOpsInfo('开始导出PDF', data: {'exportType': exportType.name});
         // 获取额外参数
         final extraParams = result.containsKey('extraParams')
             ? result['extraParams'] as Map<String, dynamic>
             : <String, dynamic>{};
-
-        debugPrint('导出PDF的额外参数: $extraParams');
 
         final pdfPath = await ExportService.exportToPdf(
           controller,
@@ -126,17 +109,16 @@ class FileOperations {
           extraParams: extraParams,
         );
 
-        debugPrint('PDF导出结果: ${pdfPath != null ? "成功" : "失败"}, 路径: $pdfPath');
-
         if (pdfPath != null) {
           // 检查文件是否存在
           final file = File(pdfPath);
           final exists = await file.exists();
-          debugPrint('检查导出的PDF文件是否存在: $exists');
 
           if (exists) {
-            final fileSize = await file.length();
-            debugPrint('导出的PDF文件大小: $fileSize 字节');
+            EditPageLogger.fileOpsInfo('PDF导出成功', data: {
+              'path': pdfPath,
+              'size': await file.length(),
+            });
 
             _safeShowSnackBar(
               scaffoldMessenger,
@@ -162,6 +144,7 @@ class FileOperations {
             );
           }
         } else {
+          EditPageLogger.fileOpsError('PDF导出失敗');
           _safeShowSnackBar(
             scaffoldMessenger,
             SnackBar(
@@ -170,7 +153,6 @@ class FileOperations {
         }
       } else {
         // 导出为图片
-        debugPrint('开始导出图片, 格式: ${exportType.name}');
         final imagePaths = await ExportService.exportToImages(
           controller,
           outputPath,
@@ -179,24 +161,22 @@ class FileOperations {
           pixelRatio: pixelRatio,
         );
 
-        debugPrint(
-            '图片导出结果: ${imagePaths.isNotEmpty ? "成功" : "失败"}, 数量: ${imagePaths.length}');
-        if (imagePaths.isNotEmpty) {
-          for (int i = 0; i < imagePaths.length; i++) {
-            debugPrint('导出的图片 ${i + 1}: ${imagePaths[i]}');
-          }
-        }
+        EditPageLogger.fileOpsInfo('图片导出完成', data: {
+          'success': imagePaths.isNotEmpty,
+          'imageCount': imagePaths.length,
+        });
 
         if (imagePaths.isNotEmpty) {
           // 检查第一个文件是否存在
           if (imagePaths.isNotEmpty) {
             final file = File(imagePaths[0]);
             final exists = await file.exists();
-            debugPrint('检查导出的第一个图片文件是否存在: $exists');
-
             if (exists) {
               final fileSize = await file.length();
-              debugPrint('导出的第一个图片文件大小: $fileSize 字节');
+              EditPageLogger.fileOpsInfo('图片文件验证成功', data: {
+                'fileSize': fileSize,
+                'filePath': imagePaths[0],
+              });
             }
           }
 
@@ -225,8 +205,7 @@ class FileOperations {
         }
       }
     } catch (e, stack) {
-      debugPrint('导出过程中发生异常: $e');
-      debugPrint('异常堆栈: $stack');
+      EditPageLogger.fileOpsError('导出过程异常', error: e, stackTrace: stack);
 
       _safeShowSnackBar(
         scaffoldMessenger,
@@ -234,7 +213,7 @@ class FileOperations {
             content: Text(AppLocalizations.of(context).error(e.toString()))),
       );
     } finally {
-      debugPrint('=== 导出字帖过程结束 ===');
+      // 导出过程结束，不需要详细日志
     }
   }
 
@@ -265,7 +244,13 @@ class FileOperations {
       final pageRenderer = PageRenderer(controller);
       final pageImages = await pageRenderer.renderAllPages(
         onProgress: (current, total) {
-          debugPrint('渲染进度: $current/$total');
+          if (current % 5 == 0 || current == total) {
+            EditPageLogger.editPageDebug('打印渲染进度', data: {
+              'current': current,
+              'total': total,
+              'progress': '${(current / total * 100).toInt()}%',
+            });
+          }
         },
         pixelRatio: 1.0, // 使用标准分辨率
       );

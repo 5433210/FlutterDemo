@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'batch_update_mixin.dart';
@@ -103,6 +104,8 @@ class PracticeEditController extends ChangeNotifier
 
   /// 构造函数
   PracticeEditController(this._practiceService) {
+    final initSession = PracticeEditLogger.startOperation('controller_init');
+    
     _undoRedoManager = UndoRedoManager(
       onStateChanged: () {
         // 更新撤销/重做状态
@@ -116,8 +119,6 @@ class PracticeEditController extends ChangeNotifier
           eventData: {
             'canUndo': _state.canUndo,
             'canRedo': _state.canRedo,
-            'operation': 'undo_redo_state_update',
-            'timestamp': DateTime.now().toIso8601String(),
           },
           affectedUIComponents: ['undo_redo_toolbar', 'menu_bar'],
         );
@@ -129,6 +130,8 @@ class PracticeEditController extends ChangeNotifier
 
     // 初始化默认数据
     _initDefaultData();
+    
+    PracticeEditLogger.endOperation(initSession);
   }
 
   /// 获取画布 GlobalKey
@@ -215,42 +218,27 @@ class PracticeEditController extends ChangeNotifier
   /// 释放资源
   @override
   void dispose() {
-    EditPageLogger.controllerInfo(
-      'PracticeEditController开始销毁',
-      data: {
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
+    final disposeSession = PracticeEditLogger.startOperation('controller_dispose');
+    
     try {
       // 先释放智能分发器资源
-      EditPageLogger.controllerDebug('销毁智能分发器');
       _intelligentDispatcher.dispose();
     } catch (e) {
-      EditPageLogger.controllerError(
-        '智能分发器销毁失败',
-        error: e,
-      );
+      PracticeEditLogger.logError('dispose_intelligent_dispatcher', e, sessionId: disposeSession);
     }
 
     try {
       // 清理批量更新相关资源
-      EditPageLogger.controllerDebug('销毁批量更新资源');
       disposeBatchUpdate();
     } catch (e) {
-      EditPageLogger.controllerError(
-        '批量更新资源销毁失败',
-        error: e,
-      );
+      PracticeEditLogger.logError('dispose_batch_update', e, sessionId: disposeSession);
     }
+    
     try {
       // 释放撤销重做管理器资源
-      EditPageLogger.controllerDebug('销毁撤销重做管理器');
       _undoRedoManager.clearHistory();
     } catch (e) {
-      EditPageLogger.controllerError(
-        '撤销重做管理器资源销毁失败',
-        error: e,
-      );
+      PracticeEditLogger.logError('dispose_undo_redo_manager', e, sessionId: disposeSession);
     }
 
     // 清除所有引用
@@ -262,27 +250,13 @@ class PracticeEditController extends ChangeNotifier
     // 标记为已销毁
     _state.isDisposed = true;
 
-    EditPageLogger.controllerInfo(
-      'PracticeEditController: 即将调用super.dispose()',
-      data: {
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
-
     // 确保调用完整的dispose链
     try {
       super.dispose();
-      EditPageLogger.controllerInfo(
-        'PracticeEditController: super.dispose()调用完成',
-        data: {
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
+      PracticeEditLogger.endOperation(disposeSession);
     } catch (e) {
-      EditPageLogger.controllerError(
-        'PracticeEditController: super.dispose()调用失败',
-        error: e,
-      );
+      PracticeEditLogger.endOperation(disposeSession, success: false, error: e.toString());
+      rethrow;
     }
   }
 
@@ -297,20 +271,12 @@ class PracticeEditController extends ChangeNotifier
   @override
   void notifyListeners() {
     if (_state.isDisposed) {
-      EditPageLogger.controllerWarning(
+      PracticeEditLogger.debugDetail(
         '尝试在控制器销毁后调用 notifyListeners()',
         data: {'controllerState': 'disposed'},
       );
       return;
     }
-
-    EditPageLogger.controllerDebug(
-      '执行传统 notifyListeners() 调用',
-      data: {
-        'controllerState': 'active',
-        'reason': 'temporary_fallback_during_transition',
-      },
-    );
 
     // 🔧 临时恢复传统的 notifyListeners，确保UI更新
     super.notifyListeners();
@@ -318,14 +284,6 @@ class PracticeEditController extends ChangeNotifier
 
   /// 处理预览模式变化
   void onPreviewModeChanged(bool isPreviewMode) {
-    EditPageLogger.controllerInfo(
-      '预览模式变化',
-      data: {
-        'isPreviewMode': isPreviewMode,
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
-
     // 更新状态
     _state.isPreviewMode = isPreviewMode;
 
@@ -335,7 +293,6 @@ class PracticeEditController extends ChangeNotifier
       operation: 'preview_mode_update',
       eventData: {
         'isPreviewMode': isPreviewMode,
-        'timestamp': DateTime.now().toIso8601String(),
       },
       affectedUIComponents: ['canvas', 'toolbar', 'property_panel'],
     );
@@ -344,7 +301,7 @@ class PracticeEditController extends ChangeNotifier
   /// 设置画布引用（供画布组件注册自己）
   void setEditCanvas(dynamic canvas) {
     _editCanvas = canvas;
-    EditPageLogger.controllerDebug(
+    EditPageLogger.canvasDebug(
       '画布已注册到控制器',
       data: {'canvasType': canvas.runtimeType.toString()},
     );
@@ -352,46 +309,34 @@ class PracticeEditController extends ChangeNotifier
 
   /// 触发网格设置变化事件
   void triggerGridSettingsChange() {
-    EditPageLogger.controllerDebug(
-      '触发网格设置变化',
-      data: {
-        'hasStateDispatcher': stateDispatcher != null,
-        'gridVisible': _state.gridVisible,
-        'gridSize': _state.gridSize,
-        'snapEnabled': _state.snapEnabled,
-      },
+    final gridData = {
+      'gridVisible': _state.gridVisible,
+      'gridSize': _state.gridSize,
+      'snapEnabled': _state.snapEnabled,
+    };
+    
+    PracticeEditLogger.logBusinessOperation(
+      'grid_settings_change',
+      stateDispatcher != null ? 'dispatcher_used' : 'intelligent_notify_used',
+      metrics: gridData,
     );
 
     // 如果有状态分发器，触发网格设置变化事件
     if (stateDispatcher != null) {
-      EditPageLogger.controllerDebug('使用StateDispatcher分发网格设置变化事件');
       stateDispatcher!.dispatch(StateChangeEvent(
         type: StateChangeType.gridSettingsChange,
-        data: {
-          'gridVisible': _state.gridVisible,
-          'gridSize': _state.gridSize,
-          'snapEnabled': _state.snapEnabled,
-        },
+        data: gridData,
       ));
-      EditPageLogger.controllerDebug('StateDispatcher事件分发完成');
     } else {
       // 🚀 使用智能状态分发器替代传统的 notifyListeners
-      EditPageLogger.controllerDebug('StateDispatcher不存在，使用智能状态分发器');
       intelligentNotify(
         changeType: 'grid_settings_change',
         operation: 'grid_settings_change',
-        eventData: {
-          'gridVisible': _state.gridVisible,
-          'gridSize': _state.gridSize,
-          'snapEnabled': _state.snapEnabled,
-          'operation': 'grid_settings_change',
-          'timestamp': DateTime.now().toIso8601String(),
-        },
+        eventData: gridData,
         affectedLayers: ['background'],
         affectedUIComponents: ['canvas'],
       );
     }
-    EditPageLogger.controllerDebug('网格设置变化处理完成');
   }
 
   /// 实现ElementManagementMixin的抽象方法 - 更新参考线管理器元素数据
@@ -445,7 +390,7 @@ class PracticeEditController extends ChangeNotifier
         notifyListeners(); // 通知UI更新
       });
 
-      EditPageLogger.controllerDebug('参考线管理器元素数据更新完成', data: {
+      PracticeEditLogger.debugDetail('参考线管理器元素数据更新完成', data: {
         'elementsCount': elements.length,
         'pageSize': '${pageWidth}x$pageHeight',
         'enabled': state.alignmentMode == AlignmentMode.guideline,
@@ -458,15 +403,6 @@ class PracticeEditController extends ChangeNotifier
     final practiceMap = practice is Map<String, dynamic>
         ? practice
         : (practice?.toJson() ?? <String, dynamic>{});
-
-    EditPageLogger.controllerInfo(
-      '更新字帖数据',
-      data: {
-        'practiceId': practiceMap['id'] ?? practice?.id,
-        'title': practiceMap['title'] ?? practice?.title,
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-    );
 
     // 更新 mixin 字段（用于标题显示）
     currentPracticeId = practiceMap['id'] ?? practice?.id;
@@ -528,9 +464,10 @@ class PracticeEditController extends ChangeNotifier
     // 设置默认选中的图层
     _state.selectedLayerId = defaultLayer['id'] as String;
 
-    EditPageLogger.controllerDebug(
-      '默认数据初始化完成',
-      data: {
+    PracticeEditLogger.logBusinessOperation(
+      'init_default_data',
+      'completed',
+      metrics: {
         'pagesCount': _state.pages.length,
         'layersCount': 1,
         'selectedLayerId': _state.selectedLayerId,
@@ -545,8 +482,6 @@ class PracticeEditController extends ChangeNotifier
         'pagesCount': _state.pages.length,
         'layersCount': 1,
         'selectedLayerId': _state.selectedLayerId,
-        'operation': 'init_default_data',
-        'timestamp': DateTime.now().toIso8601String(),
       },
       affectedLayers: ['content', 'interaction'],
       affectedUIComponents: ['canvas', 'property_panel'],

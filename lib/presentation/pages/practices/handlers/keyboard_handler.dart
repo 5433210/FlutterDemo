@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/practice_edit_logger.dart';
+import '../../../../utils/config/edit_page_logging_config.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 
 /// Handles keyboard events for the practice edit page
@@ -76,6 +78,10 @@ class KeyboardHandler {
   bool _isShiftPressed = false;
   bool _isAltPressed = false;
   String _lastKeyPressed = ''; // Track combination key state
+  
+  // Performance tracking for keyboard operations
+  final Map<String, DateTime> _lastActionTime = {};
+  static const int _actionDedupeMs = 100; // Prevent duplicate action logs
 
   // Tool selection callback
   final Function(String)? onSelectTool;
@@ -211,7 +217,7 @@ class KeyboardHandler {
       // Handle Escape key to exit current tool
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         if (controller.state.currentTool.isNotEmpty) {
-          EditPageLogger.editPageDebug('通过Escape键退出工具模式');
+          _logUserAction('工具退出', 'Escape键退出工具模式: ${controller.state.currentTool}');
           controller.exitSelectMode();
           return true;
         }
@@ -231,37 +237,37 @@ class KeyboardHandler {
         switch (event.logicalKey) {
           // Alt+T: Text tool
           case LogicalKeyboardKey.keyT:
-            EditPageLogger.editPageDebug('通过Alt+T选择文本工具');
+            _logUserAction('工具选择', '选择文本工具', {'shortcut': 'Alt+T'});
             _selectTool('text');
             return true;
 
           // Alt+I: Image tool
           case LogicalKeyboardKey.keyI:
-            EditPageLogger.editPageDebug('通过Alt+I选择图片工具');
+            _logUserAction('工具选择', '选择图片工具', {'shortcut': 'Alt+I'});
             _selectTool('image');
             return true;
 
           // Alt+C: Collection tool
           case LogicalKeyboardKey.keyC:
-            EditPageLogger.editPageDebug('通过Alt+C选择集字工具');
+            _logUserAction('工具选择', '选择集字工具', {'shortcut': 'Alt+C'});
             _selectTool('collection');
             return true;
 
           // Alt+S: Select tool
           case LogicalKeyboardKey.keyS:
-            EditPageLogger.editPageDebug('通过Alt+S选择选择工具');
+            _logUserAction('工具选择', '选择选择工具', {'shortcut': 'Alt+S'});
             _selectTool('select');
             return true;
 
           // Alt+Q: Copy format
           case LogicalKeyboardKey.keyQ:
-            EditPageLogger.editPageDebug('通过Alt+Q复制格式');
+            _logUserAction('格式操作', '复制格式', {'shortcut': 'Alt+Q'});
             copyElementFormatting();
             return true;
 
           // Alt+W: Apply format
           case LogicalKeyboardKey.keyW:
-            EditPageLogger.editPageDebug('通过Alt+W应用格式');
+            _logUserAction('格式操作', '应用格式', {'shortcut': 'Alt+W'});
             applyFormatBrush();
             return true;
         }
@@ -284,7 +290,7 @@ class KeyboardHandler {
           // Ctrl+0: Reset view position
           case LogicalKeyboardKey.digit0:
           case LogicalKeyboardKey.numpad0:
-            EditPageLogger.editPageDebug('通过Ctrl+0重置视图位置');
+            _logUserAction('视图操作', '重置视图位置', {'shortcut': 'Ctrl+0'});
             resetViewPosition();
             return true;
 
@@ -301,11 +307,13 @@ class KeyboardHandler {
             if (_isShiftPressed) {
               // 确保只有在有选中元素时才执行复制操作
               if (controller.state.selectedElementIds.isNotEmpty) {
-                EditPageLogger.editPageDebug('执行复制操作 (Ctrl+Shift+C)');
+                _logUserAction('元素操作', '复制选中元素', {
+                  'shortcut': 'Ctrl+Shift+C',
+                  'elementCount': controller.state.selectedElementIds.length
+                });
                 copySelectedElement();
-              } else {
-                EditPageLogger.editPageDebug('忽略复制操作，因为没有选中元素');
               }
+              // 不记录无效操作的日志，减少噪音
               return true;
             }
             return false;
@@ -313,7 +321,7 @@ class KeyboardHandler {
           // Ctrl+Shift+V: Paste copy
           case LogicalKeyboardKey.keyV:
             if (_isShiftPressed) {
-              EditPageLogger.editPageDebug('执行粘贴操作 (Ctrl+Shift+V)');
+              _logUserAction('元素操作', '粘贴元素', {'shortcut': 'Ctrl+Shift+V'});
               pasteElement();
               return true;
             }
@@ -463,12 +471,12 @@ class KeyboardHandler {
         // Handle page navigation when no elements are selected and Ctrl is pressed
         switch (event.logicalKey) {
           case LogicalKeyboardKey.arrowLeft:
-            EditPageLogger.editPageDebug('通过Ctrl+Left切换到上一页');
+            _logUserAction('页面导航', '切换到上一页', {'shortcut': 'Ctrl+Left'});
             goToPreviousPage();
             return true;
 
           case LogicalKeyboardKey.arrowRight:
-            EditPageLogger.editPageDebug('通过Ctrl+Right切换到下一页');
+            _logUserAction('页面导航', '切换到下一页', {'shortcut': 'Ctrl+Right'});
             goToNextPage();
             return true;
         }
@@ -493,5 +501,35 @@ class KeyboardHandler {
         controller.setCurrentTool(toolName);
       }
     }
+  }
+  
+  /// 智能用户操作日志记录
+  /// 避免高频重复日志，只记录有意义的用户操作
+  void _logUserAction(String category, String action, [Map<String, dynamic>? data]) {
+    final actionKey = '$category:$action';
+    final now = DateTime.now();
+    
+    // 检查是否为重复操作（防抖动）
+    final lastTime = _lastActionTime[actionKey];
+    if (lastTime != null && now.difference(lastTime).inMilliseconds < _actionDedupeMs) {
+      return; // 跳过重复操作日志
+    }
+    
+    _lastActionTime[actionKey] = now;
+    
+    // 使用性能监控包装重要的键盘操作
+    final timer = PerformanceTimer('键盘操作: $action', 
+      customThreshold: EditPageLoggingConfig.complexOperationThreshold,
+    );
+    
+    // 使用专用的用户操作日志方法
+    EditPageLogger.userAction('$category: $action', data: {
+      'category': category,
+      'action': action,
+      'source': 'keyboard_shortcut',
+      if (data != null) ...data,
+    });
+    
+    timer.finish();
   }
 }

@@ -69,47 +69,33 @@ mixin CanvasLayerBuilders {
     Color backgroundColor = Colors.white;
     try {
       final background = currentPage['background'] as Map<String, dynamic>?;
-      EditPageLogger.canvasDebug('背景层构建', data: {'background': '$background'});
-
+        // 🚀 优化：仅在开发模式下记录背景解析的详细过程
       if (background != null && background['type'] == 'color') {
         final colorStr = background['value'] as String? ?? '#FFFFFF';
-        EditPageLogger.canvasDebug('背景颜色字符串', data: {'colorStr': colorStr});
-
+        
         // 解析颜色字符串
         if (colorStr.startsWith('#')) {
           final hex = colorStr.substring(1);
           if (hex.length == 6) {
             backgroundColor = Color(int.parse('FF$hex', radix: 16));
-            EditPageLogger.canvasDebug('解析6位颜色',
-                data: {'backgroundColor': '$backgroundColor'});
           } else if (hex.length == 8) {
             backgroundColor = Color(int.parse(hex, radix: 16));
-            EditPageLogger.canvasDebug('解析8位颜色',
-                data: {'backgroundColor': '$backgroundColor'});
           }
         }
-      } else {
-        EditPageLogger.canvasDebug('使用默认白色背景',
-            data: {'reason': '没有背景数据或类型不是color'});
       }
     } catch (e) {
       EditPageLogger.editPageError('背景色解析失败，使用默认白色', error: e);
       backgroundColor = Colors.white;
     }
 
-    EditPageLogger.canvasDebug('背景层最终配置', data: {
-      'backgroundColor': '$backgroundColor',
-      'gridVisible': controller.state.gridVisible,
-      'isPreviewMode': isPreviewMode,
-      'gridSize': controller.state.gridSize
-    });
+    // 🚀 优化：移除频繁的背景层配置日志，只保留错误和关键状态
 
     // 🔧 网格只在编辑模式下显示，预览模式、导出、缩略图生成时不显示
     final showGrid = controller.state.gridVisible && !isPreviewMode;
 
     Widget childWidget;
     if (showGrid) {
-      EditPageLogger.canvasDebug('网格开启且为编辑模式，绘制网格');
+      // 网格开启且为编辑模式，绘制网格
       final gridColor = _getGridColor(backgroundColor, context);
       childWidget = CustomPaint(
         painter: CanvasGridPainter(
@@ -119,15 +105,7 @@ mixin CanvasLayerBuilders {
         size: Size.infinite,
       );
     } else {
-      if (controller.state.gridVisible && isPreviewMode) {
-        EditPageLogger.canvasDebug('预览模式下隐藏网格', data: {
-          'reason': '网格不参与预览渲染、缩略图生成和文件导出',
-          'gridVisible': controller.state.gridVisible,
-          'isPreviewMode': isPreviewMode,
-        });
-      } else {
-        EditPageLogger.canvasDebug('网格关闭，使用SizedBox.expand');
-      }
+      // 🚀 优化：移除网格状态的详细日志，只保留必要的错误记录
       childWidget = const SizedBox.expand();
     }
 
@@ -487,8 +465,7 @@ mixin CanvasLayerBuilders {
       gridColor = Colors.white.withValues(alpha: 0.25); // 降低透明度，更柔和
     }
 
-    EditPageLogger.canvasDebug('网格颜色计算',
-        data: {'brightness': brightness, 'gridColor': '$gridColor'});
+    // 网格颜色计算完成
     return gridColor;
   }
 }
@@ -563,10 +540,15 @@ class _SmartInteractionLayer extends StatefulWidget {
 }
 
 class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
-  // 🚀 使用ValueNotifier代替直接状态变量，避免setState触发Canvas重建
+  // 🚀 使用ValueNotifier代替stateuotifier直接状态变量，避免setState触发Canvas重建
   late ValueNotifier<Set<String>> _selectedElementIdsNotifier;
   late ValueNotifier<String> _currentToolNotifier;
   bool _isRegistered = false;
+  
+  // 🚀 优化：static 变量移至class级别
+  static int _interactionUpdateCount = 0;
+  static int _lastSelectedCount = 0;
+  static String _lastTool = '';
 
   @override
   Widget build(BuildContext context) {
@@ -821,15 +803,30 @@ class _SmartInteractionLayerState extends State<_SmartInteractionLayer> {
             _currentToolNotifier.value = newTool;
           }
 
-          EditPageLogger.canvasDebug(
-            '交互层独立状态更新（无Canvas重建）',
-            data: {
-              'selectedCount': newSelectedIds.length,
-              'currentTool': newTool,
-              'optimization': 'valuenotifier_based_interaction_update',
-              'avoidedCanvasRebuild': true,
-            },
-          );
+          // 🚀 优化：减少交互层独立状态更新的频繁日志
+          // 使用静态计数器，只在重要里程碑或状态关键变化时记录
+          
+          _interactionUpdateCount++;
+          final hasSignificantChange = newSelectedIds.length != _lastSelectedCount || 
+                                     newTool != _lastTool ||
+                                     _interactionUpdateCount % 50 == 0;
+          
+          if (hasSignificantChange) {
+            EditPageLogger.canvasDebug(
+              '交互层状态更新',
+              data: {
+                'selectedCount': newSelectedIds.length,
+                'currentTool': newTool,
+                'updateCount': _interactionUpdateCount,
+                'changeType': newSelectedIds.length != _lastSelectedCount ? 'selection' : 
+                            newTool != _lastTool ? 'tool' : 'milestone',
+                'optimization': 'interaction_update_optimized',
+              },
+            );
+            
+            _lastSelectedCount = newSelectedIds.length;
+            _lastTool = newTool;
+          }
         }
       });
 

@@ -40,78 +40,30 @@ mixin IntelligentNotificationMixin {
         
         if (hasAllUIComponentListeners || (affectedUIComponents?.isEmpty ?? true)) {
           dispatchSuccessful = true;
-          EditPageLogger.performanceInfo(
-            '智能状态分发成功',
-            data: {
-              'changeType': changeType,
-              'operation': operation ?? 'unknown',
-              'affectedElements': affectedElements?.length ?? 0,
-              'affectedLayers': affectedLayers?.length ?? 0,
-              'affectedUIComponents': affectedUIComponents?.length ?? 0,
-              'optimization': 'intelligent_dispatch',
-            },
-          );
+          // 成功使用智能分发，不需要详细日志
         } else {
           dispatchSuccessful = false;
-          EditPageLogger.performanceWarning(
-            '部分UI组件没有注册监听器，需要回退到传统通知',
-            data: {
-              'changeType': changeType,
-              'operation': operation ?? 'unknown',
-              'affectedUIComponents': affectedUIComponents,
-              'reason': 'missing_ui_component_listeners',
-            },
-          );
+          EditPageLogger.performanceWarning('部分UI组件未注册监听器', data: {
+            'changeType': changeType,
+            'reason': 'missing_ui_component_listeners',
+          });
         }
       } catch (e) {
-        EditPageLogger.performanceWarning(
-          '智能状态分发器调用失败',
-          data: {
-            'changeType': changeType,
-            'operation': operation ?? 'unknown',
-            'error': e.toString(),
-          },
-        );
-        // 只有在调用失败时才设置为失败
+        // 智能分发器调用失败，使用回退机制
         dispatchSuccessful = false;
       }
 
-      // 🔧 临时恢复回退到传统通知，直到所有UI组件注册监听器
+      // 使用回退机制确保UI更新
       if (!dispatchSuccessful) {
-        EditPageLogger.performanceWarning(
-          '智能状态分发器调用失败，回退到传统通知',
-          data: {
-            'changeType': changeType,
-            'operation': operation ?? 'unknown',
-            'reason': 'ensure_ui_updates_during_transition_period',
-            'optimization': 'temporary_fallback_to_traditional_notification',
-          },
-        );
-        // 🔧 临时回退到传统通知，确保UI更新
         throttledNotifyListeners();
       }
     } catch (e) {
-      EditPageLogger.controllerError(
-        '智能通知发生异常，回退到传统通知',
-        data: {
-          'changeType': changeType,
-          'operation': operation ?? 'unknown',
-          'error': e.toString(),
-          'reason': 'ensure_ui_updates_during_exception',
-          'optimization': 'temporary_exception_fallback',
-        },
-      );
-      // 🔧 临时恢复异常时的回退机制
+      EditPageLogger.controllerError('智能通知发生异常', error: e);
+      // 异常时使用回退机制
       try {
         throttledNotifyListeners();
       } catch (fallbackError) {
-        EditPageLogger.controllerError(
-          '回退通知也失败了',
-          data: {
-            'originalError': e.toString(),
-            'fallbackError': fallbackError.toString(),
-          },
-        );
+        EditPageLogger.controllerError('回退通知失败', error: fallbackError);
       }
     }
   }
@@ -150,26 +102,12 @@ mixin IntelligentNotificationMixin {
       for (String component in affectedUIComponents) {
         bool hasListener = intelligentDispatcher.hasUIComponentListener(component);
         if (!hasListener) {
-          EditPageLogger.performanceWarning(
-            'UI组件没有注册监听器',
-            data: {
-              'component': component,
-              'reason': 'ui_component_not_registered',
-            },
-          );
           return false;
         }
       }
       return true;
     } catch (e) {
-      EditPageLogger.performanceWarning(
-        '检查UI组件监听器时发生异常',
-        data: {
-          'error': e.toString(),
-          'affectedUIComponents': affectedUIComponents,
-        },
-      );
-      // 如果检查失败，保守起见，认为没有全部注册
+      // 检查失败，保守起见，认为没有全部注册
       return false;
     }
   }

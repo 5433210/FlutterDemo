@@ -38,6 +38,9 @@ Future<Uint8List> consolidateHttpClientResponseBytes(
 
 /// 增强版集字绘制器 - 提供更多高级功能和更好的性能
 class AdvancedCollectionPainter extends CustomPainter {
+  // 用于跟踪已记录日志的字符ID，避免重复日志
+  static final Set<String> _loggedCharacters = <String>{};
+  
   // 基本属性
   final List<String> characters;
   final List<CharacterPosition> positions;
@@ -579,11 +582,16 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 缓存UI图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      EditPageLogger.rendererDebug('字符图像服务加载成功', data: {
-        'characterId': characterId,
-        'cacheKey': cacheKey,
-        'imageSize': '${image.width}x${image.height}',
-      });
+      // 🚀 优化：减少字符图像加载成功的重复日志
+      // 只在首次加载或特殊情况下记录
+      if (!_loggedCharacters.contains(characterId)) {
+        _loggedCharacters.add(characterId);
+        EditPageLogger.rendererDebug('字符图像服务加载成功', data: {
+          'characterId': characterId,
+          'cacheKey': cacheKey,
+          'imageSize': '${image.width}x${image.height}',
+        });
+      }
       return true;
     } catch (e) {
       EditPageLogger.rendererError('通过服务加载字符图像失败', error: e, data: {

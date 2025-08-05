@@ -310,38 +310,11 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
               return;
             }
 
-            EditPageLogger.propertyPanelDebug(
-              '数字输入字段变更',
-              data: {
-                'fieldLabel': label,
-                'oldValue': _lastProcessedValue,
-                'newValue': text,
-                'operation': 'number_field_change',
-              },
-            );
-
             _lastProcessedValue = text;
             _debounceTimer = Timer(const Duration(milliseconds: 500), () {
               final value = double.tryParse(text);
               if (value != null) {
-                EditPageLogger.propertyPanelDebug(
-                  '数字输入字段应用值',
-                  data: {
-                    'fieldLabel': label,
-                    'appliedValue': value,
-                    'operation': 'number_field_apply',
-                  },
-                );
                 onChanged(value);
-              } else {
-                EditPageLogger.propertyPanelDebug(
-                  '数字输入字段解析失败',
-                  data: {
-                    'fieldLabel': label,
-                    'invalidText': text,
-                    'operation': 'number_field_parse_error',
-                  },
-                );
               }
             });
           },

@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
+import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
@@ -15,109 +14,96 @@ class PracticeEditUtils {
   /// Add a new page
   static void addNewPage(
       PracticeEditController controller, BuildContext context) {
-    AppLogger.info(
-      '开始添加新页面',
-      tag: 'PracticeEdit',
-      data: {
-        'currentPageCount': controller.state.pages.length,
-        'currentPageIndex': controller.state.currentPageIndex,
-      },
-    );
-    
-    // 🆕 获取前一页作为模板（如果存在）
-    Map<String, dynamic>? template;
-    if (controller.state.pages.isNotEmpty) {
-      // 使用前一页（当前页面或最后一页）作为模板
-      final templateIndex = controller.state.currentPageIndex >= 0
-          ? controller.state.currentPageIndex
-          : controller.state.pages.length - 1;
-      
-      final previousPage = controller.state.pages[templateIndex];
-      
-      AppLogger.info(
-        '使用前一页作为模板',
-        tag: 'PracticeEdit',
-        data: {
-          'templateIndex': templateIndex,
-          'templatePageName': previousPage['name'],
-          'templateWidth': previousPage['width'],
-          'templateHeight': previousPage['height'],
-          'hasLayers': previousPage.containsKey('layers'),
-          'layerCount': previousPage.containsKey('layers') 
-              ? (previousPage['layers'] as List).length : 0,
-        },
-      );
-      
-      // 创建模板，包含页面设置但不包含元素
-      template = {
-        'width': previousPage['width'],
-        'height': previousPage['height'],
-        'background': Map<String, dynamic>.from(previousPage['background'] ?? {}),
-        'margin': Map<String, dynamic>.from(previousPage['margin'] ?? {}),
-        'gridSettings': previousPage.containsKey('gridSettings') 
-            ? Map<String, dynamic>.from(previousPage['gridSettings']) : null,
-        'guidelineSettings': previousPage.containsKey('guidelineSettings')
-            ? Map<String, dynamic>.from(previousPage['guidelineSettings']) : null,
-        'layers': previousPage.containsKey('layers')
-            ? List<Map<String, dynamic>>.from(
-                (previousPage['layers'] as List).map((layer) => {
-                  'id': 'layer_${DateTime.now().millisecondsSinceEpoch}_${(previousPage['layers'] as List).indexOf(layer)}',
-                  'name': layer['name'],
-                  'isVisible': layer['isVisible'],
-                  'isLocked': layer['isLocked'],
-                }))
-            : null,
-      };
-      
-      // 移除null值
-      template.removeWhere((key, value) => value == null);
-    } else {
-      AppLogger.info(
-        '没有前一页，将使用默认设置创建新页面',
-        tag: 'PracticeEdit',
-      );
-    }
-    
-    // 使用 PageOperations 创建新页面，传递模板
-    final newPage = PageOperations.addPage(controller.state.pages, template);
+    // 简化的操作会话追踪 - 只记录关键信息
+    final sessionId = PracticeEditLogger.startOperation('页面添加', {
+      'pageCount': controller.state.pages.length,
+    });
 
-    // 添加默认图层（如果模板中没有图层）
-    if (!newPage.containsKey('layers') || (newPage['layers'] as List).isEmpty) {
-      newPage['layers'] = [
-        {
-          'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
-          'name': AppLocalizations.of(context).practiceEditDefaultLayer,
-          'isVisible': true,
-          'isLocked': false,
+    try {
+      // 🆕 获取前一页作为模板（如果存在）
+      Map<String, dynamic>? template;
+      if (controller.state.pages.isNotEmpty) {
+        final templateIndex = controller.state.currentPageIndex >= 0
+            ? controller.state.currentPageIndex
+            : controller.state.pages.length - 1;
+
+        final previousPage = controller.state.pages[templateIndex];
+
+        // 只在模板继承关键信息时记录日志
+        if (previousPage.containsKey('layers') &&
+            (previousPage['layers'] as List).isNotEmpty) {
+          PracticeEditLogger.debugDetail('继承页面模板', data: {
+            'layerCount': (previousPage['layers'] as List).length,
+          });
         }
-      ];
-      
-      AppLogger.info(
-        '为新页面添加默认图层',
-        tag: 'PracticeEdit',
-      );
-    }
 
-    // 添加到页面列表
-    controller.state.pages.add(newPage);
+        // 创建模板，包含页面设置但不包含元素
+        template = {
+          'width': previousPage['width'],
+          'height': previousPage['height'],
+          'background':
+              Map<String, dynamic>.from(previousPage['background'] ?? {}),
+          'margin': Map<String, dynamic>.from(previousPage['margin'] ?? {}),
+          'gridSettings': previousPage.containsKey('gridSettings')
+              ? Map<String, dynamic>.from(previousPage['gridSettings'])
+              : null,
+          'guidelineSettings': previousPage.containsKey('guidelineSettings')
+              ? Map<String, dynamic>.from(previousPage['guidelineSettings'])
+              : null,
+          'layers': previousPage.containsKey('layers')
+              ? List<Map<String, dynamic>>.from(
+                  (previousPage['layers'] as List).map((layer) => {
+                        'id':
+                            'layer_${DateTime.now().millisecondsSinceEpoch}_${(previousPage['layers'] as List).indexOf(layer)}',
+                        'name': layer['name'],
+                        'isVisible': layer['isVisible'],
+                        'isLocked': layer['isLocked'],
+                      }))
+              : null,
+        };
 
-    // 切换到新页面
-    controller.state.currentPageIndex = controller.state.pages.length - 1;
+        // 移除null值
+        template.removeWhere((key, value) => value == null);
+      }
 
-    // 标记有未保存的更改
-    controller.state.hasUnsavedChanges = true;
-    
-    AppLogger.info(
-      '新页面创建完成',
-      tag: 'PracticeEdit',
-      data: {
-        'newPageIndex': controller.state.currentPageIndex,
-        'newPageName': newPage['name'],
+      // 使用 PageOperations 创建新页面，传递模板
+      final newPage = PageOperations.addPage(controller.state.pages, template);
+
+      // 添加默认图层（如果模板中没有图层）
+      if (!newPage.containsKey('layers') ||
+          (newPage['layers'] as List).isEmpty) {
+        newPage['layers'] = [
+          {
+            'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
+            'name': AppLocalizations.of(context).practiceEditDefaultLayer,
+            'isVisible': true,
+            'isLocked': false,
+          }
+        ];
+      }
+
+      // 添加到页面列表
+      controller.state.pages.add(newPage);
+
+      // 切换到新页面
+      controller.state.currentPageIndex = controller.state.pages.length - 1;
+
+      // 标记有未保存的更改
+      controller.state.hasUnsavedChanges = true;
+
+      // 简化业务操作记录 - 只记录核心指标
+      PracticeEditLogger.logBusinessOperation('页面管理', '新页面添加', metrics: {
         'totalPages': controller.state.pages.length,
-        'inheritedFromTemplate': template != null,
-        'layerCount': (newPage['layers'] as List).length,
-      },
-    );
+        'hasTemplate': template != null,
+      });
+
+      // 结束操作会话
+      PracticeEditLogger.endOperation(sessionId, success: true);
+    } catch (e) {
+      PracticeEditLogger.endOperation(sessionId,
+          success: false, error: e.toString());
+      rethrow;
+    }
   }
 
   /// Bring element to front
@@ -228,11 +214,22 @@ class PracticeEditUtils {
 
     if (clipboardElement == null) return null;
 
-    // Perform comprehensive image preloading
-    await _performComprehensiveImagePreloading(
-        clipboardElement, characterImageService, imageCacheService);
+    // 只对复杂操作进行性能监控
+    final timer = PerformanceTimer('剪贴板预加载', customThreshold: 2000);
 
-    return clipboardElement;
+    try {
+      // Perform comprehensive image preloading
+      await _performComprehensiveImagePreloading(
+          clipboardElement, characterImageService, imageCacheService);
+
+      timer.finish();
+      return clipboardElement;
+    } catch (e) {
+      timer.finish();
+      // 简化错误日志 - 只记录关键错误信息
+      PracticeEditLogger.logError('预加载失败', e);
+      return clipboardElement;
+    }
   }
 
   /// Creates a complete deep copy of an element and all its nested structures
@@ -536,9 +533,9 @@ class PracticeEditUtils {
       {dynamic characterImageService, dynamic imageCacheService}) async {
     if (clipboardElement == null) return;
 
-    try {
-      EditPageLogger.editPageDebug('开始粘贴操作并预热缓存');
+    final timer = PerformanceTimer('粘贴缓存预热操作', customThreshold: 500);
 
+    try {
       // First, warm up caches by preloading images for elements that will be pasted
       await _warmCacheForPasteOperation(
           clipboardElement, characterImageService, imageCacheService);
@@ -546,9 +543,11 @@ class PracticeEditUtils {
       // Then proceed with the normal paste operation
       pasteElement(controller, clipboardElement);
 
-      EditPageLogger.editPageDebug('粘贴操作和缓存预热完成');
+      timer.finish();
     } catch (e) {
-      EditPageLogger.editPageError('粘贴操作缓存预热错误', error: e);
+      timer.finish();
+      PracticeEditLogger.logError('粘贴缓存预热失败', e,
+          context: {'elementType': clipboardElement['type']});
       // Fallback to regular paste if cache warming fails
       pasteElement(controller, clipboardElement);
     }
@@ -1000,12 +999,12 @@ class PracticeEditUtils {
       String characterId, String type, String format) {
     Future.microtask(() async {
       try {
-        debugPrint('Preloading character image: $characterId ($type, $format)');
         await characterImageService.getCharacterImage(
             characterId, type, format);
-        debugPrint('Successfully preloaded character image: $characterId');
+        // 移除成功日志 - 减少噪音
       } catch (e) {
-        debugPrint('Failed to preload character image $characterId: $e');
+        // 只记录失败的字符ID，不记录详细错误
+        PracticeEditLogger.debugDetail('字符图像预加载失败: $characterId');
       }
     });
   }
@@ -1015,16 +1014,15 @@ class PracticeEditUtils {
       dynamic characterImageService, String imagePath) {
     Future.microtask(() async {
       try {
-        debugPrint('Preloading local image: $imagePath');
         // Use image cache service if available
         if (characterImageService != null &&
             characterImageService.toString().contains('ImageCacheService')) {
           final cacheKey = 'file:$imagePath';
           await characterImageService.getBinaryImage(cacheKey);
         }
-        debugPrint('Successfully preloaded local image: $imagePath');
+        // 移除成功日志 - 减少噪音
       } catch (e) {
-        debugPrint('Failed to preload local image $imagePath: $e');
+        PracticeEditLogger.debugDetail('本地图像预加载失败: $imagePath');
       }
     });
   }
@@ -1034,12 +1032,9 @@ class PracticeEditUtils {
       dynamic characterImageService, String imageUrl) {
     Future.microtask(() async {
       try {
-        debugPrint('Preloading network image: $imageUrl');
-        // For network images, we might need different handling
-        // This is a placeholder for future network image caching
-        debugPrint('Network image preloading not yet implemented: $imageUrl');
+        // 网络图像预加载暂未实现 - 移除日志噪音
       } catch (e) {
-        debugPrint('Failed to preload network image $imageUrl: $e');
+        PracticeEditLogger.debugDetail('网络图像预加载失败: $imageUrl');
       }
     });
   }
@@ -1049,10 +1044,9 @@ class PracticeEditUtils {
       Map<String, dynamic> clipboardElement,
       dynamic characterImageService,
       dynamic imageCacheService) async {
-    try {
-      debugPrint(
-          'Starting comprehensive image preloading for clipboard content');
+    final timer = PerformanceTimer('综合图像预加载', customThreshold: 2000);
 
+    try {
       final type = clipboardElement['type'] as String?;
 
       if (type == 'multi_elements') {
@@ -1071,9 +1065,11 @@ class PracticeEditUtils {
             clipboardElement, characterImageService, imageCacheService);
       }
 
-      debugPrint('Comprehensive image preloading completed');
+      timer.finish();
     } catch (e) {
-      debugPrint('Error in comprehensive image preloading: $e');
+      timer.finish();
+      // 只记录综合性能指标，不记录过细的调试信息
+      PracticeEditLogger.logError('图像预加载失败', e);
     }
   }
 
@@ -1099,12 +1095,17 @@ class PracticeEditUtils {
             await imageCacheService.decodeImageFromBytes(binaryImage);
         if (uiImage != null) {
           await imageCacheService.cacheUiImage(cacheKey, uiImage);
-          debugPrint(
-              'Cached UI image for character $characterId with key $cacheKey');
+          PracticeEditLogger.debugDetail('字符UI图像缓存成功', data: {
+            'characterId': characterId,
+            'cacheKey': cacheKey,
+          });
         }
       }
     } catch (e) {
-      debugPrint('Error preloading character image $characterId: $e');
+      PracticeEditLogger.debugDetail('字符图像预加载失败', data: {
+        'characterId': characterId,
+        'error': e.toString(),
+      });
     }
   }
 
@@ -1122,8 +1123,9 @@ class PracticeEditUtils {
       final characters = content['characters'] as String?;
       if (characters == null || characters.isEmpty) return;
 
-      debugPrint(
-          'Preloading images for collection element with ${characters.length} characters');
+      PracticeEditLogger.debugDetail('集合元素图像预加载', data: {
+        'characterCount': characters.length,
+      });
 
       // Preload each character's image
       for (int i = 0; i < characters.length; i++) {
@@ -1160,7 +1162,8 @@ class PracticeEditUtils {
         }
       }
     } catch (e) {
-      debugPrint('Error preloading collection element images: $e');
+      PracticeEditLogger.debugDetail('集合元素图像预加载失败',
+          data: {'error': e.toString()});
     }
   }
 
@@ -1181,9 +1184,6 @@ class PracticeEditUtils {
       if (characters == null || characters.isEmpty) return;
 
       final fontSize = content['fontSize'] as double? ?? 24.0;
-
-      debugPrint(
-          'Async preloading images for collection element with ${characters.length} characters');
 
       final preloadTasks = <Future<void>>[];
 
@@ -1227,9 +1227,12 @@ class PracticeEditUtils {
 
       // Wait for all preload tasks to complete
       await Future.wait(preloadTasks);
-      debugPrint('All collection element images preloaded successfully');
+      PracticeEditLogger.debugDetail('集合元素异步图像预加载完成', data: {
+        'taskCount': preloadTasks.length,
+      });
     } catch (e) {
-      debugPrint('Error in async collection element preloading: $e');
+      PracticeEditLogger.debugDetail('集合元素异步图像预加载失败',
+          data: {'error': e.toString()});
     }
   }
 
@@ -1281,7 +1284,11 @@ class PracticeEditUtils {
         }
       }
     } catch (e) {
-      debugPrint('Error preloading group element images: $e');
+      // 转换为正式错误日志，去除调试用的debugPrint
+      PracticeEditLogger.logError('组元素图像预加载失败', e, context: {
+        // 'elementId': groupElement['id'], // Removed undefined variable
+        // 'childElementCount': childElements.length, // Removed undefined variable
+      });
     }
   }
 
@@ -1306,9 +1313,12 @@ class PracticeEditUtils {
         }
       }
       await Future.wait(preloadTasks);
-      debugPrint('All group element children images preloaded successfully');
+      PracticeEditLogger.debugDetail('组元素图像预加载完成', data: {
+        'childCount': children.length,
+      });
     } catch (e) {
-      debugPrint('Error preloading group element images: $e');
+      PracticeEditLogger.debugDetail('组元素图像预加载失败',
+          data: {'error': e.toString()});
     }
   }
 
@@ -1330,7 +1340,8 @@ class PracticeEditUtils {
         _asyncPreloadNetworkImage(characterImageService, imageUrl);
       }
     } catch (e) {
-      debugPrint('Error preloading image element: $e');
+      PracticeEditLogger.debugDetail('图像元素预加载失败',
+          data: {'error': e.toString()});
     }
   }
 
@@ -1349,12 +1360,15 @@ class PracticeEditUtils {
       if (imagePath != null && imageCacheService != null) {
         final cacheKey = 'file:$imagePath';
         await imageCacheService.getBinaryImage(cacheKey);
-        debugPrint('Preloaded local image: $imagePath');
+        PracticeEditLogger.debugDetail('本地图像预加载完成',
+            data: {'imagePath': imagePath});
       } else if (imageUrl != null) {
-        debugPrint('Network image preloading not yet implemented: $imageUrl');
+        PracticeEditLogger.debugDetail('网络图像预加载暂未实现',
+            data: {'imageUrl': imageUrl});
       }
     } catch (e) {
-      debugPrint('Error preloading image element: $e');
+      PracticeEditLogger.debugDetail('图像元素异步预加载失败',
+          data: {'error': e.toString()});
     }
   }
 
@@ -1384,9 +1398,9 @@ class PracticeEditUtils {
       Map<String, dynamic> clipboardElement,
       dynamic characterImageService,
       dynamic imageCacheService) async {
-    try {
-      debugPrint('Warming caches for paste operation');
+    final timer = PerformanceTimer('粘贴缓存预热', customThreshold: 1000);
 
+    try {
       final type = clipboardElement['type'] as String?;
 
       if (type == 'multi_elements') {
@@ -1408,9 +1422,10 @@ class PracticeEditUtils {
             clipboardElement, characterImageService, imageCacheService);
       }
 
-      debugPrint('Cache warming for paste operation completed');
+      timer.finish();
     } catch (e) {
-      debugPrint('Error warming cache for paste operation: $e');
+      timer.finish();
+      PracticeEditLogger.logError('粘贴缓存预热失败', e);
     }
   }
 }

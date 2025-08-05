@@ -31,16 +31,6 @@ class UndoRedoManager {
 
   /// 添加操作
   void addOperation(UndoableOperation operation, {bool executeImmediately = true}) {
-    EditPageLogger.controllerDebug(
-      '开始添加撤销重做操作',
-      data: {
-        'operationType': operation.runtimeType.toString(),
-        'description': operation.description,
-        'currentUndoStackSize': _undoStack.length,
-        'executeImmediately': executeImmediately,
-      },
-    );
-
     try {
       // 条件执行操作
       if (executeImmediately) {

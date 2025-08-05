@@ -5,6 +5,10 @@ import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// Utility class for element operations
 class ElementUtils {
+  // 🚀 优化：缓存最近的像素尺寸计算结果
+  static String? _lastSizeCalculationKey;
+  static int _sizeCalculationCount = 0;
+
   /// Calculate size in pixels from millimeters
   static Size calculatePixelSize(Map<String, dynamic> page) {
     // Get page size (millimeters)
@@ -13,12 +17,29 @@ class ElementUtils {
     final orientation = page['orientation'] as String? ?? 'portrait';
     final dpi = (page['dpi'] as num?)?.toInt() ?? 300;
 
-    EditPageLogger.canvasDebug('计算页面像素尺寸', data: {
-      'width': width,
-      'height': height,
-      'orientation': orientation,
-      'dpi': dpi
-    });
+    // 🚀 优化：减少重复的像素尺寸计算日志
+    final calculationKey = '${width}_${height}_${orientation}_$dpi';
+    _sizeCalculationCount++;
+    
+    if (_lastSizeCalculationKey != calculationKey) {
+      EditPageLogger.canvasDebug('页面像素尺寸计算', data: {
+        'width': width,
+        'height': height,
+        'orientation': orientation,
+        'dpi': dpi,
+        'calculationCount': _sizeCalculationCount,
+        'changeType': _lastSizeCalculationKey == null ? 'first_calculation' : 'page_changed',
+        'optimization': 'pixel_size_calculation_optimized'
+      });
+      _lastSizeCalculationKey = calculationKey;
+    } else if (_sizeCalculationCount % 50 == 0) {
+      // 里程碑记录
+      EditPageLogger.canvasDebug('像素尺寸计算里程碑', data: {
+        'calculationCount': _sizeCalculationCount,
+        'cachedParams': calculationKey,
+        'optimization': 'pixel_size_milestone'
+      });
+    }
 
     // Convert mm to inches, 1 inch = 25.4mm
     final widthInches = width / 25.4;
@@ -28,10 +49,14 @@ class ElementUtils {
     final widthPixels = (widthInches * dpi).round().toDouble();
     final heightPixels = (heightInches * dpi).round().toDouble();
 
-    EditPageLogger.canvasDebug('像素尺寸计算结果', data: {
-      'widthPixels': widthPixels,
-      'heightPixels': heightPixels
-    });
+    // 🚀 优化：只在首次或参数变化时记录计算结果
+    if (_lastSizeCalculationKey == calculationKey && _sizeCalculationCount <= 1) {
+      EditPageLogger.canvasDebug('像素尺寸计算结果', data: {
+        'widthPixels': widthPixels,
+        'heightPixels': heightPixels,
+        'optimization': 'first_result_logged'
+      });
+    }
     
     return Size(widthPixels, heightPixels);
   }

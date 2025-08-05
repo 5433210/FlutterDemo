@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../practice_edit_controller.dart';
 import 'export_dialog.dart';
 import 'page_renderer.dart';
@@ -19,41 +20,35 @@ class ExportService {
     final List<String> exportedFiles = [];
 
     try {
-      debugPrint(
-          '开始导出图片: 页面数=${controller.state.pages.length}, 输出路径=$outputPath, 文件名前缀=$fileNamePrefix, 格式=${exportType.name}');
+      EditPageLogger.fileOpsInfo(
+          '开始导出图片: 页面数=${controller.state.pages.length}, 输出路径=$outputPath, 格式=${exportType.name}');
 
       // 检查输出路径是否有效
       if (outputPath.isEmpty) {
-        debugPrint('错误: 输出路径为空');
+        EditPageLogger.fileOpsError('输出路径为空');
         return exportedFiles;
       }
 
       // 检查文件系统权限
       try {
-        debugPrint('检查文件系统权限...');
         final testFile = File(path.join(outputPath, '.test_write_permission'));
         await testFile.writeAsString('test');
         await testFile.delete();
-        debugPrint('文件系统权限检查通过');
       } catch (e) {
-        debugPrint('文件系统权限检查失败: $e');
-        debugPrint('尝试创建目录并再次检查权限...');
+        EditPageLogger.editPageWarning('文件系统权限检查失败，将尝试创建目录: $e');
       }
 
       // 确保目录存在
       final dir = Directory(outputPath);
       if (!await dir.exists()) {
-        debugPrint('创建目录: $outputPath');
         await dir.create(recursive: true);
       }
 
       // 再次检查目录是否存在
       if (!await dir.exists()) {
-        debugPrint('错误: 无法创建目录: $outputPath');
+        EditPageLogger.fileOpsError('无法创建目录: $outputPath');
         return exportedFiles;
       }
-
-      debugPrint('目录已准备好: $outputPath');
 
       // 创建页面渲染器
       final pageRenderer = PageRenderer(controller);
@@ -61,17 +56,19 @@ class ExportService {
       // 渲染所有页面
       final pageImages = await pageRenderer.renderAllPages(
         onProgress: (current, total) {
-          debugPrint('渲染进度: $current/$total');
+          if (current % 5 == 0 || current == total) {
+            EditPageLogger.editPageDebug('渲染进度: $current/$total');
+          }
         },
         pixelRatio: pixelRatio,
       );
 
       if (pageImages.isEmpty) {
-        debugPrint('错误: 未能渲染任何页面');
+        EditPageLogger.fileOpsError('未能渲染任何页面');
         return exportedFiles;
       }
 
-      debugPrint('成功渲染 ${pageImages.length} 个页面');
+      EditPageLogger.fileOpsInfo('成功渲染 ${pageImages.length} 个页面');
 
       // 保存图片文件
       for (int i = 0; i < pageImages.length; i++) {
@@ -85,49 +82,35 @@ class ExportService {
 
         // 保存图片文件
         final filePath = path.join(outputPath, fileName);
-        debugPrint('保存图片文件到: $filePath');
 
         try {
           final file = File(filePath);
 
           // 确保文件不存在
           if (await file.exists()) {
-            debugPrint('文件已存在，先删除: $filePath');
             await file.delete();
           }
 
           // 写入文件
-          debugPrint('开始写入图片文件: $filePath');
           await file.writeAsBytes(image);
 
           // 验证文件是否已创建
           if (await file.exists()) {
             final fileSize = await file.length();
-            debugPrint('图片文件保存成功: $filePath (大小: $fileSize 字节)');
-
-            // 尝试打开文件以验证其完整性
-            try {
-              final readTest = await file.readAsBytes();
-              debugPrint('文件读取测试成功: ${readTest.length} 字节');
-            } catch (e) {
-              debugPrint('文件读取测试失败: $e');
-            }
-
+            EditPageLogger.editPageDebug('图片文件保存成功: $fileName (大小: $fileSize 字节)');
             exportedFiles.add(file.path);
           } else {
-            debugPrint('错误: 文件写入后不存在: $filePath');
+            EditPageLogger.fileOpsError('文件写入后不存在: $filePath');
           }
         } catch (e, stack) {
-          debugPrint('保存图片文件失败: $e');
-          debugPrint('堆栈跟踪: $stack');
+          EditPageLogger.fileOpsError('保存图片文件失败: $e', stackTrace: stack);
         }
       }
 
-      debugPrint('导出完成，成功导出 ${exportedFiles.length} 个文件');
+      EditPageLogger.fileOpsInfo('导出完成，成功导出 ${exportedFiles.length} 个文件');
       return exportedFiles;
     } catch (e, stack) {
-      debugPrint('导出图片失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      EditPageLogger.fileOpsError('导出图片失败: $e', stackTrace: stack);
       return exportedFiles;
     }
   }
@@ -138,41 +121,35 @@ class ExportService {
       {double pixelRatio = 1.0, Map<String, dynamic>? extraParams}) async {
     try {
       extraParams ??= {};
-      debugPrint(
-          '开始导出PDF: 页面数=${controller.state.pages.length}, 输出路径=$outputPath, 文件名=$fileName, 额外参数=$extraParams');
+      EditPageLogger.fileOpsInfo(
+          '开始导出PDF: 页面数=${controller.state.pages.length}, 输出路径=$outputPath, 文件名=$fileName');
 
       // 检查输出路径是否有效
       if (outputPath.isEmpty) {
-        debugPrint('错误: 输出路径为空');
+        EditPageLogger.fileOpsError('输出路径为空');
         return null;
       }
 
       // 检查文件系统权限
       try {
-        debugPrint('检查文件系统权限...');
         final testFile = File(path.join(outputPath, '.test_write_permission'));
         await testFile.writeAsString('test');
         await testFile.delete();
-        debugPrint('文件系统权限检查通过');
       } catch (e) {
-        debugPrint('文件系统权限检查失败: $e');
-        debugPrint('尝试创建目录并再次检查权限...');
+        EditPageLogger.editPageWarning('文件系统权限检查失败，将尝试创建目录: $e');
       }
 
       // 确保目录存在
       final dir = Directory(outputPath);
       if (!await dir.exists()) {
-        debugPrint('创建目录: $outputPath');
         await dir.create(recursive: true);
       }
 
       // 再次检查目录是否存在
       if (!await dir.exists()) {
-        debugPrint('错误: 无法创建目录: $outputPath');
+        EditPageLogger.fileOpsError('无法创建目录: $outputPath');
         return null;
       }
-
-      debugPrint('目录已准备好: $outputPath');
 
       // 创建页面渲染器
       final pageRenderer = PageRenderer(controller);
@@ -183,7 +160,7 @@ class ExportService {
           : PdfPageFormat.a4;
       // 检查页面格式是否为横向
       final isLandscape = pageFormat.width > pageFormat.height;
-      debugPrint('使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
+      EditPageLogger.editPageDebug('使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
 
       // 页面范围
       List<int> pageIndices = [];
@@ -193,21 +170,21 @@ class ExportService {
           // 所有页面
           pageIndices =
               List.generate(controller.state.pages.length, (index) => index);
-          debugPrint('导出所有页面: ${pageIndices.length}页');
+          EditPageLogger.editPageDebug('导出所有页面: ${pageIndices.length}页');
         } else if (pageRangeType == PageRangeType.current) {
           // 当前页面
           final currentPage = extraParams.containsKey('currentPage')
               ? extraParams['currentPage'] as int
               : 0;
           pageIndices = [currentPage];
-          debugPrint('只导出当前页面: 第${currentPage + 1}页');
+          EditPageLogger.editPageDebug('只导出当前页面: 第${currentPage + 1}页');
         } else if (pageRangeType == PageRangeType.custom &&
             extraParams.containsKey('pageRange')) {
           // 自定义范围
           final pageRange = extraParams['pageRange'] as String;
           pageIndices =
               _parsePageRange(pageRange, controller.state.pages.length);
-          debugPrint('导出自定义范围页面: $pageRange => ${pageIndices.length}页');
+          EditPageLogger.editPageDebug('导出自定义范围页面: $pageRange => ${pageIndices.length}页');
         }
       } else {
         // 默认导出所有页面
@@ -218,8 +195,8 @@ class ExportService {
       // 确保至少有一页
       if (pageIndices.isEmpty) {
         pageIndices = [0];
-        debugPrint(
-            'Warning: No valid page range specified, using first page by default');
+        EditPageLogger.editPageWarning(
+            'No valid page range specified, using first page by default');
       }
 
       // 边距 (单位: 厘米 => 点)
@@ -232,21 +209,21 @@ class ExportService {
       final marginBottom = margins[2] * PdfPageFormat.cm;
       final marginLeft = margins[3] * PdfPageFormat.cm;
 
-      debugPrint(
+      EditPageLogger.editPageDebug(
           '页面边距 (厘米): 上=${margins[0]}, 右=${margins[1]}, 下=${margins[2]}, 左=${margins[3]}');
 
       // 适配策略
       final fitPolicy = extraParams.containsKey('fitPolicy')
           ? extraParams['fitPolicy'] as PdfFitPolicy
           : PdfFitPolicy.width;
-      debugPrint('适配策略: $fitPolicy');
+      EditPageLogger.editPageDebug('适配策略: $fitPolicy');
 
       // 渲染指定的页面
       final List<Uint8List> pageImages = [];
       for (final pageIndex in pageIndices) {
         if (pageIndex < 0 || pageIndex >= controller.state.pages.length) {
-          debugPrint(
-              'Warning: Skipping invalid page index: $pageIndex (out of range)');
+          EditPageLogger.editPageWarning(
+              'Skipping invalid page index: $pageIndex (out of range)');
           continue;
         }
 
@@ -257,19 +234,18 @@ class ExportService {
 
         if (pageImage != null) {
           pageImages.add(pageImage);
-          debugPrint('成功渲染第 ${pageIndex + 1} 页');
         } else {
-          debugPrint(
-              'Warning: Failed to render page ${pageIndex + 1}, skipping');
+          EditPageLogger.editPageWarning(
+              'Failed to render page ${pageIndex + 1}, skipping');
         }
       }
 
       if (pageImages.isEmpty) {
-        debugPrint('错误: 未能渲染任何页面');
+        EditPageLogger.fileOpsError('未能渲染任何页面');
         return null;
       }
 
-      debugPrint('成功渲染 ${pageImages.length} 个页面');
+      EditPageLogger.fileOpsInfo('成功渲染 ${pageImages.length} 个页面');
 
       // 创建PDF文档
       final pdf = pw.Document();
@@ -279,8 +255,6 @@ class ExportService {
         final image = pageImages[i];
         final pageIndex = pageIndices[i < pageIndices.length ? i : 0];
 
-        debugPrint('添加第 ${pageIndex + 1} 页到PDF: ${image.length} 字节');
-
         // 使用指定的页面格式，应用边距
         final effectivePageFormat = pageFormat.copyWith(
           marginTop: marginTop,
@@ -288,12 +262,6 @@ class ExportService {
           marginBottom: marginBottom,
           marginLeft: marginLeft,
         );
-
-        debugPrint(
-            '页面 ${i + 1} 有效页面格式: 宽=${effectivePageFormat.width / PdfPageFormat.cm}厘米, '
-            '高=${effectivePageFormat.height / PdfPageFormat.cm}厘米, '
-            '边距(厘米): 上=${marginTop / PdfPageFormat.cm}, 右=${marginRight / PdfPageFormat.cm}, '
-            '下=${marginBottom / PdfPageFormat.cm}, 左=${marginLeft / PdfPageFormat.cm}');
 
         // 添加页面到PDF
         pdf.addPage(
@@ -303,7 +271,6 @@ class ExportService {
               pw.Widget imageWidget = pw.Image(pw.MemoryImage(image));
 
               // 应用适配策略
-              debugPrint('应用适配策略: $fitPolicy');
               switch (fitPolicy) {
                 case PdfFitPolicy.width:
                   imageWidget = pw.FittedBox(
@@ -340,65 +307,48 @@ class ExportService {
       // 确保目录存在
       final directory = Directory(outputPath);
       if (!await directory.exists()) {
-        debugPrint('创建目录: $outputPath');
         await directory.create(recursive: true);
       }
 
       // 再次检查目录是否存在
       if (!await directory.exists()) {
-        debugPrint('错误: 无法创建目录: $outputPath');
+        EditPageLogger.fileOpsError('无法创建目录: $outputPath');
         return null;
       }
 
-      debugPrint('目录已准备好: $outputPath');
-
       // 保存PDF文件
       final filePath = path.join(outputPath, pdfFileName);
-      debugPrint('保存PDF文件到: $filePath');
 
       try {
         final file = File(filePath);
 
         // 保存文件
         final pdfBytes = await pdf.save();
-        debugPrint('PDF生成完成: ${pdfBytes.length} 字节');
+        EditPageLogger.editPageDebug('PDF生成完成: ${pdfBytes.length} 字节');
 
         // 确保文件不存在
         if (await file.exists()) {
-          debugPrint('文件已存在，先删除: $filePath');
           await file.delete();
         }
 
         // 写入文件
-        debugPrint('开始写入PDF文件: $filePath');
         await file.writeAsBytes(pdfBytes);
 
         // 验证文件是否已创建
         if (await file.exists()) {
           final fileSize = await file.length();
-          debugPrint('PDF文件保存成功: $filePath (大小: $fileSize 字节)');
-
-          // 尝试打开文件以验证其完整性
-          try {
-            final readTest = await file.readAsBytes();
-            debugPrint('文件读取测试成功: ${readTest.length} 字节');
-          } catch (e) {
-            debugPrint('文件读取测试失败: $e');
-          }
-
+          EditPageLogger.fileOpsInfo('PDF文件保存成功: $pdfFileName (大小: $fileSize 字节)');
           return file.path;
         } else {
-          debugPrint('错误: PDF文件写入后不存在: $filePath');
+          EditPageLogger.fileOpsError('PDF文件写入后不存在: $filePath');
           return null;
         }
       } catch (e, stack) {
-        debugPrint('保存PDF文件失败: $e');
-        debugPrint('堆栈跟踪: $stack');
+        EditPageLogger.fileOpsError('保存PDF文件失败: $e', stackTrace: stack);
         return null;
       }
     } catch (e, stack) {
-      debugPrint('导出PDF失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      EditPageLogger.fileOpsError('导出PDF失败: $e', stackTrace: stack);
       return null;
     }
   }
@@ -448,7 +398,7 @@ class ExportService {
       final result = pageIndices.toList()..sort();
       return result;
     } catch (e) {
-      debugPrint('解析页面范围失败: $e');
+      EditPageLogger.fileOpsError('解析页面范围失败: $e');
       // 出错时返回空列表
       return [];
     }

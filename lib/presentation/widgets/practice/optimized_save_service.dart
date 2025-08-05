@@ -449,13 +449,7 @@ class OptimizedSaveService {
 
       for (final key in cacheKeys) {
         try {
-          EditPageLogger.performanceInfo(
-            '清理缓存键',
-            data: {
-              'practiceId': practiceId,
-              'cacheKey': key,
-            },
-          );
+          // 简化缓存键清理，不需要详细日志
         } catch (e) {
           // 忽略清理错误
         }
@@ -473,7 +467,6 @@ class OptimizedSaveService {
         '缩略图缓存清理完成',
         data: {
           'practiceId': practiceId,
-          'clearedKeys': cacheKeys.length,
           'method': 'clear_all_cache',
         },
       );

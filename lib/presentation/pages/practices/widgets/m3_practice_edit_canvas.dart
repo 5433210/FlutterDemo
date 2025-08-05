@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/batch_update_options.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
@@ -69,6 +70,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         CanvasControlPointHandlers {
   // 🔍[TRACKING] 静态重建计数器
   static int _buildCount = 0;
+  
+  // 🚀 性能优化相关静态变量
+  static int _interactionStateChangeCount = 0;
+  static String _lastEventType = '';
+  static DateTime _lastInteractionLogTime = DateTime.now();
 
   // 控制点处理方法已由 CanvasControlPointHandlers mixin 提供
 
@@ -143,43 +149,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    // 🔍[TRACKING] Canvas重建跟踪 - 记录重建触发原因
-    final buildStartTime = DateTime.now();
+    // 🚀 优化：使用性能计时器监控重建性能
     _buildCount++;
 
-    // 🔧 CRITICAL FIX: 缓存controller状态，避免在build中访问controller.state触发依赖
+    // 緩存controller狀態，避免在build中重複訪問
     final selectedElementIds = widget.controller.state.selectedElementIds;
-
-    EditPageLogger.canvasDebug(
-      '🚨 Canvas开始重建 - 主Widget.build()被调用',
-      data: {
-        'buildNumber': _buildCount,
-        'selectedCount': selectedElementIds.length,
-        'isReadyForDrag': _isReadyForDrag,
-        'isDragging': _isDragging,
-        'timestamp': buildStartTime.toIso8601String(),
-        'optimization': 'canvas_rebuild_tracking',
-        'cachedState': 'avoiding_controller_access_in_build',
-        'stackTrace':
-            StackTrace.current.toString().split('\n').take(5).join('\n'),
-      },
-    );
 
     // Track performance for main canvas rebuilds
     _performanceMonitor.trackWidgetRebuild('M3PracticeEditCanvas');
-
-    // 🚀 移除PostFrameCallback机制 - 在图层级架构下已无意义
-    // 现在使用智能状态分发器和图层级性能监控，不再需要Canvas级别的PostFrameCallback
-    EditPageLogger.canvasDebug(
-      '🎯 Canvas构建完成 - 图层级架构',
-      data: {
-        'buildNumber': _buildCount,
-        'buildDuration':
-            '${DateTime.now().difference(buildStartTime).inMilliseconds}ms',
-        'architecture': 'layer_based_rendering',
-        'optimization': 'no_postframe_callback_needed',
-      },
-    );
 
     return OptimizedCanvasListener(
       controller: _contentRenderController,
@@ -470,17 +447,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Apply the rotation delta
     final newRotation = rotation + rotationDelta;
 
-    EditPageLogger.canvasDebug(
-      '旋转元素',
+    // 🚀 优化：高频拖拽操作只记录重要信息
+    PracticeEditLogger.debugDetail(
+      '元素旋转: $elementId',
       data: {
         'elementId': elementId,
-        'delta': '$delta',
-        'rotationDelta': rotationDelta,
-        'newRotation': newRotation,
+        'newRotation': newRotation.toStringAsFixed(2),
         'operation': 'element_rotation',
-        'timestamp': DateTime.now().toIso8601String(),
       },
-    ); // Update rotation
+    );
+    
+    // Update rotation
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
@@ -493,82 +470,37 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
   bool shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
-    EditPageLogger.canvasDebug(
-      '检查是否需要处理特殊手势',
+    // 🚀 优化：减少手势检查的日志输出，使用简化信息
+    PracticeEditLogger.debugDetail(
+      '手势检查',
       data: {
-        'isPreview': controller.state.isPreviewMode,
         'currentTool': controller.state.currentTool,
-        'selectedElementsCount': controller.state.selectedElementIds.length,
+        'selectedCount': controller.state.selectedElementIds.length,
         'isDragging': isDragging,
-        'dragManagerDragging': dragStateManager.isDragging,
-        'operation': 'gesture_check',
       },
     );
 
     // 如果在预览模式，不处理任何手势
     if (controller.state.isPreviewMode) {
-      EditPageLogger.canvasDebug(
-        '预览模式，不处理手势',
-        data: {
-          'operation': 'gesture_handling_decision',
-          'reason': 'preview_mode',
-          'result': false,
-        },
-      );
       return false;
     }
 
     // 如果在select模式下，需要处理选择框
     if (controller.state.currentTool == 'select') {
-      EditPageLogger.canvasDebug(
-        'select模式，需要处理选择框',
-        data: {
-          'operation': 'gesture_handling_decision',
-          'reason': 'select_mode',
-          'result': true,
-        },
-      );
       return true;
     }
 
     // 如果正在进行拖拽操作，需要处理
     if (isDragging || dragStateManager.isDragging) {
-      EditPageLogger.canvasDebug(
-        '正在拖拽，需要处理',
-        data: {
-          'operation': 'gesture_handling_decision',
-          'reason': 'drag_in_progress',
-          'isDragging': isDragging,
-          'dragManagerDragging': dragStateManager.isDragging,
-          'result': true,
-        },
-      );
       return true;
     }
 
     // 只有在有选中元素时才可能需要处理元素拖拽
     if (controller.state.selectedElementIds.isNotEmpty) {
-      EditPageLogger.canvasDebug(
-        '有选中元素，可能需要处理拖拽',
-        data: {
-          'operation': 'gesture_handling_decision',
-          'reason': 'elements_selected',
-          'selectedCount': controller.state.selectedElementIds.length,
-          'result': true,
-        },
-      );
       return true;
     }
 
     // 其他情况让InteractiveViewer完全接管
-    EditPageLogger.canvasDebug(
-      '无特殊手势需求，让InteractiveViewer处理',
-      data: {
-        'operation': 'gesture_handling_decision',
-        'reason': 'no_special_conditions',
-        'result': false,
-      },
-    );
     return false;
   }
 
@@ -577,25 +509,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void togglePerformanceOverlay() {
     setState(() {
       DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
-      EditPageLogger.canvasDebug(
-        '切换性能覆盖层显示',
-        data: {
-          'operation': 'toggle_performance_overlay',
-          'enabled': DragConfig.showPerformanceOverlay,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
+      // 🚀 优化：用户操作使用专门的用户操作日志
+      PracticeEditLogger.logUserAction(
+        '切换性能覆盖层',
+        data: {'enabled': DragConfig.showPerformanceOverlay},
       );
     });
   }
 
   void triggerSetState() {
     // 🚀 优化：避免Canvas整体重建，使用分层架构
-    EditPageLogger.canvasDebug(
+    PracticeEditLogger.debugDetail(
       '跳过triggerSetState - 使用分层架构',
-      data: {
-        'optimization': 'avoid_trigger_setstate',
-        'reason': '分层架构会自动处理必要的重建',
-      },
+      data: {'optimization': 'avoid_trigger_setstate'},
     );
   }
 
@@ -805,27 +731,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
-                            final gestureStartTime = DateTime.now();
-                            EditPageLogger.canvasDebug(
-                              '画布拖拽开始',
-                              data: {
-                                'position':
-                                    '${details.globalPosition.dx.toStringAsFixed(1)},${details.globalPosition.dy.toStringAsFixed(1)}',
-                                'localPosition':
-                                    '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
-                                'currentTool':
-                                    widget.controller.state.currentTool,
-                                'selectedCount': widget
-                                    .controller.state.selectedElementIds.length,
-                                'isDragging': _isDragging,
-                                'dragManagerState':
-                                    _dragStateManager.isDragging,
-                              },
-                            );
+                            // 手勢處理開始
+                            
+                            // 簡化拖拽開始處理
 
                             // 动态检查是否需要处理特殊手势
-                            final shouldHandle =
-                                shouldHandleAnySpecialGesture(elements);
+                            final shouldHandle = shouldHandleAnySpecialGesture(elements);
 
                             if (shouldHandle) {
                               _gestureHandler.handlePanStart(details,
@@ -839,20 +750,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                 setState(() {});
                               }
 
-                              final gestureProcessTime =
-                                  DateTime.now().difference(gestureStartTime);
-                              EditPageLogger.canvasDebug(
-                                '手势处理完成',
-                                data: {
-                                  'gestureType': 'panStart',
-                                  'processingTimeMs':
-                                      gestureProcessTime.inMilliseconds,
-                                  'elementsCount': elements.length,
-                                },
-                              );
-                            } else {
-                              EditPageLogger.canvasDebug('画布空白区域点击，不处理');
-                              // 🔧 关键：不调用任何处理逻辑，让手势穿透
+                              // 完成手勢處理
                             }
                           }
                         : null, // 🔧 关键：当不需要时，设置为null让InteractiveViewer完全接管
@@ -888,7 +786,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
-                            EditPageLogger.canvasDebug('画布拖拽结束');
+                            // 🚀 优化：拖拽结束只记录必要信息
+                            PracticeEditLogger.debugDetail('拖拽结束');
 
                             // 重置选择框状态
                             if (widget.controller.state.currentTool ==
@@ -914,7 +813,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             widget
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? () {
-                            EditPageLogger.canvasDebug('画布拖拽取消');
+                            // 🚀 优化：拖拽取消只记录必要信息
+                            PracticeEditLogger.debugDetail('拖拽取消');
 
                             // 重置选择框状态
                             if (widget.controller.state.currentTool ==
@@ -1120,24 +1020,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 🔧 调试方法：检查当前状态，帮助诊断画布平移问题
   void _debugCanvasState(String context) {
-    final panEnabled =
-        !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag);
-    EditPageLogger.canvasDebug(
-      '画布状态检查',
+    // 🚀 优化：只在调试模式下记录详细状态
+    PracticeEditLogger.debugDetail(
+      '画布状态: $context',
       data: {
-        'context': context,
-        'panEnabled': panEnabled,
-        'isDragging': _isDragging,
-        'dragStateManagerIsDragging': _dragStateManager.isDragging,
-        'isReadyForDrag': _isReadyForDrag,
-      },
-    );
-    EditPageLogger.canvasDebug(
-      '画布状态详情',
-      data: {
-        'context': context,
-        'selectedElementIds':
-            widget.controller.state.selectedElementIds.toList(),
+        'panEnabled': !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag),
+        'selectedCount': widget.controller.state.selectedElementIds.length,
         'currentTool': widget.controller.state.currentTool,
       },
     );
@@ -1277,7 +1165,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // Notify the controller that zoom has changed
     widget.controller.zoomTo(scale);
 
-    // 只在变换应用失败时记录错误日志
+    // 檢查變換应用结果
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !_isDisposed) {
         final appliedMatrix = widget.transformationController.value;
@@ -1287,16 +1175,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         if ((appliedScale - scale).abs() > 0.001 ||
             (appliedTranslation.x - dx).abs() > 1 ||
             (appliedTranslation.y - dy).abs() > 1) {
-          EditPageLogger.canvasError(
+          PracticeEditLogger.logError(
             '画布视图重置失败',
-            data: {
+            '变换矩阵应用不正确',
+            context: {
               'expectedScale': scale.toStringAsFixed(3),
               'actualScale': appliedScale.toStringAsFixed(3),
-              'expectedTranslation':
-                  '(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})',
-              'actualTranslation':
-                  '(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})',
-            },
+            }
           );
         }
       }
@@ -1464,7 +1349,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     // RepaintBoundary的Key - 用于截图和快照功能
     _repaintBoundaryKey = GlobalKey();
 
-    EditPageLogger.canvasDebug('画布核心组件初始化完成，三阶段拖拽系统就绪');
+    // 🚀 优化：简化初始化日志
+    PracticeEditLogger.debugDetail('核心组件初始化完成');
   }
 
   /// 初始化手势处理器
@@ -1563,7 +1449,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _initializeOptimizationComponents() {
     // Initialize canvas structure listener for smart layer-specific routing
     _structureListener = CanvasStructureListener(widget.controller);
-    EditPageLogger.canvasDebug('画布结构监听器初始化完成');
 
     // Initialize state change dispatcher for unified state management
     _stateDispatcher =
@@ -1571,13 +1456,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
     // Set the state dispatcher in the controller for layered state management
     widget.controller.setStateDispatcher(_stateDispatcher);
-    EditPageLogger.canvasDebug(
-      '状态分发器初始化并连接到控制器',
-      data: {
-        'operation': 'state_dispatcher_initialization',
-        'component': 'StateChangeDispatcher',
-      },
-    );
 
     // Initialize drag operation manager for 3-phase drag system
     _dragOperationManager = DragOperationManager(
@@ -1585,11 +1463,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       _dragStateManager,
       _stateDispatcher,
     );
-    EditPageLogger.canvasDebug('拖拽操作管理器初始化完成');
 
     // Register layers with the layer render manager
-    _initializeLayers();
-    EditPageLogger.canvasDebug('图层注册到图层渲染管理器完成'); // ✅ 新添加：注册Canvas到智能状态分发器
+    _initializeLayers(); // ✅ 新添加：注册Canvas到智能状态分发器
     _registerCanvasToIntelligentDispatcher();
 
     // 🚀 CRITICAL FIX: 添加PostFrameCallback确保注册在widget完全构建后执行
@@ -1604,9 +1480,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void _initializeUIComponents() {
     // No need to initialize _repaintBoundaryKey again as it's already initialized in _initializeCoreComponents()
 
-    // 初始化手势处理器 (需要在所有其他组件初始化后)
-    _initializeGestureHandler(); // 恢复使用本地方法
-    EditPageLogger.canvasDebug('手势处理器初始化完成');
+    // 初始化手勢處理器 (需要在所有其他組件初始化后)
+    _initializeGestureHandler();
 
     // 🔧 修复：注册画布到控制器，支持reset view功能
     // Register this canvas with the controller for reset view functionality
@@ -1857,14 +1732,33 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         _layerRenderManager.markLayerDirty(RenderLayerType.interaction,
             reason: 'Selection or tool changed');
 
-        EditPageLogger.canvasDebug(
-          '交互层状态变化处理（优化版）',
-          data: {
-            'eventType': event.runtimeType.toString(),
-            'optimization': 'interaction_layer_only_rebuild',
-            'avoidedCanvasRebuild': true,
-          },
-        );
+        // 🚀 优化：减少交互层状态变化的重复日志
+        // 只在第一次变化、事件类型变化或时间间隔后记录
+        _interactionStateChangeCount++;
+        final eventType = event.runtimeType.toString();
+        final isNewEventType = eventType != _lastEventType;
+        final isMilestone = _interactionStateChangeCount % 100 == 0;
+        final now = DateTime.now();
+        final isTimeForLog = now.difference(_lastInteractionLogTime).inMilliseconds >= 500;
+        
+        if (isNewEventType || isMilestone || isTimeForLog) {
+          EditPageLogger.canvasDebug(
+            '交互层状态变化',
+            data: {
+              'eventType': eventType,
+              'changeCount': _interactionStateChangeCount,
+              'changeType': isNewEventType ? 'new_event_type' : 
+                          isMilestone ? 'milestone' : 'time_interval',
+              'intervalMs': now.difference(_lastInteractionLogTime).inMilliseconds,
+              'optimization': 'interaction_layer_optimized_v2',
+            },
+          );
+          
+          if (isNewEventType) {
+            _lastEventType = eventType;
+          }
+          _lastInteractionLogTime = now;
+        }
 
         // 🚀 移除setState调用 - 交互层变化不应该触发整个Canvas重建
         // 交互层会通过markLayerDirty机制自动重建

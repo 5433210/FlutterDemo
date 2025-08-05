@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/practice_edit_logger.dart';
 import 'memory_manager.dart';
 import 'performance_monitor.dart';
 

@@ -285,21 +285,20 @@ class PerformanceMonitor extends ChangeNotifier {
       );
     }
     
-    // 检查重建频率
+    // 🚀 优化：提高重建频率检查阈值，减少警告噪音
     if (_totalRebuilds > 0) {
       final secondsSinceStart = now.difference(_lastFrameTime).inSeconds;
       if (secondsSinceStart > 0) {
         final rebuildsPerSecond = _totalRebuilds / secondsSinceStart;
-        if (rebuildsPerSecond > _rebuildThresholdPerSecond) {
+        if (rebuildsPerSecond > (_rebuildThresholdPerSecond * 2)) { // 阈值加倍
           hasViolation = true;
           EditPageLogger.performanceWarning(
             '组件重建频率过高',
             data: {
               'rebuildsPerSecond': rebuildsPerSecond.toStringAsFixed(1),
-              'threshold': _rebuildThresholdPerSecond,
-              'totalRebuilds': _totalRebuilds,
-              'severity': 'moderate',
-              'suggestion': '建议优化组件状态管理以减少不必要的重建',
+              'threshold': _rebuildThresholdPerSecond * 2,
+              'severity': 'high',
+              'suggestion': '建议优化状态管理以减少不必要的重建',
             },
           );
         }
@@ -525,15 +524,15 @@ class PerformanceMonitor extends ChangeNotifier {
         (_widgetRebuildCounts[widgetName] ?? 0) + 1;
     _totalRebuilds++;
 
-    // Log excessive rebuilds
+    // 🚀 优化：只在关键阈值时记录过度重建警告
     final count = _widgetRebuildCounts[widgetName]!;
-    if (count % 10 == 0) {
+    if (count % 50 == 0 && count >= 50) { // 从10次提高到50次
       EditPageLogger.performanceWarning(
-        '组件频繁重建',
+        '组件频繁重建警告',
         data: {
           'widgetName': widgetName,
           'rebuildCount': count,
-          'totalRebuilds': _totalRebuilds,
+          'severity': count > 200 ? 'high' : 'moderate',
         },
       );
     }

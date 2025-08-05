@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/toolbar_logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import 'guideline_alignment/guideline_types.dart';
@@ -148,14 +148,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   icon: Icons.select_all,
                   tooltip: '${l10n.select} (Alt+S)',
                   onPressed: () {
-                    EditPageLogger.editPageDebug(
-                      'Toolbar: Select selection tool',
-                      data: {
-                        'selectedTool': 'select',
-                        'previousTool': currentTool,
-                        'operation': 'tool_select',
-                      },
-                    );
+                    // 使用工具栏专用日志，防重复记录
+                    ToolbarLogger.logToolSwitch(currentTool ?? 'none', 'select');
                     onSelectTool!('select');
                   },
                   isActive: currentTool == 'select',
@@ -191,15 +185,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 tooltip: '${l10n.copy} (Ctrl+Shift+C)',
                 onPressed: hasSelection
                     ? () {
-                        EditPageLogger.editPageDebug(
-                          'Toolbar: Copy operation',
-                          data: {
-                            'selectedCount':
-                                controller.state.selectedElementIds.length,
-                            'selectedIds': controller.state.selectedElementIds,
-                            'operation': 'copy_action',
-                          },
-                        );
+                        ToolbarLogger.logSelectionOperation('复制元素', 
+                            controller.state.selectedElementIds.length);
                         onCopy();
                       }
                     : null,
@@ -210,13 +197,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 tooltip: '${l10n.paste} (Ctrl+Shift+V)',
                 onPressed: canPaste
                     ? () {
-                        EditPageLogger.editPageDebug(
-                          'Toolbar: Paste operation',
-                          data: {
-                            'canPaste': canPaste,
-                            'operation': 'paste_action',
-                          },
-                        );
+                        ToolbarLogger.logEditOperation('粘贴元素');
                         onPaste();
                       }
                     : null,
@@ -227,15 +208,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 tooltip: l10n.delete,
                 onPressed: hasSelection
                     ? () {
-                        EditPageLogger.editPageDebug(
-                          'Toolbar: Delete operation',
-                          data: {
-                            'selectedCount':
-                                controller.state.selectedElementIds.length,
-                            'selectedIds': controller.state.selectedElementIds,
-                            'operation': 'delete_action',
-                          },
-                        );
+                        ToolbarLogger.logSelectionOperation('删除元素', 
+                            controller.state.selectedElementIds.length);
                         onDelete();
                       }
                     : null,
@@ -244,13 +218,20 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: Icons.group,
                 tooltip: l10n.group,
-                onPressed: isMultiSelected ? onGroupElements : null,
+                onPressed: isMultiSelected ? () {
+                  ToolbarLogger.logGroupOperation('组合元素', 
+                      controller.state.selectedElementIds.length);
+                  onGroupElements();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.format_shapes,
                 tooltip: l10n.ungroup,
-                onPressed: hasSelectedGroup ? onUngroupElements : null,
+                onPressed: hasSelectedGroup ? () {
+                  ToolbarLogger.logGroupOperation('取消组合', 1, groupType: 'ungroup');
+                  onUngroupElements();
+                } : null,
               ),
             ],
           ),
@@ -267,25 +248,41 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: Icons.vertical_align_top,
                 tooltip: l10n.bringToFront,
-                onPressed: hasSelection ? onBringToFront : null,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logLayerOperation('置于顶层', 
+                      controller.state.selectedElementIds.length);
+                  onBringToFront();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.vertical_align_bottom,
                 tooltip: l10n.sendToBack,
-                onPressed: hasSelection ? onSendToBack : null,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logLayerOperation('置于底层', 
+                      controller.state.selectedElementIds.length);
+                  onSendToBack();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.arrow_upward,
                 tooltip: l10n.moveUp,
-                onPressed: hasSelection ? onMoveUp : null,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logLayerOperation('上移一层', 
+                      controller.state.selectedElementIds.length);
+                  onMoveUp();
+                } : null,
               ),
               _buildToolbarButton(
                 context: context,
                 icon: Icons.arrow_downward,
                 tooltip: l10n.moveDown,
-                onPressed: hasSelection ? onMoveDown : null,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logLayerOperation('下移一层', 
+                      controller.state.selectedElementIds.length);
+                  onMoveDown();
+                } : null,
               ),
             ],
           ),
@@ -302,7 +299,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 context: context,
                 icon: gridVisible ? Icons.grid_on : Icons.grid_off,
                 tooltip: gridVisible ? l10n.hideGrid : l10n.showGrid,
-                onPressed: onToggleGrid,
+                onPressed: () {
+                  ToolbarLogger.logViewStateToggle('网格显示', !gridVisible);
+                  onToggleGrid();
+                },
                 isActive: gridVisible,
               ),
               _buildAlignmentModeButton(context),
@@ -311,14 +311,20 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   context: context,
                   icon: Icons.format_paint,
                   tooltip: l10n.copyFormat,
-                  onPressed: hasSelection ? onCopyFormatting : null,
+                  onPressed: hasSelection ? () {
+                    ToolbarLogger.logFormatOperation('复制格式');
+                    onCopyFormatting!();
+                  } : null,
                 ),
               if (onApplyFormatBrush != null)
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_color_fill,
                   tooltip: l10n.applyFormatBrush,
-                  onPressed: hasSelection ? onApplyFormatBrush : null,
+                  onPressed: hasSelection ? () {
+                    ToolbarLogger.logFormatOperation('应用格式刷');
+                    onApplyFormatBrush!();
+                  } : null,
                 ),
             ],
           ),
@@ -338,7 +344,6 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     VoidCallback? onCreateElement,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
 
     Widget button = Tooltip(
       message: tooltip,
@@ -347,14 +352,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         borderRadius: BorderRadius.circular(8.0),
         child: InkWell(
           onTap: () {
-            EditPageLogger.editPageDebug(
-              'Toolbar element click - create element',
-              data: {
-                'toolName': toolName,
-                'action': 'click_to_create',
-              },
-            );
-            // 点击直接创建元素，而不是切换工具
+            // 使用专用日志工具，避免重复记录
+            ToolbarLogger.logElementCreate(toolName);
             if (onCreateElement != null) {
               onCreateElement();
             }
@@ -431,16 +430,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           child: button,
         ),
         onDragStarted: () {
-          EditPageLogger.editPageDebug(
-            'Toolbar element drag started',
-            data: {
-              'toolName': toolName,
-              'action': 'drag_to_create',
-            },
-          );
-          if (onDragStart != null) {
-            onDragStart();
-          }
+          // 拖拽操作使用专用日志，减少噪音
+          ToolbarLogger.logDragCreateStart(toolName);
+          onDragStart();
         },
         child: button,
       );
@@ -465,7 +457,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         (isActive
             ? colorScheme.primary
             : onPressed == null
-                ? colorScheme.onSurface.withOpacity(0.3)
+                ? colorScheme.onSurface.withValues(alpha: 0.3)
                 : colorScheme.onSurface);
 
     return Tooltip(
@@ -522,7 +514,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
       case AlignmentMode.none:
         icon = Icons.crop_free; // 无辅助图标
         tooltip = l10n.alignmentNone;
-        buttonColor = colorScheme.onSurface.withOpacity(0.5);
+        buttonColor = colorScheme.onSurface.withValues(alpha: 0.5);
         break;
       case AlignmentMode.gridSnap:
         icon = Icons.grid_view; // 网格贴附图标
@@ -540,10 +532,40 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
       context: context,
       icon: icon,
       tooltip: tooltip,
-      onPressed: onToggleAlignmentMode,
+      onPressed: () {
+        // 对齐模式切换使用专用日志
+        String currentMode = _getAlignmentModeName(alignmentMode);
+        String nextMode = _getNextAlignmentModeName(alignmentMode);
+        ToolbarLogger.logAlignmentModeToggle(currentMode, nextMode);
+        onToggleAlignmentMode();
+      },
       isActive: alignmentMode != AlignmentMode.none,
       customColor: buttonColor,
     );
+  }
+
+  /// Get alignment mode name for logging
+  String _getAlignmentModeName(AlignmentMode mode) {
+    switch (mode) {
+      case AlignmentMode.none:
+        return '无对齐';
+      case AlignmentMode.gridSnap:
+        return '网格对齐';
+      case AlignmentMode.guideline:
+        return '参考线对齐';
+    }
+  }
+
+  /// Get next alignment mode name for logging
+  String _getNextAlignmentModeName(AlignmentMode mode) {
+    switch (mode) {
+      case AlignmentMode.none:
+        return '网格对齐';
+      case AlignmentMode.gridSnap:
+        return '参考线对齐';
+      case AlignmentMode.guideline:
+        return '无对齐';
+    }
   }
 
   /// Check if the selected element is a group
