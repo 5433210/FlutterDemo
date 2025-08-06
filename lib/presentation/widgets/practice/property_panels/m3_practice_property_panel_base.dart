@@ -5,12 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
-import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import 'image/image_property_panel.dart';
 import 'm3_collection_property_panel.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
 import 'm3_practice_property_panel_group.dart';
-import 'image/image_property_panel.dart';
 import 'm3_practice_property_panel_layer.dart';
 import 'm3_practice_property_panel_multi.dart';
 import 'm3_practice_property_panel_page.dart';

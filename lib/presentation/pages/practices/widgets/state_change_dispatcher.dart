@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -58,11 +57,10 @@ class StateChangeDispatcher {
     // 启动批处理计时器
     _scheduleBatchProcessing();
 
-    EditPageLogger.editPageDebug('分发状态变化事件', 
-      data: {
-        'eventType': event.type.toString(),
-        'queueLength': _changeQueue.length
-      });
+    EditPageLogger.editPageDebug('分发状态变化事件', data: {
+      'eventType': event.type.toString(),
+      'queueLength': _changeQueue.length
+    });
   }
 
   /// 释放资源
@@ -102,8 +100,8 @@ class StateChangeDispatcher {
       final batchEvents = List<StateChangeEvent>.from(_changeQueue);
       _changeQueue.clear();
 
-      EditPageLogger.editPageDebug('开始处理状态变化批次', 
-        data: {'eventCount': batchEvents.length});
+      EditPageLogger.editPageDebug('开始处理状态变化批次',
+          data: {'eventCount': batchEvents.length});
 
       // 按类型分组处理
       final groupedEvents = <StateChangeType, List<StateChangeEvent>>{};
@@ -118,12 +116,12 @@ class StateChangeDispatcher {
         StateChangeType.dragEnd,
         StateChangeType.selectionChange,
         StateChangeType.elementUpdate,
-        StateChangeType.elementOrderChange,  // 🔧 修复：添加元素顺序变化处理
+        StateChangeType.elementOrderChange, // 🔧 修复：添加元素顺序变化处理
         StateChangeType.toolChange,
         StateChangeType.viewportChange,
         StateChangeType.layerVisibilityChange,
         StateChangeType.pageChange,
-        StateChangeType.gridSettingsChange,  // 🔧 修复：也添加网格设置变化处理
+        StateChangeType.gridSettingsChange, // 🔧 修复：也添加网格设置变化处理
       ];
 
       for (final type in priorityOrder) {
@@ -282,10 +280,10 @@ class StateChangeDispatcher {
         EditPageLogger.editPageDebug('处理元素顺序变化事件', data: {
           'elementId': event.data['elementId'] ?? '',
         });
-        
+
         // 强制清除所有元素缓存
         _clearAllElementCache();
-        
+
         // 发送强制重建信号
         _structureListener.dispatchToLayer(
           RenderLayerType.content,
@@ -294,7 +292,7 @@ class StateChangeDispatcher {
             timestamp: DateTime.now(),
           ),
         );
-        
+
         _structureListener.dispatchToLayer(
           RenderLayerType.content,
           ElementOrderChangeEvent(
@@ -322,8 +320,6 @@ class StateChangeDispatcher {
 
   /// 处理页面变化事件
   void _processPageChangeEvents(List<StateChangeEvent> events) {
-    final latestEvent = events.last;
-
     _structureListener.dispatchToLayer(
       RenderLayerType.staticBackground,
       PageBackgroundChangeEvent(

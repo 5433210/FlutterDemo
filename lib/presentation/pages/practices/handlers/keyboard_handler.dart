@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -78,7 +77,7 @@ class KeyboardHandler {
   bool _isShiftPressed = false;
   bool _isAltPressed = false;
   String _lastKeyPressed = ''; // Track combination key state
-  
+
   // Performance tracking for keyboard operations
   final Map<String, DateTime> _lastActionTime = {};
   static const int _actionDedupeMs = 100; // Prevent duplicate action logs
@@ -114,7 +113,8 @@ class KeyboardHandler {
   final Function() applyFormatBrush;
   final Function(double dx, double dy) moveSelectedElements;
   final Function() resetViewPosition; // Added callback for reset view position
-  final Function() goToPreviousPage; // Added callback for previous page navigation
+  final Function()
+      goToPreviousPage; // Added callback for previous page navigation
   final Function() goToNextPage; // Added callback for next page navigation
   KeyboardHandler({
     required this.controller,
@@ -217,7 +217,8 @@ class KeyboardHandler {
       // Handle Escape key to exit current tool
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         if (controller.state.currentTool.isNotEmpty) {
-          _logUserAction('工具退出', 'Escape键退出工具模式: ${controller.state.currentTool}');
+          _logUserAction(
+              '工具退出', 'Escape键退出工具模式: ${controller.state.currentTool}');
           controller.exitSelectMode();
           return true;
         }
@@ -497,31 +498,34 @@ class KeyboardHandler {
       controller.exitSelectMode();
     } else {
       // Otherwise select the tool
-      if (toolName != null && controller.state.currentTool != toolName) {
+      if (controller.state.currentTool != toolName) {
         controller.setCurrentTool(toolName);
       }
     }
   }
-  
+
   /// 智能用户操作日志记录
   /// 避免高频重复日志，只记录有意义的用户操作
-  void _logUserAction(String category, String action, [Map<String, dynamic>? data]) {
+  void _logUserAction(String category, String action,
+      [Map<String, dynamic>? data]) {
     final actionKey = '$category:$action';
     final now = DateTime.now();
-    
+
     // 检查是否为重复操作（防抖动）
     final lastTime = _lastActionTime[actionKey];
-    if (lastTime != null && now.difference(lastTime).inMilliseconds < _actionDedupeMs) {
+    if (lastTime != null &&
+        now.difference(lastTime).inMilliseconds < _actionDedupeMs) {
       return; // 跳过重复操作日志
     }
-    
+
     _lastActionTime[actionKey] = now;
-    
+
     // 使用性能监控包装重要的键盘操作
-    final timer = PerformanceTimer('键盘操作: $action', 
+    final timer = PerformanceTimer(
+      '键盘操作: $action',
       customThreshold: EditPageLoggingConfig.complexOperationThreshold,
     );
-    
+
     // 使用专用的用户操作日志方法
     EditPageLogger.userAction('$category: $action', data: {
       'category': category,
@@ -529,7 +533,7 @@ class KeyboardHandler {
       'source': 'keyboard_shortcut',
       if (data != null) ...data,
     });
-    
+
     timer.finish();
   }
 }

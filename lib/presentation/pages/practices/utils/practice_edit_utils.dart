@@ -674,14 +674,13 @@ class PracticeEditUtils {
     if (children.isEmpty) return;
 
     // Generate unique IDs for all children to prevent conflicts
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
 
     // 转换子元素的坐标为全局坐标
     final groupX = (groupElement['x'] as num).toDouble();
     final groupY = (groupElement['y'] as num).toDouble();
 
     final childElements = <Map<String, dynamic>>[];
-    int index = 0;
+
     for (final child in children) {
       // Create a full deep copy of the child element
       final childMap = deepCopyElement(child as Map<String, dynamic>);
@@ -704,7 +703,6 @@ class PracticeEditUtils {
       // }
 
       childElements.add(newElement);
-      index++;
     }
 
     // Create operation for undo/redo support

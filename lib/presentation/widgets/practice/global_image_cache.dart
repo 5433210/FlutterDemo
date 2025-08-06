@@ -1,17 +1,15 @@
 import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 
 /// 全局图像缓存 - 增强版，统一管理UI图像资源
 class GlobalImageCache {
   // 图像缓存，使用静态Map便于全局访问
   static final Map<String, ui.Image> _cache = {};
-  
+
   // 缓存访问记录
   static final Map<String, int> _accessCount = {};
-  
+
   // 调试模式
   static bool debugMode = true;
 
@@ -24,7 +22,7 @@ class GlobalImageCache {
       );
       return;
     }
-    
+
     if (image.width <= 0 || image.height <= 0) {
       EditPageLogger.performanceWarning(
         '尝试缓存无效图像',
@@ -37,10 +35,10 @@ class GlobalImageCache {
       );
       return;
     }
-    
+
     _cache[key] = image;
     _accessCount[key] = 0;
-    
+
     EditPageLogger.performanceInfo(
       '图像缓存添加成功',
       data: {
@@ -71,11 +69,11 @@ class GlobalImageCache {
   /// 获取缓存中的图像
   static ui.Image? get(String key) {
     ui.Image? image = _cache[key];
-    
+
     if (image != null) {
       // 更新访问计数
       _accessCount[key] = (_accessCount[key] ?? 0) + 1;
-      
+
       EditPageLogger.performanceInfo(
         '图像缓存命中',
         data: {
@@ -99,7 +97,7 @@ class GlobalImageCache {
         },
       );
     }
-    
+
     return image;
   }
 
@@ -134,34 +132,35 @@ class GlobalImageCache {
       );
     }
   }
-  
+
   /// 获取缓存大小
   static int get size => _cache.length;
-  
+
   /// 获取所有缓存键
   static List<String> get keys => _cache.keys.toList();
-  
+
   /// 获取缓存信息摘要
   static String getSummary() {
     StringBuffer buffer = StringBuffer();
     buffer.writeln('ℹ️ GlobalImageCache 摘要:');
     buffer.writeln('  - 缓存项数: ${_cache.length}');
-    
+
     if (_cache.isNotEmpty) {
       buffer.writeln('  - 缓存项列表:');
       _cache.forEach((key, image) {
         int accessCount = _accessCount[key] ?? 0;
-        buffer.writeln('    * $key (${image.width}x${image.height}, 访问次数: $accessCount)');
+        buffer.writeln(
+            '    * $key (${image.width}x${image.height}, 访问次数: $accessCount)');
       });
     }
-    
+
     return buffer.toString();
   }
-  
+
   /// 尝试根据前缀查找缓存项
   static ui.Image? getByPrefix(String prefix) {
     if (prefix.isEmpty) return null;
-    
+
     for (String key in _cache.keys) {
       if (key.startsWith(prefix)) {
         EditPageLogger.performanceInfo(
@@ -176,7 +175,7 @@ class GlobalImageCache {
         return _cache[key];
       }
     }
-    
+
     EditPageLogger.performanceWarning(
       '前缀匹配图像缓存未命中',
       data: {

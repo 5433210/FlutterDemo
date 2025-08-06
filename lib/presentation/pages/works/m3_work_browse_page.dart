@@ -29,9 +29,6 @@ class M3WorkBrowsePage extends ConsumerStatefulWidget {
 
 class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     with WidgetsBindingObserver {
-  // Store provider reference during initialization to avoid accessing it during lifecycle changes
-  StateController<RefreshInfo?>? _refreshNotifier;
-
   // 🚀 优化的刷新管理器
   // OptimizedRefreshManager? _refreshManager;
 
@@ -39,7 +36,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   void initState() {
     super.initState();
     AppLogger.info('M3WorkBrowsePage initState', tag: 'WorkBrowse');
-    
+
     // 添加帧回调，确认首帧渲染完成
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLogger.info('M3WorkBrowsePage 首帧渲染完成', tag: 'WorkBrowse');
@@ -61,11 +58,11 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   @override
   Widget build(BuildContext context) {
     AppLogger.info('M3WorkBrowsePage build开始', tag: 'WorkBrowse');
-    
+
     try {
       final l10n = AppLocalizations.of(context);
       AppLogger.debug('获取本地化资源成功', tag: 'WorkBrowse');
-      
+
       final state = ref.watch(workBrowseProvider);
       final viewModel = ref.read(workBrowseProvider.notifier);
 
@@ -194,7 +191,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       onToggleFavorite: (workId) {
                         viewModel.toggleFavorite(workId);
                       },
-                      onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                      onTagsEdited: (workId) =>
+                          _handleTagEdited(context, workId),
                     ),
                   ),
                 ],
@@ -226,8 +224,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
             : null,
       );
     } catch (e, stack) {
-      AppLogger.error('M3WorkBrowsePage build过程中发生错误', 
-        error: e, stackTrace: stack, tag: 'WorkBrowse');
+      AppLogger.error('M3WorkBrowsePage build过程中发生错误',
+          error: e, stackTrace: stack, tag: 'WorkBrowse');
       return Scaffold(
         appBar: AppBar(
           title: const Text('作品浏览'),

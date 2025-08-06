@@ -24,8 +24,10 @@ class DatabaseMigrationIntegration {
       });
 
       // 获取对应的数据库版本
-      final fromDbVersion = DataVersionDefinition.getDatabaseVersion(fromDataVersion);
-      final toDbVersion = DataVersionDefinition.getDatabaseVersion(toDataVersion);
+      final fromDbVersion =
+          DataVersionDefinition.getDatabaseVersion(fromDataVersion);
+      final toDbVersion =
+          DataVersionDefinition.getDatabaseVersion(toDataVersion);
 
       if (fromDbVersion >= toDbVersion) {
         AppLogger.info('数据库版本无需升级', tag: 'DatabaseMigrationIntegration', data: {
@@ -38,9 +40,11 @@ class DatabaseMigrationIntegration {
       // 检查数据库文件是否存在
       final dbFile = File(databasePath);
       if (!await dbFile.exists()) {
-        AppLogger.warning('数据库文件不存在，跳过迁移', tag: 'DatabaseMigrationIntegration', data: {
-          'databasePath': databasePath,
-        });
+        AppLogger.warning('数据库文件不存在，跳过迁移',
+            tag: 'DatabaseMigrationIntegration',
+            data: {
+              'databasePath': databasePath,
+            });
         return;
       }
 
@@ -51,10 +55,9 @@ class DatabaseMigrationIntegration {
         'fromDbVersion': fromDbVersion,
         'toDbVersion': toDbVersion,
       });
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库迁移集成失败', 
-          error: e, 
+      AppLogger.error('数据库迁移集成失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       rethrow;
@@ -82,15 +85,17 @@ class DatabaseMigrationIntegration {
           for (var i = oldVersion; i < newVersion; i++) {
             if (i < migrations.length) {
               final sql = migrations[i];
-              AppLogger.debug('执行迁移脚本 ${i + 1}', tag: 'DatabaseMigrationIntegration', data: {
-                'migrationIndex': i + 1,
-                'sql': sql.substring(0, 100) + '...', // 只记录前100个字符
-              });
-              
+              AppLogger.debug('执行迁移脚本 ${i + 1}',
+                  tag: 'DatabaseMigrationIntegration',
+                  data: {
+                    'migrationIndex': i + 1,
+                    'sql': '${sql.substring(0, 100)}...', // 只记录前100个字符
+                  });
+
               try {
                 await db.execute(sql);
               } catch (e) {
-                AppLogger.error('迁移脚本执行失败', 
+                AppLogger.error('迁移脚本执行失败',
                     error: e,
                     tag: 'DatabaseMigrationIntegration',
                     data: {
@@ -115,10 +120,9 @@ class DatabaseMigrationIntegration {
       AppLogger.info('数据库迁移执行完成', tag: 'DatabaseMigrationIntegration', data: {
         'finalVersion': currentVersion,
       });
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库迁移执行失败', 
-          error: e, 
+      AppLogger.error('数据库迁移执行失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       rethrow;
@@ -126,15 +130,19 @@ class DatabaseMigrationIntegration {
   }
 
   /// 验证数据库版本
-  static Future<bool> validateDatabaseVersion(String databasePath, String expectedDataVersion) async {
+  static Future<bool> validateDatabaseVersion(
+      String databasePath, String expectedDataVersion) async {
     try {
-      final expectedDbVersion = DataVersionDefinition.getDatabaseVersion(expectedDataVersion);
-      
+      final expectedDbVersion =
+          DataVersionDefinition.getDatabaseVersion(expectedDataVersion);
+
       final dbFile = File(databasePath);
       if (!await dbFile.exists()) {
-        AppLogger.warning('数据库文件不存在', tag: 'DatabaseMigrationIntegration', data: {
-          'databasePath': databasePath,
-        });
+        AppLogger.warning('数据库文件不存在',
+            tag: 'DatabaseMigrationIntegration',
+            data: {
+              'databasePath': databasePath,
+            });
         return false;
       }
 
@@ -143,7 +151,7 @@ class DatabaseMigrationIntegration {
       await database.close();
 
       final isValid = currentVersion == expectedDbVersion;
-      
+
       AppLogger.info('数据库版本验证', tag: 'DatabaseMigrationIntegration', data: {
         'expectedDataVersion': expectedDataVersion,
         'expectedDbVersion': expectedDbVersion,
@@ -152,10 +160,9 @@ class DatabaseMigrationIntegration {
       });
 
       return isValid;
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库版本验证失败', 
-          error: e, 
+      AppLogger.error('数据库版本验证失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       return false;
@@ -175,10 +182,9 @@ class DatabaseMigrationIntegration {
       await database.close();
 
       return version;
-
     } catch (e, stackTrace) {
-      AppLogger.error('获取数据库版本失败', 
-          error: e, 
+      AppLogger.error('获取数据库版本失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       return 0;
@@ -194,8 +200,8 @@ class DatabaseMigrationIntegration {
       }
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final backupPath = '${databasePath}.backup_$timestamp';
-      
+      final backupPath = '$databasePath.backup_$timestamp';
+
       await dbFile.copy(backupPath);
 
       AppLogger.info('数据库备份完成', tag: 'DatabaseMigrationIntegration', data: {
@@ -204,10 +210,9 @@ class DatabaseMigrationIntegration {
       });
 
       return backupPath;
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库备份失败', 
-          error: e, 
+      AppLogger.error('数据库备份失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       rethrow;
@@ -215,7 +220,8 @@ class DatabaseMigrationIntegration {
   }
 
   /// 恢复数据库
-  static Future<void> restoreDatabase(String backupPath, String targetPath) async {
+  static Future<void> restoreDatabase(
+      String backupPath, String targetPath) async {
     try {
       final backupFile = File(backupPath);
       if (!await backupFile.exists()) {
@@ -228,10 +234,9 @@ class DatabaseMigrationIntegration {
         'backupPath': backupPath,
         'targetPath': targetPath,
       });
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库恢复失败', 
-          error: e, 
+      AppLogger.error('数据库恢复失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
       rethrow;
@@ -239,12 +244,13 @@ class DatabaseMigrationIntegration {
   }
 
   /// 清理数据库备份文件
-  static Future<void> cleanupDatabaseBackups(String databasePath, {int keepCount = 3}) async {
+  static Future<void> cleanupDatabaseBackups(String databasePath,
+      {int keepCount = 3}) async {
     try {
       final dbFile = File(databasePath);
       final directory = dbFile.parent;
       final baseName = path.basenameWithoutExtension(databasePath);
-      
+
       // 查找所有备份文件
       final backupFiles = <File>[];
       await for (final entity in directory.list()) {
@@ -254,27 +260,30 @@ class DatabaseMigrationIntegration {
       }
 
       // 按修改时间排序，保留最新的几个
-      backupFiles.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
-      
+      backupFiles
+          .sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+
       if (backupFiles.length > keepCount) {
         final filesToDelete = backupFiles.skip(keepCount);
         for (final file in filesToDelete) {
           await file.delete();
-          AppLogger.debug('删除旧备份文件', tag: 'DatabaseMigrationIntegration', data: {
-            'filePath': file.path,
-          });
+          AppLogger.debug('删除旧备份文件',
+              tag: 'DatabaseMigrationIntegration',
+              data: {
+                'filePath': file.path,
+              });
         }
       }
 
       AppLogger.info('数据库备份清理完成', tag: 'DatabaseMigrationIntegration', data: {
         'totalBackups': backupFiles.length,
         'kept': keepCount,
-        'deleted': backupFiles.length > keepCount ? backupFiles.length - keepCount : 0,
+        'deleted':
+            backupFiles.length > keepCount ? backupFiles.length - keepCount : 0,
       });
-
     } catch (e, stackTrace) {
-      AppLogger.error('数据库备份清理失败', 
-          error: e, 
+      AppLogger.error('数据库备份清理失败',
+          error: e,
           stackTrace: stackTrace,
           tag: 'DatabaseMigrationIntegration');
     }

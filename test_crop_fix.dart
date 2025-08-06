@@ -1,5 +1,3 @@
-import 'dart:io';
-
 void main() {
   print('=== 裁剪功能修复验证 ===');
 

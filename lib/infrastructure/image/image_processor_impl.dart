@@ -11,9 +11,8 @@ import 'package:xml/xml.dart';
 
 import '../../domain/models/character/detected_outline.dart';
 import '../../infrastructure/logging/logger.dart';
-import './dynamic_image_bounds.dart';
-import './image_transform_coordinator.dart';
 import './image_processor.dart';
+import './image_transform_coordinator.dart';
 
 /// 图片处理器实现
 class ImageProcessorImpl implements ImageProcessor {
@@ -164,43 +163,43 @@ class ImageProcessorImpl implements ImageProcessor {
     print('  - 输入图像: ${source.width}x${source.height}');
     print('  - 阈值: $threshold');
     print('  - 反转颜色: $invertColors');
-    
+
     final gray = img.grayscale(source);
     print('  - 灰度化完成');
-    
+
     // 🔍 调试：采样原始图像的像素值
     final originalSamples = <int>[];
     final processedSamples = <int>[];
-    
+
     for (int y = 0; y < gray.height; y++) {
       for (int x = 0; x < gray.width; x++) {
         final pixel = gray.getPixel(x, y);
         final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
-        
+
         // 采样部分像素用于调试
         if (originalSamples.length < 10 && (x + y) % (gray.width ~/ 5) == 0) {
           originalSamples.add(luminance.toInt());
         }
-        
+
         final newColor = luminance > threshold
             ? img.ColorRgb8(255, 255, 255)
             : img.ColorRgb8(0, 0, 0);
-            
+
         gray.setPixel(x, y, newColor);
-        
+
         // 采样处理后的像素
         if (processedSamples.length < 10 && (x + y) % (gray.width ~/ 5) == 0) {
           processedSamples.add(newColor.r.toInt());
         }
       }
     }
-    
+
     print('  - 原始亮度采样: ${originalSamples.join(', ')}');
     print('  - 处理后采样: ${processedSamples.join(', ')}');
 
     final result = invertColors ? img.invert(gray) : gray;
     print('  - 二值化处理完成，反转: $invertColors');
-    
+
     return result;
   }
 
@@ -868,7 +867,6 @@ class ImageProcessorImpl implements ImageProcessor {
   img.Image flipThenCropImage(
       img.Image sourceImage, Rect region, double rotation,
       {bool? flipHorizontal, bool? flipVertical}) {
-    
     // 调试日志
     AppLogger.info('flipThenCropImage called', data: {
       'sourceImageSize': '${sourceImage.width}x${sourceImage.height}',
@@ -877,11 +875,11 @@ class ImageProcessorImpl implements ImageProcessor {
       'flipVertical': flipVertical,
       'rotation': rotation,
     });
-    
+
     // 🔧 实现用户建议的动态边界逻辑
     // 关键理解：当前传入的region参数是相对于原始图像坐标系的
     // 我们需要正确处理这个坐标系统
-    
+
     // 如果没有任何变换，直接裁剪
     if (rotation == 0 && flipHorizontal != true && flipVertical != true) {
       AppLogger.info('No transforms applied, direct crop');
@@ -896,13 +894,15 @@ class ImageProcessorImpl implements ImageProcessor {
 
     // 🔧 步骤1: 创建变换协调器
     final coordinator = ImageTransformCoordinator(
-      originalImageSize: Size(sourceImage.width.toDouble(), sourceImage.height.toDouble()),
+      originalImageSize:
+          Size(sourceImage.width.toDouble(), sourceImage.height.toDouble()),
       rotation: rotation,
       flipHorizontal: flipHorizontal ?? false,
       flipVertical: flipVertical ?? false,
     );
-    
-    AppLogger.info('Transform coordinator created', data: coordinator.getDebugInfo());
+
+    AppLogger.info('Transform coordinator created',
+        data: coordinator.getDebugInfo());
 
     // 🔧 步骤2: 将原始坐标系的裁剪区域转换为动态边界坐标系
     final dynamicCropParams = coordinator.originalToDynamicCropParams(
@@ -911,68 +911,73 @@ class ImageProcessorImpl implements ImageProcessor {
       cropWidth: region.width,
       cropHeight: region.height,
     );
-    
+
     final dynamicCropRect = Rect.fromLTWH(
       dynamicCropParams['cropX']!,
       dynamicCropParams['cropY']!,
       dynamicCropParams['cropWidth']!,
       dynamicCropParams['cropHeight']!,
     );
-    
+
     AppLogger.info('Coordinate conversion completed', data: {
-      'originalRegion': '${region.left},${region.top},${region.width}x${region.height}',
-      'dynamicCropRect': '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
+      'originalRegion':
+          '${region.left},${region.top},${region.width}x${region.height}',
+      'dynamicCropRect':
+          '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
     });
 
     // 🔧 步骤3: 验证并调整动态边界中的裁剪区域
-    final clampedDynamicRect = coordinator.clampDynamicCropRect(dynamicCropRect);
-    
+    final clampedDynamicRect =
+        coordinator.clampDynamicCropRect(dynamicCropRect);
+
     AppLogger.info('Dynamic crop rect clamped', data: {
-      'beforeClamp': '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
-      'afterClamp': '${clampedDynamicRect.left},${clampedDynamicRect.top},${clampedDynamicRect.width}x${clampedDynamicRect.height}',
+      'beforeClamp':
+          '${dynamicCropRect.left},${dynamicCropRect.top},${dynamicCropRect.width}x${dynamicCropRect.height}',
+      'afterClamp':
+          '${clampedDynamicRect.left},${clampedDynamicRect.top},${clampedDynamicRect.width}x${clampedDynamicRect.height}',
     });
 
     // 🔧 步骤4: 创建结果图像
     final result = img.Image(
-      width: clampedDynamicRect.width.round(), 
-      height: clampedDynamicRect.height.round()
-    );
-    
+        width: clampedDynamicRect.width.round(),
+        height: clampedDynamicRect.height.round());
+
     AppLogger.info('Created result image', data: {
       'resultSize': '${result.width}x${result.height}',
     });
 
     // 🔧 步骤5: 对结果图像的每个像素进行映射
     final bounds = coordinator.bounds;
-    
+
     for (int resultY = 0; resultY < result.height; resultY++) {
       for (int resultX = 0; resultX < result.width; resultX++) {
-        
         // 5a. 计算该像素在动态边界中的坐标
         final dynamicX = clampedDynamicRect.left + resultX;
         final dynamicY = clampedDynamicRect.top + resultY;
-        
+
         // 5b. 将动态边界坐标映射到原始图像坐标
-        final originalPixel = bounds.mapDynamicToImagePixel(Offset(dynamicX, dynamicY));
-        
+        final originalPixel =
+            bounds.mapDynamicToImagePixel(Offset(dynamicX, dynamicY));
+
         // 5c. 检查原始图像坐标是否有效并采样
-        if (originalPixel.dx >= 0 && originalPixel.dx < sourceImage.width - 1 && 
-            originalPixel.dy >= 0 && originalPixel.dy < sourceImage.height - 1) {
-          
+        if (originalPixel.dx >= 0 &&
+            originalPixel.dx < sourceImage.width - 1 &&
+            originalPixel.dy >= 0 &&
+            originalPixel.dy < sourceImage.height - 1) {
           // 双线性插值获取像素值
           final x0 = originalPixel.dx.floor();
           final y0 = originalPixel.dy.floor();
           final x1 = x0 + 1;
           final y1 = y0 + 1;
-          
+
           final wx = originalPixel.dx - x0;
           final wy = originalPixel.dy - y0;
-          
+
           final p00 = sourceImage.getPixel(x0, y0);
           final p01 = sourceImage.getPixel(x0, y1);
           final p10 = sourceImage.getPixel(x1, y0);
           final p11 = sourceImage.getPixel(x1, y1);
-          
+
           final r = ((1 - wx) * (1 - wy) * p00.r +
                   wx * (1 - wy) * p10.r +
                   (1 - wx) * wy * p01.r +
@@ -993,13 +998,13 @@ class ImageProcessorImpl implements ImageProcessor {
                   (1 - wx) * wy * p01.a +
                   wx * wy * p11.a)
               .round();
-          
+
           result.setPixelRgba(resultX, resultY, r, g, b, a);
         }
         // 如果原始坐标超出范围，像素保持默认（透明）
       }
     }
-    
+
     AppLogger.info('Dynamic bounds mapping completed', data: {
       'appliedRotation': rotation,
       'appliedFlipH': flipHorizontal,
@@ -1008,7 +1013,7 @@ class ImageProcessorImpl implements ImageProcessor {
       'mappingMethod': 'coordinatedDynamicBounds',
       'coordinatorInfo': coordinator.toString(),
     });
-    
+
     return result;
   }
 

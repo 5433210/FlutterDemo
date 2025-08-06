@@ -20,9 +20,7 @@ class SortOption with _$SortOption {
   static const defaultOption = SortOption();
 
   const factory SortOption({
-    @Default(SortField.createTime)
-    @JsonKey(fromJson: _sortFieldFromJson, toJson: _sortFieldToJson)
-    SortField field,
+    @Default(SortField.createTime) @JsonKey(fromJson: _sortFieldFromJson, toJson: _sortFieldToJson) SortField field,
     @Default(true) bool descending,
   }) = _SortOption;
 

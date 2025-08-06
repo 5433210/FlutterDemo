@@ -51,10 +51,6 @@ class M3PracticeListItem extends ConsumerWidget {
     final String title = practice['title'] as String? ?? l10n.unknown;
     final int pageCount = practice['pageCount'] as int? ?? 0;
     final bool isFavorite = practice['isFavorite'] as bool? ?? false;
-    final List<String> tags = (practice['tags'] as List<dynamic>?)
-            ?.map((tag) => tag.toString())
-            .toList() ??
-        [];
 
     return Card(
       key: ValueKey('practice_item_$practiceId'),

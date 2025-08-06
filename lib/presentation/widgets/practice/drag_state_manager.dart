@@ -36,8 +36,6 @@ class DragConfig {
 /// 负责独立管理拖拽状态，分离拖拽预览和实际数据提交，
 /// 实现拖拽过程中的批量位置更新和性能优化
 class DragStateManager extends ChangeNotifier {
-  static const Duration _batchUpdateDelay = Duration(milliseconds: 16); // 60FPS
-
   static const Duration _notificationThrottle =
       Duration(milliseconds: 16); // 60FPS节流
   // 🚀 性能优化：节流通知机制
@@ -414,10 +412,8 @@ class DragStateManager extends ChangeNotifier {
     if (DragConfig.debugMode && _updateCount % 30 == 0) {
       final currentFps = _frameRates.isNotEmpty ? _frameRates.last : 0;
       if (currentFps < 50) {
-        EditPageLogger.performanceInfo('拖拽性能监控', data: {
-          'updateCount': _updateCount,
-          'currentFps': currentFps
-        });
+        EditPageLogger.performanceInfo('拖拽性能监控',
+            data: {'updateCount': _updateCount, 'currentFps': currentFps});
       }
     }
   }
@@ -511,24 +507,6 @@ class DragStateManager extends ChangeNotifier {
     }
   }
 
-  /// 提交最终位置
-  void _commitFinalPositions() {
-    if (_previewPositions.isEmpty) return;
-
-    final finalUpdates = <String, Map<String, dynamic>>{};
-
-    for (final entry in _previewPositions.entries) {
-      finalUpdates[entry.key] = {
-        'x': entry.value.dx,
-        'y': entry.value.dy,
-      };
-    }
-
-    if (finalUpdates.isNotEmpty && _onBatchUpdate != null) {
-      _onBatchUpdate!(finalUpdates);
-    }
-  }
-
   /// 处理批量更新
   void _processBatchUpdate() {
     if (_pendingUpdates.isNotEmpty && _onBatchUpdate != null) {
@@ -540,26 +518,6 @@ class DragStateManager extends ChangeNotifier {
 
       _onBatchUpdate!(batchData);
     }
-  }
-
-  /// 调度批量更新
-  void _scheduleBatchUpdate() {
-    // 取消之前的定时器
-    _batchUpdateTimer?.cancel();
-
-    // 准备批量更新数据
-    for (final elementId in _draggingElementIds) {
-      final previewPos = _previewPositions[elementId];
-      if (previewPos != null) {
-        _pendingUpdates[elementId] = {
-          'x': previewPos.dx,
-          'y': previewPos.dy,
-        };
-      }
-    }
-
-    // 设置新的定时器进行批量更新
-    _batchUpdateTimer = Timer(_batchUpdateDelay, _processBatchUpdate);
   }
 
   /// 🚀 节流通知方法 - 避免拖拽操作过于频繁地触发UI更新

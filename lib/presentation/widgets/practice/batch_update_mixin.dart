@@ -28,8 +28,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
   /// 设置状态变化分发器（用于分层状态管理）
   void setStateDispatcher(StateChangeDispatcher? dispatcher) {
     _stateDispatcher = dispatcher;
-    EditPageLogger.controllerDebug('设置状态分发器', 
-      data: {'hasDispatcher': dispatcher != null});
+    EditPageLogger.controllerDebug('设置状态分发器',
+        data: {'hasDispatcher': dispatcher != null});
   }
 
   /// 立即刷新所有待处理的更新
@@ -44,7 +44,7 @@ mixin BatchUpdateMixin on ChangeNotifier {
   }
 
   /// 批量更新单个元素属性
-  /// 
+  ///
   /// [elementId] 要更新的元素ID
   /// [properties] 要更新的属性映射
   /// [options] 批量更新选项
@@ -57,8 +57,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
 
     final updateOptions = options ?? const BatchUpdateOptions();
 
-    EditPageLogger.controllerDebug('批量更新元素属性', 
-      data: {'elementId': elementId, 'propertyCount': properties.length});
+    EditPageLogger.controllerDebug('批量更新元素属性',
+        data: {'elementId': elementId, 'propertyCount': properties.length});
 
     // 如果有待处理的更新，合并属性
     if (_pendingUpdates.containsKey(elementId)) {
@@ -102,8 +102,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
         Map<String, Map<String, dynamic>>.from(_pendingUpdates);
     _pendingUpdates.clear();
 
-    EditPageLogger.controllerInfo('批量更新提交', 
-      data: {'updateCount': updatesToCommit.length});
+    EditPageLogger.controllerInfo('批量更新提交',
+        data: {'updateCount': updatesToCommit.length});
 
     _executeBatchUpdate(updatesToCommit, options);
   }
@@ -113,9 +113,10 @@ mixin BatchUpdateMixin on ChangeNotifier {
     Map<String, Map<String, dynamic>> batchUpdates,
     BatchUpdateOptions options,
   ) {
-    if (state.currentPageIndex < 0 || state.currentPageIndex >= state.pages.length) {
-      EditPageLogger.controllerWarning('批量更新失败', 
-        data: {'reason': '无效页面索引', 'pageIndex': state.currentPageIndex});
+    if (state.currentPageIndex < 0 ||
+        state.currentPageIndex >= state.pages.length) {
+      EditPageLogger.controllerWarning('批量更新失败',
+          data: {'reason': '无效页面索引', 'pageIndex': state.currentPageIndex});
       return;
     }
 
@@ -201,7 +202,7 @@ mixin BatchUpdateMixin on ChangeNotifier {
         // 创建批量操作
         final batchOperation = BatchOperation(
           operations: operations,
-          operationDescription: '批量更新${updatedElementIds.length}个元素',
+          description: '批量更新${updatedElementIds.length}个元素',
         );
 
         undoRedoManager.addOperation(batchOperation);
@@ -226,13 +227,12 @@ mixin BatchUpdateMixin on ChangeNotifier {
         notifyListeners();
       }
 
-      EditPageLogger.controllerInfo('批量更新完成', 
-        data: {
-          'affectedElements': updatedElementIds.length,
-          'elementIds': updatedElementIds,
-          'hasUndoRecord': options.recordUndoOperation,
-          'hasStateDispatcher': _stateDispatcher != null
-        });
+      EditPageLogger.controllerInfo('批量更新完成', data: {
+        'affectedElements': updatedElementIds.length,
+        'elementIds': updatedElementIds,
+        'hasUndoRecord': options.recordUndoOperation,
+        'hasStateDispatcher': _stateDispatcher != null
+      });
     }
   }
-} 
+}

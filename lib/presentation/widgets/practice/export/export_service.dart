@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -97,7 +96,8 @@ class ExportService {
           // 验证文件是否已创建
           if (await file.exists()) {
             final fileSize = await file.length();
-            EditPageLogger.editPageDebug('图片文件保存成功: $fileName (大小: $fileSize 字节)');
+            EditPageLogger.editPageDebug(
+                '图片文件保存成功: $fileName (大小: $fileSize 字节)');
             exportedFiles.add(file.path);
           } else {
             EditPageLogger.fileOpsError('文件写入后不存在: $filePath');
@@ -160,7 +160,8 @@ class ExportService {
           : PdfPageFormat.a4;
       // 检查页面格式是否为横向
       final isLandscape = pageFormat.width > pageFormat.height;
-      EditPageLogger.editPageDebug('使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
+      EditPageLogger.editPageDebug(
+          '使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
 
       // 页面范围
       List<int> pageIndices = [];
@@ -184,7 +185,8 @@ class ExportService {
           final pageRange = extraParams['pageRange'] as String;
           pageIndices =
               _parsePageRange(pageRange, controller.state.pages.length);
-          EditPageLogger.editPageDebug('导出自定义范围页面: $pageRange => ${pageIndices.length}页');
+          EditPageLogger.editPageDebug(
+              '导出自定义范围页面: $pageRange => ${pageIndices.length}页');
         }
       } else {
         // 默认导出所有页面
@@ -253,7 +255,6 @@ class ExportService {
       // 为每个页面创建PDF页面
       for (int i = 0; i < pageImages.length; i++) {
         final image = pageImages[i];
-        final pageIndex = pageIndices[i < pageIndices.length ? i : 0];
 
         // 使用指定的页面格式，应用边距
         final effectivePageFormat = pageFormat.copyWith(
@@ -337,7 +338,8 @@ class ExportService {
         // 验证文件是否已创建
         if (await file.exists()) {
           final fileSize = await file.length();
-          EditPageLogger.fileOpsInfo('PDF文件保存成功: $pdfFileName (大小: $fileSize 字节)');
+          EditPageLogger.fileOpsInfo(
+              'PDF文件保存成功: $pdfFileName (大小: $fileSize 字节)');
           return file.path;
         } else {
           EditPageLogger.fileOpsError('PDF文件写入后不存在: $filePath');

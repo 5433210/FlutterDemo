@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 import 'element_cache_manager.dart';
 import 'element_snapshot.dart';
 import 'memory_manager.dart';
@@ -513,7 +511,8 @@ class AdvancedElementCacheManager extends ChangeNotifier {
         '冷缓存清理完成',
         data: {
           'cleanedCount': elementsToRemoveList.length,
-          'remainingColdItems': coldElements.length - elementsToRemoveList.length,
+          'remainingColdItems':
+              coldElements.length - elementsToRemoveList.length,
           'memoryPressure': _currentMemoryPressure.toString(),
         },
       );
@@ -694,14 +693,15 @@ class AdvancedElementCacheManager extends ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _minNotificationInterval) {
       _lastNotificationTime = now;
-      
+
       EditPageLogger.performanceInfo(
         '高级缓存管理器跳过智能通知',
         data: {
           'reason': 'avoid_global_ui_rebuild',
           'optimization': 'skip_intelligent_notification',
           'notificationType': 'cache_update',
-          'timeSinceLastNotification': now.difference(_lastNotificationTime).inMilliseconds,
+          'timeSinceLastNotification':
+              now.difference(_lastNotificationTime).inMilliseconds,
         },
       );
       // notifyListeners(); // 🚀 已禁用

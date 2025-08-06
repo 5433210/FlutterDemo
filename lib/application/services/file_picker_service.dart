@@ -1,7 +1,8 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 /// 文件选择器服务
 abstract class FilePickerService {
@@ -36,7 +37,6 @@ abstract class FilePickerService {
 
 /// 文件选择器服务的实现
 class FilePickerServiceImpl implements FilePickerService {
-  
   @override
   Future<String?> pickFile({
     String? dialogTitle,
@@ -55,7 +55,7 @@ class FilePickerServiceImpl implements FilePickerService {
         final file = result.files.first;
         return file.path;
       }
-      
+
       return null;
     } catch (e) {
       // 如果文件选择器出错，返回null
@@ -83,7 +83,7 @@ class FilePickerServiceImpl implements FilePickerService {
             .map((file) => file.path!)
             .toList();
       }
-      
+
       return null;
     } catch (e) {
       // 如果文件选择器出错，返回null
@@ -120,10 +120,10 @@ class FilePickerServiceImpl implements FilePickerService {
             defaultDir = await getTemporaryDirectory();
           }
         }
-        
+
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final fileName = suggestedName ?? 'export_$timestamp.zip';
-        
+
         if (defaultDir != null) {
           return path.join(defaultDir.path, fileName);
         } else {
@@ -161,11 +161,11 @@ class FilePickerServiceImpl implements FilePickerService {
             defaultDir = await getTemporaryDirectory();
           }
         }
-        
+
         return defaultDir?.path ?? 'Downloads';
       } catch (e) {
         return 'Downloads';
       }
     }
   }
-} 
+}

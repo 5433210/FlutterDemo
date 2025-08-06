@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../l10n/app_localizations.dart';
 
 /// 批量操作进度对话框
@@ -56,7 +57,8 @@ class _ProgressDialogState extends State<ProgressDialog> {
   }
 
   /// 更新进度
-  void updateProgress(double progress, String message, [Map<String, dynamic>? data]) {
+  void updateProgress(double progress, String message,
+      [Map<String, dynamic>? data]) {
     if (mounted) {
       setState(() {
         _progress = progress.clamp(0.0, 1.0);
@@ -94,7 +96,6 @@ class _ProgressDialogState extends State<ProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return PopScope(
@@ -105,7 +106,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
             if (_hasError)
               Icon(Icons.error, color: theme.colorScheme.error)
             else if (_isCompleted)
-              Icon(Icons.check_circle, color: Colors.green)
+              const Icon(Icons.check_circle, color: Colors.green)
             else
               const SizedBox(
                 width: 20,
@@ -133,7 +134,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
               if (!_hasError) ...[
                 LinearProgressIndicator(
                   value: _progress,
-                  backgroundColor: theme.colorScheme.surfaceVariant,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     _isCompleted ? Colors.green : theme.colorScheme.primary,
                   ),
@@ -210,7 +211,8 @@ class _ProgressDialogState extends State<ProgressDialog> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withOpacity(0.3),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -261,7 +263,9 @@ class _ProgressDialogState extends State<ProgressDialog> {
           if (_isCompleted || _hasError)
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_isCompleted),
-              child: Text(_isCompleted ? AppLocalizations.of(context).done : AppLocalizations.of(context).close),
+              child: Text(_isCompleted
+                  ? AppLocalizations.of(context).done
+                  : AppLocalizations.of(context).close),
             ),
         ],
       ),
@@ -280,7 +284,8 @@ class ProgressDialogController {
   }
 
   /// 更新进度
-  void updateProgress(double progress, String message, [Map<String, dynamic>? data]) {
+  void updateProgress(double progress, String message,
+      [Map<String, dynamic>? data]) {
     if (!_isDisposed && _state != null) {
       _state!.updateProgress(progress, message, data);
     }
@@ -332,7 +337,8 @@ class ControlledProgressDialog extends StatefulWidget {
   });
 
   @override
-  State<ControlledProgressDialog> createState() => _ControlledProgressDialogState();
+  State<ControlledProgressDialog> createState() =>
+      _ControlledProgressDialogState();
 
   /// 显示带控制器的进度对话框
   static Future<T?> show<T>({
@@ -365,7 +371,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   bool _isCompleted = false;
   bool _hasError = false;
   String? _errorMessage;
-  
+
   // 导入结果相关状态
   bool _showingResult = false;
   dynamic _importResult;
@@ -387,7 +393,8 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   }
 
   /// 更新进度
-  void updateProgress(double progress, String message, [Map<String, dynamic>? data]) {
+  void updateProgress(double progress, String message,
+      [Map<String, dynamic>? data]) {
     if (mounted) {
       setState(() {
         _progress = progress.clamp(0.0, 1.0);
@@ -443,7 +450,6 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return PopScope(
@@ -454,7 +460,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
             if (_hasError)
               Icon(Icons.error, color: theme.colorScheme.error)
             else if (_isCompleted)
-              Icon(Icons.check_circle, color: Colors.green)
+              const Icon(Icons.check_circle, color: Colors.green)
             else
               const SizedBox(
                 width: 20,
@@ -482,7 +488,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
               if (!_hasError) ...[
                 LinearProgressIndicator(
                   value: _progress,
-                  backgroundColor: theme.colorScheme.surfaceVariant,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     _isCompleted ? Colors.green : theme.colorScheme.primary,
                   ),
@@ -564,7 +570,8 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withOpacity(0.3),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -615,7 +622,9 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           if (_isCompleted || _hasError)
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_isCompleted),
-              child: Text(_isCompleted ? AppLocalizations.of(context).done : AppLocalizations.of(context).close),
+              child: Text(_isCompleted
+                  ? AppLocalizations.of(context).done
+                  : AppLocalizations.of(context).close),
             ),
         ],
       ),
@@ -626,7 +635,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   Widget _buildImportResultSection(BuildContext context, ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     final result = _importResult;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -642,7 +651,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           // 标题
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.check_circle_outline,
                 color: Colors.green,
                 size: 20,
@@ -658,22 +667,24 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // 统计信息
           _buildResultStatistics(context, theme, result),
-          
+
           // 冲突处理明细
-          if (result.details != null && result.details['conflictDetails'] != null) ...[
+          if (result.details != null &&
+              result.details['conflictDetails'] != null) ...[
             const SizedBox(height: 12),
-            _buildConflictDetails(context, theme, result.details['conflictDetails']),
+            _buildConflictDetails(
+                context, theme, result.details['conflictDetails']),
           ],
-          
+
           // 文件信息
           if (_importFilePath != null) ...[
             const SizedBox(height: 12),
             _buildFileInfo(context, theme),
           ],
-          
+
           // 错误和警告
           if (result.errors.isNotEmpty || result.warnings.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -685,22 +696,29 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   }
 
   /// 构建统计信息
-  Widget _buildResultStatistics(BuildContext context, ThemeData theme, dynamic result) {
+  Widget _buildResultStatistics(
+      BuildContext context, ThemeData theme, dynamic result) {
     final l10n = AppLocalizations.of(context);
-    
+
     return Column(
       children: [
-        _buildStatRow(l10n.importedWorks, result.importedWorks, Icons.article, theme),
-        _buildStatRow(l10n.importedCharacters, result.importedCharacters, Icons.text_fields, theme),
-        _buildStatRow(l10n.importedImages, result.importedImages, Icons.image, theme),
+        _buildStatRow(
+            l10n.importedWorks, result.importedWorks, Icons.article, theme),
+        _buildStatRow(l10n.importedCharacters, result.importedCharacters,
+            Icons.text_fields, theme),
+        _buildStatRow(
+            l10n.importedImages, result.importedImages, Icons.image, theme),
         if (result.skippedItems > 0)
-          _buildStatRow(l10n.skippedItems, result.skippedItems, Icons.skip_next, theme, isWarning: true),
+          _buildStatRow(
+              l10n.skippedItems, result.skippedItems, Icons.skip_next, theme,
+              isWarning: true),
       ],
     );
   }
 
   /// 构建统计行
-  Widget _buildStatRow(String label, int count, IconData icon, ThemeData theme, {bool isWarning = false}) {
+  Widget _buildStatRow(String label, int count, IconData icon, ThemeData theme,
+      {bool isWarning = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -733,11 +751,11 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   Widget _buildFileInfo(BuildContext context, ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     final fileName = _importFilePath!.split('\\').last.split('/').last;
-    
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -771,16 +789,17 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   }
 
   /// 构建错误和警告信息
-  Widget _buildErrorsAndWarnings(BuildContext context, ThemeData theme, dynamic result) {
+  Widget _buildErrorsAndWarnings(
+      BuildContext context, ThemeData theme, dynamic result) {
     final l10n = AppLocalizations.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (result.warnings.isNotEmpty) ...[
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.warning_amber,
                 size: 16,
                 color: Colors.orange,
@@ -797,20 +816,20 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           ),
           const SizedBox(height: 4),
           ...result.warnings.map<Widget>((warning) => Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 2),
-            child: Text(
-              '• $warning',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.orange[600],
-              ),
-            ),
-          )),
+                padding: const EdgeInsets.only(left: 24, bottom: 2),
+                child: Text(
+                  '• $warning',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.orange[600],
+                  ),
+                ),
+              )),
         ],
         if (result.errors.isNotEmpty) ...[
           if (result.warnings.isNotEmpty) const SizedBox(height: 8),
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 16,
                 color: Colors.red,
@@ -827,34 +846,44 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           ),
           const SizedBox(height: 4),
           ...result.errors.map<Widget>((error) => Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 2),
-            child: Text(
-              '• $error',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.red[600],
-              ),
-            ),
-          )),
+                padding: const EdgeInsets.only(left: 24, bottom: 2),
+                child: Text(
+                  '• $error',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.red[600],
+                  ),
+                ),
+              )),
         ],
       ],
     );
   }
 
   /// 构建冲突处理明细
-  Widget _buildConflictDetails(BuildContext context, ThemeData theme, Map<String, dynamic> conflictDetails) {
+  Widget _buildConflictDetails(BuildContext context, ThemeData theme,
+      Map<String, dynamic> conflictDetails) {
     final l10n = AppLocalizations.of(context);
-    
-    final skippedWorks = conflictDetails['skippedWorks'] as List<Map<String, dynamic>>? ?? [];
-    final overwrittenWorks = conflictDetails['overwrittenWorks'] as List<Map<String, dynamic>>? ?? [];
-    final skippedCharacters = conflictDetails['skippedCharacters'] as List<Map<String, dynamic>>? ?? [];
-    final overwrittenCharacters = conflictDetails['overwrittenCharacters'] as List<Map<String, dynamic>>? ?? [];
-    
+
+    final skippedWorks =
+        conflictDetails['skippedWorks'] as List<Map<String, dynamic>>? ?? [];
+    final overwrittenWorks =
+        conflictDetails['overwrittenWorks'] as List<Map<String, dynamic>>? ??
+            [];
+    final skippedCharacters =
+        conflictDetails['skippedCharacters'] as List<Map<String, dynamic>>? ??
+            [];
+    final overwrittenCharacters = conflictDetails['overwrittenCharacters']
+            as List<Map<String, dynamic>>? ??
+        [];
+
     // 如果没有任何冲突处理，则不显示
-    if (skippedWorks.isEmpty && overwrittenWorks.isEmpty && 
-        skippedCharacters.isEmpty && overwrittenCharacters.isEmpty) {
+    if (skippedWorks.isEmpty &&
+        overwrittenWorks.isEmpty &&
+        skippedCharacters.isEmpty &&
+        overwrittenCharacters.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -870,7 +899,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           // 标题
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.info_outline,
                 color: Colors.orange,
                 size: 18,
@@ -886,52 +915,52 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
             ],
           ),
           const SizedBox(height: 8),
-          
+
           // 跳过的作品
           if (skippedWorks.isNotEmpty) ...[
             _buildConflictSection(
-              l10n.skippedWorks, 
-              skippedWorks, 
-              theme, 
+              l10n.skippedWorks,
+              skippedWorks,
+              theme,
               Icons.skip_next,
               Colors.orange,
               isWork: true,
             ),
             const SizedBox(height: 8),
           ],
-          
+
           // 覆盖的作品
           if (overwrittenWorks.isNotEmpty) ...[
             _buildConflictSection(
-              l10n.overwrittenWorks, 
-              overwrittenWorks, 
-              theme, 
+              l10n.overwrittenWorks,
+              overwrittenWorks,
+              theme,
               Icons.refresh,
               Colors.blue,
               isWork: true,
             ),
             const SizedBox(height: 8),
           ],
-          
+
           // 跳过的集字
           if (skippedCharacters.isNotEmpty) ...[
             _buildConflictSection(
-              l10n.skippedCharacters, 
-              skippedCharacters, 
-              theme, 
+              l10n.skippedCharacters,
+              skippedCharacters,
+              theme,
               Icons.skip_next,
               Colors.orange,
               isWork: false,
             ),
             const SizedBox(height: 8),
           ],
-          
+
           // 覆盖的集字
           if (overwrittenCharacters.isNotEmpty) ...[
             _buildConflictSection(
-              l10n.overwrittenCharacters, 
-              overwrittenCharacters, 
-              theme, 
+              l10n.overwrittenCharacters,
+              overwrittenCharacters,
+              theme,
               Icons.refresh,
               Colors.blue,
               isWork: false,
@@ -943,14 +972,9 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
   }
 
   /// 构建冲突处理区域
-  Widget _buildConflictSection(
-    String title, 
-    List<Map<String, dynamic>> items, 
-    ThemeData theme, 
-    IconData icon,
-    Color color,
-    {required bool isWork}
-  ) {
+  Widget _buildConflictSection(String title, List<Map<String, dynamic>> items,
+      ThemeData theme, IconData icon, Color color,
+      {required bool isWork}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -969,24 +993,22 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
           ],
         ),
         const SizedBox(height: 4),
-        
+
         // 项目列表
         ...items.map((item) => Padding(
-          padding: const EdgeInsets.only(left: 20, bottom: 2),
-          child: Text(
-            isWork 
-              ? '• ${item['title']} (${item['author']})'
-              : '• ${item['character']} (${item['workTitle']})',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        )),
+              padding: const EdgeInsets.only(left: 20, bottom: 2),
+              child: Text(
+                isWork
+                    ? '• ${item['title']} (${item['author']})'
+                    : '• ${item['character']} (${item['workTitle']})',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            )),
       ],
     );
   }
 }
-
- 

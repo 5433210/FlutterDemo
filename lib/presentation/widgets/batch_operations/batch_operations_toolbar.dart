@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../l10n/app_localizations.dart';
 
-import '../../providers/batch_selection_provider.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../providers/batch_selection_provider.dart';
 
 /// 批量操作工具栏
 class BatchOperationsToolbar extends ConsumerWidget {
   /// 页面类型
   final PageType pageType;
-  
+
   /// 总项目数量
   final int totalItems;
-  
+
   /// 导入回调
   final VoidCallback? onImport;
-  
+
   /// 批量导入回调
   final VoidCallback? onBatchImport;
-  
+
   /// 导出回调
   final VoidCallback? onExport;
-  
+
   /// 删除回调
   final VoidCallback? onDelete;
-  
+
   /// 全选回调
   final VoidCallback? onSelectAll;
-  
+
   /// 取消选择回调
   final VoidCallback? onClearSelection;
 
@@ -45,7 +45,7 @@ class BatchOperationsToolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final batchState = ref.watch(batchSelectionProvider);
     final batchNotifier = ref.read(batchSelectionProvider.notifier);
     final operationsAvailable = ref.watch(batchOperationsAvailableProvider);
@@ -70,7 +70,8 @@ class BatchOperationsToolbar extends ConsumerWidget {
         ),
       ),
       child: batchState.isBatchMode
-          ? _buildBatchModeToolbar(context, l10n, batchState, batchNotifier, operationsAvailable, selectionSummary)
+          ? _buildBatchModeToolbar(context, l10n, batchState, batchNotifier,
+              operationsAvailable, selectionSummary)
           : _buildNormalModeToolbar(context, l10n, batchNotifier),
     );
   }
@@ -100,9 +101,9 @@ class BatchOperationsToolbar extends ConsumerWidget {
             icon: const Icon(Icons.file_upload),
             label: Text(l10n.import),
           ),
-        
+
         const SizedBox(width: 12),
-        
+
         // 批量模式按钮
         OutlinedButton.icon(
           onPressed: () {
@@ -119,15 +120,15 @@ class BatchOperationsToolbar extends ConsumerWidget {
           icon: const Icon(Icons.checklist),
           label: Text(l10n.batchMode),
         ),
-        
+
         const Spacer(),
-        
+
         // 项目计数
         Text(
           _getItemCountText(l10n),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
         ),
       ],
     );
@@ -164,9 +165,9 @@ class BatchOperationsToolbar extends ConsumerWidget {
                 icon: const Icon(Icons.file_upload),
                 label: Text(l10n.import),
               ),
-            
+
             const SizedBox(width: 12),
-            
+
             // 退出批量模式按钮
             OutlinedButton.icon(
               onPressed: () {
@@ -183,37 +184,39 @@ class BatchOperationsToolbar extends ConsumerWidget {
               icon: const Icon(Icons.close),
               label: Text(l10n.exitBatchMode),
             ),
-            
+
             const Spacer(),
-            
+
             // 项目计数
             Text(
               _getItemCountText(l10n),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // 第二行：选择状态和批量操作按钮
         Row(
           children: [
             // 选择状态文本
             Expanded(
               child: Text(
-                selectionSummary.isEmpty ? l10n.noItemsSelected : selectionSummary,
+                selectionSummary.isEmpty
+                    ? l10n.noItemsSelected
+                    : selectionSummary,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: batchState.hasSelection 
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      fontWeight: FontWeight.w500,
+                      color: batchState.hasSelection
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ),
-            
+
             // 批量操作按钮组
             if (batchState.hasSelection) ...[
               // 批量导入按钮（仅在有选择时显示）
@@ -233,33 +236,35 @@ class BatchOperationsToolbar extends ConsumerWidget {
                   icon: const Icon(Icons.file_download_outlined),
                   label: Text(l10n.batchImport),
                 ),
-              
+
               const SizedBox(width: 8),
-              
+
               // 全选按钮
               TextButton.icon(
-                onPressed: batchState.isAllSelected ? null : () {
-                  AppLogger.info(
-                    '点击全选按钮',
-                    data: {
-                      'pageType': pageType.name,
-                      'totalItems': totalItems,
-                      'currentSelected': batchState.selectedCount,
-                    },
-                    tag: 'batch_operations',
-                  );
-                  onSelectAll?.call();
-                },
+                onPressed: batchState.isAllSelected
+                    ? null
+                    : () {
+                        AppLogger.info(
+                          '点击全选按钮',
+                          data: {
+                            'pageType': pageType.name,
+                            'totalItems': totalItems,
+                            'currentSelected': batchState.selectedCount,
+                          },
+                          tag: 'batch_operations',
+                        );
+                        onSelectAll?.call();
+                      },
                 icon: Icon(
-                  batchState.isAllSelected 
-                      ? Icons.check_box 
+                  batchState.isAllSelected
+                      ? Icons.check_box
                       : Icons.check_box_outline_blank,
                 ),
                 label: Text(l10n.selectAll),
               ),
-              
+
               const SizedBox(width: 8),
-              
+
               // 取消选择按钮
               TextButton.icon(
                 onPressed: () {
@@ -276,41 +281,45 @@ class BatchOperationsToolbar extends ConsumerWidget {
                 icon: const Icon(Icons.clear),
                 label: Text(l10n.clearSelection),
               ),
-              
+
               const SizedBox(width: 8),
-              
+
               // 导出按钮
               TextButton.icon(
-                onPressed: operationsAvailable[BatchOperation.export] == true ? () {
-                  AppLogger.info(
-                    '点击导出按钮',
-                    data: {
-                      'pageType': pageType.name,
-                      'selectedCount': batchState.selectedCount,
-                    },
-                    tag: 'batch_operations',
-                  );
-                  onExport?.call();
-                } : null,
+                onPressed: operationsAvailable[BatchOperation.export] == true
+                    ? () {
+                        AppLogger.info(
+                          '点击导出按钮',
+                          data: {
+                            'pageType': pageType.name,
+                            'selectedCount': batchState.selectedCount,
+                          },
+                          tag: 'batch_operations',
+                        );
+                        onExport?.call();
+                      }
+                    : null,
                 icon: const Icon(Icons.file_download),
                 label: Text(l10n.export),
               ),
-              
+
               const SizedBox(width: 8),
-              
+
               // 删除按钮
               TextButton.icon(
-                onPressed: operationsAvailable[BatchOperation.delete] == true ? () {
-                  AppLogger.info(
-                    '点击删除按钮',
-                    data: {
-                      'pageType': pageType.name,
-                      'selectedCount': batchState.selectedCount,
-                    },
-                    tag: 'batch_operations',
-                  );
-                  onDelete?.call();
-                } : null,
+                onPressed: operationsAvailable[BatchOperation.delete] == true
+                    ? () {
+                        AppLogger.info(
+                          '点击删除按钮',
+                          data: {
+                            'pageType': pageType.name,
+                            'selectedCount': batchState.selectedCount,
+                          },
+                          tag: 'batch_operations',
+                        );
+                        onDelete?.call();
+                      }
+                    : null,
                 icon: const Icon(Icons.delete),
                 label: Text(l10n.delete),
                 style: TextButton.styleFrom(
@@ -356,16 +365,16 @@ class BatchOperationsToolbar extends ConsumerWidget {
 class BatchOperationsConfig {
   /// 是否显示导入按钮
   final bool showImport;
-  
+
   /// 是否显示批量导入按钮
   final bool showBatchImport;
-  
+
   /// 是否显示导出按钮
   final bool showExport;
-  
+
   /// 是否显示删除按钮
   final bool showDelete;
-  
+
   /// 自定义按钮列表
   final List<BatchOperationButton> customButtons;
 
@@ -382,16 +391,16 @@ class BatchOperationsConfig {
 class BatchOperationButton {
   /// 按钮图标
   final IconData icon;
-  
+
   /// 按钮文本
   final String label;
-  
+
   /// 点击回调
   final VoidCallback onPressed;
-  
+
   /// 是否需要选择项目才能启用
   final bool requiresSelection;
-  
+
   /// 按钮颜色
   final Color? color;
 
@@ -402,4 +411,4 @@ class BatchOperationButton {
     this.requiresSelection = true,
     this.color,
   });
-} 
+}

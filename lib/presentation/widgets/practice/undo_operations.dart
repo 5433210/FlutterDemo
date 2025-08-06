@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 
 /// 抽象撤销操作接口
 abstract class UndoableOperation {
@@ -140,15 +137,12 @@ class ElementPropertyOperation implements UndoableOperation {
 class BatchOperation implements UndoableOperation {
   final List<UndoableOperation> operations;
   @override
-  final String operationDescription;
+  final String description;
 
   BatchOperation({
     required this.operations,
-    required this.operationDescription,
+    required this.description,
   });
-
-  @override
-  String get description => operationDescription;
 
   @override
   void execute() {
@@ -156,11 +150,11 @@ class BatchOperation implements UndoableOperation {
       '执行批量操作',
       data: {
         'operationCount': operations.length,
-        'description': operationDescription,
+        'description': description,
         'operation': 'batch_execute',
       },
     );
-    
+
     for (final operation in operations) {
       operation.execute();
     }
@@ -172,11 +166,11 @@ class BatchOperation implements UndoableOperation {
       '撤销批量操作',
       data: {
         'operationCount': operations.length,
-        'description': operationDescription,
+        'description': description,
         'operation': 'batch_undo',
       },
     );
-    
+
     for (final operation in operations.reversed) {
       operation.undo();
     }
@@ -210,7 +204,7 @@ class ElementTranslationOperation implements UndoableOperation {
         'operation': 'element_translation_execute',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], newPositions[i]);
     }
@@ -226,7 +220,7 @@ class ElementTranslationOperation implements UndoableOperation {
         'operation': 'element_translation_undo_start',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       EditPageLogger.controllerDebug(
         '🔧 DEBUG: 撤销单个元素移动',
@@ -238,7 +232,7 @@ class ElementTranslationOperation implements UndoableOperation {
       );
       updateElement(elementIds[i], oldPositions[i]);
     }
-    
+
     EditPageLogger.controllerDebug(
       '🔧 DEBUG: 元素移动撤销操作完成',
       data: {
@@ -276,7 +270,7 @@ class ResizeElementOperation implements UndoableOperation {
         'operation': 'resize_element_execute',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], newSizes[i]);
     }
@@ -292,7 +286,7 @@ class ResizeElementOperation implements UndoableOperation {
         'operation': 'resize_element_undo_start',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       EditPageLogger.controllerDebug(
         '🔧 DEBUG: 撤销单个元素调整大小',
@@ -304,7 +298,7 @@ class ResizeElementOperation implements UndoableOperation {
       );
       updateElement(elementIds[i], oldSizes[i]);
     }
-    
+
     EditPageLogger.controllerDebug(
       '🔧 DEBUG: 元素调整大小撤销操作完成',
       data: {
@@ -343,7 +337,7 @@ class ElementRotationOperation implements UndoableOperation {
         'operation': 'rotation_execute',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], {'rotation': newRotations[i]});
     }
@@ -360,7 +354,7 @@ class ElementRotationOperation implements UndoableOperation {
         'operation': 'rotation_undo',
       },
     );
-    
+
     for (int i = 0; i < elementIds.length; i++) {
       updateElement(elementIds[i], {'rotation': oldRotations[i]});
     }
@@ -395,7 +389,7 @@ class GroupElementRotationOperation implements UndoableOperation {
         'operation': 'group_rotation_execute',
       },
     );
-    
+
     // 恢复整个组合元素的状态，包括子元素
     updateElement(groupElementId, newGroupState);
   }
@@ -411,17 +405,20 @@ class GroupElementRotationOperation implements UndoableOperation {
         'operation': 'group_rotation_undo',
       },
     );
-    
+
     // 🔧 添加详细的状态调试信息
     if (oldGroupState['type'] == 'group') {
       final content = oldGroupState['content'] as Map<String, dynamic>?;
       final children = content?['children'] as List<dynamic>? ?? [];
-      
+
       EditPageLogger.controllerDebug('🔧 恢复组合元素完整状态', data: {
         'groupElementId': groupElementId,
         'restoredRotation': oldGroupState['rotation'],
         'restoredPosition': {'x': oldGroupState['x'], 'y': oldGroupState['y']},
-        'restoredSize': {'width': oldGroupState['width'], 'height': oldGroupState['height']},
+        'restoredSize': {
+          'width': oldGroupState['width'],
+          'height': oldGroupState['height']
+        },
         'restoredChildrenCount': children.length,
         'restoredChildrenDetails': children.map((child) {
           final childMap = child as Map<String, dynamic>;
@@ -435,7 +432,7 @@ class GroupElementRotationOperation implements UndoableOperation {
         'operation': 'detailed_undo_state_restore',
       });
     }
-    
+
     // 恢复整个组合元素的状态，包括子元素
     updateElement(groupElementId, oldGroupState);
   }
@@ -679,11 +676,11 @@ class GroupElementsOperation implements UndoableOperation {
         'operation': 'group_elements_execute',
       },
     );
-    
+
     // 删除原来的元素
     final elementIds = elements.map((e) => e['id'] as String).toList();
     removeElements(elementIds);
-    
+
     // 添加组合元素
     addElement(groupElement);
   }
@@ -698,10 +695,10 @@ class GroupElementsOperation implements UndoableOperation {
         'operation': 'group_elements_undo',
       },
     );
-    
+
     // 删除组合元素
     removeElement(groupElement['id'] as String);
-    
+
     // 恢复原来的元素
     for (final element in elements) {
       addElement(element);
@@ -739,10 +736,10 @@ class UngroupElementOperation implements UndoableOperation {
         'operation': 'ungroup_element_execute',
       },
     );
-    
+
     // 删除组合元素
     removeElement(groupElement['id'] as String);
-    
+
     // 添加子元素
     addElements(childElements);
   }
@@ -757,13 +754,13 @@ class UngroupElementOperation implements UndoableOperation {
         'operation': 'ungroup_element_undo',
       },
     );
-    
+
     // 删除子元素
     final childIds = childElements.map((e) => e['id'] as String).toList();
     for (final id in childIds) {
       removeElement(id);
     }
-    
+
     // 恢复组合元素
     addElement(groupElement);
   }
@@ -796,7 +793,7 @@ class FormatPainterOperation implements UndoableOperation {
         'operation': 'format_painter_execute',
       },
     );
-    
+
     for (int i = 0; i < targetElementIds.length; i++) {
       updateElement(targetElementIds[i], newPropertiesList[i]);
     }
@@ -812,7 +809,7 @@ class FormatPainterOperation implements UndoableOperation {
         'operation': 'format_painter_undo',
       },
     );
-    
+
     for (int i = 0; i < targetElementIds.length; i++) {
       updateElement(targetElementIds[i], oldPropertiesList[i]);
     }
@@ -1056,4 +1053,4 @@ class DeletePageOperation implements UndoableOperation {
       setCurrentPageIndex(oldCurrentPageIndex);
     }
   }
-} 
+}

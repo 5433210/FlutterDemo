@@ -47,7 +47,6 @@ class SaveResult {
 /// 优化的保存服务
 /// 解决保存过程中的用户体验问题
 class OptimizedSaveService {
-  static const Duration _saveTimeout = Duration(seconds: 30);
   static const Size _thumbnailSize = Size(300, 400);
 
   /// 优化的保存字帖方法
@@ -437,22 +436,6 @@ class OptimizedSaveService {
             'error': e.toString(),
           },
         );
-      }
-
-      // 2. 清理可能的自定义缓存键
-      final cacheKeys = [
-        'file:practices/$practiceId/cover/thumbnail.jpg',
-        'thumbnail_$practiceId',
-        'practice_${practiceId}_thumbnail',
-        practiceId,
-      ];
-
-      for (final key in cacheKeys) {
-        try {
-          // 简化缓存键清理，不需要详细日志
-        } catch (e) {
-          // 忽略清理错误
-        }
       }
 
       // 3. 强制清理Live Images（最有效的方法）

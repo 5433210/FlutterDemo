@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
-import '../../../widgets/practice/element_snapshot.dart';
 import 'drag_operation_manager.dart';
 
 /// 拖拽预览图层组件
@@ -63,15 +62,16 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
 
         // 🚀 优化：减少拖拽预览层构建的重复日志
         // 只在拖拽状态发生变化或首次构建时记录
-        final stateChanged = isDragPreviewActive != _lastIsDragPreviewActive || 
-                           isDragging != _lastIsDragging;
-        
+        final stateChanged = isDragPreviewActive != _lastIsDragPreviewActive ||
+            isDragging != _lastIsDragging;
+
         if (stateChanged) {
           EditPageLogger.canvasDebug('DragPreviewLayer状态变化', data: {
             'isDragPreviewActive': isDragPreviewActive,
             'isDragging': isDragging,
             'draggingElementCount': draggingElementIds.length,
-            'stateTransition': '${_lastIsDragPreviewActive}->${isDragPreviewActive}, ${_lastIsDragging}->${isDragging}',
+            'stateTransition':
+                '$_lastIsDragPreviewActive->$isDragPreviewActive, $_lastIsDragging->$isDragging',
           });
           _lastIsDragPreviewActive = isDragPreviewActive;
           _lastIsDragging = isDragging;
@@ -97,7 +97,8 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
           EditPageLogger.canvasDebug('DragPreviewLayer构建预览层', data: {
             'draggingElementCount': draggingElementIds.length,
             'isSingleSelection': isSingleSelection,
-            'elementCountChanged': '${_lastDraggingCount}->${draggingElementIds.length}',
+            'elementCountChanged':
+                '$_lastDraggingCount->${draggingElementIds.length}',
           });
           _lastDraggingCount = draggingElementIds.length;
         }
@@ -271,111 +272,6 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     widget.dragStateManager.addListener(_handleDragStateChange);
   }
 
-  /// 构建默认预览样式
-  Widget _buildDefaultPreview(
-      String elementId, Offset position, Map<String, dynamic> element) {
-    // 提取元素属性
-    final elementWidth = (element['width'] as num).toDouble();
-    final elementHeight = (element['height'] as num).toDouble();
-    final elementRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-    final elementType = element['type'] as String;
-
-    // 确保预览尺寸不小于最小值，确保视觉可见性
-    final displayWidth = math.max(elementWidth, 20.0);
-    final displayHeight = math.max(elementHeight, 20.0);
-
-    // 为超小元素添加更明显的视觉反馈
-    final bool isVerySmall = elementWidth < 30.0 || elementHeight < 30.0;
-    final bool isExtremelySmall = elementWidth < 15.0 || elementHeight < 15.0;
-
-    // 根据元素尺寸调整边框宽度和透明度
-    final borderWidth = isExtremelySmall ? 3.0 : (isVerySmall ? 2.5 : 1.5);
-    final opacity = isExtremelySmall ? 0.2 : 0.1;
-
-    // 根据元素类型构建不同的预览样式
-    Widget previewContent;
-
-    switch (elementType) {
-      case 'text':
-        // 简化的文本预览
-        previewContent = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: borderWidth),
-            color: Colors.blue.withOpacity(opacity),
-          ),
-          child: Center(
-            child: Icon(
-              Icons.text_fields,
-              color: Colors.blue,
-              size: isVerySmall
-                  ? math.min(displayWidth, displayHeight) * 0.6
-                  : null,
-            ),
-          ),
-        );
-        break;
-
-      case 'image':
-        // 简化的图片预览
-        previewContent = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.green, width: borderWidth),
-            color: Colors.green.withOpacity(opacity),
-          ),
-          child: Center(
-            child: Icon(
-              Icons.image,
-              color: Colors.green,
-              size: isVerySmall
-                  ? math.min(displayWidth, displayHeight) * 0.6
-                  : null,
-            ),
-          ),
-        );
-        break;
-
-      case 'collection':
-        // 简化的集字预览
-        previewContent = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.orange, width: borderWidth),
-            color: Colors.orange.withOpacity(0.1),
-          ),
-          child: const Center(
-            child: Icon(Icons.grid_on, color: Colors.orange),
-          ),
-        );
-        break;
-
-      default:
-        // 默认预览样式
-        previewContent = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.purple, width: borderWidth),
-            color: Colors.purple.withOpacity(0.1),
-          ),
-        );
-    }
-
-    // 应用位置和旋转
-    return Positioned(
-      left: position.dx,
-      top: position.dy,
-      child: Transform.rotate(
-        angle: elementRotation * 3.14159265359 / 180,
-        child: previewContent,
-      ),
-    );
-  }
-
   /// 🔧 新增：构建基于完整属性的预览（支持resize和rotate）
   Widget _buildFullPropertyPreview(
       String elementId, Map<String, dynamic> properties) {
@@ -490,94 +386,6 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
   }
 
   /// 使用ElementSnapshot构建高性能预览
-  Widget _buildSnapshotPreview(String elementId, ElementSnapshot snapshot) {
-    // 从快照获取位置
-    final x = (snapshot.properties['x'] as num).toDouble();
-    final y = (snapshot.properties['y'] as num).toDouble();
-    final position = Offset(x, y);
-
-    // 如果快照有缓存的Widget，优先使用它
-    if (snapshot.cachedWidget != null) {
-      return Positioned(
-        left: position.dx,
-        top: position.dy,
-        child: snapshot.cachedWidget!,
-      );
-    }
-
-    // 根据元素类型构建不同的预览
-    final elementType = snapshot.elementType;
-    final width = snapshot.size.width;
-    final height = snapshot.size.height;
-
-    // 确保预览尺寸不小于最小值，确保视觉可见性
-    final displayWidth = math.max(width, 20.0);
-    final displayHeight = math.max(height, 20.0);
-
-    // 为超小元素添加视觉反馈
-    final bool isVerySmall = width < 30.0 || height < 30.0;
-    final borderWidth = isVerySmall ? 2.5 : 1.5;
-
-    Widget child;
-    switch (elementType) {
-      case 'text':
-        final text = snapshot.properties['text'] as String? ?? '';
-        final fontSize =
-            (snapshot.properties['fontSize'] as num?)?.toDouble() ?? 14.0;
-        child = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(
-                color: Colors.blue.withOpacity(0.7), width: borderWidth),
-            color: Colors.white.withOpacity(0.9),
-          ),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            text,
-            style: TextStyle(fontSize: fontSize),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-          ),
-        );
-        break;
-      case 'image':
-        child = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(
-                color: Colors.green.withOpacity(0.7), width: borderWidth),
-            color: Colors.white.withOpacity(0.9),
-          ),
-          child: const Icon(Icons.image, color: Colors.green),
-        );
-        break;
-      default:
-        child = Container(
-          width: displayWidth,
-          height: displayHeight,
-          decoration: BoxDecoration(
-            border: Border.all(
-                color: Colors.purple.withOpacity(0.7), width: borderWidth),
-            color: Colors.white.withOpacity(0.9),
-          ),
-          child: Center(
-            child: Text(
-              elementType,
-              style: const TextStyle(color: Colors.purple),
-            ),
-          ),
-        );
-    }
-
-    return Positioned(
-      left: position.dx,
-      top: position.dy,
-      child: child,
-    );
-  }
 
   /// 处理拖拽状态变化
   void _handleDragStateChange() {

@@ -209,12 +209,6 @@ void main() {
       );
     });
 
-    void tearDown() {
-      rebuildManager.dispose();
-      cacheManager.dispose();
-      dirtyTracker.dispose();
-    }
-
     test('should optimize rebuild efficiency in realistic scenario', () {
       // Simulate a canvas with 10 elements
       final elementIds = List.generate(10, (i) => 'element_$i');

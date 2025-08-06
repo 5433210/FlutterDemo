@@ -346,7 +346,6 @@ mixin CanvasControlPointHandlers {
         _originalElementProperties = null;
         EditPageLogger.canvasDebug('旋转操作完成', data: {'elementId': elementId});
         return;
-        return;
       }
 
       // 处理调整大小控制点
@@ -389,12 +388,6 @@ mixin CanvasControlPointHandlers {
         _isResizing = false;
         _originalElementProperties = null;
         return;
-
-        // UI更新已由updateElementPropertiesWithoutUndo处理
-
-        _isResizing = false;
-        _originalElementProperties = null;
-        EditPageLogger.canvasDebug('调整大小操作完成', data: {'elementId': elementId});
       }
     } catch (e, stackTrace) {
       EditPageLogger.editPageError(
@@ -772,8 +765,9 @@ mixin CanvasControlPointHandlers {
     if (isDragging != null) _isDragging = isDragging;
     if (isResizing != null) _isResizing = isResizing;
     if (isRotating != null) _isRotating = isRotating;
-    if (originalElementProperties != null)
+    if (originalElementProperties != null) {
       _originalElementProperties = originalElementProperties;
+    }
     if (isReadyForDrag != null) _isReadyForDrag = isReadyForDrag;
     // dragStart 和 elementStartPosition 可以被子类使用
   }
@@ -833,11 +827,12 @@ mixin CanvasControlPointHandlers {
                 '(${currentProperties['x']}, ${currentProperties['y']})',
             'size':
                 '${currentProperties['width']}x${currentProperties['height']}',
-          });      // 🚀 修改：使用实时参考线生成方法
+          }); // 🚀 修改：使用实时参考线生成方法
       GuidelineManager.instance.updateGuidelinesLive(
         elementId: elementId,
         draftPosition: Offset(currentProperties['x']!, currentProperties['y']!),
-        elementSize: Size(currentProperties['width']!, currentProperties['height']!),
+        elementSize:
+            Size(currentProperties['width']!, currentProperties['height']!),
       );
 
       // 获取生成的参考线

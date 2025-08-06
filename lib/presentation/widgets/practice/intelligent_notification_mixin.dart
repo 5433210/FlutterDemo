@@ -36,9 +36,11 @@ mixin IntelligentNotificationMixin {
 
         // ✅ 检查是否所有预期的UI组件都有监听器
         // 如果有UI组件没有注册监听器，则需要回退到传统通知
-        bool hasAllUIComponentListeners = _hasAllUIComponentListeners(affectedUIComponents);
-        
-        if (hasAllUIComponentListeners || (affectedUIComponents?.isEmpty ?? true)) {
+        bool hasAllUIComponentListeners =
+            _hasAllUIComponentListeners(affectedUIComponents);
+
+        if (hasAllUIComponentListeners ||
+            (affectedUIComponents?.isEmpty ?? true)) {
           dispatchSuccessful = true;
           // 成功使用智能分发，不需要详细日志
         } else {
@@ -72,25 +74,6 @@ mixin IntelligentNotificationMixin {
   void throttledNotifyListeners(
       {Duration delay = const Duration(milliseconds: 16)});
 
-  /// 检查是否有注册的监听器
-  bool _hasRegisteredListeners(
-    List<String>? affectedLayers,
-    List<String>? affectedUIComponents,
-    List<String>? affectedElements,
-  ) {
-    try {
-      // 使用智能分发器的公共方法检查监听器
-      return intelligentDispatcher.hasRegisteredListeners(
-        affectedLayers: affectedLayers,
-        affectedUIComponents: affectedUIComponents,
-        affectedElements: affectedElements,
-      );
-    } catch (e) {
-      // 如果检查失败，假设没有监听器
-      return false;
-    }
-  }
-
   /// 检查所有UI组件是否都有监听器
   bool _hasAllUIComponentListeners(List<String>? affectedUIComponents) {
     if (affectedUIComponents == null || affectedUIComponents.isEmpty) {
@@ -100,7 +83,8 @@ mixin IntelligentNotificationMixin {
     try {
       // 检查每个UI组件是否都有监听器
       for (String component in affectedUIComponents) {
-        bool hasListener = intelligentDispatcher.hasUIComponentListener(component);
+        bool hasListener =
+            intelligentDispatcher.hasUIComponentListener(component);
         if (!hasListener) {
           return false;
         }

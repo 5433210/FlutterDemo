@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/services/file_picker_service.dart';
 import '../../../domain/models/import_export/import_data_model.dart';
-import '../../../domain/models/import_export/import_export_compatibility.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/batch_selection_provider.dart';
@@ -33,12 +32,6 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
   ConflictResolution _conflictResolution = ConflictResolution.skip; // 默认跳过
   ImportDataModel? _previewData;
   bool _isLoading = false;
-
-  // 版本兼容性信息
-  ImportExportCompatibility? _compatibility;
-  String? _sourceVersion;
-  String? _targetVersion;
-  String? _compatibilityMessage;
 
   @override
   void initState() {
@@ -512,7 +505,7 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
 
   /// 处理导入
   void _handleImport() {
-    final l10n = AppLocalizations.of(context);
+    AppLocalizations.of(context);
 
     // 创建简化的导入选项
     final options = ImportOptions(

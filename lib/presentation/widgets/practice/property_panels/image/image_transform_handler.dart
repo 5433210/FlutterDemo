@@ -81,8 +81,6 @@ mixin ImageTransformHandler {
       content['cropWidth'] = cropWidth;
       content['cropHeight'] = cropHeight;
 
-      final bool hasOtherTransforms =
-          flipHorizontal || flipVertical || contentRotation != 0.0;
       final bool invalidCropping = cropX < 0 ||
           cropY < 0 ||
           cropX + cropWidth > imageSize.width ||

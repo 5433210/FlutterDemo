@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -20,7 +19,7 @@ class ElementUtils {
     // 🚀 优化：减少重复的像素尺寸计算日志
     final calculationKey = '${width}_${height}_${orientation}_$dpi';
     _sizeCalculationCount++;
-    
+
     if (_lastSizeCalculationKey != calculationKey) {
       EditPageLogger.canvasDebug('页面像素尺寸计算', data: {
         'width': width,
@@ -28,7 +27,9 @@ class ElementUtils {
         'orientation': orientation,
         'dpi': dpi,
         'calculationCount': _sizeCalculationCount,
-        'changeType': _lastSizeCalculationKey == null ? 'first_calculation' : 'page_changed',
+        'changeType': _lastSizeCalculationKey == null
+            ? 'first_calculation'
+            : 'page_changed',
         'optimization': 'pixel_size_calculation_optimized'
       });
       _lastSizeCalculationKey = calculationKey;
@@ -50,14 +51,15 @@ class ElementUtils {
     final heightPixels = (heightInches * dpi).round().toDouble();
 
     // 🚀 优化：只在首次或参数变化时记录计算结果
-    if (_lastSizeCalculationKey == calculationKey && _sizeCalculationCount <= 1) {
+    if (_lastSizeCalculationKey == calculationKey &&
+        _sizeCalculationCount <= 1) {
       EditPageLogger.canvasDebug('像素尺寸计算结果', data: {
         'widthPixels': widthPixels,
         'heightPixels': heightPixels,
         'optimization': 'first_result_logged'
       });
     }
-    
+
     return Size(widthPixels, heightPixels);
   }
 
@@ -104,9 +106,8 @@ class ElementUtils {
       // Parse the color
       return Color(int.parse(hexColor, radix: 16));
     } catch (e) {
-      EditPageLogger.editPageError('颜色解析失败', data: {
-        'hexColor': hexColor
-      }, error: e);
+      EditPageLogger.editPageError('颜色解析失败',
+          data: {'hexColor': hexColor}, error: e);
       return Colors.white; // Default to white on error
     }
   }

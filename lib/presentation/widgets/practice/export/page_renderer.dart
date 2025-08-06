@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../../infrastructure/logging/logger.dart';
 import '../practice_edit_controller.dart';
 
 /// 页面渲染器
@@ -91,7 +90,8 @@ class PageRenderer {
         data: {
           'successfulPages': pageImages.length,
           'totalPages': totalPages,
-          'successRate': '${(pageImages.length / totalPages * 100).toStringAsFixed(1)}%',
+          'successRate':
+              '${(pageImages.length / totalPages * 100).toStringAsFixed(1)}%',
         },
       );
       return pageImages;
@@ -117,7 +117,6 @@ class PageRenderer {
   Future<Uint8List?> renderSinglePage(int pageIndex,
       {double pixelRatio = 1.0}) async {
     try {
-
       // 检查页面索引是否有效
       if (pageIndex < 0 || pageIndex >= controller.state.pages.length) {
         EditPageLogger.rendererError(

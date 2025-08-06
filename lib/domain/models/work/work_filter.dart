@@ -58,32 +58,25 @@ class WorkFilter with _$WorkFilter {
   const factory WorkFilter({
     /// 搜索关键字
     String? keyword,    /// 作品风格
-    @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-    String? style,
+    @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson) String? style,
 
     /// 创作工具
-    @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-    String? tool,
+    @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson) String? tool,
 
     /// 标签
     @Default([]) List<String> tags,
 
     /// 创作日期区间
-    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
-    DateTimeRange? dateRange,
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson) DateTimeRange? dateRange,
 
     /// 创建时间区间
-    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
-    DateTimeRange? createTimeRange,
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson) DateTimeRange? createTimeRange,
 
     /// 修改时间区间
-    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
-    DateTimeRange? updateTimeRange,
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson) DateTimeRange? updateTimeRange,
 
     /// 日期预设
-    @Default(DateRangePreset.all)
-    @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
-    DateRangePreset datePreset,
+    @Default(DateRangePreset.all) @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson) DateRangePreset datePreset,
 
     /// 排序选项
     @Default(SortOption()) SortOption sortOption,

@@ -5,31 +5,31 @@ library version_compatibility;
 class VersionCompatibilityInfo {
   /// 版本号
   final String version;
-  
+
   /// 最小兼容版本
   final String? minCompatibleVersion;
-  
-  /// 最大兼容版本  
+
+  /// 最大兼容版本
   final String? maxCompatibleVersion;
-  
+
   /// API兼容性级别
   final CompatibilityLevel apiCompatibility;
-  
+
   /// 数据兼容性级别
   final CompatibilityLevel dataCompatibility;
-  
+
   /// 兼容性说明
   final String? description;
-  
+
   /// 不兼容的功能列表
   final List<String> incompatibleFeatures;
-  
+
   /// 迁移指导
   final List<MigrationStep> migrationSteps;
-  
+
   /// 创建时间
   final DateTime createdAt;
-  
+
   /// 更新时间
   final DateTime updatedAt;
 
@@ -52,10 +52,13 @@ class VersionCompatibilityInfo {
       version: map['version'] as String,
       minCompatibleVersion: map['minCompatibleVersion'] as String?,
       maxCompatibleVersion: map['maxCompatibleVersion'] as String?,
-      apiCompatibility: CompatibilityLevel.fromString(map['apiCompatibility'] as String),
-      dataCompatibility: CompatibilityLevel.fromString(map['dataCompatibility'] as String),
+      apiCompatibility:
+          CompatibilityLevel.fromString(map['apiCompatibility'] as String),
+      dataCompatibility:
+          CompatibilityLevel.fromString(map['dataCompatibility'] as String),
       description: map['description'] as String?,
-      incompatibleFeatures: List<String>.from(map['incompatibleFeatures'] ?? []),
+      incompatibleFeatures:
+          List<String>.from(map['incompatibleFeatures'] ?? []),
       migrationSteps: (map['migrationSteps'] as List<dynamic>? ?? [])
           .map((step) => MigrationStep.fromMap(step as Map<String, dynamic>))
           .toList(),
@@ -83,8 +86,7 @@ class VersionCompatibilityInfo {
   /// 检查是否与指定版本兼容
   bool isCompatibleWith(String targetVersion) {
     final target = _parseVersion(targetVersion);
-    final current = _parseVersion(version);
-    
+
     // 检查最小兼容版本
     if (minCompatibleVersion != null) {
       final minCompatible = _parseVersion(minCompatibleVersion!);
@@ -92,7 +94,7 @@ class VersionCompatibilityInfo {
         return false;
       }
     }
-    
+
     // 检查最大兼容版本
     if (maxCompatibleVersion != null) {
       final maxCompatible = _parseVersion(maxCompatibleVersion!);
@@ -100,7 +102,7 @@ class VersionCompatibilityInfo {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -131,15 +133,15 @@ class VersionCompatibilityInfo {
   /// 返回: -1 (v1 < v2), 0 (v1 == v2), 1 (v1 > v2)
   int _compareVersions(List<int> v1, List<int> v2) {
     final maxLength = [v1.length, v2.length].reduce((a, b) => a > b ? a : b);
-    
+
     for (int i = 0; i < maxLength; i++) {
       final part1 = i < v1.length ? v1[i] : 0;
       final part2 = i < v2.length ? v2[i] : 0;
-      
+
       if (part1 < part2) return -1;
       if (part1 > part2) return 1;
     }
-    
+
     return 0;
   }
 
@@ -173,10 +175,13 @@ class VersionCompatibilityInfo {
 enum CompatibilityLevel {
   /// 完全兼容
   full,
+
   /// 部分兼容
   partial,
+
   /// 不兼容
   incompatible,
+
   /// 未知
   unknown;
 
@@ -241,16 +246,16 @@ enum CompatibilityLevel {
 class MigrationStep {
   /// 步骤标题
   final String title;
-  
+
   /// 步骤描述
   final String description;
-  
+
   /// 是否必需
   final bool isRequired;
-  
+
   /// 预估时间（分钟）
   final int? estimatedMinutes;
-  
+
   /// 相关文档链接
   final String? documentationUrl;
 
@@ -308,28 +313,28 @@ class MigrationStep {
 class CompatibilityReport {
   /// 源版本
   final String sourceVersion;
-  
+
   /// 目标版本
   final String targetVersion;
-  
+
   /// 是否兼容
   final bool isCompatible;
-  
+
   /// API兼容性
   final CompatibilityLevel apiCompatibility;
-  
+
   /// 数据兼容性
   final CompatibilityLevel dataCompatibility;
-  
+
   /// 不兼容的功能
   final List<String> incompatibleFeatures;
-  
+
   /// 迁移步骤
   final List<MigrationStep> migrationSteps;
-  
+
   /// 描述
   final String? description;
-  
+
   /// 生成时间
   final DateTime generatedAt;
 
@@ -348,12 +353,13 @@ class CompatibilityReport {
   /// 获取整体兼容性级别
   CompatibilityLevel get overallCompatibility {
     if (!isCompatible) return CompatibilityLevel.incompatible;
-    
+
     final levels = [apiCompatibility, dataCompatibility];
-    
+
     if (levels.every((level) => level == CompatibilityLevel.full)) {
       return CompatibilityLevel.full;
-    } else if (levels.any((level) => level == CompatibilityLevel.incompatible)) {
+    } else if (levels
+        .any((level) => level == CompatibilityLevel.incompatible)) {
       return CompatibilityLevel.incompatible;
     } else {
       return CompatibilityLevel.partial;
@@ -399,6 +405,6 @@ class CompatibilityReport {
 
   @override
   String toString() {
-    return 'CompatibilityReport(${sourceVersion} -> ${targetVersion}: ${overallCompatibility.displayName})';
+    return 'CompatibilityReport($sourceVersion -> $targetVersion: ${overallCompatibility.displayName})';
   }
-} 
+}

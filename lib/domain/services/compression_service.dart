@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// 压缩服务接口
 abstract class CompressionService {
   /// 压缩文件或目录
@@ -27,13 +25,13 @@ abstract class CompressionService {
 class CompressionOptions {
   /// 压缩级别 (0-9)
   final int compressionLevel;
-  
+
   /// 是否包含隐藏文件
   final bool includeHiddenFiles;
-  
+
   /// 文件过滤器
   final bool Function(String path)? fileFilter;
-  
+
   /// 自定义选项
   final Map<String, dynamic> customOptions;
 
@@ -49,13 +47,13 @@ class CompressionOptions {
 class DecompressionOptions {
   /// 是否验证完整性
   final bool verifyIntegrity;
-  
+
   /// 是否覆盖现有文件
   final bool overwriteExisting;
-  
+
   /// 文件过滤器
   final bool Function(String path)? fileFilter;
-  
+
   /// 自定义选项
   final Map<String, dynamic> customOptions;
 
@@ -71,31 +69,31 @@ class DecompressionOptions {
 class CompressionResult {
   /// 是否成功
   final bool success;
-  
+
   /// 输出文件路径
   final String? outputPath;
-  
+
   /// 原始大小（字节）
   final int originalSize;
-  
+
   /// 压缩后大小（字节）
   final int compressedSize;
-  
+
   /// 压缩率 (0.0-1.0)
   final double compressionRatio;
-  
+
   /// 文件校验和
   final String? checksum;
-  
+
   /// 处理时间
   final Duration duration;
-  
+
   /// 压缩格式
   final CompressionFormat format;
-  
+
   /// 错误信息
   final String? errorMessage;
-  
+
   /// 额外信息
   final Map<String, dynamic> metadata;
 
@@ -123,25 +121,25 @@ class CompressionResult {
 class DecompressionResult {
   /// 是否成功
   final bool success;
-  
+
   /// 输出目录路径
   final String? outputPath;
-  
+
   /// 解压的文件数量
   final int extractedFiles;
-  
+
   /// 总大小（字节）
   final int totalSize;
-  
+
   /// 处理时间
   final Duration duration;
-  
+
   /// 压缩格式
   final CompressionFormat format;
-  
+
   /// 错误信息
   final String? errorMessage;
-  
+
   /// 额外信息
   final Map<String, dynamic> metadata;
 
@@ -161,13 +159,13 @@ class DecompressionResult {
 enum CompressionFormat {
   /// ZIP格式
   zip,
-  
+
   /// 7zip格式
   sevenZip,
-  
+
   /// TAR格式
   tar,
-  
+
   /// GZIP格式
   gzip,
 }
@@ -221,16 +219,16 @@ extension CompressionFormatExtension on CompressionFormat {
 class IntegrityVerificationResult {
   /// 是否有效
   final bool isValid;
-  
+
   /// 错误列表
   final List<String> errors;
-  
+
   /// 警告列表
   final List<String> warnings;
-  
+
   /// 验证详情
   final Map<String, dynamic> details;
-  
+
   /// 验证时间
   final Duration verificationTime;
 

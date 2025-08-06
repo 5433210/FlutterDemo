@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
 import 'custom_operation.dart';
-import 'guideline_alignment/guideline_manager.dart' hide EditPageLogger;
+import 'guideline_alignment/guideline_manager.dart';
 import 'guideline_alignment/guideline_types.dart';
 import 'intelligent_notification_mixin.dart';
 import 'practice_edit_state.dart';
@@ -188,7 +188,7 @@ mixin ElementOperationsMixin on ChangeNotifier
     if (operations.isNotEmpty) {
       final batchOperation = BatchOperation(
         operations: operations,
-        operationDescription: '对齐${operations.length}个元素',
+        description: '对齐${operations.length}个元素',
       );
       undoRedoManager.addOperation(batchOperation);
     }

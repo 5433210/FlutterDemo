@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_panel_styles.dart';
 import 'm3_practice_property_panel_base.dart';
-import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 
 /// Material 3 多选属性面板
 class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
@@ -14,10 +14,6 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
   // 🚀 优化：静态变量移至class级别
   static int _buildCount = 0;
   static int _lastSelectedCount = 0;
-  static int _opacitySliderUpdateCount = 0;
-  static int _batchOperationCount = 0;
-  static int _lockToggleCount = 0;
-  static int _visibilityToggleCount = 0;
   static int _propertiesCalculationCount = 0;
   static final Set<String> _loggedAlignments = <String>{};
   static final Set<String> _loggedDistributions = <String>{};
@@ -46,9 +42,9 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
     // 🚀 优化：减少多选属性面板的重复构建日志
     _buildCount++;
-    final hasSignificantChange = selectedIds.length != _lastSelectedCount ||
-                                _buildCount % 50 == 0;
-    
+    final hasSignificantChange =
+        selectedIds.length != _lastSelectedCount || _buildCount % 50 == 0;
+
     if (hasSignificantChange) {
       EditPageLogger.propertyPanelDebug(
         '多选属性面板构建',
@@ -56,17 +52,19 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
           'selectedCount': selectedIds.length,
           'validElementsCount': elements.length,
           'buildCount': _buildCount,
-          'changeType': selectedIds.length != _lastSelectedCount ? 'selection_change' : 'milestone',
+          'changeType': selectedIds.length != _lastSelectedCount
+              ? 'selection_change'
+              : 'milestone',
           'optimization': 'multi_panel_build_optimized',
         },
       );
-      
+
       _lastSelectedCount = selectedIds.length;
     }
 
     if (elements.isEmpty) {
       // 🚀 优化：只在真正无效元素时记录警告
-      
+
       return Center(
         child: Text(
           l10n.noElementsSelected,
@@ -85,7 +83,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
     // 🚀 优化：减少共同属性计算的详细日志
     _propertiesCalculationCount++;
-    
+
     if (_propertiesCalculationCount % 20 == 0) {
       EditPageLogger.propertyPanelDebug(
         '多选共同属性计算里程碑',
@@ -532,7 +530,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
   void _alignElements(String alignment) {
     // 🚀 优化：减少多选元素对齐的详细日志
     final alignmentKey = '${selectedIds.length}_$alignment';
-    
+
     if (!_loggedAlignments.contains(alignmentKey)) {
       _loggedAlignments.add(alignmentKey);
       EditPageLogger.propertyPanelDebug(
@@ -543,13 +541,13 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
           'optimization': 'multi_alignment_first_log',
         },
       );
-      
+
       // 防止集合过大
       if (_loggedAlignments.length > 50) {
         _loggedAlignments.clear();
       }
     }
-    
+
     try {
       controller.alignElements(selectedIds, alignment);
     } catch (error, stackTrace) {
@@ -600,7 +598,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
   void _distributeElements(String direction) {
     // 🚀 优化：减少多选元素分布的详细日志
     final distributionKey = '${selectedIds.length}_$direction';
-    
+
     if (!_loggedDistributions.contains(distributionKey)) {
       _loggedDistributions.add(distributionKey);
       EditPageLogger.propertyPanelDebug(
@@ -611,13 +609,13 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
           'optimization': 'multi_distribution_first_log',
         },
       );
-      
+
       // 防止集合过大
       if (_loggedDistributions.length > 50) {
         _loggedDistributions.clear();
       }
     }
-    
+
     try {
       controller.distributeElements(selectedIds, direction);
     } catch (error, stackTrace) {
@@ -702,7 +700,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
   void _updateAllElements(String property, dynamic value) {
     // 🚀 优化：减少多选批量属性更新的详细日志
     _batchUpdateCount++;
-    
+
     if (_batchUpdateCount % 10 == 0) {
       EditPageLogger.propertyPanelDebug(
         '多选批量属性更新里程碑',
@@ -714,7 +712,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
         },
       );
     }
-    
+
     try {
       for (var id in selectedIds) {
         onElementPropertiesChanged({
@@ -722,7 +720,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
           property: value,
         });
       }
-      
+
       // 🚀 优化：移除批量更新完成的重复日志
     } catch (error, stackTrace) {
       EditPageLogger.propertyPanelError(

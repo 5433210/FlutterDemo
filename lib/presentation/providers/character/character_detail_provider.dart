@@ -196,8 +196,7 @@ class CharacterFormatInfo with _$CharacterFormatInfo {
     required CharacterImageType format,
     required String name,
     required String description,
-    @JsonKey(includeFromJson: false, includeToJson: false)
-    Future<String> Function(String)? pathResolver,
+    @JsonKey(includeFromJson: false, includeToJson: false) Future<String> Function(String)? pathResolver,
   }) = _CharacterFormatInfo;
 
   factory CharacterFormatInfo.fromJson(Map<String, dynamic> json) =>

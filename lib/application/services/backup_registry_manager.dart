@@ -793,36 +793,6 @@ class BackupRegistryManager {
     }
   }
 
-  /// 从指定路径合并备份数据
-  static Future<List<BackupEntry>> _mergeBackupsFromPath(
-      String backupPath) async {
-    try {
-      final backups = await _scanBackupsInPath(backupPath);
-
-      // 为备份条目标记来源路径
-      final currentPath = await getCurrentBackupPath();
-      final isLegacy = currentPath != backupPath;
-
-      return backups
-          .map((backup) => BackupEntry(
-                id: backup.id,
-                filename: backup.filename,
-                fullPath: backup.fullPath,
-                size: backup.size,
-                createdTime: backup.createdTime,
-                checksum: backup.checksum,
-                appVersion: backup.appVersion,
-                description: backup.description,
-                location: isLegacy ? 'legacy' : 'current',
-              ))
-          .toList();
-    } catch (e, stack) {
-      AppLogger.error('合并备份数据失败',
-          error: e, stackTrace: stack, tag: 'BackupRegistryManager');
-      return [];
-    }
-  }
-
   /// 从文件创建备份条目
   static Future<BackupEntry?> _createBackupEntryFromFile(File file) async {
     try {
@@ -848,33 +818,6 @@ class BackupRegistryManager {
           data: {'filePath': file.path});
       return null;
     }
-  }
-
-  /// 去重备份列表
-  static List<BackupEntry> _deduplicateBackups(List<BackupEntry> backups) {
-    final uniqueBackups = <BackupEntry>[];
-    final seen = <String>{};
-
-    for (final backup in backups) {
-      // 基于文件名和大小创建唯一键
-      final key = '${backup.filename}_${backup.size}';
-
-      if (!seen.contains(key)) {
-        seen.add(key);
-        uniqueBackups.add(backup);
-      } else {
-        AppLogger.info('跳过重复备份', tag: 'BackupRegistryManager', data: {
-          'filename': backup.filename,
-          'size': backup.size,
-          'path': backup.fullPath,
-        });
-      }
-    }
-
-    // 按创建时间排序
-    uniqueBackups.sort((a, b) => b.createdTime.compareTo(a.createdTime));
-
-    return uniqueBackups;
   }
 
   /// 高级备份路径切换（提供用户选择）

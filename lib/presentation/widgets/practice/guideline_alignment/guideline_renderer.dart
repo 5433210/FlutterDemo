@@ -1,4 +1,4 @@
-import 'dart:math' show cos, sin, sqrt;
+import 'dart:math' show sqrt;
 
 import 'package:flutter/material.dart';
 
@@ -51,23 +51,6 @@ class _GuidelinePainter extends CustomPainter {
       return;
     }
 
-    // 默认画笔
-    final defaultPaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final defaultDashPaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final defaultLabelStyle = TextStyle(
-      color: color,
-      fontSize: 10,
-      fontWeight: FontWeight.w500,
-    );
-
     final labelBackground = Paint()
       ..color = Colors.black.withOpacity(0.6)
       ..style = PaintingStyle.fill;
@@ -111,15 +94,6 @@ class _GuidelinePainter extends CustomPainter {
             guidelineLabelStyle,
             labelBackground);
       }
-
-      // 禁用特殊中心线样式，全部使用参考线自己的颜色
-      // 仅为动态参考线，取消中心线特殊高亮效果
-      if (false &&
-          (guideline.type == GuidelineType.horizontalCenterLine ||
-              guideline.type == GuidelineType.verticalCenterLine)) {
-        _drawCenterlineHighlight(canvas, size, guideline, guidelinePaint,
-            guidelineLabelStyle, labelBackground);
-      }
     }
   }
 
@@ -150,87 +124,6 @@ class _GuidelinePainter extends CustomPainter {
     }
 
     return false;
-  }
-
-  /// 绘制箭头
-  void _drawArrow(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    Paint paint,
-  ) {
-    canvas.drawLine(start, end, paint);
-
-    // 计算箭头方向
-    final angle = (end - start).direction;
-
-    // 计算箭头两翼的点
-    const arrowSize = 6.0;
-    final arrowAngle1 = angle + 2.5;
-    final arrowAngle2 = angle - 2.5;
-
-    final arrowPoint1 = Offset(
-      end.dx + arrowSize * cos(arrowAngle1),
-      end.dy + arrowSize * sin(arrowAngle1),
-    );
-
-    final arrowPoint2 = Offset(
-      end.dx + arrowSize * cos(arrowAngle2),
-      end.dy + arrowSize * sin(arrowAngle2),
-    );
-
-    // 绘制箭头
-    final arrowPath = Path()
-      ..moveTo(end.dx, end.dy)
-      ..lineTo(arrowPoint1.dx, arrowPoint1.dy)
-      ..lineTo(arrowPoint2.dx, arrowPoint2.dy)
-      ..close();
-
-    canvas.drawPath(arrowPath, paint);
-  }
-
-  /// 绘制中心线高亮
-  void _drawCenterlineHighlight(
-    Canvas canvas,
-    Size size,
-    Guideline guideline,
-    Paint paint,
-    TextStyle labelStyle,
-    Paint labelBackground,
-  ) {
-    // 中心线使用更醒目的样式
-    final centerPaint = Paint()
-      ..color = Colors.blue // 中心线使用蓝色
-      ..strokeWidth = strokeWidth * 1.5 // 加粗
-      ..style = PaintingStyle.stroke;
-
-    if (guideline.type == GuidelineType.horizontalCenterLine) {
-      // 水平中心线
-      final y = guideline.position;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        centerPaint,
-      );
-
-      // 在两端绘制箭头
-      _drawArrow(canvas, Offset(10, y), Offset(30, y), centerPaint);
-      _drawArrow(canvas, Offset(size.width - 10, y), Offset(size.width - 30, y),
-          centerPaint);
-    } else if (guideline.type == GuidelineType.verticalCenterLine) {
-      // 垂直中心线
-      final x = guideline.position;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        centerPaint,
-      );
-
-      // 在两端绘制箭头
-      _drawArrow(canvas, Offset(x, 10), Offset(x, 30), centerPaint);
-      _drawArrow(canvas, Offset(x, size.height - 10),
-          Offset(x, size.height - 30), centerPaint);
-    }
   }
 
   /// 绘制虚线

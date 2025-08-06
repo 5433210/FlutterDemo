@@ -8,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('FreeControlPoints 参考线对齐测试', () {
     testWidgets('平移时应该触发参考线对齐回调', (WidgetTester tester) async {
-      List<Guideline> capturedGuidelines = [];
       bool onGuidelinesUpdatedCalled = false;
 
       // 初始化GuidelineManager
@@ -42,7 +41,6 @@ void main() {
                 rotation: 0.0,
                 alignmentMode: AlignmentMode.guideline,
                 onGuidelinesUpdated: (guidelines) {
-                  capturedGuidelines = guidelines;
                   onGuidelinesUpdatedCalled = true;
                 },
                 updateGuidelineManagerElements: null, // Test can pass null

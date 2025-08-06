@@ -41,21 +41,15 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
   // Legacy constructor with full parameters
   const ContentRenderLayer.withFullParams({
     super.key,
-    required List<Map<String, dynamic>> elements,
-    required List<Map<String, dynamic>> layers,
+    required this.elements,
+    required this.layers,
     required this.renderController,
-    required bool isPreviewMode,
-    required Size pageSize,
-    required Color backgroundColor,
-    required Set<String> selectedElementIds,
+    required this.isPreviewMode,
+    required this.pageSize,
+    required this.backgroundColor,
+    required this.selectedElementIds,
     this.viewportCullingManager,
-  })  : elements = elements,
-        layers = layers,
-        isPreviewMode = isPreviewMode,
-        pageSize = pageSize,
-        backgroundColor = backgroundColor,
-        selectedElementIds = selectedElementIds,
-        controller = null;
+  }) : controller = null;
 
   @override
   ConsumerState<ContentRenderLayer> createState() => _ContentRenderLayerState();
@@ -165,7 +159,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         _hasElementOrderChanged(oldElements, currentElements);
 
     // 🚀 优化：只在实际发生变化或重要里程碑时记录变化分析
-    final hasActualChanges = elementsChanged || layersChanged || elementOrderChanged;
+    final hasActualChanges =
+        elementsChanged || layersChanged || elementOrderChanged;
     if (hasActualChanges || _didUpdateWidgetCount % 50 == 0) {
       EditPageLogger.rendererDebug('ContentRenderLayer变化分析', data: {
         'oldElementsCount': oldElements.length,
@@ -175,7 +170,9 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         'elementOrderChanged': elementOrderChanged,
         'didUpdateCount': _didUpdateWidgetCount,
         'changeDetected': hasActualChanges,
-        'optimization': hasActualChanges ? 'content_layer_actual_change' : 'content_layer_milestone',
+        'optimization': hasActualChanges
+            ? 'content_layer_actual_change'
+            : 'content_layer_milestone',
       });
     }
 
@@ -315,30 +312,16 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     final layers = widget.layers ?? widget.controller?.state.layers ?? [];
     final isPreviewMode =
         widget.isPreviewMode ?? widget.controller?.state.isPreviewMode ?? false;
-    final selectedElementIds = widget.selectedElementIds ??
-        widget.controller?.state.selectedElementIds.toSet() ??
-        <String>{};
 
     final isDragging = widget.renderController.isDragging;
 
-    // Calculate page size and background color if not provided
+    // Calculate page size if not provided
     Size pageSize = widget.pageSize ?? const Size(800, 600);
-    Color backgroundColor = widget.backgroundColor ?? Colors.white;
 
     if (widget.controller != null && widget.pageSize == null) {
       final currentPage = widget.controller!.state.currentPage;
       if (currentPage != null) {
         pageSize = ElementUtils.calculatePixelSize(currentPage);
-
-        try {
-          final background = currentPage['background'] as Map<String, dynamic>?;
-          if (background != null && background['type'] == 'color') {
-            final colorStr = background['value'] as String? ?? '#FFFFFF';
-            backgroundColor = ElementUtils.parseColor(colorStr);
-          }
-        } catch (e) {
-          EditPageLogger.rendererError('背景颜色解析失败', error: e);
-        }
       }
     }
     // 在需要时记录重建日志
@@ -399,7 +382,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
           children: visibleElements.map((element) {
-            final currentElementId = element['id'] as String;
 
             // Skip hidden elements in preview mode
             final isHidden = element['hidden'] == true;
@@ -459,7 +441,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                     margin: const EdgeInsets.only(bottom: 2),
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.8),
+                      color: Colors.red.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(color: Colors.white, width: 0.5),
                     ),
@@ -478,7 +460,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                   Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.8),
+                      color: Colors.orange.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(color: Colors.white, width: 0.5),
                     ),

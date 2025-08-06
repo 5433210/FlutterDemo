@@ -792,64 +792,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     }
   }
 
-  /// 🔧 新增：在拖拽过程中生成参考线用于显示，但不强制对齐
-  void _generateDragGuidelines(Map<String, double> currentProperties) {
-    // 只在参考线对齐模式下生成参考线
-    if (widget.alignmentMode != AlignmentMode.guideline) {
-      return;
-    }
-
-    try {
-      // 确保GuidelineManager已启用
-      if (!GuidelineManager.instance.enabled) {
-        return;
-      }
-
-      // 获取当前元素位置和大小
-      final currentPos =
-          Offset(currentProperties['x']!, currentProperties['y']!);
-      final currentSize =
-          Size(currentProperties['width']!, currentProperties['height']!);
-      GuidelineManager.instance.updateGuidelinesLive(
-        elementId: widget.elementId,
-        draftPosition: currentPos,
-        elementSize: currentSize,
-        regenerateStatic: false, // 🔧 拖拽过程中不重新生成静态参考线
-        operationType: _currentDraggingControlPoint != null 
-          ? (_isResizeOperation(_currentDraggingControlPoint!) ? 'resize' : 'translate')
-          : 'translate',
-        resizeDirection: _currentDraggingControlPoint != null
-          ? _getResizeDirection(_currentDraggingControlPoint!)
-          : null,
-      );
-
-      // 获取生成的参考线
-      final dynamicGuidelines = GuidelineManager
-          .instance.activeGuidelines; // 🔧 优化：立即更新本地状态并通知外部，确保参考线能够实时跟随移动
-      _activeGuidelines = dynamicGuidelines;
-
-      // 🔧 关键修复：无论是否有参考线都要通知外部，确保清除和显示都能及时生效
-      if (widget.onGuidelinesUpdated != null) {
-        widget.onGuidelinesUpdated!(dynamicGuidelines);
-      }
-
-      EditPageLogger.editPageDebug('动态参考线实时更新', data: {
-        'elementId': widget.elementId,
-        'guidelinesCount': dynamicGuidelines.length,
-        'position': '${currentPos.dx}, ${currentPos.dy}',
-        'size': '${currentSize.width} x ${currentSize.height}',
-        'mode': 'real_time_dynamic_guidelines',
-        'isEmpty': dynamicGuidelines.isEmpty,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
-    } catch (e) {
-      EditPageLogger.editPageDebug('动态参考线生成失败', data: {
-        'error': e.toString(),
-        'elementId': widget.elementId,
-      });
-    }
-  }
-
   MouseCursor _getControlPointCursor(int index) {
     switch (index) {
       case 0:
@@ -925,8 +867,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         return null;
     }
   }
-
-
 
   /// 初始化控制点位置 - 基于元素的初始位置和大小
   void _initializeControlPointPositions() {
@@ -1139,12 +1079,14 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           draftPosition: currentPos,
           elementSize: currentSize,
           regenerateStatic: false, // 🔧 拖拽过程中不重新生成静态参考线
-          operationType: _currentDraggingControlPoint != null 
-            ? (_isResizeOperation(_currentDraggingControlPoint!) ? 'resize' : 'translate')
-            : 'translate',
+          operationType: _currentDraggingControlPoint != null
+              ? (_isResizeOperation(_currentDraggingControlPoint!)
+                  ? 'resize'
+                  : 'translate')
+              : 'translate',
           resizeDirection: _currentDraggingControlPoint != null
-            ? _getResizeDirection(_currentDraggingControlPoint!)
-            : null,
+              ? _getResizeDirection(_currentDraggingControlPoint!)
+              : null,
         );
 
         // 获取生成的参考线
@@ -1849,7 +1791,8 @@ class _TestElementBorderPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  Offset _rotatePoint(double px, double py, double cx, double cy, double angle) {
+  Offset _rotatePoint(
+      double px, double py, double cx, double cy, double angle) {
     final cosAngle = cos(angle);
     final sinAngle = sin(angle);
     final dx = px - cx;

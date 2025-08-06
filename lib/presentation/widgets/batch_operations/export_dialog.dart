@@ -6,7 +6,6 @@ import '../../../domain/models/import_export/export_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/batch_selection_provider.dart';
-import 'progress_dialog.dart';
 
 /// 导出对话框
 class ExportDialog extends ConsumerStatefulWidget {
@@ -531,39 +530,5 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
 
     Navigator.of(context).pop();
     widget.onExport(options, _targetPath);
-  }
-
-  /// 创建带进度回调的导出函数
-  static Future<void> Function(ExportOptions, String)
-      createProgressExportFunction({
-    required BuildContext context,
-    required Future<void> Function(ExportOptions options, String targetPath,
-            ProgressDialogController progressController)
-        onExportWithProgress,
-  }) {
-    return (ExportOptions options, String targetPath) async {
-      // 显示进度对话框
-      final progressController = ProgressDialogController();
-
-      // 显示进度对话框
-      final progressFuture = ControlledProgressDialog.show(
-        context: context,
-        title: AppLocalizations.of(context).export,
-        controller: progressController,
-        initialMessage: AppLocalizations.of(context).exporting,
-        canCancel: false,
-      );
-
-      try {
-        // 执行导出
-        await onExportWithProgress(options, targetPath, progressController);
-      } catch (e) {
-        progressController.showError('导出失败: ${e.toString()}');
-      } finally {
-        progressController.dispose();
-      }
-
-      await progressFuture;
-    };
   }
 }

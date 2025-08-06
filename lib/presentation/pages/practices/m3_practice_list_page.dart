@@ -27,7 +27,6 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(practiceListProvider);
     final viewModel = ref.read(practiceListProvider.notifier);
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     // Show error snackbar if needed
@@ -182,16 +181,6 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         ],
       ),
     );
-  }
-
-  void _handlePracticeLongPress(String practiceId) {
-    final viewModel = ref.read(practiceListProvider.notifier);
-    final state = ref.read(practiceListProvider);
-
-    if (!state.batchMode) {
-      viewModel.toggleBatchMode();
-      viewModel.togglePracticeSelection(practiceId);
-    }
   }
 
   void _handlePracticeTap(String practiceId) {

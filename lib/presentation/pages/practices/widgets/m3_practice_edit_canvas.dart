@@ -68,9 +68,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         CanvasViewControllers,
         // 最后放置与交互控制相关的mixin
         CanvasControlPointHandlers {
-  // 🔍[TRACKING] 静态重建计数器
-  static int _buildCount = 0;
-  
   // 🚀 性能优化相关静态变量
   static int _interactionStateChangeCount = 0;
   static String _lastEventType = '';
@@ -149,12 +146,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    // 🚀 优化：使用性能计时器监控重建性能
-    _buildCount++;
-
-    // 緩存controller狀態，避免在build中重複訪問
-    final selectedElementIds = widget.controller.state.selectedElementIds;
-
     // Track performance for main canvas rebuilds
     _performanceMonitor.trackWidgetRebuild('M3PracticeEditCanvas');
 
@@ -456,7 +447,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         'operation': 'element_rotation',
       },
     );
-    
+
     // Update rotation
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
@@ -732,11 +723,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                 .controller.state.selectedElementIds.isNotEmpty)
                         ? (details) {
                             // 手勢處理開始
-                            
+
                             // 簡化拖拽開始處理
 
                             // 动态检查是否需要处理特殊手势
-                            final shouldHandle = shouldHandleAnySpecialGesture(elements);
+                            final shouldHandle =
+                                shouldHandleAnySpecialGesture(elements);
 
                             if (shouldHandle) {
                               _gestureHandler.handlePanStart(details,
@@ -1024,7 +1016,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     PracticeEditLogger.debugDetail(
       '画布状态: $context',
       data: {
-        'panEnabled': !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag),
+        'panEnabled':
+            !(_isDragging || _dragStateManager.isDragging || _isReadyForDrag),
         'selectedCount': widget.controller.state.selectedElementIds.length,
         'currentTool': widget.controller.state.currentTool,
       },
@@ -1175,14 +1168,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         if ((appliedScale - scale).abs() > 0.001 ||
             (appliedTranslation.x - dx).abs() > 1 ||
             (appliedTranslation.y - dy).abs() > 1) {
-          PracticeEditLogger.logError(
-            '画布视图重置失败',
-            '变换矩阵应用不正确',
-            context: {
-              'expectedScale': scale.toStringAsFixed(3),
-              'actualScale': appliedScale.toStringAsFixed(3),
-            }
-          );
+          PracticeEditLogger.logError('画布视图重置失败', '变换矩阵应用不正确', context: {
+            'expectedScale': scale.toStringAsFixed(3),
+            'actualScale': appliedScale.toStringAsFixed(3),
+          });
         }
       }
     });
@@ -1739,21 +1728,26 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         final isNewEventType = eventType != _lastEventType;
         final isMilestone = _interactionStateChangeCount % 100 == 0;
         final now = DateTime.now();
-        final isTimeForLog = now.difference(_lastInteractionLogTime).inMilliseconds >= 500;
-        
+        final isTimeForLog =
+            now.difference(_lastInteractionLogTime).inMilliseconds >= 500;
+
         if (isNewEventType || isMilestone || isTimeForLog) {
           EditPageLogger.canvasDebug(
             '交互层状态变化',
             data: {
               'eventType': eventType,
               'changeCount': _interactionStateChangeCount,
-              'changeType': isNewEventType ? 'new_event_type' : 
-                          isMilestone ? 'milestone' : 'time_interval',
-              'intervalMs': now.difference(_lastInteractionLogTime).inMilliseconds,
+              'changeType': isNewEventType
+                  ? 'new_event_type'
+                  : isMilestone
+                      ? 'milestone'
+                      : 'time_interval',
+              'intervalMs':
+                  now.difference(_lastInteractionLogTime).inMilliseconds,
               'optimization': 'interaction_layer_optimized_v2',
             },
           );
-          
+
           if (isNewEventType) {
             _lastEventType = eventType;
           }

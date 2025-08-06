@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 
 /// Enhanced performance tracker with detailed metrics collection
 /// Implements Task 5.1: Enhanced frame time tracking, detailed logging, and regression detection
@@ -23,7 +22,8 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
 
   // 🚀 性能优化：节流通知机制
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 500); // 最多每500ms通知一次
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 500); // 最多每500ms通知一次
 
   // Frame timing detailed tracking
   final List<FrameTimingData> _frameTimingHistory = [];
@@ -265,7 +265,7 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
     _fpsQueue.clear();
     _frameTimeQueue.clear();
     _operationMetrics.clear();
-    
+
     // 🚀 使用节流通知替代直接notifyListeners
     _throttledNotifyListeners(
       operation: 'reset',
@@ -348,7 +348,8 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
         data: {
           'currentFps': double.parse(currentAvgFps.toStringAsFixed(1)),
           'baselineFps': double.parse(baselineFps.toStringAsFixed(1)),
-          'degradationPercentage': double.parse(regressionPercentage.toStringAsFixed(1)),
+          'degradationPercentage':
+              double.parse(regressionPercentage.toStringAsFixed(1)),
           'baselineName': _currentBaseline!.name,
           'regressionThreshold': _regressionThreshold,
         },
@@ -542,7 +543,7 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
       _lastNotificationTime = now;
-      
+
       EditPageLogger.performanceInfo(
         '增强性能跟踪器通知',
         data: {
@@ -554,7 +555,7 @@ class EnhancedPerformanceTracker extends ChangeNotifier {
           ...?data,
         },
       );
-      
+
       notifyListeners();
     }
   }

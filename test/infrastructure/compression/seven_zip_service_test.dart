@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as path;
 
 import 'package:charasgem/domain/services/compression_service.dart';
 import 'package:charasgem/infrastructure/compression/seven_zip_service.dart';
 import 'package:charasgem/infrastructure/integrity/file_integrity_service.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 
 void main() {
   group('SevenZipService Tests', () {
@@ -62,7 +61,8 @@ void main() {
       final testFile = File(path.join(tempDir.path, 'integrity_test.txt'));
       await testFile.writeAsString('Integrity test content');
 
-      final compressedFile = File(path.join(tempDir.path, 'integrity_test.cgc'));
+      final compressedFile =
+          File(path.join(tempDir.path, 'integrity_test.cgc'));
 
       // 压缩文件
       await sevenZipService.compress(
@@ -125,7 +125,8 @@ void main() {
       final file2 = File(path.join(subDir.path, 'file2.txt'));
       await file2.writeAsString('File 2 content');
 
-      final compressedFile = File(path.join(tempDir.path, 'directory_test.cgw'));
+      final compressedFile =
+          File(path.join(tempDir.path, 'directory_test.cgw'));
       final extractDir = Directory(path.join(tempDir.path, 'extracted_dir'));
 
       // 压缩目录
@@ -147,7 +148,8 @@ void main() {
 
       // 验证解压缩的文件
       final extractedFile1 = File(path.join(extractDir.path, 'file1.txt'));
-      final extractedFile2 = File(path.join(extractDir.path, 'subdir', 'file2.txt'));
+      final extractedFile2 =
+          File(path.join(extractDir.path, 'subdir', 'file2.txt'));
 
       expect(await extractedFile1.exists(), isTrue);
       expect(await extractedFile2.exists(), isTrue);
@@ -174,12 +176,14 @@ void main() {
       );
 
       // 验证完整性
-      final isValid = await sevenZipService.verifyIntegrity(compressedFile.path);
+      final isValid =
+          await sevenZipService.verifyIntegrity(compressedFile.path);
       expect(isValid, isTrue);
 
       // 损坏文件并重新验证
       await compressedFile.writeAsBytes([0, 1, 2, 3, 4]);
-      final isValidAfterCorruption = await sevenZipService.verifyIntegrity(compressedFile.path);
+      final isValidAfterCorruption =
+          await sevenZipService.verifyIntegrity(compressedFile.path);
       expect(isValidAfterCorruption, isFalse);
     });
   });

@@ -290,9 +290,6 @@ class _M3WorkBrowseNavigationBarState
       builder: (context) => ImportDialog(
         pageType: PageType.works,
         onImport: (options, filePath) async {
-          // 保存Navigator状态，用于后续对话框显示
-          final navigatorState = Navigator.of(context);
-
           // 显示进度对话框
           final progressController = ProgressDialogController();
 

@@ -249,22 +249,4 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
       widget.onScaleChanged?.call(newScale);
     }
   }
-
-  void _handleZoom(double delta) {
-    final currentScale = _transformationController.value.getMaxScaleOnAxis();
-    final newScale =
-        (currentScale + delta).clamp(widget.minScale, widget.maxScale);
-
-    _transformationController.value = Matrix4.identity()..scale(newScale);
-
-    setState(() => _isZoomed = newScale > 1.0);
-    widget.onScaleChanged?.call(newScale);
-  }
-
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
-    setState(() => _isZoomed = false);
-    widget.onScaleChanged?.call(1.0);
-    widget.onResetZoom?.call();
-  }
 }

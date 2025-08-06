@@ -270,19 +270,6 @@ class SevenZipService implements CompressionService {
         bytes[1] == 0x4B &&
         (bytes[2] == 0x03 || bytes[2] == 0x05 || bytes[2] == 0x07);
   }
-
-  /// 检查是否为7zip格式
-  bool _isSevenZipFormat(List<int> bytes) {
-    if (bytes.length < 6) return false;
-
-    // 7zip文件头: 37 7A BC AF 27 1C
-    return bytes[0] == 0x37 &&
-        bytes[1] == 0x7A &&
-        bytes[2] == 0xBC &&
-        bytes[3] == 0xAF &&
-        bytes[4] == 0x27 &&
-        bytes[5] == 0x1C;
-  }
 }
 
 /// 压缩异常

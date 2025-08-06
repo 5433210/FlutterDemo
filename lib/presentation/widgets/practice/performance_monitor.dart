@@ -3,26 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 import 'drag_state_manager.dart';
 import 'performance_dashboard.dart';
 
 /// Performance monitoring utility for M3Canvas optimization tracking
 class PerformanceMonitor extends ChangeNotifier {
   static final PerformanceMonitor _instance = PerformanceMonitor._internal();
-  
+
   // 🚀 性能优化：节流通知机制
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 500); // 最多每500ms通知一次
-  
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 500); // 最多每500ms通知一次
+
   // Performance thresholds
   static const double _fpsThresholdHigh = 55.0;
   static const double _fpsThresholdMedium = 30.0;
   static const double _fpsThresholdLow = 15.0;
   static const int _frameTimeThresholdMs = 20; // Jank threshold
   static const int _rebuildThresholdPerSecond = 100;
-  static const double _memoryThresholdPercent = 80.0;
-  
+
   // Frame rate tracking
   int _frameCount = 0;
   DateTime _lastFrameTime = DateTime.now();
@@ -36,7 +35,7 @@ class PerformanceMonitor extends ChangeNotifier {
 
   Duration _maxFrameTime = Duration.zero;
   int _slowFrameCount = 0;
-  
+
   // Threshold tracking
   DateTime _lastThresholdCheck = DateTime.now();
   int _thresholdViolationCount = 0;
@@ -66,7 +65,7 @@ class PerformanceMonitor extends ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
       _lastNotificationTime = now;
-      
+
       EditPageLogger.performanceInfo(
         '性能监控通知',
         data: {
@@ -78,10 +77,11 @@ class PerformanceMonitor extends ChangeNotifier {
           ...?data,
         },
       );
-      
+
       notifyListeners();
     }
   }
+
   Duration get averageFrameTime => _averageFrameTime;
   // Getters for current metrics
   double get currentFPS => _currentFPS;
@@ -154,14 +154,14 @@ class PerformanceMonitor extends ChangeNotifier {
         'duration_ms': duration.inMilliseconds,
         'frameCount': frameCount,
         'avgFps': double.parse(avgFps.toStringAsFixed(1)),
-        'avgFrameTime_ms': frameTimeStats.isNotEmpty 
-            ? double.parse(frameTimeStats['avg'].toStringAsFixed(2)) 
+        'avgFrameTime_ms': frameTimeStats.isNotEmpty
+            ? double.parse(frameTimeStats['avg'].toStringAsFixed(2))
             : 0.0,
-        'maxFrameTime_ms': frameTimeStats.isNotEmpty 
-            ? double.parse(frameTimeStats['max'].toStringAsFixed(2)) 
+        'maxFrameTime_ms': frameTimeStats.isNotEmpty
+            ? double.parse(frameTimeStats['max'].toStringAsFixed(2))
             : 0.0,
-        'jankPercentage': frameTimeStats.isNotEmpty 
-            ? double.parse(frameTimeStats['jankPercentage'].toStringAsFixed(1)) 
+        'jankPercentage': frameTimeStats.isNotEmpty
+            ? double.parse(frameTimeStats['jankPercentage'].toStringAsFixed(1))
             : 0.0,
         'dragElementCount': _dragStateManager?.draggingElementIds.length ?? 0,
       },
@@ -214,8 +214,8 @@ class PerformanceMonitor extends ChangeNotifier {
 
     if (_widgetRebuildCounts.isNotEmpty) {
       final top = _getTopRebuildWidgets();
-      reportData['topRebuildWidgets'] = top.map((w) => 
-        '${w['widget']}: ${w['rebuilds']} rebuilds').toList();
+      reportData['topRebuildWidgets'] =
+          top.map((w) => '${w['widget']}: ${w['rebuilds']} rebuilds').toList();
     }
 
     if (_fpsHistory.isNotEmpty) {
@@ -228,7 +228,7 @@ class PerformanceMonitor extends ChangeNotifier {
       '详细性能报告',
       data: reportData,
     );
-    
+
     // 检查并报告性能阈值违规
     _checkPerformanceThresholds();
   }
@@ -236,15 +236,15 @@ class PerformanceMonitor extends ChangeNotifier {
   /// 检查性能阈值
   void _checkPerformanceThresholds() {
     final now = DateTime.now();
-    
+
     // 每5秒检查一次阈值
     if (now.difference(_lastThresholdCheck).inSeconds < 5) {
       return;
     }
-    
+
     _lastThresholdCheck = now;
     bool hasViolation = false;
-    
+
     // 检查帧率阈值
     if (_currentFPS < _fpsThresholdLow) {
       hasViolation = true;
@@ -269,7 +269,7 @@ class PerformanceMonitor extends ChangeNotifier {
         },
       );
     }
-    
+
     // 检查帧时间阈值
     if (_maxFrameTime.inMilliseconds > _frameTimeThresholdMs) {
       hasViolation = true;
@@ -284,13 +284,14 @@ class PerformanceMonitor extends ChangeNotifier {
         },
       );
     }
-    
+
     // 🚀 优化：提高重建频率检查阈值，减少警告噪音
     if (_totalRebuilds > 0) {
       final secondsSinceStart = now.difference(_lastFrameTime).inSeconds;
       if (secondsSinceStart > 0) {
         final rebuildsPerSecond = _totalRebuilds / secondsSinceStart;
-        if (rebuildsPerSecond > (_rebuildThresholdPerSecond * 2)) { // 阈值加倍
+        if (rebuildsPerSecond > (_rebuildThresholdPerSecond * 2)) {
+          // 阈值加倍
           hasViolation = true;
           EditPageLogger.performanceWarning(
             '组件重建频率过高',
@@ -304,7 +305,7 @@ class PerformanceMonitor extends ChangeNotifier {
         }
       }
     }
-    
+
     if (hasViolation) {
       _thresholdViolationCount++;
       EditPageLogger.performanceInfo(
@@ -363,7 +364,7 @@ class PerformanceMonitor extends ChangeNotifier {
     _widgetRebuildCounts.clear();
     _totalRebuilds = 0;
     _memoryHistory.clear();
-    
+
     // 🚀 使用节流通知替代直接notifyListeners
     _throttledNotifyListeners(
       operation: 'reset_metrics',
@@ -526,7 +527,8 @@ class PerformanceMonitor extends ChangeNotifier {
 
     // 🚀 优化：只在关键阈值时记录过度重建警告
     final count = _widgetRebuildCounts[widgetName]!;
-    if (count % 50 == 0 && count >= 50) { // 从10次提高到50次
+    if (count % 50 == 0 && count >= 50) {
+      // 从10次提高到50次
       EditPageLogger.performanceWarning(
         '组件频繁重建警告',
         data: {
@@ -643,80 +645,6 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
     _monitor.addListener(_onPerformanceUpdate);
   }
 
-  // 构建拖拽性能信息
-  Widget _buildDragPerformanceInfo() {
-    final dragData = _monitor.getDragPerformanceData();
-    if (dragData == null) {
-      return const SizedBox.shrink();
-    }
-
-    final currentFps = dragData['currentFps'] as int;
-    final avgFps = dragData['avgFps'] as double;
-    final updateCount = dragData['updateCount'] as int;
-    final batchUpdateCount = dragData['batchUpdateCount'] as int;
-    final avgUpdateTime = dragData['avgUpdateTime'] as double;
-    final elementCount = dragData['elementCount'] as int;
-    final isPerformanceCritical = dragData['isPerformanceCritical'] as bool;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '拖拽帧率: ${currentFps.toString()} FPS',
-          style: TextStyle(
-            color: _getFPSColor(currentFps.toDouble()),
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          '平均帧率: ${avgFps.toStringAsFixed(1)} FPS',
-          style: TextStyle(
-            color: _getFPSColor(avgFps),
-            fontSize: 10,
-          ),
-        ),
-        Text(
-          '更新次数: $updateCount (批量: $batchUpdateCount)',
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
-        ),
-        Text(
-          '平均更新时间: ${avgUpdateTime.toStringAsFixed(2)}ms',
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
-        ),
-        Text(
-          '拖拽元素: $elementCount',
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
-        ),
-        if (isPerformanceCritical)
-          const Text(
-            '⚠️ 性能警告: 帧率过低',
-            style: TextStyle(
-                color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildFPSIndicator() {
-    final fps = _monitor.currentFPS;
-    final color = _getFPSColor(fps);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        'FPS: ${fps.toStringAsFixed(1)}',
-        style:
-            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
-      ),
-    );
-  } // Build the performance display using the PerformanceDashboard widget
-
   Widget _buildPerformanceDisplay() {
     // Use the PerformanceDashboard widget which provides a complete
     // performance visualization UI
@@ -728,16 +656,6 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
       height: 200,
     );
   } // 根据帧率获取颜色
-
-  Color _getFPSColor(double fps) {
-    if (fps >= 55) {
-      return Colors.green;
-    } else if (fps >= 30) {
-      return Colors.orange;
-    } else {
-      return Colors.red;
-    }
-  }
 
   void _onPerformanceUpdate() {
     if (mounted) setState(() {});

@@ -34,9 +34,6 @@ class DragOperationManager {
   /// 拖拽性能监控
   final DragPerformanceMonitor _performanceMonitor = DragPerformanceMonitor();
 
-  /// 预拖拽配置
-  final PreDragConfig _preDragConfig = PreDragConfig();
-
   /// 元素快照管理器
   final ElementSnapshotManager _snapshotManager = ElementSnapshotManager();
 

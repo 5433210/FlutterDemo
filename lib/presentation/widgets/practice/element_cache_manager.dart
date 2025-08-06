@@ -1,13 +1,9 @@
-import 'dart:math' as math;
 import 'dart:async';
-import 'dart:ui';
+import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
-import '../../../infrastructure/logging/logger.dart';
 import 'memory_manager.dart';
 
 /// 元素缓存性能指标
@@ -108,8 +104,9 @@ class CacheMetrics {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }
@@ -265,7 +262,8 @@ class ElementCacheManager extends ChangeNotifier {
   Timer? _notificationTimer;
   bool _hasPendingUpdate = false;
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 16); // 60 FPS
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 16); // 60 FPS
 
   /// 创建一个新的元素缓存管理器
   ElementCacheManager({
@@ -745,7 +743,7 @@ class ElementCacheManager extends ChangeNotifier {
     final now = DateTime.now();
     if (now.difference(_lastNotificationTime) >= _notificationThrottle) {
       _lastNotificationTime = now;
-      
+
       EditPageLogger.performanceInfo(
         '元素缓存管理器跳过通知',
         data: {
@@ -756,7 +754,7 @@ class ElementCacheManager extends ChangeNotifier {
           ...?data,
         },
       );
-      
+
       // super.notifyListeners(); // 🚀 已禁用以避免触发全局UI重建
     } else {
       // 缓存待处理的更新
@@ -765,7 +763,7 @@ class ElementCacheManager extends ChangeNotifier {
         _notificationTimer?.cancel();
         _notificationTimer = Timer(_notificationThrottle, () {
           _hasPendingUpdate = false;
-          
+
           EditPageLogger.performanceInfo(
             '元素缓存管理器跳过延迟通知',
             data: {
@@ -776,7 +774,7 @@ class ElementCacheManager extends ChangeNotifier {
               ...?data,
             },
           );
-          
+
           // super.notifyListeners(); // 🚀 已禁用以避免触发全局UI重建
         });
       }

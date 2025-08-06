@@ -69,12 +69,10 @@ class SmartGestureDispatcher {
   static const Duration _responseTimeTarget = Duration(milliseconds: 20);
   static const int _maxGestureHistory = 50;
   static const double _velocityThreshold = 500.0; // pixels per second
-  static const Duration _gestureTimeoutDuration = Duration(milliseconds: 100);
 
   // Gesture tracking
   final Map<int, _GestureTracker> _activeGestures = {};
   final List<_GestureEvent> _gestureHistory = [];
-  GestureDispatchResult? _lastDispatchResult;
 
   // Performance monitoring
   final Stopwatch _performanceStopwatch = Stopwatch();
@@ -108,7 +106,6 @@ class SmartGestureDispatcher {
       // Update performance metrics
       _updatePerformanceMetrics();
 
-      _lastDispatchResult = result;
       return result;
     } finally {
       _performanceStopwatch.stop();
@@ -333,7 +330,7 @@ class SmartGestureDispatcher {
     if (distance < 1.0 && velocity < 50.0) {
       final tapType = await _determineTapType(tracker, context);
       final hitTarget = await _performHitTest(tracker.currentPosition, context);
-      
+
       return _SmartGestureType.tap(
         confidence: 0.95,
         position: tracker.currentPosition,

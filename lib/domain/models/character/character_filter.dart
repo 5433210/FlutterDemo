@@ -66,30 +66,22 @@ class CharacterFilter with _$CharacterFilter {
     /// 作品ID筛选
     String? workId,
     String? pageId,    /// 作品风格
-    @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
-    String? style,
+    @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson) String? style,
 
     /// 创作工具
-    @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
-    String? tool,
+    @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson) String? tool,
 
     /// 创作时间筛选预设
-    @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
-    @Default(DateRangePreset.all)
-    DateRangePreset creationDatePreset,
+    @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson) @Default(DateRangePreset.all) DateRangePreset creationDatePreset,
 
     /// 创作时间范围（自定义时间段）
-    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
-    DateTimeRange? creationDateRange,
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson) DateTimeRange? creationDateRange,
 
     /// 收集时间筛选预设
-    @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
-    @Default(DateRangePreset.all)
-    DateRangePreset collectionDatePreset,
+    @JsonKey(fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson) @Default(DateRangePreset.all) DateRangePreset collectionDatePreset,
 
     /// 收集时间范围（自定义时间段）
-    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
-    DateTimeRange? collectionDateRange,
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson) DateTimeRange? collectionDateRange,
 
     /// 标签筛选
     @Default([]) List<String> tags,

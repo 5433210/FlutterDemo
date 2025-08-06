@@ -3,45 +3,45 @@
 library version_config;
 
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // 导入平台特定的版本配置
 import 'platform/android_version_config.dart';
 import 'platform/ios_version_config.dart';
+import 'platform/linux_version_config.dart';
+import 'platform/macos_version_config.dart';
+import 'platform/ohos_version_config.dart';
 import 'platform/web_version_config.dart';
 import 'platform/windows_version_config.dart';
-import 'platform/macos_version_config.dart';
-import 'platform/linux_version_config.dart';
-import 'platform/ohos_version_config.dart';
 
 /// 版本信息数据类
 class VersionInfo {
   /// 主版本号
   final int major;
-  
+
   /// 次版本号
   final int minor;
-  
+
   /// 修订版本号
   final int patch;
-  
+
   /// 预发布标识符 (dev, alpha, beta, rc)
   final String? prerelease;
-  
+
   /// 构建号
   final String buildNumber;
-  
+
   /// Git提交哈希
   final String? gitCommit;
-  
+
   /// Git分支名
   final String? gitBranch;
-  
+
   /// 构建时间
   final DateTime? buildTime;
-  
+
   /// 构建环境
   final String? buildEnvironment;
 
@@ -104,7 +104,7 @@ class VersionInfo {
 class VersionConfig {
   static VersionConfig? _instance;
   static VersionInfo? _versionInfo;
-  
+
   /// 获取单例实例
   static VersionConfig get instance {
     return _instance ??= VersionConfig._internal();
@@ -115,18 +115,18 @@ class VersionConfig {
   /// 初始化版本信息
   static Future<void> initialize() async {
     if (_versionInfo != null) return;
-    
+
     try {
       // 获取平台特定的版本信息
       final platformVersion = await _getPlatformVersionInfo();
-      
+
       // 获取Git信息 (如果可用)
       final gitInfo = await _getGitInfo();
-      
+
       // 解析版本号
       final versionParts = _parseVersion(platformVersion.version);
       final buildNumber = platformVersion.buildNumber;
-      
+
       _versionInfo = VersionInfo(
         major: versionParts['major'] ?? 1,
         minor: versionParts['minor'] ?? 0,
@@ -152,7 +152,8 @@ class VersionConfig {
   /// 获取版本信息
   static VersionInfo get versionInfo {
     if (_versionInfo == null) {
-      throw StateError('VersionConfig not initialized. Call VersionConfig.initialize() first.');
+      throw StateError(
+          'VersionConfig not initialized. Call VersionConfig.initialize() first.');
     }
     return _versionInfo!;
   }
@@ -184,7 +185,7 @@ class VersionConfig {
     // 解析格式: 1.2.3-alpha.1+20250620001 或 1.2.3+20250620001
     final regex = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?$');
     final match = regex.firstMatch(version);
-    
+
     if (match == null) {
       return {
         'major': 1,
@@ -244,7 +245,7 @@ class VersionConfig {
     const prereleaseOrder = ['dev', 'alpha', 'beta', 'rc'];
     final aIndex = prereleaseOrder.indexOf(a.prerelease!.split('.')[0]);
     final bIndex = prereleaseOrder.indexOf(b.prerelease!.split('.')[0]);
-    
+
     result = aIndex.compareTo(bIndex);
     if (result != 0) return result;
 
@@ -298,7 +299,7 @@ extension VersionStringExtension on String {
   VersionInfo? parseAsVersion() {
     final parts = VersionConfig._parseVersion(this);
     if (parts['major'] == null) return null;
-    
+
     return VersionInfo(
       major: parts['major'],
       minor: parts['minor'],
@@ -307,4 +308,4 @@ extension VersionStringExtension on String {
       buildNumber: '0', // 默认构建号
     );
   }
-} 
+}

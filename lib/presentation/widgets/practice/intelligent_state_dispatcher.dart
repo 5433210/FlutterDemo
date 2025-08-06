@@ -165,9 +165,10 @@ class IntelligentStateDispatcher {
       case 'element_order_update':
         // 特殊逻辑：如果是变换操作，确保交互层被通知（如果还没有被通知的话）
         if ((operation.contains('transform') ||
-            operation.contains('position') ||
-            operation.contains('size')) &&
-            (affectedLayers == null || !affectedLayers.contains('interaction'))) {
+                operation.contains('position') ||
+                operation.contains('size')) &&
+            (affectedLayers == null ||
+                !affectedLayers.contains('interaction'))) {
           final interactionListeners = _layerListeners['interaction'];
           if (interactionListeners != null && interactionListeners.isNotEmpty) {
             _notifyLayerListeners('interaction', changeType);
@@ -182,7 +183,7 @@ class IntelligentStateDispatcher {
           }
         }
         break;
-      
+
       default:
         // 其他类型不需要特殊处理，完全依赖参数化通知
         break;
@@ -195,10 +196,10 @@ class IntelligentStateDispatcher {
     }
 
     // 🚀 优化：只在重要里程碑、错误或性能问题时记录分发完成
-    final shouldLogCompletion = _dispatchCount % 25 == 0 || 
-                               changeType.contains('error') ||
-                               dispatchDuration.inMilliseconds > 5;
-    
+    final shouldLogCompletion = _dispatchCount % 25 == 0 ||
+        changeType.contains('error') ||
+        dispatchDuration.inMilliseconds > 5;
+
     if (shouldLogCompletion) {
       EditPageLogger.performanceInfo(
         '智能状态分发完成里程碑',

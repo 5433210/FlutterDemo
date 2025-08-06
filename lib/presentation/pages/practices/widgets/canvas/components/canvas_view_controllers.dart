@@ -1,6 +1,3 @@
-import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math_64.dart';
 
@@ -8,20 +5,19 @@ import '../../../../../../infrastructure/logging/edit_page_logger_extension.dart
 import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../widgets/practice/practice_edit_controller.dart';
 import '../../../helpers/element_utils.dart';
-import 'canvas_layer_builders.dart';
 
 /// 画布视图控制器 mixin
 /// 负责处理画布视图相关的逻辑，如缩放、重置、坐标转换等
 mixin CanvasViewControllers {
   /// 获取控制器（由使用此mixin的类实现）
   PracticeEditController get controller;
-  
+
   /// 获取转换控制器（由使用此mixin的类实现）
   TransformationController get transformationController;
-  
+
   /// 获取BuildContext（由使用此mixin的类实现）
   BuildContext get context;
-  
+
   /// 获取mounted状态（由使用此mixin的类实现）
   bool get mounted;
 
@@ -47,18 +43,18 @@ mixin CanvasViewControllers {
       AppLogger.warning('组件未挂载，无法重置视图', tag: 'Canvas');
       return;
     }
-    
+
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) {
       AppLogger.warning('无法获取渲染框，无法重置视图', tag: 'Canvas');
       return;
     }
-    
+
     final Size viewportSize = renderBox.size;
 
     // 获取页面大小（画布内容边界）
     final Size pageSize = ElementUtils.calculatePixelSize(currentPage);
-    
+
     AppLogger.debug(
       '重置视图计算信息',
       tag: 'Canvas',
@@ -96,7 +92,7 @@ mixin CanvasViewControllers {
       data: {
         'scale': scale,
         'translation': '($dx, $dy)',
-        'scaledPageSize': '${scaledPageWidth}x${scaledPageHeight}',
+        'scaledPageSize': '${scaledPageWidth}x$scaledPageHeight',
       },
     );
 
@@ -106,7 +102,6 @@ mixin CanvasViewControllers {
     // 验证变换应用是否正确
     final appliedMatrix = transformationController.value;
     final appliedScale = appliedMatrix.getMaxScaleOnAxis();
-    final appliedTranslation = appliedMatrix.getTranslation();
 
     if ((appliedScale - scale).abs() < 0.001) {
       AppLogger.debug('变换应用正确', tag: 'Canvas');
@@ -130,8 +125,8 @@ mixin CanvasViewControllers {
       tag: 'Canvas',
       data: {
         'finalScale': scale,
-        'availableSize': '${availableWidth}x${availableHeight}',
-        'scaledContentSize': '${scaledPageWidth}x${scaledPageHeight}',
+        'availableSize': '${availableWidth}x$availableHeight',
+        'scaledContentSize': '${scaledPageWidth}x$scaledPageHeight',
         'centerOffset': '($dx, $dy)',
       },
     );
@@ -148,7 +143,7 @@ mixin CanvasViewControllers {
   Offset screenToCanvas(Offset screenPoint) {
     try {
       final Matrix4 matrix = transformationController.value;
-      
+
       // 检查矩阵是否有效
       if (!_isValidMatrix(matrix)) {
         EditPageLogger.editPageError(
@@ -160,7 +155,7 @@ mixin CanvasViewControllers {
         );
         return screenPoint; // 返回原始点作为回退
       }
-      
+
       Matrix4 invertedMatrix;
       try {
         invertedMatrix = Matrix4.inverted(matrix);
@@ -174,25 +169,25 @@ mixin CanvasViewControllers {
             'determinant': matrix.determinant(),
           },
         );
-        
+
         // 重置变换控制器
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             transformationController.value = Matrix4.identity();
           }
         });
-        
+
         return screenPoint; // 返回原始点作为回退
       }
-      
+
       final Vector3 transformed = invertedMatrix.transform3(Vector3(
         screenPoint.dx,
         screenPoint.dy,
         0,
       ));
-      
+
       final canvasPoint = Offset(transformed.x, transformed.y);
-      
+
       AppLogger.debug(
         '坐标转换：屏幕到画布',
         tag: 'Canvas',
@@ -201,7 +196,7 @@ mixin CanvasViewControllers {
           'canvasPoint': '$canvasPoint',
         },
       );
-      
+
       return canvasPoint;
     } catch (e) {
       EditPageLogger.editPageError(
@@ -211,7 +206,7 @@ mixin CanvasViewControllers {
       return screenPoint; // 返回原始点作为回退
     }
   }
-  
+
   /// 检查矩阵是否有效
   bool _isValidMatrix(Matrix4 matrix) {
     // 检查矩阵中是否有NaN或Infinity值
@@ -221,13 +216,13 @@ mixin CanvasViewControllers {
         return false;
       }
     }
-    
+
     // 检查行列式是否接近0（不可逆）
     final determinant = matrix.determinant();
     if (determinant.abs() < 1e-10) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -235,7 +230,7 @@ mixin CanvasViewControllers {
   Offset canvasToScreen(Offset canvasPoint) {
     try {
       final Matrix4 matrix = transformationController.value;
-      
+
       // 检查矩阵是否有效
       if (!_isValidMatrix(matrix)) {
         EditPageLogger.editPageError(
@@ -247,15 +242,15 @@ mixin CanvasViewControllers {
         );
         return canvasPoint; // 返回原始点作为回退
       }
-      
+
       final Vector3 transformed = matrix.transform3(Vector3(
         canvasPoint.dx,
         canvasPoint.dy,
         0,
       ));
-      
+
       final screenPoint = Offset(transformed.x, transformed.y);
-      
+
       AppLogger.debug(
         '坐标转换：画布到屏幕',
         tag: 'Canvas',
@@ -264,7 +259,7 @@ mixin CanvasViewControllers {
           'screenPoint': '$screenPoint',
         },
       );
-      
+
       return screenPoint;
     } catch (e) {
       EditPageLogger.editPageError(
@@ -309,8 +304,10 @@ mixin CanvasViewControllers {
     final double scaleDelta = scale / currentScale;
 
     // 计算新的平移量以保持焦点位置不变
-    final double newTranslationX = focal.dx - (focal.dx - currentTranslation.x) * scaleDelta;
-    final double newTranslationY = focal.dy - (focal.dy - currentTranslation.y) * scaleDelta;
+    final double newTranslationX =
+        focal.dx - (focal.dx - currentTranslation.x) * scaleDelta;
+    final double newTranslationY =
+        focal.dy - (focal.dy - currentTranslation.y) * scaleDelta;
 
     // 创建新的变换矩阵
     final Matrix4 newMatrix = Matrix4.identity()
@@ -333,10 +330,10 @@ mixin CanvasViewControllers {
   /// 获取视口中心点
   Offset _getViewportCenter() {
     if (!mounted) return Offset.zero;
-    
+
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return Offset.zero;
-    
+
     final Size viewportSize = renderBox.size;
     return Offset(viewportSize.width / 2, viewportSize.height / 2);
   }
@@ -369,13 +366,13 @@ mixin CanvasViewControllers {
   Offset getCurrentTranslation() {
     final Vector3 translation = transformationController.value.getTranslation();
     final offset = Offset(translation.x, translation.y);
-    
+
     AppLogger.debug(
       '获取当前平移量',
       tag: 'Canvas',
       data: {'translation': '$offset'},
     );
-    
+
     return offset;
   }
 
@@ -392,7 +389,7 @@ mixin CanvasViewControllers {
     // 计算页面在屏幕上的位置和大小
     final double scaledWidth = pageSize.width * scale;
     final double scaledHeight = pageSize.height * scale;
-    
+
     final Rect visibleArea = Rect.fromLTWH(
       translation.x,
       translation.y,
@@ -412,4 +409,4 @@ mixin CanvasViewControllers {
 
     return visibleArea;
   }
-} 
+}

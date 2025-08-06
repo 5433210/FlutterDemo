@@ -303,7 +303,7 @@ mixin LayerManagementMixin on ChangeNotifier
           description: '添加复制图层中的元素',
         ),
       ],
-      operationDescription: '复制图层',
+      description: '复制图层',
     );
 
     undoRedoManager.addOperation(operation);
@@ -566,7 +566,7 @@ mixin LayerManagementMixin on ChangeNotifier
     if (operations.isNotEmpty) {
       final batchOperation = BatchOperation(
         operations: operations,
-        operationDescription: '显示所有图层',
+        description: '显示所有图层',
       );
 
       undoRedoManager.addOperation(batchOperation);
