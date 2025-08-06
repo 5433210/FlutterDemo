@@ -10,6 +10,10 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.chopper.dart"
   plugins:
     - dart_code_metrics
   errors:
@@ -17,6 +21,8 @@ analyzer:
     missing_return: error
     must_be_immutable: error
     sort_unnamed_constructors_first: ignore
+    invalid_annotation_target: ignore  # 忽略 JsonKey 註解目標檢查
+    unused_element: ignore  # 忽略生成代碼中的未使用元素檢查
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false

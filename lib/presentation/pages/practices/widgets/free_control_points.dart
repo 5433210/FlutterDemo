@@ -55,9 +55,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   static String? _lastUpdateLog;
   static DateTime? _lastUpdateTime;
 
-  static const Duration _guidelineThrottleDuration = Duration(milliseconds: 16);
-  static const _snapThreshold = 5.0; // 吸附阈值：5像素内才会吸附
-  static const _highlightThreshold = 10.0; // 高亮阈值：10像素内显示高亮
   // 独立的控制点位置状态，不依赖元素位置
   final Map<int, Offset> _controlPointPositions = {};
   bool _isInitialized = false;
@@ -72,8 +69,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   double? _initialRotationAngle; // 🔧 新增：参考线对齐相关状态
 
   List<Guideline> _activeGuidelines = [];
-  // 🔧 新增：节流相关状态，避免过于频繁的参考线计算
-  DateTime? _lastGuidelineUpdate;
   // 🔧 新增：当前拖拽控制点追踪，用于传递操作上下文
   int? _currentDraggingControlPoint;
 
@@ -105,7 +100,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             width: _currentWidth,
             height: _currentHeight,
             rotation: _currentRotation * 180 / pi, // 使用当前旋转角度
-            color: Colors.green.withOpacity(0.5), // 使用绿色表示这是测试版本
+            color: Colors.green.withValues(alpha: 0.5), // 使用绿色表示这是测试版本
           ),
           size: Size.infinite,
         ),
@@ -757,7 +752,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               color: Colors.transparent,
               // 添加调试边框（在debug模式下可见）
               border: kDebugMode
-                  ? Border.all(color: Colors.red.withOpacity(0.3), width: 1)
+                  ? Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1)
                   : null,
             ),
           ),
@@ -1307,80 +1302,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _recalculateControlPointPositions();
   }
 
-  /// 测试用辅助函数 - 检测吸附功能是否正常工作
-  void _testSnapAlignment() {
-    // 只在参考线对齐模式下测试
-    if (widget.alignmentMode != AlignmentMode.guideline) return;
-
-    // 获取当前元素位置和大小
-    final currentProps = getCurrentElementProperties();
-    final elementPos = Offset(currentProps['x']!, currentProps['y']!);
-    final elementSize = Size(currentProps['width']!, currentProps['height']!);
-
-    EditPageLogger.editPageInfo('🧪【吸附测试】开始测试吸附功能', data: {
-      'elementId': widget.elementId,
-      'position': elementPos.toString(),
-      'size': elementSize.toString(),
-      'operation': 'snap_test',
-    });
-
-    try {
-      // 测试X轴微小偏移，看是否会触发吸附
-      // 创建一个偏移的测试位置，接近但不完全等于当前位置
-      final testOffsets = [
-        Offset(elementPos.dx + 3, elementPos.dy), // X轴正向微小偏移
-        Offset(elementPos.dx - 3, elementPos.dy), // X轴负向微小偏移
-        Offset(elementPos.dx, elementPos.dy + 3), // Y轴正向微小偏移
-        Offset(elementPos.dx, elementPos.dy - 3), // Y轴负向微小偏移
-      ];
-
-      // 遍历测试用的偏移位置
-      for (int i = 0; i < testOffsets.length; i++) {
-        final testPos = testOffsets[i];
-        EditPageLogger.editPageInfo('🧪【吸附测试】测试位置 #$i', data: {
-          'testPosition': testPos.toString(),
-          'deltaFromActual': (testPos - elementPos).toString(),
-        });
-
-        // 调用对齐函数测试
-        final result = GuidelineManager.instance.performAlignment(
-          elementId: widget.elementId,
-          currentPosition: testPos,
-          elementSize: elementSize,
-          operationType: 'translate',
-        );
-
-        // 输出结果
-        final bool hasAlignment = result['hasAlignment'] as bool;
-        final Offset alignedPos = result['position'] as Offset;
-        final double snapDistanceX = (alignedPos.dx - testPos.dx).abs();
-        final double snapDistanceY = (alignedPos.dy - testPos.dy).abs();
-
-        EditPageLogger.editPageInfo('🧪【吸附测试】位置 #$i 测试结果', data: {
-          'hasAlignment': hasAlignment,
-          'testPosition': testPos.toString(),
-          'alignedPosition': alignedPos.toString(),
-          'snapDistanceX': snapDistanceX,
-          'snapDistanceY': snapDistanceY,
-          'isXSnapped': snapDistanceX > 0,
-          'isYSnapped': snapDistanceY > 0,
-          'guidelines': result['guidelines']?.length ?? 0,
-        });
-      }
-
-      EditPageLogger.editPageInfo('🧪【吸附测试】完成', data: {
-        'conclusion':
-            '如果以上测试中有hasAlignment=true且snapDistance>0的结果，说明吸附功能应该正常工作',
-      });
-    } catch (e) {
-      EditPageLogger.editPageError('🧪【吸附测试】测试失败',
-          data: {
-            'error': e.toString(),
-          },
-          error: e);
-    }
-  }
-
   /// 将屏幕坐标系的delta转换为元素本地坐标系的delta
   /// ⚠️ 注意：此方法仅用于调整大小操作（resize），不用于平移操作（translate）
   /// 平移操作应始终使用屏幕坐标系，确保鼠标移动方向与元素移动方向一致
@@ -1685,34 +1606,6 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 重新计算所有控制点位置
     _updateAllControlPointsFromRect(
         Rect.fromLTWH(_currentX, _currentY, _currentWidth, _currentHeight));
-  }
-
-  /// 🔹 重置参考线颜色并传递到外部更新
-  void _updateGuidelineColors() {
-    // 定义固定的灰色
-    const guidelineColor = Color(0xFFA0A0A0);
-
-    if (_activeGuidelines.isNotEmpty) {
-      // 重设参考线颜色
-      final updatedGuidelines = _activeGuidelines.map((guideline) {
-        return guideline.copyWith(
-          color: guidelineColor, // 强制使用灰色
-          isHighlighted: false, // 禁用高亮
-          lineWeight: 1.5, // 使用统一线宽
-        );
-      }).toList();
-
-      _activeGuidelines = updatedGuidelines;
-
-      // 通知外部更新参考线
-      if (widget.onGuidelinesUpdated != null) {
-        EditPageLogger.editPageDebug('强制更新参考线颜色为灰色', data: {
-          'guidelineCount': _activeGuidelines.length,
-          'color': 'gray (0xFFA0A0A0)',
-        });
-        widget.onGuidelinesUpdated!(_activeGuidelines);
-      }
-    }
   }
 
   /// 更新旋转

@@ -9,8 +9,10 @@ import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 /// 🚀 优化的集字元素渲染器
 /// 减少重复渲染，智能缓存管理，批量处理
 class OptimizedCollectionElementRenderer {
-  final CharacterImageService _characterImageService;
-  final OptimizedImageCacheService _optimizedCache;
+  // ignore: unused_field
+  final CharacterImageService _characterImageService; // 為未來優化預留
+  // ignore: unused_field
+  final OptimizedImageCacheService _optimizedCache; // 為批量緩存功能預留
 
   // 🔧 渲染状态缓存 - 避免重复渲染相同内容
   final Map<String, _RenderState> _renderStateCache = {};

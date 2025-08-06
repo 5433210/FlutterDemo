@@ -37,7 +37,8 @@ class ZoomableImageView extends StatefulWidget {
 
 class _ZoomableImageViewState extends State<ZoomableImageView> {
   late TransformationController _transformationController;
-  bool _isZoomed = false;
+  // ignore: unused_field
+  bool _isZoomed = false; // 為未來的縮放UI功能預留
 
   @override
   void initState() {

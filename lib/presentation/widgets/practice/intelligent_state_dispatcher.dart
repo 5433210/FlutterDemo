@@ -6,7 +6,8 @@ import 'practice_edit_controller.dart';
 /// 🚀 智能状态分发器
 /// 精确控制组件重建，避免全局Canvas重建
 class IntelligentStateDispatcher {
-  final PracticeEditController _controller;
+  // ignore: unused_field
+  final PracticeEditController _controller; // 為未來狀態管理功能預留
 
   // 🔍[TRACKING] 静态分发计数器
   static int _dispatchCount = 0;

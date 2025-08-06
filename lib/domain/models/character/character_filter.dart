@@ -65,10 +65,12 @@ class CharacterFilter with _$CharacterFilter {
 
     /// 作品ID筛选
     String? workId,
-    String? pageId,    /// 作品风格
+    String? pageId,
+    
+    /// 作品风格
     @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson) String? style,
 
-    /// 创作工具
+    /// 创作工具  
     @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson) String? tool,
 
     /// 创作时间筛选预设

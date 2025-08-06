@@ -57,7 +57,9 @@ String? _workToolToJson(String? tool) => tool;
 class WorkFilter with _$WorkFilter {
   const factory WorkFilter({
     /// 搜索关键字
-    String? keyword,    /// 作品风格
+    String? keyword,
+    
+    /// 作品风格
     @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson) String? style,
 
     /// 创作工具
