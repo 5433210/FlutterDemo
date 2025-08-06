@@ -358,13 +358,13 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                         if (color == Colors.transparent) {
                           _updateContentProperty('fontColor', 'transparent');
                         } else {
-                          // Convert color to hex string
+                          // Convert color to hex string - 修復：正確轉換 0.0-1.0 範圍到 0-255
                           final r =
-                              color.r.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.red).toRadixString(16).padLeft(2, '0');
                           final g =
-                              color.g.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.green).toRadixString(16).padLeft(2, '0');
                           final b =
-                              color.b.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.blue).toRadixString(16).padLeft(2, '0');
                           final hexColor = '#$r$g$b';
                           _updateContentProperty('fontColor', hexColor);
                         }
@@ -415,13 +415,13 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                           _updateContentProperty(
                               'backgroundColor', 'transparent');
                         } else {
-                          // Convert color to hex string
+                          // Convert color to hex string - 修復：正確轉換 0.0-1.0 範圍到 0-255
                           final r =
-                              color.r.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.red).toRadixString(16).padLeft(2, '0');
                           final g =
-                              color.g.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.green).toRadixString(16).padLeft(2, '0');
                           final b =
-                              color.b.toInt().toRadixString(16).padLeft(2, '0');
+                              (color.blue).toRadixString(16).padLeft(2, '0');
                           final hexColor = '#$r$g$b';
                           _updateContentProperty('backgroundColor', hexColor);
                         }

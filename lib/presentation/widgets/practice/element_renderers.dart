@@ -527,15 +527,8 @@ class ElementRenderers {
             child: Opacity(
               opacity: opacity,
               child: Container(
-                // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
-                decoration: backgroundColor != Colors.transparent
-                    ? BoxDecoration(
-                        color: backgroundColor,
-                        // 移除非选中状态下的灰色边框
-                        border: null, // 不再显示边框
-                        // 移除圆角
-                      )
-                    : null, // 透明背景时不使用decoration
+                // 移除外層背景色設置，改為傳遞給TextRenderer處理
+                decoration: null, // 背景色由TextRenderer內部處理
                 child: Padding(
                   padding: EdgeInsets.all(padding),
                   child: writingMode.startsWith('vertical')
@@ -549,7 +542,7 @@ class ElementRenderers {
                             maxWidth: constraints.maxWidth - padding * 2,
                             maxHeight: constraints.maxHeight - padding * 2,
                           ),
-                          backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
+                          backgroundColor: backgroundColor, // 傳遞正確的背景色
                         )
                       : TextRenderer.renderHorizontalText(
                           text: text,
@@ -561,7 +554,7 @@ class ElementRenderers {
                             maxWidth: constraints.maxWidth - padding * 2,
                             maxHeight: constraints.maxHeight - padding * 2,
                           ),
-                          backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
+                          backgroundColor: backgroundColor, // 傳遞正確的背景色
                         ),
                 ),
               ),
@@ -789,6 +782,11 @@ class ElementRenderers {
 
   /// 解析颜色字符串
   static Color _parseColor(String colorStr) {
+    EditPageLogger.rendererDebug('解析颜色字符串', data: {
+      'colorStr': colorStr,
+      'type': colorStr.runtimeType.toString(),
+    });
+
     if (colorStr == 'transparent') return Colors.transparent;
 
     try {
@@ -806,7 +804,7 @@ class ElementRenderers {
             '无效的颜色格式',
             data: {'colorStr': colorStr},
           );
-          return Colors.black; // Invalid format
+          return Colors.transparent; // Invalid format, use transparent instead of black
         }
       } else {
         buffer.write('ff'); // Default full opacity
@@ -828,7 +826,7 @@ class ElementRenderers {
         data: {'colorStr': colorStr},
         error: e,
       );
-      return Colors.black;
+      return Colors.transparent; // Return transparent instead of black on error
     }
   }
 
