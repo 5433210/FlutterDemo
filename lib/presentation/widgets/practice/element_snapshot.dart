@@ -331,8 +331,8 @@ class ElementSnapshotManager {
       width: snapshot.size.width,
       height: snapshot.size.height,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.orange.withOpacity(0.5), width: 1),
-        color: Colors.orange.withOpacity(0.1),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.5), width: 1),
+        color: Colors.orange.withValues(alpha: 0.1),
       ),
       child: const Center(
         child: Icon(
@@ -350,8 +350,8 @@ class ElementSnapshotManager {
       width: snapshot.size.width,
       height: snapshot.size.height,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.purple.withOpacity(0.5), width: 1),
-        color: Colors.purple.withOpacity(0.1),
+        border: Border.all(color: Colors.purple.withValues(alpha: 0.5), width: 1),
+        color: Colors.purple.withValues(alpha: 0.1),
       ),
       child: Center(
         child: Text(
@@ -371,8 +371,8 @@ class ElementSnapshotManager {
       width: snapshot.size.width,
       height: snapshot.size.height,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.green.withOpacity(0.5), width: 1),
-        color: Colors.green.withOpacity(0.1),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.5), width: 1),
+        color: Colors.green.withValues(alpha: 0.1),
       ),
       child: const Center(
         child: Icon(
@@ -394,8 +394,8 @@ class ElementSnapshotManager {
       width: snapshot.size.width,
       height: snapshot.size.height,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.blue.withOpacity(0.5), width: 1),
-        color: Colors.blue.withOpacity(0.1),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.5), width: 1),
+        color: Colors.blue.withValues(alpha: 0.1),
       ),
       child: Center(
         child: Text(

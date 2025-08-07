@@ -166,10 +166,10 @@ class _ProgressDialogState extends State<ProgressDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: theme.colorScheme.error.withOpacity(0.3),
+                      color: theme.colorScheme.error.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
@@ -212,7 +212,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -520,10 +520,10 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: theme.colorScheme.error.withOpacity(0.3),
+                      color: theme.colorScheme.error.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
@@ -571,7 +571,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -639,10 +639,10 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.green.withOpacity(0.3),
+          color: Colors.green.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -755,7 +755,7 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -887,10 +887,10 @@ class _ControlledProgressDialogState extends State<ControlledProgressDialog> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.3),
+          color: Colors.orange.withValues(alpha: 0.3),
         ),
       ),
       child: Column(

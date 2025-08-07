@@ -172,7 +172,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '${pageCount}${l10n.pages}',
+                        '$pageCount${l10n.pages}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

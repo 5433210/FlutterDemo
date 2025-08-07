@@ -1,8 +1,8 @@
 /// Android平台版本配置
 library android_version_config;
 
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Android平台版本配置管理
 class AndroidVersionConfig {

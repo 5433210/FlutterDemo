@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../../infrastructure/logging/logger.dart';
 import 'memory_manager.dart';
 import 'resource_disposal_service.dart';
 
@@ -277,8 +278,9 @@ class EnhancedOnDemandResourceLoader extends ChangeNotifier {
     }
 
     if (kDebugMode && entriesToRemove.isNotEmpty) {
-      print(
-          '🧹 EnhancedOnDemandResourceLoader: Cleaned ${entriesToRemove.length} cache entries');
+      AppLogger.debug(
+          'EnhancedOnDemandResourceLoader: 清理了 ${entriesToRemove.length} 个缓存条目',
+          tag: 'ResourceLoader');
     }
   }
 

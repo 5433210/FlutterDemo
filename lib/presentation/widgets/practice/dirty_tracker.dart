@@ -3,8 +3,8 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
-import '../../pages/practices/widgets/element_change_types.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../pages/practices/widgets/element_change_types.dart';
 
 /// Tracks which elements are dirty and need rebuilding for optimized rendering
 class DirtyTracker extends ChangeNotifier {

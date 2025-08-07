@@ -34,7 +34,7 @@ class GuidelineManager {
   double _snapThreshold = 8.0;
   
   /// 参考线显示阈值（像素）- 当动态参考线距离静态参考线在此范围内时才显示
-  double _displayThreshold = 20.0;
+  final double _displayThreshold = 20.0;
 
   /// 当前是否处于拖拽状态
   bool _isDragging = false;

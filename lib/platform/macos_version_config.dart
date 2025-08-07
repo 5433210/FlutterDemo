@@ -1,8 +1,8 @@
 /// macOS平台版本配置
 library macos_version_config;
 
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// macOS平台版本配置管理
 class MacOSVersionConfig {

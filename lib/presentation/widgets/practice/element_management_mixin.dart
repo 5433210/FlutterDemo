@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import 'batch_update_options.dart';
 import 'intelligent_notification_mixin.dart';
@@ -748,29 +749,24 @@ mixin ElementManagementMixin on ChangeNotifier
       properties.forEach((key, value) {
         if (key == 'content' && element.containsKey('content')) {
           // 对于content对象，合并而不是替换
-          print('🔍 element_management_mixin - 合并content');
-          print(
-              '  - 原始content keys: ${(element['content'] as Map<String, dynamic>).keys.toList()}');
-          print(
-              '  - 新content keys: ${(value as Map<String, dynamic>).keys.toList()}');
+          AppLogger.debug('合并content');
+          AppLogger.debug('原始content keys: ${(element['content'] as Map<String, dynamic>).keys.toList()}');
+          AppLogger.debug( '新content keys: ${(value as Map<String, dynamic>).keys.toList()}');
 
           final originalContent = element['content'] as Map<String, dynamic>;
           final newContent = value;
 
           // 检查binarizedImageData
           if (originalContent.containsKey('binarizedImageData')) {
-            print(
-                '  - 原始content[binarizedImageData]: ${originalContent['binarizedImageData']?.runtimeType}');
+            AppLogger.debug('原始content[binarizedImageData]: ${originalContent['binarizedImageData']?.runtimeType}');
           }
           if (newContent.containsKey('binarizedImageData')) {
-            print(
-                '  - 新content[binarizedImageData]: ${newContent['binarizedImageData']?.runtimeType}');
+            AppLogger.debug( '新content[binarizedImageData]: ${newContent['binarizedImageData']?.runtimeType}');
             if (newContent['binarizedImageData'] is List<int>) {
-              print(
-                  '  - List<int>大小: ${(newContent['binarizedImageData'] as List<int>).length}');
+              AppLogger.debug( 'List<int>大小: ${(newContent['binarizedImageData'] as List<int>).length}');
             }
           } else {
-            print('  - 新content中没有binarizedImageData，将从合并结果中移除');
+            AppLogger.debug( '新content中没有binarizedImageData，将从合并结果中移除');
           }
 
           // 🔧 修复合并逻辑：当新content中删除了某个键时，确保从合并结果中也删除该键
@@ -785,14 +781,14 @@ mixin ElementManagementMixin on ChangeNotifier
           // 如果原始content有binarizedImageData，但新content没有，则明确删除它
           if (originalContent.containsKey('binarizedImageData') &&
               !newContent.containsKey('binarizedImageData')) {
-            print('  - 🗑️ 明确删除binarizedImageData（新content中已移除）');
+            AppLogger.debug('明确删除binarizedImageData（新content中已移除）');
             mergedContent.remove('binarizedImageData');
           }
 
           // 🔧 关键修复：检查transformedImageData的删除情况
           if (originalContent.containsKey('transformedImageData') &&
               !newContent.containsKey('transformedImageData')) {
-            print('  - 🗑️ 明确删除transformedImageData（新content中已移除）');
+            AppLogger.debug('明确删除transformedImageData（新content中已移除）');
             mergedContent.remove('transformedImageData');
           }
 
@@ -808,7 +804,7 @@ mixin ElementManagementMixin on ChangeNotifier
           for (final key in transformKeys) {
             if (originalContent.containsKey(key) &&
                 !newContent.containsKey(key)) {
-              print('  - 🗑️ 明确删除$key（新content中已移除）');
+              AppLogger.debug( '明确删除$key（新content中已移除）');
               mergedContent.remove(key);
             }
           }
@@ -816,16 +812,14 @@ mixin ElementManagementMixin on ChangeNotifier
           newProperties['content'] = mergedContent;
 
           // 检查合并后的结果
-          print('  - 合并后content keys: ${mergedContent.keys.toList()}');
+          AppLogger.debug('合并后content keys: ${mergedContent.keys.toList()}');
           if (mergedContent.containsKey('binarizedImageData')) {
-            print(
-                '  - 合并后content[binarizedImageData]: ${mergedContent['binarizedImageData']?.runtimeType}');
+            AppLogger.debug('合并后content[binarizedImageData]: ${mergedContent['binarizedImageData']?.runtimeType}');
             if (mergedContent['binarizedImageData'] is List<int>) {
-              print(
-                  '  - 合并后List<int>大小: ${(mergedContent['binarizedImageData'] as List<int>).length}');
+              AppLogger.debug('合并后List<int>大小: ${(mergedContent['binarizedImageData'] as List<int>).length}');
             }
           } else {
-            print('  - 💡 合并后binarizedImageData已被成功移除');
+            AppLogger.debug('合并后binarizedImageData已被成功移除');
           }
         } else {
           newProperties[key] = value;

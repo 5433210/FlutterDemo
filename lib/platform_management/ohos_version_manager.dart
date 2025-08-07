@@ -1,9 +1,8 @@
 /// 鸿蒙OS平台版本管理器
 library ohos_version_manager;
 
-import 'dart:io';
-
 import 'dart:convert';
+import 'dart:io';
 
 import 'platform_version_manager.dart';
 

@@ -3,12 +3,12 @@ library platform_managers_init;
 
 import 'android_version_manager.dart';
 import 'ios_version_manager.dart';
+import 'linux_version_manager.dart';
+import 'macos_version_manager.dart';
+import 'ohos_version_manager.dart';
 import 'platform_version_manager.dart';
 import 'web_version_manager.dart';
 import 'windows_version_manager.dart';
-import 'macos_version_manager.dart';
-import 'linux_version_manager.dart';
-import 'ohos_version_manager.dart';
 
 /// 初始化所有平台版本管理器
 void initializePlatformManagers() {

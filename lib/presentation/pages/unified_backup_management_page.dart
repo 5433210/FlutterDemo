@@ -699,6 +699,7 @@ class _UnifiedBackupManagementPageState
     final l10n = AppLocalizations.of(context);
     // 显示创建备份对话框
     final controller = TextEditingController();
+    if (!mounted) return;
     final description = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -752,6 +753,7 @@ class _UnifiedBackupManagementPageState
       AppLogger.info('备份前检查通过', tag: 'UnifiedBackupManagement');
     } catch (e) {
       // 基本检查失败
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.backupPreCheckFailed(e.toString())),
@@ -767,6 +769,7 @@ class _UnifiedBackupManagementPageState
 
     // 显示可取消的进度对话框
     final dialogCompleter = Completer<void>();
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -827,7 +830,7 @@ class _UnifiedBackupManagementPageState
         await Future.delayed(const Duration(milliseconds: 100));
 
         // 只关闭当前的进度对话框
-        if (Navigator.of(context).canPop()) {
+        if (mounted && Navigator.of(context).canPop()) {
           final currentRoute = ModalRoute.of(context);
           if (currentRoute != null && !currentRoute.isFirst) {
             Navigator.of(context).pop();
@@ -858,7 +861,7 @@ class _UnifiedBackupManagementPageState
         await Future.delayed(const Duration(milliseconds: 100));
 
         // 只关闭当前的进度对话框
-        if (Navigator.of(context).canPop()) {
+        if (mounted && Navigator.of(context).canPop()) {
           final currentRoute = ModalRoute.of(context);
           if (currentRoute != null && !currentRoute.isFirst) {
             Navigator.of(context).pop();
@@ -874,6 +877,7 @@ class _UnifiedBackupManagementPageState
             errorMessage = l10n.backupTimeoutDetailedError;
           }
 
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
@@ -928,6 +932,7 @@ class _UnifiedBackupManagementPageState
 
       if (duplicateBackup != null) {
         // 显示重复文件确认对话框
+        if (!mounted) return;
         final shouldProceed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -988,6 +993,7 @@ class _UnifiedBackupManagementPageState
       }
 
       // 显示进度对话框
+      if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1030,7 +1036,7 @@ class _UnifiedBackupManagementPageState
               tag: 'UnifiedBackupManagement', data: {'error': e.toString()});
           // 备用方案：使用原始上下文
           try {
-            Navigator.of(context).pop();
+            if (mounted) Navigator.of(context).pop();
           } catch (e2) {
             AppLogger.error('备用关闭方案也失败',
                 tag: 'UnifiedBackupManagement', data: {'error': e2.toString()});
@@ -1066,7 +1072,7 @@ class _UnifiedBackupManagementPageState
           Navigator.of(dialogContext!).pop();
         } catch (e2) {
           try {
-            Navigator.of(context).pop();
+            if (mounted) Navigator.of(context).pop();
           } catch (e3) {
             // 忽略
           }
@@ -1116,6 +1122,7 @@ class _UnifiedBackupManagementPageState
     final l10n = AppLocalizations.of(context);
 
     // 显示确认对话框
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1190,6 +1197,7 @@ class _UnifiedBackupManagementPageState
 
   Future<void> _deleteBackupPath(String path) async {
     final l10n = AppLocalizations.of(context);
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1248,6 +1256,7 @@ class _UnifiedBackupManagementPageState
   Future<void> _exportAllBackups(String path, List<BackupEntry> backups) async {
     final l10n = AppLocalizations.of(context);
     if (backups.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.noBackupFilesToExportMessage)),
       );
@@ -1277,6 +1286,7 @@ class _UnifiedBackupManagementPageState
 
     try {
       // 显示带进度的对话框
+      if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1481,6 +1491,7 @@ class _UnifiedBackupManagementPageState
     final Completer<void> restoreCompleter = Completer<void>();
 
     // 显示进度对话框
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1689,6 +1700,7 @@ class _UnifiedBackupManagementPageState
 
       if (targetExists) {
         // 显示文件重复确认对话框
+        if (!mounted) return;
         final userChoice = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
@@ -1743,6 +1755,7 @@ class _UnifiedBackupManagementPageState
       }
 
       // 显示进度对话框
+      if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1813,6 +1826,7 @@ class _UnifiedBackupManagementPageState
   Future<void> _importBackupToCurrentPath(BackupEntry backup) async {
     final l10n = AppLocalizations.of(context);
     // 显示确认对话框
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1880,6 +1894,7 @@ class _UnifiedBackupManagementPageState
 
       if (targetExists) {
         // 显示文件重复确认对话框
+        if (!mounted) return;
         final userChoice = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
@@ -1934,6 +1949,7 @@ class _UnifiedBackupManagementPageState
       }
 
       // 显示进度对话框
+      if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -2020,6 +2036,7 @@ class _UnifiedBackupManagementPageState
   Future<void> _deleteBackup(BackupEntry backup, String path) async {
     final l10n = AppLocalizations.of(context);
     // 显示确认对话框
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -2111,6 +2128,7 @@ class _UnifiedBackupManagementPageState
     final totalBackups = _pathBackups.values.expand((x) => x).length;
 
     if (totalBackups == 0) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.noBackupsToDelete),
@@ -2121,6 +2139,7 @@ class _UnifiedBackupManagementPageState
     }
 
     // 显示确认对话框
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -2140,9 +2159,9 @@ class _UnifiedBackupManagementPageState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -2205,6 +2224,7 @@ class _UnifiedBackupManagementPageState
     BuildContext? dialogContext;
 
     // 显示进度对话框
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,

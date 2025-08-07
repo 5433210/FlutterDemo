@@ -120,36 +120,42 @@ class FileOperations {
               'size': await file.length(),
             });
 
-            _safeShowSnackBar(
-              scaffoldMessenger,
-              SnackBar(
-                content: Text(
-                    AppLocalizations.of(context).pdfExportSuccess(pdfPath)),
-                action: SnackBarAction(
-                  label: AppLocalizations.of(context).openFolder,
-                  onPressed: () {
-                    // 打开文件所在的文件夹
-                    final directory = path.dirname(pdfPath);
-                    Process.run('explorer.exe', [directory]);
-                  },
-                ),
-              ),
-            );
-          } else {
-            _safeShowSnackBar(
-              scaffoldMessenger,
-              SnackBar(
+            if (context.mounted) {
+              _safeShowSnackBar(
+                scaffoldMessenger,
+                SnackBar(
                   content: Text(
-                      AppLocalizations.of(context).pdfExportSuccess(pdfPath))),
-            );
+                      AppLocalizations.of(context).pdfExportSuccess(pdfPath)),
+                  action: SnackBarAction(
+                    label: AppLocalizations.of(context).openFolder,
+                    onPressed: () {
+                      // 打开文件所在的文件夹
+                      final directory = path.dirname(pdfPath);
+                      Process.run('explorer.exe', [directory]);
+                    },
+                  ),
+                ),
+              );
+            }
+          } else {
+            if (context.mounted) {
+              _safeShowSnackBar(
+                scaffoldMessenger,
+                SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context).pdfExportSuccess(pdfPath))),
+              );
+            }
           }
         } else {
           EditPageLogger.fileOpsError('PDF导出失敗');
-          _safeShowSnackBar(
-            scaffoldMessenger,
-            SnackBar(
-                content: Text(AppLocalizations.of(context).pdfExportFailed)),
-          );
+          if (context.mounted) {
+            _safeShowSnackBar(
+              scaffoldMessenger,
+              SnackBar(
+                  content: Text(AppLocalizations.of(context).pdfExportFailed)),
+            );
+          }
         }
       } else {
         // 导出为图片
@@ -180,38 +186,44 @@ class FileOperations {
             }
           }
 
-          _safeShowSnackBar(
-            scaffoldMessenger,
-            SnackBar(
-              content: Text(AppLocalizations.of(context).exportSuccess),
-              action: SnackBarAction(
-                label: AppLocalizations.of(context).openFolder,
-                onPressed: () {
-                  // 打开文件所在的文件夹
-                  if (imagePaths.isNotEmpty) {
-                    final directory = path.dirname(imagePaths[0]);
-                    Process.run('explorer.exe', [directory]);
-                  }
-                },
+          if (context.mounted) {
+            _safeShowSnackBar(
+              scaffoldMessenger,
+              SnackBar(
+                content: Text(AppLocalizations.of(context).exportSuccess),
+                action: SnackBarAction(
+                  label: AppLocalizations.of(context).openFolder,
+                  onPressed: () {
+                    // 打开文件所在的文件夹
+                    if (imagePaths.isNotEmpty) {
+                      final directory = path.dirname(imagePaths[0]);
+                      Process.run('explorer.exe', [directory]);
+                    }
+                  },
+                ),
               ),
-            ),
-          );
+            );
+          }
         } else {
-          _safeShowSnackBar(
-            scaffoldMessenger,
-            SnackBar(
-                content: Text(AppLocalizations.of(context).imageExportFailed)),
-          );
+          if (context.mounted) {
+            _safeShowSnackBar(
+              scaffoldMessenger,
+              SnackBar(
+                  content: Text(AppLocalizations.of(context).imageExportFailed)),
+            );
+          }
         }
       }
     } catch (e, stack) {
       EditPageLogger.fileOpsError('导出过程异常', error: e, stackTrace: stack);
 
-      _safeShowSnackBar(
-        scaffoldMessenger,
-        SnackBar(
-            content: Text(AppLocalizations.of(context).error(e.toString()))),
-      );
+      if (context.mounted) {
+        _safeShowSnackBar(
+          scaffoldMessenger,
+          SnackBar(
+              content: Text(AppLocalizations.of(context).error(e.toString()))),
+        );
+      }
     } finally {
       // 导出过程结束，不需要详细日志
     }
@@ -256,12 +268,14 @@ class FileOperations {
       );
 
       if (pageImages.isEmpty) {
-        _safeShowSnackBar(
-          scaffoldMessenger,
-          SnackBar(
-              content:
-                  Text(AppLocalizations.of(context).cannotCapturePageImage)),
-        );
+        if (context.mounted) {
+          _safeShowSnackBar(
+            scaffoldMessenger,
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).cannotCapturePageImage)),
+          );
+        }
         return;
       }
 
@@ -276,11 +290,13 @@ class FileOperations {
       //   );
       // }
     } catch (e) {
-      _safeShowSnackBar(
-        scaffoldMessenger,
-        SnackBar(
-            content: Text(AppLocalizations.of(context).error(e.toString()))),
-      );
+      if (context.mounted) {
+        _safeShowSnackBar(
+          scaffoldMessenger,
+          SnackBar(
+              content: Text(AppLocalizations.of(context).error(e.toString()))),
+        );
+      }
     }
   }
 
@@ -309,8 +325,10 @@ class FileOperations {
 
     if (title == null || title.isEmpty) return;
 
-    // 🔧 修复：统一使用优化的保存服务，确保与Save操作行为一致
-    await _saveAsWithOptimizedService(context, controller, title);
+    if (context.mounted) {
+      // 🔧 修复：统一使用优化的保存服务，确保与Save操作行为一致
+      await _saveAsWithOptimizedService(context, controller, title);
+    }
   }
 
   /// 保存字帖
@@ -388,11 +406,13 @@ class FileOperations {
               );
             }
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(AppLocalizations.of(context)
-                      .practiceSheetSaved(controller.practiceTitle!))),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(AppLocalizations.of(context)
+                        .practiceSheetSaved(controller.practiceTitle!))),
+              );
+            }
           } else if (result == 'title_exists') {
             // 如果标题已存在，询问是否覆盖
             final shouldOverwrite =
@@ -425,12 +445,14 @@ class FileOperations {
                   refreshService.notifyPracticeSaved(controller.practiceId!);
                 }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(AppLocalizations.of(context)
-                          .overwriteExistingPractice(
-                              controller.practiceTitle!))),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(AppLocalizations.of(context)
+                            .overwriteExistingPractice(
+                                controller.practiceTitle!))),
+                  );
+                }
               } else if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -449,9 +471,11 @@ class FileOperations {
                 'pageCount': pages.length,
               },
             );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
+              );
+            }
           }
         }
       } catch (error, stackTrace) {
@@ -504,11 +528,13 @@ class FileOperations {
           refreshService.notifyPracticeSaved(controller.practiceId!);
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text(AppLocalizations.of(context).practiceSheetSaved(title))),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).practiceSheetSaved(title))),
+          );
+        }
       } else if (result == 'title_exists') {
         // 如果标题已存在，询问是否覆盖
         final shouldOverwrite = await _confirmOverwrite(context, title);
@@ -526,11 +552,13 @@ class FileOperations {
               refreshService.notifyPracticeSaved(controller.practiceId!);
             }
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(AppLocalizations.of(context)
-                      .overwriteExistingPractice(title))),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(AppLocalizations.of(context)
+                        .overwriteExistingPractice(title))),
+              );
+            }
           } else if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
@@ -539,9 +567,11 @@ class FileOperations {
         }
       } else {
         // 如果保存失败，显示错误消息
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).saveFailed)),
+          );
+        }
       }
     }
   }
@@ -625,11 +655,13 @@ class FileOperations {
             );
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    result.error ?? AppLocalizations.of(context).saveFailed)),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      result.error ?? AppLocalizations.of(context).saveFailed)),
+            );
+          }
         }
       }
     } catch (e) {

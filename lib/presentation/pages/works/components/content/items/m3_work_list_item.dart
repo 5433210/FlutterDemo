@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
+import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../../infrastructure/providers/config_providers.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../l10n/app_localizations.dart';
@@ -345,7 +346,7 @@ class M3WorkListItem extends ConsumerWidget {
             ),
             padding: const EdgeInsets.all(AppSizes.xs),
             onPressed: () {
-              print('DEBUG: 列表项编辑标签按钮被点击 - ${work.id}');
+              AppLogger.debug('列表项编辑标签按钮被点击 - ${work.id}', tag: 'WorkListItem');
               onTagsEdited?.call();
             },
             tooltip: AppLocalizations.of(context).editTags,

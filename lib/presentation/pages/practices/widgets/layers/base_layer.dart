@@ -100,7 +100,7 @@ abstract class BaseCanvasLayerState<T extends BaseCanvasLayer>
 
       // Return error placeholder
       return Container(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         child: Center(
           child: Text(
             'Layer Error: ${widget.layerId}',

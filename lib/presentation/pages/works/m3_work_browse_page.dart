@@ -300,13 +300,13 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   Future<void> _handleTagEdited(BuildContext context, String workId) async {
     final l10n = AppLocalizations.of(context);
 
-    print('DEBUG: 编辑标签按钮被点击 - workId: $workId');
+    AppLogger.debug('编辑标签按钮被点击 - workId: $workId', tag: 'WorkBrowsePage');
 
     try {
       final work =
           ref.read(workBrowseProvider).works.firstWhere((w) => w.id == workId);
 
-      print('DEBUG: 找到作品 - ${work.title}, 当前标签: ${work.tags}');
+      AppLogger.debug('找到作品 - ${work.title}, 当前标签: ${work.tags}', tag: 'WorkBrowsePage');
 
       // Get all existing tags for suggestions
       final allTags = ref
@@ -316,17 +316,17 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           .toSet()
           .toList();
 
-      print('DEBUG: 准备显示对话框 - 建议标签: $allTags');
+      AppLogger.debug('准备显示对话框 - 建议标签: $allTags', tag: 'WorkBrowsePage');
 
       final result = await showDialog<List<String>>(
         context: context,
         builder: (context) {
-          print('DEBUG: 正在构建对话框');
+          AppLogger.debug('正在构建对话框', tag: 'WorkBrowsePage');
           return M3WorkTagEditDialog(
             tags: work.tags,
             suggestedTags: allTags,
             onSaved: (newTags) {
-              print('DEBUG: 标签保存 - $newTags');
+              AppLogger.debug('标签保存 - $newTags', tag: 'WorkBrowsePage');
               Navigator.of(context).pop(newTags);
             },
           );
@@ -334,7 +334,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         barrierDismissible: false,
       );
 
-      print('DEBUG: 对话框返回结果 - $result');
+      AppLogger.debug('对话框返回结果 - $result', tag: 'WorkBrowsePage');
 
       if (result != null) {
         AppLogger.debug('更新作品标签', tag: 'WorkBrowsePage', data: {
@@ -347,7 +347,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         await ref.read(workBrowseProvider.notifier).updateTags(workId, result);
       }
     } catch (e) {
-      print('DEBUG: 编辑标签时发生错误 - $e');
+      AppLogger.error('编辑标签时发生错误', tag: 'WorkBrowsePage', error: e);
       AppLogger.error('编辑标签失败', tag: 'WorkBrowsePage', error: e);
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

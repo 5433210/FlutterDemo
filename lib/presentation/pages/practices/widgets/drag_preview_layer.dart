@@ -306,7 +306,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
           height: displayHeight,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.blue, width: borderWidth),
-            color: Colors.blue.withOpacity(opacity),
+            color: Colors.blue.withValues(alpha: opacity),
           ),
           child: Center(
             child: Icon(
@@ -327,7 +327,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
           height: displayHeight,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.green, width: borderWidth),
-            color: Colors.green.withOpacity(opacity),
+            color: Colors.green.withValues(alpha: opacity),
           ),
           child: Center(
             child: Icon(
@@ -348,7 +348,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
           height: displayHeight,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.orange, width: borderWidth),
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
           ),
           child: const Center(
             child: Icon(Icons.grid_on, color: Colors.orange),
@@ -363,7 +363,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
           height: displayHeight,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.purple, width: borderWidth),
-            color: Colors.purple.withOpacity(0.1),
+            color: Colors.purple.withValues(alpha: 0.1),
           ),
         );
     }

@@ -64,7 +64,10 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         await addImagesFromLocal();
         break;
       case ImageSource.library:
-        await addImagesFromLibrary(context);
+        // Pass context immediately without await to avoid async gap
+        if (context.mounted) {
+          await addImagesFromLibrary(context);
+        }
         break;
     }
   }

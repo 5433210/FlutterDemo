@@ -449,7 +449,7 @@ class _M3CharacterDetailPanelState
                       color: Theme.of(context)
                           .colorScheme
                           .errorContainer
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -904,7 +904,7 @@ class _M3CharacterDetailPanelState
         if (snapshot.hasError) {
           return Container(
             color:
-                Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+                Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

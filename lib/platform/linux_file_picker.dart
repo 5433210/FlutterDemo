@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../infrastructure/logging/logger.dart';
+
 /// Linux平台文件选择器备用实现
 /// 当zenity不可用时，使用命令行交互方式选择文件
 class LinuxFilePicker {
@@ -93,13 +95,13 @@ class LinuxFilePicker {
             .toList();
 
         if (files.isNotEmpty) {
-          print('\n=== 文件选择器 (备用方法) ===');
-          print('可用文件:');
+          AppLogger.info('Linux文件选择器 (备用方法)', tag: 'LinuxFilePicker');
+          AppLogger.info('可用文件列表:', tag: 'LinuxFilePicker');
           for (int i = 0; i < files.length; i++) {
-            print('${i + 1}. ${files[i]}');
+            AppLogger.info('${i + 1}. ${files[i]}', tag: 'LinuxFilePicker');
           }
 
-          print('\n请输入文件编号 (1-${files.length}), 或输入完整路径:');
+          AppLogger.info('请输入文件编号 (1-${files.length}), 或输入完整路径:', tag: 'LinuxFilePicker');
 
           // 在实际应用中，这里需要更复杂的用户输入处理
           // 这只是一个示例实现

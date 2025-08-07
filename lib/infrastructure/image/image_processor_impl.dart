@@ -159,13 +159,13 @@ class ImageProcessorImpl implements ImageProcessor {
   @override
   img.Image binarizeImage(
       img.Image source, double threshold, bool invertColors) {
-    print('🎯 开始二值化处理');
-    print('  - 输入图像: ${source.width}x${source.height}');
-    print('  - 阈值: $threshold');
-    print('  - 反转颜色: $invertColors');
+    AppLogger.debug('开始二值化处理', tag: 'ImageProcessor');
+    AppLogger.debug('输入图像尺寸: ${source.width}x${source.height}', tag: 'ImageProcessor');
+    AppLogger.debug('二值化阈值: $threshold', tag: 'ImageProcessor');
+    AppLogger.debug('反转颜色: $invertColors', tag: 'ImageProcessor');
 
     final gray = img.grayscale(source);
-    print('  - 灰度化完成');
+    AppLogger.debug('灰度化处理完成', tag: 'ImageProcessor');
 
     // 🔍 调试：采样原始图像的像素值
     final originalSamples = <int>[];
@@ -194,11 +194,11 @@ class ImageProcessorImpl implements ImageProcessor {
       }
     }
 
-    print('  - 原始亮度采样: ${originalSamples.join(', ')}');
-    print('  - 处理后采样: ${processedSamples.join(', ')}');
+    AppLogger.debug('原始亮度采样: ${originalSamples.join(', ')}', tag: 'ImageProcessor');
+    AppLogger.debug('处理后采样: ${processedSamples.join(', ')}', tag: 'ImageProcessor');
 
     final result = invertColors ? img.invert(gray) : gray;
-    print('  - 二值化处理完成，反转: $invertColors');
+    AppLogger.debug('二值化处理完成，反转: $invertColors', tag: 'ImageProcessor');
 
     return result;
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
+import '../../../../../../infrastructure/logging/logger.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../l10n/app_localizations.dart';
 import '../../../../../../theme/app_sizes.dart';
@@ -171,7 +172,7 @@ class M3WorkGridItem extends ConsumerWidget {
                       if (!isSelectionMode && onTagsEdited != null)
                         IconButton(
                           onPressed: () {
-                            print('DEBUG: 网格项编辑标签按钮被点击 - ${work.id}');
+                            AppLogger.debug('网格项编辑标签按钮被点击 - ${work.id}', tag: 'WorkGridItem');
                             onTagsEdited?.call();
                           },
                           icon: const Icon(Icons.edit_outlined),
