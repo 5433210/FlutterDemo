@@ -313,7 +313,7 @@ class _M3CollectionPropertyPanelState
 
         EditPageLogger.propertyPanelDebug(
           '自动更新缺失字符图像完成',
-          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          tag: EditPageLoggingConfig.tagCollectionPanel,
           data: {
             'updatedCharCount': hasUpdates ? characters.length : 0,
             'operation': 'auto_update_missing_images',
@@ -323,7 +323,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '自动更新缺失字符图像失败',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'charCount': characters.length,
@@ -424,7 +424,7 @@ class _M3CollectionPropertyPanelState
         if (keysToRemove.isNotEmpty) {
           EditPageLogger.propertyPanelDebug(
             '清理字符图像信息无效键',
-            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            tag: EditPageLoggingConfig.tagCollectionPanel,
             data: {
               'removedKeyCount': keysToRemove.length,
               'operation': 'cleanup_character_images',
@@ -434,7 +434,7 @@ class _M3CollectionPropertyPanelState
         if (hasNestedStructure) {
           EditPageLogger.propertyPanelDebug(
             '清理嵌套字符图像结构',
-            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            tag: EditPageLoggingConfig.tagCollectionPanel,
             data: {
               'operation': 'cleanup_nested_structure',
             },
@@ -444,7 +444,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '清理字符图像信息失败',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'operation': 'cleanup_character_images',
@@ -464,7 +464,7 @@ class _M3CollectionPropertyPanelState
         if (content.containsKey('content')) {
           EditPageLogger.propertyPanelDebug(
             '发现嵌套的content结构，开始清理',
-            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            tag: EditPageLoggingConfig.tagCollectionPanel,
             data: {
               'operation': 'cleanup_nested_content',
             },
@@ -478,7 +478,7 @@ class _M3CollectionPropertyPanelState
 
           EditPageLogger.propertyPanelDebug(
             '嵌套content结构清理完成',
-            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            tag: EditPageLoggingConfig.tagCollectionPanel,
             data: {
               'operation': 'cleanup_nested_content_complete',
             },
@@ -488,7 +488,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '清理嵌套content结构时出错',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'operation': 'cleanup_nested_content',
@@ -771,7 +771,7 @@ class _M3CollectionPropertyPanelState
             (value.isNotEmpty && oldCharacters.isNotEmpty && value != oldCharacters)) {
           EditPageLogger.propertyPanelDebug(
             '文本内容更新并重新映射字符图像',
-            tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+            tag: EditPageLoggingConfig.tagCollectionPanel,
             data: {
               'oldLength': oldCharacters.length,
               'newLength': value.length,
@@ -813,7 +813,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '选择候选字符失败',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'selectedCharIndex': _selectedCharIndex,
@@ -954,7 +954,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '更新字符图像信息失败',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'characterIndex': index,
@@ -1017,7 +1017,7 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '更新新文本字符图像失败',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'newText': newText,
@@ -1067,7 +1067,7 @@ class _M3CollectionPropertyPanelState
 
         EditPageLogger.propertyPanelDebug(
           '处理content更新：已扁平化并合并属性',
-          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          tag: EditPageLoggingConfig.tagCollectionPanel,
           data: {
             'propertyKey': key,
             'operation': 'content_update_flatten',
@@ -1083,7 +1083,7 @@ class _M3CollectionPropertyPanelState
         newContent.remove('content');
         EditPageLogger.propertyPanelDebug(
           'Warning: 移除嵌套content属性',
-          tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+          tag: EditPageLoggingConfig.tagCollectionPanel,
           data: {
             'propertyKey': key,
             'operation': 'remove_nested_content',
@@ -1096,7 +1096,7 @@ class _M3CollectionPropertyPanelState
 
       EditPageLogger.propertyPanelDebug(
         '更新内容属性完成',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         data: {
           'propertyKey': key,
           'propertyCount': newContent.length,
@@ -1109,7 +1109,7 @@ class _M3CollectionPropertyPanelState
       timer.finish(); // 确保异常情况下也完成计时
       EditPageLogger.propertyPanelError(
         '更新内容属性时出错',
-        tag: EditPageLoggingConfig.TAG_COLLECTION_PANEL,
+        tag: EditPageLoggingConfig.tagCollectionPanel,
         error: e,
         data: {
           'propertyKey': key,

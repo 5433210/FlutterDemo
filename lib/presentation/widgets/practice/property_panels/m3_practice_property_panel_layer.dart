@@ -247,7 +247,7 @@ class _M3LayerPropertyPanelContentState
                 onChanged: (value) {
                   EditPageLogger.propertyPanelDebug(
                     '图层可见性变更',
-                    tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                    tag: EditPageLoggingConfig.tagLayerPanel,
                     data: {
                       'layerId': widget.layer['id'],
                       'layerName': widget.layer['name'],
@@ -288,7 +288,7 @@ class _M3LayerPropertyPanelContentState
                 onChanged: (value) {
                   EditPageLogger.propertyPanelDebug(
                     '图层锁定状态变更',
-                    tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                    tag: EditPageLoggingConfig.tagLayerPanel,
                     data: {
                       'layerId': widget.layer['id'],
                       'layerName': widget.layer['name'],
@@ -342,7 +342,7 @@ class _M3LayerPropertyPanelContentState
                             onChanged: (value) {
                               EditPageLogger.propertyPanelDebug(
                                 '图层不透明度变更',
-                                tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+                                tag: EditPageLoggingConfig.tagLayerPanel,
                                 data: {
                                   'layerId': widget.layer['id'],
                                   'layerName': widget.layer['name'],
@@ -586,7 +586,7 @@ class _M3LayerPropertyPanelContentState
     
     EditPageLogger.propertyPanelDebug(
       '图层名称变更',
-      tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+      tag: EditPageLoggingConfig.tagLayerPanel,
       data: {
         'layerId': widget.layer['id'],
         'oldName': oldName,
@@ -598,7 +598,7 @@ class _M3LayerPropertyPanelContentState
     if (newName.isNotEmpty) {
       EditPageLogger.propertyPanelDebug(
         '应用图层名称变更',
-        tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+        tag: EditPageLoggingConfig.tagLayerPanel,
         data: {
           'layerId': widget.layer['id'],
           'finalName': newName,
@@ -610,7 +610,7 @@ class _M3LayerPropertyPanelContentState
       // 如果名称为空，恢复原来的名称
       EditPageLogger.propertyPanelDebug(
         '图层名称为空，恢复原名称',
-        tag: EditPageLoggingConfig.TAG_LAYER_PANEL,
+        tag: EditPageLoggingConfig.tagLayerPanel,
         data: {
           'layerId': widget.layer['id'],
           'revertedName': oldName,

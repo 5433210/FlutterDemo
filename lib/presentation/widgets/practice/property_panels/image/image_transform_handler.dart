@@ -180,7 +180,7 @@ mixin ImageTransformHandler {
         } catch (e) {
           EditPageLogger.propertyPanelError(
             '应用图像变换失败',
-            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            tag: EditPageLoggingConfig.tagImagePanel,
             error: e,
             data: {
               'operation': 'apply_transform',
@@ -272,7 +272,7 @@ mixin ImageTransformHandler {
         } else {
           EditPageLogger.propertyPanelError(
             '图像文件不存在',
-            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            tag: EditPageLoggingConfig.tagImagePanel,
             data: {
               'operation': 'load_image_file',
               'filePath': filePath,
@@ -288,7 +288,7 @@ mixin ImageTransformHandler {
         } else {
           EditPageLogger.propertyPanelError(
             'HTTP请求获取图像失败',
-            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            tag: EditPageLoggingConfig.tagImagePanel,
             data: {
               'operation': 'load_image_http',
               'imageUrl': imageUrl,
@@ -301,7 +301,7 @@ mixin ImageTransformHandler {
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '加载图像数据失败',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         error: e,
         data: {
           'operation': 'load_image_data',

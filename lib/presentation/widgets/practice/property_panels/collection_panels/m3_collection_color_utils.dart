@@ -50,9 +50,9 @@ class CollectionColorUtils {
 
     try {
       // Get the RGB values of the color
-      final int r = color.red;
-      final int g = color.green;
-      final int b = color.blue;
+      final int r = (color.r * 255).round();
+      final int g = (color.g * 255).round();
+      final int b = (color.b * 255).round();
 
       // Convert to hex, ensuring each component has 2 digits
       final String hexR = r.toRadixString(16).padLeft(2, '0');

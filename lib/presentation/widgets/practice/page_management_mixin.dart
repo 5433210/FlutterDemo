@@ -111,6 +111,7 @@ mixin PageManagementMixin on ChangeNotifier implements IntelligentNotificationMi
     );
   }
 
+  @override
   void checkDisposed();
 
   /// 删除页面

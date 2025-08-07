@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../practice_edit_controller.dart';
 import '../m3_element_common_property_panel.dart';
 import '../m3_layer_info_panel.dart';
@@ -100,9 +101,16 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         (imageSize?.height ?? 100.0);
 
     // 记录 build 方法中读取的裁剪值
-    print('=== M3ImagePropertyPanel.build 读取裁剪值 ===');
-    print(
-        '从content读取: cropX=$cropX, cropY=$cropY, cropWidth=$cropWidth, cropHeight=$cropHeight');
+    AppLogger.debug(
+      'Reading crop values in build method',
+      tag: 'ImagePropertyPanel',
+      data: {
+        'cropX': cropX,
+        'cropY': cropY,
+        'cropWidth': cropWidth,
+        'cropHeight': cropHeight,
+      },
+    );
     // print('content内容: ${content.toString()}');
 
     // Flip properties
@@ -138,7 +146,10 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       content['noiseReductionLevel'] = 3.0;
       content['binarizedImageData'] = null;
 
-      print('🔧 已为现有图像元素添加二值化默认属性');
+      AppLogger.debug(
+        '🔧 已为现有图像元素添加二值化默认属性',
+        tag: 'ImagePropertyPanel',
+      );
       
       // 延迟到构建完成后再更新属性，避免在build过程中调用setState
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -149,12 +160,15 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     }
 
     // 🔍 调试日志：检查二值化开关状态
-    print('=== 二值化属性调试 ===');
-    print('isBinarizationEnabled: $isBinarizationEnabled');
-    print(
-        'content[isBinarizationEnabled]: ${content['isBinarizationEnabled']}');
-    print('element id: ${element['id']}');
-    print('=== 调试结束 ===');
+    AppLogger.debug(
+      '二值化属性调试',
+      tag: 'ImagePropertyPanel',
+      data: {
+        'isBinarizationEnabled': isBinarizationEnabled,
+        'contentBinarizationEnabled': content['isBinarizationEnabled'],
+        'elementId': element['id'],
+      },
+    );
 
     // Transform applied state
     final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
@@ -240,20 +254,37 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
                 (currentContent['cropHeight'] as num?)?.toDouble() ?? 0.0;
 
             // 记录属性面板接收到的回调
-            print('=== 图像属性面板 onCropChanged 回调 ===');
-            print('接收值: x=${x.toStringAsFixed(1)}, y=${y.toStringAsFixed(1)}, '
-                'width=${width.toStringAsFixed(1)}, height=${height.toStringAsFixed(1)}');
-            print(
-                '当前值: cropX=${currentCropX.toStringAsFixed(1)}, cropY=${currentCropY.toStringAsFixed(1)}, '
-                'cropWidth=${currentCropWidth.toStringAsFixed(1)}, cropHeight=${currentCropHeight.toStringAsFixed(1)}');
-            print(
-                '拖拽状态: isDragging=$isDragging, createUndoOperation=${!isDragging}');
-            print(
-                '值变化: x=${(x - currentCropX).abs() > 0.1}, y=${(y - currentCropY).abs() > 0.1}, '
-                'width=${(width - currentCropWidth).abs() > 0.1}, height=${(height - currentCropHeight).abs() > 0.1}');
+            AppLogger.debug(
+              '图像属性面板 onCropChanged 回调',
+              tag: 'ImagePropertyPanel',
+              data: {
+                'received': {
+                  'x': x.toStringAsFixed(1),
+                  'y': y.toStringAsFixed(1),
+                  'width': width.toStringAsFixed(1),
+                  'height': height.toStringAsFixed(1),
+                },
+                'current': {
+                  'cropX': currentCropX.toStringAsFixed(1),
+                  'cropY': currentCropY.toStringAsFixed(1),
+                  'cropWidth': currentCropWidth.toStringAsFixed(1),
+                  'cropHeight': currentCropHeight.toStringAsFixed(1),
+                },
+                'dragState': {
+                  'isDragging': isDragging,
+                  'createUndoOperation': !isDragging,
+                },
+                'valueChanges': {
+                  'xChanged': (x - currentCropX).abs() > 0.1,
+                  'yChanged': (y - currentCropY).abs() > 0.1,
+                  'widthChanged': (width - currentCropWidth).abs() > 0.1,
+                  'heightChanged': (height - currentCropHeight).abs() > 0.1,
+                },
+              },
+            );
 
             // 批量更新裁剪值，避免单独更新时的相互干扰
-            print('=== 开始批量更新裁剪值 ===');
+            AppLogger.debug('开始批量更新裁剪值', tag: 'ImagePropertyPanel');
             updateAllCropValues(x, y, width, height,
                 createUndoOperation: !isDragging);
 
@@ -263,7 +294,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
                 // 触发重建以显示实时更新
               });
             }
-            print('=== 批量更新完成 ===');
+            AppLogger.debug('批量更新完成', tag: 'ImagePropertyPanel');
           },
         ),
 
@@ -282,17 +313,30 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           flipHorizontal: isFlippedHorizontally,
           flipVertical: isFlippedVertically,
           onFlipChanged: (key, value) {
-            print('🔍 翻转参数变化: $key = $value');
-            print('🔍 当前状态:');
-            print('  - flipHorizontal: $isFlippedHorizontally');
-            print('  - flipVertical: $isFlippedVertically');
-            print('  - 尝试设置 $key = $value');
+            AppLogger.debug(
+              '🔍 翻转参数变化',
+              tag: 'ImagePropertyPanel',
+              data: {
+                'key': key,
+                'value': value,
+                'currentState': {
+                  'flipHorizontal': isFlippedHorizontally,
+                  'flipVertical': isFlippedVertically,
+                },
+              },
+            );
 
             // 🔧 大幅简化：翻转现在在画布渲染阶段处理，只需要更新属性
-            print('  - 💡 翻转现在在画布渲染阶段处理，只更新元素属性');
+            AppLogger.debug(
+              '💡 翻转现在在画布渲染阶段处理，只更新元素属性',
+              tag: 'ImagePropertyPanel',
+            );
             updateContentProperty(key, value, createUndoOperation: true);
 
-            print('🔍 翻转属性更新完成，无需执行图像处理管线');
+            AppLogger.debug(
+              '🔍 翻转属性更新完成，无需执行图像处理管线',
+              tag: 'ImagePropertyPanel',
+            );
           },
         ),
 
@@ -326,35 +370,51 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   @override
   void handlePropertyChange(Map<String, dynamic> updates,
       {bool createUndoOperation = true}) {
-    print('=== handlePropertyChange ===');
-    // print('updates: $updates');
-    print('createUndoOperation: $createUndoOperation');
+    AppLogger.debug(
+      'handlePropertyChange called',
+      tag: 'ImagePropertyPanel',
+      data: {
+        'createUndoOperation': createUndoOperation,
+      },
+    );
 
     // 🔧 特别检查翻转相关的更新
     if (updates.containsKey('content')) {
       final content = updates['content'] as Map<String, dynamic>;
       if (content.containsKey('isFlippedHorizontally') ||
           content.containsKey('isFlippedVertically')) {
-        print('🔍 检测到翻转状态更新:');
-        print(
-            '  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
-        print(
-            '  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
+        AppLogger.debug(
+          '🔍 检测到翻转状态更新',
+          tag: 'ImagePropertyPanel',
+          data: {
+            'contentFlipHorizontal': content['isFlippedHorizontally'],
+            'contentFlipVertical': content['isFlippedVertically'],
+          },
+        );
 
         final flipH = content['isFlippedHorizontally'] as bool? ?? false;
         final flipV = content['isFlippedVertically'] as bool? ?? false;
 
         if (!flipH && !flipV) {
-          print('  - 🎯 即将更新状态：两个翻转都为false');
+          AppLogger.debug(
+            '🎯 即将更新状态：两个翻转都为false',
+            tag: 'ImagePropertyPanel',
+          );
         }
       }
     }
 
     if (createUndoOperation) {
-      print('调用 widget.onElementPropertiesChanged (创建撤销)');
+      AppLogger.debug(
+        '调用 widget.onElementPropertiesChanged (创建撤销)',
+        tag: 'ImagePropertyPanel',
+      );
       widget.onElementPropertiesChanged(updates);
     } else {
-      print('调用 updateElementPropertiesWithoutUndo (不创建撤销)');
+      AppLogger.debug(
+        '调用 updateElementPropertiesWithoutUndo (不创建撤销)',
+        tag: 'ImagePropertyPanel',
+      );
       // 直接更新UI状态，不创建撤销操作
       // 使用现有的无撤销更新方法
       final elementId = widget.element['id'];
@@ -370,7 +430,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       }
     });
 
-    print('=== handlePropertyChange 结束 ===');
+    AppLogger.debug('handlePropertyChange 结束', tag: 'ImagePropertyPanel');
   }
 
   @override

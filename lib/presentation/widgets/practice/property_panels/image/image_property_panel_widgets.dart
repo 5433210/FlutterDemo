@@ -473,7 +473,7 @@ class ImagePropertyFitModePanel extends StatelessWidget {
   ) {
     final isSelected = fitMode == modeValue;
     
-    return Container(
+    return SizedBox(
       height: 48.0,
       child: ElevatedButton.icon(
         onPressed: () => onFitModeChanged(modeValue),
@@ -582,9 +582,9 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -830,7 +830,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
             onError: (exception, stackTrace) {
               EditPageLogger.propertyPanelError(
                 '图像加载错误',
-                tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+                tag: EditPageLoggingConfig.tagImagePanel,
                 error: exception,
                 stackTrace: stackTrace,
                 data: {
@@ -1188,7 +1188,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                      border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1273,7 +1273,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
         color: isSelected ? colorScheme.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(6.0),
         border: isSelected ? null : Border.all(
-          color: colorScheme.outline.withOpacity(0.3),
+          color: colorScheme.outline.withValues(alpha: 0.3),
           width: 0.5,
         ),
       ),
@@ -1413,8 +1413,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     max: 255.0,
                                     divisions: 255,
                                     label: threshold.toStringAsFixed(0),
-                                    activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
-                                    thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                    activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
+                                    thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
                                     onChanged: isBinarizationEnabled ? (value) {
                                       onContentPropertyUpdate('binaryThreshold', value);
                                     } : null,
@@ -1431,7 +1431,7 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: isBinarizationEnabled ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withOpacity(0.38),
+                                      color: isBinarizationEnabled ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withValues(alpha: 0.38),
                                     ),
                                   ),
                                 ),
@@ -1484,8 +1484,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                       max: 10.0,
                                       divisions: 100,
                                       label: noiseReductionLevel.toStringAsFixed(1),
-                                      activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
-                                      thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+                                      activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
+                                      thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
                                       onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
                                         onContentPropertyUpdate('noiseReductionLevel', value);
                                       } : null,
@@ -1502,7 +1502,7 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withOpacity(0.38),
+                                        color: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withValues(alpha: 0.38),
                                       ),
                                     ),
                                   ),

@@ -1130,7 +1130,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     if (_shouldLogPropertyChange(key, value)) {
       EditPageLogger.propertyPanelDebug(
         '文本属性更新',
-        tag: EditPageLoggingConfig.TAG_TEXT_PANEL,
+        tag: EditPageLoggingConfig.tagTextPanel,
         data: {
           'propertyKey': key,
           'propertyValue': _formatPropertyValue(key, value),

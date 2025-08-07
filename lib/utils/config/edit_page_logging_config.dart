@@ -6,19 +6,19 @@ import '../../infrastructure/logging/log_level.dart';
 /// 提供精细化的日志控制，减少冗余输出，优化性能
 class EditPageLoggingConfig {
   // ============ 组件标签常量 ============
-  static const String TAG_EDIT_PAGE = 'PracticeEdit';
-  static const String TAG_CANVAS = 'Canvas';
-  static const String TAG_CONTROLLER = 'Controller';
-  static const String TAG_TEXT_PANEL = 'TextPanel';
-  static const String TAG_IMAGE_PANEL = 'ImagePanel';
-  static const String TAG_LAYER_PANEL = 'LayerPanel';
-  static const String TAG_COLLECTION_PANEL = 'CollectionPanel';
-  static const String TAG_RENDERER = 'Renderer';
-  static const String TAG_FILE_OPS = 'FileOps';
-  static const String TAG_PERFORMANCE = 'Performance';
-  static const String TAG_CLIPBOARD = 'Clipboard';
-  static const String TAG_USER_ACTION = 'UserAction';
-  static const String TAG_BUSINESS = 'Business';
+  static const String tagEditPage = 'PracticeEdit';
+  static const String tagCanvas = 'Canvas';
+  static const String tagController = 'Controller';
+  static const String tagTextPanel = 'TextPanel';
+  static const String tagImagePanel = 'ImagePanel';
+  static const String tagLayerPanel = 'LayerPanel';
+  static const String tagCollectionPanel = 'CollectionPanel';
+  static const String tagRenderer = 'Renderer';
+  static const String tagFileOps = 'FileOps';
+  static const String tagPerformance = 'Performance';
+  static const String tagClipboard = 'Clipboard';
+  static const String tagUserAction = 'UserAction';
+  static const String tagBusiness = 'Business';
 
   // ============ 核心日志控制 ============
   

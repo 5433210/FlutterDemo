@@ -24,7 +24,7 @@ mixin ImageBinarizationHandler {
   void handleBinarizationToggle(bool enabled) async {
     EditPageLogger.editPageInfo(
       '二值化开关变化', 
-      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      tag: EditPageLoggingConfig.tagImagePanel,
       data: {'enabled': enabled}
     );
 
@@ -33,12 +33,12 @@ mixin ImageBinarizationHandler {
       updateContentProperty('isBinarizationEnabled', true, createUndoOperation: true);
       EditPageLogger.editPageInfo(
         '开始执行二值化图像处理', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL
+        tag: EditPageLoggingConfig.tagImagePanel
       );
       await _processBinarizedImage();
       EditPageLogger.editPageInfo(
         '二值化图像处理完成', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL
+        tag: EditPageLoggingConfig.tagImagePanel
       );
     } else {
       // 开关关闭时，先清除二值化数据，再更新状态
@@ -46,7 +46,7 @@ mixin ImageBinarizationHandler {
       updateContentProperty('isBinarizationEnabled', false, createUndoOperation: true);
       EditPageLogger.editPageInfo(
         '撤销二值化效果', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {'action': 'clear_binarized_data'}
       );
     }
@@ -64,7 +64,7 @@ mixin ImageBinarizationHandler {
     if (isBinarizationEnabled) {
       EditPageLogger.editPageInfo(
         '二值化参数变化，重新处理图像', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {'parameter': parameterName, 'value': value}
       );
       
@@ -80,13 +80,13 @@ mixin ImageBinarizationHandler {
     if (isBinarizationEnabled) {
       EditPageLogger.editPageInfo(
         '检测到二值化已启用，重新执行二值化处理', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL
+        tag: EditPageLoggingConfig.tagImagePanel
       );
       await _processBinarizedImage();
     } else {
       EditPageLogger.editPageInfo(
         '二值化未启用，跳过处理', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL
+        tag: EditPageLoggingConfig.tagImagePanel
       );
     }
   }
@@ -97,14 +97,14 @@ mixin ImageBinarizationHandler {
       
       EditPageLogger.editPageInfo(
         '检查图像URL', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {'imageUrl': imageUrl, 'imageUrlLength': imageUrl.length}
       );
       
       if (imageUrl.isEmpty) {
         EditPageLogger.editPageError(
           '无法进行二值化处理：图像URL为空',
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL
+          tag: EditPageLoggingConfig.tagImagePanel
         );
         return;
       }
@@ -116,7 +116,7 @@ mixin ImageBinarizationHandler {
 
       EditPageLogger.editPageInfo(
         '开始二值化处理', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {
           'threshold': threshold,
           'noiseReductionEnabled': isNoiseReductionEnabled,
@@ -135,7 +135,7 @@ mixin ImageBinarizationHandler {
       if (transformedImageData != null) {
         EditPageLogger.editPageInfo(
           '使用变换后的图像进行二值化处理', 
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          tag: EditPageLoggingConfig.tagImagePanel,
           data: {'dataType': transformedImageData.runtimeType.toString()}
         );
         
@@ -151,7 +151,7 @@ mixin ImageBinarizationHandler {
           sourceImage = img.decodeImage(imageBytes);
           EditPageLogger.editPageInfo(
             '成功加载变换后的图像数据', 
-            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            tag: EditPageLoggingConfig.tagImagePanel,
             data: {'imageLoaded': sourceImage != null, 'dataSize': imageBytes.length}
           );
         }
@@ -161,7 +161,7 @@ mixin ImageBinarizationHandler {
       if (sourceImage == null) {
         EditPageLogger.editPageInfo(
           '未找到变换后的图像，加载原始图像', 
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          tag: EditPageLoggingConfig.tagImagePanel,
           data: {'imageUrl': imageUrl}
         );
         
@@ -174,7 +174,7 @@ mixin ImageBinarizationHandler {
             sourceImage = img.decodeImage(bytes);
             EditPageLogger.editPageInfo(
               '成功加载本地文件图像', 
-              tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+              tag: EditPageLoggingConfig.tagImagePanel,
               data: {'filePath': filePath, 'imageLoaded': sourceImage != null}
             );
           }
@@ -185,7 +185,7 @@ mixin ImageBinarizationHandler {
             sourceImage = img.decodeImage(response.bodyBytes);
             EditPageLogger.editPageInfo(
               '成功加载网络图像', 
-              tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+              tag: EditPageLoggingConfig.tagImagePanel,
               data: {'statusCode': response.statusCode, 'imageLoaded': sourceImage != null}
             );
           }
@@ -197,7 +197,7 @@ mixin ImageBinarizationHandler {
             sourceImage = img.decodeImage(bytes);
             EditPageLogger.editPageInfo(
               '成功加载本地路径图像', 
-              tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+              tag: EditPageLoggingConfig.tagImagePanel,
               data: {'filePath': imageUrl, 'imageLoaded': sourceImage != null}
             );
           }
@@ -207,7 +207,7 @@ mixin ImageBinarizationHandler {
       if (sourceImage == null) {
         EditPageLogger.editPageError(
           '无法加载图像进行二值化处理',
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          tag: EditPageLoggingConfig.tagImagePanel,
           data: {'imageUrl': imageUrl}
         );
         return;
@@ -221,7 +221,7 @@ mixin ImageBinarizationHandler {
         processedImage = imageProcessor.denoiseImage(processedImage, noiseReductionLevel);
         EditPageLogger.editPageInfo(
           '降噪处理完成', 
-          tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+          tag: EditPageLoggingConfig.tagImagePanel,
           data: {'level': noiseReductionLevel}
         );
       }
@@ -230,7 +230,7 @@ mixin ImageBinarizationHandler {
       processedImage = imageProcessor.binarizeImage(processedImage, threshold, false);
       EditPageLogger.editPageInfo(
         '二值化处理完成', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {'threshold': threshold}
       );
 
@@ -242,14 +242,14 @@ mixin ImageBinarizationHandler {
       
       EditPageLogger.editPageInfo(
         '二值化图像数据已更新', 
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {'dataSize': processedBytes.length}
       );
 
     } catch (e, stackTrace) {
       EditPageLogger.editPageError(
         '二值化处理失败',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         error: e,
         stackTrace: stackTrace
       );

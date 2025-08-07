@@ -127,8 +127,9 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
       return;
+    }
 
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
@@ -335,8 +336,9 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
       return;
+    }
 
     final layers = state.currentPage!['layers'] as List<dynamic>;
     final currentIndex = layers.indexWhere((l) => l['id'] == layerId);
@@ -485,8 +487,9 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers'))
+    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
       return;
+    }
 
     final layers = state.currentPage!['layers'] as List<dynamic>;
     if (layers.any((l) => l['id'] == layerId)) {

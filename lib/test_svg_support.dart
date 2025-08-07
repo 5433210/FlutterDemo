@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'infrastructure/logging/logger.dart';
+
 /// 用于测试SVG图像处理的简单页面
 class SvgTestPage extends StatelessWidget {
   const SvgTestPage({super.key});
@@ -62,13 +64,21 @@ class _TestSvgWidget extends StatelessWidget {
 /// 测试图像验证工具
 void testImageValidation() async {
   // 这个函数可以在需要时调用来测试图像验证
-  print('=== 图像验证测试 ===');
+  AppLogger.debug('图像验证测试开始', tag: 'SVGTest');
 
   // 测试不存在的文件
   final result1 = await _testValidation('/nonexistent/file.svg');
-  print('不存在文件测试: ${result1.isValid ? "通过" : "失败"} - ${result1.message}');
+  AppLogger.debug(
+    '不存在文件测试结果',
+    tag: 'SVGTest',
+    data: {
+      'isValid': result1.isValid,
+      'message': result1.message,
+      'testType': 'nonexistent_file',
+    },
+  );
 
-  print('SVG 支持已配置完成');
+  AppLogger.debug('SVG 支持已配置完成', tag: 'SVGTest');
 }
 
 Future<_ValidationResult> _testValidation(String path) async {

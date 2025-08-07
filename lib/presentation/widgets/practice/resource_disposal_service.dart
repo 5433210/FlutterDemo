@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../../infrastructure/logging/logger.dart';
+
 /// Information about a managed image resource
 class ImageResourceInfo {
   final String resourceId;
@@ -195,9 +197,15 @@ class ResourceDisposalService extends ChangeNotifier {
       _imageInfo.remove(resourceId);
     }
 
-    if (kDebugMode && toRemove.isNotEmpty) {
-      print(
-          '🧹 ResourceDisposalService: Cleaned up info for ${toRemove.length} disposed images');
+    if (toRemove.isNotEmpty) {
+      AppLogger.debug(
+        'ResourceDisposalService: Cleaned up info for disposed images',
+        tag: 'ResourceDisposal',
+        data: {
+          'cleanedCount': toRemove.length,
+          'operation': 'cleanup_info',
+        },
+      );
     }
   }
 
@@ -258,9 +266,16 @@ class ResourceDisposalService extends ChangeNotifier {
       disposeImage(resourceId);
     }
 
-    if (kDebugMode && toDispose.isNotEmpty) {
-      print(
-          '🗑️ ResourceDisposalService: Disposed ${toDispose.length} images for element $elementId');
+    if (toDispose.isNotEmpty) {
+      AppLogger.debug(
+        'ResourceDisposalService: Disposed images for element',
+        tag: 'ResourceDisposal',
+        data: {
+          'elementId': elementId,
+          'disposedCount': toDispose.length,
+          'operation': 'dispose_element_images',
+        },
+      );
     }
   }
 
@@ -307,9 +322,15 @@ class ResourceDisposalService extends ChangeNotifier {
       disposeImage(resourceId);
     }
 
-    if (kDebugMode && toDispose.isNotEmpty) {
-      print(
-          '💾 ResourceDisposalService: Disposed ${toDispose.length} images due to memory pressure');
+    if (toDispose.isNotEmpty) {
+      AppLogger.debug(
+        'ResourceDisposalService: Disposed images due to memory pressure',
+        tag: 'ResourceDisposal',
+        data: {
+          'disposedCount': toDispose.length,
+          'operation': 'memory_pressure_cleanup',
+        },
+      );
     }
   }
 

@@ -15,6 +15,8 @@ mixin UIStateMixin on ChangeNotifier implements IntelligentNotificationMixin {
   set previewModeCallback(Function(bool)? callback);
   // 抽象接口
   PracticeEditState get state;
+  
+  @override
   void checkDisposed();
 
 

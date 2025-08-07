@@ -628,8 +628,9 @@ class MemoryManager extends ChangeNotifier {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
@@ -658,7 +659,7 @@ class MemoryManager extends ChangeNotifier {
           'previousPeak': _formatBytes(previousPeak),
           'currentUsage': _formatBytes(_currentMemoryUsage),
           'maxLimit': _formatBytes(_maxMemoryBytes),
-          'peakUtilization': (_peakMemoryUsage / _maxMemoryBytes * 100).toStringAsFixed(1) + '%',
+          'peakUtilization': '${(_peakMemoryUsage / _maxMemoryBytes * 100).toStringAsFixed(1)}%',
           'delta': _formatBytes(delta),
           'timestamp': DateTime.now().toIso8601String(),
         },
@@ -719,8 +720,9 @@ class MemoryStats {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }

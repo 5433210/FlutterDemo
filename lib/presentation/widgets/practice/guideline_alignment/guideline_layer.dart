@@ -51,7 +51,7 @@ class GuidelineLayer extends StatelessWidget {
         'guidelinesPositions':
             guidelines.map((g) => g.position.toStringAsFixed(1)).toList(),
         'guidelinesColors':
-            guidelines.map((g) => g.color.value.toRadixString(16)).toList(),
+            guidelines.map((g) => g.color.toARGB32().toRadixString(16)).toList(),
         'scale': scale,
         'canvasSize':
             '${canvasSize.width.toStringAsFixed(0)}x${canvasSize.height.toStringAsFixed(0)}',

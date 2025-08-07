@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../practice_edit_controller.dart';
 
@@ -154,7 +155,7 @@ mixin ImagePropertyAccessors {
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '解析背景颜色失败',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         error: e,
         data: {
           'operation': 'parse_background_color',
@@ -218,51 +219,87 @@ mixin ImagePropertyUpdaters {
 
   /// 更新内容属性
   void updateContentProperty(String key, dynamic value, {bool createUndoOperation = true}) {
-    print('🔍 updateContentProperty 被调用');
-    print('  - key: $key');
-    print('  - value: $value');
-    print('  - createUndoOperation: $createUndoOperation');
+    AppLogger.debug(
+      '🔍 updateContentProperty 被调用',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'key': key,
+        'value': value,
+        'createUndoOperation': createUndoOperation,
+      },
+    );
     
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
     
-    print('  - 更新前 content[$key]: ${content[key]}');
+    AppLogger.debug(
+      '更新content属性',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'key': key,
+        'valueBeforeUpdate': content[key],
+        'valueAfterUpdate': value,
+      },
+    );
+    
     content[key] = value;
-    print('  - 更新后 content[$key]: ${content[key]}');
     
     // 🔧 特别检查翻转状态
     if (key == 'isFlippedHorizontally' || key == 'isFlippedVertically') {
-      print('🔍 翻转状态特别检查:');
-      print('  - content[isFlippedHorizontally]: ${content['isFlippedHorizontally']}');
-      print('  - content[isFlippedVertically]: ${content['isFlippedVertically']}');
-      
       final flipH = content['isFlippedHorizontally'] as bool? ?? false;
       final flipV = content['isFlippedVertically'] as bool? ?? false;
       
-      if (!flipH && !flipV) {
-        print('  - 🎯 检测到两个翻转都为false，这应该是允许的！');
-      }
+      AppLogger.debug(
+        '🔍 翻转状态特别检查',
+        tag: 'ImagePropertyPanelMixins',
+        data: {
+          'isFlippedHorizontally': content['isFlippedHorizontally'],
+          'isFlippedVertically': content['isFlippedVertically'],
+          'bothFlipsFalse': !flipH && !flipV,
+          'message': !flipH && !flipV ? '🎯 检测到两个翻转都为false，这应该是允许的！' : null,
+        },
+      );
     }
     
     updateProperty('content', content, createUndoOperation: createUndoOperation);
-    print('  - updateProperty 已调用');
+    
+    AppLogger.debug(
+      'updateProperty 已调用',
+      tag: 'ImagePropertyPanelMixins',
+    );
   }
 
   /// 更新裁剪值
   void updateCropValue(String key, double value,
       {bool createUndoOperation = true}) {
-    print('=== updateCropValue 开始 ===');
-    print(
-        '参数: key=$key, value=${value.toStringAsFixed(1)}, createUndoOperation=$createUndoOperation');
-
     final imageSize = this.imageSize;
     final renderSize = this.renderSize;
 
+    AppLogger.debug(
+      '=== updateCropValue 开始 ===',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'key': key,
+        'value': value.toStringAsFixed(1),
+        'createUndoOperation': createUndoOperation,
+      },
+    );
+
     if (imageSize == null || renderSize == null) {
-      print('图像尺寸信息不可用，返回');
+      AppLogger.debug(
+        '图像尺寸信息不可用，返回',
+        tag: 'ImagePropertyPanelMixins',
+        data: {
+          'operation': 'update_crop_value',
+          'key': key,
+          'value': value,
+          'imageSize': imageSize?.toString(),
+          'renderSize': renderSize?.toString(),
+        },
+      );
       EditPageLogger.propertyPanelDebug(
         '图像尺寸信息不可用',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {
           'operation': 'update_crop_value',
           'key': key,
@@ -274,17 +311,24 @@ mixin ImagePropertyUpdaters {
       return;
     }
 
-    print('图像尺寸: ${imageSize.width}x${imageSize.height}');
-    print('渲染尺寸: ${renderSize.width}x${renderSize.height}');
-
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
 
-    // 记录更新前的内容状态
-    print('更新前content[cropX]: ${content['cropX']}');
-    print('更新前content[cropY]: ${content['cropY']}');
-    print('更新前content[cropWidth]: ${content['cropWidth']}');
-    print('更新前content[cropHeight]: ${content['cropHeight']}');
+    // 记录更新前的内容状态和图像尺寸
+    AppLogger.debug(
+      '图像尺寸和裁剪状态',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'renderSize': '${renderSize.width}x${renderSize.height}',
+        'beforeUpdate': {
+          'cropX': content['cropX'],
+          'cropY': content['cropY'],
+          'cropWidth': content['cropWidth'],
+          'cropHeight': content['cropHeight'],
+        },
+      },
+    );
 
     // 使用新的坐标格式进行验证
     double safeValue;
@@ -316,23 +360,34 @@ mixin ImagePropertyUpdaters {
 
     content[key] = safeValue;
 
-    print('验证后设置: content[$key] = ${safeValue.toStringAsFixed(1)}');
-
     // 记录更新后的内容状态
-    print('更新后content[cropX]: ${content['cropX']}');
-    print('更新后content[cropY]: ${content['cropY']}');
-    print('更新后content[cropWidth]: ${content['cropWidth']}');
-    print('更新后content[cropHeight]: ${content['cropHeight']}');
+    AppLogger.debug(
+      '裁剪值验证和更新完成',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'key': key,
+        'safeValue': safeValue.toStringAsFixed(1),
+        'afterUpdate': {
+          'cropX': content['cropX'],
+          'cropY': content['cropY'],
+          'cropWidth': content['cropWidth'],
+          'cropHeight': content['cropHeight'],
+        },
+        'willCallUpdateProperty': createUndoOperation,
+      },
+    );
 
-    print('调用 updateProperty，createUndoOperation=$createUndoOperation');
     updateProperty('content', content,
         createUndoOperation: createUndoOperation);
 
-    print('=== updateCropValue 结束 ===');
+    AppLogger.debug(
+      '=== updateCropValue 结束 ===',
+      tag: 'ImagePropertyPanelMixins',
+    );
 
     EditPageLogger.propertyPanelDebug(
       '更新裁剪值',
-      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      tag: EditPageLoggingConfig.tagImagePanel,
       data: {
         'operation': 'update_crop_value',
         'key': key,
@@ -347,19 +402,40 @@ mixin ImagePropertyUpdaters {
   /// 批量更新所有裁剪值，避免单独更新时的相互干扰
   void updateAllCropValues(double x, double y, double width, double height,
       {bool createUndoOperation = true}) {
-    print('=== updateAllCropValues 开始 ===');
-    print('参数: x=${x.toStringAsFixed(1)}, y=${y.toStringAsFixed(1)}, '
-        'width=${width.toStringAsFixed(1)}, height=${height.toStringAsFixed(1)}, '
-        'createUndoOperation=$createUndoOperation');
-
     final imageSize = this.imageSize;
     final renderSize = this.renderSize;
 
+    AppLogger.debug(
+      '=== updateAllCropValues 开始 ===',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'parameters': {
+          'x': x.toStringAsFixed(1),
+          'y': y.toStringAsFixed(1),
+          'width': width.toStringAsFixed(1),
+          'height': height.toStringAsFixed(1),
+          'createUndoOperation': createUndoOperation,
+        },
+      },
+    );
+
     if (imageSize == null || renderSize == null) {
-      print('图像尺寸信息不可用，返回');
+      AppLogger.debug(
+        '图像尺寸信息不可用，返回',
+        tag: 'ImagePropertyPanelMixins',
+        data: {
+          'operation': 'update_all_crop_values',
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+          'imageSize': imageSize?.toString(),
+          'renderSize': renderSize?.toString(),
+        },
+      );
       EditPageLogger.propertyPanelDebug(
         '图像尺寸信息不可用',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         data: {
           'operation': 'update_all_crop_values',
           'x': x,
@@ -373,17 +449,23 @@ mixin ImagePropertyUpdaters {
       return;
     }
 
-    print('图像尺寸: ${imageSize.width}x${imageSize.height}');
-    print('渲染尺寸: ${renderSize.width}x${renderSize.height}');
-
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
 
-    // 记录更新前的内容状态
-    print('更新前content[cropX]: ${content['cropX']}');
-    print('更新前content[cropY]: ${content['cropY']}');
-    print('更新前content[cropWidth]: ${content['cropWidth']}');
-    print('更新前content[cropHeight]: ${content['cropHeight']}');
+    AppLogger.debug(
+      '图像尺寸和更新前状态',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'renderSize': '${renderSize.width}x${renderSize.height}',
+        'beforeUpdate': {
+          'cropX': content['cropX'],
+          'cropY': content['cropY'],
+          'cropWidth': content['cropWidth'],
+          'cropHeight': content['cropHeight'],
+        },
+      },
+    );
 
     // 更宽松的边界验证 - 允许裁剪区域超出图像边界，但确保最小尺寸
     double safeX = x.clamp(0.0, imageSize.width);
@@ -391,12 +473,20 @@ mixin ImagePropertyUpdaters {
     double safeWidth = width.clamp(1.0, imageSize.width * 2); // 允许超出边界
     double safeHeight = height.clamp(1.0, imageSize.height * 2); // 允许超出边界
 
-    print('放宽边界限制 - 原始图像尺寸: ${imageSize.width}x${imageSize.height}');
-    print('允许的最大尺寸: ${imageSize.width * 2}x${imageSize.height * 2}');
-
-    print(
-        '验证后的值: x=${safeX.toStringAsFixed(1)}, y=${safeY.toStringAsFixed(1)}, '
-        'width=${safeWidth.toStringAsFixed(1)}, height=${safeHeight.toStringAsFixed(1)}');
+    AppLogger.debug(
+      '边界验证结果',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'originalImageSize': '${imageSize.width}x${imageSize.height}',
+        'maxAllowedSize': '${imageSize.width * 2}x${imageSize.height * 2}',
+        'validatedValues': {
+          'x': safeX.toStringAsFixed(1),
+          'y': safeY.toStringAsFixed(1),
+          'width': safeWidth.toStringAsFixed(1),
+          'height': safeHeight.toStringAsFixed(1),
+        },
+      },
+    );
 
     // 一次性更新所有值
     content['cropX'] = safeX;
@@ -404,21 +494,31 @@ mixin ImagePropertyUpdaters {
     content['cropWidth'] = safeWidth;
     content['cropHeight'] = safeHeight;
 
-    // 记录更新后的内容状态
-    print('更新后content[cropX]: ${content['cropX']}');
-    print('更新后content[cropY]: ${content['cropY']}');
-    print('更新后content[cropWidth]: ${content['cropWidth']}');
-    print('更新后content[cropHeight]: ${content['cropHeight']}');
+    AppLogger.debug(
+      '批量更新完成',
+      tag: 'ImagePropertyPanelMixins',
+      data: {
+        'afterUpdate': {
+          'cropX': content['cropX'],
+          'cropY': content['cropY'],
+          'cropWidth': content['cropWidth'],
+          'cropHeight': content['cropHeight'],
+        },
+        'willCallUpdateProperty': createUndoOperation,
+      },
+    );
 
-    print('调用 updateProperty，createUndoOperation=$createUndoOperation');
     updateProperty('content', content,
         createUndoOperation: createUndoOperation);
 
-    print('=== updateAllCropValues 结束 ===');
+    AppLogger.debug(
+      '=== updateAllCropValues 结束 ===',
+      tag: 'ImagePropertyPanelMixins',
+    );
 
     EditPageLogger.propertyPanelDebug(
       '批量更新裁剪值',
-      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      tag: EditPageLoggingConfig.tagImagePanel,
       data: {
         'operation': 'update_all_crop_values',
         'originalValues': 'x=$x, y=$y, width=$width, height=$height',
@@ -449,7 +549,7 @@ mixin ImagePropertyUpdaters {
 
     EditPageLogger.propertyPanelDebug(
       '更新图像尺寸信息并重置裁剪区域',
-      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      tag: EditPageLoggingConfig.tagImagePanel,
       data: {
         'operation': 'update_image_size_and_reset_crop',
         'imageSize': '${imageSize.width}x${imageSize.height}',
@@ -474,7 +574,7 @@ mixin ImagePropertyUpdaters {
 
     EditPageLogger.propertyPanelDebug(
       '仅更新图像尺寸信息（保持裁剪区域）',
-      tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+      tag: EditPageLoggingConfig.tagImagePanel,
       data: {
         'operation': 'update_image_size_only',
         'imageSize': '${imageSize.width}x${imageSize.height}',
@@ -505,16 +605,33 @@ mixin ImagePropertyUpdaters {
                              currentRenderHeight != renderSize.height;
 
     if (imageSizeChanged || renderSizeChanged) {
-      print('🔍 图像尺寸发生变化，需要更新和重置裁剪区域');
-      print('  - 原图像尺寸: ${currentImageWidth ?? 'null'}x${currentImageHeight ?? 'null'} -> ${imageSize.width}x${imageSize.height}');
-      print('  - 渲染尺寸: ${currentRenderWidth ?? 'null'}x${currentRenderHeight ?? 'null'} -> ${renderSize.width}x${renderSize.height}');
+      AppLogger.debug(
+        '🔍 图像尺寸发生变化，需要更新和重置裁剪区域',
+        tag: 'ImagePropertyPanelMixins',
+        data: {
+          'sizeChanges': {
+            'originalImageSize': {
+              'from': '${currentImageWidth ?? 'null'}x${currentImageHeight ?? 'null'}',
+              'to': '${imageSize.width}x${imageSize.height}',
+            },
+            'renderSize': {
+              'from': '${currentRenderWidth ?? 'null'}x${currentRenderHeight ?? 'null'}',
+              'to': '${renderSize.width}x${renderSize.height}',
+            },
+          },
+          'willUpdateAfterBuild': true,
+        },
+      );
       
       // 🔧 修复：延迟到构建完成后再更新图像状态，避免setState during build错误
       WidgetsBinding.instance.addPostFrameCallback((_) {
         updateImageSizeInfo(imageSize, renderSize);
       });
     } else {
-      print('🔍 图像尺寸未改变，跳过更新');
+      AppLogger.debug(
+        '🔍 图像尺寸未改变，跳过更新',
+        tag: 'ImagePropertyPanelMixins',
+      );
     }
   }
 

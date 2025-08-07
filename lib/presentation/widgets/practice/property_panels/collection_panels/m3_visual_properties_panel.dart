@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
@@ -66,8 +67,9 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print(
-                      '🎨 [VisualPropertiesPanel] Setting fontColor: $hexColor');
+                  AppLogger.debug('Setting fontColor', tag: 'VisualPropertiesPanel', data: {
+                    'hexColor': hexColor
+                  });
                   widget.onContentPropertyChanged('fontColor', hexColor);
                 }
               },
@@ -101,8 +103,9 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  print(
-                      '🎨 [VisualPropertiesPanel] Setting backgroundColor: $hexColor');
+                  AppLogger.debug('Setting backgroundColor', tag: 'VisualPropertiesPanel', data: {
+                    'hexColor': hexColor
+                  });
                   widget.onContentPropertyChanged('backgroundColor', hexColor);
                 }
               },

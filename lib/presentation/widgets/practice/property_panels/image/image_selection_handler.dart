@@ -118,7 +118,7 @@ mixin ImageSelectionHandler {
         } catch (e) {
           EditPageLogger.propertyPanelError(
             '从图库导入图片失败',
-            tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+            tag: EditPageLoggingConfig.tagImagePanel,
             error: e,
             data: {
               'selectedItemId': selectedItem.id,
@@ -142,7 +142,7 @@ mixin ImageSelectionHandler {
     } catch (e) {
       EditPageLogger.propertyPanelError(
         '打开图库选择器失败',
-        tag: EditPageLoggingConfig.TAG_IMAGE_PANEL,
+        tag: EditPageLoggingConfig.tagImagePanel,
         error: e,
         data: {
           'operation': 'show_library_picker',

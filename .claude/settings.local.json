@@ -8,7 +8,9 @@
       "Bash(flutter:*)",
       "Bash(dart analyze:*)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

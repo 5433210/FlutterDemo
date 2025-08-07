@@ -675,17 +675,17 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   void _updateBackgroundColor(Color color) {
     // 🔧 修复：使用正确的RGB属性（0-255整数）
     final colorHex =
-        '#${color.red.toRadixString(16).padLeft(2, '0')}${color.green.toRadixString(16).padLeft(2, '0')}${color.blue.toRadixString(16).padLeft(2, '0')}';
+        '#${(color.r * 255).round().toRadixString(16).padLeft(2, '0')}${(color.g * 255).round().toRadixString(16).padLeft(2, '0')}${(color.b * 255).round().toRadixString(16).padLeft(2, '0')}';
 
     EditPageLogger.propertyPanelDebug(
       '更新页面背景颜色',
-      tag: EditPageLoggingConfig.TAG_TEXT_PANEL,
+      tag: EditPageLoggingConfig.tagTextPanel,
       data: {
         'inputColor': color.toString(),
         'outputColorHex': colorHex,
-        'red': color.red,
-        'green': color.green,
-        'blue': color.blue,
+        'red': (color.r * 255).round(),
+        'green': (color.g * 255).round(),
+        'blue': (color.b * 255).round(),
         'operation': 'update_background_color',
       },
     );

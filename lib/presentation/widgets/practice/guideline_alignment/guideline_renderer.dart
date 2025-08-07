@@ -52,7 +52,7 @@ class _GuidelinePainter extends CustomPainter {
     }
 
     final labelBackground = Paint()
-      ..color = Colors.black.withOpacity(0.6)
+      ..color = Colors.black.withValues(alpha: 0.6)
       ..style = PaintingStyle.fill;
 
     // 绘制所有参考线
