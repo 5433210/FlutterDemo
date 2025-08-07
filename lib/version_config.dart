@@ -125,10 +125,19 @@ class VersionConfig {
 
       // 解析版本号
       final versionParts = _parseVersion(platformVersion.version);
-      final buildNumber = platformVersion.buildNumber;
+      
+      // 优先使用平台构建号，如果为空则使用从版本字符串解析的构建号
+      final buildNumber = platformVersion.buildNumber.isNotEmpty 
+          ? platformVersion.buildNumber 
+          : (versionParts['build'] ?? '');
+
+      // 检查构建号是否为空，如果为空则抛出异常
+      if (buildNumber.isEmpty) {
+        throw StateError('构建号为空。请检查 pubspec.yaml 中的版本格式是否包含构建号 (例如: 1.0.0+20250620001)');
+      }
 
       _versionInfo = VersionInfo(
-        major: versionParts['major'] ?? 1,
+        major: versionParts['major'] ?? 0,
         minor: versionParts['minor'] ?? 0,
         patch: versionParts['patch'] ?? 0,
         prerelease: versionParts['prerelease'],
@@ -139,13 +148,8 @@ class VersionConfig {
         buildEnvironment: kDebugMode ? 'debug' : 'release',
       );
     } catch (e) {
-      // 使用默认版本信息
-      _versionInfo = const VersionInfo(
-        major: 1,
-        minor: 0,
-        patch: 0,
-        buildNumber: '20250620001',
-      );
+      // 版本获取失败时直接抛出异常，提供更详细的错误信息
+      throw StateError('VersionConfig 初始化失败: $e. 请检查 pubspec.yaml 或平台特定的版本配置');
     }
   }
 
@@ -182,25 +186,48 @@ class VersionConfig {
 
   /// 解析版本号字符串
   static Map<String, dynamic> _parseVersion(String version) {
-    // 解析格式: 1.2.3-alpha.1+20250620001 或 1.2.3+20250620001
-    final regex = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?$');
-    final match = regex.firstMatch(version);
+    // 首先尝试解析标准格式: 1.2.3-alpha.1+20250620001 或 1.2.3+20250620001
+    final standardRegex = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?$');
+    final standardMatch = standardRegex.firstMatch(version);
 
-    if (match == null) {
-      return {
-        'major': 1,
-        'minor': 0,
-        'patch': 0,
-        'prerelease': null,
-      };
+    if (standardMatch != null) {
+      final major = int.tryParse(standardMatch.group(1) ?? '');
+      final minor = int.tryParse(standardMatch.group(2) ?? '');
+      final patch = int.tryParse(standardMatch.group(3) ?? '');
+
+      if (major != null && minor != null && patch != null) {
+        return {
+          'major': major,
+          'minor': minor,
+          'patch': patch,
+          'prerelease': standardMatch.group(4), // 预发布标识符
+          'build': standardMatch.group(5), // 构建号
+        };
+      }
     }
 
-    return {
-      'major': int.tryParse(match.group(1) ?? '1') ?? 1,
-      'minor': int.tryParse(match.group(2) ?? '0') ?? 0,
-      'patch': int.tryParse(match.group(3) ?? '0') ?? 0,
-      'prerelease': match.group(4), // 预发布标识符
-    };
+    // 如果标准格式失败，尝试解析4组件格式（如Windows MSIX版本）: 1.2.3.4
+    final fourPartRegex = RegExp(r'^(\d+)\.(\d+)\.(\d+)\.(\d+)$');
+    final fourPartMatch = fourPartRegex.firstMatch(version);
+
+    if (fourPartMatch != null) {
+      final major = int.tryParse(fourPartMatch.group(1) ?? '');
+      final minor = int.tryParse(fourPartMatch.group(2) ?? '');
+      final patch = int.tryParse(fourPartMatch.group(3) ?? '');
+      final fourth = fourPartMatch.group(4); // 第4个组件作为构建号
+
+      if (major != null && minor != null && patch != null) {
+        return {
+          'major': major,
+          'minor': minor,
+          'patch': patch,
+          'prerelease': null,
+          'build': fourth, // 使用第4个组件作为构建号
+        };
+      }
+    }
+
+    throw ArgumentError('无法解析版本号字符串: $version. 期望格式: major.minor.patch[-prerelease][+build] 或 major.minor.patch.build');
   }
 
   /// 获取Git信息 (如果可用)

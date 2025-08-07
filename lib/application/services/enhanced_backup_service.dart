@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../../version_config.dart';
 import 'backup_registry_manager.dart';
 import 'backup_service.dart';
 import 'data_path_config_service.dart';
@@ -1060,12 +1061,10 @@ class EnhancedBackupService {
   /// 获取应用版本
   Future<String> _getAppVersion() async {
     try {
-      // 这里可以从 package_info_plus 获取版本信息
-      // 暂时返回默认值
-      return '1.0.0';
+      return VersionConfig.versionInfo.shortVersion;
     } catch (e) {
-      AppLogger.warning('获取应用版本失败', error: e, tag: 'EnhancedBackupService');
-      return 'unknown';
+      AppLogger.error('获取应用版本失败', error: e, tag: 'EnhancedBackupService');
+      throw StateError('无法获取应用版本，请确保 VersionConfig 已正确初始化: $e');
     }
   }
 

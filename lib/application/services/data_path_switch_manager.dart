@@ -175,6 +175,9 @@ class DataPathSwitchManager {
         'newPath': newPath,
       });
 
+      // 获取本地化字符串，避免在异步间隔后访问context
+      final l10n = AppLocalizations.of(context);
+      
       // 获取当前配置
       final currentConfig = await DataPathConfigService.readConfig();
       final oldPath = await currentConfig.getActualDataPath();
@@ -185,7 +188,7 @@ class DataPathSwitchManager {
         await DataPathConfigService.addHistoryDataPath(oldPath);
 
         // 为了向后兼容，同时也记录到旧的系统中
-        await _recordLegacyDataPath(oldPath, context);
+        await _recordLegacyDataPath(oldPath, l10n.legacyDataPathDescription);
       }
 
       // 2. 验证新路径
@@ -221,9 +224,17 @@ class DataPathSwitchManager {
       });
 
       // 6. 延迟一段时间后重启应用，让UI有时间显示成功消息
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        AppRestartService.restartApp(context);
-      });
+      // 定义重启函数，避免使用函数变量
+      void restartApp() {
+        try {
+          AppRestartService.restartApp(context);
+        } catch (e) {
+          AppLogger.error('延迟重启应用时发生错误',
+              error: e, tag: 'DataPathSwitchManager');
+        }
+      }
+      
+      Future.delayed(const Duration(milliseconds: 1500), restartApp);
     } catch (e, stack) {
       AppLogger.error('数据路径切换失败',
           error: e, stackTrace: stack, tag: 'DataPathSwitchManager');
@@ -245,8 +256,7 @@ class DataPathSwitchManager {
 
   /// 记录旧数据路径
   static Future<void> _recordLegacyDataPath(
-      String oldPath, BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
+      String oldPath, [String? description]) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final legacyPathsJson = prefs.getStringList(_legacyDataPathsKey) ?? [];
@@ -263,7 +273,7 @@ class DataPathSwitchManager {
         switchedTime: DateTime.now(),
         sizeEstimate: sizeEstimate,
         status: 'pending_cleanup',
-        description: l10n.legacyDataPathDescription,
+        description: description ?? 'Legacy data path from previous switch',
       );
 
       legacyPathsJson.add(legacyPath.toJson().toString());
@@ -393,7 +403,7 @@ class DataPathSwitchManager {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -513,7 +523,7 @@ class _PathSwitchOptionsWidgetState extends State<_PathSwitchOptionsWidget> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

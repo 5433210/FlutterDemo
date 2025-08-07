@@ -6,6 +6,7 @@ import '../../../application/services/import_export_version_mapping_service.dart
 import '../../../domain/models/import_export/export_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../version_config.dart';
 import '../../providers/batch_selection_provider.dart';
 
 /// 带版本信息的导出对话框
@@ -68,7 +69,7 @@ class _ExportDialogWithVersionState
 
   /// 初始化版本信息
   void _initializeVersionInfo() {
-    _currentAppVersion = '1.3.0'; // 从配置获取
+    _currentAppVersion = _getCurrentAppVersion(); // 从配置获取
     _currentDataVersion =
         ImportExportVersionMappingService.getDataVersionForApp(
             _currentAppVersion!);
@@ -453,5 +454,17 @@ class _ExportDialogWithVersionState
 
     Navigator.of(context).pop();
     widget.onExport(options, _targetPath);
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，返回默认版本
+      AppLogger.warning('VersionConfig未初始化，使用默认版本', 
+          tag: 'ExportDialogWithVersion', data: {'error': e.toString()});
+      return '1.3.0'; // 保持与原始硬编码版本一致
+    }
   }
 }

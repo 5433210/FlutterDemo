@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../version_config.dart';
 import '../../../widgets/settings/settings_section.dart';
 
 final appVersionInfoProvider = FutureProvider<AppVersionInfoData>((ref) async {
@@ -70,7 +71,60 @@ class AppVersionInfoData {
 class AppVersionInfoService {
   static Future<AppVersionInfoData> getVersionInfo() async {
     try {
-      final packageInfo = await PackageInfo.fromPlatform();
+      // 优先使用 VersionConfig 统一管理的版本信息
+      final versionInfo = await _getVersionFromConfig();
+      if (versionInfo != null) {
+        return versionInfo;
+      }
+      
+      // 如果 VersionConfig 未初始化，则使用 PackageInfo 作为回退
+      return await _getVersionFromPackageInfo();
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        '获取应用版本信息失败',
+        data: {
+          'operation': 'get_version_info',
+          'error': e.toString(),
+        },
+        tag: 'system',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      
+      // 返回默认信息，使用统一的版本管理系统
+      return _getDefaultVersionInfo();
+    }
+  }
+
+  /// 从 VersionConfig 获取版本信息
+  static Future<AppVersionInfoData?> _getVersionFromConfig() async {
+    try {
+      await VersionConfig.initialize(); // 确保已初始化
+      final versionInfo = VersionConfig.versionInfo;
+      
+      return AppVersionInfoData(
+        appName: 'Char As Gem', // 可以从配置中获取
+        appVersion: versionInfo.shortVersion,
+        buildNumber: versionInfo.buildNumber,
+        buildTime: versionInfo.buildTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        buildEnvironment: versionInfo.buildEnvironment ?? (kDebugMode ? 'debug' : 'release'),
+        gitCommit: versionInfo.gitCommit,
+        gitBranch: versionInfo.gitBranch,
+        platformName: _getPlatformName(),
+        operatingSystem: _getOperatingSystem(),
+        flutterVersion: _getFlutterVersion(),
+        dartVersion: _getDartVersion(),
+      );
+    } catch (e) {
+      AppLogger.warning('从 VersionConfig 获取版本信息失败，使用 PackageInfo 回退', 
+          tag: 'AppVersionInfoService', data: {'error': e.toString()});
+      return null;
+    }
+  }
+
+  /// 从 PackageInfo 获取版本信息（回退机制）
+  static Future<AppVersionInfoData> _getVersionFromPackageInfo() async {
+    final packageInfo = await PackageInfo.fromPlatform();
 
       // 处理Windows平台的版本格式问题
       String version = packageInfo.version;
@@ -85,47 +139,60 @@ class AppVersionInfoService {
       }
 
       // 如果buildNumber为空，尝试从version中提取
-      if (buildNumber.isEmpty && version.contains('+')) {
-        final versionParts = version.split('+');
-        if (versionParts.length == 2) {
-          version = versionParts[0];
-          buildNumber = versionParts[1];
+      if (buildNumber.isEmpty) {
+        if (version.contains('+')) {
+          final versionParts = version.split('+');
+          if (versionParts.length == 2) {
+            version = versionParts[0];
+            buildNumber = versionParts[1];
+          }
+        }
+        
+        // 如果仍然为空，抛出异常
+        if (buildNumber.isEmpty) {
+          throw StateError('构建号为空。请检查 pubspec.yaml 中的版本格式是否包含构建号 (例如: 1.0.0+20250620001)');
         }
       }
 
-      // 如果仍然为空，使用默认值
-      if (buildNumber.isEmpty) {
-        buildNumber = '20250623001';
-      }
+    return AppVersionInfoData(
+      appName: packageInfo.appName,
+      appVersion: version,
+      buildNumber: buildNumber,
+      buildTime: DateTime.now().toIso8601String(),
+      buildEnvironment: kDebugMode ? 'debug' : 'release',
+      gitCommit: null,
+      gitBranch: null,
+      platformName: _getPlatformName(),
+      operatingSystem: _getOperatingSystem(),
+      flutterVersion: _getFlutterVersion(),
+      dartVersion: _getDartVersion(),
+    );
+  }
 
+  /// 获取默认版本信息
+  static AppVersionInfoData _getDefaultVersionInfo() {
+    try {
+      // 尝试从 VersionConfig 获取版本信息
+      final versionInfo = VersionConfig.versionInfo;
       return AppVersionInfoData(
-        appName: packageInfo.appName,
-        appVersion: version,
-        buildNumber: buildNumber,
-        buildTime: DateTime.now().toIso8601String(),
-        buildEnvironment: kDebugMode ? 'debug' : 'release',
-        gitCommit: null,
-        gitBranch: null,
+        appName: 'Char As Gem',
+        appVersion: versionInfo.shortVersion,
+        buildNumber: versionInfo.buildNumber,
+        buildTime: versionInfo.buildTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        buildEnvironment: versionInfo.buildEnvironment ?? (kDebugMode ? 'debug' : 'release'),
+        gitCommit: versionInfo.gitCommit,
+        gitBranch: versionInfo.gitBranch,
         platformName: _getPlatformName(),
         operatingSystem: _getOperatingSystem(),
         flutterVersion: _getFlutterVersion(),
         dartVersion: _getDartVersion(),
       );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        '获取应用版本信息失败',
-        data: {
-          'operation': 'get_version_info',
-          'error': e.toString(),
-        },
-        tag: 'system',
-        error: e,
-        stackTrace: stackTrace,
-      ); // 返回默认信息，使用本地化"未知"
+    } catch (e) {
+      // 如果所有方法都失败，返回硬编码的默认值
       return AppVersionInfoData(
         appName: 'Char As Gem',
         appVersion: '1.0.0',
-        buildNumber: 'Unknown', // 这里将在UI层显示时被替换为本地化文本
+        buildNumber: 'Unknown',
         buildTime: DateTime.now().toIso8601String(),
         buildEnvironment: kDebugMode ? 'debug' : 'release',
         platformName: _getPlatformName(),

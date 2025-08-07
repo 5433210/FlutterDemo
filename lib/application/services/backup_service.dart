@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
+import '../../version_config.dart';
 import 'backup_progress_manager.dart';
 import 'data_version_mapping_service.dart';
 
@@ -1180,7 +1181,8 @@ class BackupService {
       if (compatibility != null) {
         final minAppVersion = compatibility['minAppVersion'] as String?;
         final maxAppVersion = compatibility['maxAppVersion'] as String?;
-        const currentAppVersion = '1.0.0'; // 当前应用版本
+        // 获取当前应用版本
+        final currentAppVersion = _getCurrentAppVersion();
 
         if (minAppVersion != null &&
             _compareVersions(currentAppVersion, minAppVersion) < 0) {
@@ -1201,7 +1203,8 @@ class BackupService {
 
       // 检查备份格式版本
       if (backupVersion != null) {
-        const supportedBackupVersions = ['1.0', '1.1'];
+        // 支持的备份格式版本
+        final supportedBackupVersions = _getSupportedBackupVersions();
         if (!supportedBackupVersions.contains(backupVersion)) {
           throw Exception('不支持的备份格式版本: $backupVersion');
         }
@@ -1398,6 +1401,32 @@ class BackupService {
           error: e, stackTrace: stack, tag: 'BackupService');
       rethrow;
     }
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，抛出异常而不是返回默认值
+      AppLogger.error('VersionConfig未初始化', 
+          tag: 'BackupService', data: {'error': e.toString()});
+      throw StateError('无法获取应用版本，请确保 VersionConfig 已正确初始化: $e');
+    }
+  }
+
+  /// 获取支持的备份格式版本列表
+  List<String> _getSupportedBackupVersions() {
+    // 基于当前版本动态生成支持的版本列表
+    final currentVersion = _getCurrentAppVersion();
+    final parts = currentVersion.split('.');
+    final majorMinor = '${parts[0]}.${parts.length > 1 ? parts[1] : '0'}';
+    
+    // 支持当前版本和前一个小版本
+    final currentMajorMinor = double.tryParse(majorMinor) ?? 1.0;
+    final previousVersion = (currentMajorMinor - 0.1).toStringAsFixed(1);
+    
+    return [previousVersion, majorMinor];
   }
 }
 

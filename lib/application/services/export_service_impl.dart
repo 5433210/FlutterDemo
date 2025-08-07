@@ -18,6 +18,7 @@ import '../../domain/services/export_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/storage/storage_interface.dart';
 import '../../utils/path_privacy_helper.dart';
+import '../../version_config.dart';
 import 'import_export_version_mapping_service.dart';
 
 /// 导出服务的具体实现
@@ -367,7 +368,7 @@ class ExportServiceImpl implements ExportService {
     ExportType exportType = ExportType.worksOnly,
   }) {
     // 获取当前应用版本对应的数据版本
-    const currentAppVersion = '1.3.0'; // 从配置获取
+    final currentAppVersion = _getCurrentAppVersion(); // 从配置获取
     final dataVersion = ImportExportVersionMappingService.getDataVersionForApp(
         currentAppVersion);
 
@@ -379,9 +380,9 @@ class ExportServiceImpl implements ExportService {
       exportType: exportType,
       appVersion: currentAppVersion,
       dataFormatVersion: dataVersion, // 使用数据版本
-      compatibility: const CompatibilityInfo(
-        minSupportedVersion: '1.0.0',
-        recommendedVersion: '1.3.0',
+      compatibility: CompatibilityInfo(
+        minSupportedVersion: _getMinSupportedVersion(),
+        recommendedVersion: _getCurrentAppVersion(),
       ),
     );
 
@@ -1162,5 +1163,30 @@ class ExportServiceImpl implements ExportService {
   /// 获取应用数据目录路径
   String _getAppDataPath() {
     return _storage.getAppDataPath();
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，返回默认版本
+      AppLogger.warning('VersionConfig未初始化，使用默认版本', 
+          tag: 'ExportService', data: {'error': e.toString()});
+      return '1.3.0'; // 保持与原始硬编码版本一致
+    }
+  }
+
+  /// 获取最小支持版本
+  String _getMinSupportedVersion() {
+    try {
+      // 基于当前版本计算最小支持版本（通常是上一个主版本）
+      final currentVersion = VersionConfig.versionInfo;
+      final minMajor = currentVersion.major > 1 ? currentVersion.major - 1 : 1;
+      return '$minMajor.0.0';
+    } catch (e) {
+      // 如果VersionConfig未初始化，抛出异常而不是返回默认值
+      throw StateError('无法获取版本信息以计算最小兼容版本，请确保 VersionConfig 已正确初始化: $e');
+    }
   }
 }

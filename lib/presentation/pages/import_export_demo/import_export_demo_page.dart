@@ -5,6 +5,7 @@ import '../../../domain/models/import_export/export_data_model.dart';
 import '../../../domain/models/import_export/import_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../version_config.dart';
 import '../../providers/batch_selection_provider.dart';
 import '../../widgets/batch_operations/export_dialog_with_version.dart';
 import '../../widgets/batch_operations/import_dialog_with_version.dart';
@@ -227,7 +228,7 @@ class _ImportExportDemoPageState extends ConsumerState<ImportExportDemoPage> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            _buildStatusItem('应用版本', '1.3.0'),
+            _buildStatusItem('应用版本', _getCurrentAppVersion()),
             _buildStatusItem('数据版本', 'ie_v4'),
             _buildStatusItem('选中项目', '${_selectedIds.length} 项'),
             _buildStatusItem('支持格式', 'ZIP (推荐), JSON'),
@@ -354,5 +355,15 @@ class _ImportExportDemoPageState extends ConsumerState<ImportExportDemoPage> {
         backgroundColor: Colors.blue,
       ),
     );
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，返回默认版本
+      return '1.3.0';
+    }
   }
 }

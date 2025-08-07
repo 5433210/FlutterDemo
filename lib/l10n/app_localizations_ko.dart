@@ -113,7 +113,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get alignVerticalCenter => '수직 가운데 정렬';
 
   @override
+  String get alignment => '정렬';
+
+  @override
   String get alignmentAssist => '정렬 도우미';
+
+  @override
+  String get alignmentCenter => '가운데';
 
   @override
   String get alignmentGrid => '격자 스냅 모드 - 클릭하여 가이드라인 정렬로 전환';
@@ -256,6 +262,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get backgroundColor => '배경색';
+
+  @override
+  String get backgroundTexture => '배경 텍스처';
 
   @override
   String get backupBeforeSwitchRecommendation => '데이터 안전을 위해 데이터 경로를 전환하기 전에 먼저 백업을 생성하는 것이 좋습니다:';
@@ -553,6 +562,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beforeDate => '특정 날짜 이전';
 
   @override
+  String get binarizationParameters => '이진화 매개변수';
+
+  @override
+  String get binarizationProcessing => '이진화 처리';
+
+  @override
+  String get binarizationToggle => '이진화 토글';
+
+  @override
+  String get binaryThreshold => '이진화 임계값';
+
+  @override
   String get border => '테두리';
 
   @override
@@ -560,6 +581,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get borderWidth => '테두리 너비';
+
+  @override
+  String get bottomCenter => '아래쪽 가운데';
+
+  @override
+  String get bottomLeft => '왼쪽 아래';
+
+  @override
+  String get bottomRight => '오른쪽 아래';
 
   @override
   String get boxRegion => '미리보기 영역에서 문자를 선택하세요';
@@ -671,6 +701,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get categoryNameCannotBeEmpty => '카테고리 이름은 비워둘 수 없습니다';
+
+  @override
+  String get centerLeft => '왼쪽 가운데';
+
+  @override
+  String get centerRight => '오른쪽 가운데';
 
   @override
   String get centimeter => '센티미터';
@@ -1137,6 +1173,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get criticalError => '심각한 오류';
 
   @override
+  String get cropAdjustmentHint => '위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요';
+
+  @override
   String get cropBottom => '아래쪽 자르기';
 
   @override
@@ -1155,6 +1194,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(자르기: 왼쪽${left}px, 위쪽${top}px, 오른쪽${right}px, 아래쪽${bottom}px)';
   }
+
+  @override
+  String get crossPagePasteSuccess => '페이지 간 붙여넣기 성공';
 
   @override
   String get currentBackupPathNotSet => '현재 백업 경로가 설정되지 않았습니다';
@@ -1335,6 +1377,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get defaultPathName => '기본 경로';
+
+  @override
+  String get degrees => '도';
 
   @override
   String get delete => '삭제';
@@ -1662,6 +1707,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emptyStateNoWorks => '작품 없음, 추가 버튼을 클릭하여 작품을 가져오세요';
 
   @override
+  String get enableBinarization => '이진화 활성화';
+
+  @override
   String get enabled => '활성화됨';
 
   @override
@@ -1943,6 +1991,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get filterClear => '지우기';
 
   @override
+  String get fineRotation => '미세 회전';
+
+  @override
   String get firstPage => '첫 페이지';
 
   @override
@@ -1970,13 +2021,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flipHorizontal => '수평 뒤집기';
 
   @override
-  String get flipVertical => '수직 뒤집기';
-
-  @override
   String get flipOptions => '뒤집기 옵션';
 
   @override
-  String get imagePropertyPanelFlipInfo => '뒤집기 효과는 캔버스 렌더링 단계에서 처리되어 이미지 데이터를 다시 처리하지 않고 즉시 적용됩니다. 뒤집기는 순수한 시각적 변환으로, 이미지 처리 파이프라인과 독립적입니다.';
+  String get flipVertical => '수직 뒤집기';
 
   @override
   String get flutterVersion => 'Flutter 버전';
@@ -2164,6 +2212,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get image => '이미지';
 
   @override
+  String get imageAlignment => '이미지 정렬';
+
+  @override
   String get imageCount => '이미지 수';
 
   @override
@@ -2201,6 +2252,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get imageLoadFailed => '이미지 로드 실패';
 
   @override
+  String get imageNameInfo => '이미지 이름';
+
+  @override
   String imageProcessingPathError(Object error) {
     return '처리 경로 오류: $error';
   }
@@ -2210,6 +2264,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imagePropertyPanelAutoImportNotice => '선택한 이미지는 더 나은 관리를 위해 갤러리에 자동으로 가져옵니다';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '뒤집기 효과는 캔버스 렌더링 단계에서 처리되어 이미지 데이터를 다시 처리하지 않고 즉시 적용됩니다. 뒤집기는 순수한 시각적 변환으로, 이미지 처리 파이프라인과 독립적입니다.';
 
   @override
   String get imagePropertyPanelGeometryWarning => '이러한 속성은 이미지 내용 자체가 아닌 전체 요소 상자를 조정합니다';
@@ -2228,6 +2285,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imageSelection => '이미지 선택';
+
+  @override
+  String get imageSizeInfo => '이미지 크기';
 
   @override
   String get imageTransform => '이미지 변환';
@@ -2259,6 +2319,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String importBackupFailedMessage(Object error) {
     return '백업 가져오기 실패: $error';
   }
+
+  @override
+  String get importBackupProgressDialog => '현재 경로로 백업을 가져오는 중...';
+
+  @override
+  String get importBackupSuccessMessage => '백업이 현재 경로로 성공적으로 가져와졌습니다';
 
   @override
   String get importConfig => '구성 가져오기';
@@ -2319,10 +2385,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importToCurrentPathButton => '현재 경로로 가져오기';
 
   @override
+  String get importToCurrentPathConfirm => '현재 경로로 가져오기';
+
+  @override
   String get importToCurrentPathDesc => '이렇게 하면 백업 파일이 현재 경로로 복사되고 원본 파일은 그대로 유지됩니다.';
 
   @override
   String get importToCurrentPathDescription => '가져온 후 이 백업은 현재 경로의 백업 목록에 나타납니다';
+
+  @override
+  String get importToCurrentPathDialogContent => '이렇게 하면 백업이 현재 백업 경로로 가져와집니다. 계속하시겠습니까？';
 
   @override
   String get importToCurrentPathFailed => '현재 경로로 백업 가져오기 실패';
@@ -2779,10 +2851,31 @@ class AppLocalizationsKo extends AppLocalizations {
   String get navigationClearHistoryFailed => '탐색 기록 지우기 실패';
 
   @override
+  String get navigationClearHistorySuccess => '내비게이션 기록이 성공적으로 지워졌습니다';
+
+  @override
   String get navigationFailedBack => '이전으로 탐색 실패';
 
   @override
+  String get navigationFailedInvalidHistoryItem => '내비게이션 실패: 유효하지 않은 기록 항목';
+
+  @override
+  String get navigationFailedNoHistory => '되돌아갈 수 없음: 사용 가능한 기록이 없습니다';
+
+  @override
+  String get navigationFailedNoValidSection => '내비게이션 실패: 유효한 섹션이 없습니다';
+
+  @override
   String get navigationFailedSection => '탐색 전환 실패';
+
+  @override
+  String get navigationFailedToBack => '내비게이션 실패: 이전 섹션으로 되돌아갈 수 없습니다';
+
+  @override
+  String get navigationFailedToGoBack => '내비게이션 실패: 되돌아갈 수 없습니다';
+
+  @override
+  String get navigationFailedToNewSection => '내비게이션 실패: 새 섹션으로 이동할 수 없습니다';
 
   @override
   String get navigationFailedToSpecificItem => '특정 기록 항목으로 탐색 실패';
@@ -2989,6 +3082,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noiseReduction => '노이즈 감소';
+
+  @override
+  String get noiseReductionLevel => '노이즈 감소 레벨';
+
+  @override
+  String get noiseReductionToggle => '노이즈 감소 토글';
 
   @override
   String get none => '없음';
@@ -3483,6 +3582,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get restoreConfirmTitle => '복원 확인';
 
   @override
+  String get restoreDefaultSize => '기본 크기로 복원';
+
+  @override
   String get restoreFailure => '복원 실패';
 
   @override
@@ -3501,6 +3603,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retryAction => '재시도';
 
   @override
+  String get rotateClockwise => '시계 방향 회전';
+
+  @override
+  String get rotateCounterclockwise => '시계 반대 방향 회전';
+
+  @override
   String get rotateLeft => '왼쪽으로 회전';
 
   @override
@@ -3508,6 +3616,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rotation => '회전';
+
+  @override
+  String get rotationFineControl => '각도 미세 조정';
 
   @override
   String get safetyBackupBeforePathSwitch => '데이터 경로 전환 전 안전 백업';
@@ -3988,6 +4099,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get textureOpacity => '텍스처 불투명도';
 
   @override
+  String get texturePreview => '텍스처 미리보기';
+
+  @override
+  String get textureSize => '텍스처 크기';
+
+  @override
   String get themeMode => '테마 모드';
 
   @override
@@ -4063,6 +4180,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get toolModeSelectTooltip => '선택 도구 (Ctrl+B)';
+
+  @override
+  String get topCenter => '위쪽 가운데';
+
+  @override
+  String get topLeft => '왼쪽 위';
+
+  @override
+  String get topRight => '오른쪽 위';
 
   @override
   String get total => '총계';
@@ -4361,97 +4487,4 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 압축 파일';
-
-  @override
-  String get backgroundTexture => '배경 텍스처';
-
-  @override
-  String get texturePreview => '텍스처 미리보기';
-
-  @override
-  String get textureSize => '텍스처 크기';
-
-  @override
-  String get restoreDefaultSize => '기본 크기로 복원';
-
-  @override
-  String get alignment => '정렬';
-
-  @override
-  String get imageAlignment => '이미지 정렬';
-
-  @override
-  String get imageSizeInfo => '이미지 크기';
-
-  @override
-  String get imageNameInfo => '이미지 이름';
-
-  @override
-  String get rotationFineControl => '각도 미세 조정';
-
-  @override
-  String get rotateClockwise => '시계 방향 회전';
-
-  @override
-  String get rotateCounterclockwise => '시계 반대 방향 회전';
-
-  @override
-  String get degrees => '도';
-
-  @override
-  String get fineRotation => '미세 회전';
-
-  @override
-  String get topLeft => '왼쪽 위';
-
-  @override
-  String get topCenter => '위쪽 가운데';
-
-  @override
-  String get topRight => '오른쪽 위';
-
-  @override
-  String get centerLeft => '왼쪽 가운데';
-
-  @override
-  String get centerRight => '오른쪽 가운데';
-
-  @override
-  String get bottomLeft => '왼쪽 아래';
-
-  @override
-  String get bottomCenter => '아래쪽 가운데';
-
-  @override
-  String get bottomRight => '오른쪽 아래';
-
-  @override
-  String get alignmentCenter => '가운데';
-
-  @override
-  String get cropAdjustmentHint => '위의 미리보기 이미지에서 선택 상자와 제어점을 드래그하여 자르기 영역을 조정하세요';
-
-  @override
-  String get binarizationProcessing => '이진화 처리';
-
-  @override
-  String get binarizationToggle => '이진화 토글';
-
-  @override
-  String get binarizationParameters => '이진화 매개변수';
-
-  @override
-  String get enableBinarization => '이진화 활성화';
-
-  @override
-  String get binaryThreshold => '이진화 임계값';
-
-  @override
-  String get noiseReductionToggle => '노이즈 감소 토글';
-
-  @override
-  String get noiseReductionLevel => '노이즈 감소 레벨';
-
-  @override
-  String get crossPagePasteSuccess => '페이지 간 붙여넣기 성공';
 }

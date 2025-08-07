@@ -113,7 +113,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alignVerticalCenter => '垂直方向中央揃え';
 
   @override
+  String get alignment => '配置';
+
+  @override
   String get alignmentAssist => '整列補助';
+
+  @override
+  String get alignmentCenter => '中央';
 
   @override
   String get alignmentGrid => 'グリッドスナップモード - クリックでガイドライン整列に切り替え';
@@ -256,6 +262,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backgroundColor => '背景色';
+
+  @override
+  String get backgroundTexture => '背景テクスチャ';
 
   @override
   String get backupBeforeSwitchRecommendation => 'データの安全を確保するため、データパスを切り替える前にバックアップを作成することをお勧めします：';
@@ -553,6 +562,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get beforeDate => '特定の日付以前';
 
   @override
+  String get binarizationParameters => '二値化パラメータ';
+
+  @override
+  String get binarizationProcessing => '二値化処理';
+
+  @override
+  String get binarizationToggle => '二値化切り替え';
+
+  @override
+  String get binaryThreshold => '二値化しきい値';
+
+  @override
   String get border => '境界線';
 
   @override
@@ -560,6 +581,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get borderWidth => '境界線の幅';
+
+  @override
+  String get bottomCenter => '下中央';
+
+  @override
+  String get bottomLeft => '左下';
+
+  @override
+  String get bottomRight => '右下';
 
   @override
   String get boxRegion => 'プレビュー領域で文字を囲んで選択してください';
@@ -671,6 +701,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get categoryNameCannotBeEmpty => 'カテゴリ名は空にできません';
+
+  @override
+  String get centerLeft => '左中央';
+
+  @override
+  String get centerRight => '右中央';
 
   @override
   String get centimeter => 'センチメートル';
@@ -1137,6 +1173,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get criticalError => '重大なエラー';
 
   @override
+  String get cropAdjustmentHint => '上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください';
+
+  @override
   String get cropBottom => '下をトリミング';
 
   @override
@@ -1155,6 +1194,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(トリミング：左${left}px、上${top}px、右${right}px、下${bottom}px)';
   }
+
+  @override
+  String get crossPagePasteSuccess => 'ページ間ペースト成功';
 
   @override
   String get currentBackupPathNotSet => '現在のバックアップパスが設定されていません';
@@ -1335,6 +1377,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get defaultPathName => 'デフォルトパス';
+
+  @override
+  String get degrees => '度';
 
   @override
   String get delete => '削除';
@@ -1662,6 +1707,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emptyStateNoWorks => '作品がありません。追加ボタンをクリックして作品をインポートしてください';
 
   @override
+  String get enableBinarization => '二値化を有効にする';
+
+  @override
   String get enabled => '有効';
 
   @override
@@ -1943,6 +1991,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get filterClear => 'クリア';
 
   @override
+  String get fineRotation => '微細回転';
+
+  @override
   String get firstPage => '最初のページ';
 
   @override
@@ -1970,13 +2021,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flipHorizontal => '水平反転';
 
   @override
-  String get flipVertical => '垂直反転';
-
-  @override
   String get flipOptions => '反転オプション';
 
   @override
-  String get imagePropertyPanelFlipInfo => '反転効果はキャンバスレンダリング段階で処理され、画像データを再処理することなく即座に有効になります。反転は純粋な視覚変換で、画像処理パイプラインから独立しています。';
+  String get flipVertical => '垂直反転';
 
   @override
   String get flutterVersion => 'Flutterバージョン';
@@ -2164,6 +2212,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get image => '画像';
 
   @override
+  String get imageAlignment => '画像配置';
+
+  @override
   String get imageCount => '画像数';
 
   @override
@@ -2201,6 +2252,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get imageLoadFailed => '画像の読み込みに失敗しました';
 
   @override
+  String get imageNameInfo => '画像名';
+
+  @override
   String imageProcessingPathError(Object error) {
     return '処理パスエラー：$error';
   }
@@ -2210,6 +2264,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get imagePropertyPanelAutoImportNotice => '選択した画像は、より良い管理のために自動的にギャラリーにインポートされます';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '反転効果はキャンバスレンダリング段階で処理され、画像データを再処理することなく即座に有効になります。反転は純粋な視覚変換で、画像処理パイプラインから独立しています。';
 
   @override
   String get imagePropertyPanelGeometryWarning => 'これらのプロパティは、画像コンテンツ自体ではなく、要素ボックス全体を調整します';
@@ -2228,6 +2285,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get imageSelection => '画像の選択';
+
+  @override
+  String get imageSizeInfo => '画像サイズ';
 
   @override
   String get imageTransform => '画像の変換';
@@ -2259,6 +2319,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String importBackupFailedMessage(Object error) {
     return 'バックアップのインポートに失敗しました: $error';
   }
+
+  @override
+  String get importBackupProgressDialog => '現在のパスにバックアップをインポート中...';
+
+  @override
+  String get importBackupSuccessMessage => '現在のパスにバックアップが正常にインポートされました';
 
   @override
   String get importConfig => '設定をインポート';
@@ -2319,10 +2385,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importToCurrentPathButton => '現在のパスにインポート';
 
   @override
+  String get importToCurrentPathConfirm => '現在のパスにインポート';
+
+  @override
   String get importToCurrentPathDesc => 'これにより、バックアップファイルが現在のパスにコピーされ、元のファイルは変更されません。';
 
   @override
   String get importToCurrentPathDescription => 'インポート後、このバックアップは現在のパスのバックアップリストに表示されます';
+
+  @override
+  String get importToCurrentPathDialogContent => 'これによりバックアップが現在のバックアップパスにインポートされます。続行してもよろしいですか？';
 
   @override
   String get importToCurrentPathFailed => '現在のパスへのバックアップのインポートに失敗しました';
@@ -2779,10 +2851,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navigationClearHistoryFailed => 'ナビゲーション履歴のクリアに失敗しました';
 
   @override
+  String get navigationClearHistorySuccess => 'ナビゲーション履歴の消去が正常に完了しました';
+
+  @override
   String get navigationFailedBack => 'ナビゲーションの復帰に失敗しました';
 
   @override
+  String get navigationFailedInvalidHistoryItem => 'ナビゲーション失敗：無効な履歴項目';
+
+  @override
+  String get navigationFailedNoHistory => '戻れません：利用可能な履歴がありません';
+
+  @override
+  String get navigationFailedNoValidSection => 'ナビゲーション失敗：有効なセクションがありません';
+
+  @override
   String get navigationFailedSection => 'ナビゲーションの切り替えに失敗しました';
+
+  @override
+  String get navigationFailedToBack => 'ナビゲーション失敗：前のセクションに戻れません';
+
+  @override
+  String get navigationFailedToGoBack => 'ナビゲーション失敗：戻れません';
+
+  @override
+  String get navigationFailedToNewSection => 'ナビゲーション失敗：新しいセクションに移動できません';
 
   @override
   String get navigationFailedToSpecificItem => '特定の履歴項目へのナビゲーションに失敗しました';
@@ -2989,6 +3082,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noiseReduction => 'ノイズリダクション';
+
+  @override
+  String get noiseReductionLevel => 'ノイズリダクションレベル';
+
+  @override
+  String get noiseReductionToggle => 'ノイズリダクション切り替え';
 
   @override
   String get none => 'なし';
@@ -3483,6 +3582,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get restoreConfirmTitle => '復元の確認';
 
   @override
+  String get restoreDefaultSize => 'デフォルトサイズに戻す';
+
+  @override
   String get restoreFailure => '復元に失敗しました';
 
   @override
@@ -3501,6 +3603,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get retryAction => '再試行';
 
   @override
+  String get rotateClockwise => '時計回り';
+
+  @override
+  String get rotateCounterclockwise => '反時計回り';
+
+  @override
   String get rotateLeft => '左に回転';
 
   @override
@@ -3508,6 +3616,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rotation => '回転';
+
+  @override
+  String get rotationFineControl => '角度微調整';
 
   @override
   String get safetyBackupBeforePathSwitch => 'データパス切り替え前の安全バックアップ';
@@ -3988,6 +4099,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get textureOpacity => 'テクスチャの不透明度';
 
   @override
+  String get texturePreview => 'テクスチャプレビュー';
+
+  @override
+  String get textureSize => 'テクスチャサイズ';
+
+  @override
   String get themeMode => 'テーマモード';
 
   @override
@@ -4063,6 +4180,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get toolModeSelectTooltip => '矩形選択ツール (Ctrl+B)';
+
+  @override
+  String get topCenter => '上中央';
+
+  @override
+  String get topLeft => '左上';
+
+  @override
+  String get topRight => '右上';
 
   @override
   String get total => '合計';
@@ -4361,97 +4487,4 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP圧縮ファイル';
-
-  @override
-  String get backgroundTexture => '背景テクスチャ';
-
-  @override
-  String get texturePreview => 'テクスチャプレビュー';
-
-  @override
-  String get textureSize => 'テクスチャサイズ';
-
-  @override
-  String get restoreDefaultSize => 'デフォルトサイズに戻す';
-
-  @override
-  String get alignment => '配置';
-
-  @override
-  String get imageAlignment => '画像配置';
-
-  @override
-  String get imageSizeInfo => '画像サイズ';
-
-  @override
-  String get imageNameInfo => '画像名';
-
-  @override
-  String get rotationFineControl => '角度微調整';
-
-  @override
-  String get rotateClockwise => '時計回り';
-
-  @override
-  String get rotateCounterclockwise => '反時計回り';
-
-  @override
-  String get degrees => '度';
-
-  @override
-  String get fineRotation => '微細回転';
-
-  @override
-  String get topLeft => '左上';
-
-  @override
-  String get topCenter => '上中央';
-
-  @override
-  String get topRight => '右上';
-
-  @override
-  String get centerLeft => '左中央';
-
-  @override
-  String get centerRight => '右中央';
-
-  @override
-  String get bottomLeft => '左下';
-
-  @override
-  String get bottomCenter => '下中央';
-
-  @override
-  String get bottomRight => '右下';
-
-  @override
-  String get alignmentCenter => '中央';
-
-  @override
-  String get cropAdjustmentHint => '上のプレビュー画像で選択ボックスとコントロールポイントをドラッグしてクロップ領域を調整してください';
-
-  @override
-  String get binarizationProcessing => '二値化処理';
-
-  @override
-  String get binarizationToggle => '二値化切り替え';
-
-  @override
-  String get binarizationParameters => '二値化パラメータ';
-
-  @override
-  String get enableBinarization => '二値化を有効にする';
-
-  @override
-  String get binaryThreshold => '二値化しきい値';
-
-  @override
-  String get noiseReductionToggle => 'ノイズリダクション切り替え';
-
-  @override
-  String get noiseReductionLevel => 'ノイズリダクションレベル';
-
-  @override
-  String get crossPagePasteSuccess => 'ページ間ペースト成功';
 }

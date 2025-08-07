@@ -1,9 +1,9 @@
 {
   "app": {
     "bundleName": "com.charasgem.app",
-    "versionCode": 0,
+    "versionCode": 20250807002,
     "versionName": "0.0.0",
-    "minCompatibleVersionCode": 0,
+    "minCompatibleVersionCode": 20250807002,
     "debug": false,
     "icon": "$media:icon",
     "label": "$string:app_name",

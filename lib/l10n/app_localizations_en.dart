@@ -113,7 +113,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alignVerticalCenter => 'Align Vertical Center';
 
   @override
+  String get alignment => 'Alignment';
+
+  @override
   String get alignmentAssist => 'Alignment Assist';
+
+  @override
+  String get alignmentCenter => 'Center';
 
   @override
   String get alignmentGrid => 'Grid Snapping Mode - Tap to Switch to Guideline Alignment';
@@ -258,6 +264,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backgroundColor => 'Background Color';
 
   @override
+  String get backgroundTexture => 'Background Texture';
+
+  @override
   String get backupBeforeSwitchRecommendation => 'To ensure data safety, we recommend creating a backup before switching data paths:';
 
   @override
@@ -354,7 +363,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupFileNotExistError => 'Backup file does not exist';
 
   @override
-  String get backupFileNotFound => '备份文件不存在';
+  String get backupFileNotFound => 'Backup file not found';
 
   @override
   String get backupFileSizeMismatchError => 'Backup file size mismatch';
@@ -553,6 +562,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beforeDate => 'Before a Certain Date';
 
   @override
+  String get binarizationParameters => 'Binarization Parameters';
+
+  @override
+  String get binarizationProcessing => 'Binarization Processing';
+
+  @override
+  String get binarizationToggle => 'Binarization Toggle';
+
+  @override
+  String get binaryThreshold => 'Binary Threshold';
+
+  @override
   String get border => 'Border';
 
   @override
@@ -560,6 +581,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get borderWidth => 'Border Width';
+
+  @override
+  String get bottomCenter => 'Bottom Center';
+
+  @override
+  String get bottomLeft => 'Bottom Left';
+
+  @override
+  String get bottomRight => 'Bottom Right';
 
   @override
   String get boxRegion => 'Please select characters in the preview area';
@@ -671,6 +701,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryNameCannotBeEmpty => 'Category name cannot be empty';
+
+  @override
+  String get centerLeft => 'Center Left';
+
+  @override
+  String get centerRight => 'Center Right';
 
   @override
   String get centimeter => 'Centimeter';
@@ -1137,6 +1173,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get criticalError => 'Critical Error';
 
   @override
+  String get cropAdjustmentHint => 'Drag the selection box and control points in the preview above to adjust the crop area';
+
+  @override
   String get cropBottom => 'Crop Bottom';
 
   @override
@@ -1155,6 +1194,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(Cropping: Left ${left}px, Top ${top}px, Right ${right}px, Bottom ${bottom}px)';
   }
+
+  @override
+  String get crossPagePasteSuccess => 'Cross-page paste successful';
 
   @override
   String get currentBackupPathNotSet => 'Current backup path not set';
@@ -1335,6 +1377,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get defaultPathName => 'Default Path';
+
+  @override
+  String get degrees => 'Degrees';
 
   @override
   String get delete => 'Delete (Ctrl+D)';
@@ -1662,6 +1707,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyStateNoWorks => 'No Works Found, Click Add Button to Import Works';
 
   @override
+  String get enableBinarization => 'Enable Binarization';
+
+  @override
   String get enabled => 'Enabled';
 
   @override
@@ -1771,7 +1819,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String exportCompletedFormat2(Object failed, Object success) {
-    return '导出完成，成功: $success$failed';
+    return 'Export completed, successful: $success$failed';
   }
 
   @override
@@ -1798,7 +1846,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String exportFailedPartFormat2(Object count) {
-    return ', 失败: $count';
+    return ', failed: $count';
   }
 
   @override
@@ -1943,6 +1991,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterClear => 'Clear';
 
   @override
+  String get fineRotation => 'Fine Rotation';
+
+  @override
   String get firstPage => 'First Page';
 
   @override
@@ -1970,13 +2021,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flipHorizontal => 'Flip Horizontal';
 
   @override
-  String get flipVertical => 'Flip Vertical';
-
-  @override
   String get flipOptions => 'Flip Options';
 
   @override
-  String get imagePropertyPanelFlipInfo => 'Flip effects are processed at the canvas rendering stage and take effect immediately without reprocessing image data. Flip is a pure visual transformation, independent of the image processing pipeline.';
+  String get flipVertical => 'Flip Vertical';
 
   @override
   String get flutterVersion => 'Flutter Version';
@@ -2164,6 +2212,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get image => 'Image';
 
   @override
+  String get imageAlignment => 'Image Alignment';
+
+  @override
   String get imageCount => 'Image Count';
 
   @override
@@ -2201,6 +2252,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageLoadFailed => 'Image Load Failed';
 
   @override
+  String get imageNameInfo => 'Image Name';
+
+  @override
   String imageProcessingPathError(Object error) {
     return 'Image Processing Path Error: $error';
   }
@@ -2210,6 +2264,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelAutoImportNotice => 'Selected images will be automatically imported into your gallery for better management';
+
+  @override
+  String get imagePropertyPanelFlipInfo => 'Flip effects are processed at the canvas rendering stage and take effect immediately without reprocessing image data. Flip is a pure visual transformation, independent of the image processing pipeline.';
 
   @override
   String get imagePropertyPanelGeometryWarning => 'These properties adjust the entire element box, not the image content itself';
@@ -2228,6 +2285,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imageSelection => 'Image Selection';
+
+  @override
+  String get imageSizeInfo => 'Image Size';
 
   @override
   String get imageTransform => 'Image Transform';
@@ -2259,6 +2319,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String importBackupFailedMessage(Object error) {
     return 'Failed to import backup: $error';
   }
+
+  @override
+  String get importBackupProgressDialog => 'Importing backup to current path...';
+
+  @override
+  String get importBackupSuccessMessage => 'Backup imported to current path successfully';
 
   @override
   String get importConfig => 'Import Configuration';
@@ -2319,10 +2385,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importToCurrentPathButton => 'Import to Current Path';
 
   @override
+  String get importToCurrentPathConfirm => 'Import to Current Path';
+
+  @override
   String get importToCurrentPathDesc => 'This will copy the backup file to current path, original file remains unchanged.';
 
   @override
   String get importToCurrentPathDescription => 'This will copy the backup file to the current path, original file remains unchanged.';
+
+  @override
+  String get importToCurrentPathDialogContent => 'This will import the backup to the current backup path. Are you sure you want to continue?';
 
   @override
   String get importToCurrentPathFailed => 'Failed to import backup to current path';
@@ -2761,13 +2833,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigatedToBackupSettings => 'Navigated to backup settings page';
 
   @override
-  String get navigationAttemptBack => '尝试返回上一个功能区';
+  String get navigationAttemptBack => 'Attempting to return to previous functional area';
 
   @override
-  String get navigationAttemptToNewSection => '尝试导航到新功能区';
+  String get navigationAttemptToNewSection => 'Attempting to navigate to new functional area';
 
   @override
-  String get navigationAttemptToSpecificItem => '尝试导航到特定历史记录项';
+  String get navigationAttemptToSpecificItem => 'Attempting to navigate to specific history item';
 
   @override
   String get navigationBackToPrevious => 'Back to Previous Page';
@@ -2779,19 +2851,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationClearHistoryFailed => 'Failed to clear navigation history';
 
   @override
-  String get navigationFailedBack => '返回导航失败';
+  String get navigationClearHistorySuccess => 'Navigation history cleared successfully';
 
   @override
-  String get navigationFailedSection => '导航切换失败';
+  String get navigationFailedBack => 'Failed to navigate back';
+
+  @override
+  String get navigationFailedInvalidHistoryItem => 'Failed to navigate: invalid history item';
+
+  @override
+  String get navigationFailedNoHistory => 'Cannot navigate back: no history available';
+
+  @override
+  String get navigationFailedNoValidSection => 'Failed to navigate: no valid section available';
+
+  @override
+  String get navigationFailedSection => 'Failed to switch navigation';
+
+  @override
+  String get navigationFailedToBack => 'Failed to navigate back to previous section';
+
+  @override
+  String get navigationFailedToGoBack => 'Failed to navigate back';
+
+  @override
+  String get navigationFailedToNewSection => 'Failed to navigate to new section';
 
   @override
   String get navigationFailedToSpecificItem => 'Failed to navigate to specific history item';
 
   @override
-  String get navigationHistoryCleared => '导航历史记录已清空';
+  String get navigationHistoryCleared => 'Navigation history has been cleared';
 
   @override
-  String get navigationItemNotFound => '历史记录中未找到目标项，直接导航到该功能区';
+  String get navigationItemNotFound => 'Target item not found in history, navigating directly to that functional area';
 
   @override
   String get navigationNoHistory => 'No History';
@@ -2800,19 +2893,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationNoHistoryMessage => 'You have reached the beginning of the current functional area.';
 
   @override
-  String get navigationRecordRoute => '记录功能区内路由变化';
+  String get navigationRecordRoute => 'Recording route changes within functional area';
 
   @override
-  String get navigationRecordRouteFailed => '记录路由变化失败';
+  String get navigationRecordRouteFailed => 'Failed to record route changes';
 
   @override
-  String get navigationRestoreStateFailed => '恢复导航状态失败';
+  String get navigationRestoreStateFailed => 'Failed to restore navigation state';
 
   @override
-  String get navigationSaveState => '保存导航状态';
+  String get navigationSaveState => 'Saving navigation state';
 
   @override
-  String get navigationSaveStateFailed => '保存导航状态失败';
+  String get navigationSaveStateFailed => 'Failed to save navigation state';
 
   @override
   String get navigationSectionCharacterManagement => 'Character Management';
@@ -2833,10 +2926,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSelectPage => 'Which page do you want to return to?';
 
   @override
-  String get navigationStateRestored => '导航状态已从存储恢复';
+  String get navigationStateRestored => 'Navigation state has been restored from storage';
 
   @override
-  String get navigationStateSaved => '导航状态已保存';
+  String get navigationStateSaved => 'Navigation state has been saved';
 
   @override
   String get navigationSuccessBack => 'Successfully navigated back to previous section';
@@ -2848,7 +2941,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSuccessToSpecificItem => 'Successfully navigated to specific history item';
 
   @override
-  String get navigationToggleExpanded => '切换导航栏展开状态';
+  String get navigationToggleExpanded => 'Toggle navigation bar expanded state';
 
   @override
   String get needRestartApp => 'Need to Restart App';
@@ -2989,6 +3082,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noiseReduction => 'Noise Reduction';
+
+  @override
+  String get noiseReductionLevel => 'Noise Reduction Level';
+
+  @override
+  String get noiseReductionToggle => 'Noise Reduction Toggle';
 
   @override
   String get none => 'None';
@@ -3483,6 +3582,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreConfirmTitle => 'Restore Confirmation';
 
   @override
+  String get restoreDefaultSize => 'Restore Default Size';
+
+  @override
   String get restoreFailure => 'Restore Failed';
 
   @override
@@ -3501,6 +3603,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryAction => 'Retry';
 
   @override
+  String get rotateClockwise => 'Rotate Clockwise';
+
+  @override
+  String get rotateCounterclockwise => 'Rotate Counterclockwise';
+
+  @override
   String get rotateLeft => 'Rotate Left';
 
   @override
@@ -3508,6 +3616,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rotation => 'Rotation';
+
+  @override
+  String get rotationFineControl => 'Fine Rotation Control';
 
   @override
   String get safetyBackupBeforePathSwitch => 'Safety backup before data path switching';
@@ -3814,7 +3925,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortOrderRequired => 'Please enter sort order value';
 
   @override
-  String get sourceBackupFileNotFound => '源备份文件不存在';
+  String get sourceBackupFileNotFound => 'Source backup file not found';
 
   @override
   String sourceFileNotFound(Object path) {
@@ -3988,6 +4099,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textureOpacity => 'Texture Opacity';
 
   @override
+  String get texturePreview => 'Texture Preview';
+
+  @override
+  String get textureSize => 'Texture Size';
+
+  @override
   String get themeMode => 'Theme Mode';
 
   @override
@@ -4063,6 +4180,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolModeSelectTooltip => 'Box Selection Tool (Ctrl+B)';
+
+  @override
+  String get topCenter => 'Top Center';
+
+  @override
+  String get topLeft => 'Top Left';
+
+  @override
+  String get topRight => 'Top Right';
 
   @override
   String get total => 'Total';
@@ -4361,97 +4487,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP Archive';
-
-  @override
-  String get backgroundTexture => 'Background Texture';
-
-  @override
-  String get texturePreview => 'Texture Preview';
-
-  @override
-  String get textureSize => 'Texture Size';
-
-  @override
-  String get restoreDefaultSize => 'Restore Default Size';
-
-  @override
-  String get alignment => 'Alignment';
-
-  @override
-  String get imageAlignment => 'Image Alignment';
-
-  @override
-  String get imageSizeInfo => 'Image Size';
-
-  @override
-  String get imageNameInfo => 'Image Name';
-
-  @override
-  String get rotationFineControl => 'Fine Rotation Control';
-
-  @override
-  String get rotateClockwise => 'Rotate Clockwise';
-
-  @override
-  String get rotateCounterclockwise => 'Rotate Counterclockwise';
-
-  @override
-  String get degrees => 'Degrees';
-
-  @override
-  String get fineRotation => 'Fine Rotation';
-
-  @override
-  String get topLeft => 'Top Left';
-
-  @override
-  String get topCenter => 'Top Center';
-
-  @override
-  String get topRight => 'Top Right';
-
-  @override
-  String get centerLeft => 'Center Left';
-
-  @override
-  String get centerRight => 'Center Right';
-
-  @override
-  String get bottomLeft => 'Bottom Left';
-
-  @override
-  String get bottomCenter => 'Bottom Center';
-
-  @override
-  String get bottomRight => 'Bottom Right';
-
-  @override
-  String get alignmentCenter => 'Center';
-
-  @override
-  String get cropAdjustmentHint => 'Drag the selection box and control points in the preview above to adjust the crop area';
-
-  @override
-  String get binarizationProcessing => 'Binarization Processing';
-
-  @override
-  String get binarizationToggle => 'Binarization Toggle';
-
-  @override
-  String get binarizationParameters => 'Binarization Parameters';
-
-  @override
-  String get enableBinarization => 'Enable Binarization';
-
-  @override
-  String get binaryThreshold => 'Binary Threshold';
-
-  @override
-  String get noiseReductionToggle => 'Noise Reduction Toggle';
-
-  @override
-  String get noiseReductionLevel => 'Noise Reduction Level';
-
-  @override
-  String get crossPagePasteSuccess => 'Cross-page paste successful';
 }

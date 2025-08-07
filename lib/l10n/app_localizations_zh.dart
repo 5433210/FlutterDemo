@@ -113,7 +113,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alignVerticalCenter => '垂直居中';
 
   @override
+  String get alignment => '对齐方式';
+
+  @override
   String get alignmentAssist => '对齐辅助';
+
+  @override
+  String get alignmentCenter => '中心';
 
   @override
   String get alignmentGrid => '网格贴附模式 - 点击切换到参考线对齐';
@@ -256,6 +262,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backgroundColor => '背景颜色';
+
+  @override
+  String get backgroundTexture => '背景纹理';
 
   @override
   String get backupBeforeSwitchRecommendation => '为了确保数据安全，建议在切换数据路径前先创建备份：';
@@ -553,6 +562,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beforeDate => '某个日期之前';
 
   @override
+  String get binarizationParameters => '二值化参数';
+
+  @override
+  String get binarizationProcessing => '二值化处理';
+
+  @override
+  String get binarizationToggle => '二值化开关';
+
+  @override
+  String get binaryThreshold => '二值化阈值';
+
+  @override
   String get border => '边框';
 
   @override
@@ -560,6 +581,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get borderWidth => '边框宽度';
+
+  @override
+  String get bottomCenter => '底部居中';
+
+  @override
+  String get bottomLeft => '左下角';
+
+  @override
+  String get bottomRight => '右下角';
 
   @override
   String get boxRegion => '请在预览区域框选字符';
@@ -671,6 +701,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get categoryNameCannotBeEmpty => '分类名称不能为空';
+
+  @override
+  String get centerLeft => '左侧居中';
+
+  @override
+  String get centerRight => '右侧居中';
 
   @override
   String get centimeter => '厘米';
@@ -1137,6 +1173,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get criticalError => '严重错误';
 
   @override
+  String get cropAdjustmentHint => '在上方预览图中拖动选框和控制点来调整裁剪区域';
+
+  @override
   String get cropBottom => '底部裁剪';
 
   @override
@@ -1155,6 +1194,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '(裁剪：左${left}px，上${top}px，右${right}px，下${bottom}px)';
   }
+
+  @override
+  String get crossPagePasteSuccess => '跨页面粘贴成功';
 
   @override
   String get currentBackupPathNotSet => '当前备份路径未设置';
@@ -1335,6 +1377,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get defaultPathName => '默认路径';
+
+  @override
+  String get degrees => '度';
 
   @override
   String get delete => '删除 (Ctrl+D)';
@@ -1662,6 +1707,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get emptyStateNoWorks => '没有作品，点击添加按钮导入作品';
 
   @override
+  String get enableBinarization => '启用二值化';
+
+  @override
   String get enabled => '已启用';
 
   @override
@@ -1943,6 +1991,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterClear => '清除';
 
   @override
+  String get fineRotation => '精细旋转';
+
+  @override
   String get firstPage => '第一页';
 
   @override
@@ -1970,13 +2021,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flipHorizontal => '水平翻转';
 
   @override
-  String get flipVertical => '垂直翻转';
-
-  @override
   String get flipOptions => '翻转选项';
 
   @override
-  String get imagePropertyPanelFlipInfo => '翻转效果在画布渲染阶段处理，即时生效，无需重新处理图像数据。翻转是纯视觉变换，独立于图像处理管线。';
+  String get flipVertical => '垂直翻转';
 
   @override
   String get flutterVersion => 'Flutter版本';
@@ -2164,6 +2212,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get image => '图片';
 
   @override
+  String get imageAlignment => '图像对齐';
+
+  @override
   String get imageCount => '图像数量';
 
   @override
@@ -2201,6 +2252,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imageLoadFailed => '图片加载失败';
 
   @override
+  String get imageNameInfo => '图像名称';
+
+  @override
   String imageProcessingPathError(Object error) {
     return '处理路径错误：$error';
   }
@@ -2210,6 +2264,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelAutoImportNotice => '所选图像将自动导入到您的图库中以便更好地管理';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '翻转效果在画布渲染阶段处理，即时生效，无需重新处理图像数据。翻转是纯视觉变换，独立于图像处理管线。';
 
   @override
   String get imagePropertyPanelGeometryWarning => '这些属性调整整个元素框，而不是图像内容本身';
@@ -2228,6 +2285,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imageSelection => '图片选择';
+
+  @override
+  String get imageSizeInfo => '图像尺寸';
 
   @override
   String get imageTransform => '图像变换';
@@ -2259,6 +2319,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String importBackupFailedMessage(Object error) {
     return '导入备份失败: $error';
   }
+
+  @override
+  String get importBackupProgressDialog => '正在将备份导入到当前路径...';
+
+  @override
+  String get importBackupSuccessMessage => '备份已成功导入到当前路径';
 
   @override
   String get importConfig => '导入配置';
@@ -2319,10 +2385,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importToCurrentPathButton => '导入到当前路径';
 
   @override
+  String get importToCurrentPathConfirm => '导入到当前路径';
+
+  @override
   String get importToCurrentPathDesc => '这将复制备份文件到当前路径，原文件保持不变。';
 
   @override
   String get importToCurrentPathDescription => '导入后，此备份将出现在当前路径的备份列表中';
+
+  @override
+  String get importToCurrentPathDialogContent => '这将把备份导入到当前备份路径。您确定要继续吗？';
 
   @override
   String get importToCurrentPathFailed => '导入备份到当前路径失败';
@@ -2779,10 +2851,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationClearHistoryFailed => '清空导航历史记录失败';
 
   @override
+  String get navigationClearHistorySuccess => '导航历史记录清空成功';
+
+  @override
   String get navigationFailedBack => '返回导航失败';
 
   @override
+  String get navigationFailedInvalidHistoryItem => '导航失败：无效的历史记录项';
+
+  @override
+  String get navigationFailedNoHistory => '无法返回：没有可用的历史记录';
+
+  @override
+  String get navigationFailedNoValidSection => '导航失败：没有可用的有效功能区';
+
+  @override
   String get navigationFailedSection => '导航切换失败';
+
+  @override
+  String get navigationFailedToBack => '导航失败：无法返回到上一个功能区';
+
+  @override
+  String get navigationFailedToGoBack => '导航失败：无法返回';
+
+  @override
+  String get navigationFailedToNewSection => '导航失败：无法导航到新功能区';
 
   @override
   String get navigationFailedToSpecificItem => '导航到特定历史记录项失败';
@@ -2989,6 +3082,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noiseReduction => '降噪';
+
+  @override
+  String get noiseReductionLevel => '降噪强度';
+
+  @override
+  String get noiseReductionToggle => '降噪开关';
 
   @override
   String get none => '无';
@@ -3483,6 +3582,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get restoreConfirmTitle => '恢复确认';
 
   @override
+  String get restoreDefaultSize => '恢复默认尺寸';
+
+  @override
   String get restoreFailure => '恢复失败';
 
   @override
@@ -3501,6 +3603,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get retryAction => '重试';
 
   @override
+  String get rotateClockwise => '顺时针旋转';
+
+  @override
+  String get rotateCounterclockwise => '逆时针旋转';
+
+  @override
   String get rotateLeft => '向左旋转';
 
   @override
@@ -3508,6 +3616,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rotation => '旋转';
+
+  @override
+  String get rotationFineControl => '角度微调';
 
   @override
   String get safetyBackupBeforePathSwitch => '数据路径切换前的安全备份';
@@ -3988,6 +4099,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textureOpacity => '纹理不透明度';
 
   @override
+  String get texturePreview => '纹理预览';
+
+  @override
+  String get textureSize => '纹理尺寸';
+
+  @override
   String get themeMode => '主题模式';
 
   @override
@@ -4063,6 +4180,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toolModeSelectTooltip => '框选工具 (Ctrl+B)';
+
+  @override
+  String get topCenter => '顶部居中';
+
+  @override
+  String get topLeft => '左上角';
+
+  @override
+  String get topRight => '右上角';
 
   @override
   String get total => '总计';
@@ -4361,99 +4487,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 压缩包';
-
-  @override
-  String get backgroundTexture => '背景纹理';
-
-  @override
-  String get texturePreview => '纹理预览';
-
-  @override
-  String get textureSize => '纹理尺寸';
-
-  @override
-  String get restoreDefaultSize => '恢复默认尺寸';
-
-  @override
-  String get alignment => '对齐方式';
-
-  @override
-  String get imageAlignment => '图像对齐';
-
-  @override
-  String get imageSizeInfo => '图像尺寸';
-
-  @override
-  String get imageNameInfo => '图像名称';
-
-  @override
-  String get rotationFineControl => '角度微调';
-
-  @override
-  String get rotateClockwise => '顺时针旋转';
-
-  @override
-  String get rotateCounterclockwise => '逆时针旋转';
-
-  @override
-  String get degrees => '度';
-
-  @override
-  String get fineRotation => '精细旋转';
-
-  @override
-  String get topLeft => '左上角';
-
-  @override
-  String get topCenter => '顶部居中';
-
-  @override
-  String get topRight => '右上角';
-
-  @override
-  String get centerLeft => '左侧居中';
-
-  @override
-  String get centerRight => '右侧居中';
-
-  @override
-  String get bottomLeft => '左下角';
-
-  @override
-  String get bottomCenter => '底部居中';
-
-  @override
-  String get bottomRight => '右下角';
-
-  @override
-  String get alignmentCenter => '中心';
-
-  @override
-  String get cropAdjustmentHint => '在上方预览图中拖动选框和控制点来调整裁剪区域';
-
-  @override
-  String get binarizationProcessing => '二值化处理';
-
-  @override
-  String get binarizationToggle => '二值化开关';
-
-  @override
-  String get binarizationParameters => '二值化参数';
-
-  @override
-  String get enableBinarization => '启用二值化';
-
-  @override
-  String get binaryThreshold => '二值化阈值';
-
-  @override
-  String get noiseReductionToggle => '降噪开关';
-
-  @override
-  String get noiseReductionLevel => '降噪强度';
-
-  @override
-  String get crossPagePasteSuccess => '跨页面粘贴成功';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4565,7 +4598,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get alignVerticalCenter => '垂直置中';
 
   @override
+  String get alignment => '對齊方式';
+
+  @override
   String get alignmentAssist => '對齊輔助';
+
+  @override
+  String get alignmentCenter => '中心';
 
   @override
   String get alignmentGrid => '網格貼齊模式 - 點擊切換至參考線對齊';
@@ -4708,6 +4747,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backgroundColor => '背景顏色';
+
+  @override
+  String get backgroundTexture => '背景紋理';
 
   @override
   String get backupBeforeSwitchRecommendation => '為確保資料安全，建議在切換資料路徑前先建立備份：';
@@ -5005,6 +5047,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get beforeDate => '在某個日期之前';
 
   @override
+  String get binarizationParameters => '二值化參數';
+
+  @override
+  String get binarizationProcessing => '二值化處理';
+
+  @override
+  String get binarizationToggle => '二值化開關';
+
+  @override
+  String get binaryThreshold => '二值化閾值';
+
+  @override
   String get border => '邊框';
 
   @override
@@ -5012,6 +5066,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get borderWidth => '邊框寬度';
+
+  @override
+  String get bottomCenter => '底部置中';
+
+  @override
+  String get bottomLeft => '左下角';
+
+  @override
+  String get bottomRight => '右下角';
 
   @override
   String get boxRegion => '請在預覽區域框選字元';
@@ -5123,6 +5186,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get categoryNameCannotBeEmpty => '分類名稱不能為空';
+
+  @override
+  String get centerLeft => '左側置中';
+
+  @override
+  String get centerRight => '右側置中';
 
   @override
   String get centimeter => '公分';
@@ -5589,6 +5658,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get criticalError => '嚴重錯誤';
 
   @override
+  String get cropAdjustmentHint => '在上方預覽圖中拖拉選取框和控制點來調整裁剪區域';
+
+  @override
   String get cropBottom => '底部裁剪';
 
   @override
@@ -5607,6 +5679,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String croppingApplied(Object bottom, Object left, Object right, Object top) {
     return '（裁剪：左 ${left}px，上 ${top}px，右 ${right}px，下 ${bottom}px）';
   }
+
+  @override
+  String get crossPagePasteSuccess => '跨頁面貼上成功';
 
   @override
   String get currentBackupPathNotSet => '目前備份路徑未設定';
@@ -5787,6 +5862,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get defaultPathName => '預設路徑';
+
+  @override
+  String get degrees => '度';
 
   @override
   String get delete => '刪除 (Ctrl+D)';
@@ -6114,6 +6192,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get emptyStateNoWorks => '沒有作品，點擊新增按鈕匯入作品';
 
   @override
+  String get enableBinarization => '啟用二值化';
+
+  @override
   String get enabled => '已啟用';
 
   @override
@@ -6395,6 +6476,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get filterClear => '清除';
 
   @override
+  String get fineRotation => '精細旋轉';
+
+  @override
   String get firstPage => '第一頁';
 
   @override
@@ -6422,13 +6506,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get flipHorizontal => '水平翻轉';
 
   @override
-  String get flipVertical => '垂直翻轉';
-
-  @override
   String get flipOptions => '翻轉選項';
 
   @override
-  String get imagePropertyPanelFlipInfo => '翻轉效果在畫布繪製階段處理，即時生效，無需重新處理影像資料。翻轉是純視覺變換，獨立於影像處理管線。';
+  String get flipVertical => '垂直翻轉';
 
   @override
   String get flutterVersion => 'Flutter 版本';
@@ -6616,6 +6697,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get image => '圖片';
 
   @override
+  String get imageAlignment => '圖像對齊';
+
+  @override
   String get imageCount => '影像數量';
 
   @override
@@ -6653,6 +6737,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get imageLoadFailed => '圖片載入失敗';
 
   @override
+  String get imageNameInfo => '圖像名稱';
+
+  @override
   String imageProcessingPathError(Object error) {
     return '處理路徑錯誤：$error';
   }
@@ -6662,6 +6749,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagePropertyPanelAutoImportNotice => '所選影像將自動匯入至您的圖庫以便更好地管理';
+
+  @override
+  String get imagePropertyPanelFlipInfo => '翻轉效果在畫布繪製階段處理，即時生效，無需重新處理影像資料。翻轉是純視覺變換，獨立於影像處理管線。';
 
   @override
   String get imagePropertyPanelGeometryWarning => '這些屬性會調整整個元素框，而不是影像內容本身';
@@ -6680,6 +6770,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imageSelection => '圖片選擇';
+
+  @override
+  String get imageSizeInfo => '圖像尺寸';
 
   @override
   String get imageTransform => '影像變形';
@@ -6711,6 +6804,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String importBackupFailedMessage(Object error) {
     return '匯入備份失敗：$error';
   }
+
+  @override
+  String get importBackupProgressDialog => '正在將備份匯入到目前路徑...';
+
+  @override
+  String get importBackupSuccessMessage => '備份已成功匯入到目前路徑';
 
   @override
   String get importConfig => '匯入設定';
@@ -6771,10 +6870,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get importToCurrentPathButton => '匯入至目前路徑';
 
   @override
+  String get importToCurrentPathConfirm => '匯入到目前路徑';
+
+  @override
   String get importToCurrentPathDesc => '這會將備份檔案複製到目前路徑，原始檔案保持不變。';
 
   @override
   String get importToCurrentPathDescription => '匯入後，此備份將出現在目前路徑的備份清單中';
+
+  @override
+  String get importToCurrentPathDialogContent => '這將把備份匯入到目前備份路徑。您確定要繼續嗎？';
 
   @override
   String get importToCurrentPathFailed => '匯入備份至目前路徑失敗';
@@ -7231,10 +7336,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get navigationClearHistoryFailed => '清除導覽歷史記錄失敗';
 
   @override
+  String get navigationClearHistorySuccess => '導航歷史記錄清空成功';
+
+  @override
   String get navigationFailedBack => '返回導覽失敗';
 
   @override
+  String get navigationFailedInvalidHistoryItem => '導航失敗：無效的歷史記錄項';
+
+  @override
+  String get navigationFailedNoHistory => '無法返回：沒有可用的歷史記錄';
+
+  @override
+  String get navigationFailedNoValidSection => '導航失敗：沒有可用的有效功能區';
+
+  @override
   String get navigationFailedSection => '導覽切換失敗';
+
+  @override
+  String get navigationFailedToBack => '導航失敗：無法返回到上一個功能區';
+
+  @override
+  String get navigationFailedToGoBack => '導航失敗：無法返回';
+
+  @override
+  String get navigationFailedToNewSection => '導航失敗：無法導航到新功能區';
 
   @override
   String get navigationFailedToSpecificItem => '導覽至特定歷史記錄項目失敗';
@@ -7441,6 +7567,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noiseReduction => '降噪';
+
+  @override
+  String get noiseReductionLevel => '降噪強度';
+
+  @override
+  String get noiseReductionToggle => '降噪開關';
 
   @override
   String get none => '無';
@@ -7935,6 +8067,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get restoreConfirmTitle => '確認還原';
 
   @override
+  String get restoreDefaultSize => '恢復預設尺寸';
+
+  @override
   String get restoreFailure => '還原失敗';
 
   @override
@@ -7953,6 +8088,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get retryAction => '重試';
 
   @override
+  String get rotateClockwise => '順時針旋轉';
+
+  @override
+  String get rotateCounterclockwise => '逆時針旋轉';
+
+  @override
   String get rotateLeft => '向左旋轉';
 
   @override
@@ -7960,6 +8101,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get rotation => '旋轉';
+
+  @override
+  String get rotationFineControl => '角度微調';
 
   @override
   String get safetyBackupBeforePathSwitch => '資料路徑切換前的安全備份';
@@ -8440,6 +8584,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get textureOpacity => '紋理不透明度';
 
   @override
+  String get texturePreview => '紋理預覽';
+
+  @override
+  String get textureSize => '紋理尺寸';
+
+  @override
   String get themeMode => '主題模式';
 
   @override
@@ -8515,6 +8665,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get toolModeSelectTooltip => '框選工具 (Ctrl+B)';
+
+  @override
+  String get topCenter => '頂部置中';
+
+  @override
+  String get topLeft => '左上角';
+
+  @override
+  String get topRight => '右上角';
 
   @override
   String get total => '總計';
@@ -8813,94 +8972,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get zipFile => 'ZIP 壓縮檔';
-
-  @override
-  String get backgroundTexture => '背景紋理';
-
-  @override
-  String get texturePreview => '紋理預覽';
-
-  @override
-  String get textureSize => '紋理尺寸';
-
-  @override
-  String get restoreDefaultSize => '恢復預設尺寸';
-
-  @override
-  String get alignment => '對齊方式';
-
-  @override
-  String get imageAlignment => '圖像對齊';
-
-  @override
-  String get imageSizeInfo => '圖像尺寸';
-
-  @override
-  String get imageNameInfo => '圖像名稱';
-
-  @override
-  String get rotationFineControl => '角度微調';
-
-  @override
-  String get rotateClockwise => '順時針旋轉';
-
-  @override
-  String get rotateCounterclockwise => '逆時針旋轉';
-
-  @override
-  String get degrees => '度';
-
-  @override
-  String get fineRotation => '精細旋轉';
-
-  @override
-  String get topLeft => '左上角';
-
-  @override
-  String get topCenter => '頂部置中';
-
-  @override
-  String get topRight => '右上角';
-
-  @override
-  String get centerLeft => '左側置中';
-
-  @override
-  String get centerRight => '右側置中';
-
-  @override
-  String get bottomLeft => '左下角';
-
-  @override
-  String get bottomCenter => '底部置中';
-
-  @override
-  String get bottomRight => '右下角';
-
-  @override
-  String get alignmentCenter => '中心';
-
-  @override
-  String get cropAdjustmentHint => '在上方預覽圖中拖拉選取框和控制點來調整裁剪區域';
-
-  @override
-  String get binarizationProcessing => '二值化處理';
-
-  @override
-  String get binarizationToggle => '二值化開關';
-
-  @override
-  String get binarizationParameters => '二值化參數';
-
-  @override
-  String get enableBinarization => '啟用二值化';
-
-  @override
-  String get binaryThreshold => '二值化閾值';
-
-  @override
-  String get noiseReductionToggle => '降噪開關';
-
-  @override
-  String get noiseReductionLevel => '降噪強度';
 }

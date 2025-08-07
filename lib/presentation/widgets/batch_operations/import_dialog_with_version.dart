@@ -7,6 +7,7 @@ import '../../../application/services/unified_import_export_upgrade_service.dart
 import '../../../domain/models/import_export/import_data_model.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../version_config.dart';
 import '../../providers/batch_selection_provider.dart';
 
 /// 带版本兼容性检查的导入对话框
@@ -354,7 +355,7 @@ class _ImportDialogWithVersionState
   Future<void> _checkVersionCompatibility(String filePath) async {
     try {
       await _upgradeService.initialize();
-      const currentAppVersion = '1.3.0';
+      final currentAppVersion = _getCurrentAppVersion();
 
       final compatibility = await _upgradeService.checkImportCompatibility(
           filePath, currentAppVersion);
@@ -424,5 +425,17 @@ class _ImportDialogWithVersionState
 
     Navigator.of(context).pop();
     widget.onImport(options, _filePath);
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，返回默认版本
+      AppLogger.warning('VersionConfig未初始化，使用默认版本', 
+          tag: 'ImportDialogWithVersion', data: {'error': e.toString()});
+      return '1.3.0'; // 保持与原始硬编码版本一致
+    }
   }
 }

@@ -71,6 +71,18 @@
       "previous_build": "20250717001",
       "timestamp": "2025-07-17T22:14:19.939306",
       "strategy": "auto"
+    },
+    {
+      "build_number": "20250807001",
+      "previous_build": "20250620001",
+      "timestamp": "2025-08-07T09:00:25.500070",
+      "strategy": "auto"
+    },
+    {
+      "build_number": "20250807002",
+      "previous_build": "20250807001",
+      "timestamp": "2025-08-07T09:00:26.768977",
+      "strategy": "auto"
     }
   ]
 }

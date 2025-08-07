@@ -19,6 +19,7 @@ import '../../domain/services/import_service.dart';
 import '../../infrastructure/integrity/file_integrity_service.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../utils/path_privacy_helper.dart';
+import '../../version_config.dart';
 import 'import_export_version_mapping_service.dart';
 import 'unified_import_export_upgrade_service.dart';
 
@@ -96,7 +97,7 @@ class ImportServiceImpl implements ImportService {
 
         // 版本兼容性检查
         await _upgradeService.initialize();
-        const currentAppVersion = '1.3.0'; // 从配置或应用信息获取
+        final currentAppVersion = _getCurrentAppVersion(); // 从配置或应用信息获取
         final compatibility = await _upgradeService.checkImportCompatibility(
             filePath, currentAppVersion);
 
@@ -175,7 +176,7 @@ class ImportServiceImpl implements ImportService {
 
       // 版本升级处理
       await _upgradeService.initialize();
-      const currentAppVersion = '1.3.0'; // 从配置或应用信息获取
+      final currentAppVersion = _getCurrentAppVersion(); // 从配置或应用信息获取
       final upgradeResult = await _upgradeService.performImportUpgrade(
           filePath, currentAppVersion);
 
@@ -445,7 +446,7 @@ class ImportServiceImpl implements ImportService {
         progressCallback?.call(0.08, '检查版本兼容性...', {'step': 'version_check'});
 
         await _upgradeService.initialize();
-        const currentAppVersion = '1.3.0'; // 从配置获取
+        final currentAppVersion = _getCurrentAppVersion(); // 从配置获取
         upgradeResult = await _upgradeService.performImportUpgrade(
             sourceFilePath, currentAppVersion);
 
@@ -2997,5 +2998,17 @@ class ImportServiceImpl implements ImportService {
       }
     }
     throw Exception('找不到对应的作品');
+  }
+
+  /// 获取当前应用版本
+  String _getCurrentAppVersion() {
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      // 如果VersionConfig未初始化，返回默认版本
+      AppLogger.warning('VersionConfig未初始化，使用默认版本', 
+          tag: 'ImportService', data: {'error': e.toString()});
+      return '1.3.0'; // 保持与原始硬编码版本一致
+    }
   }
 }

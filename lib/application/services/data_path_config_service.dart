@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../domain/models/config/data_path_config.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../../version_config.dart';
 import 'unified_path_config_service.dart';
 
 /// 数据路径配置服务
@@ -231,8 +232,14 @@ class DataPathConfigService {
       AppLogger.warning('无法读取应用版本信息', error: e, tag: 'DataPathConfig');
     }
 
-    // 降级返回默认版本
-    return '1.0.0';
+    // 降级抛出异常而不是返回默认版本
+    try {
+      return VersionConfig.versionInfo.shortVersion;
+    } catch (e) {
+      AppLogger.error('VersionConfig未初始化', 
+          tag: 'DataPathConfig', data: {'error': e.toString()});
+      throw StateError('无法获取应用版本，请确保 VersionConfig 已正确初始化: $e');
+    }
   }
 
   /// 检查数据路径的版本兼容性
