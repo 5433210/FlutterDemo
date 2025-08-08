@@ -1250,6 +1250,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get currentTool => '現在のツール';
 
   @override
+  String get pageInfo => 'ページ';
+
+  @override
   String get custom => 'カスタム';
 
   @override

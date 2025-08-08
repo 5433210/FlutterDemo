@@ -1250,6 +1250,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get currentTool => '현재 도구';
 
   @override
+  String get pageInfo => '페이지';
+
+  @override
   String get custom => '사용자 정의';
 
   @override

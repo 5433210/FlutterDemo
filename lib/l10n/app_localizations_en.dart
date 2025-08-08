@@ -1250,6 +1250,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentTool => 'Current Tool';
 
   @override
+  String get pageInfo => 'Page';
+
+  @override
   String get custom => 'Custom';
 
   @override

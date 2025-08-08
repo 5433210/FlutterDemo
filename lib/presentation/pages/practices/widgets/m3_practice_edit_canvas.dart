@@ -885,13 +885,46 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               color: colorScheme.surface
                   .withAlpha(217), // 217 is approximately 85% of 255
-              child: Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 4.0,
-                runSpacing: 4.0,
+              child: Row(
                 children: [
-                  // Debug indicator showing current tool
+                  // Page information on the left side
                   Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.library_books,
+                          size: 14,
+                          color: colorScheme.onSecondaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${AppLocalizations.of(context).pageInfo} ${widget.controller.state.currentPageIndex + 1} / ${widget.controller.state.pages.length}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Spacer to push right-side elements to the end
+                  const Spacer(),
+                  // Existing elements wrapped in a Wrap widget for overflow handling
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 4.0,
+                    runSpacing: 4.0,
+                    children: [
+                      // Debug indicator showing current tool
+                      Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
@@ -1001,6 +1034,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                         ),
                       ],
                     ),
+                  ),
+                    ],
                   ),
                 ],
               ),

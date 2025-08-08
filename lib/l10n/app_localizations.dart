@@ -2422,6 +2422,12 @@ abstract class AppLocalizations {
   /// **'Current Tool'**
   String get currentTool;
 
+  /// No description provided for @pageInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get pageInfo;
+
   /// No description provided for @custom.
   ///
   /// In en, this message translates to:

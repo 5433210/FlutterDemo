@@ -1250,6 +1250,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get currentTool => '当前工具';
 
   @override
+  String get pageInfo => '页面';
+
+  @override
   String get custom => '自定义';
 
   @override
@@ -5733,6 +5736,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get currentTool => '目前工具';
+
+  @override
+  String get pageInfo => '頁面';
 
   @override
   String get custom => '自訂';
