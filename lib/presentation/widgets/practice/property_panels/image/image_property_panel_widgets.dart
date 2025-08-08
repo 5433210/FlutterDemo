@@ -9,6 +9,7 @@ import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
 import '../../../image/cached_image.dart';
+import '../m3_panel_styles.dart';
 import 'interactive_crop_overlay.dart';
 
 /// 几何属性面板
@@ -36,124 +37,101 @@ class ImagePropertyGeometryPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-          title: Text(l10n.geometryProperties),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                // Information alert
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer
-                        .withAlpha((0.3 * 255).toInt()),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.imagePropertyPanelGeometryWarning,
-                          style: TextStyle(
-                              fontSize: 14, color: colorScheme.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // X and Y position
-                Row(
-                  children: [
-                    Expanded(
-                      child: EditableNumberField(
-                        label: 'X',
-                        value: x,
-                        suffix: 'px',
-                        min: 0,
-                        max: 10000,
-                        onChanged: (value) => onPropertyUpdate('x', value),
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      child: EditableNumberField(
-                        label: 'Y',
-                        value: y,
-                        suffix: 'px',
-                        min: 0,
-                        max: 10000,
-                        onChanged: (value) => onPropertyUpdate('y', value),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
-
-                // Width and height
-                Row(
-                  children: [
-                    Expanded(
-                      child: EditableNumberField(
-                        label: l10n.width,
-                        value: width,
-                        suffix: 'px',
-                        min: 10,
-                        max: 10000,
-                        onChanged: (value) => onPropertyUpdate('width', value),
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      child: EditableNumberField(
-                        label: l10n.height,
-                        value: height,
-                        suffix: 'px',
-                        min: 10,
-                        max: 10000,
-                        onChanged: (value) => onPropertyUpdate('height', value),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
-
-                // Rotation
-                EditableNumberField(
-                  label: l10n.rotation,
-                  value: rotation,
-                  suffix: '°',
-                  min: -360,
-                  max: 360,
-                  decimalPlaces: 1,
-                  onChanged: (value) => onPropertyUpdate('rotation', value),
-                ),
-              ],
-            ),
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_geometry_properties',
+      title: l10n.geometryProperties,
+      defaultExpanded: true,
+      children: [
+        // Information alert
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withAlpha((0.3 * 255).toInt()),
+            borderRadius: BorderRadius.circular(8.0),
           ),
-        ],
-      ),
-      ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.imagePropertyPanelGeometryWarning,
+                  style: TextStyle(fontSize: 14, color: colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // X and Y position
+        Row(
+          children: [
+            Expanded(
+              child: EditableNumberField(
+                label: 'X',
+                value: x,
+                suffix: 'px',
+                min: 0,
+                max: 10000,
+                onChanged: (value) => onPropertyUpdate('x', value),
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: EditableNumberField(
+                label: 'Y',
+                value: y,
+                suffix: 'px',
+                min: 0,
+                max: 10000,
+                onChanged: (value) => onPropertyUpdate('y', value),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8.0),
+
+        // Width and height
+        Row(
+          children: [
+            Expanded(
+              child: EditableNumberField(
+                label: l10n.width,
+                value: width,
+                suffix: 'px',
+                min: 10,
+                max: 10000,
+                onChanged: (value) => onPropertyUpdate('width', value),
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: EditableNumberField(
+                label: l10n.height,
+                value: height,
+                suffix: 'px',
+                min: 10,
+                max: 10000,
+                onChanged: (value) => onPropertyUpdate('height', value),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8.0),
+
+        // Rotation
+        EditableNumberField(
+          label: l10n.rotation,
+          value: rotation,
+          suffix: '°',
+          min: -360,
+          max: 360,
+          decimalPlaces: 1,
+          onChanged: (value) => onPropertyUpdate('rotation', value),
+        ),
+      ],
     );
   }
 }
@@ -179,124 +157,103 @@ class ImagePropertyVisualPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-        title: Text(l10n.visualSettings),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Opacity
-                Text('${l10n.opacity}:',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8.0),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Slider(
-                        value: opacity,
-                        min: 0.0,
-                        max: 1.0,
-                        divisions: 100,
-                        label: '${(opacity * 100).toStringAsFixed(0)}%',
-                        activeColor: colorScheme.primary,
-                        thumbColor: colorScheme.primary,
-                        onChanged: (value) =>
-                            onPropertyUpdate('opacity', value),
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    Expanded(
-                      flex: 2,
-                      child: EditableNumberField(
-                        label: l10n.opacity,
-                        value: opacity * 100, // Convert to percentage
-                        suffix: '%',
-                        min: 0,
-                        max: 100,
-                        decimalPlaces: 0,
-                        onChanged: (value) {
-                          // Convert back to 0-1 range
-                          onPropertyUpdate('opacity', value / 100);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16.0),
-
-                // Background color
-                Text('${l10n.backgroundColor}:',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8.0),
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () async {
-                        final color = await M3ColorPicker.show(
-                          context,
-                          initialColor: backgroundColor(),
-                          enableAlpha: true,
-                        );
-                        if (color != null) {
-                          if (color == Colors.transparent) {
-                            onContentPropertyUpdate(
-                                'backgroundColor', 'transparent');
-                          } else {
-                            // Use toARGB32() for an explicit conversion
-                            final argb = color.toARGB32();
-                            final hexColor =
-                                '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
-                            onContentPropertyUpdate(
-                                'backgroundColor', hexColor);
-                          }
-                        }
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: backgroundColor(),
-                          border: Border.all(color: colorScheme.outline),
-                          borderRadius: BorderRadius.circular(8),
-                          image: backgroundColor() == Colors.transparent
-                              ? const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/transparent_bg.png'),
-                                  repeat: ImageRepeat.repeat,
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      l10n.backgroundColor,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_visual_settings',
+      title: l10n.visualSettings,
+      defaultExpanded: true,
+      children: [
+        // Opacity
+        Text('${l10n.opacity}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8.0),
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Slider(
+                value: opacity,
+                min: 0.0,
+                max: 1.0,
+                divisions: 100,
+                label: '${(opacity * 100).toStringAsFixed(0)}%',
+                activeColor: colorScheme.primary,
+                thumbColor: colorScheme.primary,
+                onChanged: (value) => onPropertyUpdate('opacity', value),
+              ),
             ),
-          ),
-        ],
-      ),
-      ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              flex: 2,
+              child: EditableNumberField(
+                label: l10n.opacity,
+                value: opacity * 100, // Convert to percentage
+                suffix: '%',
+                min: 0,
+                max: 100,
+                decimalPlaces: 0,
+                onChanged: (value) {
+                  // Convert back to 0-1 range
+                  onPropertyUpdate('opacity', value / 100);
+                },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Background color
+        Text('${l10n.backgroundColor}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8.0),
+        Row(
+          children: [
+            InkWell(
+              onTap: () async {
+                final color = await M3ColorPicker.show(
+                  context,
+                  initialColor: backgroundColor(),
+                  enableAlpha: true,
+                );
+                if (color != null) {
+                  if (color == Colors.transparent) {
+                    onContentPropertyUpdate('backgroundColor', 'transparent');
+                  } else {
+                    // Use toARGB32() for an explicit conversion
+                    final argb = color.toARGB32();
+                    final hexColor =
+                        '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
+                    onContentPropertyUpdate('backgroundColor', hexColor);
+                  }
+                }
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: backgroundColor(),
+                  border: Border.all(color: colorScheme.outline),
+                  borderRadius: BorderRadius.circular(8),
+                  image: backgroundColor() == Colors.transparent
+                      ? const DecorationImage(
+                          image: AssetImage('assets/images/transparent_bg.png'),
+                          repeat: ImageRepeat.repeat,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              l10n.backgroundColor,
+              style: TextStyle(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -318,52 +275,32 @@ class ImagePropertySelectionPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-        title: Text(l10n.imageSelection),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FilledButton.tonalIcon(
-                  icon: const Icon(Icons.collections_bookmark),
-                  onPressed: onSelectFromLibrary,
-                  label: Text(l10n.fromGallery),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(height: 8.0),
-                FilledButton.tonalIcon(
-                  icon: const Icon(Icons.photo_library),
-                  onPressed: onSelectFromLocal,
-                  label: Text(l10n.fromLocal),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                  ),
-                ),
-              ],
-            ),
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_selection',
+      title: l10n.imageSelection,
+      defaultExpanded: true,
+      children: [
+        FilledButton.tonalIcon(
+          icon: const Icon(Icons.collections_bookmark),
+          onPressed: onSelectFromLibrary,
+          label: Text(l10n.fromGallery),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: colorScheme.primaryContainer,
+            foregroundColor: colorScheme.onPrimaryContainer,
           ),
-        ],
-      ),
-      ),
+        ),
+        const SizedBox(height: 8.0),
+        FilledButton.tonalIcon(
+          icon: const Icon(Icons.photo_library),
+          onPressed: onSelectFromLocal,
+          label: Text(l10n.fromLocal),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -385,81 +322,61 @@ class ImagePropertyFitModePanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-        title: Text(l10n.fitMode),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 4个独立按钮，支持自动换行和居中对齐
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: [
-                    // Contain 按钮
-                    _buildFitModeButton(
-                      context,
-                      l10n,
-                      colorScheme,
-                      'contain',
-                      l10n.fitContain,
-                      Icons.fit_screen,
-                    ),
-                    
-                    // Cover 按钮
-                    _buildFitModeButton(
-                      context,
-                      l10n,
-                      colorScheme,
-                      'cover',
-                      l10n.fitCover,
-                      Icons.crop,
-                    ),
-                    
-                    // Fill 按钮
-                    _buildFitModeButton(
-                      context,
-                      l10n,
-                      colorScheme,
-                      'fill',
-                      l10n.fitFill,
-                      Icons.aspect_ratio,
-                    ),
-                    
-                    // None 按钮
-                    _buildFitModeButton(
-                      context,
-                      l10n,
-                      colorScheme,
-                      'none',
-                      l10n.original,
-                      Icons.image,
-                    ),
-                  ],
-                ),
-              ],
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_fit_mode',
+      title: l10n.fitMode,
+      defaultExpanded: true,
+      children: [
+        // 4个独立按钮，支持自动换行和居中对齐
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8.0,
+          runSpacing: 8.0,
+          children: [
+            // Contain 按钮
+            _buildFitModeButton(
+              context,
+              l10n,
+              colorScheme,
+              'contain',
+              l10n.fitContain,
+              Icons.fit_screen,
             ),
-          ),
-        ],
-      ),
-      ),
+
+            // Cover 按钮
+            _buildFitModeButton(
+              context,
+              l10n,
+              colorScheme,
+              'cover',
+              l10n.fitCover,
+              Icons.crop,
+            ),
+
+            // Fill 按钮
+            _buildFitModeButton(
+              context,
+              l10n,
+              colorScheme,
+              'fill',
+              l10n.fitFill,
+              Icons.aspect_ratio,
+            ),
+
+            // None 按钮
+            _buildFitModeButton(
+              context,
+              l10n,
+              colorScheme,
+              'none',
+              l10n.original,
+              Icons.image,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -472,7 +389,7 @@ class ImagePropertyFitModePanel extends StatelessWidget {
     IconData icon,
   ) {
     final isSelected = fitMode == modeValue;
-    
+
     return SizedBox(
       height: 48.0,
       child: ElevatedButton.icon(
@@ -483,8 +400,11 @@ class ImagePropertyFitModePanel extends StatelessWidget {
           style: const TextStyle(fontSize: 12),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-          foregroundColor: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+          backgroundColor: isSelected
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
+          foregroundColor:
+              isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
           elevation: isSelected ? 2 : 0,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
@@ -511,7 +431,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
   final Size? imageSize;
   final Size? renderSize;
   final Function(Size, Size) onImageSizeAvailable;
-  final Function(double, double, double, double, {bool isDragging})? onCropChanged;
+  final Function(double, double, double, double, {bool isDragging})?
+      onCropChanged;
 
   const ImagePropertyPreviewPanel({
     super.key,
@@ -537,45 +458,26 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-        title: Text(l10n.preview),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 图片信息显示区域
-                if (imageUrl.isNotEmpty && imageSize != null)
-                  _buildImageInfo(context, l10n, colorScheme),
-                const SizedBox(height: 8.0),
-                
-                _buildImagePreview(context),
-              ],
-            ),
-          ),
-        ],
-      ),
-      ),
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_preview',
+      title: l10n.preview,
+      defaultExpanded: true,
+      children: [
+        // 图片信息显示区域
+        if (imageUrl.isNotEmpty && imageSize != null)
+          _buildImageInfo(context, l10n, colorScheme),
+        const SizedBox(height: 8.0),
+
+        _buildImagePreview(context),
+      ],
     );
   }
 
   /// 构建图片信息显示区域
-  Widget _buildImageInfo(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
-    final sizeText = imageSize != null 
+  Widget _buildImageInfo(
+      BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+    final sizeText = imageSize != null
         ? '${imageSize!.width.toInt()} × ${imageSize!.height.toInt()} px'
         : l10n.unknown;
 
@@ -622,7 +524,8 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline),
         borderRadius: BorderRadius.circular(12.0),
-        color: colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
+        color:
+            colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
       ),
       child: imageUrl.isNotEmpty
           ? LayoutBuilder(
@@ -647,17 +550,19 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                             context: context,
                             imageUrl: imageUrl,
                             fitMode: _getFitMode(fitMode),
-                            onImageSizeAvailable: (detectedImageSize, detectedRenderSize) {
+                            onImageSizeAvailable:
+                                (detectedImageSize, detectedRenderSize) {
                               // Always call when image size is detected
-                              // This ensures that when a new image is loaded, 
+                              // This ensures that when a new image is loaded,
                               // the size information gets updated properly
-                              onImageSizeAvailable(detectedImageSize, detectedRenderSize);
+                              onImageSizeAvailable(
+                                  detectedImageSize, detectedRenderSize);
                             },
                           ),
                         ),
                       ),
                     ),
-                    
+
                     // Simple crop overlay
                     if (currentImageSize != null &&
                         currentRenderSize != null &&
@@ -752,7 +657,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
               onImageLoaded: (Size size) {
                 // Simple image size calculation for contain mode
                 final imageSize = size;
-                
+
                 // Calculate render size based on container and fit mode
                 final renderSize = _calculateRenderSize(
                     imageSize,
@@ -807,7 +712,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 info.image.width.toDouble(),
                 info.image.height.toDouble(),
               );
-              
+
               final renderSize = _calculateRenderSize(
                 imageSize,
                 constraints.biggest,
@@ -819,7 +724,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                             ? 'fill'
                             : 'none',
               );
-              
+
               // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
@@ -927,7 +832,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
         );
         break;
     }
-    
+
     return result;
   }
 
@@ -972,106 +877,83 @@ class ImagePropertyTransformPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_transform',
+      title: l10n.imageTransform,
+      defaultExpanded: true,
+      children: [
+        // Interactive cropping info
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withAlpha((0.3 * 255).toInt()),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.crop_free, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.cropAdjustmentHint,
+                  style: TextStyle(fontSize: 14, color: colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: ExpansionTile(
-        title: Text(l10n.imageTransform),
-        initiallyExpanded: true,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+
+        // Current crop values display
+        Text(l10n.cropping,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8.0),
+        Card(
+          elevation: 0,
+          color: colorScheme.surfaceContainerHighest,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Interactive cropping info
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer
-                        .withAlpha((0.3 * 255).toInt()),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.crop_free,
-                          color: colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.cropAdjustmentHint,
-                          style: TextStyle(
-                              fontSize: 14, color: colorScheme.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Current crop values display
-                Text(l10n.cropping,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8.0),
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      children: [
-                        // 显示裁剪参数
-                        _buildCropDisplay(context),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24.0),
-
-                // Apply and Reset buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.check),
-                        onPressed: onApplyTransform,
-                        label: Text(l10n.applyTransform),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          backgroundColor: colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: onResetTransform,
-                        label: Text(l10n.resetTransform),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          foregroundColor: colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // 显示裁剪参数
+                _buildCropDisplay(context),
               ],
             ),
           ),
-        ],
-      ),
-      ),
+        ),
+
+        const SizedBox(height: 24.0),
+
+        // Apply and Reset buttons
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                icon: const Icon(Icons.check),
+                onPressed: onApplyTransform,
+                label: Text(l10n.applyTransform),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.refresh),
+                onPressed: onResetTransform,
+                label: Text(l10n.resetTransform),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  foregroundColor: colorScheme.error,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1080,7 +962,7 @@ class ImagePropertyTransformPanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1161,105 +1043,96 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-        title: Text(l10n.imageAlignment),
-        initiallyExpanded: false,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_alignment',
+      title: l10n.imageAlignment,
+      defaultExpanded: false,
+      children: [
+        // 紧凑的工具栏风格按钮组 - 3x3网格布局
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(6.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8.0),
+              border:
+                  Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // 紧凑的工具栏风格按钮组 - 3x3网格布局
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(6.0),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // 第一行：上对齐
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildCompactAlignmentButton(context, l10n, 'topLeft', Icons.north_west),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'topCenter', Icons.north),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'topRight', Icons.north_east),
-                          ],
-                        ),
-                        const SizedBox(height: 2.0),
-                        
-                        // 第二行：中对齐
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildCompactAlignmentButton(context, l10n, 'centerLeft', Icons.west),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'center', Icons.center_focus_strong),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'centerRight', Icons.east),
-                          ],
-                        ),
-                        const SizedBox(height: 2.0),
-                        
-                        // 第三行：下对齐
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildCompactAlignmentButton(context, l10n, 'bottomLeft', Icons.south_west),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'bottomCenter', Icons.south),
-                            const SizedBox(width: 2.0),
-                            _buildCompactAlignmentButton(context, l10n, 'bottomRight', Icons.south_east),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                // 第一行：上对齐
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'topLeft', Icons.north_west),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'topCenter', Icons.north),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'topRight', Icons.north_east),
+                  ],
                 ),
-                const SizedBox(height: 8.0),
-                
-                // 当前选择显示
-                Center(
-                  child: Text(
-                    _getAlignmentDisplayName(l10n, alignment),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                const SizedBox(height: 2.0),
+
+                // 第二行：中对齐
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'centerLeft', Icons.west),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'center', Icons.center_focus_strong),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'centerRight', Icons.east),
+                  ],
+                ),
+                const SizedBox(height: 2.0),
+
+                // 第三行：下对齐
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'bottomLeft', Icons.south_west),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'bottomCenter', Icons.south),
+                    const SizedBox(width: 2.0),
+                    _buildCompactAlignmentButton(
+                        context, l10n, 'bottomRight', Icons.south_east),
+                  ],
                 ),
               ],
             ),
           ),
-        ],
-      ),
-      ),
+        ),
+        const SizedBox(height: 8.0),
+
+        // 当前选择显示
+        Center(
+          child: Text(
+            _getAlignmentDisplayName(l10n, alignment),
+            style: TextStyle(
+              fontSize: 11,
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildCompactAlignmentButton(
-    BuildContext context, 
+    BuildContext context,
     AppLocalizations l10n,
-    String alignmentValue, 
+    String alignmentValue,
     IconData icon,
   ) {
     final theme = Theme.of(context);
@@ -1272,10 +1145,12 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? colorScheme.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(6.0),
-        border: isSelected ? null : Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
+        border: isSelected
+            ? null
+            : Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.3),
+                width: 0.5,
+              ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -1289,9 +1164,9 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 14,
-                color: isSelected 
-                  ? colorScheme.onPrimary 
-                  : colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -1302,16 +1177,26 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
 
   String _getAlignmentDisplayName(AppLocalizations l10n, String alignment) {
     switch (alignment) {
-      case 'topLeft': return l10n.topLeft;
-      case 'topCenter': return l10n.topCenter;
-      case 'topRight': return l10n.topRight;
-      case 'centerLeft': return l10n.centerLeft;
-      case 'center': return l10n.alignmentCenter;
-      case 'centerRight': return l10n.centerRight;
-      case 'bottomLeft': return l10n.bottomLeft;
-      case 'bottomCenter': return l10n.bottomCenter;
-      case 'bottomRight': return l10n.bottomRight;
-      default: return l10n.unknown;
+      case 'topLeft':
+        return l10n.topLeft;
+      case 'topCenter':
+        return l10n.topCenter;
+      case 'topRight':
+        return l10n.topRight;
+      case 'centerLeft':
+        return l10n.centerLeft;
+      case 'center':
+        return l10n.alignmentCenter;
+      case 'centerRight':
+        return l10n.centerRight;
+      case 'bottomLeft':
+        return l10n.bottomLeft;
+      case 'bottomCenter':
+        return l10n.bottomCenter;
+      case 'bottomRight':
+        return l10n.bottomRight;
+      default:
+        return l10n.unknown;
     }
   }
 }
@@ -1320,7 +1205,7 @@ class ImagePropertyAlignmentPanel extends StatelessWidget {
 class ImagePropertyBinarizationPanel extends StatelessWidget {
   final bool isBinarizationEnabled;
   final double threshold;
-  final bool isNoiseReductionEnabled; 
+  final bool isNoiseReductionEnabled;
   final double noiseReductionLevel;
   final Function(String, dynamic) onContentPropertyUpdate;
   final Function(bool) onBinarizationToggle;
@@ -1343,183 +1228,203 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-          title: Text(l10n.binarizationProcessing),
-          initiallyExpanded: false,
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_binarization',
+      title: l10n.binarizationProcessing,
+      defaultExpanded: false,
+      children: [
+        // 二值化开关
+        Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 二值化开关
-                  Row(
+            Icon(Icons.tune, size: 16, color: colorScheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.enableBinarization,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Switch(
+              value: isBinarizationEnabled,
+              onChanged: (value) {
+                onBinarizationToggle(value);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+
+        // 二值化参数组（仅在开关打开时启用）
+        AnimatedOpacity(
+          opacity: isBinarizationEnabled ? 1.0 : 0.5,
+          duration: const Duration(milliseconds: 200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 二值化阈值
+              Text(l10n.binaryThreshold,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8.0),
+
+              Card(
+                elevation: 0,
+                color: colorScheme.surfaceContainerHighest,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
                     children: [
-                      Icon(Icons.tune, size: 16, color: colorScheme.onSurfaceVariant),
+                      Icon(Icons.contrast,
+                          size: 16, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          l10n.enableBinarization,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        flex: 3,
+                        child: Slider(
+                          value: threshold.clamp(0.0, 255.0),
+                          min: 0.0,
+                          max: 255.0,
+                          divisions: 255,
+                          label: threshold.toStringAsFixed(0),
+                          activeColor: isBinarizationEnabled
+                              ? colorScheme.primary
+                              : colorScheme.onSurface.withValues(alpha: 0.38),
+                          thumbColor: isBinarizationEnabled
+                              ? colorScheme.primary
+                              : colorScheme.onSurface.withValues(alpha: 0.38),
+                          onChanged: isBinarizationEnabled
+                              ? (value) {
+                                  onContentPropertyUpdate(
+                                      'binaryThreshold', value);
+                                }
+                              : null,
+                          onChangeEnd: isBinarizationEnabled
+                              ? (value) {
+                                  onBinarizationParameterChange(
+                                      'binaryThreshold', value);
+                                }
+                              : null,
                         ),
                       ),
-                      Switch(
-                        value: isBinarizationEnabled,
-                        onChanged: (value) {
-                          onBinarizationToggle(value);
-                        },
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          threshold.toStringAsFixed(0),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isBinarizationEnabled
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onSurface.withValues(alpha: 0.38),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16.0),
+                ),
+              ),
+              const SizedBox(height: 16.0),
 
-                  // 二值化参数组（仅在开关打开时启用）
-                  AnimatedOpacity(
-                    opacity: isBinarizationEnabled ? 1.0 : 0.5,
-                    duration: const Duration(milliseconds: 200),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // 降噪开关
+              Row(
+                children: [
+                  Icon(Icons.blur_on,
+                      size: 16, color: colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.noiseReductionToggle,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Switch(
+                    value: isNoiseReductionEnabled,
+                    onChanged: isBinarizationEnabled
+                        ? (value) {
+                            onContentPropertyUpdate(
+                                'isNoiseReductionEnabled', value);
+                            onBinarizationParameterChange(
+                                'isNoiseReductionEnabled', value);
+                          }
+                        : null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+
+              // 降噪强度（仅在降噪开关打开时启用）
+              AnimatedOpacity(
+                opacity: (isBinarizationEnabled && isNoiseReductionEnabled)
+                    ? 1.0
+                    : 0.5,
+                duration: const Duration(milliseconds: 200),
+                child: Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
                       children: [
-                        // 二值化阈值
-                        Text(l10n.binaryThreshold,
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8.0),
-                        
-                        Card(
-                          elevation: 0,
-                          color: colorScheme.surfaceContainerHighest,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              children: [
-                                Icon(Icons.contrast, size: 16, color: colorScheme.onSurfaceVariant),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 3,
-                                  child: Slider(
-                                    value: threshold.clamp(0.0, 255.0),
-                                    min: 0.0,
-                                    max: 255.0,
-                                    divisions: 255,
-                                    label: threshold.toStringAsFixed(0),
-                                    activeColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
-                                    thumbColor: isBinarizationEnabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
-                                    onChanged: isBinarizationEnabled ? (value) {
-                                      onContentPropertyUpdate('binaryThreshold', value);
-                                    } : null,
-                                    onChangeEnd: isBinarizationEnabled ? (value) {
-                                      onBinarizationParameterChange('binaryThreshold', value);
-                                    } : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                SizedBox(
-                                  width: 40,
-                                  child: Text(
-                                    threshold.toStringAsFixed(0),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isBinarizationEnabled ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withValues(alpha: 0.38),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        Icon(Icons.tune,
+                            size: 16, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: Slider(
+                            value: noiseReductionLevel.clamp(0.0, 10.0),
+                            min: 0.0,
+                            max: 10.0,
+                            divisions: 100,
+                            label: noiseReductionLevel.toStringAsFixed(1),
+                            activeColor: (isBinarizationEnabled &&
+                                    isNoiseReductionEnabled)
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withValues(alpha: 0.38),
+                            thumbColor: (isBinarizationEnabled &&
+                                    isNoiseReductionEnabled)
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withValues(alpha: 0.38),
+                            onChanged: (isBinarizationEnabled &&
+                                    isNoiseReductionEnabled)
+                                ? (value) {
+                                    onContentPropertyUpdate(
+                                        'noiseReductionLevel', value);
+                                  }
+                                : null,
+                            onChangeEnd: (isBinarizationEnabled &&
+                                    isNoiseReductionEnabled)
+                                ? (value) {
+                                    onBinarizationParameterChange(
+                                        'noiseReductionLevel', value);
+                                  }
+                                : null,
                           ),
                         ),
-                        const SizedBox(height: 16.0),
-
-                        // 降噪开关
-                        Row(
-                          children: [
-                            Icon(Icons.blur_on, size: 16, color: colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                l10n.noiseReductionToggle,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Switch(
-                              value: isNoiseReductionEnabled,
-                              onChanged: isBinarizationEnabled ? (value) {
-                                onContentPropertyUpdate('isNoiseReductionEnabled', value);
-                                onBinarizationParameterChange('isNoiseReductionEnabled', value);
-                              } : null,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8.0),
-
-                        // 降噪强度（仅在降噪开关打开时启用）
-                        AnimatedOpacity(
-                          opacity: (isBinarizationEnabled && isNoiseReductionEnabled) ? 1.0 : 0.5,
-                          duration: const Duration(milliseconds: 200),
-                          child: Card(
-                            elevation: 0,
-                            color: colorScheme.surfaceContainerHighest,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.tune, size: 16, color: colorScheme.onSurfaceVariant),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 3,
-                                    child: Slider(
-                                      value: noiseReductionLevel.clamp(0.0, 10.0),
-                                      min: 0.0,
-                                      max: 10.0,
-                                      divisions: 100,
-                                      label: noiseReductionLevel.toStringAsFixed(1),
-                                      activeColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
-                                      thumbColor: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.38),
-                                      onChanged: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
-                                        onContentPropertyUpdate('noiseReductionLevel', value);
-                                      } : null,
-                                      onChangeEnd: (isBinarizationEnabled && isNoiseReductionEnabled) ? (value) {
-                                        onBinarizationParameterChange('noiseReductionLevel', value);
-                                      } : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 40,
-                                    child: Text(
-                                      noiseReductionLevel.toStringAsFixed(1),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: (isBinarizationEnabled && isNoiseReductionEnabled) ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withValues(alpha: 0.38),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            noiseReductionLevel.toStringAsFixed(1),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: (isBinarizationEnabled &&
+                                      isNoiseReductionEnabled)
+                                  ? colorScheme.onSurfaceVariant
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.38),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1543,121 +1448,98 @@ class ImagePropertyFlipPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'image_flip',
+      title: l10n.flip,
+      defaultExpanded: false,
+      children: [
+        // Information alert about flip processing order
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: colorScheme.tertiaryContainer.withAlpha((0.3 * 255).toInt()),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.tertiary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.imagePropertyPanelFlipInfo,
+                  style: TextStyle(fontSize: 14, color: colorScheme.tertiary),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: ExpansionTile(
-        title: Text(l10n.flip),
-        initiallyExpanded: false,
-        children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+
+        // Flip options (immediately effective)
+        Text(l10n.flipOptions,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8.0),
+
+        Card(
+          elevation: 0,
+          color: colorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Information alert about flip processing order
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  decoration: BoxDecoration(
-                    color: colorScheme.tertiaryContainer
-                        .withAlpha((0.3 * 255).toInt()),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: colorScheme.tertiary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.imagePropertyPanelFlipInfo,
-                          style: TextStyle(
-                              fontSize: 14, color: colorScheme.tertiary),
-                        ),
+                // 水平翻转选项
+                Row(
+                  children: [
+                    const Icon(Icons.flip),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.flipHorizontal,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
-                    ],
-                  ),
-                ),
-
-                // Flip options (immediately effective)
-                Text(l10n.flipOptions,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8.0),
-
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      children: [
-                        // 水平翻转选项
-                        Row(
-                          children: [
-                            const Icon(Icons.flip),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                l10n.flipHorizontal,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                            Switch(
-                              value: flipHorizontal,
-                              onChanged: (value) {
-                                onFlipChanged('isFlippedHorizontally', value);
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // 垂直翻转选项
-                        Row(
-                          children: [
-                            Transform.rotate(
-                              angle: 1.5708, // 90 degrees in radians (π/2)
-                              child: const Icon(Icons.flip),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                l10n.flipVertical,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                            Switch(
-                              value: flipVertical,
-                              onChanged: (value) {
-                                onFlipChanged('isFlippedVertically', value);
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-                  ),
+                    Switch(
+                      value: flipHorizontal,
+                      onChanged: (value) {
+                        onFlipChanged('isFlippedHorizontally', value);
+                      },
+                    ),
+                  ],
                 ),
-
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 8),
+                // 垂直翻转选项
+                Row(
+                  children: [
+                    Transform.rotate(
+                      angle: 1.5708, // 90 degrees in radians (π/2)
+                      child: const Icon(Icons.flip),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.flipVertical,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Switch(
+                      value: flipVertical,
+                      onChanged: (value) {
+                        onFlipChanged('isFlippedVertically', value);
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-        ],
-      ),
-      ),
+        ),
+
+        const SizedBox(height: 16.0),
+      ],
     );
   }
 }
