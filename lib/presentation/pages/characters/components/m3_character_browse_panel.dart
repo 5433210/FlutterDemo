@@ -6,7 +6,7 @@ import '../../../providers/character/character_management_provider.dart';
 import '../../../viewmodels/states/character_management_state.dart';
 import '../../../widgets/common/persistent_resizable_panel.dart';
 import '../../../widgets/common/persistent_sidebar_toggle.dart';
-import '../../../widgets/pagination/m3_pagination_controls.dart';
+import '../../../widgets/pagination/m3_persistent_pagination_controls.dart';
 import '../../library/components/box_selection_painter.dart';
 import 'm3_character_filter_panel.dart';
 import 'm3_character_grid_view.dart';
@@ -137,13 +137,14 @@ class _M3CharacterBrowsePanelState
 
         // 分页控件
         if (widget.showPagination)
-          M3PaginationControls(
+          M3PersistentPaginationControls(
+            pageId: 'character_browse',
             currentPage: state.currentPage,
-            pageSize: state.pageSize,
             totalItems: state.totalCount,
             onPageChanged: _handlePageChange,
             onPageSizeChanged: _handlePageSizeChange,
             availablePageSizes: const [10, 20, 50, 100],
+            defaultPageSize: 20,
           ),
       ],
     );

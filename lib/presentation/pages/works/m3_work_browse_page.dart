@@ -14,7 +14,7 @@ import '../../utils/cross_navigation_helper.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/pagination/m3_pagination_controls.dart';
+import '../../widgets/pagination/m3_persistent_pagination_controls.dart';
 import 'components/content/m3_work_content_area.dart';
 import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
@@ -199,9 +199,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
               ),
             ),
             if (!state.isLoading && state.works.isNotEmpty)
-              M3PaginationControls(
+              M3PersistentPaginationControls(
+                pageId: 'work_browse',
                 currentPage: state.page,
-                pageSize: state.pageSize,
                 totalItems: state.totalItems,
                 onPageChanged: (page) {
                   ref.read(workBrowseProvider.notifier).setPage(page);
@@ -210,6 +210,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                   ref.read(workBrowseProvider.notifier).setPageSize(size);
                 },
                 availablePageSizes: const [10, 20, 50, 100],
+                defaultPageSize: 20,
               ),
           ],
         ),

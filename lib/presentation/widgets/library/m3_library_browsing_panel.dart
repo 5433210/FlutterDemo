@@ -17,7 +17,7 @@ import '../../providers/library/library_management_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
 import '../common/persistent_resizable_panel.dart';
 import '../common/persistent_sidebar_toggle.dart';
-import '../pagination/m3_pagination_controls.dart';
+import '../pagination/m3_persistent_pagination_controls.dart';
 
 /// 图库检索面板 - 独立可复用的组件
 /// 包含筛选面板、图片网格/列表和分页控制
@@ -386,13 +386,14 @@ class _M3LibraryBrowsingPanelState
           ),
         ),
       ),
-      child: M3PaginationControls(
+      child: M3PersistentPaginationControls(
+        pageId: 'library_browse',
         currentPage: state.currentPage,
-        pageSize: state.pageSize,
         totalItems: state.totalCount,
         onPageChanged: _handlePageChange,
         onPageSizeChanged: _handlePageSizeChanged,
         availablePageSizes: const [10, 20, 50, 100],
+        defaultPageSize: 20,
       ),
     );
   }

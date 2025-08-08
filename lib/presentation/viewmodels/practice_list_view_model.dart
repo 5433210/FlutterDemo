@@ -263,6 +263,10 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
   // 切换页码
   void setPage(int page) {
     if (page < 1) return;
+    if (page == state.page) {
+      debugPrint('PracticeListViewModel: 页码未变化($page)，跳过刷新');
+      return;
+    }
 
     state = state.copyWith(page: page);
     loadPractices(forceRefresh: true);
@@ -271,6 +275,12 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
   // 修改每页数量
   void setPageSize(int pageSize) {
     if (pageSize < 1) return;
+
+    // 如果与当前值一致则不触发刷新，防止分页控件初始化时造成的循环加载
+    if (pageSize == state.pageSize) {
+      debugPrint('PracticeListViewModel: 页面大小未变化($pageSize)，跳过刷新');
+      return;
+    }
 
     state = state.copyWith(
       pageSize: pageSize,

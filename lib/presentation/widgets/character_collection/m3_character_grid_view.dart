@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../providers/character/character_grid_provider.dart';
-import '../pagination/m3_pagination_controls.dart';
+import '../pagination/m3_persistent_pagination_controls.dart';
 import 'm3_character_tile.dart';
 import 'm3_empty_state.dart';
 import 'm3_search_filter_bar.dart';
@@ -162,9 +162,9 @@ class M3CharacterGridView extends ConsumerWidget {
           ),
         ), // 分页控制
         if (gridState.characters.isNotEmpty)
-          M3PaginationControls(
+          M3PersistentPaginationControls(
+            pageId: 'character_grid_$workId',
             currentPage: gridState.currentPage,
-            pageSize: gridState.pageSize,
             totalItems: gridState.characters.length, // 使用实际的字符总数
             onPageChanged: (page) =>
                 ref.read(characterGridProvider(workId).notifier).setPage(page),
@@ -172,6 +172,7 @@ class M3CharacterGridView extends ConsumerWidget {
                 .read(characterGridProvider(workId).notifier)
                 .setPageSize(pageSize),
             availablePageSizes: const [8, 12, 16, 20, 24, 32, 48, 64],
+            defaultPageSize: 20,
           ),
       ],
     );

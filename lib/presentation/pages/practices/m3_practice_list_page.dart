@@ -9,7 +9,7 @@ import '../../viewmodels/states/practice_list_state.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/pagination/m3_pagination_controls.dart';
+import '../../widgets/pagination/m3_persistent_pagination_controls.dart';
 import 'components/m3_practice_content_area.dart';
 import 'components/m3_practice_filter_panel.dart';
 import 'components/m3_practice_list_navigation_bar.dart';
@@ -136,13 +136,14 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
 
           // 分页控件
           if (!state.isLoading)
-            M3PaginationControls(
+            M3PersistentPaginationControls(
+              pageId: 'practice_list',
               currentPage: state.page,
-              pageSize: state.pageSize,
               totalItems: state.totalItems,
               onPageChanged: (page) => viewModel.setPage(page),
               onPageSizeChanged: (size) => viewModel.setPageSize(size),
               availablePageSizes: const [10, 20, 50, 100],
+              defaultPageSize: 20,
             ),
         ],
       ),
