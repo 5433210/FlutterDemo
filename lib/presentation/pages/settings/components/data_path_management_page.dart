@@ -312,7 +312,8 @@ class _DataPathManagementPageState
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                border: Border.all(
+                    color: colorScheme.outline.withAlpha((0.2 * 255).round())),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
