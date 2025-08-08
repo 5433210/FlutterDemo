@@ -6,7 +6,7 @@ import '../../utils/cross_navigation_helper.dart';
 import 'components/app_version_settings.dart';
 import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
-import 'components/cache_settings.dart';
+// import 'components/cache_settings.dart'; // 暂时屏蔽缓存设置
 import 'components/configuration_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
@@ -53,8 +53,8 @@ class M3SettingsPage extends ConsumerWidget {
           Divider(),
           BackupSettings(),
           Divider(),
-          CacheSettings(),
-          Divider(),
+          // CacheSettings(), // 已临时隐藏
+          // Divider(),
           AppVersionSettings(),
         ],
       ),

@@ -126,6 +126,55 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                             value: 'A5',
                             child: Text(l10n.a5Size),
                           ),
+                          // 新增常用尺寸（暂未本地化，后续可加入 l10n）
+                          const DropdownMenuItem(
+                            value: 'A3',
+                            child: Text('A3 (297×420mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'A3_PLUS',
+                            child: Text('A3+ (329×483mm)'), // 常见 A3+ 尺寸
+                          ),
+                          const DropdownMenuItem(
+                            value: 'B3',
+                            child: Text('B3 (353×500mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'B4',
+                            child: Text('B4 (250×353mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'B5',
+                            child: Text('B5 (176×250mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'B6',
+                            child: Text('B6 (125×176mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'C6',
+                            child: Text('C6 (114×162mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'K_16',
+                            child: Text('16开 (185×260mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'K_32',
+                            child: Text('32开 (130×185mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'K_32_LARGE',
+                            child: Text('大32开 (140×203mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'K_8K',
+                            child: Text('8K (260×370mm)'),
+                          ),
+                          const DropdownMenuItem(
+                            value: 'K_16K',
+                            child: Text('16K (195×270mm)'),
+                          ),
                           DropdownMenuItem(
                             value: 'custom',
                             child: Text(l10n.customSize),
@@ -600,6 +649,43 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
     } else if ((portraitWidth - 148.0).abs() < 1 &&
         (portraitHeight - 210.0).abs() < 1) {
       return 'A5';
+    } else if ((portraitWidth - 297.0).abs() < 1 &&
+        (portraitHeight - 420.0).abs() < 1) {
+      return 'A3';
+    } else if ((portraitWidth - 329.0).abs() < 2 &&
+        (portraitHeight - 483.0).abs() < 2) {
+      // A3+ 允许更大误差
+      return 'A3_PLUS';
+    } else if ((portraitWidth - 353.0).abs() < 1 &&
+        (portraitHeight - 500.0).abs() < 1) {
+      return 'B3';
+    } else if ((portraitWidth - 250.0).abs() < 1 &&
+        (portraitHeight - 353.0).abs() < 1) {
+      return 'B4';
+    } else if ((portraitWidth - 176.0).abs() < 1 &&
+        (portraitHeight - 250.0).abs() < 1) {
+      return 'B5';
+    } else if ((portraitWidth - 125.0).abs() < 1 &&
+        (portraitHeight - 176.0).abs() < 1) {
+      return 'B6';
+    } else if ((portraitWidth - 114.0).abs() < 1 &&
+        (portraitHeight - 162.0).abs() < 1) {
+      return 'C6';
+    } else if ((portraitWidth - 185.0).abs() < 2 &&
+        (portraitHeight - 260.0).abs() < 2) {
+      return 'K_16';
+    } else if ((portraitWidth - 130.0).abs() < 2 &&
+        (portraitHeight - 185.0).abs() < 2) {
+      return 'K_32';
+    } else if ((portraitWidth - 140.0).abs() < 2 &&
+        (portraitHeight - 203.0).abs() < 2) {
+      return 'K_32_LARGE';
+    } else if ((portraitWidth - 260.0).abs() < 3 &&
+        (portraitHeight - 370.0).abs() < 3) {
+      return 'K_8K';
+    } else if ((portraitWidth - 195.0).abs() < 2 &&
+        (portraitHeight - 270.0).abs() < 2) {
+      return 'K_16K';
     } else {
       return 'custom';
     }
@@ -637,6 +723,54 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
       case 'A5':
         width = 148.0; // A5 width in mm
         height = 210.0; // A5 height in mm
+        break;
+      case 'A3':
+        width = 297.0;
+        height = 420.0;
+        break;
+      case 'A3_PLUS':
+        width = 329.0; // 常见 A3+ 尺寸 (13x19 英寸 ≈ 329×483mm)
+        height = 483.0;
+        break;
+      case 'B3':
+        width = 353.0;
+        height = 500.0;
+        break;
+      case 'B4':
+        width = 250.0;
+        height = 353.0;
+        break;
+      case 'B5':
+        width = 176.0;
+        height = 250.0;
+        break;
+      case 'B6':
+        width = 125.0;
+        height = 176.0;
+        break;
+      case 'C6':
+        width = 114.0;
+        height = 162.0;
+        break;
+      case 'K_16':
+        width = 185.0; // 16开（近似值）
+        height = 260.0;
+        break;
+      case 'K_32':
+        width = 130.0; // 32开（近似值）
+        height = 185.0;
+        break;
+      case 'K_32_LARGE':
+        width = 140.0; // 大32开（近似值）
+        height = 203.0;
+        break;
+      case 'K_8K':
+        width = 260.0; // 8K（近似值）
+        height = 370.0;
+        break;
+      case 'K_16K':
+        width = 195.0; // 16K（近似值）
+        height = 270.0;
         break;
       case 'custom':
         // 不做任何操作，让用户自行输入
