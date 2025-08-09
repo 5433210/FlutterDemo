@@ -10,17 +10,17 @@ import 'performance_dashboard.dart';
 class PerformanceMonitor extends ChangeNotifier {
   static final PerformanceMonitor _instance = PerformanceMonitor._internal();
 
-  // 🚀 性能优化：节流通知机制
+  // 🚀 优化：增强节流通知机制，减少不必要的通知开销
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle =
-      Duration(milliseconds: 500); // 最多每500ms通知一次
+  static const Duration _notificationThrottle = Duration(milliseconds: 1000); // 增加到1秒
+  bool _isMonitoringActive = false;
 
-  // Performance thresholds
-  static const double _fpsThresholdHigh = 55.0;
-  static const double _fpsThresholdMedium = 30.0;
-  static const double _fpsThresholdLow = 15.0;
-  static const int _frameTimeThresholdMs = 20; // Jank threshold
-  static const int _rebuildThresholdPerSecond = 100;
+  // 🚀 优化：降低性能监控频率的阈值设置  
+  static const double _fpsThresholdHigh = 50.0;  // 降低阈值减少监控敏感度
+  static const double _fpsThresholdMedium = 25.0;
+  static const double _fpsThresholdLow = 10.0;
+  static const int _frameTimeThresholdMs = 33; // 提高阈值，减少误报
+  static const int _rebuildThresholdPerSecond = 150; // 提高阈值
 
   // Frame rate tracking
   int _frameCount = 0;
@@ -381,35 +381,20 @@ class PerformanceMonitor extends ChangeNotifier {
 
   /// Start monitoring mode with frame callbacks
   void startMonitoring() {
-    SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
-  }
-
-  /// 开始跟踪拖拽性能
-  void startTrackingDragPerformance() {
-    if (_dragStateManager == null || _dragStateManager!.isDragging) {
-      return;
+    // 🚀 优化：增强监控启动条件检查
+    if (!kDebugMode || _isMonitoringActive) {
+      return; // 避免重复启动和生产环境监控
     }
-
-    // 重置拖拽性能数据
-    _dragStartFrameCount = _frameCount;
-    _dragStartTime = DateTime.now();
-    _dragFrameTimes.clear();
-    _dragFpsValues.clear();
-
-    EditPageLogger.performanceInfo(
-      '开始跟踪拖拽性能',
-      data: {
-        'startTime': _dragStartTime?.toIso8601String(),
-        'startFrameCount': _dragStartFrameCount,
-        'currentFPS': _currentFPS,
-      },
-    );
+    
+    _isMonitoringActive = true;
+    EditPageLogger.performanceInfo('调试模式启动帧监控');
+    SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
   }
 
   /// Stop monitoring
   void stopMonitoring() {
-    // Note: SchedulerBinding doesn't provide a direct way to remove callbacks
-    // The callback will naturally stop when not rescheduled
+    _isMonitoringActive = false;
+    EditPageLogger.performanceInfo('停止性能监控');
   }
 
   /// 跟踪帧渲染性能
@@ -553,8 +538,18 @@ class PerformanceMonitor extends ChangeNotifier {
   }
 
   void _onFrameEnd(Duration timeStamp) {
-    trackFrame();
-    // Schedule next frame callback
+    // 🚀 优化：增强运行时检查，确保只在需要时执行帧跟踪
+    if (!kDebugMode || !_isMonitoringActive) {
+      return; // 监控已停止或生产环境，不重新调度
+    }
+    
+    // 🚀 优化：降低帧跟踪频率，减少CPU开销
+    _frameCount++;
+    if (_frameCount % 3 == 0) { // 每3帧跟踪一次
+      trackFrame();
+    }
+    
+    // Schedule next frame callback - only when monitoring is active
     SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
   }
 }

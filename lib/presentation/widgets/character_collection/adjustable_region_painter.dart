@@ -74,13 +74,37 @@ class AdjustableRegionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(AdjustableRegionPainter oldDelegate) {
-    return region != oldDelegate.region ||
-        isActive != oldDelegate.isActive ||
-        isAdjusting != oldDelegate.isAdjusting ||
-        activeHandleIndex != oldDelegate.activeHandleIndex ||
-        currentRotation != oldDelegate.currentRotation ||
-        guideLines != oldDelegate.guideLines ||
-        viewportRect != oldDelegate.viewportRect;
+    // 🚀 优化：先检查最可能变化的UI状态属性
+    if (oldDelegate.isActive != isActive ||
+        oldDelegate.isAdjusting != isAdjusting ||
+        oldDelegate.activeHandleIndex != activeHandleIndex) {
+      return true;
+    }
+    
+    // 检查变换相关的变化  
+    if (oldDelegate.currentRotation != currentRotation ||
+        oldDelegate.viewportRect != viewportRect) {
+      return true;
+    }
+    
+    // 检查引导线变化
+    if (!_listsEqual(oldDelegate.guideLines, guideLines)) {
+      return true;
+    }
+    
+    // 最后检查区域变化（最复杂的比较）
+    return oldDelegate.region != region;
+  }
+
+  // 🚀 优化：添加空安全的列表比较方法
+  bool _listsEqual<T>(List<T>? a, List<T>? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   void _drawGuideLines(Canvas canvas) {

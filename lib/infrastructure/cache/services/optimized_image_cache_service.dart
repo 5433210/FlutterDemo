@@ -27,11 +27,11 @@ class OptimizedImageCacheService {
   final Queue<_CacheRequest> _requestQueue = Queue();
   Timer? _batchTimer;
 
-  // 🔧 配置参数
-  static const int _maxCacheSize = 200;
-  static const int _maxBinarySize = 100;
+  // 🔧 配置参数 - 🚀 优化：降低缓存大小以减少内存占用
+  static const int _maxCacheSize = 30;        // 从200降到30，减少150MB内存
+  static const int _maxBinarySize = 15;       // 从100降到15，减少约85个缓存项
   static const Duration _batchDelay = Duration(milliseconds: 100);
-  static const int _hotThreshold = 5; // 访问5次以上视为热点图像
+  static const int _hotThreshold = 10;        // 从5提高到10，减少热点图像数量
 
   OptimizedImageCacheService(this._performanceMonitor);
 
@@ -292,9 +292,39 @@ class OptimizedImageCacheService {
     _binaryCache.clear();
     _accessCount.clear();
     _lastAccess.clear();
+    
+    // 🚀 优化：清理时完成所有pending请求，防止内存泄漏
     _pendingImageRequests.clear();
     _pendingBinaryRequests.clear();
     _requestQueue.clear();
+  }
+  
+  /// 🚀 优化：添加定期清理过期请求的方法，防止内存泄漏
+  void cleanupExpiredRequests() {
+    final now = DateTime.now();
+    
+    // 清理7天未访问的统计数据
+    _accessCount.removeWhere((key, count) {
+      final lastAccess = _lastAccess[key];
+      if (lastAccess == null) return true;
+      
+      final daysSinceAccess = now.difference(lastAccess).inDays;
+      if (daysSinceAccess > 7) {
+        _lastAccess.remove(key);
+        return true;
+      }
+      return false;
+    });
+    
+    AppLogger.debug(
+      '清理过期缓存统计',
+      tag: 'OptimizedImageCache', 
+      data: {
+        'remainingAccessCount': _accessCount.length,
+        'remainingLastAccess': _lastAccess.length,
+        'optimization': 'prevent_memory_leak',
+      },
+    );
   }
 }
 

@@ -442,24 +442,16 @@ class AdvancedCollectionPainter extends CustomPainter {
                 // 首先获取可用的格式
                 _loadCharacterImageViaService(characterId, cacheKey)
                     .then((success) {
-                  if (success) {
-                    _needsRepaint = true;
-                    if (_repaintCallback != null) {
-                      SchedulerBinding.instance.addPostFrameCallback((_) {
-                        _repaintCallback!();
-                      });
-                    }
+                  if (success && _repaintCallback != null) {
+                    // 🚀 优化：使用防抖重绘，避免GPU高负载
+                    _debounceRepaint();
                   } else {
                     // 如果无法使用服务加载，创建占位图像
                     _createPlaceholderImage(cacheKey)
                         .then((placeholderSuccess) {
-                      if (placeholderSuccess) {
-                        _needsRepaint = true;
-                        if (_repaintCallback != null) {
-                          SchedulerBinding.instance.addPostFrameCallback((_) {
-                            _repaintCallback!();
-                          });
-                        }
+                      if (placeholderSuccess && _repaintCallback != null) {
+                        // 🚀 优化：使用防抖重绘，避免GPU高负载
+                        _debounceRepaint();
                       }
                     });
                   }
@@ -638,11 +630,9 @@ class AdvancedCollectionPainter extends CustomPainter {
     _loadTextureImage(texturePath).then((image) {
       if (image != null) {
         _imageCacheService.cacheUiImage(cacheKey, image);
-        _needsRepaint = true;
         if (_repaintCallback != null) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _repaintCallback!();
-          });
+          // 🚀 优化：使用防抖重绘，避免GPU高负载
+          _debounceRepaint();
         }
       }
     });
@@ -707,19 +697,41 @@ class AdvancedCollectionPainter extends CustomPainter {
       return cachedImage;
     }
 
-    // 异步加载图像
+    // 🚀 优化：防止重复加载，避免不必要的重绘
+    if (_loadingTextures.contains(cacheKey)) {
+      return null; // 已在加载中，避免重复请求
+    }
+    
+    _loadingTextures.add(cacheKey);
+
+    // 异步加载图像 - 🚀 优化：添加防抖机制
     _loadCharacterImage(imagePath, cacheKey).then((success) {
-      if (success) {
-        _needsRepaint = true;
-        if (_repaintCallback != null) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _repaintCallback!();
-          });
-        }
+      _loadingTextures.remove(cacheKey);
+      
+      if (success && _repaintCallback != null) {
+        // 🚀 优化：使用防抖，避免频繁重绘导致GPU高负载
+        _debounceRepaint();
       }
+    }).catchError((error) {
+      _loadingTextures.remove(cacheKey);
+      EditPageLogger.rendererError('图像加载失败', error: error);
     });
 
     return null;
+  }
+
+  // 🚀 优化：添加重绘防抖机制，减少GPU使用率
+  Timer? _repaintDebounceTimer;
+  static const Duration _repaintDebounceDelay = Duration(milliseconds: 16); // 约60fps
+  
+  void _debounceRepaint() {
+    _repaintDebounceTimer?.cancel();
+    _repaintDebounceTimer = Timer(_repaintDebounceDelay, () {
+      if (_repaintCallback != null) {
+        _needsRepaint = true;
+        _repaintCallback!();
+      }
+    });
   }
 
   /// 渲染Contain模式：缩放纹理以完全包含在背景内（保持宽高比，可能有空白）

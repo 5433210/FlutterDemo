@@ -17,6 +17,9 @@ class KeyboardUtils {
 
   // 防抖定时器
   static Timer? _altDebounceTimer;
+  
+  // Alt键状态检查定时器
+  static Timer? _altStatusCheckTimer;
 
   // 上次Alt键状态更新时间
   static DateTime _lastAltKeyUpdate = DateTime.now();
@@ -147,11 +150,18 @@ class KeyboardUtils {
 
   /// 设置定时检查Alt键状态的机制，解决Windows平台上的问题
   static void _setupAltKeyStatusCheck() {
+    // 🚀 优化：只在Windows平台启动定时器，避免其他平台不必要的CPU开销
+    if (!_isWindows) {
+      if (kDebugMode) {
+        print('⌨️ 非Windows平台，跳过Alt键状态检查定时器');
+      }
+      return;
+    }
+
     // 定期检查Alt键状态，防止UI状态与实际键盘状态不同步
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      // 只在Windows平台，且上次Alt键更新时间超过500ms时检查
-      if (_isWindows &&
-          DateTime.now().difference(_lastAltKeyUpdate).inMilliseconds > 500) {
+    _altStatusCheckTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {  // 🚀 优化：从200ms改为500ms
+      // 检查上次Alt键更新时间超过500ms时才执行检查
+      if (DateTime.now().difference(_lastAltKeyUpdate).inMilliseconds > 500) {
         // 检查任何Alt键是否被标记为按下
         bool anyAltKeyDown = isKeyPressed(LogicalKeyboardKey.alt) ||
             isKeyPressed(LogicalKeyboardKey.altLeft) ||
@@ -180,6 +190,10 @@ class KeyboardUtils {
         }
       }
     });
+
+    if (kDebugMode) {
+      print('⌨️ Windows平台Alt键状态检查定时器已启动');
+    }
   }
 
   /// 更新按键状态
@@ -221,6 +235,18 @@ class KeyboardUtils {
           listener(key, isDown);
         }
       }
+    }
+  }
+
+  /// 🚀 优化：添加dispose方法，确保定时器被正确停止，防止内存泄漏
+  static void dispose() {
+    _altStatusCheckTimer?.cancel();
+    _altStatusCheckTimer = null;
+    _altDebounceTimer?.cancel();
+    _altDebounceTimer = null;
+    
+    if (kDebugMode) {
+      print('⌨️ KeyboardUtils已清理，定时器已停止');
     }
   }
 }

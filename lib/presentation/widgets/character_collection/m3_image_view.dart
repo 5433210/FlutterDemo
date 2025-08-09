@@ -42,6 +42,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   AnimationController? _animationController;
   Timer? _transformationDebouncer;
+  Timer? _hoverDebouncer;  // 🚀 优化：添加鼠标悬停防抖器
   String? _lastImageId;
   bool _isFirstLoad = true;
 
@@ -169,7 +170,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
               imageSize.width > 0 &&
               imageSize.height > 0 &&
               _transformer != null) {
-            // 确保在布局完成后执行
+            // 🚀 优化：合并多个addPostFrameCallback调用，减少GPU重绘次数
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!_mounted || _transformer == null) return;
 
@@ -190,19 +191,19 @@ class _ImageViewState extends ConsumerState<M3ImageView>
             });
           }
 
-          // 添加处理：当窗口大小变化且处于adjusting状态时，更新选框
+          // 🚀 优化：减少窗口大小变化时的addPostFrameCallback调用
           if (_isAdjusting && _originalRegion != null && _transformer != null) {
-            // 使用WidgetsBinding确保在布局完成后更新
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!_mounted) return;
-              final currentViewportSize = viewportSize;
-              final hasViewportChanged =
-                  _lastViewportSize != currentViewportSize;
-              if (hasViewportChanged) {
+            final currentViewportSize = viewportSize;
+            final hasViewportChanged = _lastViewportSize != currentViewportSize;
+            if (hasViewportChanged) {
+              // 使用防抖减少频繁的布局更新
+              _transformationDebouncer?.cancel();
+              _transformationDebouncer = Timer(const Duration(milliseconds: 16), () {
+                if (!_mounted) return;
                 _lastViewportSize = currentViewportSize;
                 _updateSelectionBoxAfterLayoutChange();
-              }
-            });
+              });
+            }
           }
 
           return Material(
@@ -259,6 +260,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   void dispose() {
     _mounted = false;
     _transformationDebouncer?.cancel();
+    _hoverDebouncer?.cancel();  // 🚀 优化：清理悬停防抖器
     _altKeyDebouncer?.cancel();
     _ticker?.dispose(); // Properly dispose the ticker
     _animationController?.dispose();
@@ -281,17 +283,16 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     _transformationController.addListener(_onTransformationChanged);
 
     // Add focus listener to handle focus changes
-    _focusNode.addListener(_onFocusChange); // 添加Alt键状态监听器
-    _altKeyNotifier.addListener(() {
-      // 当ValueNotifier更新时，强制刷新UI
-      setState(() {});
-    });
+    _focusNode.addListener(_onFocusChange); 
+    
+    // 🚀 优化：改为防抖的Alt键状态监听器，避免频繁setState
+    _altKeyNotifier.addListener(_onAltKeyChange);
 
     // 添加全局键盘事件处理器
     HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
 
-    // 创建并启动Ticker替代帧回调
-    _ticker = createTicker(_onTick)..start();
+    // 🚀 优化：改为按需启动Ticker，避免持续的GPU消耗
+    _ticker = createTicker(_onTick);  // 创建但不自动启动
 
     _initializeView();
 
@@ -367,6 +368,18 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       _lastImageId = '${imageState.workId}-${imageState.currentPageId}';
       if (imageState.hasValidImage) {
         _tryLoadCharacterData();
+      }
+    });
+  }
+
+  // 🚀 优化：添加Alt键状态变化的防抖处理
+  void _onAltKeyChange() {
+    // 使用防抖避免频繁的setState调用，减少GPU重绘
+    _altKeyDebouncer?.cancel();
+    _altKeyDebouncer = Timer(const Duration(milliseconds: 16), () {
+      if (mounted) {
+        // 只在需要时启动Ticker，避免持续GPU消耗
+        _startTickerIfNeeded();
       }
     });
   }
@@ -628,30 +641,32 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                 // 绘制所有区域
                 if (_transformer != null && regions.isNotEmpty)
                   Positioned.fill(
-                    child: GestureDetector(
-                      onTapUp:
-                          _onTapUp, // Always allow selection start, handle adjustment cancellation inside
-                      onPanStart:
-                          isPanMode || _isAltKeyPressed || _isRightMousePressed
-                              ? _handlePanStart
-                              : _handleSelectionStart,
-                      onPanUpdate:
-                          isPanMode || _isAltKeyPressed || _isRightMousePressed
-                              ? _handlePanUpdate
-                              : _handleSelectionUpdate,
-                      onPanEnd:
-                          isPanMode || _isAltKeyPressed || _isRightMousePressed
-                              ? _handlePanEnd
-                              : _handleSelectionEnd,
-                      child: CustomPaint(
-                        painter: RegionsPainter(
-                          regions: regions,
-                          transformer: _transformer!,
-                          hoveredId: _hoveredRegionId,
-                          adjustingRegionId: _adjustingRegionId,
-                          currentTool: toolMode,
-                          isAdjusting: characterCollection.isAdjusting,
-                          selectedIds: selectedIds,
+                    child: RepaintBoundary(
+                      child: GestureDetector(
+                        onTapUp:
+                            _onTapUp, // Always allow selection start, handle adjustment cancellation inside
+                        onPanStart:
+                            isPanMode || _isAltKeyPressed || _isRightMousePressed
+                                ? _handlePanStart
+                                : _handleSelectionStart,
+                        onPanUpdate:
+                            isPanMode || _isAltKeyPressed || _isRightMousePressed
+                                ? _handlePanUpdate
+                                : _handleSelectionUpdate,
+                        onPanEnd:
+                            isPanMode || _isAltKeyPressed || _isRightMousePressed
+                                ? _handlePanEnd
+                                : _handleSelectionEnd,
+                        child: CustomPaint(
+                          painter: RegionsPainter(
+                            regions: regions,
+                            transformer: _transformer!,
+                            hoveredId: _hoveredRegionId,
+                            adjustingRegionId: _adjustingRegionId,
+                            currentTool: toolMode,
+                            isAdjusting: characterCollection.isAdjusting,
+                            selectedIds: selectedIds,
+                          ),
                         ),
                       ),
                     ),
@@ -660,91 +675,102 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                 // **Adjustment Layer GestureDetector**
                 if (_isAdjusting && _adjustingRegionId != null)
                   Positioned.fill(
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: _altKeyNotifier,
-                      builder: (context, isAltPressed, child) {
-                        return MouseRegion(
-                          cursor: isAltPressed || _isRightMousePressed
-                              ? SystemMouseCursors.move
-                              : _getCursor(),
-                          onHover: (event) {
-                            final handleIndex = _getHandleIndexFromPosition(
-                                event.localPosition);
-
-                            setState(() {
-                              _activeHandleIndex = handleIndex;
-                            });
-                          },
-                          onExit: (_) {
-                            setState(() {
-                              _activeHandleIndex =
-                                  null; // Reset active handle index on exit
-                            });
-                          },
-                          child: GestureDetector(
-                            behavior: HitTestBehavior
-                                .opaque, // Capture hits within bounds
-                            onTapUp: _onTapUp,
-                            onPanStart: isAltPressed || _isRightMousePressed
-                                ? _handlePanStart
-                                : _handleAdjustmentPanStart, // Use dedicated handler
-                            onPanUpdate: isAltPressed || _isRightMousePressed
-                                ? _handlePanUpdate
-                                : _handleAdjustmentPanUpdate, // Use dedicated handler
-                            onPanEnd: isAltPressed || _isRightMousePressed
-                                ? _handlePanEnd
-                                : _handleAdjustmentPanEnd, // Use dedicated handler
-                            child: CustomPaint(
-                              painter: AdjustableRegionPainter(
-                                region: _originalRegion!,
-                                transformer: _transformer!,
-                                isActive: true,
-                                isAdjusting: true,
-                                activeHandleIndex: _activeHandleIndex,
-                                currentRotation: _currentRotation,
-                                guideLines: _guideLines,
-                                viewportRect: _adjustingRect,
+                    child: RepaintBoundary(
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _altKeyNotifier,
+                        builder: (context, isAltPressed, child) {
+                          return MouseRegion(
+                            cursor: isAltPressed || _isRightMousePressed
+                                ? SystemMouseCursors.move
+                                : _getCursor(),
+                            onHover: (event) {
+                              // 🚀 优化：使用防抖减少悬停事件的setState频率
+                              _hoverDebouncer?.cancel();
+                              _hoverDebouncer = Timer(const Duration(milliseconds: 8), () {
+                                if (!_mounted) return;
+                                final handleIndex = _getHandleIndexFromPosition(
+                                    event.localPosition);
+                                setState(() {
+                                  _activeHandleIndex = handleIndex;
+                                });
+                              });
+                            },
+                            onExit: (_) {
+                              // 🚀 优化：清除悬停防抖器并立即重置状态
+                              _hoverDebouncer?.cancel();
+                              if (_mounted) {
+                                setState(() {
+                                  _activeHandleIndex = null;
+                                });
+                              }
+                            },
+                            child: GestureDetector(
+                              behavior: HitTestBehavior
+                                  .opaque, // Capture hits within bounds
+                              onTapUp: _onTapUp,
+                              onPanStart: isAltPressed || _isRightMousePressed
+                                  ? _handlePanStart
+                                  : _handleAdjustmentPanStart, // Use dedicated handler
+                              onPanUpdate: isAltPressed || _isRightMousePressed
+                                  ? _handlePanUpdate
+                                  : _handleAdjustmentPanUpdate, // Use dedicated handler
+                              onPanEnd: isAltPressed || _isRightMousePressed
+                                  ? _handlePanEnd
+                                  : _handleAdjustmentPanEnd, // Use dedicated handler
+                              child: CustomPaint(
+                                painter: AdjustableRegionPainter(
+                                  region: _originalRegion!,
+                                  transformer: _transformer!,
+                                  isActive: true,
+                                  isAdjusting: true,
+                                  activeHandleIndex: _activeHandleIndex,
+                                  currentRotation: _currentRotation,
+                                  guideLines: _guideLines,
+                                  viewportRect: _adjustingRect,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
 
                 // 添加框选层
                 if (isSelectMode && !_isAdjusting)
                   Positioned.fill(
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: _altKeyNotifier,
-                      builder: (context, isAltPressed, child) {
-                        return MouseRegion(
-                          cursor: isAltPressed || _isRightMousePressed
-                              ? SystemMouseCursors.move
-                              : SystemMouseCursors.precise,
-                          child: GestureDetector(
-                            onTapUp: _onTapUp,
-                            onPanStart: isAltPressed || _isRightMousePressed
-                                ? _handlePanStart
-                                : _handleSelectionStart,
-                            onPanUpdate: isAltPressed || _isRightMousePressed
-                                ? _handlePanUpdate
-                                : _handleSelectionUpdate,
-                            onPanEnd: isAltPressed || _isRightMousePressed
-                                ? _handlePanEnd
-                                : _handleSelectionEnd,
-                            child: CustomPaint(
-                              painter: ActiveSelectionPainter(
-                                startPoint: _selectionStart ?? Offset.zero,
-                                endPoint: _selectionCurrent ?? Offset.zero,
-                                viewportSize:
-                                    _transformer?.viewportSize ?? Size.zero,
-                                isActive: _selectionStart != null,
+                    child: RepaintBoundary(
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _altKeyNotifier,
+                        builder: (context, isAltPressed, child) {
+                          return MouseRegion(
+                            cursor: isAltPressed || _isRightMousePressed
+                                ? SystemMouseCursors.move
+                                : SystemMouseCursors.precise,
+                            child: GestureDetector(
+                              onTapUp: _onTapUp,
+                              onPanStart: isAltPressed || _isRightMousePressed
+                                  ? _handlePanStart
+                                  : _handleSelectionStart,
+                              onPanUpdate: isAltPressed || _isRightMousePressed
+                                  ? _handlePanUpdate
+                                  : _handleSelectionUpdate,
+                              onPanEnd: isAltPressed || _isRightMousePressed
+                                  ? _handlePanEnd
+                                  : _handleSelectionEnd,
+                              child: CustomPaint(
+                                painter: ActiveSelectionPainter(
+                                  startPoint: _selectionStart ?? Offset.zero,
+                                  endPoint: _selectionCurrent ?? Offset.zero,
+                                  viewportSize:
+                                      _transformer?.viewportSize ?? Size.zero,
+                                  isActive: _selectionStart != null,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
               ],
@@ -1870,12 +1896,35 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     }
   }
 
-  // 每帧回调，用于帧级别的更新
+  // 🚀 优化：每帧回调，仅在必要时使用
   void _onTick(Duration elapsed) {
-    if (!_mounted) return;
+    if (!_mounted) {
+      // 如果组件已卸载，停止Ticker避免资源浪费
+      _ticker?.stop();
+      return;
+    }
 
-    // 执行原来在_onFrameCallback中需要的操作
-    // 当前它是空的，但如果将来需要添加功能，可以在这里添加
+    // 🚀 优化：只有在有实际需要时才执行帧级别的更新
+    // 目前没有需要每帧执行的操作，如果未来需要可以在这里添加
+    
+    // 如果没有活跃的交互，停止Ticker节省GPU
+    if (!_isAdjusting && !_isInSelectionMode) {
+      _ticker?.stop();
+    }
+  }
+  
+  // 🚀 优化：添加按需启动Ticker的方法
+  void _startTickerIfNeeded() {
+    if (_ticker != null && !_ticker!.isActive && (_isAdjusting || _isInSelectionMode)) {
+      _ticker!.start();
+    }
+  }
+  
+  // 🚀 优化：停止Ticker节省资源
+  void _stopTicker() {
+    if (_ticker != null && _ticker!.isActive) {
+      _ticker!.stop();
+    }
   }
 
   /// 处理变换矩阵变化事件

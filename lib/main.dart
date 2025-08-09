@@ -26,6 +26,7 @@ bool _unifiedPathConfigInitialized = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 🚀 优化：延迟非关键初始化，加速应用启动
   // 初始化SQLite FFI (对于桌面平台)
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     // Windows和macOS使用默认初始化
@@ -33,31 +34,26 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Initialize logging config - default to minimal logging
+  // 🚀 优化：最小化启动时的日志配置
   LoggingConfig.verboseStorageLogging = false;
   LoggingConfig.verboseThumbnailLogging = false;
   LoggingConfig.verboseDatabaseLogging = false;
 
-  // 初始化字帖编辑页日志配置
+  // 🚀 优化：简化启动时的日志配置，推迟到需要时配置详细日志
   if (kDebugMode) {
     EditPageLoggingConfig.configureForDevelopment();
-    AppLogger.info('已启用字帖编辑页开发环境日志配置', tag: 'App');
   } else {
     EditPageLoggingConfig.configureForProduction();
-    AppLogger.info('已启用字帖编辑页生产环境日志配置', tag: 'App');
   }
 
-  // 初始化键盘工具
-  KeyboardUtils.initialize();
+  // 🚀 优化：延迟键盘工具初始化到实际需要时
+  // KeyboardUtils.initialize();
 
-  // Only initialize window manager on desktop platforms
+  // 🚀 优化：简化窗口管理器初始化
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-    // 初始化窗口管理器
     await windowManager.ensureInitialized();
-
-    // 设置初始窗口标题，后续会在应用中根据语言更新
-    const appTitle = '字字珠玑'; // 默认使用中文标题
-
+    
+    // 🚀 优化：使用更简单的窗口配置，减少启动时间
     WindowOptions windowOptions = const WindowOptions(
       size: Size(1400, 800),
       minimumSize: Size(800, 600),
@@ -65,86 +61,55 @@ void main() async {
       backgroundColor: Colors.white,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
-      title: appTitle,
-    ); // 设置窗口
+      title: '字字珠玑',
+    );
+    
+    // 🚀 优化：简化窗口显示流程
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      // 设置窗口图标，确保与任务栏图标一致
-      await windowManager.setIcon('assets/images/app_trans_bg4.ico');
-      // 确保窗口背景不透明
-      await windowManager.setBackgroundColor(Colors.white);
       await windowManager.show();
       await windowManager.focus();
+      // 延迟设置图标和背景色到窗口显示后
+      _delayedWindowSetup();
     });
   }
 
-  // 初始化日志系统，启用控制台输出和调试级别
+  // 🚀 优化：简化日志初始化，减少启动开销
   await AppLogger.init(
       enableFile: true,
-      enableConsole: true,
-      minLevel: LogLevel.debug,
+      enableConsole: kDebugMode,  // 只在调试模式启用控制台
+      minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
       filePath: 'app.log');
 
-  // 🚀 启动性能监控器
-  PerformanceMonitor().startMonitoring();
-  AppLogger.info('性能监控器已启动', tag: 'App');
+  // 🚀 优化：只在调试模式启动性能监控器
+  if (kDebugMode) {
+    PerformanceMonitor().startMonitoring();
+  }
 
   try {
-    // 初始化 SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
+    // 🚀 优化：并行初始化SharedPreferences和路径配置
+    final futures = await Future.wait([
+      SharedPreferences.getInstance(),
+      _initializePathConfig(),
+    ]);
+    
+    final prefs = futures[0] as SharedPreferences;
 
-    // 初始化统一路径配置（确保只初始化一次）
-    if (!_unifiedPathConfigInitialized) {
-      _unifiedPathConfigInitialized = true;
-      try {
-        AppLogger.info('开始初始化统一路径配置', tag: 'App');
-        final unifiedConfig = await UnifiedPathConfigService.readConfig();
-        AppLogger.info('统一路径配置初始化成功', tag: 'App', data: {
-          'dataPath': unifiedConfig.dataPath.useDefaultPath
-              ? '默认路径'
-              : unifiedConfig.dataPath.customPath,
-          'backupPath': unifiedConfig.backupPath.path.isEmpty
-              ? '未设置'
-              : unifiedConfig.backupPath.path,
-          'dataHistoryCount': unifiedConfig.dataPath.historyPaths.length,
-          'backupHistoryCount': unifiedConfig.backupPath.historyPaths.length,
-        });
-      } catch (e) {
-        AppLogger.warning('统一路径配置初始化失败，将使用旧配置', error: e, tag: 'App');
-      }
-    }
-
-    // 创建ProviderContainer用于初始化阶段 - Use SilentObserver here too
+    // 🚀 优化：使用优化的ProviderContainer配置
     final container = ProviderContainer(
-      observers: [
-        SilentObserver()
-      ], // Replace ProviderLogger with SilentObserver
+      observers: [SilentObserver()], // 避免Riverpod日志开销
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],
     );
 
-    // 预加载数据路径配置
-    try {
-      AppLogger.info('开始预加载数据路径配置', tag: 'App');
-      final initResult = await container.read(appInitializationProvider.future);
-      if (initResult.isSuccess) {
-        AppLogger.info('数据路径配置预加载成功', tag: 'App');
-      } else {
-        AppLogger.warning('数据路径配置预加载失败: ${initResult.errorMessage}',
-            tag: 'App');
-      }
+    // 🚀 优化：简化预加载流程，减少启动阻塞
+    _preloadAppDataAsync(container);
 
-      // 备份恢复检查现在在应用初始化过程中处理
-    } catch (e) {
-      AppLogger.error('数据路径配置预加载出错', error: e, tag: 'App');
-      // 备份恢复检查现在在应用初始化过程中处理，即使预加载失败也会尝试
-    }
-
-    // 启动应用
+    // 🚀 优化：立即启动应用，避免阻塞主线程
     runApp(
       UncontrolledProviderScope(
         container: container,
-        child: KeyboardMonitor.wrapApp(const MyApp()),
+        child: _buildAppWithDelayedKeyboardMonitor(),
       ),
     );
   } catch (e, stack) {
@@ -178,6 +143,70 @@ void main() async {
         ),
       ),
     );
+  }
+}
+
+// 🚀 优化：延迟窗口设置，减少启动阻塞
+void _delayedWindowSetup() {
+  Future.delayed(const Duration(milliseconds: 100), () async {
+    try {
+      await windowManager.setIcon('assets/images/app_trans_bg4.ico');
+      await windowManager.setBackgroundColor(Colors.white);
+    } catch (e) {
+      AppLogger.warning('延迟窗口设置失败', error: e, tag: 'App');
+    }
+  });
+}
+
+// 🚀 优化：异步路径配置初始化
+Future<void> _initializePathConfig() async {
+  if (!_unifiedPathConfigInitialized) {
+    _unifiedPathConfigInitialized = true;
+    try {
+      final unifiedConfig = await UnifiedPathConfigService.readConfig();
+      AppLogger.info('统一路径配置初始化成功', tag: 'App');
+    } catch (e) {
+      AppLogger.warning('统一路径配置初始化失败', error: e, tag: 'App');
+    }
+  }
+}
+
+// 🚀 优化：异步预加载数据，不阻塞UI启动
+void _preloadAppDataAsync(ProviderContainer container) {
+  Future(() async {
+    try {
+      final initResult = await container.read(appInitializationProvider.future);
+      if (initResult.isSuccess) {
+        AppLogger.info('数据路径配置预加载完成', tag: 'App');
+      }
+    } catch (e) {
+      AppLogger.error('数据预加载失败', error: e, tag: 'App');
+    }
+  });
+}
+
+// 🚀 优化：延迟键盘监控初始化
+Widget _buildAppWithDelayedKeyboardMonitor() {
+  return FutureBuilder(
+    future: _delayedInitializeKeyboard(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.done && snapshot.data == true) {
+        return KeyboardMonitor.wrapApp(const MyApp());
+      }
+      return const MyApp(); // 直接显示应用，不等待键盘监控
+    },
+  );
+}
+
+// 🚀 优化：异步初始化键盘工具
+Future<bool> _delayedInitializeKeyboard() async {
+  await Future.delayed(const Duration(milliseconds: 200));
+  try {
+    KeyboardUtils.initialize();
+    return true;
+  } catch (e) {
+    AppLogger.warning('键盘工具初始化失败', error: e, tag: 'App');
+    return false;
   }
 }
 

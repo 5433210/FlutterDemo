@@ -89,13 +89,32 @@ class RegionsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(RegionsPainter oldDelegate) {
+    // 🚀 优化：先检查最可能变化的属性，短路求值提升性能
+    if (oldDelegate.hoveredId != hoveredId || 
+        oldDelegate.adjustingRegionId != adjustingRegionId ||
+        oldDelegate.isAdjusting != isAdjusting) {
+      return true;
+    }
+    
+    // 检查选中状态变化
+    if (oldDelegate.selectedIds.length != selectedIds.length ||
+        !_listsEqual(oldDelegate.selectedIds, selectedIds)) {
+      return true;
+    }
+    
+    // 最后检查较复杂的对象比较
     return oldDelegate.regions != regions ||
         oldDelegate.transformer != transformer ||
-        oldDelegate.hoveredId != hoveredId ||
-        oldDelegate.currentTool != currentTool ||
-        oldDelegate.adjustingRegionId != adjustingRegionId ||
-        oldDelegate.isAdjusting != isAdjusting ||
-        oldDelegate.selectedIds != selectedIds;
+        oldDelegate.currentTool != currentTool;
+  }
+
+  // 🚀 优化：添加高效的列表比较方法
+  bool _listsEqual<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   void _drawHandles(Canvas canvas, Rect rect, bool isActive) {

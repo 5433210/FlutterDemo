@@ -108,11 +108,12 @@ class MemoryEfficientElement {
 /// Comprehensive memory management system for the M3 Canvas
 /// Handles resource disposal, memory tracking, and large element optimization
 class MemoryManager extends ChangeNotifier {
-  static const int _defaultMaxMemory = 256 * 1024 * 1024; // 256MB default
-  static const int _largeElementThreshold =
-      1024 * 1024; // 1MB threshold for large elements
-  static const double _memoryPressureThreshold =
-      0.8; // 80% memory usage threshold
+  // 🚀 优化：降低默认内存限制，适合轻度使用场景
+  static const int _defaultMaxMemory = 64 * 1024 * 1024;  // 从256MB降到64MB
+  // 🚀 优化：提高大型元素阈值，减少误判
+  static const int _largeElementThreshold = 5 * 1024 * 1024; // 从1MB提高到5MB
+  // 🚀 优化：提前触发内存压力清理
+  static const double _memoryPressureThreshold = 0.6;     // 从80%降到60%
 
   final Map<String, ImageResource> _imageResources = {};
   final Map<String, ElementMemoryInfo> _elementMemoryInfo = {};
@@ -572,10 +573,10 @@ class MemoryManager extends ChangeNotifier {
         final content = element['content'] as Map<String, dynamic>?;
         final characters = content?['characters'] as String? ?? '';
         final characterImages = content?['characterImages'] as Map? ?? {};
-        // Each character image can be substantial
+        // 🚀 优化：降低collection元素内存估算，之前过于保守
         return baseSize +
-            (characters.length * 50 * 1024) +
-            (characterImages.length * 20 * 1024);
+            (characters.length * 5 * 1024) +     // 从50KB降到5KB每字符
+            (characterImages.length * 10 * 1024); // 从20KB降到10KB每字符图片
 
       case 'image':
         // Estimate based on dimensions - assume compressed but decoded in memory

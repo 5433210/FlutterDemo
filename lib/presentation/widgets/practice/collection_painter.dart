@@ -48,6 +48,10 @@ class CollectionPainter extends CustomPainter {
   final Set<String> _loadingTextures = {};
   final bool _needsRepaint = false;
   VoidCallback? _repaintCallback;
+  
+  // 🚀 优化：添加重绘防抖机制，减少GPU使用率
+  Timer? _repaintDebounceTimer;
+  static const Duration _repaintDebounceDelay = Duration(milliseconds: 16); // 约60fps
 
   // 服务
   late ImageCacheService _imageCacheService;
@@ -111,6 +115,16 @@ class CollectionPainter extends CustomPainter {
   /// 设置重绘回调函数
   void setRepaintCallback(VoidCallback callback) {
     _repaintCallback = callback;
+  }
+  
+  // 🚀 优化：添加重绘防抖机制，减少GPU使用率
+  void _debounceRepaint() {
+    _repaintDebounceTimer?.cancel();
+    _repaintDebounceTimer = Timer(_repaintDebounceDelay, () {
+      if (_repaintCallback != null) {
+        _repaintCallback!();
+      }
+    });
   }
 
   @override
@@ -476,11 +490,9 @@ class CollectionPainter extends CustomPainter {
 
       _loadingTextures.remove(cacheKey);
 
-      // 触发重绘
+      // 触发重绘 - 🚀 优化：使用防抖重绘，避免GPU高负载
       if (image != null && _repaintCallback != null) {
-        scheduleMicrotask(() {
-          _repaintCallback!();
-        });
+        _debounceRepaint();
       }
 
       return image != null;
@@ -547,9 +559,8 @@ class CollectionPainter extends CustomPainter {
               .then((loadedImage) {
             _loadingTextures.remove(cacheKey);
             if (loadedImage != null && _repaintCallback != null) {
-              scheduleMicrotask(() {
-                _repaintCallback!();
-              });
+              // 🚀 优化：使用防抖重绘，避免GPU高负载
+              _debounceRepaint();
             }
           });
         });
