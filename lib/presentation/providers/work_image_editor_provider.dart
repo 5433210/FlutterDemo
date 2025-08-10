@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
+import '../../application/services/character/character_service.dart';
 import '../../domain/models/work/work_image.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
@@ -243,9 +244,125 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         }
       }
 
-      // Process each selected file for work import
-      for (int i = 0; i < selectedFiles.length; i++) {
-        final file = selectedFiles[i];
+      // 检查重复图片（包括文件路径和图库ID）
+      final existingPaths = state.images.map((img) => img.originalPath).toSet();
+      final existingLibraryIds = state.images
+          .where((img) => img.libraryItemId != null)
+          .map((img) => img.libraryItemId!)
+          .toSet();
+      
+      AppLogger.info('检查图片重复', tag: 'WorkImageEditor', data: {
+        'totalSelectedFiles': selectedFiles.length,
+        'existingImagesCount': state.images.length,
+        'fromLibrary': fromLibrary,
+        'existingLibraryIds': existingLibraryIds.length,
+        'providedLibraryItemIds': finalLibraryItemIds.length,
+      });
+      
+      final duplicateFiles = <File>[];
+      final duplicateLibraryItems = <String>[]; // 图库项目名称
+      final uniqueSelectedFiles = <File>[];
+      int duplicateCount = 0;
+
+      for (final file in selectedFiles) {
+        final absolutePath = file.absolute.path;
+        final libraryItemId = finalLibraryItemIds[file.path];
+        bool isDuplicate = false;
+        String? duplicateReason;
+        
+        // 检查与现有图片路径是否重复
+        for (final existingPath in existingPaths) {
+          if (File(existingPath).absolute.path == absolutePath) {
+            isDuplicate = true;
+            duplicateReason = '文件路径重复';
+            break;
+          }
+        }
+        
+        // 如果来自图库，还要检查图库ID是否重复
+        if (!isDuplicate && fromLibrary && libraryItemId != null) {
+          if (existingLibraryIds.contains(libraryItemId)) {
+            isDuplicate = true;
+            duplicateReason = '图库图片已存在';
+          }
+        }
+        
+        if (isDuplicate) {
+          duplicateFiles.add(file);
+          duplicateCount++;
+          
+          // 记录图库项目名称用于提示
+          if (fromLibrary && libraryItemId != null) {
+            final fileName = file.path.split(Platform.pathSeparator).last;
+            duplicateLibraryItems.add(fileName);
+          }
+          
+          AppLogger.debug('发现重复图片', tag: 'WorkImageEditor', data: {
+            'filePath': file.path,
+            'libraryItemId': libraryItemId,
+            'reason': duplicateReason,
+            'fromLibrary': fromLibrary,
+          });
+        } else {
+          uniqueSelectedFiles.add(file);
+          existingPaths.add(absolutePath); // 防止本批次内部重复
+          if (libraryItemId != null) {
+            existingLibraryIds.add(libraryItemId); // 防止图库ID重复
+          }
+        }
+      }
+
+      // 如果全部都是重复图片
+      if (duplicateFiles.isNotEmpty && uniqueSelectedFiles.isEmpty) {
+        String message;
+        if (duplicateCount == 1) {
+          final fileName = duplicateFiles.first.path.split(Platform.pathSeparator).last;
+          if (fromLibrary && duplicateLibraryItems.isNotEmpty) {
+            message = '图库图片 "$fileName" 已存在于当前作品中';
+          } else {
+            message = '图片 "$fileName" 已存在';
+          }
+        } else {
+          if (fromLibrary && duplicateLibraryItems.isNotEmpty) {
+            message = '选择的 $duplicateCount 张图库图片已存在于当前作品中，未添加任何新图片';
+          } else {
+            message = '选择的 $duplicateCount 张图片已存在，未添加任何新图片';
+          }
+        }
+        
+        state = state.copyWith(
+          isProcessing: false,
+          error: message,
+        );
+        return;
+      }
+
+      // 记录重复图片信息（用于后续提示）
+      String? duplicateMessage;
+      if (duplicateCount > 0) {
+        if (duplicateCount == 1) {
+          final fileName = duplicateFiles.first.path.split(Platform.pathSeparator).last;
+          if (fromLibrary && duplicateLibraryItems.isNotEmpty) {
+            duplicateMessage = '图库图片 "$fileName" 已存在于当前作品中';
+          } else {
+            duplicateMessage = '图片 "$fileName" 已存在';
+          }
+        } else {
+          if (fromLibrary && duplicateLibraryItems.length == duplicateCount) {
+            // 全部都是图库重复
+            duplicateMessage = '$duplicateCount 张图库图片已存在于当前作品中';
+          } else if (fromLibrary && duplicateLibraryItems.isNotEmpty) {
+            // 混合重复（部分图库，部分文件）
+            duplicateMessage = '$duplicateCount 张图片已存在（包含 ${duplicateLibraryItems.length} 张图库重复）';
+          } else {
+            duplicateMessage = '$duplicateCount 张图片已存在';
+          }
+        }
+      }
+
+      // Process each unique selected file for work import
+      for (int i = 0; i < uniqueSelectedFiles.length; i++) {
+        final file = uniqueSelectedFiles[i];
         try {
           if (!await file.exists()) {
             AppLogger.warning('Selected file does not exist',
@@ -288,6 +405,16 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         // Update state with all new images
         final allImages = [...state.images, ...newImages];
 
+        // 构造完整的状态消息
+        String? finalMessage;
+        if (duplicateMessage != null && errorCount > 0) {
+          finalMessage = '$duplicateMessage，已成功添加 $successCount 张新图片，$errorCount 张图片处理失败';
+        } else if (duplicateMessage != null) {
+          finalMessage = '$duplicateMessage，已成功添加 $successCount 张新图片';
+        } else if (errorCount > 0) {
+          finalMessage = '已成功添加 $successCount 张图片，$errorCount 张图片处理失败';
+        }
+
         AppLogger.debug('Adding images to work state',
             tag: 'WorkImageEditor',
             data: {
@@ -295,14 +422,17 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
               'totalImagesCount': allImages.length,
               'successCount': successCount,
               'errorCount': errorCount,
+              'duplicateCount': duplicateCount,
               'fromLibrary': fromLibrary,
               'libraryItemIdsCount': finalLibraryItemIds.length,
+              'finalMessage': finalMessage,
             });
 
         state = state.copyWith(
           images: allImages,
           isProcessing: false,
           hasPendingAdditions: true,
+          error: finalMessage, // 显示包含重复信息的消息
         );
 
         // Update selected index to the first new image
@@ -311,17 +441,21 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
         // Mark work as changed
         _ref.read(workDetailProvider.notifier).markAsChanged();
-
-        // Show user feedback about partial failures if any
-        if (errorCount > 0 && successCount > 0) {
-          AppLogger.warning('Some images failed to process',
-              tag: 'WorkImageEditor',
-              data: {'successCount': successCount, 'errorCount': errorCount});
-        }
+        
       } else {
+        // 没有新图片被添加
+        String errorMessage;
+        if (duplicateCount > 0 && errorCount > 0) {
+          errorMessage = '$duplicateMessage，其余 $errorCount 张图片处理失败';
+        } else if (duplicateCount > 0) {
+          errorMessage = duplicateMessage!;
+        } else {
+          errorMessage = errorCount > 0 ? '所有选择的图片都处理失败' : '没有有效的图片文件';
+        }
+        
         state = state.copyWith(
           isProcessing: false,
-          error: errorCount > 0 ? '所有选择的图片都处理失败' : '没有有效的图片文件',
+          error: errorMessage,
         );
       }
     } catch (e) {
@@ -491,12 +625,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       final imagesCopy = images.map((img) => img.copyWith()).toList();
 
       // Update our state with clean pending state
+      // 注意：保留现有的 temporaryRotations，避免旋转信息丢失
       state = WorkImageEditorState(
         images: imagesCopy,
         deletedImageIds: const [],
         isProcessing: false,
         error: null,
         hasPendingAdditions: false, // Reset pending state on initialization
+        temporaryRotations: state.temporaryRotations, // 保留旋转信息
       );
 
       // Verify images were properly loaded before marking as initialized
@@ -621,7 +757,11 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
     AppLogger.debug(
       'Resetting WorkImageEditor state',
       tag: 'WorkImageEditor',
-      data: {'deletedIdsCleared': true, 'pendingAdditionsCleared': true},
+      data: {
+        'deletedIdsCleared': true, 
+        'pendingAdditionsCleared': true,
+        'temporaryRotationsCleared': true,
+      },
     );
   }
 
@@ -641,6 +781,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
             .toList(),
         'hasPendingAdditions': state.hasPendingAdditions,
         'deletedImageIds': state.deletedImageIds,
+        'temporaryRotationsCount': state.temporaryRotations.length,
         'firstImageId': state.images.isNotEmpty ? state.images[0].id : null,
       });
 
@@ -648,7 +789,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       // 先删除标记为删除的图片
       for (final imageId in state.deletedImageIds) {
+        AppLogger.debug('Deleting image and associated characters', 
+            tag: 'WorkImageEditor', data: {'imageId': imageId});
+        
         try {
+          // 删除该图片关联的所有字符
+          await _deleteImageCharacters(imageId);
+          
+          // 删除图片
           await workImageService.deleteImage(workId, imageId);
         } catch (e) {
           AppLogger.warning('删除图片文件失败',
@@ -661,12 +809,66 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         }
       }
 
-      // 保存所有图片 - 不再检查条件，确保顺序调整能被保存
-      AppLogger.info('调用 Service 保存图片', tag: 'WorkImageEditor', data: {
+      // 转换临时旋转信息：从 imageId -> rotation 转换为 originalPath -> rotation
+      final imageRotations = <String, double>{};
+      bool needUpdateCover = false;
+      String? firstImageId;
+      
+      if (state.images.isNotEmpty) {
+        // 按照index排序后取第一张图片
+        final sortedImages = [...state.images]..sort((a, b) => a.index.compareTo(b.index));
+        firstImageId = sortedImages.first.id;
+      }
+
+      for (final entry in state.temporaryRotations.entries) {
+        final imageId = entry.key;
+        final rotation = entry.value;
+        
+        if (rotation != 0.0) {
+          // 删除该图片关联的所有字符（旋转会使字符位置失效）
+          await _deleteImageCharacters(imageId);
+          
+          // 查找对应的图片
+          WorkImage? image;
+          for (final img in state.images) {
+            if (img.id == imageId) {
+              image = img;
+              break;
+            }
+          }
+          
+          if (image == null) {
+            AppLogger.warning('Image not found for rotation', tag: 'WorkImageEditor', data: {
+              'searchId': imageId,
+              'availableIds': state.images.map((img) => img.id).toList(),
+            });
+            continue;
+          }
+          
+          // 只使用originalPath作为键，避免混乱
+          imageRotations[image.originalPath] = rotation;
+          
+          // 如果旋转的是第一张图片，需要更新封面
+          if (imageId == firstImageId) {
+            needUpdateCover = true;
+          }
+          
+          AppLogger.info('准备旋转图片', tag: 'WorkImageEditor', data: {
+            'imageId': imageId,
+            'originalPath': image.originalPath,
+            'rotation': rotation,
+            'isFirstImage': imageId == firstImageId,
+          });
+        }
+      }
+
+      AppLogger.info('调用 WorkImageService 保存所有更改', tag: 'WorkImageEditor', data: {
         'imageCount': state.images.length,
-        'saveReason': 'Always save to ensure order changes are persisted',
+        'imageRotationsCount': imageRotations.length,
+        'needUpdateCover': needUpdateCover,
       });
 
+      // 调用 WorkImageService 保存所有更改（包括旋转）
       final savedImages = await workImageService.saveChanges(
         workId,
         state.images,
@@ -676,6 +878,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
             'message': message,
           });
         },
+        imageRotations: imageRotations, // 传递旋转信息
       );
 
       AppLogger.info('图片保存完成', tag: 'WorkImageEditor', data: {
@@ -684,17 +887,149 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
             .map((img) => '${img.id}(${img.index})')
             .take(5)
             .toList(),
+        'needUpdateCover': needUpdateCover,
       });
+
+      // 如果旋转了首图，重新生成封面
+      if (needUpdateCover && firstImageId != null) {
+        try {
+          AppLogger.info('开始更新作品封面', tag: 'WorkImageEditor', data: {
+            'workId': workId,
+            'firstImageId': firstImageId,
+            'reason': '首图已旋转',
+          });
+          
+          await workImageService.updateCover(workId, firstImageId);
+          
+          AppLogger.info('作品封面更新完成', tag: 'WorkImageEditor', data: {
+            'workId': workId,
+            'firstImageId': firstImageId,
+          });
+        } catch (e) {
+          AppLogger.error('更新作品封面失败', tag: 'WorkImageEditor', 
+              error: e, data: {
+                'workId': workId,
+                'firstImageId': firstImageId,
+              });
+          // 不中断保存流程，封面更新失败不应影响主要功能
+        }
+      }
+
+      // 建立旧ID到新ID的映射（用于处理新增图片的情况）
+      final idMapping = <String, String>{};
+      for (int i = 0; i < state.images.length && i < savedImages.length; i++) {
+        final oldId = state.images[i].id;
+        final newId = savedImages[i].id;
+        if (oldId != newId) {
+          idMapping[oldId] = newId;
+          AppLogger.debug('图片ID映射', tag: 'WorkImageEditor', data: {
+            'oldId': oldId,
+            'newId': newId,
+            'reason': '新增图片保存后ID变化',
+          });
+        }
+      }
+
+      // 更新temporaryRotations中的ID（如果有ID变化的话）
+      // 注意：只有成功保存的旋转才被清除，失败的保留
+      final updatedRotations = <String, double>{};
+      for (final entry in state.temporaryRotations.entries) {
+        final oldId = entry.key;
+        final rotation = entry.value;
+        final newId = idMapping[oldId] ?? oldId;
+        
+        // 检查这个旋转是否已经被成功应用
+        bool wasApplied = false;
+        if (rotation != 0.0) {
+          for (final img in state.images) {
+            if (img.id == oldId && imageRotations.containsKey(img.originalPath)) {
+              wasApplied = true;
+              break;
+            }
+          }
+        }
+        
+        if (wasApplied) {
+          AppLogger.info('旋转已应用，清除临时旋转', tag: 'WorkImageEditor', data: {
+            'imageId': oldId,
+            'rotation': rotation,
+          });
+          // 成功应用的旋转被清除，不再保留
+        } else if (rotation != 0.0) {
+          // 旋转未被应用（可能是因为图片找不到），保留它，并更新ID
+          updatedRotations[newId] = rotation;
+          AppLogger.warning('旋转未应用，保留临时旋转', tag: 'WorkImageEditor', data: {
+            'oldImageId': oldId,
+            'newImageId': newId,
+            'rotation': rotation,
+          });
+        }
+      }
 
       state = state.copyWith(
         images: savedImages,
         deletedImageIds: [],
         isProcessing: false,
         hasPendingAdditions: false, // Clear pending flag after successful save
+        temporaryRotations: updatedRotations, // 使用更新后的旋转信息，而不是直接清空
       );
 
-      // 移除此行 - 不要重新加载作品详情，会覆盖已编辑的更改
-      // await _ref.read(workDetailProvider.notifier).loadWorkDetails(workId);
+      // 立即清除图片缓存，确保旋转后的图片能正确显示
+      // 先清除全局缓存
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      
+      // 立即清除特定图片的缓存
+      for (final image in savedImages) {
+        try {
+          // 清除各种可能的图片路径缓存
+          for (final path in [image.path, image.originalPath, image.thumbnailPath]) {
+            if (path.isNotEmpty) {
+              final file = File(path);
+              if (file.existsSync()) {
+                FileImage(file).evict();
+              }
+            }
+          }
+        } catch (e) {
+          AppLogger.warning('清除单个图片缓存失败', 
+              tag: 'WorkImageEditor', 
+              error: e, 
+              data: {'imageId': image.id});
+        }
+      }
+      
+      AppLogger.info('已立即清除Flutter图片缓存，强制刷新旋转后图片', 
+          tag: 'WorkImageEditor',
+          data: {
+            'clearedCacheCount': 'all',
+            'savedImagesCount': savedImages.length,
+            'specificCachesCleared': savedImages.length * 3, // 每个图片3个路径
+          });
+      
+      // 延迟一帧后再次清除，确保所有UI组件都能看到更新
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // 等待一小段时间确保文件系统操作完成
+        await Future.delayed(const Duration(milliseconds: 50));
+        
+        PaintingBinding.instance.imageCache.clear();
+        PaintingBinding.instance.imageCache.clearLiveImages();
+        AppLogger.debug('PostFrame 图片缓存延迟清除完成', tag: 'WorkImageEditor');
+      });
+
+      // 不重新加载作品详情，避免清空旋转状态
+      // 直接更新当前状态以反映保存的结果
+      AppLogger.info('保存完成，不重新加载避免状态重置', tag: 'WorkImageEditor', data: {
+        'savedImagesCount': savedImages.length,
+        'updatedRotationsCount': updatedRotations.length,
+        'finalStateImageCount': state.images.length,
+        'firstImageDetails': state.images.isNotEmpty ? {
+          'id': state.images[0].id,
+          'path': state.images[0].path,
+          'updateTime': state.images[0].updateTime.millisecondsSinceEpoch,
+        } : null,
+        'currentTemporaryRotations': state.temporaryRotations,
+      });
     } catch (e) {
       AppLogger.error('保存图片更改失败', tag: 'WorkImageEditor', error: e);
       state = state.copyWith(
@@ -765,6 +1100,130 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       },
     );
   }
+
+  /// 检查图片是否已提取字符
+  Future<bool> hasExtractedCharacters(String imageId) async {
+    try {
+      final characterService = _ref.read(characterServiceProvider);
+      final characters = await characterService.getCharactersByPageId(imageId);
+      return characters.isNotEmpty;
+    } catch (e) {
+      AppLogger.error('检查图片字符提取状态失败', error: e, data: {'imageId': imageId});
+      return false;
+    }
+  }
+
+  /// 获取图片的已提取字符数量
+  Future<int> getCharacterCount(String imageId) async {
+    try {
+      final characterService = _ref.read(characterServiceProvider);
+      final characters = await characterService.getCharactersByPageId(imageId);
+      return characters.length;
+    } catch (e) {
+      AppLogger.error('获取图片字符数量失败', error: e, data: {'imageId': imageId});
+      return 0;
+    }
+  }
+
+  /// 临时旋转图片预览（不修改实际文件）
+  void rotateImagePreview(String imageId) {
+    try {
+      AppLogger.debug('Adding temporary rotation to image preview', tag: 'WorkImageEditor', data: {
+        'imageId': imageId,
+      });
+
+      // 获取当前的临时旋转角度
+      final currentRotation = state.temporaryRotations[imageId] ?? 0.0;
+      // 每次增加90度
+      final newRotation = (currentRotation + 90.0) % 360.0;
+      
+      // 更新临时旋转角度
+      final updatedRotations = Map<String, double>.from(state.temporaryRotations);
+      updatedRotations[imageId] = newRotation;
+      
+      state = state.copyWith(
+        temporaryRotations: updatedRotations,
+      );
+
+      // 标记作品已更改，激活保存按钮
+      _ref.read(workDetailProvider.notifier).markAsChanged();
+
+      AppLogger.debug('Image preview rotation updated', 
+          tag: 'WorkImageEditor',
+          data: {
+            'imageId': imageId,
+            'newRotation': newRotation,
+          });
+
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to rotate image preview',
+          tag: 'WorkImageEditor', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// 获取图片的临时旋转角度
+  double getImageRotation(String imageId) {
+    final rotation = state.temporaryRotations[imageId] ?? 0.0;
+    
+    AppLogger.debug('获取图片旋转角度', tag: 'WorkImageEditor', data: {
+      'imageId': imageId,
+      'rotation': rotation,
+      'hasTemporaryRotation': state.temporaryRotations.containsKey(imageId),
+      'totalTemporaryRotations': state.temporaryRotations.length,
+      'allRotations': state.temporaryRotations,
+    });
+    
+    return rotation;
+  }
+
+  /// 清除错误状态
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(error: null);
+      AppLogger.debug('Error state cleared', tag: 'WorkImageEditor');
+    }
+  }
+
+  /// 删除图片关联的所有字符
+  Future<void> _deleteImageCharacters(String imageId) async {
+    try {
+      final characterService = _ref.read(characterServiceProvider);
+      
+      // 获取该图片的所有字符
+      final characters = await characterService.getCharactersByPageId(imageId);
+      
+      if (characters.isNotEmpty) {
+        AppLogger.info('删除图片关联的字符', 
+            tag: 'WorkImageEditor',
+            data: {
+              'imageId': imageId,
+              'characterCount': characters.length,
+              'characterIds': characters.map((c) => c.id).toList(),
+            });
+        
+        // 批量删除字符
+        final characterIds = characters.map((c) => c.id).toList();
+        await characterService.deleteBatchCharacters(characterIds);
+        
+        AppLogger.info('成功删除图片关联的字符', 
+            tag: 'WorkImageEditor',
+            data: {
+              'imageId': imageId,
+              'deletedCount': characters.length,
+            });
+      } else {
+        AppLogger.debug('图片无关联字符，跳过删除', 
+            tag: 'WorkImageEditor',
+            data: {'imageId': imageId});
+      }
+    } catch (e) {
+      AppLogger.error('删除图片关联字符失败',
+          tag: 'WorkImageEditor', 
+          error: e, 
+          data: {'imageId': imageId});
+      // 不重新抛出异常，避免影响主要操作
+    }
+  }
 }
 
 class WorkImageEditorState {
@@ -773,6 +1232,7 @@ class WorkImageEditorState {
   final bool isProcessing;
   final String? error;
   final bool hasPendingAdditions; // Track if we've added new images
+  final Map<String, double> temporaryRotations; // 临时旋转角度，key是imageId
 
   const WorkImageEditorState({
     this.images = const [],
@@ -780,6 +1240,7 @@ class WorkImageEditorState {
     this.isProcessing = false,
     this.error,
     this.hasPendingAdditions = false,
+    this.temporaryRotations = const {},
   });
 
   WorkImageEditorState copyWith({
@@ -788,6 +1249,7 @@ class WorkImageEditorState {
     bool? isProcessing,
     String? error,
     bool? hasPendingAdditions,
+    Map<String, double>? temporaryRotations,
   }) {
     return WorkImageEditorState(
       images: images ?? this.images,
@@ -795,6 +1257,7 @@ class WorkImageEditorState {
       isProcessing: isProcessing ?? this.isProcessing,
       error: error,
       hasPendingAdditions: hasPendingAdditions ?? this.hasPendingAdditions,
+      temporaryRotations: temporaryRotations ?? this.temporaryRotations,
     );
   }
 }

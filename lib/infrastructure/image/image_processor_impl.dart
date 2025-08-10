@@ -579,6 +579,7 @@ class ImageProcessorImpl implements ImageProcessor {
     required int maxWidth,
     required int maxHeight,
     required int quality,
+    double rotation = 0.0,
   }) async {
     try {
       final bytes = await input.readAsBytes();
@@ -611,6 +612,11 @@ class ImageProcessorImpl implements ImageProcessor {
       } else {
         // 保持原始尺寸，只进行质量压缩
         processed = image;
+      }
+
+      // 应用旋转（如果需要）
+      if (rotation != 0.0) {
+        processed = img.copyRotate(processed, angle: rotation);
       }
 
       final outPath = await _createTempFilePath('processed_');

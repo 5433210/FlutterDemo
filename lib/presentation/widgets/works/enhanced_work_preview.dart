@@ -17,6 +17,7 @@ class EnhancedWorkPreview extends StatefulWidget {
   final Function(WorkImage)? onImageAdded;
   final Function(String)? onImageDeleted;
   final Function(int, int)? onImagesReordered;
+  final Function(String)? getImageRotation; // 获取图片旋转角度的回调
 
   const EnhancedWorkPreview({
     super.key,
@@ -29,6 +30,7 @@ class EnhancedWorkPreview extends StatefulWidget {
     this.onImageAdded,
     this.onImageDeleted,
     this.onImagesReordered,
+    this.getImageRotation,
   });
 
   @override
@@ -57,10 +59,12 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
               child: currentImage != null
                   ? ZoomableImageView(
                       imagePath: currentImage.path,
+                      rotation: widget.getImageRotation?.call(currentImage.path) ?? 0.0,
                       enableMouseWheel: true,
                       minScale: 0.1,
                       maxScale: 10.0,
                       showControls: true,
+                      reloadKey: currentImage.updateTime.millisecondsSinceEpoch.toString(),
                     )
                   : Center(
                       child: Column(
@@ -104,6 +108,7 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
                       },
                       pathResolver: (image) => image.path,
                       keyResolver: (image) => image.id,
+                      timestampResolver: (image) => image.updateTime.millisecondsSinceEpoch, // 使用WorkImage的updateTime
                     ),
                   )),
           ],

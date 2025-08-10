@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/character_entity.dart';
+import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
@@ -93,7 +94,23 @@ class CharacterService {
     }
   }
 
-  /// 清理缓存
+  /// 根据页面ID获取字符列表
+  Future<List<CharacterEntity>> getCharactersByPageId(String pageId) async {
+    try {
+      final filter = CharacterFilter(pageId: pageId);
+      final characters = await _repository.query(filter);
+      AppLogger.debug('获取页面字符', data: {
+        'pageId': pageId,
+        'characterCount': characters.length,
+      });
+      return characters;
+    } catch (e) {
+      AppLogger.error('获取页面字符失败', error: e, data: {'pageId': pageId});
+      return [];
+    }
+  }
+
+  /// Clear cache
   Future<void> clearCache() async {
     try {
       await _binaryCache.clear();

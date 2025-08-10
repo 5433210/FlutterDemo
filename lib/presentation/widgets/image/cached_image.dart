@@ -29,6 +29,9 @@ class CachedImage extends ConsumerStatefulWidget {
   /// Callback when image is loaded, provides the image size
   final Function(Size)? onImageLoaded;
 
+  /// 强制重新加载的键，当此值改变时会重新加载图片
+  final String? reloadKey;
+
   /// Simple constructor
   const CachedImage({
     super.key,
@@ -39,6 +42,7 @@ class CachedImage extends ConsumerStatefulWidget {
     this.height,
     this.errorBuilder,
     this.onImageLoaded,
+    this.reloadKey,
   });
 
   @override
@@ -74,7 +78,18 @@ class _CachedImageState extends ConsumerState<CachedImage> {
   @override
   void didUpdateWidget(CachedImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.path != widget.path) {
+    if (oldWidget.path != widget.path || oldWidget.reloadKey != widget.reloadKey) {
+      // 如果reloadKey改变了，说明图片内容可能已更新，需要清除Flutter的ImageCache
+      if (oldWidget.reloadKey != widget.reloadKey && oldWidget.path == widget.path) {
+        // 清除Flutter ImageCache中的缓存
+        final file = File(widget.path);
+        if (file.existsSync()) {
+          final fileImage = FileImage(file);
+          fileImage.evict();
+          // 也可以清除整个ImageCache (更彻底但影响范围更大)
+          // PaintingBinding.instance.imageCache.clear();
+        }
+      }
       _loadImage();
     }
   }

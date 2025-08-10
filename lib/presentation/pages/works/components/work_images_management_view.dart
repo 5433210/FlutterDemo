@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
+import '../../../../domain/models/work/work_image.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../dialogs/common/image_operation_confirm_dialog.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../providers/work_image_editor_provider.dart';
 import '../../../widgets/works/enhanced_work_preview.dart';
@@ -24,6 +26,31 @@ class WorkImagesManagementView extends ConsumerWidget {
     final isProcessing = state.isProcessing;
     final currentIndex = ref.watch(currentWorkImageIndexProvider);
     final isInitialized = ref.watch(workImageInitializedProvider);
+
+    // Show error message with SnackBar
+    if (state.error != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error!),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: '关闭',
+                textColor: Theme.of(context).colorScheme.onError,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  notifier.clearError();
+                },
+              ),
+            ),
+          );
+          // Auto clear error after showing
+          notifier.clearError();
+        }
+      });
+    }
 
     // Add debugging to understand what state we're getting
     AppLogger.debug(
@@ -135,7 +162,85 @@ class WorkImagesManagementView extends ConsumerWidget {
               selectedIndex: currentIndex,
               isEditing: true,
               showToolbar: true,
+              getImageRotation: (imagePath) {
+                // 根据图片路径找到对应的图片，然后获取其临时旋转角度
+                // 需要处理路径可能变化的情况
+                WorkImage? foundImage;
+                
+                AppLogger.debug('查找图片旋转角度', tag: 'WorkImagesManagementView', data: {
+                  'searchPath': imagePath,
+                  'availableImagePaths': state.images.map((img) => img.path).take(3).toList(),
+                });
+                
+                // 首先尝试精确匹配path
+                for (final img in state.images) {
+                  if (img.path == imagePath) {
+                    foundImage = img;
+                    break;
+                  }
+                }
+                
+                // 如果没找到，尝试匹配originalPath
+                if (foundImage == null) {
+                  for (final img in state.images) {
+                    if (img.originalPath == imagePath) {
+                      foundImage = img;
+                      break;
+                    }
+                  }
+                }
+                
+                // 如果还是没找到，使用当前选中的图片作为后备
+                if (foundImage == null) {
+                  if (state.images.isNotEmpty && currentIndex < state.images.length) {
+                    foundImage = state.images[currentIndex];
+                    AppLogger.warning('Image path not found, using current selected image', 
+                        tag: 'WorkImagesManagementView',
+                        data: {
+                          'searchPath': imagePath,
+                          'fallbackImageId': foundImage.id,
+                          'fallbackImagePath': foundImage.path,
+                        });
+                  }
+                }
+                
+                if (foundImage == null) {
+                  AppLogger.error('No image found for rotation display', 
+                      tag: 'WorkImagesManagementView',
+                      data: {
+                        'searchPath': imagePath,
+                        'availableImages': state.images.length,
+                      });
+                  return 0.0;
+                }
+                
+                final rotation = ref.read(workImageEditorProvider.notifier).getImageRotation(foundImage.id);
+                
+                AppLogger.debug('Image rotation lookup结果', tag: 'WorkImagesManagementView', data: {
+                  'searchPath': imagePath,
+                  'foundImageId': foundImage.id,
+                  'foundImagePath': foundImage.path,
+                  'foundImageUpdateTime': foundImage.updateTime.millisecondsSinceEpoch,
+                  'rotation': rotation,
+                });
+                
+                return rotation;
+              },
               toolbarActions: [
+                // 旋转图片按钮
+                Tooltip(
+                  message: '旋转90°',
+                  preferBelow: false,
+                  child: IconButton(
+                    onPressed: (isProcessing || state.images.isEmpty)
+                        ? null
+                        : () => _handleRotateImage(context, ref),
+                    icon: const Icon(Icons.rotate_right),
+                  ),
+                ),
+
+                const SizedBox(width: 4),
+
                 // 添加图片按钮 - 改为图标按钮
                 Tooltip(
                   message: l10n.addImage,
@@ -170,26 +275,6 @@ class WorkImagesManagementView extends ConsumerWidget {
                       _handleReorder(ref, oldIndex, newIndex),
             ),
 
-            // Error message display
-            if (state.error != null)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Material(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      state.error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
 
             // Processing overlay
             if (isProcessing)
@@ -287,32 +372,47 @@ class WorkImagesManagementView extends ConsumerWidget {
           tag: 'WorkImagesManagementView',
           data: {'imageId': selectedImage.id, 'index': currentIndex});
 
-      // 确认删除
-      final shouldDelete = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false, // Prevent dismiss by tapping outside
-        builder: (context) {
-          final l10n = AppLocalizations.of(context);
-          return AlertDialog(
-            title: Text(l10n.confirmDelete),
-            content: Text(l10n.deleteMessage(1)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  foregroundColor: Theme.of(context).colorScheme.onError,
+      // 检查是否有提取的字符
+      final hasCharacters = await notifier.hasExtractedCharacters(selectedImage.id);
+      bool shouldDelete = false;
+
+      if (hasCharacters) {
+        final characterCount = await notifier.getCharacterCount(selectedImage.id);
+        
+        // 显示字符删除确认对话框
+        shouldDelete = await ImageOperationConfirmDialog.showDeletionConfirm(
+          context,
+          characterCount,
+          () {}, // 空回调，实际操作在返回后处理
+        ) ?? false;
+      } else {
+        // 没有字符，显示普通删除确认对话框
+        shouldDelete = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false, // Prevent dismiss by tapping outside
+          builder: (context) {
+            final l10n = AppLocalizations.of(context);
+            return AlertDialog(
+              title: Text(l10n.confirmDelete),
+              content: Text(l10n.deleteMessage(1)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l10n.cancel),
                 ),
-                child: Text(l10n.confirm),
-              ),
-            ],
-          );
-        },
-      );
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onError,
+                  ),
+                  child: Text(l10n.confirm),
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+      }
 
       AppLogger.debug('Delete confirmation result',
           tag: 'WorkImagesManagementView', data: {'confirmed': shouldDelete});
@@ -344,6 +444,85 @@ class WorkImagesManagementView extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.deleteFailed(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// 处理图片旋转
+  Future<void> _handleRotateImage(
+      BuildContext context, WidgetRef ref) async {
+    try {
+      final state = ref.read(workImageEditorProvider);
+      if (state.images.isEmpty) {
+        AppLogger.warning('Attempted to rotate image but no images exist',
+            tag: 'WorkImagesManagementView');
+        return;
+      }
+
+      final notifier = ref.read(workImageEditorProvider.notifier);
+      final currentIndex = ref.read(currentWorkImageIndexProvider);
+
+      // 确保索引有效
+      if (currentIndex < 0 || currentIndex >= state.images.length) {
+        AppLogger.error('Invalid selected index for rotation',
+            tag: 'WorkImagesManagementView',
+            data: {
+              'currentIndex': currentIndex,
+              'imageCount': state.images.length
+            });
+        return;
+      }
+
+      final selectedImage = state.images[currentIndex];
+
+      AppLogger.debug('Preparing to rotate image preview',
+          tag: 'WorkImagesManagementView',
+          data: {'imageId': selectedImage.id, 'index': currentIndex});
+
+      // 检查是否有提取的字符
+      final hasCharacters = await notifier.hasExtractedCharacters(selectedImage.id);
+      
+      if (hasCharacters) {
+        final characterCount = await notifier.getCharacterCount(selectedImage.id);
+        
+        // 显示确认对话框
+        final shouldRotate = await ImageOperationConfirmDialog.showRotationConfirm(
+          context,
+          characterCount,
+          () {}, // 空回调，实际操作在返回后处理
+        );
+
+        if (shouldRotate != true) {
+          return;
+        }
+      }
+
+      // 执行预览旋转（不修改实际文件）
+      AppLogger.debug('Rotating image preview',
+          tag: 'WorkImagesManagementView',
+          data: {'imageId': selectedImage.id});
+
+      notifier.rotateImagePreview(selectedImage.id);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('已调整预览角度，保存时将应用旋转'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+    } catch (e, stack) {
+      AppLogger.error('Error in rotate preview operation',
+          tag: 'WorkImagesManagementView', error: e, stackTrace: stack);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('调整预览角度失败: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

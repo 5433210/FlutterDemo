@@ -10,6 +10,7 @@ import '../../application/services/work/work_service.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
+import '../providers/work_image_editor_provider.dart'; // 导入ImageSource枚举
 import '../widgets/library/m3_library_picker_dialog.dart';
 import 'states/work_import_state.dart';
 
@@ -26,6 +27,67 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     return state.hasImages &&
         state.title.trim().isNotEmpty &&
         !state.isProcessing;
+  }
+
+  /// 添加图片（支持来源选择）
+  Future<void> addImagesWithSource(BuildContext context) async {
+    try {
+      state = state.copyWith(error: null);
+
+      // 显示来源选择对话框
+      final source = await _showImageSourceDialog(context);
+      if (source == null) return;
+
+      switch (source) {
+        case ImageSource.local:
+          await addImages(); // 调用现有的本地文件选择方法
+          break;
+        case ImageSource.library:
+          if (context.mounted) {
+            await addImagesFromGallery(context);
+          }
+          break;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: '添加图片失败: $e',
+      );
+    }
+  }
+
+  /// 显示图片来源选择对话框
+  Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+
+    return await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.addImages),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder),
+              title: const Text('从本地文件选择'),
+              subtitle: const Text('选择的图片将自动添加到图库'),
+              onTap: () => Navigator.of(context).pop(ImageSource.local),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('从图库选择'),
+              subtitle: const Text('选择已存在的图库图片'),
+              onTap: () => Navigator.of(context).pop(ImageSource.library),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 添加图片（从本地文件系统或传入的文件列表）
@@ -56,14 +118,68 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         isProcessing: true,
         error: null,
       );
-      state = state.copyWith(
-        images: [...state.images, ...files],
-        imageFromGallery: [
-          ...state.imageFromGallery,
-          ...List.filled(files.length, false)
-        ], // 标记为本地文件
-        isProcessing: false,
-      );
+
+      // 检查重复图片
+      final existingPaths = state.images.map((f) => f.absolute.path).toSet();
+      final duplicateFiles = <File>[];
+      final newFiles = <File>[];
+
+      for (final file in files) {
+        final absolutePath = file.absolute.path;
+        if (existingPaths.contains(absolutePath)) {
+          duplicateFiles.add(file);
+        } else {
+          newFiles.add(file);
+          existingPaths.add(absolutePath); // 防止本批次内部重复
+        }
+      }
+
+      // 处理结果
+      if (duplicateFiles.isNotEmpty && newFiles.isEmpty) {
+        // 全部都是重复图片
+        final message = duplicateFiles.length == 1
+            ? '图片 "${duplicateFiles.first.path.split(Platform.pathSeparator).last}" 已存在'
+            : '选择的 ${duplicateFiles.length} 张图片已存在，未添加任何新图片';
+        state = state.copyWith(
+          isProcessing: false,
+          error: message,
+        );
+        return;
+      } else if (duplicateFiles.isNotEmpty && newFiles.isNotEmpty) {
+        // 部分重复图片
+        final message = duplicateFiles.length == 1
+            ? '图片 "${duplicateFiles.first.path.split(Platform.pathSeparator).last}" 已存在，已添加 ${newFiles.length} 张新图片'
+            : '${duplicateFiles.length} 张图片已存在，已添加 ${newFiles.length} 张新图片';
+        
+        // 添加新图片
+        state = state.copyWith(
+          images: [...state.images, ...newFiles],
+          imageFromGallery: [
+            ...state.imageFromGallery,
+            ...List.filled(newFiles.length, false)
+          ], // 标记为本地文件
+          isProcessing: false,
+          error: message, // 使用error字段显示部分重复的消息
+        );
+      } else {
+        // 没有重复图片，全部添加
+        state = state.copyWith(
+          images: [...state.images, ...newFiles],
+          imageFromGallery: [
+            ...state.imageFromGallery,
+            ...List.filled(newFiles.length, false)
+          ], // 标记为本地文件
+          isProcessing: false,
+        );
+      }
+
+      AppLogger.info('添加图片完成', data: {
+        'totalSelected': files.length,
+        'duplicateCount': duplicateFiles.length,
+        'newCount': newFiles.length,
+        'finalImageCount': state.images.length,
+      });
+
     } catch (e) {
       state = state.copyWith(
         isProcessing: false,
@@ -96,32 +212,139 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       );
 
       // 将选择的图库项目转换为文件
-
       final selectedFiles = selectedItems
           .map((item) => File(item.path))
           .where((file) => file.existsSync())
           .toList();
 
       if (selectedFiles.isEmpty) {
-        throw Exception('没有找到有效的图片文件');
+        state = state.copyWith(
+          isProcessing: false,
+          error: '没有找到有效的图片文件',
+        );
+        return;
       }
 
-      // 添加文件并确保强制更新状态
-      final updatedImages = [...state.images, ...selectedFiles];
+      // 检查重复图片（包括文件路径和图库ID）
+      final existingPaths = state.images.map((f) => f.absolute.path).toSet();
+      
+      // 创建当前图库项目ID集合（基于现有图片的路径反查）
+      final existingLibraryIds = <String>{};
+      for (int i = 0; i < state.images.length; i++) {
+        if (i < state.imageFromGallery.length && state.imageFromGallery[i]) {
+          // 这是来自图库的图片，需要找到对应的图库ID
+          // 由于我们之前可能添加过这些图库项目，可以通过路径反查
+          for (final item in selectedItems) {
+            if (File(item.path).absolute.path == state.images[i].absolute.path) {
+              existingLibraryIds.add(item.id);
+              break;
+            }
+          }
+        }
+      }
+      
+      final duplicateFiles = <File>[];
+      final duplicateLibraryItems = <String>[];
+      final newFiles = <File>[];
+      final newLibraryItems = selectedItems.toList();
 
-      AppLogger.debug('从图库添加图片', data: {
-        'selectedCount': selectedFiles.length,
-        'totalCount': updatedImages.length
-      }); // 更新状态，设置选中索引为第一张新图片
-      state = state.copyWith(
-        images: updatedImages,
-        imageFromGallery: [
-          ...state.imageFromGallery,
-          ...List.filled(selectedFiles.length, true)
-        ], // 标记为图库文件
-        isProcessing: false,
-        selectedImageIndex: state.images.length,
-      );
+      for (int i = 0; i < selectedFiles.length; i++) {
+        final file = selectedFiles[i];
+        final item = selectedItems[i];
+        final absolutePath = file.absolute.path;
+        bool isDuplicate = false;
+        String? duplicateReason;
+        
+        // 检查文件路径重复
+        if (existingPaths.contains(absolutePath)) {
+          isDuplicate = true;
+          duplicateReason = '文件路径重复';
+        }
+        
+        // 检查图库ID重复
+        if (!isDuplicate && existingLibraryIds.contains(item.id)) {
+          isDuplicate = true;
+          duplicateReason = '图库项目已存在';
+        }
+        
+        if (isDuplicate) {
+          duplicateFiles.add(file);
+          duplicateLibraryItems.add(file.path.split(Platform.pathSeparator).last);
+          
+          AppLogger.debug('发现重复图库图片', data: {
+            'filePath': file.path,
+            'libraryItemId': item.id,
+            'reason': duplicateReason,
+          });
+        } else {
+          newFiles.add(file);
+          existingPaths.add(absolutePath); // 防止本批次内部重复
+          existingLibraryIds.add(item.id); // 防止图库ID重复
+        }
+      }
+
+      // 处理图库重复结果
+      if (duplicateFiles.isNotEmpty && newFiles.isEmpty) {
+        // 全部都是重复图库图片
+        String message;
+        if (duplicateFiles.length == 1) {
+          final fileName = duplicateFiles.first.path.split(Platform.pathSeparator).last;
+          if (duplicateLibraryItems.isNotEmpty) {
+            message = '图库图片 "$fileName" 已存在于当前导入列表中';
+          } else {
+            message = '图片 "$fileName" 已存在';
+          }
+        } else {
+          if (duplicateLibraryItems.length == duplicateFiles.length) {
+            message = '选择的 ${duplicateFiles.length} 张图库图片已存在于当前导入列表中，未添加任何新图片';
+          } else if (duplicateLibraryItems.isNotEmpty) {
+            message = '选择的 ${duplicateFiles.length} 张图片已存在（包含 ${duplicateLibraryItems.length} 张图库重复），未添加任何新图片';
+          } else {
+            message = '选择的 ${duplicateFiles.length} 张图片已存在，未添加任何新图片';
+          }
+        }
+        
+        state = state.copyWith(
+          isProcessing: false,
+          error: message,
+        );
+        return;
+      } else if (duplicateFiles.isNotEmpty && newFiles.isNotEmpty) {
+        // 部分重复图片
+        final message = duplicateFiles.length == 1
+            ? '图片 "${duplicateFiles.first.path.split(Platform.pathSeparator).last}" 已存在，已添加 ${newFiles.length} 张新图片'
+            : '${duplicateFiles.length} 张图片已存在，已添加 ${newFiles.length} 张新图片';
+        
+        // 添加新图片
+        state = state.copyWith(
+          images: [...state.images, ...newFiles],
+          imageFromGallery: [
+            ...state.imageFromGallery,
+            ...List.filled(newFiles.length, true) // 标记为图库文件
+          ],
+          isProcessing: false,
+          selectedImageIndex: state.images.length, // 选中第一张新图片
+          error: message, // 显示部分重复的消息
+        );
+      } else {
+        // 没有重复图片，全部添加
+        state = state.copyWith(
+          images: [...state.images, ...newFiles],
+          imageFromGallery: [
+            ...state.imageFromGallery,
+            ...List.filled(newFiles.length, true) // 标记为图库文件
+          ],
+          isProcessing: false,
+          selectedImageIndex: state.images.length, // 选中第一张新图片
+        );
+      }
+
+      AppLogger.info('从图库添加图片完成', data: {
+        'totalSelected': selectedFiles.length,
+        'duplicateCount': duplicateFiles.length,
+        'newCount': newFiles.length,
+        'finalImageCount': state.images.length,
+      });
     } catch (e) {
       state = state.copyWith(
         isProcessing: false,
@@ -233,6 +456,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         state.images,
         work,
         libraryItemIds: libraryItemIds.isNotEmpty ? libraryItemIds : null,
+        imageRotations: state.imageRotations.isNotEmpty ? state.imageRotations : null,
       );
 
       // 导入成功后重置状态
@@ -380,6 +604,31 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   /// 设置创作工具 (string version for compatibility)
   void setToolByString(String? toolStr) {
     setTool(toolStr); // Now just use the main method
+  }
+
+  /// 旋转当前选中的图片
+  void rotateCurrentImage() {
+    if (state.selectedImageIndex < state.images.length) {
+      final imageKey = state.images[state.selectedImageIndex].path;
+      final currentRotation = state.imageRotations[imageKey] ?? 0.0;
+      final newRotation = (currentRotation + 90) % 360;
+      
+      final newRotations = Map<String, double>.from(state.imageRotations);
+      newRotations[imageKey] = newRotation;
+      
+      state = state.copyWith(imageRotations: newRotations);
+      
+      AppLogger.debug('Rotated image $imageKey to ${newRotation}°', data: {
+        'imageKey': imageKey,
+        'oldRotation': currentRotation,
+        'newRotation': newRotation,
+      });
+    }
+  }
+
+  /// 获取图片的旋转角度
+  double getImageRotation(String imagePath) {
+    return state.imageRotations[imagePath] ?? 0.0;
   }
 
   /// 计算新的选中索引

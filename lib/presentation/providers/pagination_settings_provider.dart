@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/repositories/pagination_settings_repository_impl.dart';
 import '../../application/services/pagination_settings_service.dart';
-import '../../domain/models/pagination/pagination_settings.dart';
 import '../../domain/repositories/pagination_settings_repository.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 

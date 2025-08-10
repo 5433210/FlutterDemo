@@ -22,6 +22,7 @@ class ThumbnailStrip<T> extends StatefulWidget {
   final String Function(T image) pathResolver;
   final String Function(T image) keyResolver;
   final Function(int)? onRemove;
+  final int Function(T image)? timestampResolver; // 新增：获取时间戳的函数
 
   const ThumbnailStrip({
     super.key,
@@ -34,6 +35,7 @@ class ThumbnailStrip<T> extends StatefulWidget {
     this.onReorder,
     this.onRemove,
     this.useOriginalImage = false,
+    this.timestampResolver, // 新增参数
   });
 
   @override
@@ -220,8 +222,33 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
       errorMessage = '图片加载失败，请检查文件路径';
     }
 
+    // 生成heroTag，优先使用timestampResolver提供的时间戳
     final heroTag = fileExists
-        ? '${path}_${status?.lastModified.millisecondsSinceEpoch}'
+        ? () {
+            if (widget.timestampResolver != null) {
+              // 使用WorkImage的updateTime
+              final timestamp = widget.timestampResolver!(image);
+              AppLogger.debug('Using WorkImage updateTime for thumbnail', 
+                  tag: 'ThumbnailStrip', 
+                  data: {
+                    'path': path,
+                    'timestamp': timestamp,
+                    'index': index,
+                  });
+              return '${path}_$timestamp';
+            } else {
+              // 使用文件系统的lastModified时间
+              final timestamp = status?.lastModified.millisecondsSinceEpoch;
+              AppLogger.debug('Using file lastModified for thumbnail', 
+                  tag: 'ThumbnailStrip', 
+                  data: {
+                    'path': path,
+                    'timestamp': timestamp,
+                    'index': index,
+                  });
+              return '${path}_$timestamp';
+            }
+          }()
         : path;
 
     return GestureDetector(
@@ -264,6 +291,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
                     path: path,
                     fit: BoxFit.cover,
                     key: ValueKey(heroTag),
+                    reloadKey: heroTag, // 使用heroTag作为reloadKey，因为它包含了修改时间
                     errorBuilder: (context, error, stack) => Center(
                       child: Icon(Icons.broken_image,
                           size: 32, color: theme.colorScheme.error),

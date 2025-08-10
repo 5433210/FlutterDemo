@@ -10,7 +10,9 @@
       "Bash(python:*)",
       "Bash(find:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(echo $PATH)",
+      "Bash(dart:*)"
     ],
     "deny": []
   }

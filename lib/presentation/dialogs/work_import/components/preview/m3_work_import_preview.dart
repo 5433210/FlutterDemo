@@ -95,53 +95,46 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                         isEditing: !state
                             .isProcessing, // Disable editing during processing
                         showToolbar: true,
+                        getImageRotation: (imagePath) => 
+                            ref.read(workImportProvider.notifier).getImageRotation(imagePath),
                         toolbarActions: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                FilledButton.tonalIcon(
-                                  onPressed: handleAdd,
-                                  icon: const Icon(Icons.add_photo_alternate),
-                                  label: isSmallWidth
-                                      ? Text(l10n.fromLocal)
-                                      : Text(l10n.fromLocal),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: () => _handleAddFromGallery(),
-                                  icon: const Icon(Icons.collections),
-                                  label: isSmallWidth
-                                      ? Text(l10n.fromGallery)
-                                      : Text(l10n.fromGallery),
-                                ),
-                              ],
+                          // 旋转图片按钮
+                          Tooltip(
+                            message: '旋转90°',
+                            preferBelow: false,
+                            child: IconButton(
+                              onPressed: state.isProcessing
+                                  ? null
+                                  : () => _handleRotateImage(),
+                              icon: const Icon(Icons.rotate_right),
                             ),
                           ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: OutlinedButton.icon(
-                              onPressed:
-                                  handleDelete, // Disabled during processing
-                              icon: const Icon(
-                                Icons.delete_outline,
-                              ),
-                              label: isSmallWidth
-                                  ? Text(l10n.delete)
-                                  : Text(l10n.deleteImage),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.error,
-                                side: BorderSide(
-                                  color: theme.colorScheme.error.withAlpha(
-                                    images.isEmpty || state.isProcessing
-                                        ? 97
-                                        : 255,
-                                  ),
-                                ),
-                              ),
+
+                          const SizedBox(width: 4),
+
+                          // 添加图片按钮 - 使用统一的图标按钮样式
+                          Tooltip(
+                            message: l10n.addImage,
+                            preferBelow: false,
+                            child: IconButton(
+                              onPressed: state.isProcessing
+                                  ? null
+                                  : () => _handleAddImages(),
+                              icon: const Icon(Icons.add_photo_alternate),
+                            ),
+                          ),
+
+                          const SizedBox(width: 4),
+
+                          // 删除图片按钮 - 使用统一的图标按钮样式
+                          Tooltip(
+                            message: l10n.deleteImage,
+                            preferBelow: false,
+                            child: IconButton(
+                              onPressed: (images.isEmpty || state.isProcessing)
+                                  ? null
+                                  : () => _handleDeleteSelected(),
+                              icon: const Icon(Icons.delete_outline),
                             ),
                           ),
                         ],
@@ -207,13 +200,7 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
               FilledButton.tonalIcon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_photo_alternate),
-                label: Text(l10n.fromLocal),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => _handleAddFromGallery(),
-                icon: const Icon(Icons.collections),
-                label: Text(l10n.fromGallery),
+                label: Text(l10n.addImage),
               ),
             ],
           ),
@@ -222,51 +209,14 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     );
   }
 
-  /// 处理从图库添加图片
-  Future<void> _handleAddFromGallery() async {
-    final viewModel = ref.read(workImportProvider.notifier);
-    AppLogger.debug('M3WorkImportPreview handling addImages from gallery');
-
-    try {
-      // 添加前获取当前图片数量
-      final countBefore = ref.read(workImportProvider).images.length;
-
-      // 确保在正确的上下文中调用，并使用非根导航器
-      if (!mounted) {
-        return;
-      }
-
-      await viewModel.addImagesFromGallery(context);
-
-      // 检查组件是否仍然挂载
-      if (!mounted) {
-        return;
-      }
-
-      // 添加后获取图片数量，用于确认添加成功
-      final countAfter = ref.read(workImportProvider).images.length;
-      AppLogger.debug(
-          'Gallery images added: ${countAfter - countBefore} new images');
-
-      // 如果图片数量没变，可能添加失败但未抛出异常
-      if (countAfter == countBefore) {
-        AppLogger.warning('No images added from gallery');
-      }
-    } catch (e) {
-      AppLogger.error('Failed to add images from gallery: $e');
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.addFromGalleryFailed(e.toString()))),
-      );
-    }
-  }
-
-  /// 处理从本地文件系统添加图片
+  /// 处理添加图片（支持来源选择）
   Future<void> _handleAddImages() async {
     final viewModel = ref.read(workImportProvider.notifier);
-    AppLogger.debug('M3WorkImportPreview handling addImages from local');
-    await viewModel.addImages([]);
+    AppLogger.debug('M3WorkImportPreview handling addImages with source selection');
+    
+    if (!mounted) return;
+    
+    await viewModel.addImagesWithSource(context);
   }
 
   Future<void> _handleConfirmAndClose() async {
@@ -315,5 +265,12 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     final viewModel = ref.read(workImportProvider.notifier);
     AppLogger.debug('M3WorkImportPreview selecting image: $index');
     viewModel.selectImage(index);
+  }
+
+  /// 处理图片旋转
+  void _handleRotateImage() {
+    final viewModel = ref.read(workImportProvider.notifier);
+    AppLogger.debug('M3WorkImportPreview rotating current image');
+    viewModel.rotateCurrentImage();
   }
 }

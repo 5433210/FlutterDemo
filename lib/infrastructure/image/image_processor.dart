@@ -79,6 +79,7 @@ abstract class ImageProcessor {
     required int maxWidth,
     required int maxHeight,
     required int quality,
+    double rotation = 0.0, // 旋转角度（度）
   });
 
   /// 处理SVG轮廓

@@ -125,6 +125,7 @@ class _M3ViewModeImagePreviewState
                 onTap: widget.onImageSelect,
                 pathResolver: (image) => image.thumbnailPath,
                 keyResolver: (image) => image.id,
+                timestampResolver: (image) => image.updateTime.millisecondsSinceEpoch, // 使用WorkImage的updateTime
               ),
             ),
           ),

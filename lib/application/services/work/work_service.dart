@@ -183,6 +183,7 @@ class WorkService with WorkServiceErrorHandler {
     List<File> files,
     WorkEntity work, {
     Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+    Map<String, double>? imageRotations, // filePath -> rotation 的映射
   }) async {
     return handleOperation(
       'importWork',
@@ -215,6 +216,7 @@ class WorkService with WorkServiceErrorHandler {
           work.id,
           files,
           libraryItemIds: libraryItemIds,
+          imageRotations: imageRotations,
         );
 
         // 注意：不需要在这里显式调用updateCover，

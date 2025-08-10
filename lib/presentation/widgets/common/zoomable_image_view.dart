@@ -15,6 +15,8 @@ class ZoomableImageView extends StatefulWidget {
   final double minScale;
   final double maxScale;
   final bool showControls;
+  final double rotation; // 旋转角度（度）
+  final String? reloadKey; // 强制重新加载的键
   final Widget Function(BuildContext, Object, StackTrace?)? errorBuilder;
   final VoidCallback? onResetZoom;
   final Function(double)? onScaleChanged;
@@ -26,6 +28,8 @@ class ZoomableImageView extends StatefulWidget {
     this.minScale = 0.5,
     this.maxScale = 5.0,
     this.showControls = true,
+    this.rotation = 0.0,
+    this.reloadKey,
     this.errorBuilder,
     this.onResetZoom,
     this.onScaleChanged,
@@ -44,6 +48,25 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
   void initState() {
     super.initState();
     _transformationController = TransformationController();
+  }
+
+  @override
+  void didUpdateWidget(ZoomableImageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 当reloadKey改变时，清除图片缓存以确保显示最新内容
+    if (oldWidget.reloadKey != widget.reloadKey && 
+        oldWidget.imagePath == widget.imagePath &&
+        widget.reloadKey != null) {
+      try {
+        final file = File(widget.imagePath);
+        if (file.existsSync()) {
+          FileImage(file).evict();
+        }
+      } catch (e) {
+        // 忽略缓存清除错误
+      }
+    }
   }
 
   @override
@@ -67,7 +90,12 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
             onInteractionStart: _handleInteractionStart,
             onInteractionEnd: _handleInteractionEnd,
             child: Center(
-              child: _buildImageWidget(theme),
+              child: widget.rotation != 0.0
+                  ? Transform.rotate(
+                      angle: widget.rotation * (3.14159265359 / 180), // 转换为弧度
+                      child: _buildImageWidget(theme),
+                    )
+                  : _buildImageWidget(theme),
             ),
           ),
           // if (widget.showControls) ...[
@@ -123,6 +151,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
       return CachedImage(
         path: path,
         fit: BoxFit.contain,
+        reloadKey: widget.reloadKey,
         errorBuilder: widget.errorBuilder ??
             (context, error, stackTrace) => Center(
                   child: Column(

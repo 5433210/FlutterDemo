@@ -163,7 +163,7 @@ Future<void> _initializePathConfig() async {
   if (!_unifiedPathConfigInitialized) {
     _unifiedPathConfigInitialized = true;
     try {
-      final unifiedConfig = await UnifiedPathConfigService.readConfig();
+      await UnifiedPathConfigService.readConfig();
       AppLogger.info('统一路径配置初始化成功', tag: 'App');
     } catch (e) {
       AppLogger.warning('统一路径配置初始化失败', error: e, tag: 'App');

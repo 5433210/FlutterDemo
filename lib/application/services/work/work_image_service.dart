@@ -412,6 +412,7 @@ class WorkImageService with WorkServiceErrorHandler {
     String workId,
     File file, {
     String? libraryItemId,
+    double rotation = 0.0,
   }) async {
     return handleOperation(
       'importImage',
@@ -468,6 +469,7 @@ class WorkImageService with WorkServiceErrorHandler {
     String workId,
     List<File> files, {
     Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+    Map<String, double>? imageRotations, // filePath -> rotation 的映射
   }) async {
     return handleOperation(
       'importImages',
@@ -491,8 +493,9 @@ class WorkImageService with WorkServiceErrorHandler {
 
         for (final file in uniqueFiles) {
           final libraryItemId = libraryItemIds?[file.path];
+          final rotation = imageRotations?[file.path] ?? 0.0;
           final image =
-              await importImage(workId, file, libraryItemId: libraryItemId);
+              await importImage(workId, file, libraryItemId: libraryItemId, rotation: rotation);
           images.add(image);
         }
 
@@ -502,11 +505,118 @@ class WorkImageService with WorkServiceErrorHandler {
     );
   }
 
+  /// 旋转图片
+  Future<WorkImage> rotateImage(
+    String workId,
+    WorkImage image,
+    double degrees,
+  ) async {
+    return handleOperation(
+      'rotateImage',
+      () async {
+        AppLogger.info('开始旋转图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageId': image.id,
+          'degrees': degrees,
+          'currentPath': image.path,
+          'originalPath': image.originalPath,
+        });
+
+        // 优先使用当前已处理的图片作为旋转基础
+        final currentFile = File(image.path);
+        final originalFile = File(image.originalPath);
+        
+        File sourceFile;
+        if (await currentFile.exists()) {
+          sourceFile = currentFile;
+          AppLogger.info('使用当前图片作为旋转基础', tag: 'WorkImageService', data: {
+            'sourceFile': image.path,
+          });
+        } else if (await originalFile.exists()) {
+          sourceFile = originalFile;
+          AppLogger.warning('当前图片不存在，使用原始图片作为旋转基础', tag: 'WorkImageService', data: {
+            'currentPath': image.path,
+            'originalPath': image.originalPath,
+          });
+        } else {
+          throw FileSystemException('图片文件不存在，无法旋转', 'current: ${image.path}, original: ${image.originalPath}');
+        }
+
+        // 处理并旋转图片
+        final rotatedFile = await _processor.processImage(
+          sourceFile,
+          maxWidth: 10000,
+          maxHeight: 10000,
+          quality: 90,
+          rotation: degrees,
+        );
+
+        // 保存旋转后的图片
+        final rotatedPath = await _storage.saveImportedImage(
+          workId,
+          image.id,
+          rotatedFile,
+        );
+
+        // 生成旋转后的缩略图（同样基于当前文件）
+        final rotatedThumbnail = await _processor.processImage(
+          sourceFile,
+          maxWidth: 200,
+          maxHeight: 200,
+          quality: 80,
+          rotation: degrees,
+        );
+
+        final rotatedThumbnailPath = await _storage.saveThumbnail(
+          workId,
+          image.id,
+          rotatedThumbnail,
+        );
+
+        // 获取旋转后图片的信息
+        final info = await _storage.getWorkImageInfo(rotatedPath);
+
+        // 创建更新后的图片对象
+        final updatedImage = image.copyWith(
+          path: rotatedPath,
+          thumbnailPath: rotatedThumbnailPath,
+          width: info['width'] ?? image.width,
+          height: info['height'] ?? image.height,
+          size: info['size'] ?? image.size,
+          updateTime: DateTime.now(),
+        );
+
+        // 保存到数据库
+        await _repository.saveMany([updatedImage]);
+
+        AppLogger.info('图片旋转完成', tag: 'WorkImageService', data: {
+          'imageId': image.id,
+          'newPath': rotatedPath,
+          'newWidth': updatedImage.width,
+          'newHeight': updatedImage.height,
+          'degrees': degrees,
+        });
+
+        // 清理临时文件
+        try {
+          await rotatedFile.delete();
+          await rotatedThumbnail.delete();
+        } catch (e) {
+          AppLogger.warning('清理临时文件失败', error: e, tag: 'WorkImageService');
+        }
+
+        return updatedImage;
+      },
+      data: {'workId': workId, 'imageId': image.id, 'degrees': degrees},
+    );
+  }
+
   /// 处理完整的图片导入流程
   Future<List<WorkImage>> processImport(
     String workId,
     List<File> files, {
     Map<String, String>? libraryItemIds, // filePath -> libraryItemId 的映射
+    Map<String, double>? imageRotations, // filePath -> rotation 的映射
   }) async {
     return handleOperation(
       'processImport',
@@ -522,10 +632,10 @@ class WorkImageService with WorkServiceErrorHandler {
 
         // 2. 导入所有图片
         final tempImages =
-            await importImages(workId, files, libraryItemIds: libraryItemIds);
+            await importImages(workId, files, libraryItemIds: libraryItemIds, imageRotations: imageRotations);
 
         // 3. 处理并保存图片
-        final savedImages = await saveChanges(workId, tempImages);
+        final savedImages = await saveChanges(workId, tempImages, imageRotations: imageRotations);
 
         // 4. 强制验证封面是否已正确生成
         if (savedImages.isNotEmpty) {
@@ -589,6 +699,7 @@ class WorkImageService with WorkServiceErrorHandler {
     String workId,
     List<WorkImage> images, {
     ProgressCallback? onProgress,
+    Map<String, double>? imageRotations, // 添加旋转信息参数
   }) async {
     return handleOperation(
       'saveChanges',
@@ -686,12 +797,16 @@ class WorkImageService with WorkServiceErrorHandler {
                 );
                 tempFiles.add(originalPath);
 
+                // 获取旋转角度（从 imageRotations 参数中获取）
+                final rotation = imageRotations?[image.originalPath] ?? 0.0;
+
                 // 2. 处理并保存导入图片
                 final processedFile = await _processor.processImage(
                   file,
                   maxWidth: 10000,
                   maxHeight: 10000,
                   quality: 90,
+                  rotation: rotation,
                 );
                 final importedPath = await _storage.saveImportedImage(
                   workId,
@@ -706,6 +821,7 @@ class WorkImageService with WorkServiceErrorHandler {
                   maxWidth: 200,
                   maxHeight: 200,
                   quality: 80,
+                  rotation: rotation,
                 );
                 final thumbnailPath = await _storage.saveThumbnail(
                   workId,
@@ -744,47 +860,162 @@ class WorkImageService with WorkServiceErrorHandler {
                 rethrow;
               }
             } else {
-              // 已存在的图片: 只更新索引，同时验证文件是否存在
-              AppLogger.info('处理现有图片（顺序调整）', tag: 'WorkImageService', data: {
+              // 已存在的图片: 检查是否需要旋转，然后更新索引
+              final rotation = imageRotations?[image.originalPath] ?? 0.0;
+              
+              AppLogger.info('处理现有图片', tag: 'WorkImageService', data: {
                 'imageId': image.id,
                 'currentPath': image.path,
                 'originalPath': image.originalPath,
                 'thumbnailPath': image.thumbnailPath,
                 'targetIndex': index,
+                'rotation': rotation,
               });
 
-              // 验证当前图片的所有相关文件是否存在
-              final pathsToCheck = [
-                {'type': 'imported', 'path': image.path},
-                {'type': 'original', 'path': image.originalPath},
-                {'type': 'thumbnail', 'path': image.thumbnailPath},
-              ];
-
-              for (final pathInfo in pathsToCheck) {
-                final file = File(pathInfo['path'] as String);
-                final exists = await file.exists();
-                AppLogger.info('验证现有图片文件', tag: 'WorkImageService', data: {
+              if (rotation != 0.0) {
+                // 需要旋转的已存在图片
+                AppLogger.info('开始旋转已存在图片', tag: 'WorkImageService', data: {
                   'imageId': image.id,
-                  'fileType': pathInfo['type'],
-                  'path': pathInfo['path'],
-                  'exists': exists,
-                  'fileSize': exists ? await file.length() : 0,
+                  'rotation': rotation,
                 });
 
-                if (!exists) {
-                  AppLogger.warning('现有图片文件缺失', tag: 'WorkImageService', data: {
+                try {
+                  // 使用当前已处理的图片作为旋转基础，而不是原始图片
+                  final currentFile = File(image.path);
+                  if (!await currentFile.exists()) {
+                    // 如果当前图片不存在，尝试使用原始图片
+                    final originalFile = File(image.originalPath);
+                    if (!await originalFile.exists()) {
+                      throw FileSystemException('图片文件不存在，无法旋转', 'current: ${image.path}, original: ${image.originalPath}');
+                    }
+                    // 使用原始图片作为后备
+                    AppLogger.warning('当前图片不存在，使用原始图片作为旋转基础', tag: 'WorkImageService', data: {
+                      'imageId': image.id,
+                      'currentPath': image.path,
+                      'originalPath': image.originalPath,
+                    });
+                  }
+                  
+                  // 选择正确的源文件：优先使用当前处理过的文件
+                  final sourceFile = await currentFile.exists() ? currentFile : File(image.originalPath);
+                  
+                  AppLogger.info('选择旋转源文件', tag: 'WorkImageService', data: {
+                    'imageId': image.id,
+                    'sourcePath': sourceFile.path,
+                    'isCurrentFile': sourceFile.path == image.path,
+                    'rotation': rotation,
+                  });
+
+                  // 处理并旋转图片
+                  final rotatedFile = await _processor.processImage(
+                    sourceFile,
+                    maxWidth: 10000,
+                    maxHeight: 10000,
+                    quality: 90,
+                    rotation: rotation,
+                  );
+
+                  // 保存旋转后的图片
+                  final rotatedPath = await _storage.saveImportedImage(
+                    workId,
+                    image.id,
+                    rotatedFile,
+                  );
+
+                  // 生成旋转后的缩略图（同样基于当前文件）
+                  final rotatedThumbnail = await _processor.processImage(
+                    sourceFile,
+                    maxWidth: 200,
+                    maxHeight: 200,
+                    quality: 80,
+                    rotation: rotation,
+                  );
+
+                  final rotatedThumbnailPath = await _storage.saveThumbnail(
+                    workId,
+                    image.id,
+                    rotatedThumbnail,
+                  );
+
+                  // 获取旋转后图片的信息
+                  final info = await _storage.getWorkImageInfo(rotatedPath);
+
+                  processedImages.add(image.copyWith(
+                    path: rotatedPath,
+                    thumbnailPath: rotatedThumbnailPath,
+                    width: info['width'] ?? image.width,
+                    height: info['height'] ?? image.height,
+                    size: info['size'] ?? image.size,
+                    index: index++,
+                    updateTime: DateTime.now(),
+                  ));
+
+                  AppLogger.info('已存在图片旋转完成', tag: 'WorkImageService', data: {
+                    'imageId': image.id,
+                    'newPath': rotatedPath,
+                    'newThumbnailPath': rotatedThumbnailPath,
+                    'rotation': rotation,
+                  });
+
+                  // 清理临时文件
+                  try {
+                    await rotatedFile.delete();
+                    await rotatedThumbnail.delete();
+                  } catch (e) {
+                    AppLogger.warning('清理临时文件失败', error: e, tag: 'WorkImageService');
+                  }
+
+                } catch (e, stack) {
+                  AppLogger.error('旋转已存在图片失败',
+                      tag: 'WorkImageService',
+                      error: e,
+                      stackTrace: stack,
+                      data: {
+                        'imageId': image.id,
+                        'rotation': rotation,
+                      });
+                  
+                  // 旋转失败时，仍然保留原图片信息，只更新索引
+                  processedImages.add(image.copyWith(
+                    index: index++,
+                    updateTime: DateTime.now(),
+                  ));
+                }
+              } else {
+                // 不需要旋转，只更新索引和验证文件存在
+                // 验证当前图片的所有相关文件是否存在
+                final pathsToCheck = [
+                  {'type': 'imported', 'path': image.path},
+                  {'type': 'original', 'path': image.originalPath},
+                  {'type': 'thumbnail', 'path': image.thumbnailPath},
+                ];
+
+                for (final pathInfo in pathsToCheck) {
+                  final file = File(pathInfo['path'] as String);
+                  final exists = await file.exists();
+                  AppLogger.debug('验证现有图片文件', tag: 'WorkImageService', data: {
                     'imageId': image.id,
                     'fileType': pathInfo['type'],
-                    'missingPath': pathInfo['path'],
-                    'reason': '顺序调整时发现文件缺失',
+                    'path': pathInfo['path'],
+                    'exists': exists,
+                    'fileSize': exists ? await file.length() : 0,
                   });
-                }
-              }
 
-              processedImages.add(image.copyWith(
-                index: index++,
-                updateTime: DateTime.now(),
-              ));
+                  if (!exists) {
+                    AppLogger.warning('现有图片文件缺失', tag: 'WorkImageService', data: {
+                      'imageId': image.id,
+                      'fileType': pathInfo['type'],
+                      'missingPath': pathInfo['path'],
+                      'reason': '顺序调整时发现文件缺失',
+                    });
+                  }
+                }
+
+                processedImages.add(image.copyWith(
+                  index: index++,
+                  updateTime: DateTime.now(),
+                ));
+              }
             }
           }
 
