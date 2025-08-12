@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'application/providers/app_initialization_provider.dart';
+import 'application/services/enhanced_backup_service.dart';
 import 'application/services/unified_path_config_service.dart';
 import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
@@ -74,11 +75,20 @@ void main() async {
   }
 
   // 🚀 优化：简化日志初始化，减少启动开销
+  String? logFilePath;
+  if (Platform.isAndroid || Platform.isIOS) {
+    // 移动端：禁用文件日志，避免权限问题
+    logFilePath = null;
+  } else {
+    // 桌面端：使用相对路径
+    logFilePath = 'app.log';
+  }
+  
   await AppLogger.init(
-      enableFile: true,
+      enableFile: logFilePath != null,
       enableConsole: kDebugMode,  // 只在调试模式启用控制台
       minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
-      filePath: 'app.log');
+      filePath: logFilePath);
 
   // 🚀 优化：只在调试模式启动性能监控器
   if (kDebugMode) {
@@ -165,9 +175,36 @@ Future<void> _initializePathConfig() async {
     try {
       await UnifiedPathConfigService.readConfig();
       AppLogger.info('统一路径配置初始化成功', tag: 'App');
+      
+      // 立即检查备份恢复，在任何Provider被触发之前
+      try {
+        await _checkAndCompleteBackupRestore();
+      } catch (restoreError, restoreStack) {
+        // 备份恢复失败记录详细错误，但不影响应用启动
+        AppLogger.error('主程序备份恢复失败', 
+            error: restoreError, stackTrace: restoreStack, tag: 'App');
+      }
+      
+      AppLogger.info('数据路径配置预加载完成', tag: 'App');
     } catch (e) {
       AppLogger.warning('统一路径配置初始化失败', error: e, tag: 'App');
     }
+  }
+}
+
+/// 检查并完成备份恢复
+Future<void> _checkAndCompleteBackupRestore() async {
+  try {
+    // 获取当前数据路径
+    final config = await UnifiedPathConfigService.readConfig();
+    final actualDataPath = await config.dataPath.getActualDataPath();
+    
+    // 调用备份恢复检查
+    await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(actualDataPath);
+  } catch (e, stack) {
+    AppLogger.error('主程序中备份恢复检查失败', 
+        error: e, stackTrace: stack, tag: 'App');
+    // 备份恢复失败不应该阻止应用启动
   }
 }
 

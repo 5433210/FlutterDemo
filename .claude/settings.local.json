@@ -12,7 +12,11 @@
       "mcp__ide__getDiagnostics",
       "Bash(rm:*)",
       "Bash(echo $PATH)",
-      "Bash(dart:*)"
+      "Bash(dart:*)",
+      "Bash(./gradlew:*)",
+      "Bash(gradlew.bat clean:*)",
+      "Bash(cp:*)",
+      "Bash(adb shell:*)"
     ],
     "deny": []
   }

@@ -429,4 +429,42 @@ class WorkRepositoryImpl implements WorkRepository {
 
     return data;
   }
+
+  @override
+  Future<void> updateImageStats({
+    required String workId,
+    required int imageCount,
+    String? firstImageId,
+    DateTime? lastImageUpdateTime,
+  }) async {
+    AppLogger.debug('更新作品图片统计信息', tag: 'WorkRepositoryImpl', data: {
+      'workId': workId,
+      'imageCount': imageCount,
+      'firstImageId': firstImageId,
+      'lastImageUpdateTime': lastImageUpdateTime?.toIso8601String(),
+    });
+
+    final updateData = <String, dynamic>{
+      'imageCount': imageCount,
+      'firstImageId': firstImageId,
+      'updateTime': DateTimeHelper.toStorageFormat(DateTime.now()),
+    };
+
+    if (lastImageUpdateTime != null) {
+      updateData['lastImageUpdateTime'] = DateTimeHelper.toStorageFormat(lastImageUpdateTime);
+    }
+
+    // 构建 SQL 更新语句
+    final setClause = updateData.keys.map((key) => '$key = ?').join(', ');
+    final sql = 'UPDATE $_table SET $setClause WHERE id = ?';
+    final args = [...updateData.values, workId];
+
+    await _db.rawUpdate(sql, args);
+
+    AppLogger.info('作品图片统计信息更新完成', tag: 'WorkRepositoryImpl', data: {
+      'workId': workId,
+      'imageCount': imageCount,
+      'firstImageId': firstImageId,
+    });
+  }
 }

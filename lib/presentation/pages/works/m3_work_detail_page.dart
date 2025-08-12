@@ -531,30 +531,27 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
         final coverExists =
             await storageService.verifyWorkImageExists(coverPath);
 
-        // 只有在封面不存在时才重新生成，避免不必要的错误
-        if (!coverExists) {
-          AppLogger.info('封面不存在，尝试重新生成', tag: 'M3WorkDetailPage', data: {
-            'firstImageId': savedImages[0].id,
-            'coverPath': coverPath,
-          });
+        // 始终更新封面以确保它与当前首张图片一致
+        // 特别是在删除首页图片后，需要确保封面反映新的首页图片
+        AppLogger.info('更新封面以确保与当前首张图片一致', tag: 'M3WorkDetailPage', data: {
+          'firstImageId': savedImages[0].id,
+          'coverPath': coverPath,
+          'coverExists': coverExists,
+          'reason': '确保封面与首页图片同步',
+        });
 
-          try {
-            await imageService.updateCover(editingWork.id, savedImages[0].id);
-            AppLogger.info('封面重新生成成功', tag: 'M3WorkDetailPage');
-          } catch (e) {
-            AppLogger.warning('封面重新生成失败，但不影响图片保存',
-                tag: 'M3WorkDetailPage',
-                error: e,
-                data: {
-                  'firstImageId': savedImages[0].id,
-                  'reason': '可能是顺序调整时图片文件路径问题',
-                });
-            // 不要抛出异常，封面生成失败不应该影响图片顺序保存
-          }
-        } else {
-          AppLogger.info('封面已存在，跳过更新', tag: 'M3WorkDetailPage', data: {
-            'coverPath': coverPath,
-          });
+        try {
+          await imageService.updateCover(editingWork.id, savedImages[0].id);
+          AppLogger.info('封面更新成功', tag: 'M3WorkDetailPage');
+        } catch (e) {
+          AppLogger.warning('封面更新失败，但不影响图片保存',
+              tag: 'M3WorkDetailPage',
+              error: e,
+              data: {
+                'firstImageId': savedImages[0].id,
+                'reason': '可能是图片文件路径问题',
+              });
+          // 不要抛出异常，封面生成失败不应该影响图片顺序保存
         }
       }
 

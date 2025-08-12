@@ -104,70 +104,7 @@ const migrations = [
   '''
   
   
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works
-    SET imageCount = (
-      SELECT COUNT(*)
-      FROM work_images
-      WHERE workId = NEW.workId
-    )
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works
-    SET imageCount = (
-      SELECT COUNT(*)
-      FROM work_images
-      WHERE workId = OLD.workId
-    )
-    WHERE id = OLD.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update
-  AFTER UPDATE OF indexInWork ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id FROM work_images WHERE workId = OLD.workId ORDER BY indexInWork ASC LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = OLD.workId;
-  END;
+  
   
   
   ''',
@@ -490,80 +427,7 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_works_updateTime ON works(updateTime);
 
   -- 6. 重新创建触发器
-  DROP TRIGGER IF EXISTS update_work_image_count_insert;
-  DROP TRIGGER IF EXISTS update_work_image_count_delete;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_insert;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_update;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_delete;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works
-    SET imageCount = (
-      SELECT COUNT(*)
-      FROM work_images
-      WHERE workId = NEW.workId
-    )
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works
-    SET imageCount = (
-      SELECT COUNT(*)
-      FROM work_images
-      WHERE workId = OLD.workId
-    )
-    WHERE id = OLD.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update
-  AFTER UPDATE OF indexInWork ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END;
-
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = OLD.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = OLD.workId;
-  END;  
+  
   
   -- 7. 初始化书法风格配置到settings表
   INSERT OR IGNORE INTO settings (key, value, updateTime) VALUES
@@ -580,7 +444,8 @@ const migrations = [
     c.id,
     c.character,
     c.isFavorite,
-    c.createTime AS collectionTime,    c.updateTime,
+    c.createTime AS collectionTime,
+    c.updateTime,
     c.pageId,
     c.workId,
     c.tags,

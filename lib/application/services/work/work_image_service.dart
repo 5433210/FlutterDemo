@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
+import '../../../domain/repositories/work_repository.dart';
 import '../../../infrastructure/image/image_processor.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../storage/work_storage_service.dart';
@@ -20,14 +21,64 @@ class WorkImageService with WorkServiceErrorHandler {
   final WorkStorageService _storage;
   final ImageProcessor _processor;
   final WorkImageRepository _repository;
+  final WorkRepository _workRepository;
 
   WorkImageService({
     required WorkStorageService storage,
     required ImageProcessor processor,
     required WorkImageRepository repository,
+    required WorkRepository workRepository,
   })  : _storage = storage,
         _processor = processor,
-        _repository = repository;
+        _repository = repository,
+        _workRepository = workRepository;
+
+  /// 更新作品的图片统计信息
+  Future<void> updateWorkImageStats(String workId) async {
+    return handleOperation(
+      'updateWorkImageStats',
+      () async {
+        AppLogger.debug('开始更新作品图片统计信息', tag: 'WorkImageService', data: {
+          'workId': workId,
+        });
+
+        // 获取作品的所有图片
+        final images = await _repository.getAllByWorkId(workId);
+        
+        // 按索引排序
+        final sortedImages = [...images]..sort((a, b) => a.index.compareTo(b.index));
+        
+        // 计算新的统计信息
+        final imageCount = sortedImages.length;
+        final firstImageId = sortedImages.isNotEmpty ? sortedImages.first.id : null;
+        final lastImageUpdateTime = sortedImages.isNotEmpty 
+            ? sortedImages.map((img) => img.updateTime).reduce((a, b) => a.isAfter(b) ? a : b)
+            : null;
+
+        AppLogger.debug('计算得出的统计信息', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageCount': imageCount,
+          'firstImageId': firstImageId,
+          'lastImageUpdateTime': lastImageUpdateTime?.toIso8601String(),
+        });
+
+        // 更新作品信息
+        await _workRepository.updateImageStats(
+          workId: workId,
+          imageCount: imageCount,
+          firstImageId: firstImageId,
+          lastImageUpdateTime: lastImageUpdateTime,
+        );
+
+        AppLogger.info('作品图片统计信息更新完成', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageCount': imageCount,
+          'firstImageId': firstImageId,
+        });
+      },
+      data: {'workId': workId},
+    );
+  }
 
   /// 清理未使用的图片文件
   Future<void> cleanupUnusedFiles(String workId, List<String> usedPaths) async {
@@ -273,6 +324,9 @@ class WorkImageService with WorkServiceErrorHandler {
 
         // 删除数据库记录
         await _repository.delete(workId, imageId);
+
+        // 更新作品的图片统计信息
+        await updateWorkImageStats(workId);
 
         AppLogger.info('图片文件删除完成', tag: 'WorkImageService');
       },
@@ -741,21 +795,36 @@ class WorkImageService with WorkServiceErrorHandler {
               images.map((img) => '${img.id}(${img.index})').take(5).toList(),
         });
 
+        // 清理已删除的图片记录和获取删除的图片ID列表
+        final deletedIds = existingIds.difference(newIds).toList();
+
         // 确定是否需要更新封面
-        // 只有当首图真的变化时才更新封面，纯顺序调整且首图未变不需要更新
+        // 需要更新封面的情况：
+        // 1. 首图ID发生变化
+        // 2. 有图片被删除且旧的首图是被删除的图片之一
+        // 3. 图片发生重新排序
         final shouldUpdateCover = newFirstImageId != null &&
-            existingFirstImageId != null &&
-            existingFirstImageId != newFirstImageId;
+            (existingFirstImageId != newFirstImageId || 
+             deletedIds.contains(existingFirstImageId) ||
+             imagesReordered);
 
         AppLogger.info('封面更新判断', tag: 'WorkImageService', data: {
           'existingFirstImageId': existingFirstImageId,
           'newFirstImageId': newFirstImageId,
+          'deletedIds': deletedIds,
+          'deletedCount': deletedIds.length,
+          'imagesReordered': imagesReordered,
           'shouldUpdateCover': shouldUpdateCover,
-          'reason': shouldUpdateCover ? '首图ID变化' : '首图未变化，不需要更新封面',
+          'reason': shouldUpdateCover 
+              ? (existingFirstImageId != newFirstImageId 
+                  ? '首图ID变化' 
+                  : deletedIds.contains(existingFirstImageId)
+                      ? '原首图被删除'
+                      : '图片顺序变化')
+              : '无需更新封面',
         });
 
         // 清理已删除的图片记录
-        final deletedIds = existingIds.difference(newIds).toList();
         if (deletedIds.isNotEmpty) {
           await _repository.deleteMany(workId, deletedIds);
         }
@@ -1125,6 +1194,9 @@ class WorkImageService with WorkServiceErrorHandler {
 
             // Verify all processed files
             await _verifyAllProcessedFiles(tempFiles);
+
+            // 更新作品的图片统计信息
+            await updateWorkImageStats(workId);
 
             onProgress?.call(1.0, '完成');
 

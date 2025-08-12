@@ -199,15 +199,7 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
       'actualPath': actualPath,
     });
 
-    // 在初始化数据库之前检查备份恢复
-    AppLogger.info('开始检查备份恢复', tag: 'AppInit');
-    try {
-      await _checkAndCompleteBackupRestore(actualPath);
-      AppLogger.info('备份恢复检查完成', tag: 'AppInit');
-    } catch (e) {
-      AppLogger.warning('备份恢复检查失败', error: e, tag: 'AppInit');
-      // 备份恢复失败不应该阻止应用启动
-    }
+    // 备份恢复已在main.dart中完成，此处不再重复执行
 
     // 确保ServiceLocator初始化（这会注册所有必要的服务，包括EnhancedBackupService）
     AppLogger.info('开始初始化服务定位器', tag: 'AppInit');
@@ -222,16 +214,6 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
   } catch (e, stack) {
     AppLogger.error('应用初始化失败', error: e, stackTrace: stack, tag: 'AppInit');
     return AppInitializationResult.failure('应用初始化失败: $e');
-  }
-}
-
-/// 检查并完成备份恢复
-Future<void> _checkAndCompleteBackupRestore(String dataPath) async {
-  try {
-    await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
-  } catch (e, stack) {
-    AppLogger.error('备份恢复检查失败', error: e, stackTrace: stack, tag: 'AppInit');
-    rethrow;
   }
 }
 

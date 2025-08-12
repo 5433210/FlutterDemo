@@ -493,55 +493,99 @@ class SQLiteDatabase implements DatabaseInterface {
         onCreate: (db, version) async {
           AppLogger.info(
             '首次创建数据库，执行初始化...\n'
-            '执行迁移脚本:\n',
+            '合并执行所有迁移脚本 (v1-v$version)',
             tag: 'Database',
           );
-          for (int i = 0; i < migrations.length; i++) {
-            final sql = migrations[i];
-            AppLogger.info(
-              '执行SQL (${i + 1}/${migrations.length}):\n$sql',
-              tag: 'Database',
-            );
-            try {
-              await db.execute(sql);
-            } catch (e) {
-              AppLogger.error('执行迁移脚本失败', tag: 'Database', error: e, data: {
-                'script_index': i,
-                'sql': sql,
-              });
-              rethrow;
-            }
+          
+          // 将所有迁移脚本合并成一个脚本
+          final combinedSql = _combineMigrationScripts(migrations, 0, migrations.length);
+          
+          AppLogger.debug(
+            '执行合并SQL脚本 (${combinedSql.length} 字符)',
+            tag: 'Database',
+          );
+          
+          try {
+            // 使用事务执行合并后的脚本
+            await db.transaction((txn) async {
+              // 分割SQL语句并执行
+              final statements = _splitSqlStatements(combinedSql);
+              for (int i = 0; i < statements.length; i++) {
+                final statement = statements[i].trim();
+                if (statement.isNotEmpty) {
+                  try {
+                    await txn.execute(statement);
+                  } catch (e) {
+                    AppLogger.error('执行SQL语句失败', tag: 'Database', error: e, data: {
+                      'statement_index': i,
+                      'statement': statement.length > 200 ? '${statement.substring(0, 200)}...' : statement,
+                    });
+                    rethrow;
+                  }
+                }
+              }
+            });
+            
+            AppLogger.info('数据库初始化完成', tag: 'Database');
+          } catch (e) {
+            AppLogger.error('执行合并迁移脚本失败', tag: 'Database', error: e, data: {
+              'version': version,
+              'sql_length': combinedSql.length,
+            });
+            rethrow;
           }
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           AppLogger.info(
             '升级数据库:\n'
             '  - 当前版本: v$oldVersion\n'
-            '  - 目标版本: v$newVersion',
+            '  - 目标版本: v$newVersion\n'
+            '  - 合并执行迁移脚本',
             tag: 'Database',
           );
-          for (var i = oldVersion; i < newVersion; i++) {
-            final sql = migrations[i];
-            AppLogger.debug(
-              '执行迁移脚本 ${i + 1}:\n$sql',
+          
+          // 将需要的迁移脚本合并成一个脚本
+          final combinedSql = _combineMigrationScripts(migrations, oldVersion, newVersion);
+          
+          AppLogger.debug(
+            '执行合并升级脚本 (${combinedSql.length} 字符)',
+            tag: 'Database',
+          );
+          
+          try {
+            // 使用事务执行合并后的脚本
+            await db.transaction((txn) async {
+              // 分割SQL语句并执行
+              final statements = _splitSqlStatements(combinedSql);
+              for (int i = 0; i < statements.length; i++) {
+                final statement = statements[i].trim();
+                if (statement.isNotEmpty) {
+                  try {
+                    await txn.execute(statement);
+                  } catch (e) {
+                    AppLogger.error('执行SQL语句失败', tag: 'Database', error: e, data: {
+                      'statement_index': i,
+                      'statement': statement.length > 200 ? '${statement.substring(0, 200)}...' : statement,
+                    });
+                    rethrow;
+                  }
+                }
+              }
+            });
+            
+            AppLogger.info('数据库升级完成', tag: 'Database');
+          } catch (e) {
+            AppLogger.error(
+              '数据库升级失败',
               tag: 'Database',
+              error: e,
+              data: {
+                'oldVersion': oldVersion,
+                'newVersion': newVersion,
+                'sql_length': combinedSql.length,
+              },
             );
-            try {
-              await db.execute(sql);
-            } catch (e) {
-              AppLogger.error(
-                '数据库升级失败',
-                tag: 'Database',
-                error: e,
-                data: {
-                  'script_index': i,
-                  'oldVersion': oldVersion,
-                  'newVersion': newVersion,
-                  'sql': sql,
-                },
-              );
-              rethrow;
-            }
+            rethrow;
           }
         },
         onConfigure: (db) async {
@@ -574,5 +618,71 @@ class SQLiteDatabase implements DatabaseInterface {
       // 重新抛出异常，让调用者知道初始化失败
       rethrow;
     }
+  }
+
+  /// 合併遷移腳本
+  static String _combineMigrationScripts(List<String> migrations, int startIndex, int endIndex) {
+    final buffer = StringBuffer();
+    
+    for (int i = startIndex; i < endIndex; i++) {
+      final script = migrations[i].trim();
+      if (script.isNotEmpty) {
+        buffer.writeln('-- Migration ${i + 1}');
+        buffer.writeln(script);
+        buffer.writeln();
+      }
+    }
+    
+    return buffer.toString();
+  }
+
+  /// 分割SQL語句
+  static List<String> _splitSqlStatements(String sql) {
+    final statements = <String>[];
+    final buffer = StringBuffer();
+    final lines = sql.split('\n');
+    
+    bool inMultiLineComment = false;
+    
+    for (final line in lines) {
+      final trimmedLine = line.trim();
+      
+      // 跳過空行和單行註釋
+      if (trimmedLine.isEmpty || trimmedLine.startsWith('--')) {
+        continue;
+      }
+      
+      // 處理多行註釋
+      if (trimmedLine.startsWith('/*')) {
+        inMultiLineComment = true;
+        continue;
+      }
+      if (trimmedLine.endsWith('*/')) {
+        inMultiLineComment = false;
+        continue;
+      }
+      if (inMultiLineComment) {
+        continue;
+      }
+      
+      buffer.writeln(line);
+      
+      // 如果行以分號結尾，則認為是一個完整的語句
+      if (trimmedLine.endsWith(';')) {
+        final statement = buffer.toString().trim();
+        if (statement.isNotEmpty && !statement.startsWith('--')) {
+          statements.add(statement);
+        }
+        buffer.clear();
+      }
+    }
+    
+    // 處理最後一個沒有分號結尾的語句
+    final lastStatement = buffer.toString().trim();
+    if (lastStatement.isNotEmpty && !lastStatement.startsWith('--')) {
+      statements.add(lastStatement);
+    }
+    
+    return statements;
   }
 }

@@ -123,12 +123,16 @@ class EnhancedBackupService {
               'source': entity.path,
               'target': targetFilePath,
             });
-          } catch (e) {
-            AppLogger.error('文件恢复失败', tag: 'EnhancedBackupService', data: {
-              'source': entity.path,
-              'target': targetFilePath,
-              'error': e.toString(),
-            });
+          } catch (e, stackTrace) {
+            AppLogger.error('文件恢复失败',
+                tag: 'EnhancedBackupService',
+                error: e,
+                stackTrace: stackTrace,
+                data: {
+                  'source': entity.path,
+                  'target': targetFilePath,
+                  'errorType': e.runtimeType.toString(),
+                });
           }
         }
       }
@@ -162,12 +166,16 @@ class EnhancedBackupService {
               'source': entity.path,
               'target': targetFilePath,
             });
-          } catch (e) {
-            AppLogger.error('数据库文件恢复失败', tag: 'EnhancedBackupService', data: {
-              'source': entity.path,
-              'target': targetFilePath,
-              'error': e.toString(),
-            });
+          } catch (e, stackTrace) {
+            AppLogger.error('数据库文件恢复失败',
+                tag: 'EnhancedBackupService',
+                error: e,
+                stackTrace: stackTrace,
+                data: {
+                  'source': entity.path,
+                  'target': targetFilePath,
+                  'errorType': e.runtimeType.toString(),
+                });
           }
         }
       }
@@ -210,13 +218,17 @@ class EnhancedBackupService {
               'target': targetFilePath,
               'result': 'success',
             });
-          } catch (e) {
-            AppLogger.error('重启后恢复临时文件失败', tag: 'EnhancedBackupService', data: {
-              'source': entity.path,
-              'target': targetFilePath,
-              'result': 'fail',
-              'error': e.toString(),
-            });
+          } catch (e, stackTrace) {
+            AppLogger.error('重启后恢复临时文件失败',
+                tag: 'EnhancedBackupService',
+                error: e,
+                stackTrace: stackTrace,
+                data: {
+                  'source': entity.path,
+                  'target': targetFilePath,
+                  'result': 'fail',
+                  'errorType': e.runtimeType.toString(),
+                });
           }
         }
       }

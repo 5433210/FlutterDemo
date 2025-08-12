@@ -47,4 +47,12 @@ abstract class WorkRepository {
 
   /// 标签建议
   Future<List<String>> suggestTags(String prefix, {int limit = 10});
+
+  /// 更新作品的图片统计信息
+  Future<void> updateImageStats({
+    required String workId,
+    required int imageCount,
+    String? firstImageId,
+    DateTime? lastImageUpdateTime,
+  });
 }
