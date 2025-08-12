@@ -753,6 +753,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCount => 'Character Count';
 
   @override
+  String characterDisplayFormat(Object character) {
+    return 'Character: $character';
+  }
+
+  @override
   String get characterDetailFormatBinary => 'Binary';
 
   @override

@@ -753,6 +753,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get characterCount => '수집된 문자 수';
 
   @override
+  String characterDisplayFormat(Object character) {
+    return '문자: $character';
+  }
+
+  @override
   String get characterDetailFormatBinary => '이진화';
 
   @override

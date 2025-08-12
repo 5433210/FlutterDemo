@@ -231,6 +231,7 @@
   "characterCollectionToolPan": "パンツール (Ctrl+V)",
   "characterCollectionUseBoxTool": "矩形選択ツールを使用して画像から文字を抽出します",
   "characterCount": "収集文字数",
+  "characterDisplayFormat": "文字：{character}",
   "characterDetailFormatBinary": "二値化",
   "characterDetailFormatBinaryDesc": "白黒二値化画像",
   "characterDetailFormatDescription": "説明",

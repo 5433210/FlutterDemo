@@ -231,6 +231,7 @@
   "characterCollectionToolPan": "이동 도구 (Ctrl+V)",
   "characterCollectionUseBoxTool": "상자 선택 도구를 사용하여 이미지에서 문자 추출",
   "characterCount": "수집된 문자 수",
+  "characterDisplayFormat": "문자: {character}",
   "characterDetailFormatBinary": "이진화",
   "characterDetailFormatBinaryDesc": "흑백 이진화 이미지",
   "characterDetailFormatDescription": "설명",

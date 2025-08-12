@@ -753,6 +753,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCount => '集字数量';
 
   @override
+  String characterDisplayFormat(Object character) {
+    return '字符：$character';
+  }
+
+  @override
   String get characterDetailFormatBinary => '二值化';
 
   @override
@@ -5239,6 +5244,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get characterCount => '集字數量';
+
+  @override
+  String characterDisplayFormat(Object character) {
+    return '字元：$character';
+  }
 
   @override
   String get characterDetailFormatBinary => '二值化';

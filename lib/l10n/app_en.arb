@@ -231,6 +231,7 @@
   "characterCollectionToolPan": "Pan Tool (Ctrl+V)",
   "characterCollectionUseBoxTool": "Use Box Selection Tool to Extract Characters from Image",
   "characterCount": "Character Count",
+  "characterDisplayFormat": "Character: {character}",
   "characterDetailFormatBinary": "Binary",
   "characterDetailFormatBinaryDesc": "Black and White Binary Image",
   "characterDetailFormatDescription": "Description",

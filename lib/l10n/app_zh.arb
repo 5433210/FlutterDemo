@@ -231,6 +231,7 @@
   "characterCollectionToolPan": "平移工具 (Ctrl+V)",
   "characterCollectionUseBoxTool": "使用框选工具从图像中提取字符",
   "characterCount": "集字数量",
+  "characterDisplayFormat": "字符：{character}",
   "characterDetailFormatBinary": "二值化",
   "characterDetailFormatBinaryDesc": "黑白二值化图像",
   "characterDetailFormatDescription": "描述",

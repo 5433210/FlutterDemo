@@ -1492,6 +1492,12 @@ abstract class AppLocalizations {
   /// **'Character Count'**
   String get characterCount;
 
+  /// No description provided for @characterDisplayFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Character: {character}'**
+  String characterDisplayFormat(Object character);
+
   /// No description provided for @characterDetailFormatBinary.
   ///
   /// In en, this message translates to:

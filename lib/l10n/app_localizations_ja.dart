@@ -753,6 +753,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get characterCount => '収集文字数';
 
   @override
+  String characterDisplayFormat(Object character) {
+    return '文字：$character';
+  }
+
+  @override
   String get characterDetailFormatBinary => '二値化';
 
   @override

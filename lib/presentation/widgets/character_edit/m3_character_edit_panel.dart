@@ -244,7 +244,14 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               });
               return KeyEventResult.ignored; // Let the event propagate
             },
-            child: _buildContent(l10n),
+            child: Stack(
+              children: [
+                // Main content
+                _buildContent(l10n),
+                // Full-screen character input dialog overlay
+                if (_isEditing) _buildCharacterInput(l10n),
+              ],
+            ),
           ),
         ),
       ),
@@ -423,6 +430,22 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     }
   }
 
+  Widget _buildCurrentCharacterDisplay(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final currentCharacter = _characterController.text.isNotEmpty
+        ? _CharacterInputValidator._getFirstCharacter(_characterController.text)
+        : '';
+
+    return Text(
+      l10n.characterDisplayFormat(
+          currentCharacter.isEmpty ? l10n.none : currentCharacter),
+      style: TextStyle(
+        fontSize: 14,
+        color: colorScheme.onSurface,
+      ),
+    );
+  }
+
   Widget _buildBottomButtons(SaveState saveState, AppLocalizations l10n) {
     final bool isSaving = saveState.isSaving;
     final String? errorMessage = saveState.error;
@@ -465,40 +488,58 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           SizedBox(
             width: double.infinity,
             child: Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 12,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12, // 水平间距
+              runSpacing: 8, // 垂直间距（换行时）
               children: [
-                if (!_isEditing)
-                  FilledButton.tonalIcon(
-                    onPressed: isSaving
-                        ? null
-                        : () {
-                            setState(() => _isEditing = true);
-                            // Ensure focus on input field
-                            Future.delayed(const Duration(milliseconds: 50),
-                                () {
-                              _inputFocusNode.requestFocus();
-                            });
-                          },
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: Text(ShortcutTooltipBuilder.build(
-                      l10n.inputCharacter,
-                      EditorShortcuts.openInput,
-                    )),
-                  ),
-                FilledButton.icon(
-                  onPressed: isSaving ? null : () => _handleSave(),
-                  icon: isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save, size: 18),
-                  label: Text(ShortcutTooltipBuilder.build(
-                    l10n.save,
-                    EditorShortcuts.save,
-                  )),
+                // Current character display on the left
+                _buildCurrentCharacterDisplay(l10n),
+                // Action buttons wrapped in a Row for proper grouping
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!_isEditing)
+                      Tooltip(
+                        message: ShortcutTooltipBuilder.build(
+                          l10n.inputCharacter,
+                          EditorShortcuts.openInput,
+                        ),
+                        child: FilledButton.tonalIcon(
+                          onPressed: isSaving
+                              ? null
+                              : () {
+                                  setState(() => _isEditing = true);
+                                  // Ensure focus on input field
+                                  Future.delayed(
+                                      const Duration(milliseconds: 50), () {
+                                    _inputFocusNode.requestFocus();
+                                  });
+                                },
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: Text(l10n.inputCharacter),
+                        ),
+                      ),
+                    if (!_isEditing) const SizedBox(width: 12),
+                    Tooltip(
+                      message: ShortcutTooltipBuilder.build(
+                        l10n.save,
+                        EditorShortcuts.save,
+                      ),
+                      child: FilledButton.icon(
+                        onPressed: isSaving ? null : () => _handleSave(),
+                        icon: isSaving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save, size: 18),
+                        label: Text(l10n.save),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -511,102 +552,152 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   Widget _buildCharacterInput(AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Positioned.fill(
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Icon(Icons.edit, size: 16, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
-              Text(
-                l10n.inputCharacter,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: Icon(Icons.close,
-                    size: 16, color: colorScheme.onSurfaceVariant),
-                onPressed: _restoreMainPanelFocus,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _characterController,
-            focusNode: _inputFocusNode,
-            autofocus: true,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 24, color: colorScheme.onSurface),
-            decoration: InputDecoration(
-              hintText: l10n.inputHint,
-              border: const OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                borderRadius: BorderRadius.circular(8),
+          // Semi-transparent background overlay (modal backdrop)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.5),
+              child: GestureDetector(
+                onTap: _restoreMainPanelFocus, // Close on backdrop tap
+                child: Container(),
               ),
             ),
-            onChanged: (value) {
-              // 输入过程中不限制字符长度，适配各种输入法
-              // 但在输入完成后会只保留第一个字符
-            },
-            onSubmitted: (value) {
-              // 输入完成后，只保留第一个字符
-              if (value.isNotEmpty) {
-                final firstChar =
-                    _CharacterInputValidator._getFirstCharacter(value);
-                _characterController.text = firstChar;
-                _characterController.selection = TextSelection.fromPosition(
-                  TextPosition(offset: firstChar.length),
-                );
-              }
-              _restoreMainPanelFocus();
-            },
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                onPressed: () => _restoreMainPanelFocus(),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: const Size(60, 36),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Centered dialog
+          Center(
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 300,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
-                child: Text(l10n.cancel),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: () => _restoreMainPanelFocus(),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: const Size(60, 36),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title row
+                    Row(
+                      children: [
+                        Icon(Icons.edit, size: 20, color: colorScheme.primary),
+                        const SizedBox(width: 12),
+                        Text(
+                          l10n.inputCharacter,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.close,
+                              size: 20, color: colorScheme.onSurfaceVariant),
+                          onPressed: _restoreMainPanelFocus,
+                          padding: EdgeInsets.zero,
+                          constraints:
+                              const BoxConstraints(minWidth: 32, minHeight: 32),
+                          tooltip: '关闭',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Input field
+                    TextField(
+                      controller: _characterController,
+                      focusNode: _inputFocusNode,
+                      autofocus: true,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurface,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: l10n.inputHint,
+                        hintStyle: TextStyle(
+                          fontSize: 16,
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.6),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: colorScheme.primary, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerHighest,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 16),
+                      ),
+                      onChanged: (value) {
+                        // 输入过程中不限制字符长度，适配各种输入法
+                        // 但在输入完成后会只保留第一个字符
+                        setState(() {
+                          // 触发UI更新以显示当前输入的字符
+                        });
+                      },
+                      onSubmitted: (value) {
+                        // 输入完成后，只保留第一个字符
+                        if (value.isNotEmpty) {
+                          final firstChar =
+                              _CharacterInputValidator._getFirstCharacter(
+                                  value);
+                          _characterController.text = firstChar;
+                          _characterController.selection =
+                              TextSelection.fromPosition(
+                            TextPosition(offset: firstChar.length),
+                          );
+                        }
+                        _restoreMainPanelFocus();
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: _restoreMainPanelFocus,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(l10n.cancel),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: _restoreMainPanelFocus,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(l10n.confirm),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                child: Text(l10n.confirm),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -687,14 +778,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                           right: 16,
                           top: 16,
                           child: _buildThumbnailPreview(l10n),
-                        ),
-
-                      // Character input floating window
-                      if (_isEditing)
-                        Positioned(
-                          left: 16,
-                          top: 16,
-                          child: _buildCharacterInput(l10n),
                         ),
                     ],
                   ),
