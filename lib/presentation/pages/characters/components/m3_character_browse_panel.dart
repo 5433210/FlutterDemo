@@ -485,44 +485,11 @@ class _M3CharacterBrowsePanelState
 
     // 如果筛选面板打开，显示筛选面板
     if (state.showFilterPanel) {
-      return Column(
-        children: [
-          // 筛选面板工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  AppLocalizations.of(context).filter ?? 'Filter',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => _toggleFilterPanel(),
-                  tooltip: AppLocalizations.of(context).close ?? 'Close',
-                ),
-              ],
-            ),
-          ),
-          // 筛选面板内容
-          Expanded(
-            child: M3CharacterFilterPanel(
-              onToggleExpand: _toggleFilterPanel,
-              onRefresh: () {
-                ref.read(characterManagementProvider.notifier).refresh();
-              },
-            ),
-          ),
-        ],
+      return M3CharacterFilterPanel(
+        onToggleExpand: _toggleFilterPanel,
+        onRefresh: () {
+          ref.read(characterManagementProvider.notifier).refresh();
+        },
       );
     }
 
@@ -545,7 +512,7 @@ class _M3CharacterBrowsePanelState
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 onPressed: () => _toggleFilterPanel(),
-                tooltip: AppLocalizations.of(context).filter ?? 'Filter',
+                tooltip: AppLocalizations.of(context).filter,
               ),
               const Spacer(),
             ],

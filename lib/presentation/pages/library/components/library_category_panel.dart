@@ -114,6 +114,15 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
               decoration: InputDecoration(
                 hintText: l10n.searchCategories,
                 prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search, size: 20),
+                  onPressed: () {
+                    // 搜索按钮被点击时触发搜索
+                    // 由于onChanged已经实时更新了_searchQuery，这里只需要确认搜索
+                    setState(() {});
+                  },
+                  tooltip: l10n.search,
+                ),
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: AppSizes.spacing8,
@@ -122,6 +131,7 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
                 isDense: true,
               ),
               onChanged: (value) => setState(() => _searchQuery = value),
+              onSubmitted: (value) => setState(() => _searchQuery = value),
             ),
           ),
 

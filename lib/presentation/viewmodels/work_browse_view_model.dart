@@ -38,10 +38,9 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   /// 全选所有作品
   void selectAll() {
     final allWorkIds = state.works.map((work) => work.id).toSet();
-    
+
     AppLogger.debug('全选作品',
-        tag: 'WorkBrowseViewModel',
-        data: {'totalCount': allWorkIds.length});
+        tag: 'WorkBrowseViewModel', data: {'totalCount': allWorkIds.length});
 
     state = state.copyWith(selectedWorks: allWorkIds);
   }
@@ -289,6 +288,13 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void toggleSidebar() {
+    state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
+  }
+
+  /// 在窄屏模式下切换侧边栏（针对响应式设计优化）
+  void toggleSidebarExclusive() {
+    // 对于作品浏览页，只有筛选面板，所以直接切换即可
+    // 这个方法为了保持与其他页面的API一致性
     state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
   }
 

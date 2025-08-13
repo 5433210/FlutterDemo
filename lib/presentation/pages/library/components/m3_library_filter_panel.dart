@@ -21,11 +21,15 @@ class M3LibraryFilterPanel extends ConsumerStatefulWidget {
   /// 刷新回调
   final VoidCallback? onRefresh;
 
+  /// 展开/折叠状态变化时的回调
+  final VoidCallback? onToggleExpand;
+
   const M3LibraryFilterPanel({
     super.key,
     this.searchController,
     this.onSearch,
     this.onRefresh,
+    this.onToggleExpand,
   });
 
   @override
@@ -90,211 +94,201 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           right: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          // Header with reset button
-          SliverToBoxAdapter(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSizes.spacing16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.filter,
-                      style: theme.textTheme.titleMedium,
+      child: Column(
+        children: [
+          // 标题栏
+          _buildHeader(context),
+          // 内容区域
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                // 搜索框部分
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSizes.spacing16,
+                        AppSizes.spacing8,
+                        AppSizes.spacing16,
+                        AppSizes.spacing16),
+                    child: TextField(
+                      controller: widget.searchController,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            if (widget.onSearch != null &&
+                                widget.searchController != null) {
+                              widget.onSearch!(widget.searchController!.text);
+                            }
+                          },
+                          tooltip: l10n.search,
+                        ),
+                        hintText: l10n.search,
+                        isDense: true,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onSubmitted: (value) {
+                        if (widget.onSearch != null) {
+                          widget.onSearch!(value);
+                        }
+                      },
                     ),
                   ),
-                  // 刷新按钮
-                  if (widget.onRefresh != null)
-                    IconButton(
-                      icon: const Icon(Icons.sync),
-                      iconSize: AppSizes.iconSizeMedium,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: widget.onRefresh,
-                      tooltip: l10n.refresh,
+                ),
+
+                // Sort section
+                SliverToBoxAdapter(
+                  child: _buildCollapsibleSection(
+                    title: l10n.sortBy,
+                    isExpanded: _isSortExpanded,
+                    onToggle: () =>
+                        setState(() => _isSortExpanded = !_isSortExpanded),
+                    child: M3FilterSortSection(
+                      sortField: SortField.values.firstWhere(
+                        (field) => field.toString().split('.').last == _sortBy,
+                        orElse: () => SortField.title,
+                      ),
+                      descending: _sortDesc,
+                      availableSortFields: const [
+                        SortField.fileName,
+                        SortField.fileUpdatedAt,
+                        SortField.fileSize,
+                      ],
+                      onSortFieldChanged: (field) {
+                        setState(
+                            () => _sortBy = field.toString().split('.').last);
+                        ref
+                            .read(libraryManagementProvider.notifier)
+                            .setSortBy(_sortBy, _sortDesc);
+                      },
+                      onSortDirectionChanged: (isDescending) {
+                        setState(() => _sortDesc = isDescending);
+                        ref
+                            .read(libraryManagementProvider.notifier)
+                            .setSortBy(_sortBy, _sortDesc);
+                      },
                     ),
-                  // 重置按钮
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    iconSize: AppSizes.iconSizeMedium,
-                    visualDensity: VisualDensity.compact,
-                    onPressed: _resetFilters,
-                    tooltip: l10n.reset,
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          // 搜索框部分 - 位于重置按钮下方
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.spacing16,
-                  AppSizes.spacing8, AppSizes.spacing16, AppSizes.spacing16),
-              child: TextField(
-                controller: widget.searchController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: l10n.search,
-                  isDense: true,
-                  border: const OutlineInputBorder(),
                 ),
-                onSubmitted: (value) {
-                  if (widget.onSearch != null) {
-                    widget.onSearch!(value);
-                  }
-                },
-              ),
-            ),
-          ),
 
-          // Sort section
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.sortBy,
-              isExpanded: _isSortExpanded,
-              onToggle: () =>
-                  setState(() => _isSortExpanded = !_isSortExpanded),
-              child: M3FilterSortSection(
-                sortField: SortField.values.firstWhere(
-                  (field) => field.toString().split('.').last == _sortBy,
-                  orElse: () => SortField.title,
-                ),
-                descending: _sortDesc,
-                availableSortFields: const [
-                  SortField.fileName,
-                  SortField.fileUpdatedAt,
-                  SortField.fileSize,
-                ],
-                onSortFieldChanged: (field) {
-                  setState(() => _sortBy = field.toString().split('.').last);
-                  ref
-                      .read(libraryManagementProvider.notifier)
-                      .setSortBy(_sortBy, _sortDesc);
-                },
-                onSortDirectionChanged: (isDescending) {
-                  setState(() => _sortDesc = isDescending);
-                  ref
-                      .read(libraryManagementProvider.notifier)
-                      .setSortBy(_sortBy, _sortDesc);
-                },
-              ),
-            ),
-          ),
-
-          // Favorites section (现在位于排序下方)
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.favorite,
-              isExpanded: _isFavoriteExpanded,
-              onToggle: () =>
-                  setState(() => _isFavoriteExpanded = !_isFavoriteExpanded),
-              child: SwitchListTile(
-                title: Text(l10n.favoritesOnly),
-                value: _showFavoritesOnly,
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (value) {
-                  setState(() => _showFavoritesOnly = value);
-                  if (value !=
-                      ref.read(libraryManagementProvider).showFavoritesOnly) {
-                    ref
-                        .read(libraryManagementProvider.notifier)
-                        .toggleFavoritesOnly();
-                  }
-                },
-              ),
-            ),
-          ), // Categories section
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.categories,
-              isExpanded: _isCategoriesExpanded,
-              onToggle: () => setState(
-                  () => _isCategoriesExpanded = !_isCategoriesExpanded),
-              child: _isCategoriesExpanded
-                  ? const LibraryCategoryPanel() // 动态高度，不再使用固定高度的SizedBox
-                  : const SizedBox.shrink(),
-            ),
-          ),
-
-          // Type filter section
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.type,
-              isExpanded: _isTypeExpanded,
-              onToggle: () =>
-                  setState(() => _isTypeExpanded = !_isTypeExpanded),
-              child: Column(
-                children: [
-                  ...List.generate(_fileTypes.length, (index) {
-                    final type = _fileTypes[index];
-                    return RadioListTile<String?>(
-                      title: Text(type == 'all' ? l10n.allTypes : type),
-                      value: type == 'all' ? null : type,
-                      groupValue: _selectedType,
+                // Favorites section (现在位于排序下方)
+                SliverToBoxAdapter(
+                  child: _buildCollapsibleSection(
+                    title: l10n.favorite,
+                    isExpanded: _isFavoriteExpanded,
+                    onToggle: () => setState(
+                        () => _isFavoriteExpanded = !_isFavoriteExpanded),
+                    child: SwitchListTile(
+                      title: Text(l10n.favoritesOnly),
+                      value: _showFavoritesOnly,
                       dense: true,
                       visualDensity: VisualDensity.compact,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
-                        setState(() => _selectedType = value);
-                        ref
-                            .read(libraryManagementProvider.notifier)
-                            .setTypeFilter(value);
+                        setState(() => _showFavoritesOnly = value);
+                        if (value !=
+                            ref
+                                .read(libraryManagementProvider)
+                                .showFavoritesOnly) {
+                          ref
+                              .read(libraryManagementProvider.notifier)
+                              .toggleFavoritesOnly();
+                        }
                       },
-                    );
-                  }),
-                ],
-              ),
+                    ),
+                  ),
+                ), // Categories section
+                SliverToBoxAdapter(
+                  child: _buildCollapsibleSection(
+                    title: l10n.categories,
+                    isExpanded: _isCategoriesExpanded,
+                    onToggle: () => setState(
+                        () => _isCategoriesExpanded = !_isCategoriesExpanded),
+                    child: _isCategoriesExpanded
+                        ? const LibraryCategoryPanel() // 动态高度，不再使用固定高度的SizedBox
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+
+                // Type filter section
+                SliverToBoxAdapter(
+                  child: _buildCollapsibleSection(
+                    title: l10n.type,
+                    isExpanded: _isTypeExpanded,
+                    onToggle: () =>
+                        setState(() => _isTypeExpanded = !_isTypeExpanded),
+                    child: Column(
+                      children: [
+                        ...List.generate(_fileTypes.length, (index) {
+                          final type = _fileTypes[index];
+                          return RadioListTile<String?>(
+                            title: Text(type == 'all' ? l10n.allTypes : type),
+                            value: type == 'all' ? null : type,
+                            groupValue: _selectedType,
+                            dense: true,
+                            visualDensity: VisualDensity.compact,
+                            contentPadding: EdgeInsets.zero,
+                            onChanged: (value) {
+                              setState(() => _selectedType = value);
+                              ref
+                                  .read(libraryManagementProvider.notifier)
+                                  .setTypeFilter(value);
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Format filter section
+                SliverToBoxAdapter(
+                  child: _buildCollapsibleSection(
+                    title: l10n.format,
+                    isExpanded: _isFormatExpanded,
+                    onToggle: () =>
+                        setState(() => _isFormatExpanded = !_isFormatExpanded),
+                    child: Wrap(
+                      spacing: AppSizes.spacing8,
+                      children: _fileFormats.map((format) {
+                        return FilterChip(
+                          label: Text(format),
+                          selected: _selectedFormat == format,
+                          onSelected: (selected) {
+                            setState(() =>
+                                _selectedFormat = selected ? format : null);
+                            ref
+                                .read(libraryManagementProvider.notifier)
+                                .setFormatFilter(selected ? format : null);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+                // Size range section
+                SliverToBoxAdapter(
+                  child: _buildSizeRangeSection(),
+                ),
+
+                // File size section
+                SliverToBoxAdapter(
+                  child: _buildFileSizeSection(),
+                ),
+
+                // Creation date section
+                SliverToBoxAdapter(
+                  child: _buildDateRangeSection(isCreationDate: true),
+                ),
+
+                // Update date section
+                SliverToBoxAdapter(
+                  child: _buildDateRangeSection(isCreationDate: false),
+                ),
+              ],
             ),
-          ),
-
-          // Format filter section
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.format,
-              isExpanded: _isFormatExpanded,
-              onToggle: () =>
-                  setState(() => _isFormatExpanded = !_isFormatExpanded),
-              child: Wrap(
-                spacing: AppSizes.spacing8,
-                children: _fileFormats.map((format) {
-                  return FilterChip(
-                    label: Text(format),
-                    selected: _selectedFormat == format,
-                    onSelected: (selected) {
-                      setState(
-                          () => _selectedFormat = selected ? format : null);
-                      ref
-                          .read(libraryManagementProvider.notifier)
-                          .setFormatFilter(selected ? format : null);
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-
-          // Size range section
-          SliverToBoxAdapter(
-            child: _buildSizeRangeSection(),
-          ),
-
-          // File size section
-          SliverToBoxAdapter(
-            child: _buildFileSizeSection(),
-          ),
-
-          // Creation date section
-          SliverToBoxAdapter(
-            child: _buildDateRangeSection(isCreationDate: true),
-          ),
-
-          // Update date section
-          SliverToBoxAdapter(
-            child: _buildDateRangeSection(isCreationDate: false),
           ),
         ],
       ),
@@ -577,5 +571,65 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           .read(libraryManagementProvider.notifier)
           .setHeightRange(minHeight, maxHeight);
     }
+  }
+
+  /// 构建标题栏
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              l10n.filter,
+              style: theme.textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 刷新按钮
+              if (widget.onRefresh != null)
+                Tooltip(
+                  message: l10n.refresh,
+                  child: IconButton(
+                    onPressed: widget.onRefresh,
+                    icon: const Icon(Icons.sync),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+
+              // 重置按钮
+              Tooltip(
+                message: l10n.reset,
+                child: IconButton(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.refresh),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(0),
+                ),
+              ),
+
+              // 关闭按钮（窄屏模式下显示）
+              if (widget.onToggleExpand != null)
+                Tooltip(
+                  message: l10n.close,
+                  child: IconButton(
+                    onPressed: widget.onToggleExpand,
+                    icon: const Icon(Icons.chevron_left),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

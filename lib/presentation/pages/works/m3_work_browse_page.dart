@@ -11,6 +11,8 @@ import '../../dialogs/work_import/m3_work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../utils/cross_navigation_helper.dart';
+import '../../viewmodels/states/work_browse_state.dart';
+import '../../viewmodels/work_browse_view_model.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
@@ -131,89 +133,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           onSelectAll: () => _handleSelectAll(),
           onClearSelection: () => _handleClearSelection(),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  // Filter Panel
-                  if (state.isSidebarOpen)
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Calculate responsive panel width
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final maxPanelWidth =
-                            (screenWidth * 0.4).clamp(250.0, 400.0);
-                        final minPanelWidth =
-                            (screenWidth * 0.25).clamp(200.0, 280.0);
-                        final initialPanelWidth =
-                            (screenWidth * 0.3).clamp(250.0, 300.0);
-
-                        return PersistentResizablePanel(
-                          panelId: 'work_browse_filter_panel',
-                          initialWidth: initialPanelWidth,
-                          minWidth: minPanelWidth,
-                          maxWidth: maxPanelWidth,
-                          isLeftPanel: true,
-                          child: M3WorkFilterPanel(
-                            filter: state.filter,
-                            onFilterChanged: viewModel.updateFilter,
-                            onToggleExpand: () => viewModel.toggleSidebar(),
-                            searchController: state.searchController,
-                            initialSearchValue: state.searchQuery,
-                            onRefresh: () => viewModel.refresh(),
-                          ),
-                        );
-                      },
-                    ),
-                  PersistentSidebarToggle(
-                    sidebarId: 'work_browse_filter_sidebar',
-                    defaultIsOpen: state.isSidebarOpen,
-                    onToggle: (isOpen) => viewModel.toggleSidebar(),
-                    alignRight: false,
-                  ),
-                  // Content area with batch selection support
-                  Expanded(
-                    child: M3WorkContentArea(
-                      works: state.works,
-                      viewMode: state.viewMode,
-                      batchMode: state.batchMode,
-                      selectedWorks: state.selectedWorks,
-                      onSelectionChanged: (workId, selected) {
-                        viewModel.toggleSelection(workId);
-                      },
-                      onItemTap: (workId) {
-                        Navigator.of(context).pushNamed(
-                          AppRoutes.workDetail,
-                          arguments: workId,
-                        );
-                      },
-                      onToggleFavorite: (workId) {
-                        viewModel.toggleFavorite(workId);
-                      },
-                      onTagsEdited: (workId) =>
-                          _handleTagEdited(context, workId),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!state.isLoading && state.works.isNotEmpty)
-              M3PersistentPaginationControls(
-                pageId: 'work_browse',
-                currentPage: state.page,
-                totalItems: state.totalItems,
-                onPageChanged: (page) {
-                  ref.read(workBrowseProvider.notifier).setPage(page);
-                },
-                onPageSizeChanged: (size) {
-                  ref.read(workBrowseProvider.notifier).setPageSize(size);
-                },
-                availablePageSizes: const [10, 20, 50, 100],
-                defaultPageSize: 20,
-              ),
-          ],
-        ),
+        body: _buildResponsiveLayout(state, viewModel, l10n),
         floatingActionButton: state.isLoading && state.works.isEmpty
             ? FloatingActionButton.extended(
                 onPressed: () {
@@ -307,7 +227,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       final work =
           ref.read(workBrowseProvider).works.firstWhere((w) => w.id == workId);
 
-      AppLogger.debug('找到作品 - ${work.title}, 当前标签: ${work.tags}', tag: 'WorkBrowsePage');
+      AppLogger.debug('找到作品 - ${work.title}, 当前标签: ${work.tags}',
+          tag: 'WorkBrowsePage');
 
       // Get all existing tags for suggestions
       final allTags = ref
@@ -489,5 +410,214 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     AppLogger.debug('用户触发取消选择操作', tag: 'WorkBrowsePage', data: {
       'previousSelectedCount': ref.read(workBrowseProvider).selectedWorks.length
     });
+  }
+
+  /// 根据屏幕宽度切换侧边栏
+  void _toggleSidebar() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+    final provider = ref.read(workBrowseProvider.notifier);
+
+    if (isNarrowScreen) {
+      provider.toggleSidebarExclusive();
+    } else {
+      provider.toggleSidebar();
+    }
+  }
+
+  Widget _buildResponsiveLayout(WorkBrowseState state,
+      WorkBrowseViewModel viewModel, AppLocalizations l10n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        const breakpoint = 1200.0;
+
+        if (screenWidth < breakpoint) {
+          // Narrow screen: show only filter panel when sidebar is open
+          return _buildNarrowLayout(state, viewModel, l10n);
+        } else {
+          // Wide screen: show filter panel and content side by side
+          return _buildWideLayout(state, viewModel, l10n);
+        }
+      },
+    );
+  }
+
+  Widget _buildNarrowLayout(WorkBrowseState state,
+      WorkBrowseViewModel viewModel, AppLocalizations l10n) {
+    return Column(
+      children: [
+        Expanded(
+          child: state.isSidebarOpen
+              ? M3WorkFilterPanel(
+                  filter: state.filter,
+                  onFilterChanged: viewModel.updateFilter,
+                  onToggleExpand: () => _toggleSidebar(),
+                  searchController: state.searchController,
+                  initialSearchValue: state.searchQuery,
+                  onRefresh: () => viewModel.refresh(),
+                )
+              : Column(
+                  children: [
+                    // 工具栏 - 显示筛选按钮
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.filter_list),
+                            onPressed: () => _toggleSidebar(),
+                            tooltip: l10n.filter,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${state.works.length} works',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 主内容区域
+                    Expanded(
+                      child: M3WorkContentArea(
+                        works: state.works,
+                        viewMode: state.viewMode,
+                        batchMode: state.batchMode,
+                        selectedWorks: state.selectedWorks,
+                        onSelectionChanged: (workId, selected) {
+                          viewModel.toggleSelection(workId);
+                        },
+                        onItemTap: (workId) {
+                          Navigator.of(context).pushNamed(
+                            AppRoutes.workDetail,
+                            arguments: workId,
+                          );
+                        },
+                        onToggleFavorite: (workId) {
+                          viewModel.toggleFavorite(workId);
+                        },
+                        onTagsEdited: (workId) =>
+                            _handleTagEdited(context, workId),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+        if (!state.isLoading && state.works.isNotEmpty && !state.isSidebarOpen)
+          M3PersistentPaginationControls(
+            pageId: 'work_browse',
+            currentPage: state.page,
+            totalItems: state.totalItems,
+            onPageChanged: (page) {
+              ref.read(workBrowseProvider.notifier).setPage(page);
+            },
+            onPageSizeChanged: (size) {
+              ref.read(workBrowseProvider.notifier).setPageSize(size);
+            },
+            availablePageSizes: const [10, 20, 50, 100],
+            defaultPageSize: 20,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(WorkBrowseState state, WorkBrowseViewModel viewModel,
+      AppLocalizations l10n) {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              // Filter Panel
+              if (state.isSidebarOpen)
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Calculate responsive panel width
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final maxPanelWidth =
+                        (screenWidth * 0.4).clamp(250.0, 400.0);
+                    final minPanelWidth =
+                        (screenWidth * 0.25).clamp(200.0, 280.0);
+                    final initialPanelWidth =
+                        (screenWidth * 0.3).clamp(250.0, 300.0);
+
+                    return PersistentResizablePanel(
+                      panelId: 'work_browse_filter_panel',
+                      initialWidth: initialPanelWidth,
+                      minWidth: minPanelWidth,
+                      maxWidth: maxPanelWidth,
+                      isLeftPanel: true,
+                      child: M3WorkFilterPanel(
+                        filter: state.filter,
+                        onFilterChanged: viewModel.updateFilter,
+                        onToggleExpand: () => _toggleSidebar(),
+                        searchController: state.searchController,
+                        initialSearchValue: state.searchQuery,
+                        onRefresh: () => viewModel.refresh(),
+                      ),
+                    );
+                  },
+                ),
+              PersistentSidebarToggle(
+                sidebarId: 'work_browse_filter_sidebar',
+                defaultIsOpen: state.isSidebarOpen,
+                onToggle: (isOpen) => _toggleSidebar(),
+                alignRight: false,
+              ),
+              // Content area
+              Expanded(
+                child: M3WorkContentArea(
+                  works: state.works,
+                  viewMode: state.viewMode,
+                  batchMode: state.batchMode,
+                  selectedWorks: state.selectedWorks,
+                  onSelectionChanged: (workId, selected) {
+                    viewModel.toggleSelection(workId);
+                  },
+                  onItemTap: (workId) {
+                    Navigator.of(context).pushNamed(
+                      AppRoutes.workDetail,
+                      arguments: workId,
+                    );
+                  },
+                  onToggleFavorite: (workId) {
+                    viewModel.toggleFavorite(workId);
+                  },
+                  onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!state.isLoading && state.works.isNotEmpty)
+          M3PersistentPaginationControls(
+            pageId: 'work_browse',
+            currentPage: state.page,
+            totalItems: state.totalItems,
+            onPageChanged: (page) {
+              ref.read(workBrowseProvider.notifier).setPage(page);
+            },
+            onPageSizeChanged: (size) {
+              ref.read(workBrowseProvider.notifier).setPageSize(size);
+            },
+            availablePageSizes: const [10, 20, 50, 100],
+            defaultPageSize: 20,
+          ),
+      ],
+    );
   }
 }

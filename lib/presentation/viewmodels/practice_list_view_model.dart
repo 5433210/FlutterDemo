@@ -321,6 +321,16 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
     state.persist();
   }
 
+  /// 在窄屏模式下切换过滤面板（针对响应式设计优化）
+  void toggleFilterPanelExclusive() {
+    // 对于练习列表页，只有筛选面板，所以直接切换即可
+    // 这个方法为了保持与其他页面的API一致性
+    state = state.copyWith(isFilterPanelExpanded: !state.isFilterPanelExpanded);
+
+    // 保存状态以记住过滤面板是否展开
+    state.persist();
+  }
+
   // 切换练习选择
   void togglePracticeSelection(String id) {
     final newSelection = Set<String>.from(state.selectedPractices);

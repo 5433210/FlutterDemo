@@ -578,45 +578,13 @@ class _M3LibraryBrowsingPanelState
 
     // 如果筛选面板打开，显示筛选面板
     if (state.showFilterPanel) {
-      return Column(
-        children: [
-          // 筛选面板工具栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  l10n?.filter ?? 'Filter',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => _toggleFilterPanel(),
-                  tooltip: l10n?.close ?? 'Close',
-                ),
-              ],
-            ),
-          ),
-          // 筛选面板内容
-          Expanded(
-            child: M3LibraryFilterPanel(
-              searchController: _searchController,
-              onSearch: _handleSearch,
-              onRefresh: () {
-                ref.read(libraryManagementProvider.notifier).refresh();
-              },
-            ),
-          ),
-        ],
+      return M3LibraryFilterPanel(
+        searchController: _searchController,
+        onSearch: _handleSearch,
+        onRefresh: () {
+          ref.read(libraryManagementProvider.notifier).refresh();
+        },
+        onToggleExpand: _toggleFilterPanel,
       );
     }
 
@@ -679,6 +647,8 @@ class _M3LibraryBrowsingPanelState
                       // 触发图库数据刷新
                       ref.read(libraryManagementProvider.notifier).refresh();
                     },
+                    // 宽屏模式下不需要关闭按钮，由侧边栏切换器处理
+                    onToggleExpand: null,
                   ),
                 ),
               ],

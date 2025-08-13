@@ -66,87 +66,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
             : null,
         allPracticeIds: state.practices.map((p) => p['id'] as String).toList(),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                // 左侧过滤面板
-                if (state.isFilterPanelExpanded)
-                  PersistentResizablePanel(
-                    panelId: 'practice_list_filter_panel',
-                    initialWidth: 300,
-                    minWidth: 280,
-                    maxWidth: 400,
-                    isLeftPanel: true,
-                    child: M3PracticeFilterPanel(
-                      filter: state.filter,
-                      onFilterChanged: viewModel.updateFilter,
-                      onSearch: _searchPractices,
-                      onToggleExpand: () => viewModel.toggleFilterPanel(),
-                      initialSearchValue: state.searchQuery,
-                      searchController: state.searchController,
-                      onRefresh: () => viewModel.refresh(),
-                    ),
-                  ), // 过滤面板切换按钮
-                PersistentSidebarToggle(
-                  sidebarId: 'practice_list_filter_sidebar',
-                  defaultIsOpen: state.isFilterPanelExpanded,
-                  onToggle: (isOpen) => viewModel.toggleFilterPanel(),
-                  alignRight: false,
-                ),
-
-                // 主内容区域
-                Expanded(
-                  child: state.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : M3PracticeContentArea(
-                          practices: state.practices,
-                          viewMode: state.viewMode,
-                          isBatchMode: state.batchMode,
-                          selectedPractices: state.selectedPractices,
-                          onPracticeTap: _handlePracticeTap,
-                          onPracticeLongPress: (practiceId) {
-                            if (!state.batchMode) {
-                              ref
-                                  .read(practiceListProvider.notifier)
-                                  .toggleBatchMode();
-                            }
-                            ref
-                                .read(practiceListProvider.notifier)
-                                .togglePracticeSelection(practiceId);
-                          },
-                          onToggleFavorite: (practiceId) {
-                            ref
-                                .read(practiceListProvider.notifier)
-                                .handleToggleFavorite(practiceId);
-                          },
-                          onTagsEdited: (practiceId, tags) {
-                            ref
-                                .read(practiceListProvider.notifier)
-                                .handleTagEdited(practiceId, tags);
-                          },
-                          isLoading: state.isLoading,
-                          errorMessage: state.error,
-                        ),
-                ),
-              ],
-            ),
-          ),
-
-          // 分页控件
-          if (!state.isLoading)
-            M3PersistentPaginationControls(
-              pageId: 'practice_list',
-              currentPage: state.page,
-              totalItems: state.totalItems,
-              onPageChanged: (page) => viewModel.setPage(page),
-              onPageSizeChanged: (size) => viewModel.setPageSize(size),
-              availablePageSizes: const [10, 20, 50, 100],
-              defaultPageSize: 20,
-            ),
-        ],
-      ),
+      body: _buildResponsiveLayout(state, viewModel, l10n),
     );
   }
 
@@ -238,5 +158,221 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         viewModel.togglePracticeSelection(practiceId);
       }
     }
+  }
+
+  /// 根据屏幕宽度切换筛选面板
+  void _toggleFilterPanel() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+    final provider = ref.read(practiceListProvider.notifier);
+
+    if (isNarrowScreen) {
+      provider.toggleFilterPanelExclusive();
+    } else {
+      provider.toggleFilterPanel();
+    }
+  }
+
+  Widget _buildResponsiveLayout(
+      PracticeListState state, dynamic viewModel, AppLocalizations l10n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        const breakpoint = 1200.0;
+
+        if (screenWidth < breakpoint) {
+          // Narrow screen: show only filter panel when expanded
+          return _buildNarrowLayout(state, viewModel, l10n);
+        } else {
+          // Wide screen: show filter panel and content side by side
+          return _buildWideLayout(state, viewModel, l10n);
+        }
+      },
+    );
+  }
+
+  Widget _buildNarrowLayout(
+      PracticeListState state, dynamic viewModel, AppLocalizations l10n) {
+    return Column(
+      children: [
+        Expanded(
+          child: state.isFilterPanelExpanded
+              ? M3PracticeFilterPanel(
+                  filter: state.filter,
+                  onFilterChanged: viewModel.updateFilter,
+                  onSearch: _searchPractices,
+                  onToggleExpand: () => _toggleFilterPanel(),
+                  initialSearchValue: state.searchQuery,
+                  searchController: state.searchController,
+                  onRefresh: () => viewModel.refresh(),
+                )
+              : Column(
+                  children: [
+                    // 工具栏 - 显示筛选按钮
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.filter_list),
+                            onPressed: () => _toggleFilterPanel(),
+                            tooltip: l10n.filter,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${state.practices.length} practices',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 主内容区域
+                    Expanded(
+                      child: state.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : M3PracticeContentArea(
+                              practices: state.practices,
+                              viewMode: state.viewMode,
+                              isBatchMode: state.batchMode,
+                              selectedPractices: state.selectedPractices,
+                              onPracticeTap: _handlePracticeTap,
+                              onPracticeLongPress: (practiceId) {
+                                if (!state.batchMode) {
+                                  ref
+                                      .read(practiceListProvider.notifier)
+                                      .toggleBatchMode();
+                                }
+                                ref
+                                    .read(practiceListProvider.notifier)
+                                    .togglePracticeSelection(practiceId);
+                              },
+                              onToggleFavorite: (practiceId) {
+                                ref
+                                    .read(practiceListProvider.notifier)
+                                    .handleToggleFavorite(practiceId);
+                              },
+                              onTagsEdited: (practiceId, tags) {
+                                ref
+                                    .read(practiceListProvider.notifier)
+                                    .handleTagEdited(practiceId, tags);
+                              },
+                              isLoading: state.isLoading,
+                              errorMessage: state.error,
+                            ),
+                    ),
+                  ],
+                ),
+        ),
+        // Show pagination only when not in filter mode and not loading
+        if (!state.isLoading && !state.isFilterPanelExpanded)
+          M3PersistentPaginationControls(
+            pageId: 'practice_list',
+            currentPage: state.page,
+            totalItems: state.totalItems,
+            onPageChanged: (page) => viewModel.setPage(page),
+            onPageSizeChanged: (size) => viewModel.setPageSize(size),
+            availablePageSizes: const [10, 20, 50, 100],
+            defaultPageSize: 20,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(
+      PracticeListState state, dynamic viewModel, AppLocalizations l10n) {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              // 左侧过滤面板
+              if (state.isFilterPanelExpanded)
+                PersistentResizablePanel(
+                  panelId: 'practice_list_filter_panel',
+                  initialWidth: 300,
+                  minWidth: 280,
+                  maxWidth: 400,
+                  isLeftPanel: true,
+                  child: M3PracticeFilterPanel(
+                    filter: state.filter,
+                    onFilterChanged: viewModel.updateFilter,
+                    onSearch: _searchPractices,
+                    onToggleExpand: () => _toggleFilterPanel(),
+                    initialSearchValue: state.searchQuery,
+                    searchController: state.searchController,
+                    onRefresh: () => viewModel.refresh(),
+                  ),
+                ),
+              // 过滤面板切换按钮
+              PersistentSidebarToggle(
+                sidebarId: 'practice_list_filter_sidebar',
+                defaultIsOpen: state.isFilterPanelExpanded,
+                onToggle: (isOpen) => _toggleFilterPanel(),
+                alignRight: false,
+              ),
+              // 主内容区域
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : M3PracticeContentArea(
+                        practices: state.practices,
+                        viewMode: state.viewMode,
+                        isBatchMode: state.batchMode,
+                        selectedPractices: state.selectedPractices,
+                        onPracticeTap: _handlePracticeTap,
+                        onPracticeLongPress: (practiceId) {
+                          if (!state.batchMode) {
+                            ref
+                                .read(practiceListProvider.notifier)
+                                .toggleBatchMode();
+                          }
+                          ref
+                              .read(practiceListProvider.notifier)
+                              .togglePracticeSelection(practiceId);
+                        },
+                        onToggleFavorite: (practiceId) {
+                          ref
+                              .read(practiceListProvider.notifier)
+                              .handleToggleFavorite(practiceId);
+                        },
+                        onTagsEdited: (practiceId, tags) {
+                          ref
+                              .read(practiceListProvider.notifier)
+                              .handleTagEdited(practiceId, tags);
+                        },
+                        isLoading: state.isLoading,
+                        errorMessage: state.error,
+                      ),
+              ),
+            ],
+          ),
+        ),
+        // 分页控件
+        if (!state.isLoading)
+          M3PersistentPaginationControls(
+            pageId: 'practice_list',
+            currentPage: state.page,
+            totalItems: state.totalItems,
+            onPageChanged: (page) => viewModel.setPage(page),
+            onPageSizeChanged: (size) => viewModel.setPageSize(size),
+            availablePageSizes: const [10, 20, 50, 100],
+            defaultPageSize: 20,
+          ),
+      ],
+    );
   }
 }
