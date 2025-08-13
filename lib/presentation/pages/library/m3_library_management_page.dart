@@ -85,31 +85,7 @@ class _M3LibraryManagementPageState
           children: [
             // Main content area
             Expanded(
-              child: Row(
-                children: [
-                  // 主内容区域: 图库检索面板
-                  Expanded(
-                    child: M3LibraryBrowsingPanel(
-                      enableFileDrop: true,
-                      enableMultiSelect: state.isBatchMode, // 只在批量操作模式时启用多选
-                      onItemSelected:
-                          _handleImageSelected, // Add handler for image selection
-                      imagePreviewVisible: isImagePreviewVisible,
-                      onToggleImagePreview: _toggleImagePreviewPanel,
-                      selectedItem: state.selectedItem,
-                    ),
-                  ),
-
-                  // 右侧详情面板
-                  if (state.selectedItem != null && state.isDetailOpen)
-                    SizedBox(
-                      width: 350,
-                      child: M3LibraryDetailPanel(
-                        item: state.selectedItem!,
-                      ),
-                    ),
-                ],
-              ),
+              child: _buildResponsiveLayout(state),
             ),
           ],
         ),
@@ -487,5 +463,60 @@ class _M3LibraryManagementPageState
 
   void _toggleViewMode() {
     ref.read(libraryManagementProvider.notifier).toggleViewMode();
+  }
+
+  /// 构建响应式布局
+  Widget _buildResponsiveLayout(LibraryManagementState state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+
+    if (isNarrowScreen) {
+      // 窄屏模式：只显示一个面板
+      if (state.isDetailOpen && state.selectedItem != null) {
+        // 显示详情面板
+        return M3LibraryDetailPanel(
+          item: state.selectedItem!,
+          onClose: () =>
+              ref.read(libraryManagementProvider.notifier).closeDetailPanel(),
+        );
+      } else {
+        // 显示浏览面板
+        return M3LibraryBrowsingPanel(
+          enableFileDrop: true,
+          enableMultiSelect: state.isBatchMode,
+          onItemSelected: _handleImageSelected,
+          imagePreviewVisible: isImagePreviewVisible,
+          onToggleImagePreview: _toggleImagePreviewPanel,
+          selectedItem: state.selectedItem,
+        );
+      }
+    } else {
+      // 宽屏模式：并排显示
+      return Row(
+        children: [
+          // 主内容区域: 图库检索面板
+          Expanded(
+            child: M3LibraryBrowsingPanel(
+              enableFileDrop: true,
+              enableMultiSelect: state.isBatchMode,
+              onItemSelected: _handleImageSelected,
+              imagePreviewVisible: isImagePreviewVisible,
+              onToggleImagePreview: _toggleImagePreviewPanel,
+              selectedItem: state.selectedItem,
+            ),
+          ),
+
+          // 右侧详情面板
+          if (state.selectedItem != null && state.isDetailOpen)
+            SizedBox(
+              width: 350,
+              child: M3LibraryDetailPanel(
+                item: state.selectedItem!,
+                // 宽屏模式下不提供关闭回调，因为详情面板不会阻挡其他内容
+              ),
+            ),
+        ],
+      );
+    }
   }
 }

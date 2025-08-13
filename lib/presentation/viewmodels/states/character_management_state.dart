@@ -39,6 +39,9 @@ class CharacterManagementState with _$CharacterManagementState {
     /// Whether the detail panel is open
     @Default(false) bool isDetailOpen,
 
+    /// Whether the filter panel is shown
+    @Default(true) bool showFilterPanel,
+
     /// Error message, if any
     String? errorMessage,
 

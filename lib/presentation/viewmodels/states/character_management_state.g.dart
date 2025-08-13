@@ -35,6 +35,7 @@ _$CharacterManagementStateImpl _$$CharacterManagementStateImplFromJson(
               .toSet() ??
           const {},
       isDetailOpen: json['isDetailOpen'] as bool? ?? false,
+      showFilterPanel: json['showFilterPanel'] as bool? ?? true,
       errorMessage: json['errorMessage'] as String?,
       selectedCharacterId: json['selectedCharacterId'] as String?,
       viewMode: $enumDecodeNullable(_$ViewModeEnumMap, json['viewMode']) ??
@@ -54,6 +55,7 @@ Map<String, dynamic> _$$CharacterManagementStateImplToJson(
       'isBatchMode': instance.isBatchMode,
       'selectedCharacters': instance.selectedCharacters.toList(),
       'isDetailOpen': instance.isDetailOpen,
+      'showFilterPanel': instance.showFilterPanel,
       'errorMessage': instance.errorMessage,
       'selectedCharacterId': instance.selectedCharacterId,
       'viewMode': _$ViewModeEnumMap[instance.viewMode]!,

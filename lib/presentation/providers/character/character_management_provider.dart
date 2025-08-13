@@ -80,6 +80,54 @@ class CharacterManagementNotifier
     state = state.copyWith(isDetailOpen: false);
   }
 
+  /// Close filter panel
+  void closeFilterPanel() {
+    // 暂时使用现有的状态管理，未来可以扩展
+  }
+
+  /// Open detail panel (关闭筛选面板以防止重叠)
+  void openDetailPanel({String? characterId}) {
+    state = state.copyWith(
+      isDetailOpen: true,
+      selectedCharacterId: characterId ?? state.selectedCharacterId,
+    );
+  }
+
+  /// Open filter panel (关闭详情面板以防止重叠)
+  void openFilterPanel() {
+    state = state.copyWith(
+      isDetailOpen: false, // 自动关闭详情面板
+    );
+  }
+
+  /// Toggle filter panel visibility
+  void toggleFilterPanel() {
+    state = state.copyWith(showFilterPanel: !state.showFilterPanel);
+  }
+
+  /// 在窄屏模式下切换筛选面板（确保与详情面板互斥）
+  void toggleFilterPanelExclusive() {
+    // 如果要打开筛选面板且详情面板已打开，则关闭详情面板
+    if (!state.showFilterPanel && state.isDetailOpen) {
+      state = state.copyWith(
+        showFilterPanel: true,
+        isDetailOpen: false,
+        selectedCharacterId: null,
+      );
+    } else {
+      state = state.copyWith(showFilterPanel: !state.showFilterPanel);
+    }
+  }
+
+  /// 在窄屏模式下打开详情面板（确保与筛选面板互斥）
+  void openDetailPanelExclusive(String characterId) {
+    state = state.copyWith(
+      selectedCharacterId: characterId,
+      isDetailOpen: true,
+      showFilterPanel: false, // 关闭筛选面板
+    );
+  }
+
   /// 复制选中的字符ID到剪贴板
   /// 如果是批量模式下选择了多个字符，则复制所有选中的字符ID
   /// 如果不是批量模式，则复制当前选中的字符ID
@@ -242,6 +290,7 @@ class CharacterManagementNotifier
     state = state.copyWith(
       selectedCharacterId: characterId,
       isDetailOpen: true,
+      // isFilterOpen: false, // 自动关闭筛选面板以防止重叠 - 暂时注释直到 Freezed 生成完成
     );
   }
 

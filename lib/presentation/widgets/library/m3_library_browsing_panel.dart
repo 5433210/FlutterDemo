@@ -67,7 +67,6 @@ class M3LibraryBrowsingPanel extends ConsumerStatefulWidget {
 class _M3LibraryBrowsingPanelState
     extends ConsumerState<M3LibraryBrowsingPanel> {
   late final TextEditingController _searchController;
-  bool _isFilterPanelExpanded = true;
 
   // 框选相关变量
   bool _isBoxSelecting = false;
@@ -80,55 +79,17 @@ class _M3LibraryBrowsingPanelState
     final state = ref.watch(libraryManagementProvider);
     final l10n = AppLocalizations.of(context);
 
+    // 检查屏幕宽度以决定是否启用互斥模式
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+
     return Column(
       children: [
         // Main content area with filter, list and search
         Expanded(
-          child: Row(
-            children: [
-              // Left filter panel (resizable)
-              if (_isFilterPanelExpanded)
-                PersistentResizablePanel(
-                  panelId: 'library_browsing_filter_panel',
-                  initialWidth: 300,
-                  minWidth: 280,
-                  maxWidth: 400,
-                  isLeftPanel: true,
-                  child: Column(
-                    children: [
-                      // 筛选面板内容（搜索框已移至筛选面板内部）
-                      Expanded(
-                        child: M3LibraryFilterPanel(
-                          searchController: _searchController,
-                          onSearch: _handleSearch,
-                          onRefresh: () {
-                            // 触发图库数据刷新
-                            ref
-                                .read(libraryManagementProvider.notifier)
-                                .refresh();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Filter panel toggle
-              PersistentSidebarToggle(
-                sidebarId: 'library_browsing_filter_sidebar',
-                defaultIsOpen: _isFilterPanelExpanded,
-                onToggle: (isOpen) => _toggleFilterPanel(),
-                alignRight: false,
-              ),
-
-              // Main content area
-              Expanded(
-                child: widget.enableFileDrop
-                    ? _buildDropTarget(state)
-                    : _buildContentArea(state),
-              ),
-            ],
-          ),
+          child: isNarrowScreen
+              ? _buildNarrowLayout(state, l10n)
+              : _buildWideLayout(state, l10n),
         ),
 
         // Pagination controls
@@ -510,6 +471,10 @@ class _M3LibraryBrowsingPanelState
     final notifier = ref.read(libraryManagementProvider.notifier);
     final selectedItem = state.items.firstWhere((item) => item.id == itemId);
 
+    // 检查屏幕宽度以决定是否使用互斥模式
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+
     // 根据不同场景处理点击
     if (widget.showConfirmButtons) {
       // 选择对话框模式
@@ -530,13 +495,21 @@ class _M3LibraryBrowsingPanelState
     } else if (widget.onItemSelected != null) {
       // 有选择回调的单选模式
       notifier.selectItem(itemId);
-      notifier.setDetailItem(selectedItem); // Also update the detail item
+      if (isNarrowScreen) {
+        notifier.openDetailPanelExclusive(selectedItem);
+      } else {
+        notifier.setDetailItem(selectedItem);
+      }
       widget.onItemSelected!(selectedItem);
     } else {
       // 图库管理页模式 - 不选中项目，只显示详情
-      notifier.openDetailPanel();
       notifier.clearSelection();
-      notifier.setDetailItem(selectedItem);
+      if (isNarrowScreen) {
+        notifier.openDetailPanelExclusive(selectedItem);
+      } else {
+        notifier.openDetailPanel();
+        notifier.setDetailItem(selectedItem);
+      }
     }
   }
 
@@ -584,9 +557,150 @@ class _M3LibraryBrowsingPanelState
 
   // 切换筛选面板显示
   void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelExpanded = !_isFilterPanelExpanded;
-    });
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+    final provider = ref.read(libraryManagementProvider.notifier);
+
+    if (isNarrowScreen) {
+      provider.toggleFilterPanelExclusive();
+    } else {
+      provider.toggleFilterPanel();
+    }
+  }
+
+  /// 窄屏布局：筛选面板和内容区域在窄屏时互斥显示
+  Widget _buildNarrowLayout(
+      LibraryManagementState state, AppLocalizations? l10n) {
+    // 如果详情面板打开，显示详情面板
+    if (state.isDetailOpen) {
+      return _buildContentArea(state);
+    }
+
+    // 如果筛选面板打开，显示筛选面板
+    if (state.showFilterPanel) {
+      return Column(
+        children: [
+          // 筛选面板工具栏
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  l10n?.filter ?? 'Filter',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => _toggleFilterPanel(),
+                  tooltip: l10n?.close ?? 'Close',
+                ),
+              ],
+            ),
+          ),
+          // 筛选面板内容
+          Expanded(
+            child: M3LibraryFilterPanel(
+              searchController: _searchController,
+              onSearch: _handleSearch,
+              onRefresh: () {
+                ref.read(libraryManagementProvider.notifier).refresh();
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 否则显示内容区域
+    return Column(
+      children: [
+        // 工具栏
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () => _toggleFilterPanel(),
+                tooltip: l10n?.filter ?? 'Filter',
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+        // 内容区域
+        Expanded(
+          child: widget.enableFileDrop
+              ? _buildDropTarget(state)
+              : _buildContentArea(state),
+        ),
+      ],
+    );
+  }
+
+  /// 宽屏布局：筛选面板和内容区域水平排列
+  Widget _buildWideLayout(
+      LibraryManagementState state, AppLocalizations? l10n) {
+    return Row(
+      children: [
+        // Left filter panel (resizable)
+        if (state.showFilterPanel)
+          PersistentResizablePanel(
+            panelId: 'library_browsing_filter_panel',
+            initialWidth: 300,
+            minWidth: 280,
+            maxWidth: 400,
+            isLeftPanel: true,
+            child: Column(
+              children: [
+                // 筛选面板内容（搜索框已移至筛选面板内部）
+                Expanded(
+                  child: M3LibraryFilterPanel(
+                    searchController: _searchController,
+                    onSearch: _handleSearch,
+                    onRefresh: () {
+                      // 触发图库数据刷新
+                      ref.read(libraryManagementProvider.notifier).refresh();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Filter panel toggle
+        PersistentSidebarToggle(
+          sidebarId: 'library_browsing_filter_sidebar',
+          defaultIsOpen: state.showFilterPanel,
+          onToggle: (isOpen) => _toggleFilterPanel(),
+          alignRight: false,
+        ),
+
+        // Main content area
+        Expanded(
+          child: widget.enableFileDrop
+              ? _buildDropTarget(state)
+              : _buildContentArea(state),
+        ),
+      ],
+    );
   }
 
   // 显示批量导入对话框

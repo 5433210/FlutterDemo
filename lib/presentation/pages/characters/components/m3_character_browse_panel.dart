@@ -53,9 +53,6 @@ class M3CharacterBrowsePanel extends ConsumerStatefulWidget {
   /// 是否显示分页控件
   final bool showPagination;
 
-  /// 是否显示筛选面板
-  final bool showFilterPanel;
-
   /// 构造函数
   const M3CharacterBrowsePanel({
     super.key,
@@ -72,7 +69,6 @@ class M3CharacterBrowsePanel extends ConsumerStatefulWidget {
     this.onSearch,
     this.onViewModeChanged,
     this.showPagination = true,
-    this.showFilterPanel = true,
   });
 
   @override
@@ -82,7 +78,6 @@ class M3CharacterBrowsePanel extends ConsumerStatefulWidget {
 
 class _M3CharacterBrowsePanelState
     extends ConsumerState<M3CharacterBrowsePanel> {
-  late bool _isFilterPanelExpanded;
   late TextEditingController _searchController;
 
   // 框选相关变量
@@ -94,48 +89,19 @@ class _M3CharacterBrowsePanelState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(characterManagementProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
 
     return Column(
       children: [
-        // 主要内容区域（筛选面板和字符网格/列表）
+        // Main content area
         Expanded(
-          child: Row(
-            children: [
-              // 筛选面板（可折叠和调整大小）
-              if (widget.showFilterPanel && _isFilterPanelExpanded)
-                PersistentResizablePanel(
-                  panelId: 'character_browse_filter_panel',
-                  initialWidth: 300,
-                  minWidth: 280,
-                  maxWidth: 400,
-                  isLeftPanel: true,
-                  child: M3CharacterFilterPanel(
-                    onToggleExpand: _toggleFilterPanel,
-                    onRefresh: () {
-                      // 触发集字数据刷新
-                      ref.read(characterManagementProvider.notifier).refresh();
-                    },
-                  ),
-                ),
-
-              // 筛选面板切换按钮
-              if (widget.showFilterPanel)
-                PersistentSidebarToggle(
-                  sidebarId: 'character_browse_filter_sidebar',
-                  defaultIsOpen: _isFilterPanelExpanded,
-                  onToggle: (isOpen) => _toggleFilterPanel(),
-                  alignRight: false,
-                ),
-
-              // 主内容（字符网格或列表）
-              Expanded(
-                child: _buildContentArea(state),
-              ),
-            ],
-          ),
+          child: isNarrowScreen
+              ? _buildNarrowLayout(state)
+              : _buildWideLayout(state),
         ),
 
-        // 分页控件
+        // Pagination controls
         if (widget.showPagination)
           M3PersistentPaginationControls(
             pageId: 'character_browse',
@@ -159,7 +125,6 @@ class _M3CharacterBrowsePanelState
   @override
   void initState() {
     super.initState();
-    _isFilterPanelExpanded = widget.initialFilterPanelExpanded;
     _searchController = TextEditingController();
 
     // 设置初始视图模式
@@ -398,17 +363,22 @@ class _M3CharacterBrowsePanelState
     }
 
     final state = ref.read(characterManagementProvider);
+    final provider = ref.read(characterManagementProvider.notifier);
+
+    // 检查屏幕宽度以决定是否使用互斥模式
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
 
     if (state.isBatchMode) {
       // 批量模式下，切换选择状态
-      ref
-          .read(characterManagementProvider.notifier)
-          .toggleCharacterSelection(characterId);
+      provider.toggleCharacterSelection(characterId);
     } else {
       // 普通模式下，选择字符查看详情
-      ref
-          .read(characterManagementProvider.notifier)
-          .selectCharacter(characterId);
+      if (isNarrowScreen) {
+        provider.openDetailPanelExclusive(characterId);
+      } else {
+        provider.selectCharacter(characterId);
+      }
     }
   }
 
@@ -488,12 +458,6 @@ class _M3CharacterBrowsePanelState
 
   // ===== 事件处理方法 =====
 
-  void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelExpanded = !_isFilterPanelExpanded;
-    });
-  }
-
   // For future use when search field is added directly to this panel
   /*
   void _handleSearch(String query) {
@@ -511,4 +475,137 @@ class _M3CharacterBrowsePanelState
     ref.read(characterManagementProvider.notifier).updateFilter(filter);
   }
   */
+
+  /// 窄屏布局：筛选面板和内容区域在窄屏时互斥显示
+  Widget _buildNarrowLayout(CharacterManagementState state) {
+    // 如果详情面板打开，内容区域会显示详情面板
+    if (state.isDetailOpen) {
+      return _buildContentArea(state);
+    }
+
+    // 如果筛选面板打开，显示筛选面板
+    if (state.showFilterPanel) {
+      return Column(
+        children: [
+          // 筛选面板工具栏
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  AppLocalizations.of(context).filter ?? 'Filter',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => _toggleFilterPanel(),
+                  tooltip: AppLocalizations.of(context).close ?? 'Close',
+                ),
+              ],
+            ),
+          ),
+          // 筛选面板内容
+          Expanded(
+            child: M3CharacterFilterPanel(
+              onToggleExpand: _toggleFilterPanel,
+              onRefresh: () {
+                ref.read(characterManagementProvider.notifier).refresh();
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 否则显示内容区域
+    return Column(
+      children: [
+        // 工具栏
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () => _toggleFilterPanel(),
+                tooltip: AppLocalizations.of(context).filter ?? 'Filter',
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+        // 内容区域
+        Expanded(
+          child: _buildContentArea(state),
+        ),
+      ],
+    );
+  }
+
+  /// 宽屏布局：筛选面板和内容区域水平排列
+  Widget _buildWideLayout(CharacterManagementState state) {
+    return Row(
+      children: [
+        // 筛选面板（可折叠和调整大小）
+        if (state.showFilterPanel)
+          PersistentResizablePanel(
+            panelId: 'character_browse_filter_panel',
+            initialWidth: 300,
+            minWidth: 280,
+            maxWidth: 400,
+            isLeftPanel: true,
+            child: M3CharacterFilterPanel(
+              onToggleExpand: _toggleFilterPanel,
+              onRefresh: () {
+                // 触发集字数据刷新
+                ref.read(characterManagementProvider.notifier).refresh();
+              },
+            ),
+          ),
+
+        // 筛选面板切换按钮
+        PersistentSidebarToggle(
+          sidebarId: 'character_browse_filter_sidebar',
+          defaultIsOpen: state.showFilterPanel,
+          onToggle: (isOpen) => _toggleFilterPanel(),
+          alignRight: false,
+        ),
+
+        // 主内容（字符网格或列表）
+        Expanded(
+          child: _buildContentArea(state),
+        ),
+      ],
+    );
+  }
+
+  /// 切换筛选面板
+  void _toggleFilterPanel() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+    final provider = ref.read(characterManagementProvider.notifier);
+
+    if (isNarrowScreen) {
+      provider.toggleFilterPanelExclusive();
+    } else {
+      provider.toggleFilterPanel();
+    }
+  }
 }

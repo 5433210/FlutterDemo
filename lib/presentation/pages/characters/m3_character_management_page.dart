@@ -67,40 +67,7 @@ class _M3CharacterManagementPageState
           minWidth: 800,
           minHeight: 600,
         ),
-        child: Row(
-          children: [
-            // 主内容区域（包含筛选面板、字符列表和分页）
-            Expanded(
-              child: M3CharacterBrowsePanel(
-                initialViewMode: state.viewMode,
-                enableBatchMode: true,
-                isBatchMode: state.isBatchMode,
-                onCharacterSelected: _handleCharacterTap,
-                onCharacterDeleted: _handleDeleteCharacter,
-                onCharacterEdited: _handleEditCharacter,
-                onFavoriteToggled: _handleToggleFavorite,
-              ),
-            ),
-
-            // 详情面板（可折叠和调整大小）
-            if (state.selectedCharacterId != null && state.isDetailOpen)
-              PersistentResizablePanel(
-                panelId: 'character_management_detail_panel',
-                initialWidth: 350,
-                minWidth: 250,
-                maxWidth: 500,
-                isLeftPanel: false,
-                child: M3CharacterDetailPanel(
-                  characterId: state.selectedCharacterId!,
-                  onClose: _closeDetailPanel,
-                  onEdit: () =>
-                      _handleEditCharacter(state.selectedCharacterId!),
-                  onToggleFavorite: () =>
-                      _handleToggleFavorite(state.selectedCharacterId!),
-                ),
-              ),
-          ],
-        ),
+        child: _buildResponsiveLayout(state),
       ),
     );
   }
@@ -134,9 +101,19 @@ class _M3CharacterManagementPageState
           .toggleCharacterSelection(characterId);
     } else {
       // In normal mode, select for detail view
-      ref
-          .read(characterManagementProvider.notifier)
-          .selectCharacter(characterId);
+      // 在窄屏幕下，打开详情面板时自动关闭筛选面板
+      final screenWidth = MediaQuery.of(context).size.width;
+      if (screenWidth < 1200) {
+        // 使用 openDetailPanel 方法，它包含互斥逻辑
+        ref
+            .read(characterManagementProvider.notifier)
+            .openDetailPanel(characterId: characterId);
+      } else {
+        // 宽屏幕下使用原来的方法
+        ref
+            .read(characterManagementProvider.notifier)
+            .selectCharacter(characterId);
+      }
     }
   }
 
@@ -287,5 +264,72 @@ class _M3CharacterManagementPageState
 
   void _toggleViewMode() {
     ref.read(characterManagementProvider.notifier).toggleViewMode();
+  }
+
+  /// 构建响应式布局
+  Widget _buildResponsiveLayout(CharacterManagementState state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 1200;
+
+    if (isNarrowScreen) {
+      // 窄屏模式：只显示一个面板
+      if (state.isDetailOpen && state.selectedCharacterId != null) {
+        // 显示详情面板
+        return M3CharacterDetailPanel(
+          characterId: state.selectedCharacterId!,
+          onClose: _closeDetailPanel,
+          onEdit: () => _handleEditCharacter(state.selectedCharacterId!),
+          onToggleFavorite: () =>
+              _handleToggleFavorite(state.selectedCharacterId!),
+        );
+      } else {
+        // 显示浏览面板
+        return M3CharacterBrowsePanel(
+          initialViewMode: state.viewMode,
+          enableBatchMode: true,
+          isBatchMode: state.isBatchMode,
+          onCharacterSelected: _handleCharacterTap,
+          onCharacterDeleted: _handleDeleteCharacter,
+          onCharacterEdited: _handleEditCharacter,
+          onFavoriteToggled: _handleToggleFavorite,
+        );
+      }
+    } else {
+      // 宽屏模式：并排显示
+      return Row(
+        children: [
+          // 主内容区域（包含筛选面板、字符列表和分页）
+          Expanded(
+            child: M3CharacterBrowsePanel(
+              initialViewMode: state.viewMode,
+              enableBatchMode: true,
+              isBatchMode: state.isBatchMode,
+              onCharacterSelected: _handleCharacterTap,
+              onCharacterDeleted: _handleDeleteCharacter,
+              onCharacterEdited: _handleEditCharacter,
+              onFavoriteToggled: _handleToggleFavorite,
+            ),
+          ),
+
+          // 详情面板（可折叠和调整大小）
+          if (state.selectedCharacterId != null && state.isDetailOpen)
+            PersistentResizablePanel(
+              panelId: 'character_management_detail_panel',
+              initialWidth: 350,
+              minWidth: 250,
+              maxWidth: 500,
+              isLeftPanel: false,
+              child: M3CharacterDetailPanel(
+                characterId: state.selectedCharacterId!,
+                onClose: _closeDetailPanel,
+                onEdit: () => _handleEditCharacter(state.selectedCharacterId!),
+                onToggleFavorite: () =>
+                    _handleToggleFavorite(state.selectedCharacterId!),
+                // 宽屏模式下也提供关闭回调，保持一致性
+              ),
+            ),
+        ],
+      );
+    }
   }
 }

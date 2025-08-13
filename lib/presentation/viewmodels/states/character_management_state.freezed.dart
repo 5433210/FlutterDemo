@@ -42,6 +42,9 @@ mixin _$CharacterManagementState {
   /// Whether the detail panel is open
   bool get isDetailOpen => throw _privateConstructorUsedError;
 
+  /// Whether the filter panel is shown
+  bool get showFilterPanel => throw _privateConstructorUsedError;
+
   /// Error message, if any
   String? get errorMessage => throw _privateConstructorUsedError;
 
@@ -84,6 +87,7 @@ abstract class $CharacterManagementStateCopyWith<$Res> {
       bool isBatchMode,
       Set<String> selectedCharacters,
       bool isDetailOpen,
+      bool showFilterPanel,
       String? errorMessage,
       String? selectedCharacterId,
       ViewMode viewMode,
@@ -117,6 +121,7 @@ class _$CharacterManagementStateCopyWithImpl<$Res,
     Object? isBatchMode = null,
     Object? selectedCharacters = null,
     Object? isDetailOpen = null,
+    Object? showFilterPanel = null,
     Object? errorMessage = freezed,
     Object? selectedCharacterId = freezed,
     Object? viewMode = null,
@@ -152,6 +157,10 @@ class _$CharacterManagementStateCopyWithImpl<$Res,
       isDetailOpen: null == isDetailOpen
           ? _value.isDetailOpen
           : isDetailOpen // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showFilterPanel: null == showFilterPanel
+          ? _value.showFilterPanel
+          : showFilterPanel // ignore: cast_nullable_to_non_nullable
               as bool,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
@@ -208,6 +217,7 @@ abstract class _$$CharacterManagementStateImplCopyWith<$Res>
       bool isBatchMode,
       Set<String> selectedCharacters,
       bool isDetailOpen,
+      bool showFilterPanel,
       String? errorMessage,
       String? selectedCharacterId,
       ViewMode viewMode,
@@ -241,6 +251,7 @@ class __$$CharacterManagementStateImplCopyWithImpl<$Res>
     Object? isBatchMode = null,
     Object? selectedCharacters = null,
     Object? isDetailOpen = null,
+    Object? showFilterPanel = null,
     Object? errorMessage = freezed,
     Object? selectedCharacterId = freezed,
     Object? viewMode = null,
@@ -276,6 +287,10 @@ class __$$CharacterManagementStateImplCopyWithImpl<$Res>
       isDetailOpen: null == isDetailOpen
           ? _value.isDetailOpen
           : isDetailOpen // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showFilterPanel: null == showFilterPanel
+          ? _value.showFilterPanel
+          : showFilterPanel // ignore: cast_nullable_to_non_nullable
               as bool,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
@@ -316,6 +331,7 @@ class _$CharacterManagementStateImpl implements _CharacterManagementState {
       this.isBatchMode = false,
       final Set<String> selectedCharacters = const {},
       this.isDetailOpen = false,
+      this.showFilterPanel = true,
       this.errorMessage,
       this.selectedCharacterId,
       this.viewMode = ViewMode.grid,
@@ -386,6 +402,11 @@ class _$CharacterManagementStateImpl implements _CharacterManagementState {
   @JsonKey()
   final bool isDetailOpen;
 
+  /// Whether the filter panel is shown
+  @override
+  @JsonKey()
+  final bool showFilterPanel;
+
   /// Error message, if any
   @override
   final String? errorMessage;
@@ -416,7 +437,7 @@ class _$CharacterManagementStateImpl implements _CharacterManagementState {
 
   @override
   String toString() {
-    return 'CharacterManagementState(characters: $characters, allTags: $allTags, filter: $filter, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedCharacters: $selectedCharacters, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, selectedCharacterId: $selectedCharacterId, viewMode: $viewMode, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize)';
+    return 'CharacterManagementState(characters: $characters, allTags: $allTags, filter: $filter, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedCharacters: $selectedCharacters, isDetailOpen: $isDetailOpen, showFilterPanel: $showFilterPanel, errorMessage: $errorMessage, selectedCharacterId: $selectedCharacterId, viewMode: $viewMode, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize)';
   }
 
   @override
@@ -436,6 +457,8 @@ class _$CharacterManagementStateImpl implements _CharacterManagementState {
                 .equals(other._selectedCharacters, _selectedCharacters) &&
             (identical(other.isDetailOpen, isDetailOpen) ||
                 other.isDetailOpen == isDetailOpen) &&
+            (identical(other.showFilterPanel, showFilterPanel) ||
+                other.showFilterPanel == showFilterPanel) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             (identical(other.selectedCharacterId, selectedCharacterId) ||
@@ -461,6 +484,7 @@ class _$CharacterManagementStateImpl implements _CharacterManagementState {
       isBatchMode,
       const DeepCollectionEquality().hash(_selectedCharacters),
       isDetailOpen,
+      showFilterPanel,
       errorMessage,
       selectedCharacterId,
       viewMode,
@@ -494,6 +518,7 @@ abstract class _CharacterManagementState implements CharacterManagementState {
       final bool isBatchMode,
       final Set<String> selectedCharacters,
       final bool isDetailOpen,
+      final bool showFilterPanel,
       final String? errorMessage,
       final String? selectedCharacterId,
       final ViewMode viewMode,
@@ -531,6 +556,10 @@ abstract class _CharacterManagementState implements CharacterManagementState {
   /// Whether the detail panel is open
   @override
   bool get isDetailOpen;
+
+  /// Whether the filter panel is shown
+  @override
+  bool get showFilterPanel;
 
   /// Error message, if any
   @override

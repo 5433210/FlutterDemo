@@ -15,10 +15,12 @@ import '../../../../utils/file_size_formatter.dart';
 /// 图库详情面板
 class M3LibraryDetailPanel extends ConsumerStatefulWidget {
   final LibraryItem item;
+  final VoidCallback? onClose;
 
   const M3LibraryDetailPanel({
     super.key,
     required this.item,
+    this.onClose,
   });
 
   @override
@@ -77,6 +79,14 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                     ),
                     child: Row(
                       children: [
+                        // 关闭按钮（仅在窄屏时显示）
+                        if (widget.onClose != null) ...[
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: widget.onClose,
+                            tooltip: l10n.back,
+                          ),
+                        ],
                         Expanded(
                           child: Text(
                             l10n.detail,

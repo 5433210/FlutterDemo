@@ -141,13 +141,15 @@ class _M3PersistentPaginationControlsState
         builder: (context, constraints) {
           // 根据可用宽度决定显示模式
           final availableWidth = constraints.maxWidth;
-          
+
           if (availableWidth < 400) {
             // 紧凑版本 - 只显示基本控制
-            return _buildCompactLayout(context, pageSize, totalPages, l10n, theme);
+            return _buildCompactLayout(
+                context, pageSize, totalPages, l10n, theme);
           } else if (availableWidth < 600) {
             // 中等版本 - 隐藏总数显示或页面大小选择器
-            return _buildMediumLayout(context, pageSize, totalPages, l10n, theme);
+            return _buildMediumLayout(
+                context, pageSize, totalPages, l10n, theme);
           } else {
             // 完整版本 - 显示所有元素
             return _buildFullLayout(context, pageSize, totalPages, l10n, theme);
@@ -176,8 +178,8 @@ class _M3PersistentPaginationControlsState
               : null,
           tooltip: l10n.previousPage,
           visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(minWidth: 25, minHeight: 25),
+          padding: const EdgeInsets.all(2),
         ),
         Container(
           constraints: const BoxConstraints(minWidth: 60),
@@ -194,8 +196,8 @@ class _M3PersistentPaginationControlsState
               : null,
           tooltip: l10n.nextPage,
           visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(minWidth: 25, minHeight: 25),
+          padding: const EdgeInsets.all(2),
         ),
       ],
     );
@@ -217,15 +219,14 @@ class _M3PersistentPaginationControlsState
           '${widget.currentPage} / $totalPages',
           style: theme.textTheme.bodyMedium,
         ),
-        
+
         // 分页控制按钮
         Row(
           children: [
             IconButton(
               icon: const Icon(Icons.first_page, size: 20),
-              onPressed: widget.currentPage > 1
-                  ? () => widget.onPageChanged(1)
-                  : null,
+              onPressed:
+                  widget.currentPage > 1 ? () => widget.onPageChanged(1) : null,
               tooltip: l10n.firstPage,
               visualDensity: VisualDensity.compact,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -263,7 +264,7 @@ class _M3PersistentPaginationControlsState
             ),
           ],
         ),
-        
+
         // 只在有足够空间时显示页面大小选择器
         if (widget.showPageSizeSelector)
           Container(
@@ -333,9 +334,8 @@ class _M3PersistentPaginationControlsState
           children: [
             IconButton(
               icon: const Icon(Icons.first_page, size: 20),
-              onPressed: widget.currentPage > 1
-                  ? () => widget.onPageChanged(1)
-                  : null,
+              onPressed:
+                  widget.currentPage > 1 ? () => widget.onPageChanged(1) : null,
               tooltip: l10n.firstPage,
               visualDensity: VisualDensity.compact,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -408,8 +408,7 @@ class _M3PersistentPaginationControlsState
                       ))
                   .toList(),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -999,6 +999,29 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     state = state.copyWith(showFilterPanel: !state.showFilterPanel);
   }
 
+  /// 在窄屏模式下切换筛选面板（确保与详情面板互斥）
+  void toggleFilterPanelExclusive() {
+    // 如果要打开筛选面板且详情面板已打开，则关闭详情面板
+    if (!state.showFilterPanel && state.isDetailOpen) {
+      state = state.copyWith(
+        showFilterPanel: true,
+        isDetailOpen: false,
+        selectedItem: null,
+      );
+    } else {
+      state = state.copyWith(showFilterPanel: !state.showFilterPanel);
+    }
+  }
+
+  /// 在窄屏模式下打开详情面板（确保与筛选面板互斥）
+  void openDetailPanelExclusive(LibraryItem item) {
+    state = state.copyWith(
+      selectedItem: item,
+      isDetailOpen: true,
+      showFilterPanel: false, // 关闭筛选面板
+    );
+  }
+
   /// 切换图片预览面板的可见性
   void toggleImagePreviewPanel() {
     // The state now has isImagePreviewOpen properly defined

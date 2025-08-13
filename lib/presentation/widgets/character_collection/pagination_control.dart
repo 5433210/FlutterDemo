@@ -27,7 +27,7 @@ class PaginationControl extends StatelessWidget {
         builder: (context, constraints) {
           // 根据可用宽度决定显示紧凑版本还是完整版本
           final availableWidth = constraints.maxWidth;
-          
+
           if (availableWidth < 400) {
             // 紧凑版本：只显示基本导航
             return _buildCompactPagination(context);
@@ -46,7 +46,7 @@ class PaginationControl extends StatelessWidget {
   /// 紧凑版本分页控件（宽度 < 400px）
   Widget _buildCompactPagination(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -57,7 +57,7 @@ class PaginationControl extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        
+
         // 基本导航按钮
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -84,7 +84,7 @@ class PaginationControl extends StatelessWidget {
   /// 中等版本分页控件（400px <= 宽度 < 600px）
   Widget _buildMediumPagination(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -93,7 +93,7 @@ class PaginationControl extends StatelessWidget {
           _getCompactDisplayRange(),
           style: theme.textTheme.bodySmall,
         ),
-        
+
         // 导航控件
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -104,14 +104,14 @@ class PaginationControl extends StatelessWidget {
               icon: Icons.first_page,
               enabled: currentPage > 1,
             ),
-            
+
             _buildPageButton(
               context,
               currentPage - 1,
               icon: Icons.chevron_left,
               enabled: currentPage > 1,
             ),
-            
+
             // 页码显示（不显示多个页码按钮）
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -128,14 +128,14 @@ class PaginationControl extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             _buildPageButton(
               context,
               currentPage + 1,
               icon: Icons.chevron_right,
               enabled: currentPage < totalPages,
             ),
-            
+
             _buildPageButton(
               context,
               totalPages,
@@ -215,7 +215,7 @@ class PaginationControl extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: enabled 
+          color: enabled
               ? theme.colorScheme.primary.withOpacity(0.1)
               : theme.disabledColor.withOpacity(0.1),
         ),
@@ -322,13 +322,13 @@ class PaginationControl extends StatelessWidget {
     // 假设每页16个项目
     const itemsPerPage = 16;
     final totalItems = totalPages * itemsPerPage;
-    return '共${totalItems}个';
+    return '共$totalItems个';
   }
 
   String _getCompactDisplayRange() {
     // 紧凑版本的显示范围
     const itemsPerPage = 16;
     final totalItems = totalPages * itemsPerPage;
-    return '共${totalItems}个';
+    return '共$totalItems个';
   }
 }
