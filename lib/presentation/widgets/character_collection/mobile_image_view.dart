@@ -109,10 +109,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   final FocusNode _focusNode = FocusNode();
   CoordinateTransformer? _transformer;
 
-  // 🔧 内部变换矩阵管理 - 避免依赖容易重置的TransformationController
-  Matrix4 _internalMatrix = Matrix4.identity();
-  bool _isMatrixInitialized = false;
-
   // 移动端特定的状态
   bool _isSelecting = false;
   bool _isAdjusting = false;
@@ -133,14 +129,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   // 调整相关状态
   int? _activeHandleIndex;
-
-  // 平移模式点击检测相关
-  bool _isInteracting = false;
-  Offset? _interactionStartPosition;
-  DateTime? _interactionStartTime;
-
-  // 🔧 添加防抖机制，避免频繁的矩阵恢复操作
-  DateTime? _lastRestoreAttempt;
 
   @override
   void initState() {
@@ -183,151 +171,128 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
             viewportSize: viewportSize,
           );
 
-          return Consumer(
-            builder: (context, ref, child) {
-              // 🔧 使用PostFrameCallback避免在每次build时都检查矩阵
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _restoreMatrixIfNeeded();
-              });
-
-              return _buildImageContent(
-                imageState: imageState,
-                viewportSize: viewportSize,
-                toolMode: toolMode,
-              );
-            },
+          // 直接返回内容，不使用Consumer包装整个内容
+          return _buildImageContent(
+            imageState: imageState,
+            viewportSize: viewportSize,
+            toolMode: toolMode,
           );
         },
       ),
     );
   }
 
-  /// 构建图片内容
+  /// 构建图片内容（参考桌面版的成功实现）
   Widget _buildImageContent({
     required WorkImageState imageState,
     required Size viewportSize,
     required Tool toolMode,
   }) {
-    // 在平移模式下，我们需要在InteractiveViewer外面包装一个GestureDetector
-    // 来处理点击事件，避免与InteractiveViewer的平移行为冲突
-    Widget interactiveContent = InteractiveViewer(
-      key: const ValueKey('mobile_interactive_viewer'), // 🔑 添加key防止重建时重置matrix
-      transformationController: _transformationController,
-      constrained: false,
-      minScale: 0.1,
-      maxScale: 10.0,
-      // 启用基本的平移和缩放功能
-      panEnabled: toolMode == Tool.pan, // 只在平移模式下启用平移
-      scaleEnabled: true,
-      // 使用合理的边界设置，确保变换矩阵正常更新
-      boundaryMargin: const EdgeInsets.all(double.infinity),
-      // 允许超出边界但不无限制
-      // clipBehavior: Clip.none,
-      alignment: Alignment.topLeft,
-      // 添加InteractiveViewer回调以确保矩阵正确更新
-      onInteractionStart: _handleInteractionStart,
-      onInteractionUpdate: _handleInteractionUpdate,
-      onInteractionEnd: _handleInteractionEnd,
-      child: Stack(
-        children: [
-          // 图片层
-          Image.memory(
-            imageState.imageData!,
-            fit: BoxFit.contain,
-            alignment: Alignment.topLeft,
-            filterQuality: FilterQuality.high,
-            gaplessPlayback: true,
-          ),
-
-          // 选区绘制层 - 使用独立的Consumer避免影响InteractiveViewer
-          Consumer(
-            builder: (context, ref, child) {
-              final currentRegions =
-                  ref.watch(characterCollectionProvider).regions;
-
-              if (_transformer == null || currentRegions.isEmpty) {
-                return const SizedBox.shrink();
-              }
-
-              return Positioned.fill(
-                child: CustomPaint(
-                  painter: RegionsPainter(
-                    regions: currentRegions,
-                    transformer: _transformer!,
-                    hoveredId: null, // 移动端不需要hover状态
-                    adjustingRegionId: _adjustingRegionId,
-                    currentTool: toolMode,
-                    isAdjusting: _isAdjusting,
-                    selectedIds: currentRegions
-                        .where((r) => r.isSelected)
-                        .map((r) => r.id)
-                        .toList(),
+    final regions = ref.watch(characterCollectionProvider).regions;
+    final selectedIds = regions.where((r) => r.isSelected).map((r) => r.id).toList();
+    
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        InteractiveViewer(
+          constrained: false,
+          transformationController: _transformationController,
+          minScale: 0.1,
+          maxScale: 10.0,
+          panEnabled: toolMode == Tool.pan,
+          scaleEnabled: true,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          alignment: Alignment.topLeft,
+          child: Stack(
+            children: [
+              // 图片层
+              Image.memory(
+                imageState.imageData!,
+                fit: BoxFit.contain,
+                alignment: Alignment.topLeft,
+                filterQuality: FilterQuality.high,
+                gaplessPlayback: true,
+              ),
+              
+              // 选区绘制层 - 使用GestureDetector直接在CustomPaint上
+              if (_transformer != null && regions.isNotEmpty)
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: _onTapUp,
+                    child: CustomPaint(
+                      painter: RegionsPainter(
+                        regions: regions,
+                        transformer: _transformer!,
+                        hoveredId: null,
+                        adjustingRegionId: _adjustingRegionId,
+                        currentTool: toolMode,
+                        isAdjusting: _isAdjusting,
+                        selectedIds: selectedIds,
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
+            ],
           ),
-
-          // 调整控制层
-          if (_isAdjusting && _originalRegion != null)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: AdjustableRegionPainter(
-                  region: _originalRegion!,
-                  transformer: _transformer!,
-                  isActive: true,
-                  isAdjusting: true,
-                  activeHandleIndex: _activeHandleIndex,
-                  currentRotation: _rotation,
-                  guideLines: null,
-                  viewportRect: _adjustingRect,
-                ),
-              ),
-            ),
-
-          // 选区创建层
-          if (_isSelecting && _selectionStart != null && _selectionEnd != null)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: ActiveSelectionPainter(
-                  startPoint: _selectionStart!,
-                  endPoint: _selectionEnd!,
-                  viewportSize: viewportSize,
-                  isActive: true,
-                ),
-              ),
-            ),
-
-          // 手势检测层 - 只在选择模式下激活
-          if (toolMode == Tool.select)
-            Positioned.fill(
-              child: GestureDetector(
-                onTapUp: _handleTapUp,
-                onLongPressStart: _handleLongPressStart,
-                onScaleStart: _handleScaleStart,
-                onScaleUpdate: _handleScaleUpdate,
-                onScaleEnd: _handleScaleEnd,
-                behavior: HitTestBehavior.translucent,
-                child: Container(), // 透明容器接收手势
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
 
-    // 在平移模式下，使用外层的GestureDetector来处理点击
-    if (toolMode == Tool.pan) {
-      return GestureDetector(
-        onTapUp: (details) {
-          // 直接处理点击，不依赖InteractiveViewer的回调
-          _handlePanModeClick(details.localPosition);
-        },
-        behavior: HitTestBehavior.deferToChild,
-        child: interactiveContent,
-      );
+  /// 处理点击事件（简化版本，参考桌面端）
+  void _onTapUp(TapUpDetails details) {
+    final toolMode = ref.read(toolModeProvider);
+    final regions = ref.read(characterCollectionProvider).regions;
+    final position = details.localPosition;
+    
+    AppLogger.debug('🖱️ 移动端点击事件', data: {
+      'position': '${position.dx}, ${position.dy}',
+      'toolMode': toolMode.toString(),
+      'regionsCount': regions.length,
+    });
+
+    // 使用简化的碰撞检测
+    final hitRegion = _hitTestRegion(position, regions);
+    
+    if (hitRegion != null) {
+      AppLogger.debug('点击到区域', data: {
+        'regionId': hitRegion.id,
+        'isSelected': hitRegion.isSelected,
+      });
+      
+      if (toolMode == Tool.pan) {
+        // 平移模式：切换选择状态
+        ref.read(characterCollectionProvider.notifier).toggleSelection(hitRegion.id);
+      } else {
+        // 选择模式：选中单个区域
+        ref.read(characterCollectionProvider.notifier).selectRegion(hitRegion.id);
+      }
+    } else {
+      // 点击空白区域，清除所有选择
+      ref.read(characterCollectionProvider.notifier).clearSelections();
+      AppLogger.debug('点击空白区域，清除所有选择');
     }
+  }
 
-    return interactiveContent;
+  /// 碰撞检测（简化版本，参考桌面端）
+  CharacterRegion? _hitTestRegion(Offset position, List<CharacterRegion> regions) {
+    if (_transformer == null) return null;
+    
+    // 直接使用transformer的方法进行碰撞检测
+    for (final region in regions.reversed) {
+      final rect = _transformer!.imageRectToViewportRect(region.rect);
+      if (rect.contains(position)) {
+        AppLogger.debug('碰撞检测成功', data: {
+          'regionId': region.id,
+          'viewportRect': '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
+          'position': '${position.dx}, ${position.dy}',
+        });
+        return region;
+      }
+    }
+    
+    return null;
   }
 
   /// 处理缩放手势开始
@@ -424,179 +389,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     _gestureStartTime = DateTime.now();
   }
 
-  /// 处理点击（基础点击手势）
-  void _handleTapUp(TapUpDetails details) {
-    final toolMode = ref.read(toolModeProvider);
 
-    AppLogger.debug('移动端点击', data: {
-      'toolMode': toolMode.toString(),
-      'position': '${details.globalPosition.dx}, ${details.globalPosition.dy}',
-    });
-
-    final imagePoint = _screenToImagePoint(details.globalPosition);
-    if (imagePoint != null) {
-      final regions = ref.read(characterCollectionProvider).regions;
-
-      if (toolMode == Tool.select) {
-        // 选择模式：选中或取消选中字符区域
-        final hitRegion = _findRegionAtPoint(imagePoint, regions);
-        if (hitRegion != null) {
-          _toggleRegionSelection(hitRegion);
-        } else {
-          // 点击空白区域，取消所有选择
-          _clearAllSelections();
-        }
-      } else if (toolMode == Tool.pan) {
-        // 平移模式：点击选中字符区域
-        final hitRegion = _findRegionAtPoint(imagePoint, regions);
-        if (hitRegion != null) {
-          _selectSingleRegion(hitRegion);
-        } else {
-          _clearAllSelections();
-        }
-      }
-    }
-  }
-
-  /// 处理平移模式的点击事件（支持多选和反选）
-  void _handlePanModeClick(Offset localPosition) {
-    AppLogger.debug('平移模式点击检测', data: {
-      'localPosition': '${localPosition.dx}, ${localPosition.dy}',
-    });
-
-    // 使用localPosition并应用InteractiveViewer的变换矩阵来转换为图像坐标
-    final imagePoint = _localToImagePoint(localPosition);
-    AppLogger.debug('坐标转换结果', data: {
-      'localPosition': '${localPosition.dx}, ${localPosition.dy}',
-      'imagePoint':
-          imagePoint != null ? '${imagePoint.dx}, ${imagePoint.dy}' : 'null',
-      'hasTransformer': _transformer != null,
-    });
-
-    if (imagePoint == null) {
-      AppLogger.warning('坐标转换失败，无法处理点击');
-      return;
-    }
-
-    final regions = ref.read(characterCollectionProvider).regions;
-    AppLogger.debug('当前区域数量', data: {
-      'totalRegions': regions.length,
-      'regionsList': regions
-          .map((r) => '${r.id}: ${r.rect} (selected: ${r.isSelected})')
-          .toList(),
-    });
-
-    final hitRegion = _findRegionAtPoint(imagePoint, regions);
-    AppLogger.debug('碰撞检测结果', data: {
-      'hitRegion': hitRegion?.id,
-      'hitRegionSelected': hitRegion?.isSelected,
-    });
-
-    if (hitRegion != null) {
-      // 检查是否已选中该区域
-      if (hitRegion.isSelected) {
-        // 已选中，执行反选
-        ref
-            .read(characterCollectionProvider.notifier)
-            .toggleSelection(hitRegion.id);
-        AppLogger.debug('平移模式反选区域', data: {
-          'regionId': hitRegion.id,
-        });
-      } else {
-        // 未选中，执行多选（不清除其他选择）
-        ref
-            .read(characterCollectionProvider.notifier)
-            .addToSelection(hitRegion.id);
-        AppLogger.debug('平移模式多选区域', data: {
-          'regionId': hitRegion.id,
-        });
-      }
-    } else {
-      // 点击空白区域，取消所有选择
-      _clearAllSelections();
-      AppLogger.debug('平移模式取消所有选择');
-    }
-  }
-
-  /// 处理InteractiveViewer的交互开始（用于平移模式的点击检测）
-  void _handleInteractionStart(ScaleStartDetails details) {
-    // 只处理单指点击，多指留给InteractiveViewer处理缩放
-    if (details.pointerCount == 1) {
-      _interactionStartPosition = details.focalPoint;
-      _interactionStartTime = DateTime.now();
-      _isInteracting = true;
-
-      AppLogger.debug('平移模式交互开始', data: {
-        'position': '${details.focalPoint.dx}, ${details.focalPoint.dy}',
-        'pointerCount': details.pointerCount,
-      });
-    } else {
-      // 多指操作，清除点击检测
-      _interactionStartPosition = null;
-      _interactionStartTime = null;
-      _isInteracting = false;
-
-      AppLogger.debug('平移模式多指交互开始', data: {
-        'pointerCount': details.pointerCount,
-      });
-    }
-  }
-
-  /// 处理InteractiveViewer的交互结束（用于平移模式的点击检测）
-  void _handleInteractionEnd(ScaleEndDetails details) {
-    AppLogger.debug('平移模式交互结束', data: {
-      'velocity': details.velocity.toString(),
-      'isInteracting': _isInteracting,
-      'hasStartPosition': _interactionStartPosition != null,
-    });
-
-    // 检查是否是单指点击
-    if (_isInteracting &&
-        _interactionStartPosition != null &&
-        _interactionStartTime != null) {
-      final duration = DateTime.now().difference(_interactionStartTime!);
-      final velocity = details.velocity.pixelsPerSecond.distance;
-
-      AppLogger.debug('平移模式点击检测参数', data: {
-        'duration': duration.inMilliseconds,
-        'velocity': velocity,
-        'startPosition':
-            '${_interactionStartPosition!.dx}, ${_interactionStartPosition!.dy}',
-      });
-
-      // 更宽松的点击检测条件：时间不超过300ms且速度不超过50px/s
-      if (duration.inMilliseconds < 300 && velocity < 50) {
-        AppLogger.debug('检测到点击，触发选择逻辑');
-        _handlePanModeClick(_interactionStartPosition!);
-      } else {
-        AppLogger.debug('检测到拖拽，忽略点击逻辑', data: {
-          'reason': duration.inMilliseconds >= 300
-              ? 'duration_too_long'
-              : 'velocity_too_high',
-        });
-      }
-    }
-
-    // 重置交互状态
-    _isInteracting = false;
-    _interactionStartPosition = null;
-    _interactionStartTime = null;
-  }
-
-  /// 处理InteractiveViewer的交互更新（用于记录矩阵变化）
-  void _handleInteractionUpdate(ScaleUpdateDetails details) {
-    // 记录矩阵更新，特别是缩放操作
-    if (details.scale != 1.0 ||
-        details.horizontalScale != 1.0 ||
-        details.verticalScale != 1.0) {
-      AppLogger.debug('InteractiveViewer缩放更新', data: {
-        'scale': details.scale.toStringAsFixed(3),
-        'horizontalScale': details.horizontalScale.toStringAsFixed(3),
-        'verticalScale': details.verticalScale.toStringAsFixed(3),
-        'matrix': _transformationController.value.toString(),
-      });
-    }
-  }
 
   /// 处理长按开始
   void _handleLongPressStart(LongPressStartDetails details) {
@@ -618,125 +411,14 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
   }
 
-  /// 将本地坐标（相对于InteractiveViewer的坐标）转换为图像坐标
-  Offset? _localToImagePoint(Offset localPosition) {
-    if (_transformer == null) {
-      AppLogger.warning('坐标转换失败：transformer为null');
-      return null;
-    }
-
-    try {
-      // 🔧 使用内部保存的变换矩阵，避免依赖可能被重置的TransformationController
-      final matrix = _internalMatrix;
-
-      // 计算逆矩阵来反向变换坐标
-      final invertedMatrix = Matrix4.identity();
-      final determinant = matrix.copyInverse(invertedMatrix);
-
-      if (determinant == 0) {
-        AppLogger.warning('内部矩阵逆变换失败：determinant = 0');
-        return null;
-      }
-
-      // 应用逆变换将视口坐标转换为图像坐标
-      final transformed = invertedMatrix.transform3(Vector3(
-        localPosition.dx,
-        localPosition.dy,
-        0.0,
-      ));
-
-      final imagePoint = Offset(transformed.x, transformed.y);
-
-      AppLogger.debug('本地坐标到图像坐标转换（使用内部矩阵）', data: {
-        'localPosition': '${localPosition.dx}, ${localPosition.dy}',
-        'imagePoint': '${imagePoint.dx}, ${imagePoint.dy}',
-        'internalMatrix': matrix.toString(),
-        'isInternalMatrixIdentity': matrix.isIdentity(),
-      });
-
-      return imagePoint;
-    } catch (e) {
-      AppLogger.error('坐标转换失败', error: e, data: {
-        'localPosition': '${localPosition.dx}, ${localPosition.dy}',
-      });
-      return null;
-    }
-  }
-
-  /// 屏幕坐标转换为图片坐标
+  /// 屏幕坐标转换为图像坐标（用于手势处理）
   Offset? _screenToImagePoint(Offset screenPoint) {
-    if (_transformer == null) {
-      AppLogger.warning('坐标转换失败：transformer为null');
-      return null;
-    }
-
-    try {
-      // 获取变换参数
-      final currentScale = _transformer!.currentScale;
-      final baseScale = _transformer!.baseScale;
-      final currentOffset = _transformer!.currentOffset;
-      final imageSize = _transformer!.imageSize;
-      final viewportSize = _transformer!.viewportSize;
-
-      // 🔧 使用内部保存的变换矩阵，避免依赖可能被重置的TransformationController
-      final matrix = _internalMatrix;
-      final invertedMatrix = Matrix4.identity();
-      final determinant = matrix.copyInverse(invertedMatrix);
-
-      Offset imagePoint;
-
-      if (determinant != 0) {
-        final transformed = invertedMatrix.transform3(Vector3(
-          screenPoint.dx,
-          screenPoint.dy,
-          0.0,
-        ));
-
-        // 得到考虑用户缩放/平移后的坐标
-        final userTransformedPoint = Offset(transformed.x, transformed.y);
-
-        // 计算图像在视口中的居中偏移
-        final scaledImageWidth = imageSize.width * baseScale;
-        final scaledImageHeight = imageSize.height * baseScale;
-        final centerOffsetX = (viewportSize.width - scaledImageWidth) / 2;
-        final centerOffsetY = (viewportSize.height - scaledImageHeight) / 2;
-
-        // 减去居中偏移，然后除以基础缩放得到图像坐标
-        imagePoint = Offset(
-          (userTransformedPoint.dx - centerOffsetX) / baseScale,
-          (userTransformedPoint.dy - centerOffsetY) / baseScale,
-        );
-
-        AppLogger.debug('坐标转换详情（使用内部矩阵）', data: {
-          'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
-          'userTransformed':
-              '${userTransformedPoint.dx}, ${userTransformedPoint.dy}',
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-          'viewportSize': '${viewportSize.width}x${viewportSize.height}',
-          'scaledImageSize':
-              '${scaledImageWidth.toStringAsFixed(1)}x${scaledImageHeight.toStringAsFixed(1)}',
-          'centerOffset':
-              '${centerOffsetX.toStringAsFixed(1)}, ${centerOffsetY.toStringAsFixed(1)}',
-          'finalImagePoint': '${imagePoint.dx}, ${imagePoint.dy}',
-          'currentScale': currentScale.toStringAsFixed(3),
-          'baseScale': baseScale.toStringAsFixed(3),
-          'currentOffset': '${currentOffset.dx}, ${currentOffset.dy}',
-          'internalMatrix': matrix.toString(),
-          'isInternalMatrixIdentity': matrix.isIdentity(),
-        });
-      } else {
-        AppLogger.warning('内部矩阵逆变换失败：determinant = 0');
-        return null;
-      }
-
-      return imagePoint;
-    } catch (e) {
-      AppLogger.error('坐标转换失败', error: e, data: {
-        'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
-      });
-      return null;
-    }
+    if (_transformer == null) return null;
+    
+    // 使用transformer的简化方法
+    return _transformer!.viewportToImageCoordinate(screenPoint);
   }
+
 
   /// 在指定位置查找字符区域
   CharacterRegion? _findRegionAtPoint(
@@ -959,78 +641,16 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
   }
 
-  /// 🔧 检查并恢复内部矩阵到TransformationController
-  void _restoreMatrixIfNeeded() {
-    final now = DateTime.now();
-
-    // 🔧 防抖：避免频繁执行，最多每100ms检查一次
-    if (_lastRestoreAttempt != null &&
-        now.difference(_lastRestoreAttempt!).inMilliseconds < 100) {
-      return;
-    }
-    _lastRestoreAttempt = now;
-
-    final currentMatrix = _transformationController.value;
-
-    // 如果TransformationController的矩阵被重置为identity，但我们有保存的非identity矩阵
-    if (currentMatrix.isIdentity() &&
-        _isMatrixInitialized &&
-        !_internalMatrix.isIdentity()) {
-      AppLogger.debug('检测到TransformationController被重置，恢复内部矩阵', data: {
-        'currentMatrix': currentMatrix.toString(),
-        'internalMatrix': _internalMatrix.toString(),
-      });
-
-      // 恢复矩阵
-      _transformationController.value = _internalMatrix.clone();
-    }
-  }
-
-  /// 变换矩阵变化监听
+  /// 变换矩阵变化监听（简化版本）
   void _onTransformationChanged() {
-    final matrix = _transformationController.value;
-
-    // 🔧 保存变换矩阵到内部变量，避免依赖容易重置的TransformationController
-    if (!matrix.isIdentity() || !_isMatrixInitialized) {
-      _internalMatrix = matrix.clone();
-      _isMatrixInitialized = true;
-
-      AppLogger.debug('保存内部变换矩阵', data: {
-        'matrix': matrix.toString(),
-        'isIdentity': matrix.isIdentity(),
-        'scaleX': matrix.entry(0, 0),
-        'scaleY': matrix.entry(1, 1),
-        'translateX': matrix.entry(0, 3),
-        'translateY': matrix.entry(1, 3),
-      });
-    }
-
+    // 如果正在调整选区，更新其视口位置
     if (_isAdjusting && _originalRegion != null && _transformer != null) {
-      // 更新调整中的选区位置
       final newRect =
           _transformer!.imageRectToViewportRect(_originalRegion!.rect);
       setState(() {
         _adjustingRect = newRect;
       });
     }
-  }
-
-  /// 🔧 手动更新内部矩阵（用于特殊情况）
-  void _updateInternalMatrix(Matrix4 newMatrix) {
-    _internalMatrix = newMatrix.clone();
-    _isMatrixInitialized = true;
-
-    AppLogger.debug('手动更新内部矩阵', data: {
-      'newMatrix': newMatrix.toString(),
-      'isIdentity': newMatrix.isIdentity(),
-    });
-  }
-
-  /// 🔧 获取当前有效的变换矩阵（优先使用内部矩阵）
-  Matrix4 _getCurrentMatrix() {
-    return _isMatrixInitialized
-        ? _internalMatrix
-        : _transformationController.value;
   }
 
   /// 检测控制点位置

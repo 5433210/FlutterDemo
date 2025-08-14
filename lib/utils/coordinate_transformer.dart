@@ -137,48 +137,30 @@ class CoordinateTransformer {
     //   });
     // }
 
-    // try {
-    //   // 1. 检查输入矩形是否有效
-    //   if (imageRect.isEmpty || imageRect.width < 0 || imageRect.height < 0) {
-    //     throw ArgumentError('无效的输入矩形: $imageRect');
-    //   }
+    // // 使用当前的变换矩阵进行转换
+    // final matrix = transformationController.value;
 
-    //   // 2. 确保输入矩形在图像范围内
-    //   final clampedImageRect = Rect.fromLTRB(
-    //     imageRect.left.clamp(0.0, imageSize.width),
-    //     imageRect.top.clamp(0.0, imageSize.height),
-    //     imageRect.right.clamp(0.0, imageSize.width),
-    //     imageRect.bottom.clamp(0.0, imageSize.height),
-    //   );
+    // // 转换矩形的左上角和右下角
+    // final topLeft = matrix.transform3(Vector3(imageRect.left, imageRect.top, 0));
+    // final bottomRight = matrix.transform3(Vector3(imageRect.right, imageRect.bottom, 0));
 
-    //   // 3. 转换矩形的角点
-    //   final topLeft = imageToViewportCoordinate(clampedImageRect.topLeft);
-    //   final bottomRight =
-    //       imageToViewportCoordinate(clampedImageRect.bottomRight);
+    // final viewportRect = Rect.fromLTRB(
+    //   topLeft.x,
+    //   topLeft.y,
+    //   bottomRight.x,
+    //   bottomRight.y,
+    // );
 
-    //   // 4. 创建视口矩形并确保在视口范围内
-    //   final viewportRect = Rect.fromPoints(topLeft, bottomRight)
-    //       .intersect(Offset.zero & viewportSize);
-
-    //   if (enableLogging) {
-    //     AppLogger.debug('【坐标转换】转换结果', data: {
-    //       'viewportRect':
-    //           '${viewportRect.left},${viewportRect.top},${viewportRect.width}x${viewportRect.height}',
-    //       'actualScale': actualScale.toStringAsFixed(3),
-    //     });
-    //   }
-
-    //   return viewportRect;
-    // } catch (e) {
-    //   AppLogger.error('【坐标转换】图像矩形转换失败', error: e);
-    //   // 发生错误时返回一个安全的默认值 - 视口中心的1x1矩形
-    //   return Rect.fromCenter(
-    //     center: Offset(viewportSize.width / 2, viewportSize.height / 2),
-    //     width: 1,
-    //     height: 1,
-    //   );
+    // if (enableLogging) {
+    //   AppLogger.debug('【坐标转换】转换结果', data: {
+    //     'viewportRect':
+    //         '${viewportRect.left},${viewportRect.top},${viewportRect.width}x${viewportRect.height}',
+    //     'matrix': matrix.toString(),
+    //   });
     // }
-    return imageRect; // 直接返回图像矩形 - 可能需要根据实际需求进行调整
+
+    // return viewportRect;
+    return imageRect;
   }
 
   /// 图像坐标转换为视口坐标
