@@ -109,6 +109,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   final FocusNode _focusNode = FocusNode();
   CoordinateTransformer? _transformer;
 
+  // 🔧 内部变换矩阵管理 - 避免依赖容易重置的TransformationController
+  Matrix4 _internalMatrix = Matrix4.identity();
+  bool _isMatrixInitialized = false;
+
   // 移动端特定的状态
   bool _isSelecting = false;
   bool _isAdjusting = false;
@@ -135,6 +139,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   Offset? _interactionStartPosition;
   DateTime? _interactionStartTime;
 
+  // 🔧 添加防抖机制，避免频繁的矩阵恢复操作
+  DateTime? _lastRestoreAttempt;
+
   @override
   void initState() {
     super.initState();
@@ -154,7 +161,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   @override
   Widget build(BuildContext context) {
     final imageState = ref.watch(workImageProvider);
-    final regions = ref.watch(characterCollectionProvider).regions;
     final toolMode = ref.watch(toolModeProvider);
 
     return Scaffold(
@@ -177,11 +183,19 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
             viewportSize: viewportSize,
           );
 
-          return _buildImageContent(
-            imageState: imageState,
-            regions: regions,
-            viewportSize: viewportSize,
-            toolMode: toolMode,
+          return Consumer(
+            builder: (context, ref, child) {
+              // 🔧 使用PostFrameCallback避免在每次build时都检查矩阵
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _restoreMatrixIfNeeded();
+              });
+
+              return _buildImageContent(
+                imageState: imageState,
+                viewportSize: viewportSize,
+                toolMode: toolMode,
+              );
+            },
           );
         },
       ),
@@ -191,13 +205,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   /// 构建图片内容
   Widget _buildImageContent({
     required WorkImageState imageState,
-    required List<CharacterRegion> regions,
     required Size viewportSize,
     required Tool toolMode,
   }) {
     // 在平移模式下，我们需要在InteractiveViewer外面包装一个GestureDetector
     // 来处理点击事件，避免与InteractiveViewer的平移行为冲突
     Widget interactiveContent = InteractiveViewer(
+      key: const ValueKey('mobile_interactive_viewer'), // 🔑 添加key防止重建时重置matrix
       transformationController: _transformationController,
       constrained: false,
       minScale: 0.1,
@@ -205,9 +219,15 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       // 启用基本的平移和缩放功能
       panEnabled: toolMode == Tool.pan, // 只在平移模式下启用平移
       scaleEnabled: true,
-      // 设置边界行为，防止图片自动回弹
+      // 使用合理的边界设置，确保变换矩阵正常更新
       boundaryMargin: const EdgeInsets.all(double.infinity),
-      // 移除平移模式下的交互回调，改用外层GestureDetector
+      // 允许超出边界但不无限制
+      // clipBehavior: Clip.none,
+      alignment: Alignment.topLeft,
+      // 添加InteractiveViewer回调以确保矩阵正确更新
+      onInteractionStart: _handleInteractionStart,
+      onInteractionUpdate: _handleInteractionUpdate,
+      onInteractionEnd: _handleInteractionEnd,
       child: Stack(
         children: [
           // 图片层
@@ -219,24 +239,34 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
             gaplessPlayback: true,
           ),
 
-          // 选区绘制层
-          if (_transformer != null && regions.isNotEmpty)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: RegionsPainter(
-                  regions: regions,
-                  transformer: _transformer!,
-                  hoveredId: null, // 移动端不需要hover状态
-                  adjustingRegionId: _adjustingRegionId,
-                  currentTool: toolMode,
-                  isAdjusting: _isAdjusting,
-                  selectedIds: regions
-                      .where((r) => r.isSelected)
-                      .map((r) => r.id)
-                      .toList(),
+          // 选区绘制层 - 使用独立的Consumer避免影响InteractiveViewer
+          Consumer(
+            builder: (context, ref, child) {
+              final currentRegions =
+                  ref.watch(characterCollectionProvider).regions;
+
+              if (_transformer == null || currentRegions.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return Positioned.fill(
+                child: CustomPaint(
+                  painter: RegionsPainter(
+                    regions: currentRegions,
+                    transformer: _transformer!,
+                    hoveredId: null, // 移动端不需要hover状态
+                    adjustingRegionId: _adjustingRegionId,
+                    currentTool: toolMode,
+                    isAdjusting: _isAdjusting,
+                    selectedIds: currentRegions
+                        .where((r) => r.isSelected)
+                        .map((r) => r.id)
+                        .toList(),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
+          ),
 
           // 调整控制层
           if (_isAdjusting && _originalRegion != null)
@@ -429,19 +459,25 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   }
 
   /// 处理平移模式的点击事件（支持多选和反选）
-  void _handlePanModeClick(Offset globalPosition) {
+  void _handlePanModeClick(Offset localPosition) {
     AppLogger.debug('平移模式点击检测', data: {
-      'position': '${globalPosition.dx}, ${globalPosition.dy}',
+      'localPosition': '${localPosition.dx}, ${localPosition.dy}',
     });
 
-    // final imagePoint = _screenToImagePoint(globalPosition);
-    // AppLogger.debug('坐标转换结果', data: {
-    //   'screenPoint': '${globalPosition.dx}, ${globalPosition.dy}',
-    //   'imagePoint':
-    //       imagePoint != null ? '${imagePoint.dx}, ${imagePoint.dy}' : 'null',
-    //   'hasTransformer': _transformer != null,
-    // });
-    final imagePoint = globalPosition;
+    // 使用localPosition并应用InteractiveViewer的变换矩阵来转换为图像坐标
+    final imagePoint = _localToImagePoint(localPosition);
+    AppLogger.debug('坐标转换结果', data: {
+      'localPosition': '${localPosition.dx}, ${localPosition.dy}',
+      'imagePoint':
+          imagePoint != null ? '${imagePoint.dx}, ${imagePoint.dy}' : 'null',
+      'hasTransformer': _transformer != null,
+    });
+
+    if (imagePoint == null) {
+      AppLogger.warning('坐标转换失败，无法处理点击');
+      return;
+    }
+
     final regions = ref.read(characterCollectionProvider).regions;
     AppLogger.debug('当前区域数量', data: {
       'totalRegions': regions.length,
@@ -547,6 +583,21 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     _interactionStartTime = null;
   }
 
+  /// 处理InteractiveViewer的交互更新（用于记录矩阵变化）
+  void _handleInteractionUpdate(ScaleUpdateDetails details) {
+    // 记录矩阵更新，特别是缩放操作
+    if (details.scale != 1.0 ||
+        details.horizontalScale != 1.0 ||
+        details.verticalScale != 1.0) {
+      AppLogger.debug('InteractiveViewer缩放更新', data: {
+        'scale': details.scale.toStringAsFixed(3),
+        'horizontalScale': details.horizontalScale.toStringAsFixed(3),
+        'verticalScale': details.verticalScale.toStringAsFixed(3),
+        'matrix': _transformationController.value.toString(),
+      });
+    }
+  }
+
   /// 处理长按开始
   void _handleLongPressStart(LongPressStartDetails details) {
     final toolMode = ref.read(toolModeProvider);
@@ -567,6 +618,51 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
   }
 
+  /// 将本地坐标（相对于InteractiveViewer的坐标）转换为图像坐标
+  Offset? _localToImagePoint(Offset localPosition) {
+    if (_transformer == null) {
+      AppLogger.warning('坐标转换失败：transformer为null');
+      return null;
+    }
+
+    try {
+      // 🔧 使用内部保存的变换矩阵，避免依赖可能被重置的TransformationController
+      final matrix = _internalMatrix;
+
+      // 计算逆矩阵来反向变换坐标
+      final invertedMatrix = Matrix4.identity();
+      final determinant = matrix.copyInverse(invertedMatrix);
+
+      if (determinant == 0) {
+        AppLogger.warning('内部矩阵逆变换失败：determinant = 0');
+        return null;
+      }
+
+      // 应用逆变换将视口坐标转换为图像坐标
+      final transformed = invertedMatrix.transform3(Vector3(
+        localPosition.dx,
+        localPosition.dy,
+        0.0,
+      ));
+
+      final imagePoint = Offset(transformed.x, transformed.y);
+
+      AppLogger.debug('本地坐标到图像坐标转换（使用内部矩阵）', data: {
+        'localPosition': '${localPosition.dx}, ${localPosition.dy}',
+        'imagePoint': '${imagePoint.dx}, ${imagePoint.dy}',
+        'internalMatrix': matrix.toString(),
+        'isInternalMatrixIdentity': matrix.isIdentity(),
+      });
+
+      return imagePoint;
+    } catch (e) {
+      AppLogger.error('坐标转换失败', error: e, data: {
+        'localPosition': '${localPosition.dx}, ${localPosition.dy}',
+      });
+      return null;
+    }
+  }
+
   /// 屏幕坐标转换为图片坐标
   Offset? _screenToImagePoint(Offset screenPoint) {
     if (_transformer == null) {
@@ -582,8 +678,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       final imageSize = _transformer!.imageSize;
       final viewportSize = _transformer!.viewportSize;
 
-      // 方法1：先使用InteractiveViewer的矩阵逆变换
-      final matrix = _transformationController.value;
+      // 🔧 使用内部保存的变换矩阵，避免依赖可能被重置的TransformationController
+      final matrix = _internalMatrix;
       final invertedMatrix = Matrix4.identity();
       final determinant = matrix.copyInverse(invertedMatrix);
 
@@ -611,7 +707,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           (userTransformedPoint.dy - centerOffsetY) / baseScale,
         );
 
-        AppLogger.debug('坐标转换详情', data: {
+        AppLogger.debug('坐标转换详情（使用内部矩阵）', data: {
           'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
           'userTransformed':
               '${userTransformedPoint.dx}, ${userTransformedPoint.dy}',
@@ -625,9 +721,11 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           'currentScale': currentScale.toStringAsFixed(3),
           'baseScale': baseScale.toStringAsFixed(3),
           'currentOffset': '${currentOffset.dx}, ${currentOffset.dy}',
+          'internalMatrix': matrix.toString(),
+          'isInternalMatrixIdentity': matrix.isIdentity(),
         });
       } else {
-        AppLogger.warning('矩阵逆变换失败：determinant = 0');
+        AppLogger.warning('内部矩阵逆变换失败：determinant = 0');
         return null;
       }
 
@@ -861,8 +959,52 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
   }
 
+  /// 🔧 检查并恢复内部矩阵到TransformationController
+  void _restoreMatrixIfNeeded() {
+    final now = DateTime.now();
+
+    // 🔧 防抖：避免频繁执行，最多每100ms检查一次
+    if (_lastRestoreAttempt != null &&
+        now.difference(_lastRestoreAttempt!).inMilliseconds < 100) {
+      return;
+    }
+    _lastRestoreAttempt = now;
+
+    final currentMatrix = _transformationController.value;
+
+    // 如果TransformationController的矩阵被重置为identity，但我们有保存的非identity矩阵
+    if (currentMatrix.isIdentity() &&
+        _isMatrixInitialized &&
+        !_internalMatrix.isIdentity()) {
+      AppLogger.debug('检测到TransformationController被重置，恢复内部矩阵', data: {
+        'currentMatrix': currentMatrix.toString(),
+        'internalMatrix': _internalMatrix.toString(),
+      });
+
+      // 恢复矩阵
+      _transformationController.value = _internalMatrix.clone();
+    }
+  }
+
   /// 变换矩阵变化监听
   void _onTransformationChanged() {
+    final matrix = _transformationController.value;
+
+    // 🔧 保存变换矩阵到内部变量，避免依赖容易重置的TransformationController
+    if (!matrix.isIdentity() || !_isMatrixInitialized) {
+      _internalMatrix = matrix.clone();
+      _isMatrixInitialized = true;
+
+      AppLogger.debug('保存内部变换矩阵', data: {
+        'matrix': matrix.toString(),
+        'isIdentity': matrix.isIdentity(),
+        'scaleX': matrix.entry(0, 0),
+        'scaleY': matrix.entry(1, 1),
+        'translateX': matrix.entry(0, 3),
+        'translateY': matrix.entry(1, 3),
+      });
+    }
+
     if (_isAdjusting && _originalRegion != null && _transformer != null) {
       // 更新调整中的选区位置
       final newRect =
@@ -871,6 +1013,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _adjustingRect = newRect;
       });
     }
+  }
+
+  /// 🔧 手动更新内部矩阵（用于特殊情况）
+  void _updateInternalMatrix(Matrix4 newMatrix) {
+    _internalMatrix = newMatrix.clone();
+    _isMatrixInitialized = true;
+
+    AppLogger.debug('手动更新内部矩阵', data: {
+      'newMatrix': newMatrix.toString(),
+      'isIdentity': newMatrix.isIdentity(),
+    });
+  }
+
+  /// 🔧 获取当前有效的变换矩阵（优先使用内部矩阵）
+  Matrix4 _getCurrentMatrix() {
+    return _isMatrixInitialized
+        ? _internalMatrix
+        : _transformationController.value;
   }
 
   /// 检测控制点位置
