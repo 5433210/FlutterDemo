@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/character/work_image_provider.dart';
-import 'm3_image_view.dart';
+import 'adaptive_image_view.dart';
 import 'm3_preview_toolbar.dart';
 import 'm3_thumbnail_list.dart';
 
@@ -38,7 +38,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
                 AppLogger.debug(
                     'Image preview panel gained focus from mouse enter');
 
-                // Also request focus for the M3ImageView
+                // Also request focus for the AdaptiveImageView
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     // 直接使用FocusScope来请求焦点
@@ -61,8 +61,8 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Image view
-                  M3ImageView(key: UniqueKey()),
+                  // Image view - 使用自适应实现
+                  const AdaptiveImageView(),
 
                   // Loading indicator
                   if (imageState.loading)
@@ -149,7 +149,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
     if (_panelFocusNode.hasFocus) {
       AppLogger.debug('M3ImagePreviewPanel gained focus');
 
-      // Request focus for the M3ImageView when the panel gets focus
+      // Request focus for the AdaptiveImageView when the panel gets focus
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           // 直接使用FocusScope来请求焦点
