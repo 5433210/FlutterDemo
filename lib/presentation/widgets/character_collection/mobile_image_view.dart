@@ -8,6 +8,7 @@ import '../../../domain/models/character/character_region.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../utils/coordinate_transformer.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'image_view_base.dart';
@@ -268,13 +269,25 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       if (toolMode == Tool.pan) {
         // 平移模式：切换选择状态
         ref.read(characterCollectionProvider.notifier).toggleSelection(hitRegion.id);
+        
+        // 如果选中了区域，更新右侧编辑面板
+        if (!hitRegion.isSelected) { // toggleSelection后会变为选中状态
+          ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
+        } else {
+          // 如果取消选择，清除右侧编辑面板
+          ref.read(selectedRegionProvider.notifier).clearRegion();
+        }
       } else {
         // 选择模式：选中单个区域
         ref.read(characterCollectionProvider.notifier).selectRegion(hitRegion.id);
+        
+        // 更新右侧编辑面板显示选中的区域
+        ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
       }
     } else {
       // 点击空白区域，清除所有选择
       ref.read(characterCollectionProvider.notifier).clearSelections();
+      ref.read(selectedRegionProvider.notifier).clearRegion();
       AppLogger.debug('点击空白区域，清除所有选择');
     }
   }
@@ -370,10 +383,26 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       return;
     }
     
+    // 获取最新的选区数据
+    final regions = ref.read(characterCollectionProvider).regions;
+    final updatedRegion = regions.firstWhere(
+      (r) => r.id == _draggingRegion!.id,
+      orElse: () => _draggingRegion!,
+    );
+    
     AppLogger.debug('🔄 移动端平移结束', data: {
-      'regionId': _draggingRegion!.id,
-      'finalRect': '${_draggingRegion!.rect.left}, ${_draggingRegion!.rect.top}, ${_draggingRegion!.rect.width}x${_draggingRegion!.rect.height}',
+      'regionId': updatedRegion.id,
+      'finalRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
     });
+    
+    // 更新右侧字符编辑面板的选区
+    if (updatedRegion.isSelected) {
+      ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
+      AppLogger.debug('更新右侧编辑面板选区', data: {
+        'regionId': updatedRegion.id,
+        'newRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+      });
+    }
     
     // 清理拖拽状态
     setState(() {
