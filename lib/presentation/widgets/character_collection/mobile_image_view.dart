@@ -191,8 +191,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     required Tool toolMode,
   }) {
     final regions = ref.watch(characterCollectionProvider).regions;
-    final selectedIds = regions.where((r) => r.isSelected).map((r) => r.id).toList();
-    
+    final selectedIds =
+        regions.where((r) => r.isSelected).map((r) => r.id).toList();
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -202,7 +203,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           minScale: 0.1,
           maxScale: 10.0,
           panEnabled: toolMode == Tool.pan,
-          scaleEnabled: true,
+          scaleEnabled: true, // 保持缩放始终启用
           boundaryMargin: const EdgeInsets.all(double.infinity),
           alignment: Alignment.topLeft,
           child: Stack(
@@ -215,16 +216,25 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
                 filterQuality: FilterQuality.high,
                 gaplessPlayback: true,
               ),
-              
-              // 选区绘制层 - 使用GestureDetector直接在CustomPaint上
+
+              // 选区绘制层 - 智能手势检测
               if (_transformer != null && regions.isNotEmpty)
                 Positioned.fill(
                   child: GestureDetector(
+                    // 在非选择模式下使用deferToChild，让缩放手势透传
                     behavior: HitTestBehavior.opaque,
+                    // toolMode == Tool.select
+                    //     ? HitTestBehavior.translucent
+                    //     : HitTestBehavior.deferToChild,
+
                     onTapUp: _onTapUp,
+                    // 只在框选模式下处理单指拖拽，避免与双指缩放冲突
                     onPanStart: toolMode == Tool.select ? _onPanStart : null,
                     onPanUpdate: toolMode == Tool.select ? _onPanUpdate : null,
                     onPanEnd: toolMode == Tool.select ? _onPanEnd : null,
+
+                    // 移除scale手势处理，让InteractiveViewer处理所有缩放
+                    // onScaleStart/Update/End会与InteractiveViewer竞争手势识别
                     child: CustomPaint(
                       painter: RegionsPainter(
                         regions: regions,
@@ -250,7 +260,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final toolMode = ref.read(toolModeProvider);
     final regions = ref.read(characterCollectionProvider).regions;
     final position = details.localPosition;
-    
+
     AppLogger.debug('🖱️ 移动端点击事件', data: {
       'position': '${position.dx}, ${position.dy}',
       'toolMode': toolMode.toString(),
@@ -259,19 +269,22 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
     // 使用简化的碰撞检测
     final hitRegion = _hitTestRegion(position, regions);
-    
+
     if (hitRegion != null) {
       AppLogger.debug('点击到区域', data: {
         'regionId': hitRegion.id,
         'isSelected': hitRegion.isSelected,
       });
-      
+
       if (toolMode == Tool.pan) {
         // 平移模式：切换选择状态
-        ref.read(characterCollectionProvider.notifier).toggleSelection(hitRegion.id);
-        
+        ref
+            .read(characterCollectionProvider.notifier)
+            .toggleSelection(hitRegion.id);
+
         // 如果选中了区域，更新右侧编辑面板
-        if (!hitRegion.isSelected) { // toggleSelection后会变为选中状态
+        if (!hitRegion.isSelected) {
+          // toggleSelection后会变为选中状态
           ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
         } else {
           // 如果取消选择，清除右侧编辑面板
@@ -279,8 +292,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         }
       } else {
         // 选择模式：选中单个区域
-        ref.read(characterCollectionProvider.notifier).selectRegion(hitRegion.id);
-        
+        ref
+            .read(characterCollectionProvider.notifier)
+            .selectRegion(hitRegion.id);
+
         // 更新右侧编辑面板显示选中的区域
         ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
       }
@@ -293,22 +308,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   }
 
   /// 碰撞检测（简化版本，参考桌面端）
-  CharacterRegion? _hitTestRegion(Offset position, List<CharacterRegion> regions) {
+  CharacterRegion? _hitTestRegion(
+      Offset position, List<CharacterRegion> regions) {
     if (_transformer == null) return null;
-    
+
     // 直接使用transformer的方法进行碰撞检测
     for (final region in regions.reversed) {
       final rect = _transformer!.imageRectToViewportRect(region.rect);
       if (rect.contains(position)) {
         AppLogger.debug('碰撞检测成功', data: {
           'regionId': region.id,
-          'viewportRect': '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
+          'viewportRect':
+              '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
           'position': '${position.dx}, ${position.dy}',
         });
         return region;
       }
     }
-    
+
     return null;
   }
 
@@ -316,14 +333,14 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   void _onPanStart(DragStartDetails details) {
     final position = details.localPosition;
     final regions = ref.read(characterCollectionProvider).regions;
-    
+
     AppLogger.debug('🔄 移动端平移开始', data: {
       'position': '${position.dx}, ${position.dy}',
     });
-    
+
     // 检查是否点击了选中的区域
     final hitRegion = _hitTestRegion(position, regions);
-    
+
     if (hitRegion != null && hitRegion.isSelected) {
       // 开始拖拽选中的区域
       setState(() {
@@ -332,33 +349,40 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _dragStartPosition = position;
         _originalDragRect = hitRegion.rect;
       });
-      
+
       AppLogger.debug('开始拖拽选区', data: {
         'regionId': hitRegion.id,
-        'originalRect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+        'originalRect':
+            '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
       });
     }
   }
 
   /// 处理平移更新（选区拖拽）
   void _onPanUpdate(DragUpdateDetails details) {
-    if (!_isDraggingRegion || _draggingRegion == null || _dragStartPosition == null || _originalDragRect == null) {
+    if (!_isDraggingRegion ||
+        _draggingRegion == null ||
+        _dragStartPosition == null ||
+        _originalDragRect == null) {
       return;
     }
-    
+
     final currentPosition = details.localPosition;
     final delta = currentPosition - _dragStartPosition!;
-    
+
     AppLogger.debug('🔄 移动端平移更新', data: {
       'delta': '${delta.dx}, ${delta.dy}',
       'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
     });
-    
+
     // 将delta转换为图像坐标系中的偏移量
-    final deltaStart = _transformer!.viewportToImageCoordinate(_dragStartPosition!);
-    final deltaCurrent = _transformer!.viewportToImageCoordinate(currentPosition);
-    final imageDelta = Offset(deltaCurrent.dx - deltaStart.dx, deltaCurrent.dy - deltaStart.dy);
-    
+    final deltaStart =
+        _transformer!.viewportToImageCoordinate(_dragStartPosition!);
+    final deltaCurrent =
+        _transformer!.viewportToImageCoordinate(currentPosition);
+    final imageDelta = Offset(
+        deltaCurrent.dx - deltaStart.dx, deltaCurrent.dy - deltaStart.dy);
+
     // 计算新的图像矩形位置
     final newImageRect = Rect.fromLTWH(
       _originalDragRect!.left + imageDelta.dx,
@@ -366,15 +390,17 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       _originalDragRect!.width,
       _originalDragRect!.height,
     );
-    
+
     // 实时更新选区位置
     final updatedRegion = _draggingRegion!.copyWith(
       rect: newImageRect,
       updateTime: DateTime.now(),
       isModified: true,
     );
-    
-    ref.read(characterCollectionProvider.notifier).updateRegionDisplay(updatedRegion);
+
+    ref
+        .read(characterCollectionProvider.notifier)
+        .updateRegionDisplay(updatedRegion);
   }
 
   /// 处理平移结束（选区拖拽）
@@ -382,28 +408,30 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     if (!_isDraggingRegion || _draggingRegion == null) {
       return;
     }
-    
+
     // 获取最新的选区数据
     final regions = ref.read(characterCollectionProvider).regions;
     final updatedRegion = regions.firstWhere(
       (r) => r.id == _draggingRegion!.id,
       orElse: () => _draggingRegion!,
     );
-    
+
     AppLogger.debug('🔄 移动端平移结束', data: {
       'regionId': updatedRegion.id,
-      'finalRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+      'finalRect':
+          '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
     });
-    
+
     // 更新右侧字符编辑面板的选区
     if (updatedRegion.isSelected) {
       ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
       AppLogger.debug('更新右侧编辑面板选区', data: {
         'regionId': updatedRegion.id,
-        'newRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+        'newRect':
+            '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
       });
     }
-    
+
     // 清理拖拽状态
     setState(() {
       _isDraggingRegion = false;
@@ -507,8 +535,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     _gestureStartTime = DateTime.now();
   }
 
-
-
   /// 处理长按开始
   void _handleLongPressStart(LongPressStartDetails details) {
     final toolMode = ref.read(toolModeProvider);
@@ -532,11 +558,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   /// 屏幕坐标转换为图像坐标（用于手势处理）
   Offset? _screenToImagePoint(Offset screenPoint) {
     if (_transformer == null) return null;
-    
+
     // 使用transformer的简化方法
     return _transformer!.viewportToImageCoordinate(screenPoint);
   }
-
 
   /// 在指定位置查找字符区域
   CharacterRegion? _findRegionAtPoint(
