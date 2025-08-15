@@ -17,7 +17,8 @@
       "Bash(gradlew.bat clean:*)",
       "Bash(cp:*)",
       "Bash(adb shell:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(r)"
     ],
     "deny": []
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/providers/character/tool_mode_provider.dart';
 import '../../../utils/coordinate_transformer.dart';
 import 'regions_state_utils.dart';
@@ -18,6 +19,10 @@ class RegionsPainter extends CustomPainter {
   final bool isSelecting; // 是否正在创建选区
   final Offset? selectionStart; // 选区创建起点
   final Offset? selectionEnd; // 选区创建终点
+  // 添加控制点状态支持
+  final String? pressedRegionId; // 被点压的选区ID
+  final int? pressedHandleIndex; // 被点压的控制点索引
+  final bool isHandlePressed; // 是否有控制点被点压
 
   const RegionsPainter({
     required this.regions,
@@ -31,6 +36,10 @@ class RegionsPainter extends CustomPainter {
     this.isSelecting = false,
     this.selectionStart,
     this.selectionEnd,
+    // 控制点状态参数
+    this.pressedRegionId,
+    this.pressedHandleIndex,
+    this.isHandlePressed = false,
   });
 
   @override
@@ -122,6 +131,13 @@ class RegionsPainter extends CustomPainter {
       return true;
     }
     
+    // 检查控制点状态变化
+    if (oldDelegate.isHandlePressed != isHandlePressed ||
+        oldDelegate.pressedRegionId != pressedRegionId ||
+        oldDelegate.pressedHandleIndex != pressedHandleIndex) {
+      return true;
+    }
+    
     // 检查选中状态变化
     if (oldDelegate.selectedIds.length != selectedIds.length ||
         !_listsEqual(oldDelegate.selectedIds, selectedIds)) {
@@ -143,7 +159,7 @@ class RegionsPainter extends CustomPainter {
     return true;
   }
 
-  void _drawHandles(Canvas canvas, Rect rect, bool isActive) {
+  void _drawHandles(Canvas canvas, Rect rect, bool isActive, String regionId) {
     final handlePositions = [
       rect.topLeft,
       rect.topCenter,
@@ -155,87 +171,47 @@ class RegionsPainter extends CustomPainter {
       rect.centerLeft,
     ];
 
-    final handlePaths = handlePositions.map((pos) {
-      return Path()
-        ..addRect(Rect.fromCenter(
-          center: pos,
-          width: 8.0,
-          height: 8.0,
-        ));
-    }).toList();
+    // 为每个控制点单独绘制，以支持不同状态的颜色
+    for (int i = 0; i < handlePositions.length; i++) {
+      final handleRect = Rect.fromCenter(
+        center: handlePositions[i],
+        width: 12.0, // 移动端使用更大的触摸区域
+        height: 12.0,
+      );
 
-    // 批量绘制白色填充
-    canvas.drawPath(
-      Path.combine(
-        PathOperation.union,
-        handlePaths[0],
-        Path.combine(
-          PathOperation.union,
-          handlePaths[1],
-          Path.combine(
-            PathOperation.union,
-            handlePaths[2],
-            Path.combine(
-              PathOperation.union,
-              handlePaths[3],
-              Path.combine(
-                PathOperation.union,
-                handlePaths[4],
-                Path.combine(
-                  PathOperation.union,
-                  handlePaths[5],
-                  Path.combine(
-                    PathOperation.union,
-                    handlePaths[6],
-                    handlePaths[7],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill,
-    );
+      // 判断此控制点是否被点压
+      final isPressed = isHandlePressed && 
+                       pressedRegionId == regionId && 
+                       pressedHandleIndex == i;
 
-    // 批量绘制蓝色边框
-    canvas.drawPath(
-      Path.combine(
-        PathOperation.union,
-        handlePaths[0],
-        Path.combine(
-          PathOperation.union,
-          handlePaths[1],
-          Path.combine(
-            PathOperation.union,
-            handlePaths[2],
-            Path.combine(
-              PathOperation.union,
-              handlePaths[3],
-              Path.combine(
-                PathOperation.union,
-                handlePaths[4],
-                Path.combine(
-                  PathOperation.union,
-                  handlePaths[5],
-                  Path.combine(
-                    PathOperation.union,
-                    handlePaths[6],
-                    handlePaths[7],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
+      // 根据状态选择颜色
+      final fillColor = isPressed ? Colors.orange : Colors.white;
+      final strokeColor = isPressed ? Colors.deepOrange : Colors.blue;
+
+      // 绘制填充
+      canvas.drawRect(
+        handleRect,
+        Paint()
+          ..color = fillColor
+          ..style = PaintingStyle.fill,
+      );
+
+      // 绘制边框
+      canvas.drawRect(
+        handleRect,
+        Paint()
+          ..color = strokeColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0, // 移动端使用更粗的边框
+      );
+    }
+
+    AppLogger.debug('🎨 _drawHandles 绘制控制点', data: {
+      'regionId': regionId,
+      'isHandlePressed': isHandlePressed,
+      'pressedRegionId': pressedRegionId,
+      'pressedHandleIndex': pressedHandleIndex,
+    });
   }
 
   void _drawRegion(
@@ -310,7 +286,7 @@ class RegionsPainter extends CustomPainter {
 
       // 5. 如果处于Select模式并且是选中状态，绘制控制点
       if (isSelected && currentTool == Tool.select) {
-        _drawHandles(canvas, viewportRect, true);
+        _drawHandles(canvas, viewportRect, true, region.id);
       }
 
       canvas.restore();
@@ -333,7 +309,7 @@ class RegionsPainter extends CustomPainter {
 
       // 5. 如果处于Select模式并且是选中状态，绘制控制点
       if (isSelected && currentTool == Tool.select) {
-        _drawHandles(canvas, viewportRect, true);
+        _drawHandles(canvas, viewportRect, true, region.id);
       }
     }
   }

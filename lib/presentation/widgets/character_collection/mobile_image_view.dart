@@ -132,6 +132,18 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   // 调整相关状态
   int? _activeHandleIndex;
 
+  // 控制点点压状态
+  bool _isHandlePressed = false;
+  String? _pressedRegionId;
+  int? _pressedHandleIndex;
+
+  // 控制点拖拽调整状态
+  bool _isAdjustingHandle = false;
+  String? _adjustingHandleRegionId;
+  int? _adjustingHandleIndex;
+  CharacterRegion? _originalAdjustingRegion;
+  Offset? _adjustingStartPosition;
+
   @override
   void initState() {
     super.initState();
@@ -248,6 +260,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
                         isSelecting: _isSelecting,
                         selectionStart: _selectionStart,
                         selectionEnd: _selectionEnd,
+                        // 添加控制点状态支持
+                        pressedRegionId: _pressedRegionId,
+                        pressedHandleIndex: _pressedHandleIndex,
+                        isHandlePressed: _isHandlePressed,
                       ),
                     ),
                   ),
@@ -333,20 +349,114 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     return null;
   }
 
+  /// 检测控制点的点击
+  /// 返回: {regionId: String?, handleIndex: int?}
+  Map<String, dynamic> _hitTestHandle(
+      Offset position, List<CharacterRegion> regions) {
+    if (_transformer == null) {
+      return {'regionId': null, 'handleIndex': null};
+    }
+
+    // 只检测已选中的区域的控制点
+    for (final region in regions.reversed) {
+      if (!region.isSelected) continue;
+      
+      final rect = _transformer!.imageRectToViewportRect(region.rect);
+      final handleIndex = _getHandleIndexFromPosition(position, rect);
+      
+      if (handleIndex != null) {
+        AppLogger.debug('控制点碰撞检测成功', data: {
+          'regionId': region.id,
+          'handleIndex': handleIndex,
+          'position': '${position.dx}, ${position.dy}',
+        });
+        return {'regionId': region.id, 'handleIndex': handleIndex};
+      }
+    }
+
+    return {'regionId': null, 'handleIndex': null};
+  }
+
+  /// 检测控制点位置
+  int? _getHandleIndexFromPosition(Offset position, Rect rect) {
+    const handleSize = 24.0; // 移动端使用更大的触摸区域
+
+    // 8个调整控制点
+    final handles = [
+      rect.topLeft, // 0
+      rect.topCenter, // 1
+      rect.topRight, // 2
+      rect.centerRight, // 3
+      rect.bottomRight, // 4
+      rect.bottomCenter, // 5
+      rect.bottomLeft, // 6
+      rect.centerLeft, // 7
+    ];
+
+    // 检查每个控制点
+    for (int i = 0; i < handles.length; i++) {
+      final handleRect = Rect.fromCenter(
+        center: handles[i],
+        width: handleSize,
+        height: handleSize,
+      );
+
+      if (handleRect.contains(position)) {
+        return i;
+      }
+    }
+
+    return null;
+  }
+
   /// 处理平移开始（选区拖拽或创建新选区）
   void _onPanStart(DragStartDetails details) {
     final position = details.localPosition;
     final regions = ref.read(characterCollectionProvider).regions;
+    final toolMode = ref.read(toolModeProvider);
 
     AppLogger.debug('🔄 移动端平移开始', data: {
       'position': '${position.dx}, ${position.dy}',
       'regionsCount': regions.length,
+      'toolMode': toolMode.toString(),
       'currentStates': {
         '_isDraggingRegion': _isDraggingRegion,
         '_isSelecting': _isSelecting,
         '_isAdjusting': _isAdjusting,
       }
     });
+
+    // 在框选模式下，优先检测控制点
+    if (toolMode == Tool.select) {
+      final handleResult = _hitTestHandle(position, regions);
+      final hitRegionId = handleResult['regionId'] as String?;
+      final hitHandleIndex = handleResult['handleIndex'] as int?;
+
+      if (hitRegionId != null && hitHandleIndex != null) {
+        // 点击了控制点，开始控制点拖拽调整
+        final hitRegion = regions.firstWhere((r) => r.id == hitRegionId);
+        
+        setState(() {
+          _isHandlePressed = true;
+          _pressedRegionId = hitRegionId;
+          _pressedHandleIndex = hitHandleIndex;
+          // 开始控制点调整
+          _isAdjustingHandle = true;
+          _adjustingHandleRegionId = hitRegionId;
+          _adjustingHandleIndex = hitHandleIndex;
+          _originalAdjustingRegion = hitRegion;
+          _adjustingStartPosition = position;
+        });
+
+        AppLogger.debug('🎯 控制点拖拽调整开始', data: {
+          'regionId': hitRegionId,
+          'handleIndex': hitHandleIndex,
+          'originalRect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+        });
+        
+        return; // 直接返回，不继续处理其他操作
+      }
+    }
 
     // 检查是否点击了选中的区域
     final hitRegion = _hitTestRegion(position, regions);
@@ -403,10 +513,14 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         '_isDraggingRegion': _isDraggingRegion,
         '_isSelecting': _isSelecting,
         '_isAdjusting': _isAdjusting,
+        '_isAdjustingHandle': _isAdjustingHandle,
       }
     });
     
-    if (_isDraggingRegion) {
+    if (_isAdjustingHandle) {
+      // 控制点拖拽调整选区大小
+      _updateHandleAdjustment(currentPosition);
+    } else if (_isDraggingRegion) {
       // 拖拽现有选区
       if (_draggingRegion == null ||
           _dragStartPosition == null ||
@@ -486,8 +600,32 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         '_isDraggingRegion': _isDraggingRegion,
         '_isSelecting': _isSelecting,
         '_isAdjusting': _isAdjusting,
+        '_isHandlePressed': _isHandlePressed,
+        '_isAdjustingHandle': _isAdjustingHandle,
       }
     });
+
+    // 处理控制点调整完成
+    if (_isAdjustingHandle) {
+      _finishHandleAdjustment();
+      return; // 直接返回，不继续处理其他操作
+    }
+
+    // 处理控制点释放（仅点压，未拖拽）
+    if (_isHandlePressed && !_isAdjustingHandle) {
+      setState(() {
+        _isHandlePressed = false;
+        _pressedRegionId = null;
+        _pressedHandleIndex = null;
+      });
+
+      AppLogger.debug('🎯 控制点点压结束（仅点压）', data: {
+        'previousRegionId': _pressedRegionId,
+        'previousHandleIndex': _pressedHandleIndex,
+      });
+      
+      return; // 直接返回，不继续处理其他操作
+    }
 
     if (_isDraggingRegion) {
       // 完成选区拖拽
@@ -549,6 +687,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           '_isDraggingRegion': _isDraggingRegion,
           '_isSelecting': _isSelecting,
           '_isAdjusting': _isAdjusting,
+          '_isHandlePressed': _isHandlePressed,
         }
       });
     }
@@ -734,6 +873,156 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         'startPoint': '${imagePoint.dx}, ${imagePoint.dy}',
       });
     }
+  }
+
+  /// 完成控制点调整
+  void _finishHandleAdjustment() {
+    if (!_isAdjustingHandle || _adjustingHandleRegionId == null) {
+      AppLogger.debug('❌ 控制点调整完成条件不满足');
+      return;
+    }
+
+    // 获取最新的选区数据
+    final regions = ref.read(characterCollectionProvider).regions;
+    final updatedRegion = regions.where((r) => r.id == _adjustingHandleRegionId!).firstOrNull;
+
+    AppLogger.debug('🎯 控制点调整完成', data: {
+      'regionId': _adjustingHandleRegionId!,
+      'handleIndex': _adjustingHandleIndex,
+      'finalRect': updatedRegion != null 
+          ? '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}'
+          : 'null',
+    });
+
+    // 更新右侧字符编辑面板的选区
+    if (updatedRegion != null && updatedRegion.isSelected) {
+      ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
+      AppLogger.debug('更新右侧编辑面板选区', data: {
+        'regionId': updatedRegion.id,
+        'newRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+      });
+    }
+
+    // 清理控制点调整状态
+    setState(() {
+      _isHandlePressed = false;
+      _pressedRegionId = null;
+      _pressedHandleIndex = null;
+      _isAdjustingHandle = false;
+      _adjustingHandleRegionId = null;
+      _adjustingHandleIndex = null;
+      _originalAdjustingRegion = null;
+      _adjustingStartPosition = null;
+    });
+  }
+
+  /// 更新控制点拖拽调整
+  void _updateHandleAdjustment(Offset currentPosition) {
+    if (!_isAdjustingHandle || 
+        _originalAdjustingRegion == null || 
+        _adjustingStartPosition == null ||
+        _adjustingHandleIndex == null ||
+        _transformer == null) {
+      AppLogger.debug('❌ 控制点调整条件不满足');
+      return;
+    }
+
+    // 将屏幕坐标转换为图像坐标
+    final startImagePoint = _transformer!.viewportToImageCoordinate(_adjustingStartPosition!);
+    final currentImagePoint = _transformer!.viewportToImageCoordinate(currentPosition);
+    
+    // 计算在图像坐标系中的偏移量
+    final imageDelta = Offset(
+      currentImagePoint.dx - startImagePoint.dx,
+      currentImagePoint.dy - startImagePoint.dy,
+    );
+
+    final originalRect = _originalAdjustingRegion!.rect;
+    final handleIndex = _adjustingHandleIndex!;
+
+    // 根据控制点索引计算新的矩形
+    Rect newRect = _calculateNewRectForHandle(originalRect, imageDelta, handleIndex);
+
+    // 确保矩形有最小尺寸
+    const minSize = 10.0;
+    if (newRect.width < minSize || newRect.height < minSize) {
+      // 如果矩形太小，保持最小尺寸
+      if (newRect.width < minSize) {
+        if (handleIndex == 0 || handleIndex == 6 || handleIndex == 7) {
+          // 左侧控制点，调整left
+          newRect = Rect.fromLTRB(newRect.right - minSize, newRect.top, newRect.right, newRect.bottom);
+        } else {
+          // 右侧控制点，调整right
+          newRect = Rect.fromLTRB(newRect.left, newRect.top, newRect.left + minSize, newRect.bottom);
+        }
+      }
+      if (newRect.height < minSize) {
+        if (handleIndex == 0 || handleIndex == 1 || handleIndex == 2) {
+          // 顶部控制点，调整top
+          newRect = Rect.fromLTRB(newRect.left, newRect.bottom - minSize, newRect.right, newRect.bottom);
+        } else {
+          // 底部控制点，调整bottom
+          newRect = Rect.fromLTRB(newRect.left, newRect.top, newRect.right, newRect.top + minSize);
+        }
+      }
+    }
+
+    // 实时更新选区
+    final updatedRegion = _originalAdjustingRegion!.copyWith(
+      rect: newRect,
+      updateTime: DateTime.now(),
+      isModified: true,
+    );
+
+    AppLogger.debug('🎯 控制点调整更新', data: {
+      'handleIndex': handleIndex,
+      'imageDelta': '${imageDelta.dx}, ${imageDelta.dy}',
+      'originalRect': '${originalRect.left}, ${originalRect.top}, ${originalRect.width}x${originalRect.height}',
+      'newRect': '${newRect.left}, ${newRect.top}, ${newRect.width}x${newRect.height}',
+    });
+
+    ref.read(characterCollectionProvider.notifier).updateRegionDisplay(updatedRegion);
+  }
+
+  /// 根据控制点索引和偏移量计算新矩形
+  Rect _calculateNewRectForHandle(Rect originalRect, Offset delta, int handleIndex) {
+    double left = originalRect.left;
+    double top = originalRect.top;
+    double right = originalRect.right;
+    double bottom = originalRect.bottom;
+
+    switch (handleIndex) {
+      case 0: // topLeft - 左上角
+        left += delta.dx;
+        top += delta.dy;
+        break;
+      case 1: // topCenter - 上边中点
+        top += delta.dy;
+        break;
+      case 2: // topRight - 右上角
+        right += delta.dx;
+        top += delta.dy;
+        break;
+      case 3: // centerRight - 右边中点
+        right += delta.dx;
+        break;
+      case 4: // bottomRight - 右下角
+        right += delta.dx;
+        bottom += delta.dy;
+        break;
+      case 5: // bottomCenter - 下边中点
+        bottom += delta.dy;
+        break;
+      case 6: // bottomLeft - 左下角
+        left += delta.dx;
+        bottom += delta.dy;
+        break;
+      case 7: // centerLeft - 左边中点
+        left += delta.dx;
+        break;
+    }
+
+    return Rect.fromLTRB(left, top, right, bottom);
   }
 
   /// 开始创建新选区
@@ -998,49 +1287,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _adjustingRect = newRect;
       });
     }
-  }
-
-  /// 检测控制点位置
-  int? _getHandleIndexFromPosition(Offset position, Rect rect) {
-    const handleSize = 24.0; // 移动端使用更大的触摸区域
-
-    // 旋转控制点（在顶部中心上方）
-    final rotationPoint = Offset(rect.topCenter.dx, rect.topCenter.dy - 40);
-    if ((position - rotationPoint).distance < handleSize) {
-      return -1; // 旋转句柄
-    }
-
-    // 8个调整控制点
-    final handles = [
-      rect.topLeft, // 0
-      rect.topCenter, // 1
-      rect.topRight, // 2
-      rect.centerRight, // 3
-      rect.bottomRight, // 4
-      rect.bottomCenter, // 5
-      rect.bottomLeft, // 6
-      rect.centerLeft, // 7
-    ];
-
-    // 检查每个控制点
-    for (int i = 0; i < handles.length; i++) {
-      final handleRect = Rect.fromCenter(
-        center: handles[i],
-        width: handleSize,
-        height: handleSize,
-      );
-
-      if (handleRect.contains(position)) {
-        return i;
-      }
-    }
-
-    // 检查是否在选区内部（用于拖拽整个选区）
-    if (rect.contains(position)) {
-      return 8; // 拖拽整个选区
-    }
-
-    return null;
   }
 
   /// 调整选中区域的大小或位置
