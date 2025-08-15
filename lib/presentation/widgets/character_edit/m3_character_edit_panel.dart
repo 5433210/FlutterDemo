@@ -2060,18 +2060,18 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             .setBrushSize(dynamicBrushSize);
 
         // Show a brief notification to inform the user that brush size was automatically adjusted
-        if (mounted && context.mounted) {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  '笔刷大小已根据字符截取图像分辨率自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}'),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-              width: 350,
-            ),
-          );
-        }
+        // if (mounted && context.mounted) {
+        //   ScaffoldMessenger.of(context).clearSnackBars();
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(
+        //       content: Text(
+        //           '笔刷大小已根据字符截取图像分辨率自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}'),
+        //       duration: const Duration(seconds: 2),
+        //       behavior: SnackBarBehavior.floating,
+        //       width: 350,
+        //     ),
+        //   );
+        // }
       } catch (e) {
         AppLogger.error('计算动态笔刷大小时出错', error: e);
         // Fallback to the original logic if image processing fails

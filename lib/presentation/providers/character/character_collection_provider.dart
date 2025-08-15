@@ -170,14 +170,19 @@ class CharacterCollectionNotifier
         isModified: true, // New region is modified by default
       );
 
-      // 清理现有选择状态
+      // 清理现有选择状态 - 先清除所有已选中区域的选中状态
       _selectedRegionNotifier.clearRegion();
+      
+      // 清除所有现有区域的选中状态
+      final clearedRegions = state.regions
+          .map((r) => r.isSelected ? r.copyWith(isSelected: false) : r)
+          .toList();
 
       // 设置新的选中区域并立即进入可调节状态
       _selectedRegionNotifier.setRegion(region);
 
       // 更新区域列表和状态
-      final updatedRegions = [...state.regions, region];
+      final updatedRegions = [...clearedRegions, region];
 
       // Maintain selectedIds and modifiedIds for transition period
 

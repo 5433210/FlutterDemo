@@ -360,10 +360,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 只检测已选中的区域的控制点
     for (final region in regions.reversed) {
       if (!region.isSelected) continue;
-      
+
       final rect = _transformer!.imageRectToViewportRect(region.rect);
       final handleIndex = _getHandleIndexFromPosition(position, rect);
-      
+
       if (handleIndex != null) {
         AppLogger.debug('控制点碰撞检测成功', data: {
           'regionId': region.id,
@@ -435,7 +435,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       if (hitRegionId != null && hitHandleIndex != null) {
         // 点击了控制点，开始控制点拖拽调整
         final hitRegion = regions.firstWhere((r) => r.id == hitRegionId);
-        
+
         setState(() {
           _isHandlePressed = true;
           _pressedRegionId = hitRegionId;
@@ -451,9 +451,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         AppLogger.debug('🎯 控制点拖拽调整开始', data: {
           'regionId': hitRegionId,
           'handleIndex': hitHandleIndex,
-          'originalRect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+          'originalRect':
+              '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
         });
-        
+
         return; // 直接返回，不继续处理其他操作
       }
     }
@@ -462,11 +463,14 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final hitRegion = _hitTestRegion(position, regions);
 
     AppLogger.debug('🔍 碰撞检测结果', data: {
-      'hitRegion': hitRegion != null ? {
-        'id': hitRegion.id,
-        'isSelected': hitRegion.isSelected,
-        'rect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
-      } : null,
+      'hitRegion': hitRegion != null
+          ? {
+              'id': hitRegion.id,
+              'isSelected': hitRegion.isSelected,
+              'rect':
+                  '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+            }
+          : null,
     });
 
     if (hitRegion != null && hitRegion.isSelected) {
@@ -489,15 +493,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         'startPosition': '${position.dx}, ${position.dy}',
         'transformer': _transformer != null ? 'available' : 'null',
       });
-      
+
+      // 先清除所有已选中的选区
+      ref.read(characterCollectionProvider.notifier).clearSelections();
+      ref.read(selectedRegionProvider.notifier).clearRegion();
+      AppLogger.debug('清除已选中选区后开始创建新选区');
+
       _startRegionCreation(position);
-      
+
       AppLogger.debug('✅ 已调用_startRegionCreation', data: {
         'startPosition': '${position.dx}, ${position.dy}',
         'newStates': {
           '_isSelecting': _isSelecting,
-          '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-          '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+          '_selectionStart': _selectionStart != null
+              ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+              : 'null',
+          '_selectionEnd': _selectionEnd != null
+              ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+              : 'null',
         }
       });
     }
@@ -506,7 +519,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   /// 处理平移更新（选区拖拽或选区创建）
   void _onPanUpdate(DragUpdateDetails details) {
     final currentPosition = details.localPosition;
-    
+
     AppLogger.debug('🔄 _onPanUpdate 开始', data: {
       'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
       'states': {
@@ -516,7 +529,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         '_isAdjustingHandle': _isAdjustingHandle,
       }
     });
-    
+
     if (_isAdjustingHandle) {
       // 控制点拖拽调整选区大小
       _updateHandleAdjustment(currentPosition);
@@ -527,8 +540,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           _originalDragRect == null) {
         AppLogger.debug('❌ 拖拽选区条件不满足', data: {
           '_draggingRegion': _draggingRegion?.id ?? 'null',
-          '_dragStartPosition': _dragStartPosition != null ? '${_dragStartPosition!.dx}, ${_dragStartPosition!.dy}' : 'null',
-          '_originalDragRect': _originalDragRect != null ? '${_originalDragRect!.left}, ${_originalDragRect!.top}, ${_originalDragRect!.width}x${_originalDragRect!.height}' : 'null',
+          '_dragStartPosition': _dragStartPosition != null
+              ? '${_dragStartPosition!.dx}, ${_dragStartPosition!.dy}'
+              : 'null',
+          '_originalDragRect': _originalDragRect != null
+              ? '${_originalDragRect!.left}, ${_originalDragRect!.top}, ${_originalDragRect!.width}x${_originalDragRect!.height}'
+              : 'null',
         });
         return;
       }
@@ -570,16 +587,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       // 创建新选区
       AppLogger.debug('🆕 _onPanUpdate 调用_updateRegionCreation', data: {
         'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
-        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        'selectionEnd_before': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        'selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        'selectionEnd_before': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       });
-      
+
       _updateRegionCreation(currentPosition);
-      
+
       AppLogger.debug('✅ _onPanUpdate 已调用_updateRegionCreation', data: {
         'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
-        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        'selectionEnd_after': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        'selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        'selectionEnd_after': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       });
     } else {
       AppLogger.debug('⚠️ _onPanUpdate 无操作', data: {
@@ -623,7 +648,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         'previousRegionId': _pressedRegionId,
         'previousHandleIndex': _pressedHandleIndex,
       });
-      
+
       return; // 直接返回，不继续处理其他操作
     }
 
@@ -667,18 +692,26 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     } else if (_isSelecting) {
       // 完成选区创建
       AppLogger.debug('🆕 _onPanEnd 准备调用_finishRegionCreation', data: {
-        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        'selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        'selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        'selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
         '_isSelecting': _isSelecting,
       });
-      
+
       _finishRegionCreation();
-      
+
       AppLogger.debug('✅ _onPanEnd 已调用_finishRegionCreation', data: {
         'statesAfter': {
           '_isSelecting': _isSelecting,
-          '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-          '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+          '_selectionStart': _selectionStart != null
+              ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+              : 'null',
+          '_selectionEnd': _selectionEnd != null
+              ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+              : 'null',
         }
       });
     } else {
@@ -884,12 +917,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
     // 获取最新的选区数据
     final regions = ref.read(characterCollectionProvider).regions;
-    final updatedRegion = regions.where((r) => r.id == _adjustingHandleRegionId!).firstOrNull;
+    final updatedRegion =
+        regions.where((r) => r.id == _adjustingHandleRegionId!).firstOrNull;
 
     AppLogger.debug('🎯 控制点调整完成', data: {
       'regionId': _adjustingHandleRegionId!,
       'handleIndex': _adjustingHandleIndex,
-      'finalRect': updatedRegion != null 
+      'finalRect': updatedRegion != null
           ? '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}'
           : 'null',
     });
@@ -899,7 +933,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
       AppLogger.debug('更新右侧编辑面板选区', data: {
         'regionId': updatedRegion.id,
-        'newRect': '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+        'newRect':
+            '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
       });
     }
 
@@ -918,8 +953,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 更新控制点拖拽调整
   void _updateHandleAdjustment(Offset currentPosition) {
-    if (!_isAdjustingHandle || 
-        _originalAdjustingRegion == null || 
+    if (!_isAdjustingHandle ||
+        _originalAdjustingRegion == null ||
         _adjustingStartPosition == null ||
         _adjustingHandleIndex == null ||
         _transformer == null) {
@@ -928,9 +963,11 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
 
     // 将屏幕坐标转换为图像坐标
-    final startImagePoint = _transformer!.viewportToImageCoordinate(_adjustingStartPosition!);
-    final currentImagePoint = _transformer!.viewportToImageCoordinate(currentPosition);
-    
+    final startImagePoint =
+        _transformer!.viewportToImageCoordinate(_adjustingStartPosition!);
+    final currentImagePoint =
+        _transformer!.viewportToImageCoordinate(currentPosition);
+
     // 计算在图像坐标系中的偏移量
     final imageDelta = Offset(
       currentImagePoint.dx - startImagePoint.dx,
@@ -941,7 +978,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final handleIndex = _adjustingHandleIndex!;
 
     // 根据控制点索引计算新的矩形
-    Rect newRect = _calculateNewRectForHandle(originalRect, imageDelta, handleIndex);
+    Rect newRect =
+        _calculateNewRectForHandle(originalRect, imageDelta, handleIndex);
 
     // 确保矩形有最小尺寸
     const minSize = 10.0;
@@ -950,19 +988,23 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       if (newRect.width < minSize) {
         if (handleIndex == 0 || handleIndex == 6 || handleIndex == 7) {
           // 左侧控制点，调整left
-          newRect = Rect.fromLTRB(newRect.right - minSize, newRect.top, newRect.right, newRect.bottom);
+          newRect = Rect.fromLTRB(newRect.right - minSize, newRect.top,
+              newRect.right, newRect.bottom);
         } else {
           // 右侧控制点，调整right
-          newRect = Rect.fromLTRB(newRect.left, newRect.top, newRect.left + minSize, newRect.bottom);
+          newRect = Rect.fromLTRB(newRect.left, newRect.top,
+              newRect.left + minSize, newRect.bottom);
         }
       }
       if (newRect.height < minSize) {
         if (handleIndex == 0 || handleIndex == 1 || handleIndex == 2) {
           // 顶部控制点，调整top
-          newRect = Rect.fromLTRB(newRect.left, newRect.bottom - minSize, newRect.right, newRect.bottom);
+          newRect = Rect.fromLTRB(newRect.left, newRect.bottom - minSize,
+              newRect.right, newRect.bottom);
         } else {
           // 底部控制点，调整bottom
-          newRect = Rect.fromLTRB(newRect.left, newRect.top, newRect.right, newRect.top + minSize);
+          newRect = Rect.fromLTRB(
+              newRect.left, newRect.top, newRect.right, newRect.top + minSize);
         }
       }
     }
@@ -977,15 +1019,20 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     AppLogger.debug('🎯 控制点调整更新', data: {
       'handleIndex': handleIndex,
       'imageDelta': '${imageDelta.dx}, ${imageDelta.dy}',
-      'originalRect': '${originalRect.left}, ${originalRect.top}, ${originalRect.width}x${originalRect.height}',
-      'newRect': '${newRect.left}, ${newRect.top}, ${newRect.width}x${newRect.height}',
+      'originalRect':
+          '${originalRect.left}, ${originalRect.top}, ${originalRect.width}x${originalRect.height}',
+      'newRect':
+          '${newRect.left}, ${newRect.top}, ${newRect.width}x${newRect.height}',
     });
 
-    ref.read(characterCollectionProvider.notifier).updateRegionDisplay(updatedRegion);
+    ref
+        .read(characterCollectionProvider.notifier)
+        .updateRegionDisplay(updatedRegion);
   }
 
   /// 根据控制点索引和偏移量计算新矩形
-  Rect _calculateNewRectForHandle(Rect originalRect, Offset delta, int handleIndex) {
+  Rect _calculateNewRectForHandle(
+      Rect originalRect, Offset delta, int handleIndex) {
     double left = originalRect.left;
     double top = originalRect.top;
     double right = originalRect.right;
@@ -1031,8 +1078,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
       'currentStates_before': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
 
@@ -1046,8 +1097,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
       'newStates_after': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
   }
@@ -1084,8 +1139,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
       'currentStates_before': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
 
@@ -1102,8 +1161,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
       'newStates_after': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
   }
@@ -1131,16 +1194,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     AppLogger.debug('🏁 _finishRegionCreation 开始', data: {
       'currentStates': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
 
     if (!_isSelecting || _selectionStart == null || _selectionEnd == null) {
       AppLogger.debug('❌ _finishRegionCreation 条件不满足', data: {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       });
       return;
     }
@@ -1151,14 +1222,15 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     AppLogger.debug('🔄 坐标转换结果', data: {
       'screenStart': '${_selectionStart!.dx}, ${_selectionStart!.dy}',
       'screenEnd': '${_selectionEnd!.dx}, ${_selectionEnd!.dy}',
-      'imageStart': startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
+      'imageStart':
+          startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
       'imageEnd': endImage != null ? '${endImage.dx}, ${endImage.dy}' : 'null',
       'transformer': _transformer != null ? 'available' : 'null',
     });
 
     if (startImage != null && endImage != null) {
       final rect = Rect.fromPoints(startImage, endImage);
-      
+
       AppLogger.debug('🔄 创建的矩形信息', data: {
         'rect': '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
         'width': rect.width,
@@ -1174,7 +1246,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
         final newRegion =
             ref.read(characterCollectionProvider.notifier).createRegion(rect);
-        
+
         if (newRegion != null) {
           AppLogger.debug('🎉 新选区创建成功', data: {
             'regionId': newRegion.id,
@@ -1193,18 +1265,24 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       }
     } else {
       AppLogger.debug('❌ 坐标转换失败，无法创建选区', data: {
-        'startImage': startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
-        'endImage': endImage != null ? '${endImage.dx}, ${endImage.dy}' : 'null',
+        'startImage':
+            startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
+        'endImage':
+            endImage != null ? '${endImage.dx}, ${endImage.dy}' : 'null',
       });
     }
 
     _cleanupSelection();
-    
+
     AppLogger.debug('✅ _finishRegionCreation 清理完成', data: {
       'statesAfter': {
         '_isSelecting': _isSelecting,
-        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
-        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_selectionStart': _selectionStart != null
+            ? '${_selectionStart!.dx}, ${_selectionStart!.dy}'
+            : 'null',
+        '_selectionEnd': _selectionEnd != null
+            ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}'
+            : 'null',
       }
     });
   }
