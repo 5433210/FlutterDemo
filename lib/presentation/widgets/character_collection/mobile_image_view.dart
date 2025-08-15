@@ -10,10 +10,8 @@ import '../../../utils/coordinate_transformer.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
-import 'adjustable_region_painter.dart';
 import 'image_view_base.dart';
 import 'regions_painter.dart';
-import 'selection_painters.dart';
 
 /// 移动端图片预览组件
 /// 专门针对触摸设备优化的手势操作实现
@@ -112,12 +110,15 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   // 移动端特定的状态
   bool _isSelecting = false;
   bool _isAdjusting = false;
+  bool _isDraggingRegion = false; // 是否正在拖拽选区
+  CharacterRegion? _draggingRegion; // 正在拖拽的选区
+  Offset? _dragStartPosition; // 拖拽开始位置
+  Rect? _originalDragRect; // 拖拽开始时的原始矩形
 
   // 手势状态
   int _pointerCount = 0;
   DateTime _gestureStartTime = DateTime.now();
   Matrix4? _initialTransform;
-  final double _rotation = 0.0;
 
   // 选区相关
   Offset? _selectionStart;
@@ -220,6 +221,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTapUp: _onTapUp,
+                    onPanStart: toolMode == Tool.select ? _onPanStart : null,
+                    onPanUpdate: toolMode == Tool.select ? _onPanUpdate : null,
+                    onPanEnd: toolMode == Tool.select ? _onPanEnd : null,
                     child: CustomPaint(
                       painter: RegionsPainter(
                         regions: regions,
@@ -293,6 +297,91 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     }
     
     return null;
+  }
+
+  /// 处理平移开始（选区拖拽）
+  void _onPanStart(DragStartDetails details) {
+    final position = details.localPosition;
+    final regions = ref.read(characterCollectionProvider).regions;
+    
+    AppLogger.debug('🔄 移动端平移开始', data: {
+      'position': '${position.dx}, ${position.dy}',
+    });
+    
+    // 检查是否点击了选中的区域
+    final hitRegion = _hitTestRegion(position, regions);
+    
+    if (hitRegion != null && hitRegion.isSelected) {
+      // 开始拖拽选中的区域
+      setState(() {
+        _isDraggingRegion = true;
+        _draggingRegion = hitRegion;
+        _dragStartPosition = position;
+        _originalDragRect = hitRegion.rect;
+      });
+      
+      AppLogger.debug('开始拖拽选区', data: {
+        'regionId': hitRegion.id,
+        'originalRect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+      });
+    }
+  }
+
+  /// 处理平移更新（选区拖拽）
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (!_isDraggingRegion || _draggingRegion == null || _dragStartPosition == null || _originalDragRect == null) {
+      return;
+    }
+    
+    final currentPosition = details.localPosition;
+    final delta = currentPosition - _dragStartPosition!;
+    
+    AppLogger.debug('🔄 移动端平移更新', data: {
+      'delta': '${delta.dx}, ${delta.dy}',
+      'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+    });
+    
+    // 将delta转换为图像坐标系中的偏移量
+    final deltaStart = _transformer!.viewportToImageCoordinate(_dragStartPosition!);
+    final deltaCurrent = _transformer!.viewportToImageCoordinate(currentPosition);
+    final imageDelta = Offset(deltaCurrent.dx - deltaStart.dx, deltaCurrent.dy - deltaStart.dy);
+    
+    // 计算新的图像矩形位置
+    final newImageRect = Rect.fromLTWH(
+      _originalDragRect!.left + imageDelta.dx,
+      _originalDragRect!.top + imageDelta.dy,
+      _originalDragRect!.width,
+      _originalDragRect!.height,
+    );
+    
+    // 实时更新选区位置
+    final updatedRegion = _draggingRegion!.copyWith(
+      rect: newImageRect,
+      updateTime: DateTime.now(),
+      isModified: true,
+    );
+    
+    ref.read(characterCollectionProvider.notifier).updateRegionDisplay(updatedRegion);
+  }
+
+  /// 处理平移结束（选区拖拽）
+  void _onPanEnd(DragEndDetails details) {
+    if (!_isDraggingRegion || _draggingRegion == null) {
+      return;
+    }
+    
+    AppLogger.debug('🔄 移动端平移结束', data: {
+      'regionId': _draggingRegion!.id,
+      'finalRect': '${_draggingRegion!.rect.left}, ${_draggingRegion!.rect.top}, ${_draggingRegion!.rect.width}x${_draggingRegion!.rect.height}',
+    });
+    
+    // 清理拖拽状态
+    setState(() {
+      _isDraggingRegion = false;
+      _draggingRegion = null;
+      _dragStartPosition = null;
+      _originalDragRect = null;
+    });
   }
 
   /// 处理缩放手势开始
