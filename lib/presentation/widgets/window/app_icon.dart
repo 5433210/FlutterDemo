@@ -26,8 +26,9 @@ class _AppIconWidgetState extends State<AppIconWidget> {
     try {
       return CachedImage(
         path: Theme.of(context).brightness == Brightness.dark
-            ? 'assets/images/app_trans_bg4.ico'
-            : 'assets/images/app_trans_bg4.ico',
+            ? 'assets/images/zi.ico'
+            : 'assets/images/zi.ico',
+
         width: widget.size,
         height: widget.size,
         // Note: CachedImage doesn't support color and colorBlendMode directly

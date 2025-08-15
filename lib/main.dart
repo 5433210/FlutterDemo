@@ -53,7 +53,7 @@ void main() async {
   // 🚀 优化：简化窗口管理器初始化
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
-    
+
     // 🚀 优化：使用更简单的窗口配置，减少启动时间
     WindowOptions windowOptions = const WindowOptions(
       size: Size(1400, 800),
@@ -64,7 +64,7 @@ void main() async {
       titleBarStyle: TitleBarStyle.hidden,
       title: '字字珠玑',
     );
-    
+
     // 🚀 优化：简化窗口显示流程
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
@@ -83,10 +83,10 @@ void main() async {
     // 桌面端：使用相对路径
     logFilePath = 'app.log';
   }
-  
+
   await AppLogger.init(
       enableFile: logFilePath != null,
-      enableConsole: kDebugMode,  // 只在调试模式启用控制台
+      enableConsole: kDebugMode, // 只在调试模式启用控制台
       minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
       filePath: logFilePath);
 
@@ -101,7 +101,7 @@ void main() async {
       SharedPreferences.getInstance(),
       _initializePathConfig(),
     ]);
-    
+
     final prefs = futures[0] as SharedPreferences;
 
     // 🚀 优化：使用优化的ProviderContainer配置
@@ -160,7 +160,8 @@ void main() async {
 void _delayedWindowSetup() {
   Future.delayed(const Duration(milliseconds: 100), () async {
     try {
-      await windowManager.setIcon('assets/images/app_trans_bg4.ico');
+      await windowManager.setIcon('assets/images/zi.ico');
+
       await windowManager.setBackgroundColor(Colors.white);
     } catch (e) {
       AppLogger.warning('延迟窗口设置失败', error: e, tag: 'App');
@@ -175,16 +176,16 @@ Future<void> _initializePathConfig() async {
     try {
       await UnifiedPathConfigService.readConfig();
       AppLogger.info('统一路径配置初始化成功', tag: 'App');
-      
+
       // 立即检查备份恢复，在任何Provider被触发之前
       try {
         await _checkAndCompleteBackupRestore();
       } catch (restoreError, restoreStack) {
         // 备份恢复失败记录详细错误，但不影响应用启动
-        AppLogger.error('主程序备份恢复失败', 
+        AppLogger.error('主程序备份恢复失败',
             error: restoreError, stackTrace: restoreStack, tag: 'App');
       }
-      
+
       AppLogger.info('数据路径配置预加载完成', tag: 'App');
     } catch (e) {
       AppLogger.warning('统一路径配置初始化失败', error: e, tag: 'App');
@@ -198,12 +199,12 @@ Future<void> _checkAndCompleteBackupRestore() async {
     // 获取当前数据路径
     final config = await UnifiedPathConfigService.readConfig();
     final actualDataPath = await config.dataPath.getActualDataPath();
-    
+
     // 调用备份恢复检查
-    await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(actualDataPath);
+    await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
+        actualDataPath);
   } catch (e, stack) {
-    AppLogger.error('主程序中备份恢复检查失败', 
-        error: e, stackTrace: stack, tag: 'App');
+    AppLogger.error('主程序中备份恢复检查失败', error: e, stackTrace: stack, tag: 'App');
     // 备份恢复失败不应该阻止应用启动
   }
 }
@@ -227,7 +228,8 @@ Widget _buildAppWithDelayedKeyboardMonitor() {
   return FutureBuilder(
     future: _delayedInitializeKeyboard(),
     builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.done && snapshot.data == true) {
+      if (snapshot.connectionState == ConnectionState.done &&
+          snapshot.data == true) {
         return KeyboardMonitor.wrapApp(const MyApp());
       }
       return const MyApp(); // 直接显示应用，不等待键盘监控
