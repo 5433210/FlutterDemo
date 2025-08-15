@@ -218,7 +218,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
               ),
 
               // 选区绘制层 - 智能手势检测
-              if (_transformer != null && regions.isNotEmpty)
+              if (_transformer != null && (regions.isNotEmpty || _isSelecting))
                 Positioned.fill(
                   child: GestureDetector(
                     // 在非选择模式下使用deferToChild，让缩放手势透传
@@ -244,6 +244,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
                         currentTool: toolMode,
                         isAdjusting: _isAdjusting,
                         selectedIds: selectedIds,
+                        // 添加创建中选区的支持
+                        isSelecting: _isSelecting,
+                        selectionStart: _selectionStart,
+                        selectionEnd: _selectionEnd,
                       ),
                     ),
                   ),
@@ -329,17 +333,31 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     return null;
   }
 
-  /// 处理平移开始（选区拖拽）
+  /// 处理平移开始（选区拖拽或创建新选区）
   void _onPanStart(DragStartDetails details) {
     final position = details.localPosition;
     final regions = ref.read(characterCollectionProvider).regions;
 
     AppLogger.debug('🔄 移动端平移开始', data: {
       'position': '${position.dx}, ${position.dy}',
+      'regionsCount': regions.length,
+      'currentStates': {
+        '_isDraggingRegion': _isDraggingRegion,
+        '_isSelecting': _isSelecting,
+        '_isAdjusting': _isAdjusting,
+      }
     });
 
     // 检查是否点击了选中的区域
     final hitRegion = _hitTestRegion(position, regions);
+
+    AppLogger.debug('🔍 碰撞检测结果', data: {
+      'hitRegion': hitRegion != null ? {
+        'id': hitRegion.id,
+        'isSelected': hitRegion.isSelected,
+        'rect': '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
+      } : null,
+    });
 
     if (hitRegion != null && hitRegion.isSelected) {
       // 开始拖拽选中的区域
@@ -350,95 +368,190 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _originalDragRect = hitRegion.rect;
       });
 
-      AppLogger.debug('开始拖拽选区', data: {
+      AppLogger.debug('✅ 开始拖拽选区', data: {
         'regionId': hitRegion.id,
         'originalRect':
             '${hitRegion.rect.left}, ${hitRegion.rect.top}, ${hitRegion.rect.width}x${hitRegion.rect.height}',
       });
-    }
-  }
-
-  /// 处理平移更新（选区拖拽）
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (!_isDraggingRegion ||
-        _draggingRegion == null ||
-        _dragStartPosition == null ||
-        _originalDragRect == null) {
-      return;
-    }
-
-    final currentPosition = details.localPosition;
-    final delta = currentPosition - _dragStartPosition!;
-
-    AppLogger.debug('🔄 移动端平移更新', data: {
-      'delta': '${delta.dx}, ${delta.dy}',
-      'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
-    });
-
-    // 将delta转换为图像坐标系中的偏移量
-    final deltaStart =
-        _transformer!.viewportToImageCoordinate(_dragStartPosition!);
-    final deltaCurrent =
-        _transformer!.viewportToImageCoordinate(currentPosition);
-    final imageDelta = Offset(
-        deltaCurrent.dx - deltaStart.dx, deltaCurrent.dy - deltaStart.dy);
-
-    // 计算新的图像矩形位置
-    final newImageRect = Rect.fromLTWH(
-      _originalDragRect!.left + imageDelta.dx,
-      _originalDragRect!.top + imageDelta.dy,
-      _originalDragRect!.width,
-      _originalDragRect!.height,
-    );
-
-    // 实时更新选区位置
-    final updatedRegion = _draggingRegion!.copyWith(
-      rect: newImageRect,
-      updateTime: DateTime.now(),
-      isModified: true,
-    );
-
-    ref
-        .read(characterCollectionProvider.notifier)
-        .updateRegionDisplay(updatedRegion);
-  }
-
-  /// 处理平移结束（选区拖拽）
-  void _onPanEnd(DragEndDetails details) {
-    if (!_isDraggingRegion || _draggingRegion == null) {
-      return;
-    }
-
-    // 获取最新的选区数据
-    final regions = ref.read(characterCollectionProvider).regions;
-    final updatedRegion = regions.firstWhere(
-      (r) => r.id == _draggingRegion!.id,
-      orElse: () => _draggingRegion!,
-    );
-
-    AppLogger.debug('🔄 移动端平移结束', data: {
-      'regionId': updatedRegion.id,
-      'finalRect':
-          '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
-    });
-
-    // 更新右侧字符编辑面板的选区
-    if (updatedRegion.isSelected) {
-      ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
-      AppLogger.debug('更新右侧编辑面板选区', data: {
-        'regionId': updatedRegion.id,
-        'newRect':
-            '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+    } else {
+      // 点击空白区域，开始创建新选区
+      AppLogger.debug('🆕 准备开始创建新选区', data: {
+        'startPosition': '${position.dx}, ${position.dy}',
+        'transformer': _transformer != null ? 'available' : 'null',
+      });
+      
+      _startRegionCreation(position);
+      
+      AppLogger.debug('✅ 已调用_startRegionCreation', data: {
+        'startPosition': '${position.dx}, ${position.dy}',
+        'newStates': {
+          '_isSelecting': _isSelecting,
+          '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+          '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        }
       });
     }
+  }
 
-    // 清理拖拽状态
-    setState(() {
-      _isDraggingRegion = false;
-      _draggingRegion = null;
-      _dragStartPosition = null;
-      _originalDragRect = null;
+  /// 处理平移更新（选区拖拽或选区创建）
+  void _onPanUpdate(DragUpdateDetails details) {
+    final currentPosition = details.localPosition;
+    
+    AppLogger.debug('🔄 _onPanUpdate 开始', data: {
+      'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+      'states': {
+        '_isDraggingRegion': _isDraggingRegion,
+        '_isSelecting': _isSelecting,
+        '_isAdjusting': _isAdjusting,
+      }
     });
+    
+    if (_isDraggingRegion) {
+      // 拖拽现有选区
+      if (_draggingRegion == null ||
+          _dragStartPosition == null ||
+          _originalDragRect == null) {
+        AppLogger.debug('❌ 拖拽选区条件不满足', data: {
+          '_draggingRegion': _draggingRegion?.id ?? 'null',
+          '_dragStartPosition': _dragStartPosition != null ? '${_dragStartPosition!.dx}, ${_dragStartPosition!.dy}' : 'null',
+          '_originalDragRect': _originalDragRect != null ? '${_originalDragRect!.left}, ${_originalDragRect!.top}, ${_originalDragRect!.width}x${_originalDragRect!.height}' : 'null',
+        });
+        return;
+      }
+
+      final delta = currentPosition - _dragStartPosition!;
+
+      AppLogger.debug('🔄 移动端平移更新（拖拽选区）', data: {
+        'delta': '${delta.dx}, ${delta.dy}',
+        'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+      });
+
+      // 将delta转换为图像坐标系中的偏移量
+      final deltaStart =
+          _transformer!.viewportToImageCoordinate(_dragStartPosition!);
+      final deltaCurrent =
+          _transformer!.viewportToImageCoordinate(currentPosition);
+      final imageDelta = Offset(
+          deltaCurrent.dx - deltaStart.dx, deltaCurrent.dy - deltaStart.dy);
+
+      // 计算新的图像矩形位置
+      final newImageRect = Rect.fromLTWH(
+        _originalDragRect!.left + imageDelta.dx,
+        _originalDragRect!.top + imageDelta.dy,
+        _originalDragRect!.width,
+        _originalDragRect!.height,
+      );
+
+      // 实时更新选区位置
+      final updatedRegion = _draggingRegion!.copyWith(
+        rect: newImageRect,
+        updateTime: DateTime.now(),
+        isModified: true,
+      );
+
+      ref
+          .read(characterCollectionProvider.notifier)
+          .updateRegionDisplay(updatedRegion);
+    } else if (_isSelecting) {
+      // 创建新选区
+      AppLogger.debug('🆕 _onPanUpdate 调用_updateRegionCreation', data: {
+        'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        'selectionEnd_before': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      });
+      
+      _updateRegionCreation(currentPosition);
+      
+      AppLogger.debug('✅ _onPanUpdate 已调用_updateRegionCreation', data: {
+        'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        'selectionEnd_after': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      });
+    } else {
+      AppLogger.debug('⚠️ _onPanUpdate 无操作', data: {
+        'currentPosition': '${currentPosition.dx}, ${currentPosition.dy}',
+        'states': {
+          '_isDraggingRegion': _isDraggingRegion,
+          '_isSelecting': _isSelecting,
+          '_isAdjusting': _isAdjusting,
+        }
+      });
+    }
+  }
+
+  /// 处理平移结束（选区拖拽或选区创建）
+  void _onPanEnd(DragEndDetails details) {
+    AppLogger.debug('🏁 _onPanEnd 开始', data: {
+      'states': {
+        '_isDraggingRegion': _isDraggingRegion,
+        '_isSelecting': _isSelecting,
+        '_isAdjusting': _isAdjusting,
+      }
+    });
+
+    if (_isDraggingRegion) {
+      // 完成选区拖拽
+      if (_draggingRegion == null) {
+        AppLogger.debug('❌ 拖拽结束条件不满足: _draggingRegion = null');
+        return;
+      }
+
+      // 获取最新的选区数据
+      final regions = ref.read(characterCollectionProvider).regions;
+      final updatedRegion = regions.firstWhere(
+        (r) => r.id == _draggingRegion!.id,
+        orElse: () => _draggingRegion!,
+      );
+
+      AppLogger.debug('🔄 移动端平移结束（拖拽选区）', data: {
+        'regionId': updatedRegion.id,
+        'finalRect':
+            '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+      });
+
+      // 更新右侧字符编辑面板的选区
+      if (updatedRegion.isSelected) {
+        ref.read(selectedRegionProvider.notifier).setRegion(updatedRegion);
+        AppLogger.debug('更新右侧编辑面板选区', data: {
+          'regionId': updatedRegion.id,
+          'newRect':
+              '${updatedRegion.rect.left}, ${updatedRegion.rect.top}, ${updatedRegion.rect.width}x${updatedRegion.rect.height}',
+        });
+      }
+
+      // 清理拖拽状态
+      setState(() {
+        _isDraggingRegion = false;
+        _draggingRegion = null;
+        _dragStartPosition = null;
+        _originalDragRect = null;
+      });
+    } else if (_isSelecting) {
+      // 完成选区创建
+      AppLogger.debug('🆕 _onPanEnd 准备调用_finishRegionCreation', data: {
+        'selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        'selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        '_isSelecting': _isSelecting,
+      });
+      
+      _finishRegionCreation();
+      
+      AppLogger.debug('✅ _onPanEnd 已调用_finishRegionCreation', data: {
+        'statesAfter': {
+          '_isSelecting': _isSelecting,
+          '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+          '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+        }
+      });
+    } else {
+      AppLogger.debug('⚠️ _onPanEnd 无操作', data: {
+        'states': {
+          '_isDraggingRegion': _isDraggingRegion,
+          '_isSelecting': _isSelecting,
+          '_isAdjusting': _isAdjusting,
+        }
+      });
+    }
   }
 
   /// 处理缩放手势开始
@@ -625,14 +738,28 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 开始创建新选区
   void _startRegionCreation(Offset screenPoint) {
+    AppLogger.debug('🚀 _startRegionCreation 开始', data: {
+      'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
+      'currentStates_before': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
+    });
+
     setState(() {
       _isSelecting = true;
       _selectionStart = screenPoint;
       _selectionEnd = screenPoint;
     });
 
-    AppLogger.debug('开始创建新选区', data: {
-      'startPoint': '${screenPoint.dx}, ${screenPoint.dy}',
+    AppLogger.debug('✅ _startRegionCreation setState完成', data: {
+      'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
+      'newStates_after': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
     });
   }
 
@@ -664,10 +791,31 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 更新新选区创建
   void _updateRegionCreation(Offset screenPoint) {
-    if (!_isSelecting) return;
+    AppLogger.debug('🔄 _updateRegionCreation 开始', data: {
+      'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
+      'currentStates_before': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
+    });
+
+    if (!_isSelecting) {
+      AppLogger.debug('❌ _updateRegionCreation 条件不满足: _isSelecting = false');
+      return;
+    }
 
     setState(() {
       _selectionEnd = screenPoint;
+    });
+
+    AppLogger.debug('✅ _updateRegionCreation setState完成', data: {
+      'screenPoint': '${screenPoint.dx}, ${screenPoint.dy}',
+      'newStates_after': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
     });
   }
 
@@ -691,29 +839,85 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 完成新选区创建
   void _finishRegionCreation() {
+    AppLogger.debug('🏁 _finishRegionCreation 开始', data: {
+      'currentStates': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
+    });
+
     if (!_isSelecting || _selectionStart == null || _selectionEnd == null) {
+      AppLogger.debug('❌ _finishRegionCreation 条件不满足', data: {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      });
       return;
     }
 
     final startImage = _screenToImagePoint(_selectionStart!);
     final endImage = _screenToImagePoint(_selectionEnd!);
 
+    AppLogger.debug('🔄 坐标转换结果', data: {
+      'screenStart': '${_selectionStart!.dx}, ${_selectionStart!.dy}',
+      'screenEnd': '${_selectionEnd!.dx}, ${_selectionEnd!.dy}',
+      'imageStart': startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
+      'imageEnd': endImage != null ? '${endImage.dx}, ${endImage.dy}' : 'null',
+      'transformer': _transformer != null ? 'available' : 'null',
+    });
+
     if (startImage != null && endImage != null) {
       final rect = Rect.fromPoints(startImage, endImage);
+      
+      AppLogger.debug('🔄 创建的矩形信息', data: {
+        'rect': '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
+        'width': rect.width,
+        'height': rect.height,
+        'minSizeCheck': rect.width > 10 && rect.height > 10,
+      });
+
       if (rect.width > 10 && rect.height > 10) {
         // 最小尺寸要求
+        AppLogger.debug('✅ 开始创建新选区', data: {
+          'rect': rect.toString(),
+        });
+
         final newRegion =
             ref.read(characterCollectionProvider.notifier).createRegion(rect);
+        
         if (newRegion != null) {
-          AppLogger.debug('创建新选区', data: {
+          AppLogger.debug('🎉 新选区创建成功', data: {
             'regionId': newRegion.id,
             'rect': rect.toString(),
           });
+        } else {
+          AppLogger.debug('❌ 新选区创建失败', data: {
+            'rect': rect.toString(),
+          });
         }
+      } else {
+        AppLogger.debug('❌ 选区尺寸太小，未创建', data: {
+          'rect': '${rect.left}, ${rect.top}, ${rect.width}x${rect.height}',
+          'minSizeRequired': '10x10',
+        });
       }
+    } else {
+      AppLogger.debug('❌ 坐标转换失败，无法创建选区', data: {
+        'startImage': startImage != null ? '${startImage.dx}, ${startImage.dy}' : 'null',
+        'endImage': endImage != null ? '${endImage.dx}, ${endImage.dy}' : 'null',
+      });
     }
 
     _cleanupSelection();
+    
+    AppLogger.debug('✅ _finishRegionCreation 清理完成', data: {
+      'statesAfter': {
+        '_isSelecting': _isSelecting,
+        '_selectionStart': _selectionStart != null ? '${_selectionStart!.dx}, ${_selectionStart!.dy}' : 'null',
+        '_selectionEnd': _selectionEnd != null ? '${_selectionEnd!.dx}, ${_selectionEnd!.dy}' : 'null',
+      }
+    });
   }
 
   /// 切换选区选择状态

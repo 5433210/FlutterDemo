@@ -14,6 +14,10 @@ class RegionsPainter extends CustomPainter {
   final Tool currentTool; // 当前工具模式
   final bool isAdjusting; // 是否处于调整状态
   final List<String> selectedIds; // 添加选中的区域ID列表以支持多选
+  // 添加创建中选区的支持
+  final bool isSelecting; // 是否正在创建选区
+  final Offset? selectionStart; // 选区创建起点
+  final Offset? selectionEnd; // 选区创建终点
 
   const RegionsPainter({
     required this.regions,
@@ -23,6 +27,10 @@ class RegionsPainter extends CustomPainter {
     required this.currentTool, // 当前工具模式
     this.isAdjusting = false, // 是否处于调整状态
     this.selectedIds = const [], // 默认为空列表
+    // 创建中选区的参数
+    this.isSelecting = false,
+    this.selectionStart,
+    this.selectionEnd,
   });
 
   @override
@@ -33,6 +41,12 @@ class RegionsPainter extends CustomPainter {
     try {
       // 计算可见区域
       final viewportBounds = Rect.fromLTWH(0, 0, size.width, size.height);
+
+      // 调试信息
+      debugPrint('🎨 RegionsPainter paint开始 - regions: ${regions.length}, isSelecting: $isSelecting');
+      if (isSelecting && selectionStart != null && selectionEnd != null) {
+        debugPrint('📐 创建中选区: start=${selectionStart!.dx}, ${selectionStart!.dy}, end=${selectionEnd!.dx}, ${selectionEnd!.dy}');
+      }
 
       for (final region in regions) {
         // 如果区域正在被其他组件调整，则跳过绘制
@@ -82,6 +96,11 @@ class RegionsPainter extends CustomPainter {
           debugPrint('区域绘制失败: ${region.id}, error: $e\n$stack');
         }
       }
+
+      // 绘制创建中的选区
+      if (isSelecting && selectionStart != null && selectionEnd != null) {
+        _drawCreatingRegion(canvas, selectionStart!, selectionEnd!);
+      }
     } catch (e, stack) {
       debugPrint('RegionsPainter绘制失败: $e\n$stack');
     }
@@ -93,6 +112,13 @@ class RegionsPainter extends CustomPainter {
     if (oldDelegate.hoveredId != hoveredId || 
         oldDelegate.adjustingRegionId != adjustingRegionId ||
         oldDelegate.isAdjusting != isAdjusting) {
+      return true;
+    }
+    
+    // 检查创建选区状态变化
+    if (oldDelegate.isSelecting != isSelecting ||
+        oldDelegate.selectionStart != selectionStart ||
+        oldDelegate.selectionEnd != selectionEnd) {
       return true;
     }
     
@@ -340,5 +366,70 @@ class RegionsPainter extends CustomPainter {
         viewportRect.top + 5,
       ),
     );
+  }
+
+  /// 绘制创建中的选区
+  void _drawCreatingRegion(Canvas canvas, Offset start, Offset end) {
+    // 计算选区矩形
+    final rect = Rect.fromPoints(start, end);
+    
+    debugPrint('🎨 _drawCreatingRegion 绘制创建中选区');
+    debugPrint('📐 选区矩形: ${rect.left}, ${rect.top}, ${rect.width}x${rect.height}');
+    
+    // 创建中选区的样式：虚线边框，半透明填充
+    final borderPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    
+    final fillPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+    
+    // 绘制填充
+    canvas.drawRect(rect, fillPaint);
+    
+    // 绘制虚线边框
+    _drawDashedRect(canvas, rect, borderPaint);
+    
+    debugPrint('✅ _drawCreatingRegion 绘制完成');
+  }
+
+  /// 绘制虚线矩形
+  void _drawDashedRect(Canvas canvas, Rect rect, Paint paint) {
+    const dashWidth = 5.0;
+    const dashSpace = 3.0;
+    
+    // 绘制上边
+    _drawDashedLine(canvas, rect.topLeft, rect.topRight, paint, dashWidth, dashSpace);
+    // 绘制右边
+    _drawDashedLine(canvas, rect.topRight, rect.bottomRight, paint, dashWidth, dashSpace);
+    // 绘制下边
+    _drawDashedLine(canvas, rect.bottomRight, rect.bottomLeft, paint, dashWidth, dashSpace);
+    // 绘制左边
+    _drawDashedLine(canvas, rect.bottomLeft, rect.topLeft, paint, dashWidth, dashSpace);
+  }
+
+  /// 绘制虚线
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint, double dashWidth, double dashSpace) {
+    final distance = (end - start).distance;
+    final unitVector = (end - start) / distance;
+    
+    double currentDistance = 0.0;
+    bool drawing = true;
+    
+    while (currentDistance < distance) {
+      final segmentLength = drawing ? dashWidth : dashSpace;
+      final nextDistance = (currentDistance + segmentLength).clamp(0.0, distance);
+      
+      if (drawing) {
+        final segmentStart = start + unitVector * currentDistance;
+        final segmentEnd = start + unitVector * nextDistance;
+        canvas.drawLine(segmentStart, segmentEnd, paint);
+      }
+      
+      currentDistance = nextDistance;
+      drawing = !drawing;
+    }
   }
 }
