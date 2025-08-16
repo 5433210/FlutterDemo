@@ -595,7 +595,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get boxRegion => '미리보기 영역에서 문자를 선택하세요';
 
   @override
-  String get boxTool => '상자 선택 도구';
+  String get boxTool => '수집 도구';
 
   @override
   String get bringLayerToFront => '레이어를 맨 앞으로 가져오기';
@@ -741,10 +741,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get characterCollectionTitle => '글자 수집';
 
   @override
-  String get characterCollectionToolBox => '상자 선택 도구 (Ctrl+B)';
+  String get characterCollectionToolBox => '수집 도구 (Ctrl+B)';
 
   @override
-  String get characterCollectionToolPan => '이동 도구 (Ctrl+V)';
+  String get characterCollectionToolPan => '다중 선택 도구 (Ctrl+V)';
 
   @override
   String get characterCollectionUseBoxTool => '상자 선택 도구를 사용하여 이미지에서 문자 추출';
@@ -4184,10 +4184,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get toggleBackground => '배경 전환';
 
   @override
-  String get toolModePanTooltip => '드래그 도구 (Ctrl+V)';
+  String get toolModePanTooltip => '다중 선택 도구 (Ctrl+V)';
 
   @override
-  String get toolModeSelectTooltip => '선택 도구 (Ctrl+B)';
+  String get toolModeSelectTooltip => '수집 도구 (Ctrl+B)';
 
   @override
   String get topCenter => '위쪽 가운데';

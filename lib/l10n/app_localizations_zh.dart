@@ -595,7 +595,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get boxRegion => '请在预览区域框选字符';
 
   @override
-  String get boxTool => '框选工具';
+  String get boxTool => '采集工具';
 
   @override
   String get bringLayerToFront => '图层置于顶层';
@@ -741,13 +741,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCollectionTitle => '字符采集';
 
   @override
-  String get characterCollectionToolBox => '框选工具 (Ctrl+B)';
+  String get characterCollectionToolBox => '采集工具 (Ctrl+B)';
 
   @override
-  String get characterCollectionToolPan => '平移工具 (Ctrl+V)';
+  String get characterCollectionToolPan => '多选工具 (Ctrl+V)';
 
   @override
-  String get characterCollectionUseBoxTool => '使用框选工具从图像中提取字符';
+  String get characterCollectionUseBoxTool => '使用采集工具从图像中提取字符';
 
   @override
   String get characterCount => '集字数量';
@@ -4184,10 +4184,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toggleBackground => '切换背景';
 
   @override
-  String get toolModePanTooltip => '拖拽工具 (Ctrl+V)';
+  String get toolModePanTooltip => '多选工具 (Ctrl+V)';
 
   @override
-  String get toolModeSelectTooltip => '框选工具 (Ctrl+B)';
+  String get toolModeSelectTooltip => '采集工具 (Ctrl+B)';
 
   @override
   String get topCenter => '顶部居中';
@@ -5088,7 +5088,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get boxRegion => '請在預覽區域框選字元';
 
   @override
-  String get boxTool => '框選工具';
+  String get boxTool => '擷取工具';
 
   @override
   String get bringLayerToFront => '圖層置於頂層';
@@ -5234,13 +5234,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get characterCollectionTitle => '字元擷取';
 
   @override
-  String get characterCollectionToolBox => '框選工具 (Ctrl+B)';
+  String get characterCollectionToolBox => '擷取工具 (Ctrl+B)';
 
   @override
-  String get characterCollectionToolPan => '平移工具 (Ctrl+V)';
+  String get characterCollectionToolPan => '多選工具 (Ctrl+V)';
 
   @override
-  String get characterCollectionUseBoxTool => '使用框選工具從影像中擷取字元';
+  String get characterCollectionUseBoxTool => '使用擷取工具從影像中擷取字元';
 
   @override
   String get characterCount => '集字數量';
@@ -8677,10 +8677,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get toggleBackground => '切換背景';
 
   @override
-  String get toolModePanTooltip => '拖曳工具 (Ctrl+V)';
+  String get toolModePanTooltip => '多選工具 (Ctrl+V)';
 
   @override
-  String get toolModeSelectTooltip => '框選工具 (Ctrl+B)';
+  String get toolModeSelectTooltip => '擷取工具 (Ctrl+B)';
 
   @override
   String get topCenter => '頂部置中';

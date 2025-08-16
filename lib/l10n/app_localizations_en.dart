@@ -595,7 +595,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get boxRegion => 'Please select characters in the preview area';
 
   @override
-  String get boxTool => 'Box Tool';
+  String get boxTool => 'Collection Tool';
 
   @override
   String get bringLayerToFront => 'Bring Layer to Front';
@@ -741,13 +741,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionTitle => 'Character Collection';
 
   @override
-  String get characterCollectionToolBox => 'Box Selection Tool (Ctrl+B)';
+  String get characterCollectionToolBox => 'Collection Tool (Ctrl+B)';
 
   @override
-  String get characterCollectionToolPan => 'Pan Tool (Ctrl+V)';
+  String get characterCollectionToolPan => 'Multi-Select Tool (Ctrl+V)';
 
   @override
-  String get characterCollectionUseBoxTool => 'Use Box Selection Tool to Extract Characters from Image';
+  String get characterCollectionUseBoxTool => 'Use collection tool to extract characters from image';
 
   @override
   String get characterCount => 'Character Count';
@@ -4184,10 +4184,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toggleBackground => 'Toggle Background';
 
   @override
-  String get toolModePanTooltip => 'Pan Tool (Ctrl+V)';
+  String get toolModePanTooltip => 'Multi-Select Tool (Ctrl+V)';
 
   @override
-  String get toolModeSelectTooltip => 'Box Selection Tool (Ctrl+B)';
+  String get toolModeSelectTooltip => 'Collection Tool (Ctrl+B)';
 
   @override
   String get topCenter => 'Top Center';

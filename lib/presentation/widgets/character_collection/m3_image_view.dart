@@ -662,7 +662,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                             regions: regions,
                             transformer: _transformer!,
                             hoveredId: _hoveredRegionId,
-                            adjustingRegionId: _adjustingRegionId,
+                            adjustingRegionId: null, // 修復：不跳過任何選區
                             currentTool: toolMode,
                             isAdjusting: characterCollection.isAdjusting,
                             selectedIds: selectedIds,
@@ -1413,7 +1413,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     final toolMode = ref.read(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
 
-    // 如果是拖拽工具模式，启用平移
+    // 如果是多选工具模式，启用平移
     if (isPanMode) {
       setState(() {
         _isPanning = true;
@@ -1426,7 +1426,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     final toolMode = ref.read(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
 
-    // 如果是拖拽工具模式且正在平移，处理平移逻辑
+    // 如果是多选工具模式且正在平移，处理平移逻辑
     if (isPanMode && _isPanning && _lastPanPosition != null) {
       final delta = details.localFocalPoint - _lastPanPosition!;
       final matrix = _transformationController.value.clone();
@@ -1512,7 +1512,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     });
   }
 
-  // 处理拖拽工具的拖拽操作
+  // 处理多选工具的拖拽操作
   void _handlePanStart(DragStartDetails details) {
     // 允许在Pan模式或Alt键按下时进行平移
     final toolMode = ref.read(toolModeProvider);
@@ -1878,7 +1878,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     if (hitRegion != null) {
       // 如果点击了区域，处理区域点击事件
       if (isInPanMode) {
-        // 在拖拽工具模式下实现多选功能
+        // 在多选工具模式下实现多选功能
         ref
             .read(characterCollectionProvider.notifier)
             .toggleSelection(hitRegion.id);

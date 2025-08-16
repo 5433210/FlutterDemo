@@ -111,15 +111,31 @@ class CharacterCollectionNotifier
     );
   }
 
-  // 多选功能：清除所有选择
+  // 清除所有選區狀態：點擊空白處時調用
   void clearSelections() {
-    // Update regions to clear selections
+    // 將所有激活的選區恢復到普通狀態
+    // 包括：isSelected=true 的選區，以及 currentId 對應的選區（可能在isAdjusting狀態）
     final updatedRegions = state.regions
-        .map((r) => r.isSelected ? r.copyWith(isSelected: false) : r)
+        .map((r) {
+          // 如果是選中狀態，或者是當前正在調整的選區，都要清除
+          if (r.isSelected || (state.currentId != null && r.id == state.currentId)) {
+            return r.copyWith(isSelected: false);
+          }
+          return r;
+        })
         .toList();
 
-    state = state.copyWith(regions: updatedRegions, isAdjusting: false);
+    state = state.copyWith(
+      regions: updatedRegions, 
+      isAdjusting: false,
+      currentId: null, // 確保沒有當前選中的ID
+    );
     _selectedRegionNotifier.clearRegion();
+    
+    AppLogger.debug('已清除所有選區狀態', data: {
+      'clearedRegionsCount': updatedRegions.where((r) => !r.isSelected).length,
+      'previousCurrentId': state.currentId,
+    });
   }
 
   // 清理所有状态
@@ -1122,7 +1138,10 @@ class CharacterCollectionNotifier
   }
 
   /// 处理Select模式下的点击
-  /// Select模式下点击直接进入调整模式
+  /// 框選工具模式下的切換邏輯：
+  /// - 如果選區已激活(isSelected=true或isAdjusting=true)，則取消激活
+  /// - 如果選區未激活，則激活選區(isSelected=true且isAdjusting=true)
+  /// - 最多只能有一個選區處於激活狀態
   void _handleSelectModeClick(String id) {
     AppLogger.debug('Handling Select Mode Click', data: {
       'regionId': id,
@@ -1130,39 +1149,60 @@ class CharacterCollectionNotifier
       'currentStateCurrentId': state.currentId
     });
 
-    // 1. 如果当前正在调整其他选区，先保存状态
-    if (state.isAdjusting && state.currentId != id) {
-      finishCurrentAdjustment(); // 保存当前调整中的选区
-    }
-
-    // 2. 查找目标选区
+    // 查找目標選區
     final region = state.regions.firstWhere(
       (r) => r.id == id,
       orElse: () => throw Exception('Region not found'),
     );
 
-    _selectedRegionNotifier.setRegion(region);
+    // 檢查當前選區是否已激活（isSelected=true 或 isAdjusting=true）
+    final isCurrentlyActive = region.isSelected || (state.isAdjusting && state.currentId == id);
 
-    // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
-    bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
-
-    // Update all regions, only the target region is selected
-    final updatedRegions =
-        state.regions.map((r) => r.copyWith(isSelected: r.id == id)).toList();
-
-    // 重要：选择区域，但不添加到modifiedIds中
-    state = state.copyWith(
-      regions: updatedRegions,
-      currentId: id,
-      isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
-      error: null,
-    );
-
-    AppLogger.debug('Select Mode Click - State Update Complete', data: {
-      'newStateRegionId': state.currentId,
-      'newStateIsAdjusting': state.isAdjusting,
-      'wasAlreadyAdjusting': !shouldEnterAdjusting,
-    });
+    if (isCurrentlyActive) {
+      // 如果選區已激活，則取消激活：isSelected=false, isAdjusting=false
+      _selectedRegionNotifier.clearRegion();
+      
+      final updatedRegions = state.regions
+          .map((r) => r.id == id ? r.copyWith(isSelected: false) : r)
+          .toList();
+      
+      state = state.copyWith(
+        regions: updatedRegions,
+        currentId: null,
+        isAdjusting: false,
+        error: null,
+      );
+      
+      AppLogger.debug('選區已取消激活', data: {
+        'regionId': id,
+        'newStateIsAdjusting': false,
+        'newStateCurrentId': null,
+      });
+    } else {
+      // 如果選區未激活，則激活：isSelected=true, isAdjusting=true
+      // 同時清除其他所有選區的激活狀態（確保最多只有一個激活選區）
+      _selectedRegionNotifier.setRegion(region);
+      
+      // 清除所有選區的選中狀態，然後只激活點擊的選區
+      final updatedRegions = state.regions
+          .map((r) => r.id == id 
+              ? r.copyWith(isSelected: true)  // 只有點擊的選區設為激活
+              : r.copyWith(isSelected: false)) // 其他所有選區設為未激活
+          .toList();
+      
+      state = state.copyWith(
+        regions: updatedRegions,
+        currentId: id,
+        isAdjusting: true,
+        error: null,
+      );
+      
+      AppLogger.debug('選區已激活，其他選區已清除', data: {
+        'regionId': id,
+        'newStateIsAdjusting': true,
+        'newStateCurrentId': id,
+      });
+    }
   }
 
   // 检查擦除路径数据是否有变化 - Update to handle eraseData instead of erasePoints

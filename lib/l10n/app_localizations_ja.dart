@@ -595,7 +595,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get boxRegion => 'プレビュー領域で文字を囲んで選択してください';
 
   @override
-  String get boxTool => '矩形選択ツール';
+  String get boxTool => '収集ツール';
 
   @override
   String get bringLayerToFront => 'レイヤーを最前面へ';
@@ -741,10 +741,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get characterCollectionTitle => '文字収集';
 
   @override
-  String get characterCollectionToolBox => '矩形選択ツール (Ctrl+B)';
+  String get characterCollectionToolBox => '収集ツール (Ctrl+B)';
 
   @override
-  String get characterCollectionToolPan => 'パンツール (Ctrl+V)';
+  String get characterCollectionToolPan => '複数選択ツール (Ctrl+V)';
 
   @override
   String get characterCollectionUseBoxTool => '矩形選択ツールを使用して画像から文字を抽出します';
@@ -4184,10 +4184,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get toggleBackground => '背景を切り替え';
 
   @override
-  String get toolModePanTooltip => 'パンツール (Ctrl+V)';
+  String get toolModePanTooltip => '複数選択ツール (Ctrl+V)';
 
   @override
-  String get toolModeSelectTooltip => '矩形選択ツール (Ctrl+B)';
+  String get toolModeSelectTooltip => '収集ツール (Ctrl+B)';
 
   @override
   String get topCenter => '上中央';

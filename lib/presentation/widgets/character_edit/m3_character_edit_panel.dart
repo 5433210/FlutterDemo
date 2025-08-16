@@ -148,6 +148,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   // State for internal image loading
   Future<ui.Image?>? _imageLoadingFuture;
   ui.Image? _loadedImage;
+  
+  // Track expansion state of parameter control panel
+  bool _isParameterPanelExpanded = true; // Default to expanded when height is sufficient
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -1081,9 +1084,10 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         final screenSize = MediaQuery.of(context).size;
         final isPortrait = screenSize.height > screenSize.width;
         
-        // 更谨慎的移动端检测，只在确实需要时使用紧凑模式
-        final bool shouldUseCompactMode = constraints.maxWidth < 500 || 
-            (isPortrait && screenSize.width < 400);
+        // 更智能的紧凑模式检测，优先考虑高度
+        final bool shouldUseCompactMode = constraints.maxHeight < 400 || 
+            (constraints.maxWidth < 500 && constraints.maxHeight < 600) || 
+            (isPortrait && screenSize.width < 400 && screenSize.height < 700);
         
         return Container(
           padding: EdgeInsets.symmetric(
@@ -1100,8 +1104,17 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   }
 
   Widget _buildCompactToolbar(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    // 在窗体高度足够时保持面板展开，高度不足时才使用折叠
+    final hassufficientHeight = MediaQuery.of(context).size.height > 600;
+    final shouldExpand = hassufficientHeight ? true : _isParameterPanelExpanded;
+    
     return ExpansionTile(
-      initiallyExpanded: false,
+      initiallyExpanded: shouldExpand,
+      onExpansionChanged: (bool expanded) {
+        setState(() {
+          _isParameterPanelExpanded = expanded;
+        });
+      },
       tilePadding: EdgeInsets.zero,
       childrenPadding: EdgeInsets.zero,
       title: Row(

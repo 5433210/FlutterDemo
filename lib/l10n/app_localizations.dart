@@ -1183,7 +1183,7 @@ abstract class AppLocalizations {
   /// No description provided for @boxTool.
   ///
   /// In en, this message translates to:
-  /// **'Box Tool'**
+  /// **'Collection Tool'**
   String get boxTool;
 
   /// No description provided for @bringLayerToFront.
@@ -1471,19 +1471,19 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionToolBox.
   ///
   /// In en, this message translates to:
-  /// **'Box Selection Tool (Ctrl+B)'**
+  /// **'Collection Tool (Ctrl+B)'**
   String get characterCollectionToolBox;
 
   /// No description provided for @characterCollectionToolPan.
   ///
   /// In en, this message translates to:
-  /// **'Pan Tool (Ctrl+V)'**
+  /// **'Multi-Select Tool (Ctrl+V)'**
   String get characterCollectionToolPan;
 
   /// No description provided for @characterCollectionUseBoxTool.
   ///
   /// In en, this message translates to:
-  /// **'Use Box Selection Tool to Extract Characters from Image'**
+  /// **'Use collection tool to extract characters from image'**
   String get characterCollectionUseBoxTool;
 
   /// No description provided for @characterCount.
@@ -7969,13 +7969,13 @@ abstract class AppLocalizations {
   /// No description provided for @toolModePanTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Pan Tool (Ctrl+V)'**
+  /// **'Multi-Select Tool (Ctrl+V)'**
   String get toolModePanTooltip;
 
   /// No description provided for @toolModeSelectTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Box Selection Tool (Ctrl+B)'**
+  /// **'Collection Tool (Ctrl+B)'**
   String get toolModeSelectTooltip;
 
   /// No description provided for @topCenter.

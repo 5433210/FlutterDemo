@@ -92,60 +92,45 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 
-  /// 构建组合工具按钮
+  /// 构建组合工具按钮 - 改为切换控件样式
   Widget _buildCombinedToolButton(BuildContext context, WidgetRef ref, Tool toolMode) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
     final bool isPanMode = toolMode == Tool.pan;
-    final String tooltipText = isPanMode 
-        ? l10n.characterCollectionToolPan 
-        : l10n.characterCollectionToolBox;
-    final IconData iconData = isPanMode ? Icons.pan_tool : Icons.crop_square;
-    final String labelText = isPanMode ? '移动' : '框选';
 
-    return Tooltip(
-      message: tooltipText,
-      child: Material(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            // 切换工具模式
-            final newTool = isPanMode ? Tool.select : Tool.pan;
-            ref.read(toolModeProvider.notifier).setMode(newTool);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  iconData,
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  labelText,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.swap_horiz,
-                  size: 14,
-                  color: colorScheme.primary.withAlpha(180),
-                ),
-              ],
-            ),
+    return ToggleButtons(
+      isSelected: [isPanMode, !isPanMode],
+      onPressed: (index) {
+        final newTool = index == 0 ? Tool.pan : Tool.select;
+        ref.read(toolModeProvider.notifier).setMode(newTool);
+      },
+      borderRadius: BorderRadius.circular(8),
+      constraints: const BoxConstraints(minHeight: 32, minWidth: 50),
+      children: [
+        Tooltip(
+          message: l10n.characterCollectionToolPan,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.pan_tool, size: 16),
+              const SizedBox(width: 4),
+              Text('多选', style: textTheme.bodySmall),
+            ],
           ),
         ),
-      ),
+        Tooltip(
+          message: l10n.characterCollectionToolBox,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.crop_square, size: 16),
+              const SizedBox(width: 4),
+              Text('采集', style: textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -194,51 +179,43 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 
-  /// 构建面板切换按钮
+  /// 构建面板切换按钮 - 改为切换控件样式
   Widget _buildPanelToggleButton(BuildContext context, WidgetRef ref, PanelMode panelMode) {
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
     final bool isPreviewMode = panelMode == PanelMode.preview;
-    final String tooltipText = isPreviewMode 
-        ? '切换到采集结果' 
-        : '切换到字符预览';
-    final IconData iconData = isPreviewMode ? Icons.view_list : Icons.preview;
-    final String labelText = isPreviewMode ? '结果' : '预览';
 
-    return Tooltip(
-      message: tooltipText,
-      child: Material(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            ref.read(panelModeProvider.notifier).toggleMode();
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  iconData,
-                  size: 18,
-                  color: colorScheme.onSurface,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  labelText,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+    return ToggleButtons(
+      isSelected: [isPreviewMode, !isPreviewMode],
+      onPressed: (index) {
+        ref.read(panelModeProvider.notifier).toggleMode();
+      },
+      borderRadius: BorderRadius.circular(8),
+      constraints: const BoxConstraints(minHeight: 32, minWidth: 50),
+      children: [
+        Tooltip(
+          message: '字符预览',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.preview, size: 16),
+              const SizedBox(width: 4),
+              Text('预览', style: textTheme.bodySmall),
+            ],
           ),
         ),
-      ),
+        Tooltip(
+          message: '采集结果',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.view_list, size: 16),
+              const SizedBox(width: 4),
+              Text('结果', style: textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

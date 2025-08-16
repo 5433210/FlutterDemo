@@ -58,11 +58,6 @@ class RegionsPainter extends CustomPainter {
       }
 
       for (final region in regions) {
-        // 如果区域正在被其他组件调整，则跳过绘制
-        if (region.id == adjustingRegionId) {
-          continue;
-        }
-
         try {
           // 转换坐标
           final viewportRect = transformer.imageRectToViewportRect(region.rect);
@@ -284,8 +279,8 @@ class RegionsPainter extends CustomPainter {
       _drawRegionText(
           canvas, viewportRect, region, index, isSelected, borderColor);
 
-      // 5. 如果处于Select模式并且是选中状态，绘制控制点
-      if (isSelected && currentTool == Tool.select) {
+      // 5. 如果处于调整状态，绘制控制点
+      if (regionState == CharacterRegionState.adjusting) {
         _drawHandles(canvas, viewportRect, true, region.id);
       }
 
@@ -307,8 +302,8 @@ class RegionsPainter extends CustomPainter {
       _drawRegionText(
           canvas, viewportRect, region, index, isSelected, borderColor);
 
-      // 5. 如果处于Select模式并且是选中状态，绘制控制点
-      if (isSelected && currentTool == Tool.select) {
+      // 5. 如果处于调整状态，绘制控制点
+      if (regionState == CharacterRegionState.adjusting) {
         _drawHandles(canvas, viewportRect, true, region.id);
       }
     }

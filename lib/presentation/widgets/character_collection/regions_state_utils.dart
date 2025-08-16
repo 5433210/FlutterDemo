@@ -22,10 +22,8 @@ class RegionStateUtils {
         result = const Color(CharacterRegionColorScheme.adjusting);
         break;
       case CharacterRegionState.selected:
-        // 如果是多选状态，使用多选专用颜色
-        result = isMultiSelected
-            ? const Color(CharacterRegionColorScheme.multiSelected)
-            : const Color(CharacterRegionColorScheme.selected);
+        // 多选工具模式下，多選和單選使用相同顏色
+        result = const Color(CharacterRegionColorScheme.selected);
         break;
       case CharacterRegionState.normal:
         result = isSaved
@@ -47,10 +45,8 @@ class RegionStateUtils {
       case CharacterRegionState.adjusting:
         return CharacterRegionColorScheme.adjustingBorderWidth;
       case CharacterRegionState.selected:
-        // 如果是多选状态，使用多选专用边框宽度
-        return isMultiSelected
-            ? CharacterRegionColorScheme.multiSelectedBorderWidth
-            : CharacterRegionColorScheme.selectedBorderWidth;
+        // 多选工具模式下，多選和單選使用相同邊框寬度
+        return CharacterRegionColorScheme.selectedBorderWidth;
       case CharacterRegionState.normal:
         return CharacterRegionColorScheme.normalBorderWidth;
     }
@@ -79,10 +75,8 @@ class RegionStateUtils {
         opacity = CharacterRegionColorScheme.adjustingOpacity;
         break;
       case CharacterRegionState.selected:
-        // 如果是多选状态，使用多选专用透明度
-        opacity = isMultiSelected
-            ? CharacterRegionColorScheme.multiSelectedOpacity
-            : CharacterRegionColorScheme.selectedOpacity;
+        // 多选工具模式下，多選和單選使用相同透明度
+        opacity = CharacterRegionColorScheme.selectedOpacity;
         break;
       case CharacterRegionState.normal:
         opacity = isSaved
@@ -118,15 +112,8 @@ class RegionStateUtils {
       return CharacterRegionState.adjusting;
     }
 
-    // 如果被选中，根据工具模式确定状态
+    // 如果被选中，統一使用selected状态（不再區分工具模式）
     if (isSelected) {
-      // 在Select模式下，选中的区域应该显示为adjusting状态（蓝色）
-      if (currentTool == Tool.select) {
-        // AppLogger.debug('区域状态: adjusting (Select模式)');
-        return CharacterRegionState.adjusting;
-      }
-
-      // 在其他模式下（如Pan模式），使用selected状态（红色）
       // AppLogger.debug('区域状态: selected');
       return CharacterRegionState.selected;
     }

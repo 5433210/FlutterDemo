@@ -31,7 +31,7 @@ class AdjustableRegionPainter extends CustomPainter {
 
     final center = viewportRect!.center;
 
-    // 绘制选区填充
+    // 绘制调整状态的选区填充和边框
     final fillPaint = Paint()
       ..color = Colors.blue.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
@@ -46,10 +46,10 @@ class AdjustableRegionPainter extends CustomPainter {
       canvas.translate(-center.dx, -center.dy);
     }
 
-    // 绘制选区填充
+    // 绘制调整状态的选区填充
     canvas.drawRect(viewportRect!, fillPaint);
 
-    // 绘制选区边框
+    // 绘制调整状态的选区边框
     final borderPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.stroke

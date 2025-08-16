@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import 'character_collection_provider.dart';
 
 /// 工具模式Provider
 final toolModeProvider = StateNotifierProvider<ToolModeNotifier, Tool>((ref) {
-  return ToolModeNotifier();
+  return ToolModeNotifier(ref);
 });
 
 /// 工具模式枚举
@@ -39,9 +40,10 @@ enum Tool {
 
 /// 工具模式状态管理器
 class ToolModeNotifier extends StateNotifier<Tool> {
+  final Ref _ref;
   Tool _previousMode = Tool.pan;
 
-  ToolModeNotifier() : super(Tool.pan);
+  ToolModeNotifier(this._ref) : super(Tool.pan);
 
   /// 获取当前模式
   Tool get currentMode => state;
@@ -66,6 +68,25 @@ class ToolModeNotifier extends StateNotifier<Tool> {
     if (state != mode) {
       final oldMode = state;
       _previousMode = oldMode;
+      
+      // 工具切换时清除选区状态
+      try {
+        final characterCollectionNotifier = _ref.read(characterCollectionProvider.notifier);
+        
+        // 多选切换到采集时，清除已选中的选区
+        if (oldMode == Tool.pan && mode == Tool.select) {
+          AppLogger.debug('多选切换到采集，清除已选中选区');
+          characterCollectionNotifier.clearSelectedRegions();
+        }
+        // 采集切换到多选时，清除选中或adjusting的选区
+        else if (oldMode == Tool.select && mode == Tool.pan) {
+          AppLogger.debug('采集切换到多选，清除所有选区状态');
+          characterCollectionNotifier.clearSelections();
+        }
+      } catch (e) {
+        AppLogger.error('清除选区状态失败', error: e);
+      }
+      
       state = mode;
 
       // 记录工具模式变化
