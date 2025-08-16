@@ -70,8 +70,8 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
             ]
           : null,
       actions: [
-        // 组合工具按钮（移动/框选）
-        _buildCombinedToolButton(context, ref, toolMode),
+        // 删除按钮
+        _buildDeleteButton(context, ref, collectionState),
         
         // 分隔线
         Container(
@@ -81,13 +81,16 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
           margin: const EdgeInsets.symmetric(horizontal: 8),
         ),
         
-        // 删除按钮
-        _buildDeleteButton(context, ref, collectionState),
+        // 组合工具按钮（多选/采集）
+        _buildCombinedToolButton(context, ref, toolMode),
         
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         
-        // 面板切换按钮
-        _buildPanelToggleButton(context, ref, panelMode),
+        // 面板切换按钮，添加右边距
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: _buildPanelToggleButton(context, ref, panelMode),
+        ),
       ],
     );
   }
