@@ -12,10 +12,10 @@ import '../../../presentation/providers/character/erase_providers.dart'
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_grid_provider.dart';
 import '../../providers/character/character_refresh_notifier.dart';
+import '../../providers/character/panel_mode_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../character_edit/m3_character_edit_panel.dart';
-import '../common/tab_bar_theme_wrapper.dart';
 import 'm3_character_grid_view.dart';
 
 class M3RightPanel extends ConsumerStatefulWidget {
@@ -30,10 +30,7 @@ class M3RightPanel extends ConsumerStatefulWidget {
   ConsumerState<M3RightPanel> createState() => _M3RightPanelState();
 }
 
-class _M3RightPanelState extends ConsumerState<M3RightPanel>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  int _currentIndex = 0;
+class _M3RightPanelState extends ConsumerState<M3RightPanel> {
   ui.Image? _characterImage;
   bool _wasAdjusting = false;
 
@@ -41,6 +38,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
   Widget build(BuildContext context) {
     final imageState = ref.watch(workImageProvider);
     final selectedRegion = ref.watch(selectedRegionProvider);
+    final panelMode = ref.watch(panelModeProvider);
 
     // Monitor region adjustment state
     final isAdjusting = ref.watch(characterCollectionProvider).isAdjusting;
@@ -61,49 +59,21 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
       }
     }
 
-    return Column(
-      children: [
-        _buildTabBar(),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // Tab 1: Character Preview
-              _buildPreviewTab(selectedRegion, imageState),
-              // Tab 2: Collection Results
-              _buildGridTab(),
-            ],
-          ),
-        ),
-      ],
-    );
+    // 根据panel mode显示不同内容
+    return panelMode == PanelMode.preview
+        ? _buildPreviewPanel(selectedRegion, imageState)
+        : _buildGridPanel();
   }
 
   @override
   void dispose() {
     _characterImage?.dispose();
-    _tabController.dispose();
     super.dispose();
-  }
-
-  void handleTabChange() async {
-    if (!_tabController.indexIsChanging) {
-      setState(() {
-        _currentIndex = _tabController.index;
-      });
-
-      // If switching to the grid tab, refresh characters to ensure latest data
-      if (_tabController.index == 1) {
-        await _refreshCharacterGrid(widget.workId);
-      }
-    }
   }
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(handleTabChange);
 
     // Clear erase state on initialization
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,22 +82,22 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
       // Setup listener for character refresh events
       ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
         if (previous != current) {
-          // Only refresh if we're on the grid tab or we've just deleted a character
           final refreshEvent =
               ref.read(characterRefreshNotifierProvider.notifier).lastEventType;
-          if (_currentIndex == 1 ||
-              refreshEvent == RefreshEventType.characterDeleted ||
+          
+          // Always refresh character grid when needed
+          if (refreshEvent == RefreshEventType.characterDeleted ||
               refreshEvent == RefreshEventType.characterSaved) {
             _refreshCharacterGrid(widget.workId);
 
-            // If a character was deleted and we're in preview tab with no selected region,
-            // consider switching to grid tab
+            // If a character was deleted and we're in preview mode with no selected region,
+            // consider switching to grid mode
             if (refreshEvent == RefreshEventType.characterDeleted &&
-                _currentIndex == 0 &&
+                ref.read(panelModeProvider) == PanelMode.preview &&
                 ref.read(selectedRegionProvider) == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
-                  _tabController.animateTo(1); // Switch to grid tab
+                  ref.read(panelModeProvider.notifier).setMode(PanelMode.grid);
                 }
               });
             }
@@ -165,7 +135,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     );
   }
 
-  Widget _buildGridTab() {
+  Widget _buildGridPanel() {
     final l10n = AppLocalizations.of(context);
 
     // 确保 workId 不为空
@@ -185,7 +155,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     );
   }
 
-  Widget _buildPreviewTab(
+  Widget _buildPreviewPanel(
     CharacterRegion? selectedRegion,
     WorkImageState imageState,
   ) {
@@ -202,22 +172,6 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     }
 
     return _buildCharacterEditor(selectedRegion, imageState);
-  }
-
-  Widget _buildTabBar() {
-    final l10n = AppLocalizations.of(context);
-
-    // 使用 TabBarThemeWrapper 包装 TabBar，确保一致的样式
-    return TabBarThemeWrapper(
-      child: TabBar(
-        controller: _tabController,
-        tabs: [
-          Tab(text: l10n.characterCollectionPreviewTab),
-          Tab(text: l10n.characterCollectionResultsTab),
-        ],
-        indicatorSize: TabBarIndicatorSize.tab,
-      ),
-    );
   }
 
   Future<void> _handleCharacterSelected(String characterId) async {
@@ -268,8 +222,8 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
             .read(characterRefreshNotifierProvider.notifier)
             .notifyEvent(RefreshEventType.pageChanged);
 
-        // 4.4 Switch to preview tab
-        _tabController.animateTo(0);
+        // 4.4 Switch to preview mode
+        ref.read(panelModeProvider.notifier).setMode(PanelMode.preview);
       } else {
         // 5. If on current page, directly load region data
         await ref.read(characterCollectionProvider.notifier).loadWorkData(
@@ -283,8 +237,8 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
             .read(characterRefreshNotifierProvider.notifier)
             .notifyEvent(RefreshEventType.pageChanged);
 
-        // 5.1 Switch to preview tab
-        _tabController.animateTo(0);
+        // 5.1 Switch to preview mode
+        ref.read(panelModeProvider.notifier).setMode(PanelMode.preview);
       }
     } catch (e) {
       if (mounted) {
@@ -305,8 +259,8 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     final isNewCharacter = result['isNewCharacter'] == true;
 
     if (characterId != null && isNewCharacter) {
-      // Only switch to the results tab if it's a new character
-      _tabController.animateTo(1);
+      // Only switch to the grid mode if it's a new character
+      ref.read(panelModeProvider.notifier).setMode(PanelMode.grid);
     }
 
     // Refresh grid in any case

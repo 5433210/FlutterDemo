@@ -114,119 +114,118 @@ class _M3CharacterCollectionPageState
     final imageState = ref.watch(workImageProvider);
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, dynamic result) async {
-        if (didPop) return;
-        final canPop = await _onWillPop();
-        if (canPop) {
-          if (context.mounted) {
-            Navigator.of(context).pop();
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
+          if (didPop) return;
+          final canPop = await _onWillPop();
+          if (canPop) {
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
           }
-        }
-      },
-      child: Shortcuts(
-        shortcuts: const <ShortcutActivator, Intent>{
-          // Tool selection shortcuts
-          CollectionShortcuts.panTool: _PanToolIntent(),
-          CollectionShortcuts.selectTool: _SelectToolIntent(),
-
-          // Edit operations
-          CollectionShortcuts.delete: _DeleteIntent(),
-
-          // Navigation
-          CollectionShortcuts.nextPage: _NextPageIntent(),
-          CollectionShortcuts.prevPage: _PreviousPageIntent(),
-
-          // Others
-          CollectionShortcuts.escape: _EscapeIntent(),
-          CollectionShortcuts.save: _SaveIntent(),
         },
-        child: Actions(
-          actions: <Type, Action<Intent>>{
-            _PanToolIntent: CallbackAction<_PanToolIntent>(
-              onInvoke: (intent) => _changeTool(Tool.pan),
-            ),
-            _SelectToolIntent: CallbackAction<_SelectToolIntent>(
-              onInvoke: (intent) => _changeTool(Tool.select),
-            ),
-            _DeleteIntent: CallbackAction<_DeleteIntent>(
-              onInvoke: (intent) => _deleteSelectedRegions(),
-            ),
-            _NextPageIntent: CallbackAction<_NextPageIntent>(
-              onInvoke: (intent) => _navigateToNextPage(),
-            ),
-            _PreviousPageIntent: CallbackAction<_PreviousPageIntent>(
-              onInvoke: (intent) => _navigateToPreviousPage(),
-            ),
-            _EscapeIntent: CallbackAction<_EscapeIntent>(
-              onInvoke: (intent) => _clearSelections(),
-            ),
-            _SaveIntent: CallbackAction<_SaveIntent>(
-              onInvoke: (intent) => _saveSelectedRegions(),
-            ),
+        child: Shortcuts(
+          shortcuts: const <ShortcutActivator, Intent>{
+            // Tool selection shortcuts
+            CollectionShortcuts.panTool: _PanToolIntent(),
+            CollectionShortcuts.selectTool: _SelectToolIntent(),
+
+            // Edit operations
+            CollectionShortcuts.delete: _DeleteIntent(),
+
+            // Navigation
+            CollectionShortcuts.nextPage: _NextPageIntent(),
+            CollectionShortcuts.prevPage: _PreviousPageIntent(),
+
+            // Others
+            CollectionShortcuts.escape: _EscapeIntent(),
+            CollectionShortcuts.save: _SaveIntent(),
           },
-          child: Scaffold(
-            body: Column(
-              children: [
-                // Navigation bar
-                M3NavigationBar(
-                  workId: widget.workId,
-                  onBack: () => _onBackPressed(),
-                ),
-
-                // Main content
-                Expanded(
-                  child: Stack(
-                    children: [
-                      if (_isImageValid)
-                        Row(
-                          children: [
-                            // Left image preview area
-                            const Expanded(
-                              flex: 6,
-                              child: M3ImagePreviewPanel(),
-                            ), // Right panel with ResizablePanel
-                            PersistentResizablePanel(
-                              panelId: 'character_collection_right_panel',
-                              initialWidth: _panelWidth,
-                              minWidth: 350,
-                              maxWidth: 1000,
-                              isLeftPanel: false,
-                              onWidthChanged: (width) {
-                                setState(() {
-                                  _panelWidth = width;
-                                });
-                              },
-                              child: M3RightPanel(workId: widget.workId),
-                            ),
-                          ],
-                        )
-                      else
-                        _buildImageErrorState(),
-
-                      // Use Stack to display loading overlay and error messages
-                      if (collectionState.loading ||
-                          collectionState.processing ||
-                          imageState.loading)
-                        const Positioned.fill(child: M3LoadingOverlay()),
-
-                      // Error message
-                      if (collectionState.error != null)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 20,
-                          child: _buildErrorMessage(collectionState.error!),
-                        ),
-                    ],
+          child: Actions(
+            actions: <Type, Action<Intent>>{
+              _PanToolIntent: CallbackAction<_PanToolIntent>(
+                onInvoke: (intent) => _changeTool(Tool.pan),
+              ),
+              _SelectToolIntent: CallbackAction<_SelectToolIntent>(
+                onInvoke: (intent) => _changeTool(Tool.select),
+              ),
+              _DeleteIntent: CallbackAction<_DeleteIntent>(
+                onInvoke: (intent) => _deleteSelectedRegions(),
+              ),
+              _NextPageIntent: CallbackAction<_NextPageIntent>(
+                onInvoke: (intent) => _navigateToNextPage(),
+              ),
+              _PreviousPageIntent: CallbackAction<_PreviousPageIntent>(
+                onInvoke: (intent) => _navigateToPreviousPage(),
+              ),
+              _EscapeIntent: CallbackAction<_EscapeIntent>(
+                onInvoke: (intent) => _clearSelections(),
+              ),
+              _SaveIntent: CallbackAction<_SaveIntent>(
+                onInvoke: (intent) => _saveSelectedRegions(),
+              ),
+            },
+            child: Scaffold(
+              body: Column(
+                children: [
+                  // Navigation bar
+                  M3NavigationBar(
+                    workId: widget.workId,
+                    onBack: () => _onBackPressed(),
                   ),
-                ),
-              ],
+
+                  // Main content
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        if (_isImageValid)
+                          Row(
+                            children: [
+                              // Left image preview area
+                              const Expanded(
+                                flex: 6,
+                                child: M3ImagePreviewPanel(),
+                              ), // Right panel with ResizablePanel
+                              PersistentResizablePanel(
+                                panelId: 'character_collection_right_panel',
+                                initialWidth: _panelWidth,
+                                minWidth: 350,
+                                maxWidth: 1000,
+                                isLeftPanel: false,
+                                onWidthChanged: (width) {
+                                  setState(() {
+                                    _panelWidth = width;
+                                  });
+                                },
+                                child: M3RightPanel(workId: widget.workId),
+                              ),
+                            ],
+                          )
+                        else
+                          _buildImageErrorState(),
+
+                        // Use Stack to display loading overlay and error messages
+                        if (collectionState.loading ||
+                            collectionState.processing ||
+                            imageState.loading)
+                          const Positioned.fill(child: M3LoadingOverlay()),
+
+                        // Error message
+                        if (collectionState.error != null)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 20,
+                            child: _buildErrorMessage(collectionState.error!),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   @override
@@ -246,7 +245,7 @@ class _M3CharacterCollectionPageState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // 监听错误状态变化，自动清除错误信息
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final collectionState = ref.read(characterCollectionProvider);

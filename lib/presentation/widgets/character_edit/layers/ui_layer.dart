@@ -135,11 +135,6 @@ class _UILayerState extends ConsumerState<UILayer> {
   Offset? _mousePosition;
 
   bool _isDragging = false;
-  
-  // 多指手势支持
-  final Map<int, Offset> _activePointers = {};
-  bool _isMultiPointer = false;
-  Offset? _singlePointerStart;
 
   @override
   Widget build(BuildContext context) {
@@ -164,25 +159,56 @@ class _UILayerState extends ConsumerState<UILayer> {
             size: Size.infinite,
           ),
 
-          // 使用Listener替代GestureDetector来支持多指手势
-          Listener(
-            onPointerDown: _handlePointerDown,
-            onPointerMove: _handlePointerMove,
-            onPointerUp: _handlePointerUp,
-            onPointerCancel: _handlePointerCancel,
-            behavior: HitTestBehavior.translucent,
-            child: GestureDetector(
-              onTapUp: (details) {
-                if (widget.onTap != null &&
-                    _isWithinImageBounds(details.localPosition)) {
-                  _updateMousePosition(details.localPosition);
-                  widget.onTap!(details.localPosition);
+          GestureDetector(
+            onTapUp: (details) {
+              if (widget.onTap != null &&
+                  _isWithinImageBounds(details.localPosition)) {
+                _updateMousePosition(details.localPosition);
+                widget.onTap!(details.localPosition);
+              }
+            },
+            onPanStart: (details) {
+              _isDragging = true;
+              if (_isWithinImageBounds(details.localPosition)) {
+                _updateMousePosition(details.localPosition);
+
+                // 当Alt键没有按下时，调用擦除开始回调
+                if (!widget.altKeyPressed && widget.onPointerDown != null) {
+                  widget.onPointerDown!(details.localPosition);
                 }
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                color: Colors.transparent,
-              ),
+              }
+            },
+            onPanUpdate: (details) {
+              // Update cursor position during dragging if within bounds
+              if (_isWithinImageBounds(details.localPosition)) {
+                _updateMousePosition(details.localPosition);
+
+                // 当Alt键按下时，使用onPan回调进行平移操作
+                if (widget.altKeyPressed) {
+                  if (widget.onPan != null) {
+                    widget.onPan!(details.delta);
+                  }
+                } else if (widget.onPointerMove != null) {
+                  // 否则正常擦除
+                  widget.onPointerMove!(details.localPosition, details.delta);
+                }
+              }
+            },
+            onPanEnd: (_) {
+              _isDragging = false;
+
+              // 当Alt键没有按下时，才调用擦除结束回调
+              if (!widget.altKeyPressed && widget.onPointerUp != null) {
+                if (_mousePosition != null) {
+                  widget.onPointerUp!(_mousePosition!);
+                } else if (widget.cursorPosition != null) {
+                  widget.onPointerUp!(widget.cursorPosition!);
+                }
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              color: Colors.transparent,
             ),
           ),
 
@@ -217,110 +243,6 @@ class _UILayerState extends ConsumerState<UILayer> {
         position.dx < widget.imageSize!.width &&
         position.dy >= 0 &&
         position.dy < widget.imageSize!.height;
-  }
-
-  /// 处理指针按下事件
-  void _handlePointerDown(PointerDownEvent event) {
-    _activePointers[event.pointer] = event.localPosition;
-    _isMultiPointer = _activePointers.length > 1;
-
-    AppLogger.debug('🖱️ UILayer 指针按下', data: {
-      'pointer': event.pointer,
-      'pointersCount': _activePointers.length,
-      'isMultiPointer': _isMultiPointer,
-      'altKeyPressed': widget.altKeyPressed,
-    });
-
-    if (!_isMultiPointer && _isWithinImageBounds(event.localPosition)) {
-      // 单指操作
-      _singlePointerStart = event.localPosition;
-      _isDragging = false;
-      _updateMousePosition(event.localPosition);
-
-      // 当Alt键没有按下时，开始擦除操作
-      if (!widget.altKeyPressed && widget.onPointerDown != null) {
-        widget.onPointerDown!(event.localPosition);
-      }
-    }
-    // 多指操作：不处理，让InteractiveViewer处理
-  }
-
-  /// 处理指针移动事件
-  void _handlePointerMove(PointerMoveEvent event) {
-    if (_activePointers.containsKey(event.pointer)) {
-      _activePointers[event.pointer] = event.localPosition;
-    }
-
-    // 多指手势不处理，让InteractiveViewer处理
-    if (_isMultiPointer) {
-      return;
-    }
-
-    // 单指手势处理
-    if (_singlePointerStart != null && _isWithinImageBounds(event.localPosition)) {
-      _updateMousePosition(event.localPosition);
-      
-      final distance = (event.localPosition - _singlePointerStart!).distance;
-      
-      if (!_isDragging && distance > 5) {
-        // 开始拖拽
-        _isDragging = true;
-      }
-      
-      if (_isDragging) {
-        // 当Alt键按下时，使用onPan回调进行平移操作
-        if (widget.altKeyPressed) {
-          if (widget.onPan != null) {
-            widget.onPan!(event.delta);
-          }
-        } else if (widget.onPointerMove != null) {
-          // 否则正常擦除
-          widget.onPointerMove!(event.localPosition, event.delta);
-        }
-      }
-    }
-  }
-
-  /// 处理指针释放事件
-  void _handlePointerUp(PointerUpEvent event) {
-    _activePointers.remove(event.pointer);
-    _isMultiPointer = _activePointers.length > 1;
-
-    AppLogger.debug('🖱️ UILayer 指针释放', data: {
-      'pointer': event.pointer,
-      'pointersCount': _activePointers.length,
-      'isDragging': _isDragging,
-    });
-
-    // 如果所有指针都释放了
-    if (_activePointers.isEmpty) {
-      if (_isDragging) {
-        _isDragging = false;
-        
-        // 当Alt键没有按下时，才调用擦除结束回调
-        if (!widget.altKeyPressed && widget.onPointerUp != null) {
-          if (_mousePosition != null) {
-            widget.onPointerUp!(_mousePosition!);
-          } else if (widget.cursorPosition != null) {
-            widget.onPointerUp!(widget.cursorPosition!);
-          }
-        }
-      }
-      
-      _singlePointerStart = null;
-    }
-  }
-
-  /// 处理指针取消事件
-  void _handlePointerCancel(PointerCancelEvent event) {
-    _activePointers.remove(event.pointer);
-    _isMultiPointer = _activePointers.length > 1;
-    
-    // 如果所有指针都释放了，重置状态
-    if (_activePointers.isEmpty) {
-      _isDragging = false;
-      _singlePointerStart = null;
-    }
   }
 
   void _updateMousePosition(Offset position) {

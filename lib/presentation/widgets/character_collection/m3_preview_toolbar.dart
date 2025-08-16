@@ -36,21 +36,11 @@ class M3PreviewToolbar extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Tool buttons group
-              _ToolButton(
-                icon: Icons.pan_tool,
-                tooltip: l10n.characterCollectionToolPan,
-                isSelected: toolMode == Tool.pan,
-                onPressed: () =>
-                    ref.read(toolModeProvider.notifier).setMode(Tool.pan),
-              ),
-              const SizedBox(width: 4),
-              _ToolButton(
-                icon: Icons.crop_square,
-                tooltip: l10n.characterCollectionToolBox,
-                isSelected: toolMode == Tool.select,
-                onPressed: () =>
-                    ref.read(toolModeProvider.notifier).setMode(Tool.select),
+              // Combined tool toggle button
+              _CombinedToolButton(
+                currentTool: toolMode,
+                onToolChanged: (tool) =>
+                    ref.read(toolModeProvider.notifier).setMode(tool),
               ),
               const SizedBox(width: 16),
 
@@ -97,6 +87,74 @@ class M3PreviewToolbar extends ConsumerWidget {
                     : null,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Combined tool toggle button component
+class _CombinedToolButton extends StatelessWidget {
+  final Tool currentTool;
+  final ValueChanged<Tool> onToolChanged;
+
+  const _CombinedToolButton({
+    required this.currentTool,
+    required this.onToolChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final bool isPanMode = currentTool == Tool.pan;
+    final String tooltipText = isPanMode 
+        ? l10n.characterCollectionToolPan 
+        : l10n.characterCollectionToolBox;
+    final IconData iconData = isPanMode ? Icons.pan_tool : Icons.crop_square;
+    final String labelText = isPanMode ? '移动' : '框选';
+
+    return Tooltip(
+      message: tooltipText,
+      child: Material(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            // Toggle between tools
+            final newTool = isPanMode ? Tool.select : Tool.pan;
+            onToolChanged(newTool);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  iconData,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  labelText,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.swap_horiz,
+                  size: 14,
+                  color: colorScheme.primary.withAlpha(180),
+                ),
+              ],
+            ),
           ),
         ),
       ),

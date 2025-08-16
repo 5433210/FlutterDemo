@@ -5,7 +5,6 @@ import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'adaptive_image_view.dart';
-import 'm3_preview_toolbar.dart';
 import 'm3_thumbnail_list.dart';
 
 class M3ImagePreviewPanel extends ConsumerStatefulWidget {
@@ -27,9 +26,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
 
     return Column(
       children: [
-        // Toolbar
-        const M3PreviewToolbar(),
-        // Main image area
+        // Main image area - 移除了工具栏
         Expanded(
           child: MouseRegion(
             onEnter: (_) {

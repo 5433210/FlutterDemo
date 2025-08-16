@@ -758,28 +758,34 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
                 // Main content area
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // Canvas
-                      region != null
-                          ? _OptimizedEraseLayerStack(
-                              region: region,
-                              canvasKey: _canvasKey,
-                              image: loadedImageForCanvas,
-                              handleEraseStart: _handleEraseStart,
-                              handleEraseUpdate: _handleEraseUpdate,
-                              handleEraseEnd: _handleEraseEnd,
-                            )
-                          : const SizedBox(),
+                  child: Container(
+                    // 添加约束确保内容不会溢出
+                    constraints: const BoxConstraints.expand(),
+                    child: Stack(
+                      children: [
+                        // Canvas - 确保画布被正确约束
+                        region != null
+                            ? ClipRect(
+                                child: _OptimizedEraseLayerStack(
+                                  region: region,
+                                  canvasKey: _canvasKey,
+                                  image: loadedImageForCanvas,
+                                  handleEraseStart: _handleEraseStart,
+                                  handleEraseUpdate: _handleEraseUpdate,
+                                  handleEraseEnd: _handleEraseEnd,
+                                ),
+                              )
+                            : const SizedBox(),
 
-                      // Thumbnail preview
-                      if (region != null)
-                        Positioned(
-                          right: 16,
-                          top: 16,
-                          child: _buildThumbnailPreview(l10n),
-                        ),
-                    ],
+                        // Thumbnail preview
+                        if (region != null)
+                          Positioned(
+                            right: 16,
+                            top: 16,
+                            child: _buildThumbnailPreview(l10n),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -1067,107 +1073,252 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   Widget _buildToolbar(AppLocalizations l10n) {
     final eraseState = ref.watch(erase.eraseStateProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: colorScheme.surface,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // First row with undo/redo and toggle buttons
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Undo/redo button group
-              _buildToolbarButtonGroup([
-                _ToolbarButton(
-                  icon: Icons.undo,
-                  tooltip: l10n.undo,
-                  onPressed: eraseState.canUndo
-                      ? () => ref.read(erase.eraseStateProvider.notifier).undo()
-                      : null,
-                  shortcut: EditorShortcuts.undo,
-                ),
-                _ToolbarButton(
-                  icon: Icons.redo,
-                  tooltip: l10n.redo,
-                  onPressed: eraseState.canRedo
-                      ? () => ref.read(erase.eraseStateProvider.notifier).redo()
-                      : null,
-                  shortcut: EditorShortcuts.redo,
-                ),
-              ]),
-
-              const Spacer(),
-
-              // Tool button group
-              _buildToolbarButtonGroup([
-                _ToolbarButton(
-                  icon: Icons.invert_colors,
-                  tooltip: l10n.invertMode,
-                  onPressed: () {
-                    ref.read(erase.eraseStateProvider.notifier).toggleReverse();
-                  },
-                  isActive: eraseState.isReversed,
-                  shortcut: EditorShortcuts.toggleInvert,
-                ),
-                _ToolbarButton(
-                  icon: Icons.flip,
-                  tooltip: l10n.imageInvert,
-                  onPressed: () {
-                    ref
-                        .read(erase.eraseStateProvider.notifier)
-                        .toggleImageInvert();
-                  },
-                  isActive: eraseState.imageInvertMode,
-                  shortcut: EditorShortcuts.toggleImageInvert,
-                ),
-                _ToolbarButton(
-                  icon: Icons.border_all,
-                  tooltip: l10n.showContour,
-                  onPressed: () {
-                    ref.read(erase.eraseStateProvider.notifier).toggleContour();
-                  },
-                  isActive: eraseState.showContour,
-                  shortcut: EditorShortcuts.toggleContour,
-                ),
-              ]),
-            ],
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+        final isPortrait = screenSize.height > screenSize.width;
+        
+        // 更谨慎的移动端检测，只在确实需要时使用紧凑模式
+        final bool shouldUseCompactMode = constraints.maxWidth < 500 || 
+            (isPortrait && screenSize.width < 400);
+        
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: shouldUseCompactMode ? 12 : 16, 
+            vertical: shouldUseCompactMode ? 6 : 8
           ),
-          // Second row with brush size control
-          const SizedBox(height: 12),
-          RepaintBoundary(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
+          color: colorScheme.surface,
+          child: shouldUseCompactMode 
+              ? _buildCompactToolbar(l10n, eraseState, colorScheme)
+              : _buildFullToolbar(l10n, eraseState, colorScheme),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactToolbar(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    return ExpansionTile(
+      initiallyExpanded: false,
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: EdgeInsets.zero,
+      title: Row(
+        children: [
+          // 基础操作按钮
+          _buildToolbarButtonGroup([
+            _ToolbarButton(
+              icon: Icons.undo,
+              tooltip: l10n.undo,
+              onPressed: eraseState.canUndo
+                  ? () => ref.read(erase.eraseStateProvider.notifier).undo()
+                  : null,
+              shortcut: EditorShortcuts.undo,
+            ),
+            _ToolbarButton(
+              icon: Icons.redo,
+              tooltip: l10n.redo,
+              onPressed: eraseState.canRedo
+                  ? () => ref.read(erase.eraseStateProvider.notifier).redo()
+                  : null,
+              shortcut: EditorShortcuts.redo,
+            ),
+          ]),
+          const Spacer(),
+          // 模式按钮 - 保持原有功能
+          _buildToolbarButtonGroup([
+            _ToolbarButton(
+              icon: Icons.invert_colors,
+              tooltip: l10n.invertMode,
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).toggleReverse();
+              },
+              isActive: eraseState.isReversed,
+              shortcut: EditorShortcuts.toggleInvert,
+            ),
+            _ToolbarButton(
+              icon: Icons.flip,
+              tooltip: l10n.imageInvert,
+              onPressed: () {
+                ref
+                    .read(erase.eraseStateProvider.notifier)
+                    .toggleImageInvert();
+              },
+              isActive: eraseState.imageInvertMode,
+              shortcut: EditorShortcuts.toggleImageInvert,
+            ),
+            _ToolbarButton(
+              icon: Icons.border_all,
+              tooltip: l10n.showContour,
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).toggleContour();
+              },
+              isActive: eraseState.showContour,
+              shortcut: EditorShortcuts.toggleContour,
+            ),
+          ]),
+        ],
+      ),
+      children: [
+        // 完整工具栏内容 - 保持所有原有功能
+        _buildFullToolbarContent(l10n, eraseState, colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildFullToolbar(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // First row with undo/redo and toggle buttons
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Undo/redo button group
+            _buildToolbarButtonGroup([
+              _ToolbarButton(
+                icon: Icons.undo,
+                tooltip: l10n.undo,
+                onPressed: eraseState.canUndo
+                    ? () => ref.read(erase.eraseStateProvider.notifier).undo()
+                    : null,
+                shortcut: EditorShortcuts.undo,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  RepaintBoundary(
-                    child: Tooltip(
-                      message: l10n.brushSize,
-                      child: Icon(Icons.brush,
-                          size: 16, color: colorScheme.onSurfaceVariant),
-                    ),
+              _ToolbarButton(
+                icon: Icons.redo,
+                tooltip: l10n.redo,
+                onPressed: eraseState.canRedo
+                    ? () => ref.read(erase.eraseStateProvider.notifier).redo()
+                    : null,
+                shortcut: EditorShortcuts.redo,
+              ),
+            ]),
+
+            const Spacer(),
+
+            // Tool button group
+            _buildToolbarButtonGroup([
+              _ToolbarButton(
+                icon: Icons.invert_colors,
+                tooltip: l10n.invertMode,
+                onPressed: () {
+                  ref.read(erase.eraseStateProvider.notifier).toggleReverse();
+                },
+                isActive: eraseState.isReversed,
+                shortcut: EditorShortcuts.toggleInvert,
+              ),
+              _ToolbarButton(
+                icon: Icons.flip,
+                tooltip: l10n.imageInvert,
+                onPressed: () {
+                  ref
+                      .read(erase.eraseStateProvider.notifier)
+                      .toggleImageInvert();
+                },
+                isActive: eraseState.imageInvertMode,
+                shortcut: EditorShortcuts.toggleImageInvert,
+              ),
+              _ToolbarButton(
+                icon: Icons.border_all,
+                tooltip: l10n.showContour,
+                onPressed: () {
+                  ref.read(erase.eraseStateProvider.notifier).toggleContour();
+                },
+                isActive: eraseState.showContour,
+                shortcut: EditorShortcuts.toggleContour,
+              ),
+            ]),
+          ],
+        ),
+        _buildFullToolbarContent(l10n, eraseState, colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildFullToolbarContent(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Brush size control
+        const SizedBox(height: 12),
+        RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                RepaintBoundary(
+                  child: Tooltip(
+                    message: l10n.brushSize,
+                    child: Icon(Icons.brush,
+                        size: 16, color: colorScheme.onSurfaceVariant),
                   ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: _BrushSizeSlider(),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _BrushSizeSlider(),
+                ),
+                Container(
+                  width: 32, // Fixed width for the text display
+                  alignment: Alignment.center,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      // Use dedicated text provider to only listen to the text value changes
+                      final brushSizeText =
+                          ref.watch(erase.brushSizeTextProvider);
+                      return Text(
+                        brushSizeText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      );
+                    },
                   ),
-                  Container(
+                ),
+              ],
+            ),
+          ),
+        ), // Threshold slider
+        const SizedBox(height: 12),
+        RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                RepaintBoundary(
+                  child: Tooltip(
+                    message: l10n.threshold,
+                    child: Icon(Icons.contrast,
+                        size: 16, color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _ThresholdSlider(),
+                ),
+                RepaintBoundary(
+                  child: Container(
                     width: 32, // Fixed width for the text display
                     alignment: Alignment.center,
                     child: Consumer(
                       builder: (context, ref, child) {
                         // Use dedicated text provider to only listen to the text value changes
-                        final brushSizeText =
-                            ref.watch(erase.brushSizeTextProvider);
+                        final thresholdText =
+                            ref.watch(erase.thresholdTextProvider);
                         return Text(
-                          brushSizeText,
+                          thresholdText,
                           style: TextStyle(
                             fontSize: 12,
                             color: colorScheme.onSurfaceVariant,
@@ -1176,127 +1327,80 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                       },
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ), // Third row with threshold slider
-          const SizedBox(height: 12),
-          RepaintBoundary(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  RepaintBoundary(
-                    child: Tooltip(
-                      message: l10n.threshold,
-                      child: Icon(Icons.contrast,
-                          size: 16, color: colorScheme.onSurfaceVariant),
-                    ),
+          ),
+        ), // Noise reduction control
+        const SizedBox(height: 12),
+        RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                RepaintBoundary(
+                  child: Tooltip(
+                    message: l10n.noiseReduction,
+                    child: Icon(Icons.blur_on,
+                        size: 16, color: colorScheme.onSurfaceVariant),
                   ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: _ThresholdSlider(),
-                  ),
-                  RepaintBoundary(
-                    child: Container(
-                      width: 32, // Fixed width for the text display
-                      alignment: Alignment.center,
-                      child: Consumer(
-                        builder: (context, ref, child) {
-                          // Use dedicated text provider to only listen to the text value changes
-                          final thresholdText =
-                              ref.watch(erase.thresholdTextProvider);
-                          return Text(
-                            thresholdText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          );
+                ),
+                const SizedBox(width: 8),
+                RepaintBoundary(
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      // Use dedicated provider for more efficient rebuilds
+                      final noiseReduction =
+                          ref.watch(erase.noiseReductionProvider);
+                      return Switch(
+                        value: noiseReduction > 0,
+                        onChanged: (value) {
+                          ref
+                              .read(erase.eraseStateProvider.notifier)
+                              .toggleNoiseReduction(value);
                         },
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                ],
-              ),
-            ),
-          ), // Fourth row with noise reduction toggle and slider
-          const SizedBox(height: 12),
-          RepaintBoundary(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  RepaintBoundary(
-                    child: Tooltip(
-                      message: l10n.noiseReduction,
-                      child: Icon(Icons.blur_on,
-                          size: 16, color: colorScheme.onSurfaceVariant),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  RepaintBoundary(
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _NoiseReductionSlider(),
+                ),
+                RepaintBoundary(
+                  child: Container(
+                    width: 32, // Fixed width for the text display
+                    alignment: Alignment.center,
                     child: Consumer(
                       builder: (context, ref, child) {
-                        // Use dedicated provider for more efficient rebuilds
-                        final noiseReduction =
-                            ref.watch(erase.noiseReductionProvider);
-                        return Switch(
-                          value: noiseReduction > 0,
-                          onChanged: (value) {
-                            ref
-                                .read(erase.eraseStateProvider.notifier)
-                                .toggleNoiseReduction(value);
-                          },
+                        // Use dedicated text provider to only listen to the text value changes
+                        final noiseReductionText =
+                            ref.watch(erase.noiseReductionTextProvider);
+                        return Text(
+                          noiseReductionText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: noiseReductionText != '0.0'
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.5),
+                          ),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: _NoiseReductionSlider(),
-                  ),
-                  RepaintBoundary(
-                    child: Container(
-                      width: 32, // Fixed width for the text display
-                      alignment: Alignment.center,
-                      child: Consumer(
-                        builder: (context, ref, child) {
-                          // Use dedicated text provider to only listen to the text value changes
-                          final noiseReductionText =
-                              ref.watch(erase.noiseReductionTextProvider);
-                          return Text(
-                            noiseReductionText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: noiseReductionText != '0.0'
-                                  ? colorScheme.onSurfaceVariant
-                                  : colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
