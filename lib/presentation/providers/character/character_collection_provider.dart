@@ -144,8 +144,14 @@ class CharacterCollectionNotifier
       if (_currentPageImage == null) {
         throw Exception('当前页面图像未设置，无法创建选区');
       }
-      if (rect.width < 20 || rect.height < 20) {
-        throw Exception('选区尺寸过小，最小尺寸为20x20');
+      if (rect.width < 10 || rect.height < 10) {
+        // 静默失败，不显示错误信息，防止频繁报错
+        AppLogger.debug('选区尺寸太小，已忽略', data: {
+          'width': rect.width,
+          'height': rect.height,
+          'minSize': 10,
+        });
+        return null;
       }
 
       AppLogger.debug('开始创建新选区', data: {

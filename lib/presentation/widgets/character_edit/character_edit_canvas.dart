@@ -194,12 +194,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                 constrained: false,
                 boundaryMargin: const EdgeInsets.all(double.infinity),
                 minScale: 0.1,
-                maxScale:
-                    10.0, // Enable panning when Alt key or right mouse button is pressed
+                maxScale: 10.0,
+                // 移动端：始终启用缩放，根据Alt键或右键状态控制平移
+                scaleEnabled: true,
                 panEnabled: _altKeyNotifier.value || _rightMouseNotifier.value,
                 onInteractionUpdate: (details) {
                   _updateTransformer(constraints.biggest);
                 },
+                // 移动端手势支持
+                interactionEndFrictionCoefficient: 0.0001,
+                clipBehavior: Clip.none,
                 child: SizedBox(
                   width: widget.image.width.toDouble(),
                   height: widget.image.height.toDouble(),

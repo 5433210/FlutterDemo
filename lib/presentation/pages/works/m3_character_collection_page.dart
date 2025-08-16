@@ -243,6 +243,24 @@ class _M3CharacterCollectionPageState
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // 监听错误状态变化，自动清除错误信息
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final collectionState = ref.read(characterCollectionProvider);
+      if (collectionState.error != null) {
+        // 5秒后自动清除错误信息
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            ref.read(characterCollectionProvider.notifier).clearError();
+          }
+        });
+      }
+    });
+  }
+
   // Build error message display
   Widget _buildErrorMessage(String error) {
     final l10n = AppLocalizations.of(context);
@@ -258,9 +276,34 @@ class _M3CharacterCollectionPageState
           color: colorScheme.error,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(
-          l10n.error(error),
-          style: TextStyle(color: colorScheme.onError),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                l10n.error(error),
+                style: TextStyle(color: colorScheme.onError),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () {
+                // 清除错误信息
+                ref.read(characterCollectionProvider.notifier).clearError();
+              },
+              icon: Icon(
+                Icons.close,
+                color: colorScheme.onError,
+                size: 18,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: 24,
+                minHeight: 24,
+              ),
+              tooltip: l10n.close,
+            ),
+          ],
         ),
       ),
     );
