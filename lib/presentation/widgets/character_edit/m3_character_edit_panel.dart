@@ -175,9 +175,10 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             onInvoke: (_) => ref
                 .read(erase.eraseStateProvider.notifier)
                 .toggleImageInvert()),
-        _ToggleContourIntent: CallbackAction(
-            onInvoke: (_) =>
-                ref.read(erase.eraseStateProvider.notifier).toggleContour()),
+        // 輪廓顯示開關已屏蔽
+        // _ToggleContourIntent: CallbackAction(
+        //     onInvoke: (_) =>
+        //         ref.read(erase.eraseStateProvider.notifier).toggleContour()),
         // Pan mode toggle removed
         _SetBrushSizeIntent: CallbackAction(
           onInvoke: (intent) => ref
@@ -193,7 +194,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         EditorShortcuts.openInput: const _OpenInputIntent(),
         EditorShortcuts.toggleInvert: const _ToggleInvertIntent(),
         EditorShortcuts.toggleImageInvert: const _ToggleImageInvertIntent(),
-        EditorShortcuts.toggleContour: const _ToggleContourIntent(),
+        // 輪廓顯示快捷鍵已屏蔽
+        // EditorShortcuts.toggleContour: const _ToggleContourIntent(),
         // Pan mode shortcut removed
       };
   @override
@@ -1146,15 +1148,16 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               isActive: eraseState.imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
             ),
-            _ToolbarButton(
-              icon: Icons.border_all,
-              tooltip: l10n.showContour,
-              onPressed: () {
-                ref.read(erase.eraseStateProvider.notifier).toggleContour();
-              },
-              isActive: eraseState.showContour,
-              shortcut: EditorShortcuts.toggleContour,
-            ),
+            // 輪廓顯示開關已屏蔽
+            // _ToolbarButton(
+            //   icon: Icons.border_all,
+            //   tooltip: l10n.showContour,
+            //   onPressed: () {
+            //     ref.read(erase.eraseStateProvider.notifier).toggleContour();
+            //   },
+            //   isActive: eraseState.showContour,
+            //   shortcut: EditorShortcuts.toggleContour,
+            // ),
           ]),
         ],
       ),
@@ -1218,15 +1221,16 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 isActive: eraseState.imageInvertMode,
                 shortcut: EditorShortcuts.toggleImageInvert,
               ),
-              _ToolbarButton(
-                icon: Icons.border_all,
-                tooltip: l10n.showContour,
-                onPressed: () {
-                  ref.read(erase.eraseStateProvider.notifier).toggleContour();
-                },
-                isActive: eraseState.showContour,
-                shortcut: EditorShortcuts.toggleContour,
-              ),
+              // 輪廓顯示開關已屏蔽
+              // _ToolbarButton(
+              //   icon: Icons.border_all,
+              //   tooltip: l10n.showContour,
+              //   onPressed: () {
+              //     ref.read(erase.eraseStateProvider.notifier).toggleContour();
+              //   },
+              //   isActive: eraseState.showContour,
+              //   shortcut: EditorShortcuts.toggleContour,
+              // ),
             ]),
           ],
         ),

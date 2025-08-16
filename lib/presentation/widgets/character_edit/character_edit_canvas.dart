@@ -719,7 +719,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         final pathRenderData = ref.read(pathRenderDataProvider);
         final eraseState = ref.read(eraseStateProvider);
 
-        final options = ProcessingOptions(
+        final options = widget.region?.options?.copyWith(
+          showContour: true,
+        ) ?? ProcessingOptions(
           inverted: eraseState.imageInvertMode,
           threshold: eraseState.processingOptions.threshold,
           noiseReduction: eraseState.processingOptions.noiseReduction,

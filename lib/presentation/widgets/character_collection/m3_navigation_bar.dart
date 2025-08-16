@@ -167,6 +167,7 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
                 final selectedIds = collectionState.regions
                     .where((CharacterRegion e) => e.isSelected)
                     .map((e) => e.id)
+                    .cast<String>()
                     .toList();
 
                 if (selectedIds.isEmpty) return;
