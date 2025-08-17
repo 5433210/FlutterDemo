@@ -4190,6 +4190,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolModeSelectTooltip => 'Collection Tool (Ctrl+B)';
 
   @override
+  String get toolModePanShort => 'Multi';
+
+  @override
+  String get toolModeSelectShort => 'Collect';
+
+  @override
+  String get resultShort => 'Results';
+
+  @override
   String get topCenter => 'Top Center';
 
   @override

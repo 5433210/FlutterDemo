@@ -4190,6 +4190,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toolModeSelectTooltip => '采集工具 (Ctrl+B)';
 
   @override
+  String get toolModePanShort => '多选';
+
+  @override
+  String get toolModeSelectShort => '采集';
+
+  @override
+  String get resultShort => '结果';
+
+  @override
   String get topCenter => '顶部居中';
 
   @override

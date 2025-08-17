@@ -118,7 +118,7 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
             children: [
               const Icon(Icons.pan_tool, size: 16),
               const SizedBox(width: 4),
-              Text('多选', style: textTheme.bodySmall),
+              Text(l10n.toolModePanShort, style: textTheme.bodySmall),
             ],
           ),
         ),
@@ -129,7 +129,7 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
             children: [
               const Icon(Icons.crop_square, size: 16),
               const SizedBox(width: 4),
-              Text('采集', style: textTheme.bodySmall),
+              Text(l10n.toolModeSelectShort, style: textTheme.bodySmall),
             ],
           ),
         ),
@@ -184,6 +184,7 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
 
   /// 构建面板切换按钮 - 改为切换控件样式
   Widget _buildPanelToggleButton(BuildContext context, WidgetRef ref, PanelMode panelMode) {
+    final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     
     final bool isPreviewMode = panelMode == PanelMode.preview;
@@ -197,24 +198,24 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
       constraints: const BoxConstraints(minHeight: 32, minWidth: 50),
       children: [
         Tooltip(
-          message: '字符预览',
+          message: l10n.characterCollectionPreviewTab,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.preview, size: 16),
               const SizedBox(width: 4),
-              Text('预览', style: textTheme.bodySmall),
+              Text(l10n.preview, style: textTheme.bodySmall),
             ],
           ),
         ),
         Tooltip(
-          message: '采集结果',
+          message: l10n.characterCollectionResultsTab,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.view_list, size: 16),
               const SizedBox(width: 4),
-              Text('结果', style: textTheme.bodySmall),
+              Text(l10n.resultShort, style: textTheme.bodySmall),
             ],
           ),
         ),

@@ -7978,6 +7978,24 @@ abstract class AppLocalizations {
   /// **'Collection Tool (Ctrl+B)'**
   String get toolModeSelectTooltip;
 
+  /// No description provided for @toolModePanShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi'**
+  String get toolModePanShort;
+
+  /// No description provided for @toolModeSelectShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect'**
+  String get toolModeSelectShort;
+
+  /// No description provided for @resultShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get resultShort;
+
   /// No description provided for @topCenter.
   ///
   /// In en, this message translates to:

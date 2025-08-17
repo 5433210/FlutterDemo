@@ -4190,6 +4190,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get toolModeSelectTooltip => '収集ツール (Ctrl+B)';
 
   @override
+  String get toolModePanShort => 'Multi';
+
+  @override
+  String get toolModeSelectShort => 'Collect';
+
+  @override
+  String get resultShort => 'Results';
+
+  @override
   String get topCenter => '上中央';
 
   @override
