@@ -148,9 +148,10 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   // State for internal image loading
   Future<ui.Image?>? _imageLoadingFuture;
   ui.Image? _loadedImage;
-  
+
   // Track expansion state of parameter control panel
-  bool _isParameterPanelExpanded = true; // Default to expanded when height is sufficient
+  bool _isParameterPanelExpanded =
+      true; // Default to expanded when height is sufficient
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -293,6 +294,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         if (mounted) {
           try {
             ref.read(erase.eraseStateProvider.notifier).clear();
+            // Reinitialize processing options when region changes
+            // _initializeProcessingOptions();
             // Recalculate dynamic brush size when the selected region changes
             _setDynamicBrushSize();
           } catch (e) {
@@ -1078,24 +1081,23 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   Widget _buildToolbar(AppLocalizations l10n) {
     final eraseState = ref.watch(erase.eraseStateProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenSize = MediaQuery.of(context).size;
         final isPortrait = screenSize.height > screenSize.width;
-        
+
         // 更智能的紧凑模式检测，优先考虑高度
-        final bool shouldUseCompactMode = constraints.maxHeight < 400 || 
-            (constraints.maxWidth < 500 && constraints.maxHeight < 600) || 
+        final bool shouldUseCompactMode = constraints.maxHeight < 400 ||
+            (constraints.maxWidth < 500 && constraints.maxHeight < 600) ||
             (isPortrait && screenSize.width < 400 && screenSize.height < 700);
-        
+
         return Container(
           padding: EdgeInsets.symmetric(
-            horizontal: shouldUseCompactMode ? 12 : 16, 
-            vertical: shouldUseCompactMode ? 6 : 8
-          ),
+              horizontal: shouldUseCompactMode ? 12 : 16,
+              vertical: shouldUseCompactMode ? 6 : 8),
           color: colorScheme.surface,
-          child: shouldUseCompactMode 
+          child: shouldUseCompactMode
               ? _buildCompactToolbar(l10n, eraseState, colorScheme)
               : _buildFullToolbar(l10n, eraseState, colorScheme),
         );
@@ -1103,11 +1105,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     );
   }
 
-  Widget _buildCompactToolbar(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+  Widget _buildCompactToolbar(
+      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
     // 在窗体高度足够时保持面板展开，高度不足时才使用折叠
     final hassufficientHeight = MediaQuery.of(context).size.height > 600;
     final shouldExpand = hassufficientHeight ? true : _isParameterPanelExpanded;
-    
+
     return ExpansionTile(
       initiallyExpanded: shouldExpand,
       onExpansionChanged: (bool expanded) {
@@ -1154,12 +1157,24 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               icon: Icons.flip,
               tooltip: l10n.imageInvert,
               onPressed: () {
-                ref
-                    .read(erase.eraseStateProvider.notifier)
-                    .toggleImageInvert();
+                ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
               },
               isActive: eraseState.imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
+            ),
+            // 参数控制开合按钮
+            _ToolbarButton(
+              icon: _isParameterPanelExpanded
+                  ? Icons.expand_less
+                  : Icons.expand_more,
+              tooltip: _isParameterPanelExpanded ? '折叠参数' : '展开参数',
+              onPressed: () {
+                setState(() {
+                  _isParameterPanelExpanded = !_isParameterPanelExpanded;
+                });
+              },
+              isActive: _isParameterPanelExpanded,
+              shortcut: EditorShortcuts.toggleInvert, // 暂时复用，可以后续定义新的快捷键
             ),
             // 輪廓顯示開關已屏蔽
             // _ToolbarButton(
@@ -1175,13 +1190,17 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         ],
       ),
       children: [
-        // 完整工具栏内容 - 保持所有原有功能
-        _buildFullToolbarContent(l10n, eraseState, colorScheme),
+        // 参数控制区域 - 使用简单的条件显示，不再使用ExpansionTile
+        if (_isParameterPanelExpanded) ...[
+          const SizedBox(height: 8),
+          _buildParameterControls(l10n, eraseState, colorScheme),
+        ],
       ],
     );
   }
 
-  Widget _buildFullToolbar(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+  Widget _buildFullToolbar(
+      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1234,6 +1253,20 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 isActive: eraseState.imageInvertMode,
                 shortcut: EditorShortcuts.toggleImageInvert,
               ),
+              // 参数控制开合按钮
+              _ToolbarButton(
+                icon: _isParameterPanelExpanded
+                    ? Icons.expand_less
+                    : Icons.expand_more,
+                tooltip: _isParameterPanelExpanded ? '折叠参数' : '展开参数',
+                onPressed: () {
+                  setState(() {
+                    _isParameterPanelExpanded = !_isParameterPanelExpanded;
+                  });
+                },
+                isActive: _isParameterPanelExpanded,
+                shortcut: EditorShortcuts.toggleInvert, // 暂时复用，可以后续定义新的快捷键
+              ),
               // 輪廓顯示開關已屏蔽
               // _ToolbarButton(
               //   icon: Icons.border_all,
@@ -1252,104 +1285,106 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     );
   }
 
-  Widget _buildFullToolbarContent(AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+  Widget _buildFullToolbarContent(
+      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    // 根据窗体高度决定参数面板的默认展开状态
+    final screenHeight = MediaQuery.of(context).size.height;
+    final hassufficientHeight = screenHeight > 600;
+    final shouldExpand = hassufficientHeight ? true : _isParameterPanelExpanded;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Brush size control
+        const SizedBox(height: 8),
+        // 参数控制区域 - 使用简单的条件显示，不再使用ExpansionTile
+        if (_isParameterPanelExpanded) ...[
+          const SizedBox(height: 8),
+          _buildParameterControls(l10n, eraseState, colorScheme),
+        ],
+      ],
+    );
+  }
+
+  /// 构建参数控制区域
+  Widget _buildParameterControls(
+      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        // 笔刷大小控制
+        Row(
+          children: [
+            Icon(
+              Icons.brush,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.brushSize,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: _BrushSizeSlider(),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              alignment: Alignment.centerRight,
+              child: Text(
+                eraseState.brushSize.toStringAsFixed(0),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
-        RepaintBoundary(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
+        // 阈值控制
+        Row(
+          children: [
+            Icon(
+              Icons.tune,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                RepaintBoundary(
-                  child: Tooltip(
-                    message: l10n.brushSize,
-                    child: Icon(Icons.brush,
-                        size: 16, color: colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: _BrushSizeSlider(),
-                ),
-                Container(
-                  width: 32, // Fixed width for the text display
-                  alignment: Alignment.center,
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      // Use dedicated text provider to only listen to the text value changes
-                      final brushSizeText =
-                          ref.watch(erase.brushSizeTextProvider);
-                      return Text(
-                        brushSizeText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            const SizedBox(width: 8),
+            Text(
+              l10n.threshold,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-        ), // Threshold slider
+            const SizedBox(width: 12),
+            const Expanded(
+              child: _ThresholdSlider(),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              alignment: Alignment.centerRight,
+              child: Text(
+                eraseState.processingOptions.threshold.toStringAsFixed(0),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
-        RepaintBoundary(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                RepaintBoundary(
-                  child: Tooltip(
-                    message: l10n.threshold,
-                    child: Icon(Icons.contrast,
-                        size: 16, color: colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: _ThresholdSlider(),
-                ),
-                RepaintBoundary(
-                  child: Container(
-                    width: 32, // Fixed width for the text display
-                    alignment: Alignment.center,
-                    child: Consumer(
-                      builder: (context, ref, child) {
-                        // Use dedicated text provider to only listen to the text value changes
-                        final thresholdText =
-                            ref.watch(erase.thresholdTextProvider);
-                        return Text(
-                          thresholdText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ), // Noise reduction control
-        const SizedBox(height: 12),
+        // 降噪控制
         RepaintBoundary(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
@@ -1364,7 +1399,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 RepaintBoundary(
                   child: Tooltip(
                     message: l10n.noiseReduction,
-                    child: Icon(Icons.blur_on,
+                    child: Icon(Icons.auto_fix_high,
                         size: 16, color: colorScheme.onSurfaceVariant),
                   ),
                 ),
@@ -1382,6 +1417,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                               .read(erase.eraseStateProvider.notifier)
                               .toggleNoiseReduction(value);
                         },
+                        activeColor: colorScheme.primary,
+                        inactiveThumbColor: colorScheme.onSurfaceVariant,
+                        inactiveTrackColor: colorScheme.surfaceContainerHighest,
                       );
                     },
                   ),
@@ -1417,6 +1455,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -2222,6 +2261,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 /// Noise reduction slider widget with optimized rebuilds
 class _NoiseReductionSlider extends ConsumerWidget {
   const _NoiseReductionSlider({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Use the memoized noise reduction provider for more efficient rebuilds
@@ -2229,7 +2269,7 @@ class _NoiseReductionSlider extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final eraseStateNotifier = ref.read(erase.eraseStateProvider.notifier);
 
-    // Only enabled if noiseReduction > 0
+    // Enabled when noiseReduction > 0
     final isEnabled = noiseReduction > 0;
 
     return RepaintBoundary(
@@ -2252,7 +2292,6 @@ class _NoiseReductionSlider extends ConsumerWidget {
                   eraseStateNotifier.setNoiseReductionOptimized(value);
                 }
               : null,
-          // Remove onChangeEnd to match brush slider behavior
         ),
       ),
     );

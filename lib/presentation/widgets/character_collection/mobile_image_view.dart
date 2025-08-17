@@ -238,6 +238,16 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           scaleEnabled: true, // 保持缩放始终启用
           boundaryMargin: const EdgeInsets.all(double.infinity),
           alignment: Alignment.topLeft,
+          clipBehavior: Clip.none, // 防止裁剪问题
+          onInteractionStart: (details) {
+            // 验证变换矩阵的有效性
+            final matrix = _transformationController.value;
+            if (matrix.determinant().abs() < 1e-10) {
+              // 矩阵接近奇异，重置为单位矩阵
+              AppLogger.debug('检测到奇异矩阵，重置变换');
+              _transformationController.value = Matrix4.identity();
+            }
+          },
           child: Stack(
             children: [
               // 图片层
@@ -338,19 +348,46 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           ref.read(selectedRegionProvider.notifier).clearRegion();
         }
       } else {
-        // 选择模式：选中单个区域
-        ref
-            .read(characterCollectionProvider.notifier)
-            .selectRegion(hitRegion.id);
+        // 选择模式（采集工具）：处理选区点击
+        if (hitRegion.isSelected) {
+          // 如果点击的是已选中的区域，进入adjusting状态并准备拖拽
+          AppLogger.debug('点击已选中区域，进入adjusting状态', data: {
+            'regionId': hitRegion.id,
+          });
+          
+          setState(() {
+            _isAdjusting = true;
+            _adjustingRegionId = hitRegion.id;
+            _originalRegion = hitRegion;
+            
+            // 同时设置拖拽状态，以便后续的指针事件能够正确处理
+            _isDraggingRegion = false; // 暂时不设置，等到真正开始拖拽时再设置
+          });
+          
+          // 更新右侧编辑面板显示选中的区域
+          ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
+        } else {
+          // 选中单个区域
+          ref
+              .read(characterCollectionProvider.notifier)
+              .selectRegion(hitRegion.id);
 
-        // 更新右侧编辑面板显示选中的区域
-        ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
+          // 更新右侧编辑面板显示选中的区域
+          ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
+        }
       }
     } else {
-      // 点击空白区域，清除所有选择
+      // 点击空白区域，清除所有选择并退出adjusting状态
       ref.read(characterCollectionProvider.notifier).clearSelections();
       ref.read(selectedRegionProvider.notifier).clearRegion();
-      AppLogger.debug('点击空白区域，清除所有选择');
+      
+      setState(() {
+        _isAdjusting = false;
+        _adjustingRegionId = null;
+        _originalRegion = null;
+      });
+      
+      AppLogger.debug('点击空白区域，清除所有选择并退出adjusting状态');
     }
   }
 
@@ -1421,13 +1458,28 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 变换矩阵变化监听（简化版本）
   void _onTransformationChanged() {
+    // 验证变换矩阵的有效性
+    final matrix = _transformationController.value;
+    if (matrix.determinant().abs() < 1e-10) {
+      // 矩阵接近奇异，重置为单位矩阵
+      AppLogger.debug('变换监听器检测到奇异矩阵，重置变换');
+      _transformationController.value = Matrix4.identity();
+      return;
+    }
+
     // 如果正在调整选区，更新其视口位置
     if (_isAdjusting && _originalRegion != null && _transformer != null) {
-      final newRect =
-          _transformer!.imageRectToViewportRect(_originalRegion!.rect);
-      setState(() {
-        _adjustingRect = newRect;
-      });
+      try {
+        final newRect =
+            _transformer!.imageRectToViewportRect(_originalRegion!.rect);
+        setState(() {
+          _adjustingRect = newRect;
+        });
+      } catch (e) {
+        // 如果坐标转换失败，重置变换矩阵
+        AppLogger.error('坐标转换失败，重置变换矩阵', error: e);
+        _transformationController.value = Matrix4.identity();
+      }
     }
   }
 
@@ -1524,6 +1576,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   /// 處理指針按下事件
   void _onPointerDown(PointerDownEvent event) {
     final toolMode = ref.read(toolModeProvider);
+    // 只在采集工具模式下处理拖拽操作
     if (toolMode != Tool.select) return;
 
     _activePointers[event.pointer] = event.localPosition;
@@ -1617,7 +1670,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       if (!hitHandle) {
         // 沒有點擊控制點，可能是選區操作
         final hitRegion = _hitTestRegion(_singlePointerStart!, regions);
-        print('💆 選區碰撞檢查: ${hitRegion?.id}, selected: ${hitRegion?.isSelected}');
+        print('💆 選區碰撞檢查: ${hitRegion?.id}, selected: ${hitRegion?.isSelected}, adjusting: $_isAdjusting');
+        
         if (hitRegion != null && hitRegion.isSelected) {
           // 點擊了已選中的選區，開始拖拽
           print('💆 選區拖拽準備: ${hitRegion.id}');
@@ -1626,7 +1680,19 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
             _draggingRegion = hitRegion;
             _dragStartPosition = _singlePointerStart!;
             _originalDragRect = hitRegion.rect;
+            
+            // 如果还没有进入adjusting状态，现在进入
+            if (!_isAdjusting) {
+              _isAdjusting = true;
+              _adjustingRegionId = hitRegion.id;
+              _originalRegion = hitRegion;
+            }
           });
+        } else if (hitRegion != null && !hitRegion.isSelected) {
+          // 点击了未选中的选区，先选中它
+          print('💆 選中未選中的選區: ${hitRegion.id}');
+          ref.read(characterCollectionProvider.notifier).selectRegion(hitRegion.id);
+          ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
         } else {
           print('💆 準備創建新選區');
         }
@@ -1675,6 +1741,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   /// 處理指針移動事件
   void _onPointerMove(PointerMoveEvent event) {
     final toolMode = ref.read(toolModeProvider);
+    // 只在采集工具模式下处理拖拽操作
     if (toolMode != Tool.select) return;
 
     print('💆 指針移動: ${event.pointer}, 位置: ${event.localPosition.dx.toStringAsFixed(1)}, ${event.localPosition.dy.toStringAsFixed(1)}');
@@ -1871,17 +1938,20 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       return;
     }
     
-    // 確保選區不會超出圖像邊界 - 修復邊界計算錯誤
-    final clampedLeft = newImageRect.left.clamp(0.0, imageSize.width - newImageRect.width.clamp(1.0, imageSize.width));
-    final clampedTop = newImageRect.top.clamp(0.0, imageSize.height - newImageRect.height.clamp(1.0, imageSize.height));
-    final maxWidth = (imageSize.width - clampedLeft).clamp(1.0, newImageRect.width);
-    final maxHeight = (imageSize.height - clampedTop).clamp(1.0, newImageRect.height);
+    // 確保選區不會超出圖像邊界
+    final clampedRect = Rect.fromLTWH(
+      newImageRect.left.clamp(0.0, imageSize.width - 10.0),
+      newImageRect.top.clamp(0.0, imageSize.height - 10.0),
+      newImageRect.width.clamp(10.0, imageSize.width),
+      newImageRect.height.clamp(10.0, imageSize.height),
+    );
     
+    // 確保選區完全在圖像邊界內
     final finalRect = Rect.fromLTWH(
-      clampedLeft,
-      clampedTop,
-      maxWidth,
-      maxHeight,
+      clampedRect.left.clamp(0.0, imageSize.width - clampedRect.width),
+      clampedRect.top.clamp(0.0, imageSize.height - clampedRect.height),
+      clampedRect.width,
+      clampedRect.height,
     );
 
     AppLogger.debug('選區拖拽邊界檢查', data: {

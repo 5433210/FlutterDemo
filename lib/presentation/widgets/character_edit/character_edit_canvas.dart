@@ -90,6 +90,42 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   /// 返回当前的坐标转换器
   CoordinateTransformer get transformer => _transformer;
 
+  /// 移动端检测（屏幕宽度小于600像素视为移动端）
+  bool get _isMobile => MediaQuery.of(context).size.width < 600;
+
+  /// 获取平台特定的缩放启用状态
+  bool _getScaleEnabled() {
+    if (_isMobile) {
+      // 移动端：始终启用缩放以支持多点触控
+      return true;
+    } else {
+      // 桌面端：始终启用缩放
+      return true;
+    }
+  }
+
+  /// 获取平台特定的平移启用状态
+  bool _getPanEnabled() {
+    if (_isMobile) {
+      // 移动端：始终启用平移，由UILayer的多指检测来控制手势冲突
+      return true;
+    } else {
+      // 桌面端：只有在Alt键或右键按下时才启用平移
+      return _altKeyNotifier.value || _rightMouseNotifier.value;
+    }
+  }
+
+  /// 获取平台特定的摩擦系数
+  double _getFrictionCoefficient() {
+    if (_isMobile) {
+      // 移动端：更低的摩擦系数以获得更流畅的手势体验
+      return 0.0001;
+    } else {
+      // 桌面端：默认摩擦系数
+      return 0.001;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Pan mode is always enabled by default through Alt key
@@ -195,14 +231,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                 boundaryMargin: const EdgeInsets.all(double.infinity),
                 minScale: 0.1,
                 maxScale: 10.0,
-                // 移动端：始终启用缩放，根据Alt键或右键状态控制平移
-                scaleEnabled: true,
-                panEnabled: _altKeyNotifier.value || _rightMouseNotifier.value,
+                // 平台特定的缩放和平移配置
+                scaleEnabled: _getScaleEnabled(),
+                panEnabled: _getPanEnabled(),
                 onInteractionUpdate: (details) {
                   _updateTransformer(constraints.biggest);
                 },
-                // 移动端手势支持
-                interactionEndFrictionCoefficient: 0.0001,
+                // 移动端手势支持优化
+                interactionEndFrictionCoefficient: _getFrictionCoefficient(),
                 clipBehavior: Clip.none,
                 child: SizedBox(
                   width: widget.image.width.toDouble(),
@@ -719,7 +755,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         final pathRenderData = ref.read(pathRenderDataProvider);
         final eraseState = ref.read(eraseStateProvider);
 
-        final options = widget.region?.options?.copyWith(
+        final options = widget.region?.options.copyWith(
           showContour: true,
         ) ?? ProcessingOptions(
           inverted: eraseState.imageInvertMode,
