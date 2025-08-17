@@ -150,7 +150,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   ui.Image? _loadedImage;
 
   // Track expansion state of parameter control panel
-  bool _isParameterPanelExpanded = false; // Default to collapsed, will be set based on height
+  bool _isParameterPanelExpanded =
+      false; // Default to collapsed, will be set based on height
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -294,7 +295,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           try {
             ref.read(erase.eraseStateProvider.notifier).clear();
             // Reinitialize processing options when region changes
-            _initializeProcessingOptions();
+            // _initializeProcessingOptions();
             // Recalculate dynamic brush size when the selected region changes
             _setDynamicBrushSize();
           } catch (e) {
@@ -1115,7 +1116,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
     // 在窗体高度不足时，面板应该默认折叠
     final hassufficientHeight = MediaQuery.of(context).size.height > 600;
-    
+
     return ExpansionTile(
       initiallyExpanded: _isParameterPanelExpanded,
       onExpansionChanged: (bool expanded) {

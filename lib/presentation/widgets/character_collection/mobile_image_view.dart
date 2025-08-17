@@ -149,15 +149,16 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   bool _isMultiPointer = false;
   Offset? _singlePointerStart;
   bool _isDragging = false;
-  
+
   // 新增：多指手勢狀態追蹤
-  bool _hasBeenMultiPointer = false;  // 記錄本次手勢序列是否曾經是多指
-  int _maxPointerCount = 0;  // 記錄本次手勢序列的最大指針數量
-  DateTime? _lastPointerDownTime;  // 記錄最後一次指針按下的時間
-  
+  bool _hasBeenMultiPointer = false; // 記錄本次手勢序列是否曾經是多指
+  int _maxPointerCount = 0; // 記錄本次手勢序列的最大指針數量
+  DateTime? _lastPointerDownTime; // 記錄最後一次指針按下的時間
+
   // 手勢識別常量
-  static const Duration _gestureStabilizationDelay = Duration(milliseconds: 50);  // 手勢穩定延遲
-  static const double _dragThreshold = 15.0;  // 拖拽閾值，增加防止誤觸發
+  static const Duration _gestureStabilizationDelay =
+      Duration(milliseconds: 50); // 手勢穩定延遲
+  static const double _dragThreshold = 15.0; // 拖拽閾值，增加防止誤觸發
 
   @override
   void initState() {
@@ -238,7 +239,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           scaleEnabled: true, // 保持缩放始终启用
           boundaryMargin: const EdgeInsets.all(double.infinity),
           alignment: Alignment.topLeft,
-          clipBehavior: Clip.none, // 防止裁剪问题
+          clipBehavior: Clip.hardEdge, // 防止裁剪问题
           onInteractionStart: (details) {
             // 验证变换矩阵的有效性
             final matrix = _transformationController.value;
@@ -274,7 +275,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
                         onTapUp: _onTapUp,
                         // 不再直接使用onPan*，改为使用Listener监听原始事件
-                        
+
                         child: Listener(
                           onPointerDown: _onPointerDown,
                           onPointerMove: _onPointerMove,
@@ -354,16 +355,16 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           AppLogger.debug('点击已选中区域，进入adjusting状态', data: {
             'regionId': hitRegion.id,
           });
-          
+
           setState(() {
             _isAdjusting = true;
             _adjustingRegionId = hitRegion.id;
             _originalRegion = hitRegion;
-            
+
             // 同时设置拖拽状态，以便后续的指针事件能够正确处理
             _isDraggingRegion = false; // 暂时不设置，等到真正开始拖拽时再设置
           });
-          
+
           // 更新右侧编辑面板显示选中的区域
           ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
         } else {
@@ -380,13 +381,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       // 点击空白区域，清除所有选择并退出adjusting状态
       ref.read(characterCollectionProvider.notifier).clearSelections();
       ref.read(selectedRegionProvider.notifier).clearRegion();
-      
+
       setState(() {
         _isAdjusting = false;
         _adjustingRegionId = null;
         _originalRegion = null;
       });
-      
+
       AppLogger.debug('点击空白区域，清除所有选择并退出adjusting状态');
     }
   }
@@ -470,7 +471,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           'handleIndex': i,
           'handleCenter': '${handles[i].dx}, ${handles[i].dy}',
           'position': '${position.dx}, ${position.dy}',
-          'handleRect': '${handleRect.left}, ${handleRect.top}, ${handleRect.width}x${handleRect.height}',
+          'handleRect':
+              '${handleRect.left}, ${handleRect.top}, ${handleRect.width}x${handleRect.height}',
           'distance': (position - handles[i]).distance,
         });
         return i;
@@ -488,7 +490,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
     // 简单的调试输出，确保被调用
     print('🔄 _onPanStart 被调用: ${position.dx}, ${position.dy}');
-    
+
     AppLogger.debug('🔄 移动端平移开始', data: {
       'position': '${position.dx}, ${position.dy}',
       'regionsCount': regions.length,
@@ -506,10 +508,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       // 增强控制点检测，使用更精确的检测逻辑
       for (final region in regions.reversed) {
         if (!region.isSelected) continue;
-        
+
         final rect = _transformer!.imageRectToViewportRect(region.rect);
         final handleIndex = _getHandleIndexFromPosition(position, rect);
-        
+
         if (handleIndex != null) {
           // 点击了控制点，开始控制点拖拽调整
           setState(() {
@@ -1079,24 +1081,23 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 獲取圖像尺寸進行邊界檢查
     final imageState = ref.read(workImageProvider);
     final imageSize = imageState.imageSize;
-    
-    if (imageSize != null) {
-      // 確保選區不會超出圖像邊界
-      newRect = Rect.fromLTRB(
-        newRect.left.clamp(0.0, imageSize.width),
-        newRect.top.clamp(0.0, imageSize.height),
-        newRect.right.clamp(0.0, imageSize.width),
-        newRect.bottom.clamp(0.0, imageSize.height),
-      );
-      
-      // 重新檢查最小尺寸（邊界裁剪後可能變小）
-      if (newRect.width < minSize || newRect.height < minSize) {
-        AppLogger.debug('⚠️ 控制點調整後選區太小，取消更新', data: {
-          'newRect': '${newRect.left}, ${newRect.top}, ${newRect.width}x${newRect.height}',
-          'minSize': minSize,
-        });
-        return;
-      }
+
+    // 確保選區不會超出圖像邊界
+    newRect = Rect.fromLTRB(
+      newRect.left.clamp(0.0, imageSize.width),
+      newRect.top.clamp(0.0, imageSize.height),
+      newRect.right.clamp(0.0, imageSize.width),
+      newRect.bottom.clamp(0.0, imageSize.height),
+    );
+
+    // 重新檢查最小尺寸（邊界裁剪後可能變小）
+    if (newRect.width < minSize || newRect.height < minSize) {
+      AppLogger.debug('⚠️ 控制點調整後選區太小，取消更新', data: {
+        'newRect':
+            '${newRect.left}, ${newRect.top}, ${newRect.width}x${newRect.height}',
+        'minSize': minSize,
+      });
+      return;
     }
 
     // 實時更新選區
@@ -1181,20 +1182,18 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final imageState = ref.read(workImageProvider);
     Offset clampedScreenPoint = screenPoint;
     final imageSize = imageState.imageSize;
-    
-    if (imageSize != null) {
-      clampedScreenPoint = Offset(
-        screenPoint.dx.clamp(0.0, imageSize.width),
-        screenPoint.dy.clamp(0.0, imageSize.height),
-      );
-      
-      if (clampedScreenPoint != screenPoint) {
-        AppLogger.debug('🛡️ 选区创建起始点被裁剪', data: {
-          'original': '${screenPoint.dx}, ${screenPoint.dy}',
-          'clamped': '${clampedScreenPoint.dx}, ${clampedScreenPoint.dy}',
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-        });
-      }
+
+    clampedScreenPoint = Offset(
+      screenPoint.dx.clamp(0.0, imageSize.width),
+      screenPoint.dy.clamp(0.0, imageSize.height),
+    );
+
+    if (clampedScreenPoint != screenPoint) {
+      AppLogger.debug('🛡️ 选区创建起始点被裁剪', data: {
+        'original': '${screenPoint.dx}, ${screenPoint.dy}',
+        'clamped': '${clampedScreenPoint.dx}, ${clampedScreenPoint.dy}',
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+      });
     }
 
     setState(() {
@@ -1242,20 +1241,18 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final imageState = ref.read(workImageProvider);
     Offset clampedScreenPoint = screenPoint;
     final imageSize = imageState.imageSize;
-    
-    if (imageSize != null) {
-      clampedScreenPoint = Offset(
-        screenPoint.dx.clamp(0.0, imageSize.width),
-        screenPoint.dy.clamp(0.0, imageSize.height),
-      );
-      
-      if (clampedScreenPoint != screenPoint) {
-        AppLogger.debug('🛡️ 选区创建位置被裁剪', data: {
-          'original': '${screenPoint.dx}, ${screenPoint.dy}',
-          'clamped': '${clampedScreenPoint.dx}, ${clampedScreenPoint.dy}',
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-        });
-      }
+
+    clampedScreenPoint = Offset(
+      screenPoint.dx.clamp(0.0, imageSize.width),
+      screenPoint.dy.clamp(0.0, imageSize.height),
+    );
+
+    if (clampedScreenPoint != screenPoint) {
+      AppLogger.debug('🛡️ 选区创建位置被裁剪', data: {
+        'original': '${screenPoint.dx}, ${screenPoint.dy}',
+        'clamped': '${clampedScreenPoint.dx}, ${clampedScreenPoint.dy}',
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+      });
     }
 
     setState(() {
@@ -1316,13 +1313,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 獲取圖像尺寸進行邊界檢查
     final imageState = ref.read(workImageProvider);
     final imageSize = imageState.imageSize;
-    
-    if (imageSize == null) {
-      AppLogger.debug('❌ 圖像尺寸未知，無法創建選區');
-      _cleanupSelection();
-      return;
-    }
-    
+
     // 對坐標進行邊界裁剪
     final clampedStart = Offset(
       startImage.dx.clamp(0.0, imageSize.width),
@@ -1332,7 +1323,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       endImage.dx.clamp(0.0, imageSize.width),
       endImage.dy.clamp(0.0, imageSize.height),
     );
-    
+
     final rect = Rect.fromPoints(clampedStart, clampedEnd);
 
     AppLogger.debug('🔄 創建的矩形信息 (邊界裁剪後)', data: {
@@ -1586,7 +1577,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 如果變成多指操作，記錄狀態並立即停止任何單指操作
     if (_isMultiPointer) {
       _hasBeenMultiPointer = true;
-      
+
       // 立即停止任何正在進行的單指操作
       if (_isDragging) {
         AppLogger.debug('🛑 多指檢測，停止單指操作', data: {
@@ -1594,15 +1585,17 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           'wasDraggingRegion': _isDraggingRegion,
           'wasAdjustingHandle': _isAdjustingHandle,
         });
-        
+
         _cancelCurrentGesture();
       }
-      
-      print('💆 多指檢測: ${event.pointer}, 數量: ${_activePointers.length}, 最大: $_maxPointerCount');
+
+      print(
+          '💆 多指檢測: ${event.pointer}, 數量: ${_activePointers.length}, 最大: $_maxPointerCount');
       return; // 多指操作交給InteractiveViewer處理
     }
 
-    print('💆 指針按下: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
+    print(
+        '💆 指針按下: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
 
     // 只有在真正的單指操作且從未變成多指時才處理
     if (!_hasBeenMultiPointer && !_isMultiPointer) {
@@ -1618,37 +1611,36 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           return;
         }
       }
-      
+
       // 記錄本次指針按下時間
       _lastPointerDownTime = now;
-      
+
       // 單指操作，開始選區創建或控制點操作
       _singlePointerStart = event.localPosition;
       _isDragging = false;
-      
+
       // 邊界檢查：確保指針位置在圖像範圍內
       final imageState = ref.read(workImageProvider);
       final imageSize = imageState.imageSize;
-      if (imageSize != null) {
-        final clampedPosition = Offset(
-          event.localPosition.dx.clamp(0.0, imageSize.width),
-          event.localPosition.dy.clamp(0.0, imageSize.height),
-        );
-        _singlePointerStart = clampedPosition;
-      }
-      
+      final clampedPosition = Offset(
+        event.localPosition.dx.clamp(0.0, imageSize.width),
+        event.localPosition.dy.clamp(0.0, imageSize.height),
+      );
+      _singlePointerStart = clampedPosition;
+
       // 檢查是否點擊了控制點
       final regions = ref.read(characterCollectionProvider).regions;
       bool hitHandle = false;
-      
+
       print('💆 檢查控制點碰撞: 選中區域數量: ${regions.where((r) => r.isSelected).length}');
-      
+
       for (final region in regions.reversed) {
         if (!region.isSelected) continue;
-        
+
         final rect = _transformer!.imageRectToViewportRect(region.rect);
-        final handleIndex = _getHandleIndexFromPosition(_singlePointerStart!, rect);
-        
+        final handleIndex =
+            _getHandleIndexFromPosition(_singlePointerStart!, rect);
+
         if (handleIndex != null) {
           // 點擊了控制點
           print('💆 控制點碰撞成功: region: ${region.id}, handle: $handleIndex');
@@ -1666,12 +1658,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           break;
         }
       }
-      
+
       if (!hitHandle) {
         // 沒有點擊控制點，可能是選區操作
         final hitRegion = _hitTestRegion(_singlePointerStart!, regions);
-        print('💆 選區碰撞檢查: ${hitRegion?.id}, selected: ${hitRegion?.isSelected}, adjusting: $_isAdjusting');
-        
+        print(
+            '💆 選區碰撞檢查: ${hitRegion?.id}, selected: ${hitRegion?.isSelected}, adjusting: $_isAdjusting');
+
         if (hitRegion != null && hitRegion.isSelected) {
           // 點擊了已選中的選區，開始拖拽
           print('💆 選區拖拽準備: ${hitRegion.id}');
@@ -1680,7 +1673,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
             _draggingRegion = hitRegion;
             _dragStartPosition = _singlePointerStart!;
             _originalDragRect = hitRegion.rect;
-            
+
             // 如果还没有进入adjusting状态，现在进入
             if (!_isAdjusting) {
               _isAdjusting = true;
@@ -1691,7 +1684,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         } else if (hitRegion != null && !hitRegion.isSelected) {
           // 点击了未选中的选区，先选中它
           print('💆 選中未選中的選區: ${hitRegion.id}');
-          ref.read(characterCollectionProvider.notifier).selectRegion(hitRegion.id);
+          ref
+              .read(characterCollectionProvider.notifier)
+              .selectRegion(hitRegion.id);
           ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
         } else {
           print('💆 準備創建新選區');
@@ -1709,7 +1704,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _selectionStart = null;
         _selectionEnd = null;
       }
-      
+
       // 清除選區拖拽狀態
       if (_isDraggingRegion) {
         _isDraggingRegion = false;
@@ -1717,7 +1712,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _dragStartPosition = null;
         _originalDragRect = null;
       }
-      
+
       // 清除控制點調整狀態
       if (_isAdjustingHandle) {
         _isAdjustingHandle = false;
@@ -1729,12 +1724,12 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _pressedRegionId = null;
         _pressedHandleIndex = null;
       }
-      
+
       // 重置拖拽狀態
       _isDragging = false;
       _singlePointerStart = null;
     });
-    
+
     AppLogger.debug('✅ 手勢操作已取消');
   }
 
@@ -1744,28 +1739,27 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 只在采集工具模式下处理拖拽操作
     if (toolMode != Tool.select) return;
 
-    print('💆 指針移動: ${event.pointer}, 位置: ${event.localPosition.dx.toStringAsFixed(1)}, ${event.localPosition.dy.toStringAsFixed(1)}');
+    print(
+        '💆 指針移動: ${event.pointer}, 位置: ${event.localPosition.dx.toStringAsFixed(1)}, ${event.localPosition.dy.toStringAsFixed(1)}');
 
     if (_activePointers.containsKey(event.pointer)) {
       // 邊界檢查：確保移動位置在圖像範圍內
       final imageState = ref.read(workImageProvider);
       Offset clampedPosition = event.localPosition;
       final imageSize = imageState.imageSize;
-      
-      if (imageSize != null) {
-        clampedPosition = Offset(
-          event.localPosition.dx.clamp(0.0, imageSize.width),
-          event.localPosition.dy.clamp(0.0, imageSize.height),
-        );
-      }
-      
+
+      clampedPosition = Offset(
+        event.localPosition.dx.clamp(0.0, imageSize.width),
+        event.localPosition.dy.clamp(0.0, imageSize.height),
+      );
+
       _activePointers[event.pointer] = clampedPosition;
-      
+
       // 檢查是否變成了多指操作
       final wasMultiPointer = _isMultiPointer;
       _isMultiPointer = _activePointers.length > 1;
       _maxPointerCount = math.max(_maxPointerCount, _activePointers.length);
-      
+
       if (!wasMultiPointer && _isMultiPointer) {
         // 從單指變成多指，立即停止單指操作
         _hasBeenMultiPointer = true;
@@ -1783,34 +1777,37 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
     // 多指手勢不處理，讓InteractiveViewer處理
     if (_isMultiPointer || _hasBeenMultiPointer) {
-      print('💆 忽略多指移動: isMulti: $_isMultiPointer, hadBeenMulti: $_hasBeenMultiPointer');
+      print(
+          '💆 忽略多指移動: isMulti: $_isMultiPointer, hadBeenMulti: $_hasBeenMultiPointer');
       return;
     }
 
-    print('💆 單指移動處理: start: $_singlePointerStart, hasBeenMulti: $_hasBeenMultiPointer, isMulti: $_isMultiPointer');
+    print(
+        '💆 單指移動處理: start: $_singlePointerStart, hasBeenMulti: $_hasBeenMultiPointer, isMulti: $_isMultiPointer');
 
     // 單指手勢處理 - 只有在從未變成多指且當前確實是單指時才處理
-    if (_singlePointerStart != null && !_hasBeenMultiPointer && !_isMultiPointer) {
+    if (_singlePointerStart != null &&
+        !_hasBeenMultiPointer &&
+        !_isMultiPointer) {
       // 使用裁剪後的位置計算距離
       final imageState = ref.read(workImageProvider);
       Offset clampedPosition = event.localPosition;
       final imageSize = imageState.imageSize;
-      
-      if (imageSize != null) {
-        clampedPosition = Offset(
-          event.localPosition.dx.clamp(0.0, imageSize.width),
-          event.localPosition.dy.clamp(0.0, imageSize.height),
-        );
-      }
-      
+
+      clampedPosition = Offset(
+        event.localPosition.dx.clamp(0.0, imageSize.width),
+        event.localPosition.dy.clamp(0.0, imageSize.height),
+      );
+
       final distance = (clampedPosition - _singlePointerStart!).distance;
-      print('💆 移動距離: ${distance.toStringAsFixed(1)}, 閾值: $_dragThreshold, isDragging: $_isDragging');
-      
+      print(
+          '💆 移動距離: ${distance.toStringAsFixed(1)}, 閾值: $_dragThreshold, isDragging: $_isDragging');
+
       if (!_isDragging && distance > _dragThreshold) {
         // 開始拖拽
         _isDragging = true;
         print('💆 開始拖拽操作');
-        
+
         if (_isAdjustingHandle) {
           // 控制點調整
           print('🎯 開始控制點調整');
@@ -1825,9 +1822,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           print('🆕 開始創建選區');
         }
       }
-      
+
       if (_isDragging) {
-        print('💆 執行拖拽更新: adjustingHandle: $_isAdjustingHandle, draggingRegion: $_isDraggingRegion, selecting: $_isSelecting');
+        print(
+            '💆 執行拖拽更新: adjustingHandle: $_isAdjustingHandle, draggingRegion: $_isDraggingRegion, selecting: $_isSelecting');
         if (_isAdjustingHandle) {
           _updateHandleAdjustment(clampedPosition);
         } else if (_isDraggingRegion) {
@@ -1847,7 +1845,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     _activePointers.remove(event.pointer);
     _isMultiPointer = _activePointers.length > 1;
 
-    print('💆 指針釋放: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
+    print(
+        '💆 指針釋放: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
 
     // 如果所有指針都釋放了，重置手勢狀態
     if (_activePointers.isEmpty) {
@@ -1857,7 +1856,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         'wasSelecting': _isSelecting,
         'wasDragging': _isDragging,
       });
-      
+
       // 只有在純單指操作時才完成手勢
       if (!_hasBeenMultiPointer && _isDragging) {
         if (_isAdjustingHandle) {
@@ -1872,7 +1871,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _cancelCurrentGesture();
         AppLogger.debug('📱 多指操作結束，已取消所有手勢');
       }
-      
+
       // 重置所有手勢追蹤狀態
       _resetGestureState();
     }
@@ -1886,13 +1885,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       _isHandlePressed = false;
       _pressedRegionId = null;
       _pressedHandleIndex = null;
-      
+
       // 重置多指追蹤狀態
       _hasBeenMultiPointer = false;
       _maxPointerCount = 0;
       _lastPointerDownTime = null;
     });
-    
+
     AppLogger.debug('🔄 手勢狀態已重置');
   }
 
@@ -1900,9 +1899,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   void _onPointerCancel(PointerCancelEvent event) {
     _activePointers.remove(event.pointer);
     _isMultiPointer = _activePointers.length > 1;
-    
+
     AppLogger.debug('💆 指針取消: ${event.pointer}, 數量: ${_activePointers.length}');
-    
+
     // 如果所有指針都釋放了，重置狀態
     if (_activePointers.isEmpty) {
       // 指針取消時，直接取消所有手勢操作
@@ -1914,9 +1913,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
   /// 更新選區拖拽（簡化版 - 直接使用圖像坐標）
   void _updateRegionDrag(Offset currentPosition) {
-    if (!_isDraggingRegion || 
-        _draggingRegion == null || 
-        _dragStartPosition == null || 
+    if (!_isDraggingRegion ||
+        _draggingRegion == null ||
+        _dragStartPosition == null ||
         _originalDragRect == null) {
       return;
     }
@@ -1934,10 +1933,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 獲取圖像尺寸進行邊界檢查
     final imageState = ref.read(workImageProvider);
     final imageSize = imageState.imageSize;
-    if (imageSize == null) {
-      return;
-    }
-    
+
     // 確保選區不會超出圖像邊界
     final clampedRect = Rect.fromLTWH(
       newImageRect.left.clamp(0.0, imageSize.width - 10.0),
@@ -1945,7 +1941,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       newImageRect.width.clamp(10.0, imageSize.width),
       newImageRect.height.clamp(10.0, imageSize.height),
     );
-    
+
     // 確保選區完全在圖像邊界內
     final finalRect = Rect.fromLTWH(
       clampedRect.left.clamp(0.0, imageSize.width - clampedRect.width),
@@ -1955,9 +1951,11 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     );
 
     AppLogger.debug('選區拖拽邊界檢查', data: {
-      'originalRect': '${newImageRect.left}, ${newImageRect.top}, ${newImageRect.width}x${newImageRect.height}',
+      'originalRect':
+          '${newImageRect.left}, ${newImageRect.top}, ${newImageRect.width}x${newImageRect.height}',
       'imageSize': '${imageSize.width}x${imageSize.height}',
-      'finalRect': '${finalRect.left}, ${finalRect.top}, ${finalRect.width}x${finalRect.height}',
+      'finalRect':
+          '${finalRect.left}, ${finalRect.top}, ${finalRect.width}x${finalRect.height}',
       'imageDelta': '${imageDelta.dx}, ${imageDelta.dy}',
     });
 
@@ -1967,7 +1965,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       isModified: true,
     );
 
-    ref.read(characterCollectionProvider.notifier).updateRegionDisplay(updatedRegion);
+    ref
+        .read(characterCollectionProvider.notifier)
+        .updateRegionDisplay(updatedRegion);
   }
 
   /// 完成选区拖拽（简化版）

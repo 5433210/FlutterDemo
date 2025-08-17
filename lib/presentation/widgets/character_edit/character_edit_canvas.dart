@@ -214,13 +214,26 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
       },
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+        behavior: HitTestBehavior.translucent,
         onTap: () {
           if (!focusNode.hasFocus) focusNode.requestFocus();
         },
         child: Listener(
-          onPointerDown: _handlePointerDown,
-          onPointerUp: _handlePointerUp,
+          onPointerDown: (event) {
+            AppLogger.debug('🔵 [Canvas] Listener onPointerDown', data: {
+              'pointer': event.pointer,
+              'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+              'kind': event.kind.toString(),
+            });
+            _handlePointerDown(event);
+          },
+          onPointerUp: (event) {
+            AppLogger.debug('🔴 [Canvas] Listener onPointerUp', data: {
+              'pointer': event.pointer,
+              'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+            });
+            _handlePointerUp(event);
+          },
           child: LayoutBuilder(
             builder: (context, constraints) {
               _updateTransformer(constraints.biggest);
@@ -234,8 +247,27 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                 // 平台特定的缩放和平移配置
                 scaleEnabled: _getScaleEnabled(),
                 panEnabled: _getPanEnabled(),
+                onInteractionStart: (details) {
+                  AppLogger.debug('🔄 [Canvas] InteractiveViewer onInteractionStart', data: {
+                    'focalPoint': '${details.focalPoint.dx.toStringAsFixed(1)},${details.focalPoint.dy.toStringAsFixed(1)}',
+                    'localFocalPoint': '${details.localFocalPoint.dx.toStringAsFixed(1)},${details.localFocalPoint.dy.toStringAsFixed(1)}',
+                    'pointerCount': details.pointerCount,
+                  });
+                },
                 onInteractionUpdate: (details) {
                   _updateTransformer(constraints.biggest);
+                  AppLogger.debug('🔄 [Canvas] InteractiveViewer onInteractionUpdate', data: {
+                    'focalPoint': '${details.focalPoint.dx.toStringAsFixed(1)},${details.focalPoint.dy.toStringAsFixed(1)}',
+                    'scale': details.scale.toStringAsFixed(3),
+                    'rotation': details.rotation.toStringAsFixed(3),
+                    'pointerCount': details.pointerCount,
+                  });
+                },
+                onInteractionEnd: (details) {
+                  AppLogger.debug('🔄 [Canvas] InteractiveViewer onInteractionEnd', data: {
+                    'velocity': details.velocity.pixelsPerSecond.distance.toStringAsFixed(1),
+                    'pointerCount': details.pointerCount,
+                  });
                 },
                 // 移动端手势支持优化
                 interactionEndFrictionCoefficient: _getFrictionCoefficient(),
