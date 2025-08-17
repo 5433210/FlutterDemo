@@ -150,8 +150,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   ui.Image? _loadedImage;
 
   // Track expansion state of parameter control panel
-  bool _isParameterPanelExpanded =
-      true; // Default to expanded when height is sufficient
+  bool _isParameterPanelExpanded = false; // Default to collapsed, will be set based on height
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -295,7 +294,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           try {
             ref.read(erase.eraseStateProvider.notifier).clear();
             // Reinitialize processing options when region changes
-            // _initializeProcessingOptions();
+            _initializeProcessingOptions();
             // Recalculate dynamic brush size when the selected region changes
             _setDynamicBrushSize();
           } catch (e) {
@@ -355,6 +354,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               .read(erase.eraseStateProvider.notifier)
               .clear(); // Load processing options and initialize with appropriate values
           _initializeProcessingOptions();
+
+          // Initialize parameter panel expansion based on screen height
+          final screenHeight = MediaQuery.of(context).size.height;
+          final hassufficientHeight = screenHeight > 600;
+          setState(() {
+            _isParameterPanelExpanded = hassufficientHeight;
+          });
 
           // Set dynamic brush size based on image size
           _setDynamicBrushSize();
@@ -1107,12 +1113,11 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   Widget _buildCompactToolbar(
       AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
-    // 在窗体高度足够时保持面板展开，高度不足时才使用折叠
+    // 在窗体高度不足时，面板应该默认折叠
     final hassufficientHeight = MediaQuery.of(context).size.height > 600;
-    final shouldExpand = hassufficientHeight ? true : _isParameterPanelExpanded;
-
+    
     return ExpansionTile(
-      initiallyExpanded: shouldExpand,
+      initiallyExpanded: _isParameterPanelExpanded,
       onExpansionChanged: (bool expanded) {
         setState(() {
           _isParameterPanelExpanded = expanded;
@@ -1162,39 +1167,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               isActive: eraseState.imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
             ),
-            // 参数控制开合按钮
-            _ToolbarButton(
-              icon: _isParameterPanelExpanded
-                  ? Icons.expand_less
-                  : Icons.expand_more,
-              tooltip: _isParameterPanelExpanded ? '折叠参数' : '展开参数',
-              onPressed: () {
-                setState(() {
-                  _isParameterPanelExpanded = !_isParameterPanelExpanded;
-                });
-              },
-              isActive: _isParameterPanelExpanded,
-              shortcut: EditorShortcuts.toggleInvert, // 暂时复用，可以后续定义新的快捷键
-            ),
-            // 輪廓顯示開關已屏蔽
-            // _ToolbarButton(
-            //   icon: Icons.border_all,
-            //   tooltip: l10n.showContour,
-            //   onPressed: () {
-            //     ref.read(erase.eraseStateProvider.notifier).toggleContour();
-            //   },
-            //   isActive: eraseState.showContour,
-            //   shortcut: EditorShortcuts.toggleContour,
-            // ),
           ]),
         ],
       ),
       children: [
-        // 参数控制区域 - 使用简单的条件显示，不再使用ExpansionTile
-        if (_isParameterPanelExpanded) ...[
-          const SizedBox(height: 8),
-          _buildParameterControls(l10n, eraseState, colorScheme),
-        ],
+        // 参数控制区域
+        const SizedBox(height: 8),
+        _buildParameterControls(l10n, eraseState, colorScheme),
       ],
     );
   }
