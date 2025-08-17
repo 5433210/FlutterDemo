@@ -327,13 +327,47 @@ class CharacterImageProcessor {
       'imageSize': '${source.width}x${source.height}',
     });
 
+    // Log detailed information about received erase data for debugging
+    AppLogger.debug('_applyErase接收到的详细擦除数据', data: {
+      'erasePaths': erasePaths.length,
+      'receivedPathsInfo': erasePaths.asMap().entries.map((entry) {
+        final index = entry.key;
+        final pathData = entry.value;
+        final points = pathData['points'] as List<dynamic>? ?? [];
+        return {
+          'index': index,
+          'brushSize': pathData['brushSize'],
+          'brushColor': pathData['brushColor']?.toString(),
+          'pointCount': points.length,
+          'samplePoints': points.take(2).map((p) {
+            if (p is Map) {
+              return '(${p['dx']?.toString()},${p['dy']?.toString()})';
+            }
+            return p.toString();
+          }).toList(),
+        };
+      }).toList(),
+    });
+
     final result =
         img.copyResize(source, width: source.width, height: source.height);
 
     final imageWidth = source.width;
     final imageHeight = source.height;
 
-    for (final pathData in erasePaths) {
+    for (int pathIndex = 0; pathIndex < erasePaths.length; pathIndex++) {
+      final pathData = erasePaths[pathIndex];
+      
+      AppLogger.debug('_applyErase开始处理路径', data: {
+        'pathIndex': pathIndex,
+        'totalPaths': erasePaths.length,
+        'pathData': {
+          'brushSize': pathData['brushSize'],
+          'brushColor': pathData['brushColor']?.toString(),
+          'pointsCount': (pathData['points'] as List<dynamic>?)?.length ?? 0,
+        },
+      });
+      
       final points = pathData['points'] as List<dynamic>;
       final brushSize = (pathData['brushSize'] as num?)?.toDouble() ?? 10.0;
 
@@ -449,7 +483,19 @@ class CharacterImageProcessor {
           }
         }
       }
+      
+      AppLogger.debug('_applyErase路径处理完成', data: {
+        'pathIndex': pathIndex,
+        'processedPoints': points.length,
+        'brushSize': brushSize,
+        'effectiveRadius': math.max(brushSize / 2, 1.0),
+      });
     }
+
+    AppLogger.debug('_applyErase全部完成', data: {
+      'totalPathsProcessed': erasePaths.length,
+      'imageSize': '${result.width}x${result.height}',
+    });
 
     return result;
   }

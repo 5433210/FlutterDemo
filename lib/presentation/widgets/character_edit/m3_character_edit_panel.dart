@@ -1787,60 +1787,114 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Get current state data, collect all necessary data before passing to compute
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
       final eraseState = ref.read(erase.eraseStateProvider);
-      final completedPaths = pathRenderData.completedPaths;
-
-      // Create processing result object
-      final List<Map<String, dynamic>> eraseData = [];
-
-      // Ensure data passed to compute is serializable
-      if (completedPaths.isNotEmpty) {
-        try {
-          // Use compute to process path data in a separate thread, avoid UI blocking
-          // Ensure only basic data types are passed to compute function
-          final pathDataFuture =
-              compute<List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
-            (pathsData) {
-              return pathsData;
-            },
-            completedPaths.map((path) {
-              final points = _extractPointsFromPath(path.path);
-              return {
-                'points': points,
-                'brushSize': path.brushSize,
-                'brushColor': path.brushColor.toARGB32(),
-              };
-            }).toList(),
-          );
-
-          // Update UI progress before computation completes
-          saveNotifier.updateProgress(0.2);
-
-          // Wait for path data processing to complete
-          eraseData.addAll(await pathDataFuture);
-        } catch (e) {
-          AppLogger.error('Path data processing failed: $e');
-          // Even if path processing fails, continue trying to save character without erase data
-        }
+      
+      // 确保当前路径被完成并包含在保存数据中
+      // 如果有正在进行的路径，先完成它
+      if (pathRenderData.currentPath != null) {
+        AppLogger.debug('检测到未完成的当前路径，正在完成', data: {
+          'currentPathExists': pathRenderData.currentPath != null,
+          'completedPathsBefore': pathRenderData.completedPaths.length,
+        });
+        
+        // 完成当前路径
+        ref.read(erase.eraseStateProvider.notifier).completePath();
+        
+        // 等待状态更新
+        await Future.microtask(() {});
+        
+        // 重新获取更新后的路径数据
+        final updatedPathRenderData = ref.read(erase.pathRenderDataProvider);
+        AppLogger.debug('路径完成后重新获取数据', data: {
+          'completedPathsAfter': updatedPathRenderData.completedPaths.length,
+          'currentPathAfter': updatedPathRenderData.currentPath != null,
+        });
       }
 
-      // Verify erase data is properly structured
-      if (eraseData.isNotEmpty) {
-        // Log detailed information about first path for debugging
-        final firstPath = eraseData.first;
-        final points = firstPath['points'] as List<Map<String, double>>;
+      // 延迟擦除数据的处理到真正需要的时候
+      // 这里先创建一个函数来获取擦除数据
+      Future<List<Map<String, dynamic>>> getEraseData() async {
+        final List<Map<String, dynamic>> eraseData = [];
+        
+        // 获取最终的已完成路径列表 - 确保在保存时获取最新数据
+        final finalPathRenderData = ref.read(erase.pathRenderDataProvider);
+        final completedPaths = finalPathRenderData.completedPaths;
 
-        AppLogger.debug('Validating erase path data', data: {
-          'erasePaths': eraseData.length,
-          'firstPathBrushSize': firstPath['brushSize'],
-          'firstPathBrushColor':
-              (firstPath['brushColor'] as int).toRadixString(16),
-          'firstPathPointCount': points.length,
-          'firstPathSamplePoints': points
-              .take(3)
-              .map((p) =>
-                  '(${p['dx']?.toStringAsFixed(1)},${p['dy']?.toStringAsFixed(1)})')
-              .toList(),
+        AppLogger.debug('getEraseData开始 - 准备收集擦除数据', data: {
+          'completedPathsCount': completedPaths.length,
+          'currentPathExists': finalPathRenderData.currentPath != null,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
         });
+
+        // Ensure data passed to compute is serializable
+        if (completedPaths.isNotEmpty) {
+          try {
+            AppLogger.debug('准备处理擦除路径数据', data: {
+              'pathCount': completedPaths.length,
+              'pathsSample': completedPaths.take(2).map((p) => {
+                'brushSize': p.brushSize,
+                'brushColor': p.brushColor.toString(),
+                'pathPoints': 'Path对象',
+              }).toList(),
+            });
+
+            // Use compute to process path data in a separate thread, avoid UI blocking
+            // Ensure only basic data types are passed to compute function
+            final pathDataFuture =
+                compute<List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
+              (pathsData) {
+                return pathsData;
+              },
+              completedPaths.map((path) {
+                final points = _extractPointsFromPath(path.path);
+                return {
+                  'points': points,
+                  'brushSize': path.brushSize,
+                  'brushColor': path.brushColor.toARGB32(),
+                };
+              }).toList(),
+            );
+
+            // Wait for path data processing to complete
+            eraseData.addAll(await pathDataFuture);
+            
+            AppLogger.debug('getEraseData完成 - 路径数据处理完毕', data: {
+              'eraseDataCount': eraseData.length,
+              'originalPathsCount': completedPaths.length,
+              'dataConsistencyCheck': eraseData.length == completedPaths.length,
+            });
+            
+            // Verify erase data is properly structured
+            if (eraseData.isNotEmpty) {
+              // Log detailed information about all paths for debugging
+              AppLogger.debug('Validating erase path data (detailed)', data: {
+                'erasePaths': eraseData.length,
+                'allPathsInfo': eraseData.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final pathData = entry.value;
+                  final points = pathData['points'] as List<Map<String, double>>;
+                  return {
+                    'index': index,
+                    'brushSize': pathData['brushSize'],
+                    'brushColor': (pathData['brushColor'] as int).toRadixString(16),
+                    'pointCount': points.length,
+                    'samplePoints': points.take(2).map((p) =>
+                        '(${p['dx']?.toStringAsFixed(1)},${p['dy']?.toStringAsFixed(1)})').toList(),
+                  };
+                }).toList(),
+              });
+            }
+          } catch (e) {
+            AppLogger.error('Path data processing failed: $e');
+            // Even if path processing fails, continue trying to save character without erase data
+          }
+        } else {
+          AppLogger.debug('getEraseData - 没有已完成的路径', data: {
+            'completedPathsEmpty': true,
+            'currentPathExists': finalPathRenderData.currentPath != null,
+          });
+        }
+        
+        return eraseData;
       }
       final processingOptions = ProcessingOptions(
         inverted: eraseState.imageInvertMode,
@@ -1859,6 +1913,23 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       }
 
       // Update region information, save erase path data
+      // 实时获取擦除数据，确保是最新的
+      AppLogger.debug('保存前准备获取擦除数据', data: {
+        'selectedRegionId': selectedRegion.id,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      final eraseData = await getEraseData();
+      
+      AppLogger.debug('擦除数据获取完成，准备创建updatedRegion', data: {
+        'eraseDataCount': eraseData.length,
+        'hasEraseData': eraseData.isNotEmpty,
+        'selectedRegionId': selectedRegion.id,
+      });
+      
+      // Update UI progress after erase data computation completes
+      saveNotifier.updateProgress(0.2);
+      
       final updatedRegion = selectedRegion.copyWith(
         pageId: widget.pageId,
         character: characterToSave,
@@ -1866,6 +1937,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         isModified: false,
         eraseData: eraseData.isNotEmpty ? eraseData : null,
       );
+      
+      AppLogger.debug('updatedRegion创建完成', data: {
+        'regionId': updatedRegion.id,
+        'regionEraseDataCount': updatedRegion.eraseData?.length ?? 0,
+        'regionHasEraseData': updatedRegion.eraseData != null,
+      });
 
       // Start save process directly
       try {
@@ -1902,9 +1979,11 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         // Optimize save process, reduce perceived delay
         try {
           // Immediately update UI feedback
-          saveNotifier.updateProgress(
-              0.3); // Synchronously update selection (this operation is fast)
-          collectionNotifier.updateSelectedRegion(updatedRegion);
+          saveNotifier.updateProgress(0.3);
+          
+          // 延迟调用updateSelectedRegion，确保擦除数据先被处理
+          // 这个调用会触发状态更新，可能会影响擦除数据的收集
+          // 所以我们把它移到保存操作完成之后
           saveNotifier.updateProgress(0.4);
 
           // Execute time-consuming save operation with timeout tracking
@@ -1928,7 +2007,25 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             AppLogger.debug('开始执行保存操作');
             saveNotifier.updateProgress(0.5);
 
+            // 在保存前先更新选区状态，确保擦除数据被正确传递
+            AppLogger.debug('准备调用updateSelectedRegion', data: {
+              'updatedRegionId': updatedRegion.id,
+              'updatedRegionEraseDataCount': updatedRegion.eraseData?.length ?? 0,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+            
+            collectionNotifier.updateSelectedRegion(updatedRegion);
+            
+            AppLogger.debug('updateSelectedRegion调用完成，准备调用saveCurrentRegion', data: {
+              'processingOptionsInverted': processingOptions.inverted,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+            
             await collectionNotifier.saveCurrentRegion(processingOptions);
+            
+            AppLogger.debug('saveCurrentRegion调用完成', data: {
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
             // Cancel the timeout timer immediately after successful completion
             saveTimeoutTimer.cancel();
             saveTimeoutTimer = null;
@@ -1973,6 +2070,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           rethrow;
         }
         saveNotifier.updateProgress(0.98);
+        
         saveNotifier.finishSaving();
         ref
             .read(characterRefreshNotifierProvider.notifier)

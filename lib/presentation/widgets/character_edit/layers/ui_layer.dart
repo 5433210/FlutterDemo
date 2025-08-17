@@ -201,14 +201,14 @@ class _UILayerState extends ConsumerState<UILayer> {
         defaultTargetPlatform == TargetPlatform.iOS) {
       return true;
     }
-    
+
     // 对于Web平台，可以通过其他方式判断
     if (kIsWeb) {
       // 在Web上，可以通过屏幕尺寸和用户代理来判断
       final size = MediaQuery.of(context).size;
       return size.width < 768; // 平板一般768px以上
     }
-    
+
     return false;
   }
 
@@ -229,16 +229,16 @@ class _UILayerState extends ConsumerState<UILayer> {
     final eraseState = ref.watch(eraseStateProvider);
     final currentCursor =
         widget.altKeyPressed ? SystemMouseCursors.move : widget.cursor;
-    
+
     final screenSize = MediaQuery.of(context).size;
-    AppLogger.debug('🔧 [UILayer] build方法调用', data: {
-      'screenWidth': screenSize.width.toStringAsFixed(1),
-      'screenHeight': screenSize.height.toStringAsFixed(1),
-      'isMobile': _isMobile,
-      'defaultTargetPlatform': defaultTargetPlatform.toString(),
-      'themeplatform': Theme.of(context).platform.toString(),
-      'kIsWeb': kIsWeb,
-    });
+    // AppLogger.debug('🔧 [UILayer] build方法调用', data: {
+    //   'screenWidth': screenSize.width.toStringAsFixed(1),
+    //   'screenHeight': screenSize.height.toStringAsFixed(1),
+    //   'isMobile': _isMobile,
+    //   'defaultTargetPlatform': defaultTargetPlatform.toString(),
+    //   'themeplatform': Theme.of(context).platform.toString(),
+    //   'kIsWeb': kIsWeb,
+    // });
 
     return MouseRegion(
       cursor: currentCursor,
@@ -258,7 +258,9 @@ class _UILayerState extends ConsumerState<UILayer> {
           ),
 
           // 根据平台选择不同的手势处理方式
-          _isMobile ? _buildMobileGestureHandler() : _buildDesktopGestureHandler(),
+          _isMobile
+              ? _buildMobileGestureHandler()
+              : _buildDesktopGestureHandler(),
 
           // Show cursor when we have a position and not in alt-key/pan mode
           if (_mousePosition != null && !widget.altKeyPressed)
@@ -365,26 +367,29 @@ class _UILayerState extends ConsumerState<UILayer> {
   /// 移动端手势处理器 - 支持多点触控
   Widget _buildMobileGestureHandler() {
     AppLogger.debug('📱 [UILayer] 构建移动端手势处理器');
-    
+
     return Listener(
       onPointerDown: (event) {
         AppLogger.debug('📱 [UILayer] Listener onPointerDown', data: {
           'pointer': event.pointer,
-          'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+          'position':
+              '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
         });
         _handleMobilePointerDown(event);
       },
       onPointerMove: (event) {
         AppLogger.debug('📱 [UILayer] Listener onPointerMove', data: {
           'pointer': event.pointer,
-          'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+          'position':
+              '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
         });
         _handleMobilePointerMove(event);
       },
       onPointerUp: (event) {
         AppLogger.debug('📱 [UILayer] Listener onPointerUp', data: {
           'pointer': event.pointer,
-          'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+          'position':
+              '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
         });
         _handleMobilePointerUp(event);
       },
@@ -414,7 +419,8 @@ class _UILayerState extends ConsumerState<UILayer> {
       '🖱️ [UILayer] 移动端指针按下',
       data: {
         'pointer': event.pointer,
-        'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+        'position':
+            '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
         'pointersCount': _activePointers.length,
         'isMultiPointer': _isMultiPointer,
         'hasBeenMultiPointer': _hasBeenMultiPointer,
@@ -428,7 +434,8 @@ class _UILayerState extends ConsumerState<UILayer> {
 
       // 立即停止任何正在进行的单指操作
       if (_isDragging) {
-        AppLogger.debug('🛑 [UILayer] 多指检测，停止单指操作', data: {'wasDragging': _isDragging});
+        AppLogger.debug('🛑 [UILayer] 多指检测，停止单指操作',
+            data: {'wasDragging': _isDragging});
         _cancelCurrentGesture();
       }
 
@@ -446,11 +453,12 @@ class _UILayerState extends ConsumerState<UILayer> {
     // 只有在真正的单指操作且从未变成多指时才处理
     if (!_hasBeenMultiPointer && !_isMultiPointer) {
       AppLogger.debug('✅ [UILayer] 确认单指操作，开始擦除', data: {
-        'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+        'position':
+            '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
         'hasBeenMultiPointer': _hasBeenMultiPointer,
         'isMultiPointer': _isMultiPointer,
       });
-      
+
       // 单指操作，开始擦除操作
       _singlePointerStart = event.localPosition;
       _isDragging = false;
@@ -527,8 +535,10 @@ class _UILayerState extends ConsumerState<UILayer> {
 
       if (_isDragging && widget.onPointerMove != null) {
         AppLogger.debug('🎯 [UILayer] 单指擦除移动', data: {
-          'position': '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
-          'delta': '${event.delta.dx.toStringAsFixed(1)},${event.delta.dy.toStringAsFixed(1)}',
+          'position':
+              '${event.localPosition.dx.toStringAsFixed(1)},${event.localPosition.dy.toStringAsFixed(1)}',
+          'delta':
+              '${event.delta.dx.toStringAsFixed(1)},${event.delta.dy.toStringAsFixed(1)}',
         });
         widget.onPointerMove!(event.localPosition, event.delta);
       }
@@ -548,7 +558,8 @@ class _UILayerState extends ConsumerState<UILayer> {
         'afterCount': _activePointers.length - 1,
         'isDragging': _isDragging,
         'hasBeenMultiPointer': _hasBeenMultiPointer,
-        'remainingPointers': _activePointers.keys.where((k) => k != event.pointer).toList(),
+        'remainingPointers':
+            _activePointers.keys.where((k) => k != event.pointer).toList(),
       },
     );
 
@@ -588,7 +599,8 @@ class _UILayerState extends ConsumerState<UILayer> {
     _activePointers.remove(event.pointer);
     _isMultiPointer = _activePointers.length > 1;
 
-    AppLogger.debug('💆 移动端指针取消: ${event.pointer}, 数量: ${_activePointers.length}');
+    AppLogger.debug(
+        '💆 移动端指针取消: ${event.pointer}, 数量: ${_activePointers.length}');
 
     // 如果所有指针都释放了，重置状态
     if (_activePointers.isEmpty) {

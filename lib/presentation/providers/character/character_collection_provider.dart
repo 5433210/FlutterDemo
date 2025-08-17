@@ -685,25 +685,61 @@ class CharacterCollectionNotifier
   Future<void> saveCurrentRegion(ProcessingOptions options) async {
     AppLogger.debug('saveCurrentRegion 调用',
         data: {'currentId': state.currentId});
-    if (state.currentId == null) return;
+    
+    // 获取当前选中的区域，优先使用selectedRegionProvider
+    final selectedRegion = _selectedRegionNotifier.getCurrentRegion();
+    if (state.currentId == null && selectedRegion == null) {
+      AppLogger.debug('saveCurrentRegion: 没有选中的区域可保存');
+      return;
+    }
 
     try {
       state = state.copyWith(processing: true);
 
-      final region = _selectedRegionNotifier.getCurrentRegion();
-      if (region == null) {
-        throw Exception('No region selected');
-      }
+      // 使用已获取的选中区域，如果没有则查找currentId对应的区域
+      final region = selectedRegion ?? state.regions.firstWhere(
+        (r) => r.id == state.currentId,
+        orElse: () => throw Exception('No region selected'),
+      );
 
       AppLogger.debug('保存选区', data: {
         'regionId': region.id,
         'isModified': region.isModified,
+        'currentIdBeforeSave': state.currentId,
       });
+
+      // 确保currentId与正在保存的区域一致
+      if (state.currentId != region.id) {
+        AppLogger.debug('同步currentId与保存的区域', data: {
+          'oldCurrentId': state.currentId,
+          'newCurrentId': region.id,
+        });
+        state = state.copyWith(currentId: region.id);
+      }
 
       final exists = region.characterId != null;
       final originalId = region.id; // Store original ID to detect first save
-      List<Map<String, dynamic>>? eraseData =
-          region.eraseData; // Store erase data before save
+      
+      // Use the erase data from the updated region, not the original region
+      // This ensures we use the latest data collected from the UI
+      List<Map<String, dynamic>>? eraseData = region.eraseData;
+      
+      // Log the erase data received in saveCurrentRegion for debugging
+      AppLogger.debug('saveCurrentRegion 接收到的擦除数据', data: {
+        'regionId': region.id,
+        'eraseDataCount': eraseData?.length ?? 0,
+        'eraseDataDetails': eraseData?.asMap().entries.map((entry) {
+          final index = entry.key;
+          final pathData = entry.value;
+          final points = pathData['points'] as List<dynamic>? ?? [];
+          return {
+            'index': index,
+            'brushSize': pathData['brushSize'],
+            'brushColor': pathData['brushColor']?.toString(),
+            'pointCount': points.length,
+          };
+        }).toList(),
+      });
 
       final imageData = await _workImageService.getWorkPageImage(
           _currentWorkId!, region.pageId);
@@ -1056,7 +1092,24 @@ class CharacterCollectionNotifier
 
   // 更新选中区域
   void updateSelectedRegion(CharacterRegion region) {
-    if (state.currentId == null) return;
+    // 如果 currentId 为 null，尝试根据传入的 region 查找对应的索引
+    if (state.currentId == null) {
+      final index = state.regions.indexWhere((r) => r.id == region.id);
+      if (index < 0) {
+        AppLogger.warning('updateSelectedRegion: currentId为null且找不到对应区域', data: {
+          'regionId': region.id,
+          'regionsCount': state.regions.length,
+        });
+        return;
+      }
+      
+      // 如果找到了区域，更新 currentId
+      AppLogger.debug('updateSelectedRegion: currentId为null，根据region.id更新currentId', data: {
+        'regionId': region.id,
+        'foundIndex': index,
+      });
+      state = state.copyWith(currentId: region.id);
+    }
 
     // 找到当前区域的索引
     final index = state.regions.indexWhere((r) => r.id == state.currentId);
@@ -1080,6 +1133,8 @@ class CharacterCollectionNotifier
         'regionId': region.id,
         'hasContentChanges': hasContentChanges,
         'hasEraseDataChanges': hasEraseDataChanges,
+        'inputEraseDataCount': region.eraseData?.length ?? 0,
+        'oldEraseDataCount': oldRegion.eraseData?.length ?? 0,
         'oldRect': oldRegion.rect.toString(),
         'newRect': region.rect.toString(),
         'oldRotation': oldRegion.rotation,
@@ -1092,9 +1147,19 @@ class CharacterCollectionNotifier
       });
 
       // Update region with new properties, maintaining isSelected and setting isModified if changed
+      // CRITICAL FIX: Always use the input region's eraseData without any modification
       final updatedRegion = region.copyWith(
           isSelected: oldRegion.isSelected,
-          isModified: hasContentChanges || oldRegion.isModified);
+          isModified: hasContentChanges || oldRegion.isModified,
+          // IMPORTANT: Don't override eraseData - use exactly what was passed in
+      );
+      
+      AppLogger.debug('updateSelectedRegion完成数据更新', data: {
+        'regionId': region.id,
+        'finalEraseDataCount': updatedRegion.eraseData?.length ?? 0,
+        'inputEraseDataCount': region.eraseData?.length ?? 0,
+        'eraseDataPreserved': (updatedRegion.eraseData?.length ?? 0) == (region.eraseData?.length ?? 0),
+      });
 
       // 更新区域列表
       final updatedRegions = [...state.regions];
