@@ -106,6 +106,7 @@ class _M3CharacterCollectionPageState
     extends ConsumerState<M3CharacterCollectionPage> {
   bool _isImageValid = false;
   String? _imageError;
+  bool _isInitialLoading = true; // Track initial loading state
   double _panelWidth = 400; // Track the right panel width
 
   @override
@@ -201,6 +202,8 @@ class _M3CharacterCollectionPageState
                               ),
                             ],
                           )
+                        else if (_isInitialLoading)
+                          _buildInitialLoadingState()
                         else
                           _buildImageErrorState(),
 
@@ -301,6 +304,55 @@ class _M3CharacterCollectionPageState
                 minHeight: 24,
               ),
               tooltip: l10n.close,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Display initial loading state
+  Widget _buildInitialLoadingState() {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withAlpha(25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              color: colorScheme.primary,
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.loadingImage,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.processing,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -481,6 +533,7 @@ class _M3CharacterCollectionPageState
   // Load initial data
   Future<void> _loadInitialData() async {
     setState(() {
+      _isInitialLoading = true;
       _isImageValid = false;
       _imageError = null;
     });
@@ -496,6 +549,11 @@ class _M3CharacterCollectionPageState
           tag: 'M3CharacterCollectionPage',
           error: e,
           data: {'workId': widget.workId, 'pageId': widget.initialPageId});
+    } finally {
+      // Always mark initial loading as complete
+      setState(() {
+        _isInitialLoading = false;
+      });
     }
   }
 
