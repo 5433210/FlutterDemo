@@ -680,9 +680,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                         valueListenable: _altKeyNotifier,
                         builder: (context, isAltPressed, child) {
                           return MouseRegion(
-                            cursor: isAltPressed || _isRightMousePressed
-                                ? SystemMouseCursors.move
-                                : _getCursor(),
+                            cursor: _getCursor(),
                             onHover: (event) {
                               // 🚀 优化：使用防抖减少悬停事件的setState频率
                               _hoverDebouncer?.cancel();
@@ -744,9 +742,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                         valueListenable: _altKeyNotifier,
                         builder: (context, isAltPressed, child) {
                           return MouseRegion(
-                            cursor: isAltPressed || _isRightMousePressed
-                                ? SystemMouseCursors.move
-                                : SystemMouseCursors.precise,
+                            cursor: SystemMouseCursors.precise,
                             child: GestureDetector(
                               onTapUp: _onTapUp,
                               onPanStart: isAltPressed || _isRightMousePressed
@@ -1030,11 +1026,11 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   /// 获取更新的光标样式
   MouseCursor _getCursor() {
-    final toolMode = ref.read(
-        toolModeProvider); // Alt key or right mouse pressed always shows move cursor regardless of mode
-    if (_isAltKeyPressed || _isRightMousePressed) {
-      return SystemMouseCursors.move;
-    }
+    final toolMode = ref.read(toolModeProvider);
+    // 移除Alt键和右键的光标变化，避免误导用户
+    // if (_isAltKeyPressed || _isRightMousePressed) {
+    //   return SystemMouseCursors.move;
+    // }
 
     if (_isAdjusting) {
       if (_activeHandleIndex != null) {

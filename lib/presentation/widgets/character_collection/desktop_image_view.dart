@@ -481,9 +481,7 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
                       valueListenable: _altKeyNotifier,
                       builder: (context, isAltPressed, child) {
                         return MouseRegion(
-                          cursor: (isAltPressed || _isRightMousePressed)
-                              ? SystemMouseCursors.move
-                              : _getCursor(),
+                          cursor: _getCursor(),
                           onHover: (event) {
                             if (isAltPressed || _isRightMousePressed) return;
                             _hoverDebouncer?.cancel();
@@ -538,9 +536,7 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
                       valueListenable: _altKeyNotifier,
                       builder: (context, isAltPressed, child) {
                         return MouseRegion(
-                          cursor: (isAltPressed || _isRightMousePressed)
-                              ? SystemMouseCursors.move
-                              : SystemMouseCursors.precise,
+                          cursor: SystemMouseCursors.precise,
                           child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTapUp: _onTapUp,
@@ -713,9 +709,10 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
 
   MouseCursor _getCursor() {
     final toolMode = ref.read(toolModeProvider);
-    if (_isAltKeyPressed || _isRightMousePressed) {
-      return SystemMouseCursors.move;
-    }
+    // 移除Alt键和右键的光标变化，避免误导用户
+    // if (_isAltKeyPressed || _isRightMousePressed) {
+    //   return SystemMouseCursors.move;
+    // }
 
     if (_isAdjusting) {
       if (_activeHandleIndex != null) {
