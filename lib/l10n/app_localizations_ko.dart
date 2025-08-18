@@ -4190,13 +4190,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get toolModeSelectTooltip => '수집 도구 (Ctrl+B)';
 
   @override
-  String get toolModePanShort => 'Multi';
+  String get toolModePanShort => '다중선택';
 
   @override
-  String get toolModeSelectShort => 'Collect';
+  String get toolModeSelectShort => '수집';
 
   @override
-  String get resultShort => 'Results';
+  String get resultShort => '결과';
 
   @override
   String get topCenter => '위쪽 가운데';

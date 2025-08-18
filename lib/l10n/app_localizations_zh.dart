@@ -8692,6 +8692,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get toolModeSelectTooltip => '擷取工具 (Ctrl+B)';
 
   @override
+  String get toolModePanShort => '多選';
+
+  @override
+  String get toolModeSelectShort => '擷取';
+
+  @override
+  String get resultShort => '結果';
+
+  @override
   String get topCenter => '頂部置中';
 
   @override
