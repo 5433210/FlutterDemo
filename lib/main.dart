@@ -160,7 +160,7 @@ void main() async {
 void _delayedWindowSetup() {
   Future.delayed(const Duration(milliseconds: 100), () async {
     try {
-      await windowManager.setIcon('assets/images/zi.ico');
+      await windowManager.setIcon('assets/images/logo.ico');
 
       await windowManager.setBackgroundColor(Colors.white);
     } catch (e) {

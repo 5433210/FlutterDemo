@@ -26,8 +26,8 @@ class _AppIconWidgetState extends State<AppIconWidget> {
     try {
       return CachedImage(
         path: Theme.of(context).brightness == Brightness.dark
-            ? 'assets/images/zi.ico'
-            : 'assets/images/zi.ico',
+            ? 'assets/images/logo.ico'
+            : 'assets/images/logo.ico',
 
         width: widget.size,
         height: widget.size,

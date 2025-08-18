@@ -56,6 +56,7 @@ dev_dependencies:
   json_serializable: ^6.7.1
   coverage: ^1.6.3
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
   
   analyzer: ^7.3.0
   benchmark_harness: ^2.2.2
@@ -75,6 +76,14 @@ flutter:
     - family: SourceHanSerif
       fonts:
         - asset: assets/fonts/SourceHanSerif-VF.otf.ttc
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo.png"
+  # 禁用自适应图标以避免裁剪
+  adaptive_icon_background: null
+  adaptive_icon_foreground: null
 
 # MSIX packaging configuration
 msix_config:
