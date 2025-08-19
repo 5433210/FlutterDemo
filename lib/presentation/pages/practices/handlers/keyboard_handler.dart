@@ -17,6 +17,7 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 ///
 /// View Controls:
 /// - Ctrl+P: Preview mode toggle
+/// - Ctrl+Shift+H: Toggle toolbar visibility
 /// - Ctrl+O: Page thumbnails toggle
 /// - Ctrl+G: Grid toggle
 /// - Ctrl+R: Snap toggle
@@ -89,6 +90,7 @@ class KeyboardHandler {
   final Function() onTogglePreviewMode;
 
   final Function() onToggleThumbnails;
+  final Function() onToggleToolbar;
   final Function() editTitle;
   final Function() savePractice;
   final Function() saveAsNewPractice;
@@ -120,6 +122,7 @@ class KeyboardHandler {
     required this.controller,
     required this.onTogglePreviewMode,
     required this.onToggleThumbnails,
+    required this.onToggleToolbar,
     required this.editTitle,
     required this.savePractice,
     required this.saveAsNewPractice,
@@ -414,7 +417,12 @@ class KeyboardHandler {
 
           // Ctrl+H: Hide selected objects
           case LogicalKeyboardKey.keyH:
-            toggleSelectedElementsVisibility();
+            if (!_isShiftPressed) {
+              toggleSelectedElementsVisibility();
+            } else {
+              // Ctrl+Shift+H: Toggle toolbar visibility
+              onToggleToolbar();
+            }
             return true;
 
           // Ctrl+L: Lock selected objects

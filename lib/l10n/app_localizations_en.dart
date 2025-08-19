@@ -2167,6 +2167,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hideThumbnails => 'Hide Page Thumbnails';
 
   @override
+  String get hideToolbar => 'Hide Toolbar';
+
+  @override
   String get historicalPaths => 'Historical Paths';
 
   @override
@@ -3865,6 +3868,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showThumbnails => 'Show Page Thumbnails';
+
+  @override
+  String get showToolbar => 'Show Toolbar';
 
   @override
   String get skipBackup => 'Skip Backup';

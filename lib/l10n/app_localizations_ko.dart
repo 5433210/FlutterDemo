@@ -2167,6 +2167,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hideThumbnails => '페이지 썸네일 숨기기';
 
   @override
+  String get hideToolbar => '도구 모음 숨기기';
+
+  @override
   String get historicalPaths => '과거 경로';
 
   @override
@@ -3865,6 +3868,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get showThumbnails => '페이지 썸네일 표시';
+
+  @override
+  String get showToolbar => '도구 모음 표시';
 
   @override
   String get skipBackup => '백업 건너뛰기';

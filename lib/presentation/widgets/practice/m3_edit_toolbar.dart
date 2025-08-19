@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/toolbar_logger.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_sizes.dart';
 import 'guideline_alignment/guideline_types.dart';
 import 'practice_edit_controller.dart';
 
@@ -85,11 +84,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     final hasSelectedGroup =
         hasSelection && !isMultiSelected && _isSelectedElementGroup();
     return Container(
-      width: double.infinity, // 扩展到整个画布宽度
-      // 移除固定高度限制，使用自适应高度
-      constraints: const BoxConstraints(minHeight: 48),
-      padding: const EdgeInsets.symmetric(
-          vertical: AppSizes.xs, horizontal: AppSizes.s),
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 40),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         border: Border(
@@ -100,234 +97,210 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       child: Wrap(
-        spacing: AppSizes.s,
-        runSpacing: AppSizes.s,
+        spacing: 1, // 进一步减少水平间距
+        runSpacing: 1, // 进一步减少垂直间距
         alignment: WrapAlignment.start,
+        crossAxisAlignment: WrapCrossAlignment.center, // 确保垂直居中对齐
         children: [
-          // 元素工具按钮（如果提供了相关参数）
+          // 元素工具按钮
           if (onSelectTool != null) ...[
-            // 元素工具组
-            _buildToolbarGroup(
-              title: l10n.elements,
-              children: [
-                _buildElementButton(
-                  context: context,
-                  icon: Icons.text_fields,
-                  tooltip: '${l10n.text} (Alt+T)',
-                  toolName: 'text',
-                  isSelected: currentTool == 'text',
-                  onDragStart: onDragElementStart != null
-                      ? () => onDragElementStart!(context, 'text')
-                      : null,
-                  onCreateElement: onCreateTextElement,
-                ),
-                _buildElementButton(
-                  context: context,
-                  icon: Icons.image,
-                  tooltip: '${l10n.image} (Alt+I)',
-                  toolName: 'image',
-                  isSelected: currentTool == 'image',
-                  onDragStart: onDragElementStart != null
-                      ? () => onDragElementStart!(context, 'image')
-                      : null,
-                  onCreateElement: onCreateImageElement,
-                ),
-                _buildElementButton(
-                  context: context,
-                  icon: Icons.grid_on,
-                  tooltip: '${l10n.practiceEditCollection} (Alt+C)',
-                  toolName: 'collection',
-                  isSelected: currentTool == 'collection',
-                  onDragStart: onDragElementStart != null
-                      ? () => onDragElementStart!(context, 'collection')
-                      : null,
-                  onCreateElement: onCreateCollectionElement,
-                ),
+            ..._buildCompactToolbarGroup([
+              _buildElementButton(
+                context: context,
+                icon: Icons.text_fields,
+                tooltip: '${l10n.text} (Alt+T)',
+                toolName: 'text',
+                isSelected: currentTool == 'text',
+                onDragStart: onDragElementStart != null
+                    ? () => onDragElementStart!(context, 'text')
+                    : null,
+                onCreateElement: onCreateTextElement,
+              ),
+              _buildElementButton(
+                context: context,
+                icon: Icons.image,
+                tooltip: '${l10n.image} (Alt+I)',
+                toolName: 'image',
+                isSelected: currentTool == 'image',
+                onDragStart: onDragElementStart != null
+                    ? () => onDragElementStart!(context, 'image')
+                    : null,
+                onCreateElement: onCreateImageElement,
+              ),
+              _buildElementButton(
+                context: context,
+                icon: Icons.grid_on,
+                tooltip: '${l10n.practiceEditCollection} (Alt+C)',
+                toolName: 'collection',
+                isSelected: currentTool == 'collection',
+                onDragStart: onDragElementStart != null
+                    ? () => onDragElementStart!(context, 'collection')
+                    : null,
+                onCreateElement: onCreateCollectionElement,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.select_all,
+                tooltip: '${l10n.select} (Alt+S)',
+                onPressed: () {
+                  ToolbarLogger.logToolSwitch(currentTool ?? 'none', 'select');
+                  onSelectTool!('select');
+                },
+                isActive: currentTool == 'select',
+              ),
+              if (onSelectAll != null)
                 _buildToolbarButton(
                   context: context,
-                  icon: Icons.select_all,
-                  tooltip: '${l10n.select} (Alt+S)',
-                  onPressed: () {
-                    // 使用工具栏专用日志，防重复记录
-                    ToolbarLogger.logToolSwitch(currentTool ?? 'none', 'select');
-                    onSelectTool!('select');
-                  },
-                  isActive: currentTool == 'select',
+                  icon: Icons.done_all,
+                  tooltip: l10n.selectAllWithShortcut,
+                  onPressed: onSelectAll,
                 ),
-                if (onSelectAll != null)
-                  _buildToolbarButton(
-                    context: context,
-                    icon: Icons.done_all,
-                    tooltip: l10n.selectAllWithShortcut,
-                    onPressed: onSelectAll,
-                  ),
-                if (onDeselectAll != null)
-                  _buildToolbarButton(
-                    context: context,
-                    icon: Icons.deselect,
-                    tooltip: l10n.deselectAll,
-                    onPressed: onDeselectAll,
-                  ),
-              ],
-            ),
-
-            const SizedBox(width: AppSizes.s),
-            const VerticalDivider(),
-            const SizedBox(width: AppSizes.s),
+              if (onDeselectAll != null)
+                _buildToolbarButton(
+                  context: context,
+                  icon: Icons.deselect,
+                  tooltip: l10n.deselectAll,
+                  onPressed: onDeselectAll,
+                ),
+            ]),
+            _buildVerticalDivider(context),
           ],
           // Edit operations group
-          _buildToolbarGroup(
-            title: l10n.editOperations,
-            children: [
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.copy,
-                tooltip: '${l10n.copy} (Ctrl+Shift+C)',
-                onPressed: hasSelection
-                    ? () {
-                        ToolbarLogger.logSelectionOperation('复制元素', 
-                            controller.state.selectedElementIds.length);
-                        onCopy();
-                      }
-                    : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.paste,
-                tooltip: '${l10n.paste} (Ctrl+Shift+V)',
-                onPressed: canPaste
-                    ? () {
-                        ToolbarLogger.logEditOperation('粘贴元素');
-                        onPaste();
-                      }
-                    : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.delete,
-                tooltip: l10n.delete,
-                onPressed: hasSelection
-                    ? () {
-                        ToolbarLogger.logSelectionOperation('删除元素', 
-                            controller.state.selectedElementIds.length);
-                        onDelete();
-                      }
-                    : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.group,
-                tooltip: l10n.group,
-                onPressed: isMultiSelected ? () {
-                  ToolbarLogger.logGroupOperation('组合元素', 
-                      controller.state.selectedElementIds.length);
-                  onGroupElements();
-                } : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.format_shapes,
-                tooltip: l10n.ungroup,
-                onPressed: hasSelectedGroup ? () {
-                  ToolbarLogger.logGroupOperation('取消组合', 1, groupType: 'ungroup');
-                  onUngroupElements();
-                } : null,
-              ),
-            ],
-          ),
-
-          const SizedBox(width: AppSizes.s),
-          const VerticalDivider(),
-          const SizedBox(width: AppSizes.s),
-
+          ..._buildCompactToolbarGroup([
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.copy,
+              tooltip: '${l10n.copy} (Ctrl+Shift+C)',
+              onPressed: hasSelection
+                  ? () {
+                      ToolbarLogger.logSelectionOperation('复制元素', 
+                          controller.state.selectedElementIds.length);
+                      onCopy();
+                    }
+                  : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.paste,
+              tooltip: '${l10n.paste} (Ctrl+Shift+V)',
+              onPressed: canPaste
+                  ? () {
+                      ToolbarLogger.logEditOperation('粘贴元素');
+                      onPaste();
+                    }
+                  : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.delete,
+              tooltip: l10n.delete,
+              onPressed: hasSelection
+                  ? () {
+                      ToolbarLogger.logSelectionOperation('删除元素', 
+                          controller.state.selectedElementIds.length);
+                      onDelete();
+                    }
+                  : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.group,
+              tooltip: l10n.group,
+              onPressed: isMultiSelected ? () {
+                ToolbarLogger.logGroupOperation('组合元素', 
+                    controller.state.selectedElementIds.length);
+                onGroupElements();
+              } : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.format_shapes,
+              tooltip: l10n.ungroup,
+              onPressed: hasSelectedGroup ? () {
+                ToolbarLogger.logGroupOperation('取消组合', 1, groupType: 'ungroup');
+                onUngroupElements();
+              } : null,
+            ),
+          ]),
+          _buildVerticalDivider(context),
           // Layer operations group
-          _buildToolbarGroup(
-            title: l10n.layerOperations,
-            children: [
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.vertical_align_top,
-                tooltip: l10n.bringToFront,
-                onPressed: hasSelection ? () {
-                  ToolbarLogger.logLayerOperation('置于顶层', 
-                      controller.state.selectedElementIds.length);
-                  onBringToFront();
-                } : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.vertical_align_bottom,
-                tooltip: l10n.sendToBack,
-                onPressed: hasSelection ? () {
-                  ToolbarLogger.logLayerOperation('置于底层', 
-                      controller.state.selectedElementIds.length);
-                  onSendToBack();
-                } : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.arrow_upward,
-                tooltip: l10n.moveUp,
-                onPressed: hasSelection ? () {
-                  ToolbarLogger.logLayerOperation('上移一层', 
-                      controller.state.selectedElementIds.length);
-                  onMoveUp();
-                } : null,
-              ),
-              _buildToolbarButton(
-                context: context,
-                icon: Icons.arrow_downward,
-                tooltip: l10n.moveDown,
-                onPressed: hasSelection ? () {
-                  ToolbarLogger.logLayerOperation('下移一层', 
-                      controller.state.selectedElementIds.length);
-                  onMoveDown();
-                } : null,
-              ),
-            ],
-          ),
-
-          const SizedBox(width: AppSizes.s),
-          const VerticalDivider(),
-          const SizedBox(width: AppSizes.s),
-
+          ..._buildCompactToolbarGroup([
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.vertical_align_top,
+              tooltip: l10n.bringToFront,
+              onPressed: hasSelection ? () {
+                ToolbarLogger.logLayerOperation('置于顶层', 
+                    controller.state.selectedElementIds.length);
+                onBringToFront();
+              } : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.vertical_align_bottom,
+              tooltip: l10n.sendToBack,
+              onPressed: hasSelection ? () {
+                ToolbarLogger.logLayerOperation('置于底层', 
+                    controller.state.selectedElementIds.length);
+                onSendToBack();
+              } : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.arrow_upward,
+              tooltip: l10n.moveUp,
+              onPressed: hasSelection ? () {
+                ToolbarLogger.logLayerOperation('上移一层', 
+                    controller.state.selectedElementIds.length);
+                onMoveUp();
+              } : null,
+            ),
+            _buildToolbarButton(
+              context: context,
+              icon: Icons.arrow_downward,
+              tooltip: l10n.moveDown,
+              onPressed: hasSelection ? () {
+                ToolbarLogger.logLayerOperation('下移一层', 
+                    controller.state.selectedElementIds.length);
+                onMoveDown();
+              } : null,
+            ),
+          ]),
+          _buildVerticalDivider(context),
           // 对齐辅助组
-          _buildToolbarGroup(
-            title: l10n.alignmentAssist,
-            children: [
+          ..._buildCompactToolbarGroup([
+            _buildToolbarButton(
+              context: context,
+              icon: gridVisible ? Icons.grid_on : Icons.grid_off,
+              tooltip: gridVisible ? l10n.hideGrid : l10n.showGrid,
+              onPressed: () {
+                ToolbarLogger.logViewStateToggle('网格显示', !gridVisible);
+                onToggleGrid();
+              },
+              isActive: gridVisible,
+            ),
+            _buildAlignmentModeButton(context),
+            if (onCopyFormatting != null)
               _buildToolbarButton(
                 context: context,
-                icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                tooltip: gridVisible ? l10n.hideGrid : l10n.showGrid,
-                onPressed: () {
-                  ToolbarLogger.logViewStateToggle('网格显示', !gridVisible);
-                  onToggleGrid();
-                },
-                isActive: gridVisible,
+                icon: Icons.format_paint,
+                tooltip: l10n.copyFormat,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logFormatOperation('复制格式');
+                  onCopyFormatting!();
+                } : null,
               ),
-              _buildAlignmentModeButton(context),
-              if (onCopyFormatting != null)
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.format_paint,
-                  tooltip: l10n.copyFormat,
-                  onPressed: hasSelection ? () {
-                    ToolbarLogger.logFormatOperation('复制格式');
-                    onCopyFormatting!();
-                  } : null,
-                ),
-              if (onApplyFormatBrush != null)
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.format_color_fill,
-                  tooltip: l10n.applyFormatBrush,
-                  onPressed: hasSelection ? () {
-                    ToolbarLogger.logFormatOperation('应用格式刷');
-                    onApplyFormatBrush!();
-                  } : null,
-                ),
-            ],
-          ),
+            if (onApplyFormatBrush != null)
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.format_color_fill,
+                tooltip: l10n.applyFormatBrush,
+                onPressed: hasSelection ? () {
+                  ToolbarLogger.logFormatOperation('应用格式刷');
+                  onApplyFormatBrush!();
+                } : null,
+              ),
+          ]),
         ],
       ),
     );
@@ -349,43 +322,23 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
       message: tooltip,
       child: Material(
         color: isSelected ? colorScheme.primaryContainer : colorScheme.surface,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(6.0),
         child: InkWell(
           onTap: () {
-            // 使用专用日志工具，避免重复记录
             ToolbarLogger.logElementCreate(toolName);
             if (onCreateElement != null) {
               onCreateElement();
             }
           },
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(6.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 36),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: 18,
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurface,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    tooltip.split(' ').first, // 只显示工具名称，不显示快捷键
-                    style: TextStyle(
-                      fontSize: 12,
-                      overflow: TextOverflow.ellipsis,
-                      color: isSelected
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
+            padding: const EdgeInsets.all(6), // 减少内边距
+            child: Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurface,
             ),
           ),
         ),
@@ -398,30 +351,17 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         data: toolName,
         feedback: Material(
           elevation: 4.0,
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(6.0),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+            padding: const EdgeInsets.all(6), // 减少内边距保持一致
             decoration: BoxDecoration(
               color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(6.0),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  tooltip.split(' ').first,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ],
+            child: Icon(
+              icon,
+              size: 16,
+              color: colorScheme.onPrimaryContainer,
             ),
           ),
         ),
@@ -430,7 +370,6 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           child: button,
         ),
         onDragStarted: () {
-          // 拖拽操作使用专用日志，减少噪音
           ToolbarLogger.logDragCreateStart(toolName);
           onDragStart();
         },
@@ -466,38 +405,29 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         icon: Icon(
           icon,
           color: iconColor,
-          size: 20,
+          size: 16,
         ),
         onPressed: onPressed,
         style: IconButton.styleFrom(
-          minimumSize: const Size(40, 40),
-          padding: const EdgeInsets.all(8),
+          minimumSize: const Size(28, 28), // 进一步减小按钮尺寸
+          padding: const EdgeInsets.all(6), // 减少内边距
         ),
       ),
     );
   }
 
-  /// Build toolbar group
-  Widget _buildToolbarGroup({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Wrap(
-      spacing: 4, // 设置按钮之间的水平间距
-      crossAxisAlignment: WrapCrossAlignment.center, // 垂直居中对齐
-      children: [
-        // Group title
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Tool buttons
-        ...children,
-      ],
+  /// Build compact toolbar group without title - returns list of widgets
+  List<Widget> _buildCompactToolbarGroup(List<Widget> children) {
+    return children;
+  }
+
+  /// Build vertical divider
+  Widget _buildVerticalDivider(BuildContext context) {
+    return Container(
+      height: 20, // 减少高度以更好匹配按钮
+      width: 1,
+      color: Theme.of(context).colorScheme.outlineVariant,
+      margin: const EdgeInsets.symmetric(horizontal: 6), // 增加左右边距
     );
   }
 

@@ -17,6 +17,8 @@ class M3TopNavigationBar extends StatelessWidget
   final VoidCallback onTogglePreviewMode;
   final bool showThumbnails;
   final Function(bool) onThumbnailToggle;
+  final bool showToolbar;
+  final VoidCallback onToggleToolbar;
 
   const M3TopNavigationBar({
     super.key,
@@ -26,6 +28,8 @@ class M3TopNavigationBar extends StatelessWidget
     required this.onTogglePreviewMode,
     required this.showThumbnails,
     required this.onThumbnailToggle,
+    this.showToolbar = true,
+    required this.onToggleToolbar,
   });
 
   @override
@@ -144,6 +148,24 @@ class M3TopNavigationBar extends StatelessWidget
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Toolbar toggle button
+            IconButton(
+              icon: Icon(
+                showToolbar
+                    ? Icons.build
+                    : Icons.build_outlined,
+              ),
+              tooltip: showToolbar
+                  ? '${l10n.hideToolbar} (Ctrl+Shift+H)'
+                  : '${l10n.showToolbar} (Ctrl+Shift+H)',
+              onPressed: onToggleToolbar,
+              style: IconButton.styleFrom(
+                foregroundColor:
+                    showToolbar ? colorScheme.tertiary : colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s),
+            
             // Thumbnails toggle button
             IconButton(
               icon: Icon(

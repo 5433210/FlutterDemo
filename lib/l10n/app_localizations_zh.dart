@@ -2167,6 +2167,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hideThumbnails => '隐藏页面缩略图';
 
   @override
+  String get hideToolbar => '隐藏工具栏';
+
+  @override
   String get historicalPaths => '历史路径';
 
   @override
@@ -3865,6 +3868,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get showThumbnails => '显示页面缩略图';
+
+  @override
+  String get showToolbar => '显示工具栏';
 
   @override
   String get skipBackup => '跳过备份';
@@ -6669,6 +6675,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get hideThumbnails => '隱藏頁面縮圖';
 
   @override
+  String get hideToolbar => '隱藏工具列';
+
+  @override
   String get historicalPaths => '歷史路徑';
 
   @override
@@ -8367,6 +8376,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get showThumbnails => '顯示頁面縮圖';
+
+  @override
+  String get showToolbar => '顯示工具列';
 
   @override
   String get skipBackup => '略過備份';

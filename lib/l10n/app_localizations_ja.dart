@@ -2167,6 +2167,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hideThumbnails => 'ページサムネイルを非表示';
 
   @override
+  String get hideToolbar => 'ツールバーを非表示';
+
+  @override
   String get historicalPaths => '履歴パス';
 
   @override
@@ -3865,6 +3868,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get showThumbnails => 'ページサムネイルを表示';
+
+  @override
+  String get showToolbar => 'ツールバーを表示';
 
   @override
   String get skipBackup => 'バックアップをスキップ';

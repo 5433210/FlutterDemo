@@ -86,6 +86,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   // Control page thumbnails display state
   bool _showThumbnails = false;
+  // Control toolbar visibility
+  bool _showToolbar = true;
   // Control panel visibility - will be initialized from persistent state
   bool _isLeftPanelOpen = false; // Default to closed as requested
   bool _isRightPanelOpen = true;
@@ -144,6 +146,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               onThumbnailToggle: (bool value) {
                 setState(() {
                   _showThumbnails = value; // Update thumbnails display state
+                });
+              },
+              showToolbar: _showToolbar,
+              onToggleToolbar: () {
+                setState(() {
+                  _showToolbar = !_showToolbar; // Toggle toolbar visibility
                 });
               },
             );
@@ -677,7 +685,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Toolbar - wrapped in AnimatedBuilder since it needs to react to controller changes
-              if (!_isPreviewMode)
+              if (!_isPreviewMode && _showToolbar)
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) => _buildEditToolbar(),
@@ -2183,6 +2191,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       onToggleThumbnails: () {
         setState(() {
           _showThumbnails = !_showThumbnails;
+        });
+      },
+      onToggleToolbar: () {
+        setState(() {
+          _showToolbar = !_showToolbar;
         });
       },
       editTitle: _editTitle,

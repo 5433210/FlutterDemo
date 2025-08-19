@@ -4120,6 +4120,12 @@ abstract class AppLocalizations {
   /// **'Hide Page Thumbnails'**
   String get hideThumbnails;
 
+  /// No description provided for @hideToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Toolbar'**
+  String get hideToolbar;
+
   /// No description provided for @historicalPaths.
   ///
   /// In en, this message translates to:
@@ -7359,6 +7365,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show Page Thumbnails'**
   String get showThumbnails;
+
+  /// No description provided for @showToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Toolbar'**
+  String get showToolbar;
 
   /// No description provided for @skipBackup.
   ///
