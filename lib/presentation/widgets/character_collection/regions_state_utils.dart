@@ -22,8 +22,10 @@ class RegionStateUtils {
         result = const Color(CharacterRegionColorScheme.adjusting);
         break;
       case CharacterRegionState.selected:
-        // 多选工具模式下，多選和單選使用相同顏色
-        result = const Color(CharacterRegionColorScheme.selected);
+        // 多选状态使用更醒目的颜色，单选保持原有颜色
+        result = isMultiSelected 
+            ? const Color(CharacterRegionColorScheme.multiSelected)
+            : const Color(CharacterRegionColorScheme.selected);
         break;
       case CharacterRegionState.normal:
         result = isSaved
@@ -45,8 +47,10 @@ class RegionStateUtils {
       case CharacterRegionState.adjusting:
         return CharacterRegionColorScheme.adjustingBorderWidth;
       case CharacterRegionState.selected:
-        // 多选工具模式下，多選和單選使用相同邊框寬度
-        return CharacterRegionColorScheme.selectedBorderWidth;
+        // 多选状态使用更粗的边框，单选保持原有宽度
+        return isMultiSelected 
+            ? CharacterRegionColorScheme.multiSelectedBorderWidth
+            : CharacterRegionColorScheme.selectedBorderWidth;
       case CharacterRegionState.normal:
         return CharacterRegionColorScheme.normalBorderWidth;
     }
@@ -75,8 +79,10 @@ class RegionStateUtils {
         opacity = CharacterRegionColorScheme.adjustingOpacity;
         break;
       case CharacterRegionState.selected:
-        // 多选工具模式下，多選和單選使用相同透明度
-        opacity = CharacterRegionColorScheme.selectedOpacity;
+        // 多选状态使用更高的透明度，增强视觉区分度
+        opacity = isMultiSelected 
+            ? CharacterRegionColorScheme.multiSelectedOpacity
+            : CharacterRegionColorScheme.selectedOpacity;
         break;
       case CharacterRegionState.normal:
         opacity = isSaved

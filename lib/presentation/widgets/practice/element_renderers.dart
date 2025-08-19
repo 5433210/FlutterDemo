@@ -263,7 +263,7 @@ class ElementRenderers {
                 break;
               case 'image':
                 childWidget =
-                    buildImageElement(child, isPreviewMode: isPreviewMode);
+                    buildImageElement(context, child, isPreviewMode: isPreviewMode);
                 break;
               case 'collection':
                 childWidget = buildCollectionElement(context, child,
@@ -332,7 +332,7 @@ class ElementRenderers {
   }
 
   /// 构建图片元素
-  static Widget buildImageElement(Map<String, dynamic> element,
+  static Widget buildImageElement(BuildContext context, Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
     
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
@@ -424,16 +424,11 @@ class ElementRenderers {
         rawImageData == null &&
         transformedImageData == null &&
         binarizedImageData == null) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        alignment: Alignment.center,
-        color: bgColor ?? Colors.grey.shade200,
-        child: const Icon(Icons.image, size: 48, color: Colors.grey),
-      );
+      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
     } // 优先级：二值化图像数据 > 转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
     
     Widget imageWidget = _buildImageWidget(
+      context: context,
       imageUrl: transformedImageUrl ?? imageUrl,
       fitMode: fitMode,
       imageAlignment: imageAlignment,
@@ -581,8 +576,45 @@ class ElementRenderers {
     );
   }
 
+  /// 构建图片占位符组件
+  static Widget _buildImagePlaceholder(BuildContext context, String placeholderText) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 2.0,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_outlined, 
+            size: 48, 
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            placeholderText,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 构建图片小部件，根据数据类型选择不同的加载方式
   static Widget _buildImageWidget({
+    required BuildContext context,
     required String imageUrl,
     required String fitMode,
     required String imageAlignment,
@@ -695,7 +727,7 @@ class ElementRenderers {
         'imageUrl': imageUrl,
         'priority': 'none'
       });
-      return _buildImageErrorWidget('没有可用的图像数据');
+      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
     }
 
     // 检查是否是本地文件路径（原始来源）
@@ -719,12 +751,12 @@ class ElementRenderers {
           return _buildImageErrorWidget('加载本地图片失败');
         },
       );
-    } else {
+    } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       EditPageLogger.rendererDebug('🌐 使用网络图片URL', data: {
         'imageUrl': imageUrl,
         'priority': 'lowest'
       });
-      // 使用网络图片加载
+      // 只有当URL明确是HTTP/HTTPS协议时才尝试加载网络图片
       return Image.network(
         imageUrl,
         fit: fit,
@@ -735,6 +767,13 @@ class ElementRenderers {
           return _buildImageErrorWidget('加载网络图片失败');
         },
       );
+    } else {
+      // 对于其他类型的URL或无效URL，显示占位符而不是错误
+      EditPageLogger.rendererDebug('❓ 未识别的图片URL格式，显示占位符', data: {
+        'imageUrl': imageUrl,
+        'urlType': 'unknown'
+      });
+      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
     }
   }
 

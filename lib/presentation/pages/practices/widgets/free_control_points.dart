@@ -98,15 +98,15 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       clipBehavior: Clip.none,
       fit: StackFit.loose,
       children: [
-        // 绘制元素边框（用于参考）
+        // 使用角落标记式边框绘制器
         CustomPaint(
-          painter: _TestElementBorderPainter(
+          painter: _CornerMarksBorderPainter(
             x: _currentX,
             y: _currentY,
             width: _currentWidth,
             height: _currentHeight,
             rotation: _currentRotation * 180 / pi, // 使用当前旋转角度
-            color: Colors.green.withValues(alpha: 0.5), // 使用绿色表示这是测试版本
+            color: Colors.blue.withValues(alpha: 0.8), // 使用藍色邊框，類似字符採集頁
           ),
           size: Size.infinite,
         ),
@@ -299,12 +299,12 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
         if (mounted && !_isInitialized) {
           try {
             _initializeControlPointPositions();
-            
+
             // 強制觸發重建以顯示控制點
             if (mounted) {
               setState(() {});
             }
-            
+
             EditPageLogger.canvasDebug('控制點初始化完成並觸發重建', data: {
               'isMobile': _isMobile,
               'platformDetected': _platformDetected,
@@ -313,13 +313,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
               'timing': 'postframe_callback',
             });
           } catch (e, stackTrace) {
-            EditPageLogger.canvasError('控制點初始化失敗', 
-              error: e, 
-              stackTrace: stackTrace,
-              data: {
-                'elementId': widget.elementId,
-                'operation': 'initialize_control_points',
-              });
+            EditPageLogger.canvasError('控制點初始化失敗',
+                error: e,
+                stackTrace: stackTrace,
+                data: {
+                  'elementId': widget.elementId,
+                  'operation': 'initialize_control_points',
+                });
           }
         }
       });
@@ -600,27 +600,50 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 构建测试控制点 - 独立移动，不更新元素
   Widget _buildTestControlPoint(int index) {
     final position = _controlPointPositions[index]!;
-    const controlPointSize = 32.0;
 
-    // 🔧 移动端优化：增加触摸区域大小
-    final hitAreaSize = _isMobile ? 48.0 : 24.0; // 移动端使用48px，桌面端使用24px
+    // 🔧 分離觸摸區域和可視區域的尺寸
+    // 觸摸區域根據平台優化，提高操作容錯性
+    final double touchAreaSize = _isMobile ? 56.0 : 32.0; // 移動端更大的觸摸區域
 
     String controlPointName = _getControlPointName(index);
     MouseCursor cursor = _getControlPointCursor(index);
     bool isRotation = index == 8;
 
-    // EditPageLogger.canvasDebug('🔥 构建控制点', data: {
-    //   'index': index,
-    //   'controlPointName': controlPointName,
-    //   'position': '${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}',
-    //   'isRotation': isRotation,
-    // });
+    // 如果是旋转控制点，保留可视化的旋转图标
+    Widget? child;
+    if (isRotation) {
+      child = Container(
+        width: 16.0,
+        height: 16.0,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.blue,
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(100),
+              spreadRadius: 1.0,
+              blurRadius: 2.0,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.rotate_right,
+          size: 10,
+          color: Colors.blue,
+        ),
+      );
+    }
 
     return Positioned(
-      left: position.dx - hitAreaSize / 2,
-      top: position.dy - hitAreaSize / 2,
-      width: hitAreaSize,
-      height: hitAreaSize,
+      left: position.dx - touchAreaSize / 2,
+      top: position.dy - touchAreaSize / 2,
+      width: touchAreaSize,
+      height: touchAreaSize,
       child: Material(
         color: Colors.transparent,
         child: Listener(
@@ -765,38 +788,15 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 // 🔧 清除当前拖拽控制点状态
                 _currentDraggingControlPoint = null;
               },
-              child: Center(
-                child: Container(
-                  width: controlPointSize,
-                  height: controlPointSize,
-                  decoration: BoxDecoration(
-                    color:
-                        isRotation ? Colors.orange : Colors.red, // 使用不同颜色表示测试版本
-                    shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(100),
-                        spreadRadius: 1.0,
-                        blurRadius: 2.0,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$index',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+              child: Container(
+                width: touchAreaSize,
+                height: touchAreaSize,
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
                 ),
+                child: child != null 
+                    ? Center(child: child) // 旋转控制点显示图标
+                    : null, // 其他控制点不显示任何可视元素
               ),
             ),
           ),
@@ -927,13 +927,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
             child: Container(
               width: dragWidth,
               height: dragHeight,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.transparent,
-                // 添加调试边框（在debug模式下可见）
-                border: kDebugMode
-                    ? Border.all(
-                        color: Colors.red.withValues(alpha: 0.3), width: 1)
-                    : null,
               ),
             ),
           ),
@@ -949,11 +944,13 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     if (topLeft == null || bottomRight == null) return null;
 
+    // 由于控制点现在在内部，需要向外扩展8像素来获得真实的元素边界
+    const offset = 8.0;
     return Rect.fromLTRB(
-      topLeft.dx + 8,
-      topLeft.dy + 8,
-      bottomRight.dx - 8,
-      bottomRight.dy - 8,
+      topLeft.dx - offset,
+      topLeft.dy - offset,
+      bottomRight.dx + offset,
+      bottomRight.dy + offset,
     );
   }
 
@@ -1059,32 +1056,32 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 初始化旋转中心
     _rotationCenter = Offset(centerX, centerY);
 
-    const offset = 8.0; // 控制点偏移量
+    const offset = 8.0; // 控制点内偏移量 - 现在向内偏移
 
     // 🔧 移动端优化：旋转控制点距离调整
     final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
     final unrotatedPositions = [
-      // 索引0: 左上角
-      Offset(_currentX - offset, _currentY - offset),
-      // 索引1: 上中
-      Offset(_currentX + _currentWidth / 2, _currentY - offset),
-      // 索引2: 右上角
-      Offset(_currentX + _currentWidth + offset, _currentY - offset),
-      // 索引3: 右中
+      // 索引0: 左上角 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + offset),
+      // 索引1: 上中 - 移动到元素内部
+      Offset(_currentX + _currentWidth / 2, _currentY + offset),
+      // 索引2: 右上角 - 移动到元素内部
+      Offset(_currentX + _currentWidth - offset, _currentY + offset),
+      // 索引3: 右中 - 移动到元素内部
       Offset(
-          _currentX + _currentWidth + offset, _currentY + _currentHeight / 2),
-      // 索引4: 右下角
-      Offset(_currentX + _currentWidth + offset,
-          _currentY + _currentHeight + offset),
-      // 索引5: 下中
+          _currentX + _currentWidth - offset, _currentY + _currentHeight / 2),
+      // 索引4: 右下角 - 移动到元素内部
+      Offset(_currentX + _currentWidth - offset,
+          _currentY + _currentHeight - offset),
+      // 索引5: 下中 - 移动到元素内部
       Offset(
-          _currentX + _currentWidth / 2, _currentY + _currentHeight + offset),
-      // 索引6: 左下角
-      Offset(_currentX - offset, _currentY + _currentHeight + offset),
-      // 索引7: 左中
-      Offset(_currentX - offset, _currentY + _currentHeight / 2),
-      // 索引8: 旋转控制点 - 移动端增加距离
+          _currentX + _currentWidth / 2, _currentY + _currentHeight - offset),
+      // 索引6: 左下角 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + _currentHeight - offset),
+      // 索引7: 左中 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + _currentHeight / 2),
+      // 索引8: 旋转控制点 - 保持在元素外部以便操作
       Offset(centerX, _currentY - rotationOffset),
     ];
 
@@ -1183,7 +1180,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
   /// 重新计算控制点位置
   void _recalculateControlPointPositions() {
-    const offset = 8.0; // 控制点偏移量
+    const offset = 8.0; // 控制点内偏移量 - 现在向内偏移
 
     // 🔧 移动端优化：旋转控制点距离调整
     final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
@@ -1192,26 +1189,26 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     final centerY = _currentY + _currentHeight / 2;
 
     final unrotatedPositions = [
-      // 索引0: 左上角
-      Offset(_currentX - offset, _currentY - offset),
-      // 索引1: 上中
-      Offset(_currentX + _currentWidth / 2, _currentY - offset),
-      // 索引2: 右上角
-      Offset(_currentX + _currentWidth + offset, _currentY - offset),
-      // 索引3: 右中
+      // 索引0: 左上角 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + offset),
+      // 索引1: 上中 - 移动到元素内部
+      Offset(_currentX + _currentWidth / 2, _currentY + offset),
+      // 索引2: 右上角 - 移动到元素内部
+      Offset(_currentX + _currentWidth - offset, _currentY + offset),
+      // 索引3: 右中 - 移动到元素内部
       Offset(
-          _currentX + _currentWidth + offset, _currentY + _currentHeight / 2),
-      // 索引4: 右下角
-      Offset(_currentX + _currentWidth + offset,
-          _currentY + _currentHeight + offset),
-      // 索引5: 下中
+          _currentX + _currentWidth - offset, _currentY + _currentHeight / 2),
+      // 索引4: 右下角 - 移动到元素内部
+      Offset(_currentX + _currentWidth - offset,
+          _currentY + _currentHeight - offset),
+      // 索引5: 下中 - 移动到元素内部
       Offset(
-          _currentX + _currentWidth / 2, _currentY + _currentHeight + offset),
-      // 索引6: 左下角
-      Offset(_currentX - offset, _currentY + _currentHeight + offset),
-      // 索引7: 左中
-      Offset(_currentX - offset, _currentY + _currentHeight / 2),
-      // 索引8: 旋转控制点 - 移动端增加距离
+          _currentX + _currentWidth / 2, _currentY + _currentHeight - offset),
+      // 索引6: 左下角 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + _currentHeight - offset),
+      // 索引7: 左中 - 移动到元素内部
+      Offset(_currentX + offset, _currentY + _currentHeight / 2),
+      // 索引8: 旋转控制点 - 保持在元素外部以便操作
       Offset(centerX, _currentY - rotationOffset),
     ];
 
@@ -1536,7 +1533,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   }
 
   void _updateAllControlPointsFromRect(Rect rect) {
-    const offset = 8.0;
+    const offset = 8.0; // 控制点内偏移量 - 现在向内偏移
     // 🔧 移动端优化：旋转控制点距离调整
     final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
@@ -1554,23 +1551,23 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     // 计算未旋转的控制点位置
     final unrotatedPositions = [
-      // 索引0: 左上角
-      Offset(rect.left - offset, rect.top - offset),
-      // 索引1: 上中
-      Offset(centerX, rect.top - offset),
-      // 索引2: 右上角
-      Offset(rect.right + offset, rect.top - offset),
-      // 索引3: 右中
-      Offset(rect.right + offset, centerY),
-      // 索引4: 右下角
-      Offset(rect.right + offset, rect.bottom + offset),
-      // 索引5: 下中
-      Offset(centerX, rect.bottom + offset),
-      // 索引6: 左下角
-      Offset(rect.left - offset, rect.bottom + offset),
-      // 索引7: 左中
-      Offset(rect.left - offset, centerY),
-      // 索引8: 旋转控制点 - 移动端增加距离
+      // 索引0: 左上角 - 移动到元素内部
+      Offset(rect.left + offset, rect.top + offset),
+      // 索引1: 上中 - 移动到元素内部
+      Offset(centerX, rect.top + offset),
+      // 索引2: 右上角 - 移动到元素内部
+      Offset(rect.right - offset, rect.top + offset),
+      // 索引3: 右中 - 移动到元素内部
+      Offset(rect.right - offset, centerY),
+      // 索引4: 右下角 - 移动到元素内部
+      Offset(rect.right - offset, rect.bottom - offset),
+      // 索引5: 下中 - 移动到元素内部
+      Offset(centerX, rect.bottom - offset),
+      // 索引6: 左下角 - 移动到元素内部
+      Offset(rect.left + offset, rect.bottom - offset),
+      // 索引7: 左中 - 移动到元素内部
+      Offset(rect.left + offset, centerY),
+      // 索引8: 旋转控制点 - 保持在元素外部以便操作
       Offset(centerX, rect.top - rotationOffset),
     ];
 
@@ -1599,33 +1596,33 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _currentY = centerY - _currentHeight / 2;
 
     // 使用当前独立的矩形尺寸
-    const offset = 8.0;
+    const offset = 8.0; // 控制点内偏移量 - 现在向内偏移
     // 🔧 移动端优化：旋转控制点距离调整
     final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
     // 原始控制点位置（未旋转）
     final unrotatedPositions = [
-      // 索引0: 左上角
-      Offset(centerX - _currentWidth / 2 - offset,
-          centerY - _currentHeight / 2 - offset),
-      // 索引1: 上中
-      Offset(centerX, centerY - _currentHeight / 2 - offset),
-      // 索引2: 右上角
-      Offset(centerX + _currentWidth / 2 + offset,
-          centerY - _currentHeight / 2 - offset),
-      // 索引3: 右中
-      Offset(centerX + _currentWidth / 2 + offset, centerY),
-      // 索引4: 右下角
-      Offset(centerX + _currentWidth / 2 + offset,
-          centerY + _currentHeight / 2 + offset),
-      // 索引5: 下中
-      Offset(centerX, centerY + _currentHeight / 2 + offset),
-      // 索引6: 左下角
-      Offset(centerX - _currentWidth / 2 - offset,
-          centerY + _currentHeight / 2 + offset),
-      // 索引7: 左中
-      Offset(centerX - _currentWidth / 2 - offset, centerY),
-      // 索引8: 旋转控制点 - 移动端增加距离
+      // 索引0: 左上角 - 移动到元素内部
+      Offset(centerX - _currentWidth / 2 + offset,
+          centerY - _currentHeight / 2 + offset),
+      // 索引1: 上中 - 移动到元素内部
+      Offset(centerX, centerY - _currentHeight / 2 + offset),
+      // 索引2: 右上角 - 移动到元素内部
+      Offset(centerX + _currentWidth / 2 - offset,
+          centerY - _currentHeight / 2 + offset),
+      // 索引3: 右中 - 移动到元素内部
+      Offset(centerX + _currentWidth / 2 - offset, centerY),
+      // 索引4: 右下角 - 移动到元素内部
+      Offset(centerX + _currentWidth / 2 - offset,
+          centerY + _currentHeight / 2 - offset),
+      // 索引5: 下中 - 移动到元素内部
+      Offset(centerX, centerY + _currentHeight / 2 - offset),
+      // 索引6: 左下角 - 移动到元素内部
+      Offset(centerX - _currentWidth / 2 + offset,
+          centerY + _currentHeight / 2 - offset),
+      // 索引7: 左中 - 移动到元素内部
+      Offset(centerX - _currentWidth / 2 + offset, centerY),
+      // 索引8: 旋转控制点 - 保持在元素外部以便操作
       Offset(centerX, centerY - _currentHeight / 2 - rotationOffset),
     ];
 
@@ -1823,8 +1820,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   }
 }
 
-/// 测试用的元素边框绘制器
-class _TestElementBorderPainter extends CustomPainter {
+/// 角落标记式边框绘制器 - 在所有8个控制点位置绘制L形标记，并添加细线框
+class _CornerMarksBorderPainter extends CustomPainter {
   final double x;
   final double y;
   final double width;
@@ -1832,7 +1829,7 @@ class _TestElementBorderPainter extends CustomPainter {
   final double rotation;
   final Color color;
 
-  _TestElementBorderPainter({
+  _CornerMarksBorderPainter({
     required this.x,
     required this.y,
     required this.width,
@@ -1843,14 +1840,22 @@ class _TestElementBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
     final centerX = x + width / 2;
     final centerY = y + height / 2;
     final angle = rotation * pi / 180;
+
+    // 绘制包围元素区域的细线框
+    _drawElementBorder(canvas, centerX, centerY, angle);
+
+    // 绘制控制点位置的L形标记
+    _drawControlPointMarks(canvas, centerX, centerY, angle);
+  }
+
+  void _drawElementBorder(Canvas canvas, double centerX, double centerY, double angle) {
+    final borderPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
 
     // 计算四个角点
     final corners = [
@@ -1860,7 +1865,7 @@ class _TestElementBorderPainter extends CustomPainter {
       Offset(x, y + height),
     ];
 
-    // 应用旋转
+    // 应用旋转变换
     final rotatedCorners = corners.map((corner) {
       return _rotatePoint(corner.dx, corner.dy, centerX, centerY, angle);
     }).toList();
@@ -1873,7 +1878,99 @@ class _TestElementBorderPainter extends CustomPainter {
     }
     path.close();
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+  }
+
+  void _drawControlPointMarks(Canvas canvas, double centerX, double centerY, double angle) {
+    final markPaint = Paint()
+      ..color = color
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    // 控制点标记的长度
+    const double markLength = 12.0;
+    const double inset = 8.0; // 控制点内偏移量
+
+    // 计算所有8个控制点位置（在元素内部）
+    final controlPoints = [
+      Offset(x + inset, y + inset), // 左上角
+      Offset(x + width / 2, y + inset), // 上中
+      Offset(x + width - inset, y + inset), // 右上角
+      Offset(x + width - inset, y + height / 2), // 右中
+      Offset(x + width - inset, y + height - inset), // 右下角
+      Offset(x + width / 2, y + height - inset), // 下中
+      Offset(x + inset, y + height - inset), // 左下角
+      Offset(x + inset, y + height / 2), // 左中
+    ];
+
+    // 为每个控制点位置绘制L形标记
+    for (int i = 0; i < controlPoints.length; i++) {
+      _drawControlPointMark(canvas, markPaint, controlPoints[i], i, centerX, centerY, angle, markLength);
+    }
+  }
+
+  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint, 
+      int index, double centerX, double centerY, double angle, double markLength) {
+    
+    // 应用旋转变换到控制点位置
+    final rotatedControlPoint = _rotatePoint(controlPoint.dx, controlPoint.dy, centerX, centerY, angle);
+
+    // 根据控制点位置确定L形标记的方向
+    Offset horizontal, vertical;
+    
+    switch (index) {
+      case 0: // 左上角 - L形开口向右下
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        break;
+      case 1: // 上中 - T形向下
+        horizontal = _rotatePoint(controlPoint.dx - markLength/2, controlPoint.dy, centerX, centerY, angle);
+        final horizontal2 = _rotatePoint(controlPoint.dx + markLength/2, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        canvas.drawLine(horizontal, horizontal2, paint);
+        canvas.drawLine(rotatedControlPoint, vertical, paint);
+        return;
+      case 2: // 右上角 - L形开口向左下
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        break;
+      case 3: // 右中 - T形向左
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength/2, centerX, centerY, angle);
+        final vertical2 = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength/2, centerX, centerY, angle);
+        canvas.drawLine(rotatedControlPoint, horizontal, paint);
+        canvas.drawLine(vertical, vertical2, paint);
+        return;
+      case 4: // 右下角 - L形开口向左上
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        break;
+      case 5: // 下中 - T形向上
+        horizontal = _rotatePoint(controlPoint.dx - markLength/2, controlPoint.dy, centerX, centerY, angle);
+        final horizontal2 = _rotatePoint(controlPoint.dx + markLength/2, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        canvas.drawLine(horizontal, horizontal2, paint);
+        canvas.drawLine(rotatedControlPoint, vertical, paint);
+        return;
+      case 6: // 左下角 - L形开口向右上
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        break;
+      case 7: // 左中 - T形向右
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength/2, centerX, centerY, angle);
+        final vertical2 = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength/2, centerX, centerY, angle);
+        canvas.drawLine(rotatedControlPoint, horizontal, paint);
+        canvas.drawLine(vertical, vertical2, paint);
+        return;
+      default:
+        return;
+    }
+
+    // 绘制L形标记（对于角落位置）
+    canvas.drawLine(rotatedControlPoint, horizontal, paint);
+    canvas.drawLine(rotatedControlPoint, vertical, paint);
   }
 
   Offset _rotatePoint(

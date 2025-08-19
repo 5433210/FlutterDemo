@@ -1053,9 +1053,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           width: pageSize.width,
                           height: pageSize.height,
                           // 🔧 关键修复：添加透明背景确保手势检测正常工作
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.transparent,
-                            border: Border.all(color: Colors.red, width: 2),
                           ),
                           child: Builder(
                             builder: (context) {

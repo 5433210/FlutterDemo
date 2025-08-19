@@ -886,7 +886,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'image':
-        result = ElementRenderers.buildImageElement(elementCopy,
+        result = ElementRenderers.buildImageElement(context, elementCopy,
             isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'collection':

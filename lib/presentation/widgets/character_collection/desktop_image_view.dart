@@ -1370,15 +1370,20 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
       return -1; // Rotation handle
     }
 
+    // 🔧 更新控制点位置以匹配新的角落标记式样式
+    // 控制点现在向内偏移8px，与绘制逻辑保持一致
+    const double inset = 8.0;
+    final rect = _adjustingRect!;
+    
     final handles = [
-      _adjustingRect!.topLeft,
-      _adjustingRect!.topCenter,
-      _adjustingRect!.topRight,
-      _adjustingRect!.centerRight,
-      _adjustingRect!.bottomRight,
-      _adjustingRect!.bottomCenter,
-      _adjustingRect!.bottomLeft,
-      _adjustingRect!.centerLeft,
+      Offset(rect.left + inset, rect.top + inset),       // 左上角
+      Offset(rect.center.dx, rect.top + inset),          // 上中
+      Offset(rect.right - inset, rect.top + inset),      // 右上角
+      Offset(rect.right - inset, rect.center.dy),        // 右中
+      Offset(rect.right - inset, rect.bottom - inset),   // 右下角
+      Offset(rect.center.dx, rect.bottom - inset),       // 下中
+      Offset(rect.left + inset, rect.bottom - inset),    // 左下角
+      Offset(rect.left + inset, rect.center.dy),         // 左中
     ];
 
     // Transform these handle positions if we have rotation
@@ -1387,11 +1392,12 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
         : handles;
 
     // Check each handle with transformed positions
+    // 🔧 使用更大的点击区域以提高用户体验
     for (int i = 0; i < transformedHandles.length; i++) {
       final handleRect = Rect.fromCenter(
         center: transformedHandles[i],
-        width: 12.0,
-        height: 12.0,
+        width: 20.0, // 增大点击区域
+        height: 20.0,
       );
 
       if (handleRect.contains(position)) {
