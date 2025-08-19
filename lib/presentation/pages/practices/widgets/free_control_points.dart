@@ -273,30 +273,62 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // 🔧 修复：完全避免Platform API调用，防止MethodChannel错误
-    if (!_platformDetected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_platformDetected) {
-          _isMobile = _detectMobilePlatformByUI();
-          _platformDetected = true; // 标记已检测
-          EditPageLogger.canvasDebug('控制点平台检测', data: {
-            'isMobile': _isMobile,
-            'detectionMethod': 'ui_based_detection_only',
-            'screenWidth': MediaQuery.of(context).size.width,
-            'screenHeight': MediaQuery.of(context).size.height,
-            'devicePixelRatio': MediaQuery.of(context).devicePixelRatio,
-          });
+    // 🔧 修復：簡化初始化邏輯，確保控制點能夠正常顯示
+    if (!_isInitialized) {
+      EditPageLogger.canvasDebug('開始控制點初始化流程', data: {
+        'platformDetected': _platformDetected,
+        'isInitialized': _isInitialized,
+        'timing': 'didChangeDependencies',
+      });
 
-          // 🔧 修复：平台检测完成后立即初始化控制点
-          if (!_isInitialized) {
+      // 如果還沒有檢測平台，先檢測
+      if (!_platformDetected) {
+        _isMobile = _detectMobilePlatformByUI();
+        _platformDetected = true;
+        EditPageLogger.canvasDebug('控制點平台檢測完成', data: {
+          'isMobile': _isMobile,
+          'detectionMethod': 'ui_based_detection_only',
+          'screenWidth': MediaQuery.of(context).size.width,
+          'screenHeight': MediaQuery.of(context).size.height,
+          'devicePixelRatio': MediaQuery.of(context).devicePixelRatio,
+        });
+      }
+
+      // 使用PostFrameCallback確保在渲染完成後初始化
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isInitialized) {
+          try {
             _initializeControlPointPositions();
-            EditPageLogger.canvasDebug('控制点初始化在平台检测后完成', data: {
+            
+            // 強制觸發重建以顯示控制點
+            if (mounted) {
+              setState(() {});
+            }
+            
+            EditPageLogger.canvasDebug('控制點初始化完成並觸發重建', data: {
               'isMobile': _isMobile,
-              'timing': 'after_platform_detection',
-              'fix': 'control_point_timing_issue',
+              'platformDetected': _platformDetected,
+              'isInitialized': _isInitialized,
+              'controlPointCount': _controlPointPositions.length,
+              'timing': 'postframe_callback',
             });
+          } catch (e, stackTrace) {
+            EditPageLogger.canvasError('控制點初始化失敗', 
+              error: e, 
+              stackTrace: stackTrace,
+              data: {
+                'elementId': widget.elementId,
+                'operation': 'initialize_control_points',
+              });
           }
         }
+      });
+    } else {
+      EditPageLogger.canvasDebug('控制點已初始化，跳過重複初始化', data: {
+        'isMobile': _isMobile,
+        'platformDetected': _platformDetected,
+        'isInitialized': _isInitialized,
+        'controlPointCount': _controlPointPositions.length,
       });
     }
   }
@@ -308,11 +340,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       final screenSize = mediaQuery.size;
       final devicePixelRatio = mediaQuery.devicePixelRatio;
       final viewPadding = mediaQuery.viewPadding;
-      final viewInsets = mediaQuery.viewInsets;
 
       // 移动设备的典型特征：
       // 1. 较小的屏幕宽度（通常 < 800px）
-      // 2. 较高的像素密度（通常 > 2.0）
+      // 2. 较高的像素密度（通常 > 1.5）
       // 3. 有状态栏/导航栏（viewPadding.top > 0）
       // 4. 屏幕宽高比通常更接近 16:9 或更窄
 

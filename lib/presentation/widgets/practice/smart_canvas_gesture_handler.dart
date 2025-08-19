@@ -80,9 +80,30 @@ class SmartCanvasGestureHandler implements GestureContext {
       controller.state.selectedElementIds.isNotEmpty;
 
   @override
-  bool get isMultiSelectMode =>
-      HardwareKeyboard.instance.isControlPressed ||
-      HardwareKeyboard.instance.isShiftPressed;
+  bool get isMultiSelectMode {
+    try {
+      // 🔧 修復：添加鍵盤狀態檢測的異常處理
+      final isCtrlPressed = HardwareKeyboard.instance.isControlPressed;
+      final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+      final isMultiSelect = isCtrlPressed || isShiftPressed;
+      
+      // 添加調試日誌來追蹤多選狀態
+      EditPageLogger.canvasDebug('多選狀態檢測', data: {
+        'isCtrlPressed': isCtrlPressed,
+        'isShiftPressed': isShiftPressed,
+        'isMultiSelect': isMultiSelect,
+        'logicalKeys': HardwareKeyboard.instance.logicalKeysPressed.map((k) => k.keyLabel).toList(),
+      });
+      
+      return isMultiSelect;
+    } catch (e) {
+      // 如果鍵盤狀態檢測失敗，默認為非多選模式
+      EditPageLogger.canvasDebug('鍵盤狀態檢測失敗，默認非多選模式', data: {
+        'error': e.toString(),
+      });
+      return false;
+    }
+  }
 
   // Legacy compatibility getters
   bool get isSelectionBoxActive => _isSelectionBoxActive;
@@ -968,7 +989,9 @@ class SmartCanvasGestureHandler implements GestureContext {
       'elementId': id,
       'currentlySelected': isCurrentlySelected,
       'multiSelect': isMultiSelect,
-      'locked': isLocked
+      'locked': isLocked,
+      'selectedElementCount': controller.state.selectedElementIds.length,
+      'selectedElementIds': controller.state.selectedElementIds,
     });
 
     final layerId = element['layerId'] as String?;
@@ -989,21 +1012,39 @@ class SmartCanvasGestureHandler implements GestureContext {
 
       if (isCurrentlySelected && !isMultiSelect) {
         // 🔧 修复：在单选模式下，点击已选中元素会取消选择（反选）
-        EditPageLogger.canvasDebug('单选模式反选元素');
+        EditPageLogger.canvasDebug('单选模式反选元素', data: {
+          'elementId': id,
+          'action': 'clear_selection',
+          'currentSelectedCount': controller.state.selectedElementIds.length,
+        });
         controller.clearSelection();
       } else if (isCurrentlySelected && isMultiSelect) {
         // 🔧 修复：在多选模式下，点击已选中元素会从选择中移除
-        EditPageLogger.canvasDebug('多选模式反选元素');
+        EditPageLogger.canvasDebug('多选模式反选元素', data: {
+          'elementId': id,
+          'action': 'deselect_element',
+          'currentSelectedCount': controller.state.selectedElementIds.length,
+        });
         controller.deselectElement(id);
       } else {
         // 选择新元素
-        EditPageLogger.canvasDebug('选择新元素');
+        EditPageLogger.canvasDebug('选择新元素', data: {
+          'elementId': id,
+          'action': 'select_element',
+          'isMultiSelect': isMultiSelect,
+          'currentSelectedCount': controller.state.selectedElementIds.length,
+        });
         controller.selectElement(id, isMultiSelect: isMultiSelect);
       }
     }
 
     EditPageLogger.canvasDebug('元素选择处理完成',
-        data: {'selectedElements': controller.state.selectedElementIds.length});
+        data: {
+          'selectedElements': controller.state.selectedElementIds.length,
+          'selectedElementIds': controller.state.selectedElementIds,
+          'finalAction': isCurrentlySelected && !isMultiSelect ? 'cleared' : 
+                        isCurrentlySelected && isMultiSelect ? 'deselected' : 'selected',
+        });
   }
 
   Future<GestureDispatchResult> _handleFastCanvasPan(

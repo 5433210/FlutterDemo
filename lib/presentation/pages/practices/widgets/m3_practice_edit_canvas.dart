@@ -579,6 +579,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       return true;
     }
 
+    // 🔧 关键修复：如果有选中的元素，就应该准备处理可能的拖拽
+    // 不管当前工具是什么，只要有选中元素就可能需要拖拽
+    if (controller.state.selectedElementIds.isNotEmpty) {
+      return true;
+    }
+
     // 🔧 关键修复：只有明确需要拦截下一个手势时才返回true
     // 这个标志在onTapDown中根据点击位置动态设置
     if (_shouldInterceptNextPanGesture) {
@@ -787,10 +793,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       final hasElements = elements.isNotEmpty;
                       
                       return GestureDetector(
-                        // 🔧 关键修复：根据是否需要特殊处理来决定行为
-                        behavior: needsSpecialGestureHandling 
-                            ? HitTestBehavior.translucent  // 需要特殊处理时拦截手势
-                            : HitTestBehavior.deferToChild,  // 不需要时完全让子组件处理
+                        // 🔧 关键修复：移动端智能手势行为 - 始终使用deferToChild让InteractiveViewer处理缩放平移
+                        // 只在确实需要拦截时才在onTapDown中动态设置标志
+                        behavior: _isMobile 
+                            ? HitTestBehavior.deferToChild  // 移动端：让InteractiveViewer优先处理，支持平移缩放
+                            : (needsSpecialGestureHandling 
+                                ? HitTestBehavior.translucent  // 桌面端：需要特殊处理时拦截手势
+                                : HitTestBehavior.deferToChild), // 桌面端：不需要时完全让子组件处理
                         
                         // 🔧 关键修复：在tapDown时检查是否点击在选中元素上，动态决定是否拦截pan手势
                         onTapDown: (details) {
@@ -864,90 +873,182 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                             _gestureHandler.handleSecondaryTapUp(
                                 details, elements.cast<Map<String, dynamic>>()) : null,
                         
-                        // 🔧 关键修复：只在需要特殊处理时设置pan手势处理器
-                        onPanStart: needsSpecialGestureHandling ? (details) {
-                          // 移动端：如果是多指手势，让InteractiveViewer处理
-                          if (_isMobile && _isMultiTouchGesture) return;
+                        // 🔧 关键修复：移动端和桌面端差异化处理pan手势
+                        onPanStart: (_isMobile 
+                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select'  // 移动端：仅在真正需要时处理
+                                ? (details) {
+                                    // 移动端：如果是多指手势，让InteractiveViewer处理
+                                    if (_isMobile && _isMultiTouchGesture) return;
 
-                          // 🔧 简化逻辑：拦截决定已经在onTapDown中做出
-                          // 这里直接处理，因为能到这里说明确实需要处理
-                          if (controller.state.currentTool == 'select') {
-                            // Select工具：开始选择框
-                            _gestureHandler.handlePanStart(
-                                details, elements.cast<Map<String, dynamic>>());
-                          } else if (_shouldInterceptNextPanGesture) {
-                            // 元素拖拽：开始拖拽选中的元素
-                            _gestureHandler.handlePanStart(
-                                details, elements.cast<Map<String, dynamic>>());
-                            
-                            // 如果开始了真正的拖拽，更新panEnabled状态
-                            if (mounted &&
-                                (_isDragging || _dragStateManager.isDragging)) {
-                              setState(() {});
-                            }
-                          }
-                        } : null,
+                                    // 🔧 修复：优先处理元素拖拽，无论当前工具是什么
+                                    if (_shouldInterceptNextPanGesture) {
+                                      // 点击在选中元素上，开始元素拖拽（任何工具模式下都可以）
+                                      _gestureHandler.handlePanStart(
+                                          details, elements.cast<Map<String, dynamic>>());
+                                      
+                                      // 如果开始了真正的拖拽，更新panEnabled状态
+                                      if (mounted &&
+                                          (_isDragging || _dragStateManager.isDragging)) {
+                                        setState(() {});
+                                      }
+                                    } else if (controller.state.currentTool == 'select') {
+                                      // 仅在Select工具且不是拖拽元素时：开始选择框
+                                      _gestureHandler.handlePanStart(
+                                          details, elements.cast<Map<String, dynamic>>());
+                                    }
+                                  }
+                                : null)  // 移动端：点击空白区域时不设置处理器，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                ? (details) {
+                                    // 🔧 修复：优先处理元素拖拽，无论当前工具是什么
+                                    if (_shouldInterceptNextPanGesture) {
+                                      // 点击在选中元素上，开始元素拖拽（任何工具模式下都可以）
+                                      _gestureHandler.handlePanStart(
+                                          details, elements.cast<Map<String, dynamic>>());
+                                      
+                                      // 如果开始了真正的拖拽，更新panEnabled状态
+                                      if (mounted &&
+                                          (_isDragging || _dragStateManager.isDragging)) {
+                                        setState(() {});
+                                      }
+                                    } else if (controller.state.currentTool == 'select') {
+                                      // 仅在Select工具且不是拖拽元素时：开始选择框
+                                      _gestureHandler.handlePanStart(
+                                          details, elements.cast<Map<String, dynamic>>());
+                                    }
+                                  }
+                                : null)),
                         
-                        onPanUpdate: needsSpecialGestureHandling ? (details) {
-                          // 移动端：如果是多指手势，让InteractiveViewer处理
-                          if (_isMobile && _isMultiTouchGesture) return;
+                        onPanUpdate: (_isMobile 
+                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+                                ? (details) {
+                                    // 移动端：如果是多指手势，让InteractiveViewer处理
+                                    if (_isMobile && _isMultiTouchGesture) return;
 
-                          // 只有在真正拖拽时才处理update事件
-                          if (_isDragging || _dragStateManager.isDragging) {
-                            _gestureHandler.handlePanUpdate(details);
-                            return;
-                          }
+                                    // 只有在真正拖拽时才处理update事件
+                                    if (_isDragging || _dragStateManager.isDragging) {
+                                      _gestureHandler.handlePanUpdate(details);
+                                      return;
+                                    }
 
-                          // 处理选择框更新
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _gestureHandler.handlePanUpdate(details);
-                            _selectionBoxNotifier.value = SelectionBoxState(
-                              isActive: true,
-                              startPoint: _gestureHandler.selectionBoxStart,
-                              endPoint: _gestureHandler.selectionBoxEnd,
-                            );
-                            return;
-                          }
-                        } : null,
+                                    // 处理选择框更新
+                                    if (widget.controller.state.currentTool == 'select' &&
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _gestureHandler.handlePanUpdate(details);
+                                      _selectionBoxNotifier.value = SelectionBoxState(
+                                        isActive: true,
+                                        startPoint: _gestureHandler.selectionBoxStart,
+                                        endPoint: _gestureHandler.selectionBoxEnd,
+                                      );
+                                      return;
+                                    }
+                                  }
+                                : null)  // 移动端：空白区域不处理update，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                ? (details) {
+                                    // 只有在真正拖拽时才处理update事件
+                                    if (_isDragging || _dragStateManager.isDragging) {
+                                      _gestureHandler.handlePanUpdate(details);
+                                      return;
+                                    }
+
+                                    // 处理选择框更新
+                                    if (widget.controller.state.currentTool == 'select' &&
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _gestureHandler.handlePanUpdate(details);
+                                      _selectionBoxNotifier.value = SelectionBoxState(
+                                        isActive: true,
+                                        startPoint: _gestureHandler.selectionBoxStart,
+                                        endPoint: _gestureHandler.selectionBoxEnd,
+                                      );
+                                      return;
+                                    }
+                                  }
+                                : null)),
                         
-                        onPanEnd: needsSpecialGestureHandling ? (details) {
-                          // 只有在真正处理拖拽或选择框时才需要结束处理
-                          if (_isDragging || _dragStateManager.isDragging || 
-                              _gestureHandler.isSelectionBoxActive) {
-                            
-                            // 重置选择框状态
-                            if (widget.controller.state.currentTool == 'select' &&
-                                _gestureHandler.isSelectionBoxActive) {
-                              _selectionBoxNotifier.value = SelectionBoxState();
-                            }
+                        onPanEnd: (_isMobile 
+                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+                                ? (details) {
+                                    // 只有在真正处理拖拽或选择框时才需要结束处理
+                                    if (_isDragging || _dragStateManager.isDragging || 
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      
+                                      // 重置选择框状态
+                                      if (widget.controller.state.currentTool == 'select' &&
+                                          _gestureHandler.isSelectionBoxActive) {
+                                        _selectionBoxNotifier.value = SelectionBoxState();
+                                      }
 
-                            // 处理手势结束
-                            _gestureHandler.handlePanEnd(details);
-                          }
+                                      // 处理手势结束
+                                      _gestureHandler.handlePanEnd(details);
+                                    }
 
-                          // 总是重置所有状态
-                          _shouldInterceptNextPanGesture = false;
-                          _isReadyForDrag = false;
-                        } : null,
+                                    // 总是重置所有状态
+                                    _shouldInterceptNextPanGesture = false;
+                                    _isReadyForDrag = false;
+                                  }
+                                : null)  // 移动端：空白区域不处理end，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                ? (details) {
+                                    // 只有在真正处理拖拽或选择框时才需要结束处理
+                                    if (_isDragging || _dragStateManager.isDragging || 
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      
+                                      // 重置选择框状态
+                                      if (widget.controller.state.currentTool == 'select' &&
+                                          _gestureHandler.isSelectionBoxActive) {
+                                        _selectionBoxNotifier.value = SelectionBoxState();
+                                      }
+
+                                      // 处理手势结束
+                                      _gestureHandler.handlePanEnd(details);
+                                    }
+
+                                    // 总是重置所有状态
+                                    _shouldInterceptNextPanGesture = false;
+                                    _isReadyForDrag = false;
+                                  }
+                                : null)),
                         
-                        onPanCancel: needsSpecialGestureHandling ? () {
-                          // 重置选择框状态
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
+                        onPanCancel: (_isMobile 
+                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+                                ? () {
+                                    // 重置选择框状态
+                                    if (widget.controller.state.currentTool == 'select' &&
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _selectionBoxNotifier.value = SelectionBoxState();
+                                    }
 
-                          // 处理手势取消
-                          if (_isDragging || _dragStateManager.isDragging ||
-                              _gestureHandler.isSelectionBoxActive) {
-                            _gestureHandler.handlePanCancel();
-                          }
+                                    // 处理手势取消
+                                    if (_isDragging || _dragStateManager.isDragging ||
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _gestureHandler.handlePanCancel();
+                                    }
 
-                          // 重置所有状态
-                          _shouldInterceptNextPanGesture = false;
-                          _isReadyForDrag = false;
-                        } : null,
+                                    // 重置所有状态
+                                    _shouldInterceptNextPanGesture = false;
+                                    _isReadyForDrag = false;
+                                  }
+                                : null)  // 移动端：空白区域不处理cancel，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                ? () {
+                                    // 重置选择框状态
+                                    if (widget.controller.state.currentTool == 'select' &&
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _selectionBoxNotifier.value = SelectionBoxState();
+                                    }
+
+                                    // 处理手势取消
+                                    if (_isDragging || _dragStateManager.isDragging ||
+                                        _gestureHandler.isSelectionBoxActive) {
+                                      _gestureHandler.handlePanCancel();
+                                    }
+
+                                    // 重置所有状态
+                                    _shouldInterceptNextPanGesture = false;
+                                    _isReadyForDrag = false;
+                                  }
+                                : null)),
                         child: Container(
                           width: pageSize.width,
                           height: pageSize.height,
