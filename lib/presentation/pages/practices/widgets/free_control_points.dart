@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/guideline_alignment/guideline_manager.dart';
@@ -270,16 +271,36 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     
-    // 🔧 修复：在didChangeDependencies中检测平台，此时MediaQuery可用
+    // 🔧 修复：使用更准确的平台检测方法
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _isMobile = MediaQuery.of(context).size.width < 600;
+        _isMobile = _detectMobilePlatform();
         EditPageLogger.canvasDebug('控制点平台检测', data: {
           'isMobile': _isMobile,
+          'platform': kIsWeb ? 'web' : Platform.operatingSystem,
           'screenWidth': MediaQuery.of(context).size.width,
+          'detectionMethod': 'platform_and_touch_capability',
         });
       }
     });
+  }
+
+  /// 更准确的移动平台检测
+  bool _detectMobilePlatform() {
+    // 首先检查操作系统平台
+    if (!kIsWeb) {
+      return Platform.isAndroid || Platform.isIOS;
+    }
+    
+    // Web平台：结合屏幕尺寸和触摸能力检测
+    final screenSize = MediaQuery.of(context).size;
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    
+    // 检查是否为触摸设备 (Web平台近似检测)
+    final isTouchDevice = screenSize.width < 1024 && devicePixelRatio > 1;
+    
+    // 移动端通常有较小的屏幕和较高的像素密度
+    return isTouchDevice || screenSize.width < 600;
   }
 
   /// 处理指针按下事件
@@ -499,8 +520,10 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   Widget _buildTestControlPoint(int index) {
     final position = _controlPointPositions[index]!;
     const controlPointSize = 16.0;
-    const hitAreaSize = 24.0;
-
+    
+    // 🔧 移动端优化：增加触摸区域大小
+    final hitAreaSize = _isMobile ? 48.0 : 24.0; // 移动端使用48px，桌面端使用24px
+    
     String controlPointName = _getControlPointName(index);
     MouseCursor cursor = _getControlPointCursor(index);
     bool isRotation = index == 8;
@@ -956,6 +979,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _rotationCenter = Offset(centerX, centerY);
 
     const offset = 8.0; // 控制点偏移量
+    
+    // 🔧 移动端优化：旋转控制点距离调整
+    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
 
     final unrotatedPositions = [
       // 索引0: 左上角
@@ -977,8 +1003,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       Offset(_currentX - offset, _currentY + _currentHeight + offset),
       // 索引7: 左中
       Offset(_currentX - offset, _currentY + _currentHeight / 2),
-      // 索引8: 旋转控制点
-      Offset(centerX, _currentY - 40),
+      // 索引8: 旋转控制点 - 移动端增加距离
+      Offset(centerX, _currentY - rotationOffset),
     ];
 
     // 应用旋转并保存位置
@@ -1077,6 +1103,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 重新计算控制点位置
   void _recalculateControlPointPositions() {
     const offset = 8.0; // 控制点偏移量
+    
+    // 🔧 移动端优化：旋转控制点距离调整
+    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
 
     final centerX = _currentX + _currentWidth / 2;
     final centerY = _currentY + _currentHeight / 2;
@@ -1101,8 +1130,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       Offset(_currentX - offset, _currentY + _currentHeight + offset),
       // 索引7: 左中
       Offset(_currentX - offset, _currentY + _currentHeight / 2),
-      // 索引8: 旋转控制点
-      Offset(centerX, _currentY - 40),
+      // 索引8: 旋转控制点 - 移动端增加距离
+      Offset(centerX, _currentY - rotationOffset),
     ];
 
     // 应用旋转并保存位置
@@ -1427,6 +1456,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
   void _updateAllControlPointsFromRect(Rect rect) {
     const offset = 8.0;
+    // 🔧 移动端优化：旋转控制点距离调整
+    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
+    
     final centerX = rect.center.dx;
     final centerY = rect.center.dy;
 
@@ -1457,8 +1489,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       Offset(rect.left - offset, rect.bottom + offset),
       // 索引7: 左中
       Offset(rect.left - offset, centerY),
-      // 索引8: 旋转控制点
-      Offset(centerX, rect.top - 40),
+      // 索引8: 旋转控制点 - 移动端增加距离
+      Offset(centerX, rect.top - rotationOffset),
     ];
 
     // 应用当前旋转角度到所有控制点
@@ -1487,6 +1519,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
     // 使用当前独立的矩形尺寸
     const offset = 8.0;
+    // 🔧 移动端优化：旋转控制点距离调整
+    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
 
     // 原始控制点位置（未旋转）
     final unrotatedPositions = [
@@ -1510,8 +1544,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           centerY + _currentHeight / 2 + offset),
       // 索引7: 左中
       Offset(centerX - _currentWidth / 2 - offset, centerY),
-      // 索引8: 旋转控制点
-      Offset(centerX, centerY - _currentHeight / 2 - 40),
+      // 索引8: 旋转控制点 - 移动端增加距离
+      Offset(centerX, centerY - _currentHeight / 2 - rotationOffset),
     ];
 
     // 应用当前旋转角度并保存位置
