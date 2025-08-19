@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../infrastructure/logging/practice_edit_logger.dart';
@@ -107,6 +106,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   bool _isMobile = false;
   bool _isMultiTouchGesture = false;
   int _activePointerCount = 0;
+  bool _platformDetected = false; // 🔧 新增：避免重复平台检测
 
   /// 判断是否应该处理Pan手势
   bool _shouldHandlePanGesture() {
@@ -184,6 +184,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           data: {
             'timestamp': DateTime.now().toIso8601String(),
             'operation': 'ui_init_complete',
+            'isMobile': _isMobile, // 添加平台检测结果
           },
         );
       } catch (e, stackTrace) {
@@ -1645,18 +1646,22 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
   /// 初始化UI组件
   void _initializeUIComponents() {
-    // 更准确的平台检测
-    _isMobile = _detectMobilePlatform();
+    // 🔧 修复：完全避免Platform API调用，防止MethodChannel错误
+    if (!_platformDetected) {
+      _isMobile = _detectMobilePlatformByUI();
+      _platformDetected = true; // 标记已检测
 
-    EditPageLogger.editPageDebug(
-      '检测到平台类型',
-      data: {
-        'isMobile': _isMobile,
-        'platform': kIsWeb ? 'web' : Platform.operatingSystem,
-        'screenWidth': MediaQuery.of(context).size.width,
-        'detectionMethod': 'platform_and_touch_capability',
-      },
-    );
+      EditPageLogger.editPageDebug(
+        '检测到平台类型',
+        data: {
+          'isMobile': _isMobile,
+          'detectionMethod': 'ui_based_detection_only',
+          'screenWidth': MediaQuery.of(context).size.width,
+          'screenHeight': MediaQuery.of(context).size.height,
+          'devicePixelRatio': MediaQuery.of(context).devicePixelRatio,
+        },
+      );
+    }
 
     // No need to initialize _repaintBoundaryKey again as it's already initialized in _initializeCoreComponents()
 
@@ -1679,22 +1684,55 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     });
   }
 
-  /// 更准确的移动平台检测
-  bool _detectMobilePlatform() {
-    // 首先检查操作系统平台
-    if (!kIsWeb) {
-      return Platform.isAndroid || Platform.isIOS;
+  /// 基于UI特征的移动平台检测（完全避免Platform API）
+  bool _detectMobilePlatformByUI() {
+    try {
+      final mediaQuery = MediaQuery.of(context);
+      final screenSize = mediaQuery.size;
+      final devicePixelRatio = mediaQuery.devicePixelRatio;
+      final viewPadding = mediaQuery.viewPadding;
+      
+      // 移动设备的典型特征：
+      // 1. 较小的屏幕宽度（通常 < 800px）
+      // 2. 较高的像素密度（通常 > 1.5）
+      // 3. 有状态栏/导航栏（viewPadding.top > 0）
+      // 4. 屏幕宽高比通常更接近 16:9 或更窄
+      
+      final aspectRatio = screenSize.width / screenSize.height;
+      final hasStatusBar = viewPadding.top > 0;
+      final hasHighDensity = devicePixelRatio > 1.5;
+      final hasSmallWidth = screenSize.width < 800;
+      final hasMobileAspectRatio = aspectRatio < 1.5; // 移动设备通常是竖屏或接近方形
+      
+      // 组合判断：满足多个条件的设备很可能是移动设备
+      int mobileScore = 0;
+      if (hasSmallWidth) mobileScore += 3;  // 小屏幕权重最高
+      if (hasHighDensity) mobileScore += 2; // 高像素密度
+      if (hasStatusBar) mobileScore += 2;   // 有状态栏
+      if (hasMobileAspectRatio) mobileScore += 1; // 移动设备宽高比
+      
+      final isMobile = mobileScore >= 4; // 分数阈值
+      
+      EditPageLogger.editPageDebug('UI特征移动设备检测', data: {
+        'screenSize': '${screenSize.width}x${screenSize.height}',
+        'devicePixelRatio': devicePixelRatio,
+        'aspectRatio': aspectRatio.toStringAsFixed(2),
+        'hasStatusBar': hasStatusBar,
+        'hasHighDensity': hasHighDensity,
+        'hasSmallWidth': hasSmallWidth,
+        'hasMobileAspectRatio': hasMobileAspectRatio,
+        'mobileScore': mobileScore,
+        'isMobile': isMobile,
+      });
+      
+      return isMobile;
+    } catch (e) {
+      // 最终回退：简单的屏幕宽度检测
+      EditPageLogger.editPageDebug('UI检测失败，使用简单回退方案', data: {
+        'error': e.toString(),
+      });
+      return MediaQuery.of(context).size.width < 600;
     }
-    
-    // Web平台：结合屏幕尺寸和触摸能力检测
-    final screenSize = MediaQuery.of(context).size;
-    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-    
-    // 检查是否为触摸设备 (Web平台近似检测)
-    final isTouchDevice = screenSize.width < 1024 && devicePixelRatio > 1;
-    
-    // 移动端通常有较小的屏幕和较高的像素密度
-    return isTouchDevice || screenSize.width < 600;
   }
 
   /// 处理DragStateManager状态变化

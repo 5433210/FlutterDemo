@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:io' show Platform;
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../widgets/practice/guideline_alignment/guideline_manager.dart';
@@ -74,6 +73,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   bool _isMobile = false;
   bool _isMultiTouchActive = false;
   int _activePointerCount = 0;
+  bool _platformDetected = false; // 🔧 新增：避免重复平台检测
 
   // 🔧 新增：当前拖拽控制点追踪，用于传递操作上下文
   int? _currentDraggingControlPoint;
@@ -255,7 +255,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   @override
   void initState() {
     super.initState();
-    _initializeControlPointPositions();
+    // 🔧 不在initState中进行控制点初始化，移至didChangeDependencies中
+    // _initializeControlPointPositions(); // 移除，移至didChangeDependencies
     // 增加GuidelineManager状态检查日志
     EditPageLogger.editPageInfo('🔍【吸附调试】FreeControlPoints初始化', data: {
       'elementId': widget.elementId,
@@ -264,43 +265,92 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           GuidelineManager.instance.staticGuidelines.isNotEmpty,
       'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
       'operation': 'free_control_points_init',
+      'note': '控制点初始化将在didChangeDependencies中进行',
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
-    // 🔧 修复：使用更准确的平台检测方法
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _isMobile = _detectMobilePlatform();
-        EditPageLogger.canvasDebug('控制点平台检测', data: {
-          'isMobile': _isMobile,
-          'platform': kIsWeb ? 'web' : Platform.operatingSystem,
-          'screenWidth': MediaQuery.of(context).size.width,
-          'detectionMethod': 'platform_and_touch_capability',
-        });
-      }
-    });
+
+    // 🔧 修复：完全避免Platform API调用，防止MethodChannel错误
+    if (!_platformDetected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_platformDetected) {
+          _isMobile = _detectMobilePlatformByUI();
+          _platformDetected = true; // 标记已检测
+          EditPageLogger.canvasDebug('控制点平台检测', data: {
+            'isMobile': _isMobile,
+            'detectionMethod': 'ui_based_detection_only',
+            'screenWidth': MediaQuery.of(context).size.width,
+            'screenHeight': MediaQuery.of(context).size.height,
+            'devicePixelRatio': MediaQuery.of(context).devicePixelRatio,
+          });
+
+          // 🔧 修复：平台检测完成后立即初始化控制点
+          if (!_isInitialized) {
+            _initializeControlPointPositions();
+            EditPageLogger.canvasDebug('控制点初始化在平台检测后完成', data: {
+              'isMobile': _isMobile,
+              'timing': 'after_platform_detection',
+              'fix': 'control_point_timing_issue',
+            });
+          }
+        }
+      });
+    }
   }
 
-  /// 更准确的移动平台检测
-  bool _detectMobilePlatform() {
-    // 首先检查操作系统平台
-    if (!kIsWeb) {
-      return Platform.isAndroid || Platform.isIOS;
+  /// 基于UI特征的移动平台检测（完全避免Platform API）
+  bool _detectMobilePlatformByUI() {
+    try {
+      final mediaQuery = MediaQuery.of(context);
+      final screenSize = mediaQuery.size;
+      final devicePixelRatio = mediaQuery.devicePixelRatio;
+      final viewPadding = mediaQuery.viewPadding;
+      final viewInsets = mediaQuery.viewInsets;
+
+      // 移动设备的典型特征：
+      // 1. 较小的屏幕宽度（通常 < 800px）
+      // 2. 较高的像素密度（通常 > 2.0）
+      // 3. 有状态栏/导航栏（viewPadding.top > 0）
+      // 4. 屏幕宽高比通常更接近 16:9 或更窄
+
+      final aspectRatio = screenSize.width / screenSize.height;
+      final hasStatusBar = viewPadding.top > 0;
+      final hasHighDensity = devicePixelRatio > 1.5;
+      final hasSmallWidth = screenSize.width < 800;
+      final hasMobileAspectRatio = aspectRatio < 1.5; // 移动设备通常是竖屏或接近方形
+
+      // 组合判断：满足多个条件的设备很可能是移动设备
+      int mobileScore = 0;
+      if (hasSmallWidth) mobileScore += 3; // 小屏幕权重最高
+      if (hasHighDensity) mobileScore += 2; // 高像素密度
+      if (hasStatusBar) mobileScore += 2; // 有状态栏
+      if (hasMobileAspectRatio) mobileScore += 1; // 移动设备宽高比
+
+      final isMobile = mobileScore >= 4; // 分数阈值
+
+      EditPageLogger.canvasDebug('UI特征移动设备检测', data: {
+        'screenSize': '${screenSize.width}x${screenSize.height}',
+        'devicePixelRatio': devicePixelRatio,
+        'aspectRatio': aspectRatio.toStringAsFixed(2),
+        'hasStatusBar': hasStatusBar,
+        'hasHighDensity': hasHighDensity,
+        'hasSmallWidth': hasSmallWidth,
+        'hasMobileAspectRatio': hasMobileAspectRatio,
+        'mobileScore': mobileScore,
+        'isMobile': isMobile,
+      });
+
+      return isMobile;
+    } catch (e) {
+      // 最终回退：简单的屏幕宽度检测
+      EditPageLogger.canvasDebug('UI检测失败，使用简单回退方案', data: {
+        'error': e.toString(),
+      });
+      return MediaQuery.of(context).size.width < 600;
     }
-    
-    // Web平台：结合屏幕尺寸和触摸能力检测
-    final screenSize = MediaQuery.of(context).size;
-    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-    
-    // 检查是否为触摸设备 (Web平台近似检测)
-    final isTouchDevice = screenSize.width < 1024 && devicePixelRatio > 1;
-    
-    // 移动端通常有较小的屏幕和较高的像素密度
-    return isTouchDevice || screenSize.width < 600;
   }
 
   /// 处理指针按下事件
@@ -519,11 +569,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 构建测试控制点 - 独立移动，不更新元素
   Widget _buildTestControlPoint(int index) {
     final position = _controlPointPositions[index]!;
-    const controlPointSize = 16.0;
-    
+    const controlPointSize = 32.0;
+
     // 🔧 移动端优化：增加触摸区域大小
     final hitAreaSize = _isMobile ? 48.0 : 24.0; // 移动端使用48px，桌面端使用24px
-    
+
     String controlPointName = _getControlPointName(index);
     MouseCursor cursor = _getControlPointCursor(index);
     bool isRotation = index == 8;
@@ -979,9 +1029,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     _rotationCenter = Offset(centerX, centerY);
 
     const offset = 8.0; // 控制点偏移量
-    
+
     // 🔧 移动端优化：旋转控制点距离调整
-    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
+    final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
     final unrotatedPositions = [
       // 索引0: 左上角
@@ -1103,9 +1153,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   /// 重新计算控制点位置
   void _recalculateControlPointPositions() {
     const offset = 8.0; // 控制点偏移量
-    
+
     // 🔧 移动端优化：旋转控制点距离调整
-    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
+    final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
     final centerX = _currentX + _currentWidth / 2;
     final centerY = _currentY + _currentHeight / 2;
@@ -1457,8 +1507,8 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   void _updateAllControlPointsFromRect(Rect rect) {
     const offset = 8.0;
     // 🔧 移动端优化：旋转控制点距离调整
-    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
-    
+    final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
+
     final centerX = rect.center.dx;
     final centerY = rect.center.dy;
 
@@ -1520,7 +1570,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
     // 使用当前独立的矩形尺寸
     const offset = 8.0;
     // 🔧 移动端优化：旋转控制点距离调整
-    final rotationOffset = _isMobile ? 60.0 : 40.0; // 移动端增加距离避免误触
+    final rotationOffset = _isMobile ? 120.0 : 80.0; // 移动端增加距离避免误触
 
     // 原始控制点位置（未旋转）
     final unrotatedPositions = [
