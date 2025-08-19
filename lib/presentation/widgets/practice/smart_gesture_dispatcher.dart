@@ -326,8 +326,8 @@ class SmartGestureDispatcher {
     final distance =
         _calculateDistance(tracker.startPosition, tracker.currentPosition);
 
-    // Static tap detection - 🔧 降低距离阈值以改善拖拽检测
-    if (distance < 1.0 && velocity < 50.0) {
+    // Static tap detection - 🔧 进一步降低距离阈值以改善点击检测 
+    if (distance < 3.0 && velocity < 50.0) {
       final tapType = await _determineTapType(tracker, context);
       final hitTarget = await _performHitTest(tracker.currentPosition, context);
 
@@ -349,8 +349,8 @@ class SmartGestureDispatcher {
       );
     }
 
-    // Drag detection with element hit testing - 🔧 降低距离阈值
-    if (distance > 1.0) {
+    // Drag detection with element hit testing - 🔧 调整距离阈值平衡点击和拖拽
+    if (distance > 3.0) {
       final hitTarget = await _performHitTest(tracker.currentPosition, context);
 
       if (hitTarget.isElement && hitTarget.elementId != null) {

@@ -643,6 +643,41 @@ mixin ElementManagementMixin on ChangeNotifier
     }
   }
 
+  /// 取消选择元素（仅移除单个元素）
+  void deselectElement(String id) {
+    if (state.selectedElementIds.contains(id)) {
+      state.selectedElementIds.remove(id);
+      
+      // 更新selectedElement
+      if (state.selectedElementIds.length == 1) {
+        final selectedId = state.selectedElementIds.first;
+        final elements = state.currentPageElements;
+        final selectedIndex = elements.indexWhere((e) => e['id'] == selectedId);
+        if (selectedIndex >= 0) {
+          state.selectedElement = elements[selectedIndex] as Map<String, dynamic>;
+        }
+      } else {
+        state.selectedElement = null;
+      }
+
+      // 🚀 使用智能状态分发器通知选择变化
+      intelligentNotify(
+        changeType: 'selection_change',
+        eventData: {
+          'selectedIds': state.selectedElementIds,
+          'selectionCount': state.selectedElementIds.length,
+          'elementId': id,
+          'isMultiSelect': true,
+          'operation': 'deselect_element',
+        },
+        operation: 'deselect_element',
+        affectedElements: [id],
+        affectedLayers: ['interaction'],
+        affectedUIComponents: ['property_panel', 'toolbar'],
+      );
+    }
+  }
+
   /// 选择多个元素
   void selectElements(List<String> ids) {
     if (ids.isEmpty) {

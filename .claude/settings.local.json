@@ -18,7 +18,8 @@
       "Bash(cp:*)",
       "Bash(adb shell:*)",
       "Bash(grep:*)",
-      "Bash(r)"
+      "Bash(r)",
+      "Bash(taskkill:*)"
     ],
     "deny": []
   }

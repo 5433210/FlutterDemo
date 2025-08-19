@@ -212,7 +212,7 @@ class ContentRenderController extends ChangeNotifier {
       EditPageLogger.canvasDebug('批量初始化大量元素',
           data: {'elementCount': elements.length});
     }
-    
+
     for (final element in elements) {
       final elementId = element['id'] as String;
       _lastKnownProperties[elementId] = Map.from(element);
@@ -489,55 +489,55 @@ class ContentRenderController extends ChangeNotifier {
               _lastDraggingElementIds.isNotEmpty);
 
       if (isJustStartedDragging) {
-        // 拖拽刚开始：强制重建以隐藏原始元素
-        EditPageLogger.canvasError('🔧🔧🔧 拖拽开始：强制ContentRenderLayer重建', data: {
-          'reason': '隐藏拖拽中的原始元素',
-          'draggingElementIds': draggingElementIds.toList(),
-          'elementCount': draggingElementIds.length,
-          'isSingleSelection': draggingElementIds.length == 1,
-          'rebuildTrigger': 'drag_start',
-          'precise': 'just_started_dragging',
-        });
+        // // 拖拽刚开始：强制重建以隐藏原始元素
+        // EditPageLogger.canvasError('🔧🔧🔧 拖拽开始：强制ContentRenderLayer重建', data: {
+        //   'reason': '隐藏拖拽中的原始元素',
+        //   'draggingElementIds': draggingElementIds.toList(),
+        //   'elementCount': draggingElementIds.length,
+        //   'isSingleSelection': draggingElementIds.length == 1,
+        //   'rebuildTrigger': 'drag_start',
+        //   'precise': 'just_started_dragging',
+        // });
 
         // 强制元素缓存失效，确保shouldSkipElementRendering被调用
         for (final elementId in draggingElementIds) {
-          EditPageLogger.canvasError('🔧🔧🔧 强制元素缓存失效', data: {
-            'elementId': elementId,
-            'reason': '确保拖拽时重新评估元素渲染',
-            'fix': 'force_cache_invalidation',
-          });
+          // EditPageLogger.canvasError('🔧🔧🔧 强制元素缓存失效', data: {
+          //   'elementId': elementId,
+          //   'reason': '确保拖拽时重新评估元素渲染',
+          //   'fix': 'force_cache_invalidation',
+          // });
 
           markElementDirty(elementId, ElementChangeType.visibility);
           _rebuildManager?.removeElement(elementId);
         }
 
         // 立即通知，绕过节流机制
-        EditPageLogger.canvasError('🔧🔧🔧 拖拽开始立即通知，绕过节流', data: {
-          'reason': '确保拖拽时元素立即隐藏',
-          'bypass': 'throttle_mechanism',
-        });
+        // EditPageLogger.canvasError('🔧🔧🔧 拖拽开始立即通知，绕过节流', data: {
+        //   'reason': '确保拖拽时元素立即隐藏',
+        //   'bypass': 'throttle_mechanism',
+        // });
         super.notifyListeners();
       } else if (isJustEndedDragging) {
         // 拖拽刚结束：强制重建以在新位置显示元素
-        EditPageLogger.canvasError('🔧🔧🔧 拖拽结束：强制ContentRenderLayer重建', data: {
-          'reason': '恢复元素在新位置的显示',
-          'rebuildTrigger': 'drag_end',
-          'precise': 'just_ended_dragging',
-        });
+        // EditPageLogger.canvasError('🔧🔧🔧 拖拽结束：强制ContentRenderLayer重建', data: {
+        //   'reason': '恢复元素在新位置的显示',
+        //   'rebuildTrigger': 'drag_end',
+        //   'precise': 'just_ended_dragging',
+        // });
         super.notifyListeners();
       } else {
         // 🔧 关键优化：拖拽过程中不触发ContentRenderLayer重建
         // 只有拖拽开始和结束时才需要重建ContentRenderLayer
         // 拖拽过程中的元素移动由DragPreviewLayer处理
-        EditPageLogger.canvasDebug('拖拽过程中跳过ContentRenderLayer重建', data: {
-          'reason': '拖拽过程中只需要DragPreviewLayer更新',
-          'isDragging': isDragging,
-          'isDragPreviewActive': isDragPreviewActive,
-          'draggingElementIds': draggingElementIds,
-          'isJustStarted': isJustStartedDragging,
-          'isJustEnded': isJustEndedDragging,
-          'optimization': 'skip_content_rebuild_during_drag',
-        });
+        // EditPageLogger.canvasDebug('拖拽过程中跳过ContentRenderLayer重建', data: {
+        //   'reason': '拖拽过程中只需要DragPreviewLayer更新',
+        //   'isDragging': isDragging,
+        //   'isDragPreviewActive': isDragPreviewActive,
+        //   'draggingElementIds': draggingElementIds,
+        //   'isJustStarted': isJustStartedDragging,
+        //   'isJustEnded': isJustEndedDragging,
+        //   'optimization': 'skip_content_rebuild_during_drag',
+        // });
 
         // 🔧 不调用任何通知方法，保持ContentRenderLayer稳定
         // 拖拽过程中的视觉更新完全由DragPreviewLayer负责

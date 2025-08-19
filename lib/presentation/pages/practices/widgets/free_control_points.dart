@@ -69,6 +69,11 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
   double? _initialRotationAngle; // 🔧 新增：参考线对齐相关状态
 
   List<Guideline> _activeGuidelines = [];
+  // 移动端手势支持
+  bool _isMobile = false;
+  bool _isMultiTouchActive = false;
+  int _activePointerCount = 0;
+
   // 🔧 新增：当前拖拽控制点追踪，用于传递操作上下文
   int? _currentDraggingControlPoint;
 
@@ -258,6 +263,49 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
           GuidelineManager.instance.staticGuidelines.isNotEmpty,
       'alignmentMode': widget.alignmentMode?.toString() ?? 'null',
       'operation': 'free_control_points_init',
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // 🔧 修复：在didChangeDependencies中检测平台，此时MediaQuery可用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _isMobile = MediaQuery.of(context).size.width < 600;
+        EditPageLogger.canvasDebug('控制点平台检测', data: {
+          'isMobile': _isMobile,
+          'screenWidth': MediaQuery.of(context).size.width,
+        });
+      }
+    });
+  }
+
+  /// 处理指针按下事件
+  void _handlePointerDown(PointerDownEvent event) {
+    _activePointerCount++;
+    _isMultiTouchActive = _activePointerCount > 1;
+
+    EditPageLogger.canvasDebug('控制点指针按下', data: {
+      'pointerId': event.pointer,
+      'activePointers': _activePointerCount,
+      'isMultiTouch': _isMultiTouchActive,
+      'isMobile': _isMobile,
+    });
+  }
+
+  /// 处理指针释放事件
+  void _handlePointerUp(PointerUpEvent event) {
+    _activePointerCount = max(0, _activePointerCount - 1);
+    if (_activePointerCount <= 1) {
+      _isMultiTouchActive = false;
+    }
+
+    EditPageLogger.canvasDebug('控制点指针释放', data: {
+      'pointerId': event.pointer,
+      'activePointers': _activePointerCount,
+      'isMultiTouch': _isMultiTouchActive,
     });
   }
 
@@ -471,163 +519,177 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       height: hitAreaSize,
       child: Material(
         color: Colors.transparent,
-        child: MouseRegion(
-          cursor: cursor,
-          opaque: true,
-          hitTestBehavior: HitTestBehavior.opaque,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (details) {
-              EditPageLogger.canvasDebug('🔥 控制点手势检测 - TapDown', data: {
-                'index': index,
-                'localPosition': '${details.localPosition}',
-                'globalPosition': '${details.globalPosition}',
-              });
-            },
-            onPanStart: (details) {
-              EditPageLogger.canvasDebug('🔥 FreeControlPoints拖拽开始', data: {
-                'index': index,
-                'controlPointName': controlPointName,
-                'localPosition': '${details.localPosition}',
-                'globalPosition': '${details.globalPosition}',
-              });
+        child: Listener(
+          onPointerDown: _handlePointerDown,
+          onPointerUp: _handlePointerUp,
+          child: MouseRegion(
+            cursor: cursor,
+            opaque: true,
+            hitTestBehavior: HitTestBehavior.opaque,
+            child: GestureDetector(
+              // 移动端优化：调整手势行为
+              behavior: _isMobile
+                  ? HitTestBehavior.translucent
+                  : HitTestBehavior.opaque,
+              onTapDown: (details) {
+                // 移动端：如果是多指手势，不处理tapDown
+                if (_isMobile && _isMultiTouchActive) return;
 
-              // 🔧 设置当前拖拽控制点
-              _currentDraggingControlPoint = index;
-
-              if (index == 8) {
-                // 旋转控制点 - 初始化旋转状态
-                _initializeRotationState();
-              } // 触发拖拽开始回调
-              widget.onControlPointDragStart?.call(index);
-
-              // 🔹 设置GuidelineManager的拖拽状态为true
-              GuidelineManager.instance.isDragging = true;
-
-              // 🔹 初始化动态参考线显示
-              _initializeDynamicGuidelines();
-            },
-            onPanUpdate: (details) {
-              setState(() {
-                // 先更新控制点位置
-                _updateControlPointWithConstraints(index, details.delta);
-              });
-
-              // 在setState完成后立即刷新参考线
-              _refreshGuidelinesImmediately();
-            },
-            onPanEnd: (details) {
-              EditPageLogger.editPageInfo('控制点结束拖拽', data: {
-                'index': index,
-                'controlPointName': controlPointName,
-                'operation': 'control_point_drag_end',
-              });
-
-              // 🔧 在鼠标释放时进行参考线对齐（在清除参考线之前）
-              var finalProperties = getCurrentElementProperties();
-              EditPageLogger.editPageInfo('🔄【吸附调试】拖拽结束，获取当前属性', data: {
-                'x': finalProperties['x'],
-                'y': finalProperties['y'],
-                'width': finalProperties['width'],
-                'height': finalProperties['height'],
-                'operation': 'prepare_for_alignment',
-              });
-
-              finalProperties = _alignToClosestGuidelines(
-                finalProperties,
-                operationType:
-                    _isResizeOperation(index) ? 'resize' : 'translate',
-                resizeDirection: _getResizeDirection(index),
-              );
-
-              // 🔧 拖拽结束后清除所有参考线
-              _clearGuidelines();
-
-              // 🔹 设置GuidelineManager的拖拽状态为false
-              GuidelineManager.instance.isDragging = false;
-
-              // 🔧 如果对齐后位置或尺寸有变化，需要更新控制点位置
-              if (finalProperties['x'] != _currentX ||
-                  finalProperties['y'] != _currentY ||
-                  finalProperties['width'] != _currentWidth ||
-                  finalProperties['height'] != _currentHeight) {
-                EditPageLogger.editPageInfo('🔄【吸附调试】检测到吸附修改，更新控制点位置', data: {
-                  'from':
-                      '($_currentX, $_currentY, $_currentWidth x $_currentHeight)',
-                  'to':
-                      '(${finalProperties['x']}, ${finalProperties['y']}, ${finalProperties['width']} x ${finalProperties['height']})',
-                  'operation': 'update_control_points_after_alignment',
+                EditPageLogger.canvasDebug('🔥 控制点手势检测 - TapDown', data: {
+                  'index': index,
+                  'localPosition': '${details.localPosition}',
+                  'globalPosition': '${details.globalPosition}',
+                  'isMobile': _isMobile,
+                  'isMultiTouch': _isMultiTouchActive,
+                });
+              },
+              onPanStart: (details) {
+                // 移动端：如果是多指手势，不处理单指拖拽
+                if (_isMobile && _isMultiTouchActive) return;
+                EditPageLogger.canvasDebug('🔥 FreeControlPoints拖拽开始', data: {
+                  'index': index,
+                  'controlPointName': controlPointName,
+                  'localPosition': '${details.localPosition}',
+                  'globalPosition': '${details.globalPosition}',
                 });
 
+                // 🔧 设置当前拖拽控制点
+                _currentDraggingControlPoint = index;
+
+                if (index == 8) {
+                  // 旋转控制点 - 初始化旋转状态
+                  _initializeRotationState();
+                } // 触发拖拽开始回调
+                widget.onControlPointDragStart?.call(index);
+
+                // 🔹 设置GuidelineManager的拖拽状态为true
+                GuidelineManager.instance.isDragging = true;
+
+                // 🔹 初始化动态参考线显示
+                _initializeDynamicGuidelines();
+              },
+              onPanUpdate: (details) {
                 setState(() {
-                  _currentX = finalProperties['x']!;
-                  _currentY = finalProperties['y']!;
-                  _currentWidth = finalProperties['width']!;
-                  _currentHeight = finalProperties['height']!;
-                  _recalculateControlPointPositions();
+                  // 先更新控制点位置
+                  _updateControlPointWithConstraints(index, details.delta);
                 });
 
-                EditPageLogger.editPageInfo('🎯【吸附调试】FreeControlPoints应用对齐吸附',
-                    data: {
-                      'elementId': widget.elementId,
-                      'beforeAlignment': {
-                        'x': getCurrentElementProperties()['x'],
-                        'y': getCurrentElementProperties()['y'],
-                        'width': getCurrentElementProperties()['width'],
-                        'height': getCurrentElementProperties()['height'],
-                      },
-                      'afterAlignment': finalProperties,
-                      'operationType':
-                          _isResizeOperation(index) ? 'resize' : 'translate',
-                      'resizeDirection': _getResizeDirection(index),
-                      'operation': 'alignment_applied',
-                    });
-              } else {
-                EditPageLogger.editPageInfo('⚠️【吸附调试】吸附无效果，位置和尺寸没有变化', data: {
-                  'position': '($_currentX, $_currentY)',
-                  'size': '($_currentWidth x $_currentHeight)',
-                  'operation': 'alignment_no_effect',
+                // 在setState完成后立即刷新参考线
+                _refreshGuidelinesImmediately();
+              },
+              onPanEnd: (details) {
+                EditPageLogger.editPageInfo('控制点结束拖拽', data: {
+                  'index': index,
+                  'controlPointName': controlPointName,
+                  'operation': 'control_point_drag_end',
                 });
-              }
 
-              // 🔧 修复时序：先传递最终计算的状态（已对齐），再触发Commit阶段
-              widget.onControlPointDragEndWithState
-                  ?.call(index, finalProperties);
+                // 🔧 在鼠标释放时进行参考线对齐（在清除参考线之前）
+                var finalProperties = getCurrentElementProperties();
+                EditPageLogger.editPageInfo('🔄【吸附调试】拖拽结束，获取当前属性', data: {
+                  'x': finalProperties['x'],
+                  'y': finalProperties['y'],
+                  'width': finalProperties['width'],
+                  'height': finalProperties['height'],
+                  'operation': 'prepare_for_alignment',
+                });
 
-              // 然后触发拖拽结束回调（触发Commit阶段）
-              widget.onControlPointDragEnd?.call(index);
+                finalProperties = _alignToClosestGuidelines(
+                  finalProperties,
+                  operationType:
+                      _isResizeOperation(index) ? 'resize' : 'translate',
+                  resizeDirection: _getResizeDirection(index),
+                );
 
-              // 🔧 清除当前拖拽控制点状态
-              _currentDraggingControlPoint = null;
-            },
-            child: Center(
-              child: Container(
-                width: controlPointSize,
-                height: controlPointSize,
-                decoration: BoxDecoration(
-                  color:
-                      isRotation ? Colors.orange : Colors.red, // 使用不同颜色表示测试版本
-                  shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 1.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(100),
-                      spreadRadius: 1.0,
-                      blurRadius: 2.0,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    '$index',
-                    style: const TextStyle(
+                // 🔧 拖拽结束后清除所有参考线
+                _clearGuidelines();
+
+                // 🔹 设置GuidelineManager的拖拽状态为false
+                GuidelineManager.instance.isDragging = false;
+
+                // 🔧 如果对齐后位置或尺寸有变化，需要更新控制点位置
+                if (finalProperties['x'] != _currentX ||
+                    finalProperties['y'] != _currentY ||
+                    finalProperties['width'] != _currentWidth ||
+                    finalProperties['height'] != _currentHeight) {
+                  EditPageLogger.editPageInfo('🔄【吸附调试】检测到吸附修改，更新控制点位置', data: {
+                    'from':
+                        '($_currentX, $_currentY, $_currentWidth x $_currentHeight)',
+                    'to':
+                        '(${finalProperties['x']}, ${finalProperties['y']}, ${finalProperties['width']} x ${finalProperties['height']})',
+                    'operation': 'update_control_points_after_alignment',
+                  });
+
+                  setState(() {
+                    _currentX = finalProperties['x']!;
+                    _currentY = finalProperties['y']!;
+                    _currentWidth = finalProperties['width']!;
+                    _currentHeight = finalProperties['height']!;
+                    _recalculateControlPointPositions();
+                  });
+
+                  EditPageLogger.editPageInfo('🎯【吸附调试】FreeControlPoints应用对齐吸附',
+                      data: {
+                        'elementId': widget.elementId,
+                        'beforeAlignment': {
+                          'x': getCurrentElementProperties()['x'],
+                          'y': getCurrentElementProperties()['y'],
+                          'width': getCurrentElementProperties()['width'],
+                          'height': getCurrentElementProperties()['height'],
+                        },
+                        'afterAlignment': finalProperties,
+                        'operationType':
+                            _isResizeOperation(index) ? 'resize' : 'translate',
+                        'resizeDirection': _getResizeDirection(index),
+                        'operation': 'alignment_applied',
+                      });
+                } else {
+                  EditPageLogger.editPageInfo('⚠️【吸附调试】吸附无效果，位置和尺寸没有变化', data: {
+                    'position': '($_currentX, $_currentY)',
+                    'size': '($_currentWidth x $_currentHeight)',
+                    'operation': 'alignment_no_effect',
+                  });
+                }
+
+                // 🔧 修复时序：先传递最终计算的状态（已对齐），再触发Commit阶段
+                widget.onControlPointDragEndWithState
+                    ?.call(index, finalProperties);
+
+                // 然后触发拖拽结束回调（触发Commit阶段）
+                widget.onControlPointDragEnd?.call(index);
+
+                // 🔧 清除当前拖拽控制点状态
+                _currentDraggingControlPoint = null;
+              },
+              child: Center(
+                child: Container(
+                  width: controlPointSize,
+                  height: controlPointSize,
+                  decoration: BoxDecoration(
+                    color:
+                        isRotation ? Colors.orange : Colors.red, // 使用不同颜色表示测试版本
+                    shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
+                    border: Border.all(
                       color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(100),
+                        spreadRadius: 1.0,
+                        blurRadius: 2.0,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$index',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -660,100 +722,115 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
       top: dragTop,
       width: dragWidth,
       height: dragHeight,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.move,
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onPanStart: (details) {
-            EditPageLogger.canvasDebug('控制点主导：开始平移操作'); // 清除之前的参考线
-            _clearGuidelines();
+      child: Listener(
+        onPointerDown: _handlePointerDown,
+        onPointerUp: _handlePointerUp,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.move,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onPanStart: (details) {
+              // 移动端：如果是多指手势，不处理单指拖拽
+              if (_isMobile && _isMultiTouchActive) return;
 
-            // 🔹 设置GuidelineManager的拖拽状态为true
-            GuidelineManager.instance.isDragging = true;
+              EditPageLogger.canvasDebug('控制点主导：开始平移操作', data: {
+                'isMobile': _isMobile,
+                'isMultiTouch': _isMultiTouchActive,
+              });
+              // 清除之前的参考线
+              _clearGuidelines();
 
-            // 🔹 初始化动态参考线显示
-            _initializeDynamicGuidelines();
+              // 🔹 设置GuidelineManager的拖拽状态为true
+              GuidelineManager.instance.isDragging = true;
 
-            // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
-            widget.onControlPointDragStart?.call(-1); // -1表示平移操作
-          },
-          onPanUpdate: (details) {
-            setState(() {
-              _translateAllControlPoints(details.delta);
-            });
+              // 🔹 初始化动态参考线显示
+              _initializeDynamicGuidelines();
 
-            // 在setState完成后强制立即刷新参考线，确保每次移动都更新
-            _refreshGuidelinesImmediately();
-          },
-          onPanEnd: (details) {
-            EditPageLogger.editPageInfo('🔄【吸附调试】平移操作结束', data: {
-              'operation': 'translate_end',
-            });
+              // 🔧 关键：通知Canvas开始拖拽，以控制点为主导
+              widget.onControlPointDragStart?.call(-1); // -1表示平移操作
+            },
+            onPanUpdate: (details) {
+              // 移动端：如果是多指手势，不处理单指拖拽
+              if (_isMobile && _isMultiTouchActive) return;
 
-            // 在鼠标释放时进行参考线对齐（在清除参考线之前）
-            var finalProperties = getCurrentElementProperties();
-            finalProperties = _alignToClosestGuidelines(
-              finalProperties,
-              operationType: 'translate', // 拖拽整体移动操作
-              resizeDirection: null,
-            );
-
-            // 拖拽结束后清除所有参考线
-            _clearGuidelines();
-
-            // 设置GuidelineManager的拖拽状态为false
-            GuidelineManager.instance.isDragging = false;
-
-            // 🔧 如果对齐后位置或尺寸有变化，需要更新控制点位置
-            if (finalProperties['x'] != _currentX ||
-                finalProperties['y'] != _currentY ||
-                finalProperties['width'] != _currentWidth ||
-                finalProperties['height'] != _currentHeight) {
               setState(() {
-                _currentX = finalProperties['x']!;
-                _currentY = finalProperties['y']!;
-                _currentWidth = finalProperties['width']!;
-                _currentHeight = finalProperties['height']!;
-                _recalculateControlPointPositions();
+                _translateAllControlPoints(details.delta);
               });
 
-              EditPageLogger.editPageInfo('🎯【吸附调试】FreeControlPoints应用平移对齐吸附',
-                  data: {
-                    'elementId': widget.elementId,
-                    'beforeAlignment': {
-                      'x': _currentX,
-                      'y': _currentY,
-                    },
-                    'afterAlignment': {
-                      'x': finalProperties['x'],
-                      'y': finalProperties['y'],
-                    },
-                    'operation': 'apply_translation_alignment',
-                  });
-            } else {
-              EditPageLogger.editPageInfo('🚫【吸附调试】平移对齐无变化', data: {
-                'currentPosition': '($_currentX, $_currentY)',
-                'alignedPosition':
-                    '(${finalProperties['x']}, ${finalProperties['y']})',
-                'operation': 'no_translation_alignment_change',
+              // 在setState完成后强制立即刷新参考线，确保每次移动都更新
+              _refreshGuidelinesImmediately();
+            },
+            onPanEnd: (details) {
+              EditPageLogger.editPageInfo('🔄【吸附调试】平移操作结束', data: {
+                'operation': 'translate_end',
               });
-            }
 
-            // 🔧 传递最终状态（已对齐）
-            widget.onControlPointDragEndWithState?.call(-1, finalProperties);
+              // 在鼠标释放时进行参考线对齐（在清除参考线之前）
+              var finalProperties = getCurrentElementProperties();
+              finalProperties = _alignToClosestGuidelines(
+                finalProperties,
+                operationType: 'translate', // 拖拽整体移动操作
+                resizeDirection: null,
+              );
 
-            // 触发Commit阶段
-            widget.onControlPointDragEnd?.call(-1);
-          },
-          child: Container(
-            width: dragWidth,
-            height: dragHeight,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              // 添加调试边框（在debug模式下可见）
-              border: kDebugMode
-                  ? Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1)
-                  : null,
+              // 拖拽结束后清除所有参考线
+              _clearGuidelines();
+
+              // 设置GuidelineManager的拖拽状态为false
+              GuidelineManager.instance.isDragging = false;
+
+              // 🔧 如果对齐后位置或尺寸有变化，需要更新控制点位置
+              if (finalProperties['x'] != _currentX ||
+                  finalProperties['y'] != _currentY ||
+                  finalProperties['width'] != _currentWidth ||
+                  finalProperties['height'] != _currentHeight) {
+                setState(() {
+                  _currentX = finalProperties['x']!;
+                  _currentY = finalProperties['y']!;
+                  _currentWidth = finalProperties['width']!;
+                  _currentHeight = finalProperties['height']!;
+                  _recalculateControlPointPositions();
+                });
+
+                EditPageLogger.editPageInfo('🎯【吸附调试】FreeControlPoints应用平移对齐吸附',
+                    data: {
+                      'elementId': widget.elementId,
+                      'beforeAlignment': {
+                        'x': _currentX,
+                        'y': _currentY,
+                      },
+                      'afterAlignment': {
+                        'x': finalProperties['x'],
+                        'y': finalProperties['y'],
+                      },
+                      'operation': 'apply_translation_alignment',
+                    });
+              } else {
+                EditPageLogger.editPageInfo('🚫【吸附调试】平移对齐无变化', data: {
+                  'currentPosition': '($_currentX, $_currentY)',
+                  'alignedPosition':
+                      '(${finalProperties['x']}, ${finalProperties['y']})',
+                  'operation': 'no_translation_alignment_change',
+                });
+              }
+
+              // 🔧 传递最终状态（已对齐）
+              widget.onControlPointDragEndWithState?.call(-1, finalProperties);
+
+              // 触发Commit阶段
+              widget.onControlPointDragEnd?.call(-1);
+            },
+            child: Container(
+              width: dragWidth,
+              height: dragHeight,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                // 添加调试边框（在debug模式下可见）
+                border: kDebugMode
+                    ? Border.all(
+                        color: Colors.red.withValues(alpha: 0.3), width: 1)
+                    : null,
+              ),
             ),
           ),
         ),

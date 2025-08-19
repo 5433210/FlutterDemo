@@ -116,9 +116,9 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                   // 为每个元素构建单独的预览
                   return Builder(
                     builder: (context) {
-                      // 🔧 强化单选场景日志
+                      // 🔧 单选场景调试日志
                       if (isSingleSelection) {
-                        EditPageLogger.canvasError('🔧🔧🔧 构建单选元素预览', data: {
+                        EditPageLogger.canvasDebug('🔧 构建单选元素预览', data: {
                           'elementId': elementId,
                           'fix': 'single_selection_element_preview',
                         });
@@ -136,7 +136,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                       if (previewProperties != null) {
                         // 使用完整的预览属性构建元素
                         if (isSingleSelection) {
-                          EditPageLogger.canvasError('🔧🔧🔧 单选使用完整属性预览',
+                          EditPageLogger.canvasDebug('🔧 单选使用完整属性预览',
                               data: {
                                 'elementId': elementId,
                                 'hasPreviewProperties': true,
@@ -148,6 +148,36 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                         }
                         elementPreview = _buildFullPropertyPreview(
                             elementId, previewProperties);
+                      } else {
+                        // 🔧 修复：当previewProperties为null时的回退处理
+                        if (isSingleSelection) {
+                          EditPageLogger.canvasDebug('🔧 单选元素无预览属性，使用默认预览',
+                              data: {
+                                'elementId': elementId,
+                                'reason': 'no_preview_properties',
+                                'fix': 'single_selection_default_preview',
+                              });
+                        }
+                        
+                        // 尝试从elements列表中查找元素数据
+                        final element = widget.elements.firstWhere(
+                          (e) => e['id'] == elementId,
+                          orElse: () => <String, dynamic>{},
+                        );
+
+                        if (element.isNotEmpty) {
+                          // 使用基本的元素属性构建简单预览
+                          final x = (element['x'] as num?)?.toDouble() ?? 0.0;
+                          final y = (element['y'] as num?)?.toDouble() ?? 0.0;
+                          final width = (element['width'] as num?)?.toDouble() ?? 100.0;
+                          final height = (element['height'] as num?)?.toDouble() ?? 100.0;
+                          
+                          elementPreview = _buildSimplePreview(
+                            elementId,
+                            Offset(x, y),
+                            Size(width, height),
+                          );
+                        }
                       }
                       // else {
                       //   // 回退到传统的位置偏移方式
@@ -382,6 +412,45 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
         angle: elementRotation * 3.14159265359 / 180,
         child: previewContent,
       ),
+    );
+  }
+
+  /// 🔧 新增：构建简单预览（回退方案）
+  Widget _buildSimplePreview(String elementId, Offset position, Size size) {
+    const controlPointSize = 16.0;
+    const borderWidth = 2.0;
+    
+    // 确保预览尺寸不小于最小值
+    final displayWidth = math.max(size.width, 20.0);
+    final displayHeight = math.max(size.height, 20.0);
+    
+    // 简单的预览框
+    final previewContent = Container(
+      width: displayWidth,
+      height: displayHeight,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.7), width: borderWidth),
+        color: Colors.blue.withValues(alpha: 0.1),
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.drag_indicator,
+          color: Colors.blue,
+          size: 24,
+        ),
+      ),
+    );
+
+    EditPageLogger.canvasDebug('构建简单预览', data: {
+      'elementId': elementId,
+      'position': '(${position.dx}, ${position.dy})',
+      'size': '($displayWidth, $displayHeight)',
+    });
+
+    return Positioned(
+      left: position.dx,
+      top: position.dy,
+      child: previewContent,
     );
   }
 

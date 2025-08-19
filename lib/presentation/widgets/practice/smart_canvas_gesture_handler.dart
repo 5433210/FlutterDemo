@@ -107,10 +107,8 @@ class SmartCanvasGestureHandler implements GestureContext {
 
   @override
   Future<GestureDispatchResult> deselectElement(String elementId) async {
-    // Implementation depends on controller capability
-    if (!isMultiSelectMode) {
-      controller.clearSelection();
-    }
+    // 🔧 修复：使用正确的deselectElement方法
+    controller.deselectElement(elementId);
     onDragUpdate();
     return GestureDispatchResult.handled();
   }
@@ -520,7 +518,20 @@ class SmartCanvasGestureHandler implements GestureContext {
 
     EditPageLogger.canvasDebug(
         'SmartGestureDispatcher路径优化: 跳过Controller更新保持流畅性');
-    onDragUpdate();
+    
+    try {
+      onDragUpdate();
+    } catch (e, stackTrace) {
+      EditPageLogger.canvasError('SmartGestureDispatcher拖拽更新回调异常', 
+        error: e, 
+        stackTrace: stackTrace,
+        data: {
+          'elementId': elementId,
+          'operation': 'updateElementDrag_callback',
+          'delta': delta.toString(),
+        });
+    }
+    
     return GestureDispatchResult.handled();
   }
 
@@ -936,7 +947,14 @@ class SmartCanvasGestureHandler implements GestureContext {
 
       onDragUpdate();
     } catch (e, stackTrace) {
-      EditPageLogger.canvasError('元素拖拽更新异常', error: e, stackTrace: stackTrace);
+      EditPageLogger.canvasError('元素拖拽更新异常', 
+        error: e, 
+        stackTrace: stackTrace,
+        data: {
+          'elementId': 'unknown',
+          'operation': 'element_drag_update',
+          'currentPosition': currentPosition.toString(),
+        });
     }
   }
 
@@ -969,14 +987,14 @@ class SmartCanvasGestureHandler implements GestureContext {
     } else {
       controller.state.selectedLayerId = null;
 
-      if (isCurrentlySelected && isMultiSelect) {
-        // 在多选模式下，点击已选中元素会从选择中移除
-        EditPageLogger.canvasDebug('多选模式反选元素');
-        controller.selectElement(id, isMultiSelect: true);
-      } else if (isCurrentlySelected && !isMultiSelect) {
-        // 在单选模式下，点击已选中元素会取消选择（反选）
+      if (isCurrentlySelected && !isMultiSelect) {
+        // 🔧 修复：在单选模式下，点击已选中元素会取消选择（反选）
         EditPageLogger.canvasDebug('单选模式反选元素');
         controller.clearSelection();
+      } else if (isCurrentlySelected && isMultiSelect) {
+        // 🔧 修复：在多选模式下，点击已选中元素会从选择中移除
+        EditPageLogger.canvasDebug('多选模式反选元素');
+        controller.deselectElement(id);
       } else {
         // 选择新元素
         EditPageLogger.canvasDebug('选择新元素');
@@ -1114,9 +1132,9 @@ class SmartCanvasGestureHandler implements GestureContext {
         }
       }
 
-      // 3. 其他情况进行画布平移
-      EditPageLogger.canvasDebug('开始画布平移');
-      _setupCanvasPanning(elements);
+      // 3. 其他情况 - 让InteractiveViewer处理画布平移
+      EditPageLogger.canvasDebug('让InteractiveViewer处理画布平移');
+      _currentMode = _GestureMode.idle;
     } finally {
       _isPanStartHandling = false; // 清除PanStart处理标记
     }
@@ -1381,9 +1399,9 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _setupCanvasPanning(List<Map<String, dynamic>> elements) {
-    // 画布平移应该由InteractiveViewer处理，这里完全不处理
+    // 🔧 修复：不拦截手势，让InteractiveViewer完全接管画布平移和缩放
     EditPageLogger.canvasDebug('画布平移设置',
-        data: {'note': '不拦截手势，让InteractiveViewer处理'});
+        data: {'注意': '不拦截手势，让InteractiveViewer处理'});
     _currentMode = _GestureMode.idle; // 设置为idle，表示不处理任何手势
     // 重要：不设置任何拖拽状态，让GestureDetector的手势穿透到InteractiveViewer
   }
