@@ -417,7 +417,6 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
 
   /// 🔧 新增：构建简单预览（回退方案）
   Widget _buildSimplePreview(String elementId, Offset position, Size size) {
-    const controlPointSize = 16.0;
     const borderWidth = 2.0;
     
     // 确保预览尺寸不小于最小值

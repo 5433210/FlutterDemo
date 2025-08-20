@@ -654,7 +654,7 @@ mixin ElementManagementMixin on ChangeNotifier
         final elements = state.currentPageElements;
         final selectedIndex = elements.indexWhere((e) => e['id'] == selectedId);
         if (selectedIndex >= 0) {
-          state.selectedElement = elements[selectedIndex] as Map<String, dynamic>;
+          state.selectedElement = elements[selectedIndex];
         }
       } else {
         state.selectedElement = null;

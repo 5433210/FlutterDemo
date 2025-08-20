@@ -166,14 +166,12 @@ class _CombinedToolButton extends StatelessWidget {
 class _ToolButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
-  final bool isSelected;
   final bool isEnabled;
   final VoidCallback? onPressed;
 
   const _ToolButton({
     required this.icon,
     required this.tooltip,
-    this.isSelected = false,
     this.isEnabled = true,
     this.onPressed,
   });
@@ -188,10 +186,8 @@ class _ToolButton extends StatelessWidget {
         icon: Icon(icon),
         onPressed: isEnabled ? onPressed : null,
         style: IconButton.styleFrom(
-          backgroundColor: isSelected ? colorScheme.primaryContainer : null,
-          foregroundColor: isSelected
-              ? colorScheme.primary
-              : isEnabled
+          backgroundColor: null,
+          foregroundColor: isEnabled
                   ? colorScheme.onSurface
                   : colorScheme.onSurfaceVariant,
         ),

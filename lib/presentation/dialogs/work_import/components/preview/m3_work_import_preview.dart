@@ -62,17 +62,8 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     VoidCallback? handleAdd =
         state.isProcessing ? null : () => _handleAddImages();
 
-    // Create a function to handle the "Delete Image" button click
-    VoidCallback? handleDelete = (images.isEmpty || state.isProcessing)
-        ? null
-        : () => _handleDeleteSelected();
-
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Use constraints to adapt layout
-        final isSmallWidth = constraints.maxWidth < 500;
-        // Approximate height for buttons (used for spacing calculation)
-
         return Column(
           children: [
             Expanded(

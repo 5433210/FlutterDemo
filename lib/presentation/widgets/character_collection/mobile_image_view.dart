@@ -126,7 +126,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
   Offset? _selectionEnd;
   String? _adjustingRegionId;
   CharacterRegion? _originalRegion;
-  Rect? _adjustingRect;
   Offset? _dragStartPoint;
 
   // 调整相关状态
@@ -958,7 +957,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _isAdjusting = true;
         _adjustingRegionId = region.id;
         _originalRegion = region;
-        _adjustingRect = region.rect;
         _dragStartPoint = imagePoint;
         _activeHandleIndex = handleIndex;
       });
@@ -975,7 +973,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _isAdjusting = true;
         _adjustingRegionId = region.id;
         _originalRegion = region;
-        _adjustingRect = region.rect;
         _dragStartPoint = imagePoint;
         _activeHandleIndex = 8; // 拖拽整个选区
       });
@@ -1400,7 +1397,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       _isAdjusting = true;
       _adjustingRegionId = region.id;
       _originalRegion = region;
-      _adjustingRect = region.rect;
     });
 
     AppLogger.debug('开始选区调整', data: {
@@ -1414,7 +1410,6 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       _isAdjusting = false;
       _adjustingRegionId = null;
       _originalRegion = null;
-      _adjustingRect = null;
       _dragStartPoint = null;
       _activeHandleIndex = null;
     });
@@ -1461,10 +1456,10 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 如果正在调整选区，更新其视口位置
     if (_isAdjusting && _originalRegion != null && _transformer != null) {
       try {
-        final newRect =
-            _transformer!.imageRectToViewportRect(_originalRegion!.rect);
+        // Update viewport display after transformation
+        _transformer!.imageRectToViewportRect(_originalRegion!.rect);
         setState(() {
-          _adjustingRect = newRect;
+          // Rect converted successfully
         });
       } catch (e) {
         // 如果坐标转换失败，重置变换矩阵

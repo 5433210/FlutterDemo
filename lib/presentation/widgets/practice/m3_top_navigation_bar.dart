@@ -152,8 +152,8 @@ class M3TopNavigationBar extends StatelessWidget
             IconButton(
               icon: Icon(
                 showToolbar
-                    ? Icons.build
-                    : Icons.build_outlined,
+                    ? Icons.widgets
+                    : Icons.widgets_outlined,
               ),
               tooltip: showToolbar
                   ? '${l10n.hideToolbar} (Ctrl+Shift+H)'

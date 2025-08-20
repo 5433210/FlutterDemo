@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../infrastructure/logging/practice_edit_logger.dart';
@@ -790,7 +789,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     },
                     builder: (context, candidateData, rejectedData) {
                       final needsSpecialGestureHandling = shouldHandleAnySpecialGesture(elements);
-                      final hasElements = elements.isNotEmpty;
                       
                       return GestureDetector(
                         // 🔧 关键修复：移动端智能手势行为 - 始终使用deferToChild让InteractiveViewer处理缩放平移

@@ -230,7 +230,6 @@ class _UILayerState extends ConsumerState<UILayer> {
     final currentCursor =
         widget.altKeyPressed ? SystemMouseCursors.move : widget.cursor;
 
-    final screenSize = MediaQuery.of(context).size;
     // AppLogger.debug('🔧 [UILayer] build方法调用', data: {
     //   'screenWidth': screenSize.width.toStringAsFixed(1),
     //   'screenHeight': screenSize.height.toStringAsFixed(1),

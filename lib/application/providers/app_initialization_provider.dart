@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../infrastructure/logging/logger.dart';
 import '../services/app_initialization_service.dart';
-import '../services/enhanced_backup_service.dart';
 import 'data_path_provider.dart';
 import 'import_export_providers.dart';
 import 'unified_path_provider.dart' as unified;

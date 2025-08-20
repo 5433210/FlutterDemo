@@ -246,7 +246,6 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       final duplicateFiles = <File>[];
       final duplicateLibraryItems = <String>[];
       final newFiles = <File>[];
-      final newLibraryItems = selectedItems.toList();
 
       for (int i = 0; i < selectedFiles.length; i++) {
         final file = selectedFiles[i];
@@ -618,7 +617,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       
       state = state.copyWith(imageRotations: newRotations);
       
-      AppLogger.debug('Rotated image $imageKey to ${newRotation}°', data: {
+      AppLogger.debug('Rotated image $imageKey to $newRotation°', data: {
         'imageKey': imageKey,
         'oldRotation': currentRotation,
         'newRotation': newRotation,

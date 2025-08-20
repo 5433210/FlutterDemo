@@ -1114,9 +1114,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   Widget _buildCompactToolbar(
       AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
-    // 在窗体高度不足时，面板应该默认折叠
-    final hassufficientHeight = MediaQuery.of(context).size.height > 600;
-
     return ExpansionTile(
       initiallyExpanded: _isParameterPanelExpanded,
       onExpansionChanged: (bool expanded) {
@@ -1267,11 +1264,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   Widget _buildFullToolbarContent(
       AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
-    // 根据窗体高度决定参数面板的默认展开状态
-    final screenHeight = MediaQuery.of(context).size.height;
-    final hassufficientHeight = screenHeight > 600;
-    final shouldExpand = hassufficientHeight ? true : _isParameterPanelExpanded;
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
