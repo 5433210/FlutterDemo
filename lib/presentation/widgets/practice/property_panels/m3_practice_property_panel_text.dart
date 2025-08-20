@@ -258,6 +258,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     final lineThrough = content['lineThrough'] as bool? ?? false;
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
 
+    // 根据书写模式动态调整标签
+    final isVerticalMode = writingMode.startsWith('vertical');
+    final letterSpacingLabel = isVerticalMode ? '字符间距（纵向）' : l10n.letterSpacing;
+    final lineHeightLabel = isVerticalMode ? '列间距' : l10n.lineHeight;
+
     // 颜色转换
     Color getFontColor() {
       try {
@@ -884,17 +889,17 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         const SizedBox(height: 16.0),
 
-        // 字间距设置
-        M3PanelStyles.buildSectionTitle(context, l10n.letterSpacing),
+        // 字间距设置 - 根据书写模式动态调整标签        
+        M3PanelStyles.buildSectionTitle(context, letterSpacingLabel),
         Row(
           children: [
             Expanded(
               flex: 3,
               child: Slider(
-                value: letterSpacing.clamp(-5.0, 500.0),
-                min: -5.0,
-                max: 500.0,
-                divisions: 505,
+                value: letterSpacing.clamp(0.0, 50.0), // 🔧 修改最小值为0，最大值调整为更合理的50px
+                min: 0.0, // 🔧 字符间距最小值改为0，避免字符重叠问题
+                max: 50.0, // 🔧 最大值调整为50px，更实用
+                divisions: 50, // 🔧 调整分段数
                 label: '${letterSpacing.toStringAsFixed(1)}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -908,11 +913,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.letterSpacing,
+                label: letterSpacingLabel, // 使用动态标签
                 value: letterSpacing,
                 suffix: 'px',
-                min: -5.0,
-                max: 500.0,
+                min: 0.0, // 🔧 字符间距最小值改为0
+                max: 50.0, // 🔧 最大值调整为50px
                 decimalPlaces: 1,
                 onChanged: (value) {
                   _updateContentProperty('letterSpacing', value);
@@ -924,18 +929,18 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
         const SizedBox(height: 16.0),
 
-        // 行间距设置
-        M3PanelStyles.buildSectionTitle(context, l10n.lineHeight),
+        // 行间距设置 - 根据书写模式动态调整标签        
+        M3PanelStyles.buildSectionTitle(context, lineHeightLabel),
         Row(
           children: [
             Expanded(
               flex: 3,
               child: Slider(
-                value: lineHeight.clamp(0.0, 500.0),
-                min: 0.0,
-                max: 500.0,
-                divisions: 500,
-                label: '${lineHeight.toStringAsFixed(1)}px',
+                value: lineHeight.clamp(0.5, 5.0), // 🔧 修改为倍数范围：0.5倍到5倍
+                min: 0.5, // 🔧 最小行高倍数
+                max: 5.0, // 🔧 最大行高倍数
+                divisions: 45, // 🔧 (5.0 - 0.5) * 10 = 45个分段，精确到0.1
+                label: '${lineHeight.toStringAsFixed(1)}×', // 🔧 显示倍数符号而不是px
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
@@ -948,11 +953,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: l10n.lineHeight,
+                label: lineHeightLabel, // 使用动态标签
                 value: lineHeight,
-                suffix: 'px',
-                min: 0.0,
-                max: 500.0,
+                suffix: '×', // 🔧 显示倍数符号而不是px
+                min: 0.5, // 🔧 最小行高倍数
+                max: 5.0, // 🔧 最大行高倍数
                 decimalPlaces: 1,
                 onChanged: (value) {
                   _updateContentProperty('lineHeight', value);

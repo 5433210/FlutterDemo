@@ -510,6 +510,7 @@ class ElementRenderers {
       lineHeight: lineHeight,
       underline: underline,
       lineThrough: lineThrough,
+      isVerticalMode: writingMode.startsWith('vertical'), // 检测是否为竖排模式
     );
 
     // 使用 LayoutBuilder 获取容器约束
@@ -538,6 +539,8 @@ class ElementRenderers {
                             maxHeight: constraints.maxHeight - padding * 2,
                           ),
                           backgroundColor: backgroundColor, // 傳遞正確的背景色
+                          originalLetterSpacing: letterSpacing, // 传递原始字符间距
+                          originalLineHeight: lineHeight, // 传递原始行高
                         )
                       : TextRenderer.renderHorizontalText(
                           text: text,

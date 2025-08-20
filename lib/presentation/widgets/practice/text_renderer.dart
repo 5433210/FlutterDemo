@@ -6,18 +6,36 @@ import 'package:flutter/material.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
 import 'property_panels/justified_text_renderer.dart';
 import 'property_panels/vertical_column_justified_text.dart';
+import 'text_renderer_helpers.dart';
 
 /// 文本渲染器
 /// 用于在画布和属性面板预览中统一渲染文本
 class TextRenderer {
   /// 计算每列最多可容纳的字符数
+  /// 在竖排模式下：lineHeight 实际上是列间距，letterSpacing 是纵向字符间距
   static int calculateMaxCharsPerColumn(double maxHeight, double charHeight,
-      double lineHeight, double letterSpacing) {
-    // 计算单个字符的有效高度（包括行高和字间距）
-    final effectiveCharHeight = charHeight * lineHeight + letterSpacing;
+      double lineHeight, double letterSpacing, {bool isVerticalMode = false}) {
+    // 确保参数值在合理范围内，防止无限循环
+    final safeCharHeight = math.max(charHeight, 1.0); // 最小字符高度1px
+    final safeLetterSpacing = math.max(letterSpacing, 0.0); // 最小字符间距0px
+    
+    double effectiveCharHeight;
+    if (isVerticalMode) {
+      // 竖排模式：letterSpacing 是纵向字符间距，直接加到字符高度上
+      // lineHeight 在竖排模式下是列间距，不影响单列内的字符布局
+      effectiveCharHeight = safeCharHeight + safeLetterSpacing;
+    } else {
+      // 水平模式：使用原来的计算方式
+      final safeLineHeight = math.max(lineHeight, 0.5); // 最小行高倍数0.5
+      effectiveCharHeight = safeCharHeight * safeLineHeight + safeLetterSpacing;
+    }
+    
+    // 确保有效字符高度不会太小，防止除法结果过大
+    final minEffectiveHeight = math.max(effectiveCharHeight, 10.0); // 最小有效高度10px
 
-    // 计算可容纳的最大字符数（向下取整）
-    return (maxHeight / effectiveCharHeight).floor();
+    // 计算可容纳的最大字符数（向下取整），并限制最大值防止性能问题
+    final maxChars = (maxHeight / minEffectiveHeight).floor();
+    return math.min(maxChars, 1000); // 限制最大字符数为1000，防止无限循环
   }
 
   static String convertLTRHorizontalFittedText(String text,
@@ -149,6 +167,7 @@ class TextRenderer {
 
   /// 创建文本样式
   /// 负责解析和验证字重，创建TextStyle对象
+  /// 在竖排模式下，lineHeight控制列间距，letterSpacing控制纵向字符间距
   static TextStyle createTextStyle({
     required double fontSize,
     required String fontFamily,
@@ -159,6 +178,7 @@ class TextRenderer {
     required double lineHeight,
     required bool underline,
     required bool lineThrough,
+    bool isVerticalMode = false, // 新增参数：是否为竖排模式
   }) {
     EditPageLogger.editPageDebug(
       '创建文本样式',
@@ -203,6 +223,21 @@ class TextRenderer {
     bool isSourceHanFont =
         fontFamily == 'SourceHanSans' || fontFamily == 'SourceHanSerif';
 
+    // 在竖排模式下，需要特殊处理间距参数
+    double effectiveLetterSpacing;
+    double effectiveLineHeight;
+    
+    if (isVerticalMode) {
+      // 竖排模式下：不让TextStyle自动应用letterSpacing和height
+      // 我们会在布局中手动控制这些间距
+      effectiveLetterSpacing = 0.0; // 不传递给TextStyle
+      effectiveLineHeight = 1.0; // 使用默认行高，不传递给TextStyle
+    } else {
+      // 水平模式下：正常传递参数
+      effectiveLetterSpacing = letterSpacing;
+      effectiveLineHeight = lineHeight;
+    }
+
     // 创建样式
     TextStyle style;
     if (isSourceHanFont) {
@@ -216,8 +251,8 @@ class TextRenderer {
         fontWeight: finalWeight,
         fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
         color: parsedFontColor,
-        letterSpacing: letterSpacing,
-        height: lineHeight,
+        letterSpacing: effectiveLetterSpacing, // 使用调整后的值
+        height: effectiveLineHeight, // 使用调整后的值
         decoration: decorations.isEmpty
             ? TextDecoration.none
             : TextDecoration.combine(decorations),
@@ -232,8 +267,8 @@ class TextRenderer {
         fontWeight: finalWeight,
         fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
         color: parsedFontColor,
-        letterSpacing: letterSpacing,
-        height: lineHeight,
+        letterSpacing: effectiveLetterSpacing, // 使用调整后的值
+        height: effectiveLineHeight, // 使用调整后的值
         decoration: decorations.isEmpty
             ? TextDecoration.none
             : TextDecoration.combine(decorations),
@@ -476,6 +511,9 @@ class TextRenderer {
     required BoxConstraints constraints,
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
+    // 在竖排模式下，需要原始的间距值
+    double? originalLetterSpacing,
+    double? originalLineHeight,
   }) {
     // 添加调试日志
     EditPageLogger.rendererDebug('画布文本元素渲染', 
@@ -498,6 +536,8 @@ class TextRenderer {
         constraints: constraints,
         padding: padding,
         backgroundColor: backgroundColor,
+        originalLetterSpacing: originalLetterSpacing,
+        originalLineHeight: originalLineHeight,
       );
     } else {
       return renderHorizontalText(
@@ -523,6 +563,9 @@ class TextRenderer {
     required BoxConstraints constraints,
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
+    // 在竖排模式下，需要原始的间距值而不是TextStyle中的值
+    double? originalLetterSpacing,
+    double? originalLineHeight,
   }) {
     EditPageLogger.rendererDebug('开始垂直文本渲染', 
       data: {
@@ -553,13 +596,15 @@ class TextRenderer {
         maxHeight: constraints.maxHeight - padding * 2,
       ),
       isRightToLeft: isRightToLeft,
+      originalLetterSpacing: originalLetterSpacing ?? 0.0, // 传递原始字符间距
+      originalLineHeight: originalLineHeight ?? 1.2, // 传递原始行高
     );
 
     // 在整个预览区域内应用对齐效果
     // 根据水平和垂直对齐方式决定容器的对齐方式
-    Alignment containerAlignment;
+    // 注意：现在我们不再使用外层容器的alignment来覆盖内部对齐
 
-    // 先处理水平对齐
+    // 先处理水平对齐（现在只用于justify模式）
     Alignment horizontalAlignment;
     switch (textAlign) {
       case 'left':
@@ -581,54 +626,24 @@ class TextRenderer {
         horizontalAlignment = Alignment.centerLeft;
     }
 
-    // 再处理垂直对齐
-    Alignment verticalAlignment;
-    switch (verticalAlign) {
-      case 'top':
-        verticalAlignment = Alignment.topCenter;
-        break;
-      case 'middle':
-        verticalAlignment = Alignment.center;
-        break;
-      case 'bottom':
-        verticalAlignment = Alignment.bottomCenter;
-        break;
-      case 'justify':
-        // 对于垂直两端对齐，我们使用居中对齐
-        verticalAlignment = Alignment.center;
-        break;
-      default:
-        verticalAlignment = Alignment.topCenter;
-    }
-
-    // 组合水平和垂直对齐
-    if (horizontalAlignment == Alignment.centerLeft) {
-      if (verticalAlignment == Alignment.topCenter) {
-        containerAlignment = Alignment.topLeft;
-      } else if (verticalAlignment == Alignment.bottomCenter) {
-        containerAlignment = Alignment.bottomLeft;
-      } else {
-        containerAlignment = Alignment.centerLeft;
-      }
-    } else if (horizontalAlignment == Alignment.centerRight) {
-      if (verticalAlignment == Alignment.topCenter) {
-        containerAlignment = Alignment.topRight;
-      } else if (verticalAlignment == Alignment.bottomCenter) {
-        containerAlignment = Alignment.bottomRight;
-      } else {
-        containerAlignment = Alignment.centerRight;
-      }
-    } else {
-      // center
-      containerAlignment = verticalAlignment;
-    }
-
     // 删除过度详细的调试信息
 
     // 对于水平两端对齐，我们需要特殊处理
-    if (textAlign == 'justify') {
-      // 对于水平两端对齐，我们需要将列在整个预览区域内平均分布
-      // 而列内的文字应该按照垂直对齐方式来对齐
+    if (textAlign == 'justify' && verticalAlign == 'justify') {
+      // 🔧 双分佈情况：水平分佈（列之间）+ 垂直分佈（列内字符）
+      // 列之间使用spaceBetween分佈，列内的字符也使用spaceBetween分佈
+      return Container(
+        width: constraints.maxWidth,
+        height: constraints.maxHeight,
+        padding: EdgeInsets.all(padding),
+        color: backgroundColor,
+        child: ClipRect(
+          clipBehavior: Clip.hardEdge,
+          child: contentWidget, // contentWidget中已经处理了双分佈逻辑
+        ),
+      );
+    } else if (textAlign == 'justify') {
+      // 只有水平分佈：列之间分佈，列内按verticalAlign对齐
       return Container(
         width: constraints.maxWidth,
         height: constraints.maxHeight,
@@ -640,24 +655,46 @@ class TextRenderer {
         ),
       );
     } else if (verticalAlign == 'justify') {
-      // 对于垂直两端对齐，我们需要特殊处理
-      // 在竖排文本中，垂直两端对齐意味着列内的文字应该垂直均匀分布
+      // 只有垂直分佈：列内字符分佈，列之间按textAlign对齐
       return Container(
         width: constraints.maxWidth,
         height: constraints.maxHeight,
         padding: EdgeInsets.all(padding),
         color: backgroundColor,
-        alignment: horizontalAlignment, // 只应用水平对齐，垂直对齐由列内处理
+        alignment: horizontalAlignment, // 只应用水平对齐，垂直分佈由列内处理
         child: ClipRect(clipBehavior: Clip.hardEdge, child: contentWidget),
       );
     } else {
-      // 对于其他对齐方式，我们使用原来的实现
+      // 🔧 对于其他对齐方式，不应该在外层容器设置alignment，
+      // 因为这会覆盖内部Column的mainAxisAlignment
+      // 只有当verticalAlign不是middle、bottom、justify时才使用外层对齐
+      Alignment? outerAlignment;
+      if (verticalAlign == 'top') {
+        // 顶部对齐时，只设置水平对齐，垂直对齐由内部处理
+        switch (textAlign) {
+          case 'left':
+            outerAlignment = Alignment.topLeft;
+            break;
+          case 'center':
+            outerAlignment = Alignment.topCenter;
+            break;
+          case 'right':
+            outerAlignment = Alignment.topRight;
+            break;
+          default:
+            outerAlignment = null; // 不设置对齐，让内部控制
+        }
+      } else {
+        // 对于middle、bottom、justify，完全不设置外层对齐，让内部Column控制
+        outerAlignment = null;
+      }
+
       return Container(
         width: constraints.maxWidth,
         height: constraints.maxHeight,
         padding: EdgeInsets.all(padding),
         color: backgroundColor,
-        alignment: containerAlignment, // 在整个预览区域内应用水平和垂直对齐
+        alignment: outerAlignment, // 🔧 只在需要时设置外层对齐
         child: ClipRect(clipBehavior: Clip.hardEdge, child: contentWidget),
       );
     }
@@ -808,6 +845,8 @@ class TextRenderer {
     required String textAlign,
     required BoxConstraints constraints,
     required bool isRightToLeft,
+    required double originalLetterSpacing, // 原始字符间距
+    required double originalLineHeight, // 原始行高
   }) {
     if (text.isEmpty) {
       text = '预览文本内容\n第二行文本\n第三行文本';
@@ -821,14 +860,31 @@ class TextRenderer {
 
     // 计算每列可容纳的最大字符数
     final charHeight = style.fontSize ?? 16.0;
-    final effectiveLineHeight = style.height ?? 1.2;
-    final effectiveLetterSpacing = style.letterSpacing ?? 0.0;
+    // 使用传递进来的原始值而不是TextStyle中的值
+    final effectiveLineHeight = originalLineHeight;
+    final effectiveLetterSpacing = originalLetterSpacing;
     final maxCharsPerColumn = calculateMaxCharsPerColumn(
       constraints.maxHeight,
       charHeight,
       effectiveLineHeight,
       effectiveLetterSpacing,
+      isVerticalMode: true, // 明确标识这是竖排模式
     );
+
+    // 添加安全检查，防止无限循环
+    if (maxCharsPerColumn <= 0) {
+      // 如果计算结果无效，返回简单的错误显示
+      return SizedBox(
+        width: constraints.maxWidth,
+        height: constraints.maxHeight,
+        child: const Center(
+          child: Text(
+            '文本参数错误',
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    }
 
     // 生成所有列的数据
     final allColumns = <Widget>[];
@@ -837,11 +893,18 @@ class TextRenderer {
     for (final line in lines) {
       final chars = line.characters.toList();
       int charIdx = 0;
-      while (charIdx < chars.length) {
+      int columnCount = 0; // 添加列计数器防止无限循环
+      const maxColumnsPerLine = 100; // 每行最大列数限制
+      
+      while (charIdx < chars.length && columnCount < maxColumnsPerLine) {
         // 计算当前列要显示多少字符
         final charsInThisColumn =
             math.min(maxCharsPerColumn, chars.length - charIdx);
-        final columnChars = chars.sublist(charIdx, charIdx + charsInThisColumn);
+            
+        // 确保至少处理一个字符，防止无限循环
+        final actualCharsInColumn = math.max(charsInThisColumn, 1);
+        final safeEndIndex = math.min(charIdx + actualCharsInColumn, chars.length);
+        final columnChars = chars.sublist(charIdx, safeEndIndex);
 
         // 创建当前列的Widget
         Widget columnWidget;
@@ -849,106 +912,103 @@ class TextRenderer {
         // 如果是水平两端对齐（在竖排文本中对应垂直方向）
         if (textAlign == 'justify' && columnChars.length > 1) {
           // 使用固定宽度的列，确保在画布和预览区中保持一致
-          final columnWidth = charHeight; // 增加容器宽度，使对齐效果更明显
+          final columnWidth = charHeight; // 基础列宽
+          // 在竖排模式下，lineHeight 控制列间距
+          final columnSpacing = (effectiveLineHeight - 1.0) * charHeight; // 列间距
 
           // 使用竖排文本两端对齐组件
-          columnWidget = VerticalColumnJustifiedText(
-            characters: columnChars,
-            style: style,
-            maxHeight: constraints.maxHeight,
-            columnWidth: columnWidth, // 使用固定宽度
-            verticalAlign: verticalAlign, // 传递垂直对齐方式
-            isRightToLeft: isRightToLeft,
+          columnWidget = Container(
+            margin: EdgeInsets.symmetric(horizontal: math.max(columnSpacing / 2, 2.0)), // 列间距
+            decoration: const BoxDecoration(), // 添加decoration以支持clipBehavior
+            clipBehavior: Clip.hardEdge, // 添加剪裁防止溢出
+            child: VerticalColumnJustifiedText(
+              characters: columnChars,
+              style: style,
+              maxHeight: constraints.maxHeight,
+              columnWidth: columnWidth, // 使用固定宽度
+              verticalAlign: verticalAlign, // 传递垂直对齐方式
+              isRightToLeft: isRightToLeft,
+            ),
           );
         } else {
           // 其他对齐方式使用普通容器
           // 打印调试信息
           // developer.log('创建列容器: 垂直对齐=$verticalAlign, 水平对齐=$textAlign');
 
-          // 对于垂直对齐，我们需要修改容器结构
-          // 不使用 SingleChildScrollView 包裹 Column，因为这会导致 mainAxisAlignment 失效
+          // 对于垂直对齐，我们需要完全重新设计列的布局逻辑
           // 使用固定宽度的列，确保在画布和预览区中保持一致
-          final columnWidth = charHeight; // 增加容器宽度，使对齐效果更明显
+          final columnWidth = charHeight; // 基础列宽
+          // 在竖排模式下，lineHeight 控制列间距
+          final columnSpacing = (effectiveLineHeight - 1.0) * charHeight; // 列间距 = (倍数 - 1) * 字符高度
+
+          // 根据垂直对齐方式确定Column的mainAxisAlignment
+          MainAxisAlignment columnMainAxisAlignment;
+          switch (verticalAlign) {
+            case 'top':
+              columnMainAxisAlignment = MainAxisAlignment.start;
+              break;
+            case 'middle':
+              columnMainAxisAlignment = MainAxisAlignment.center;
+              break;
+            case 'bottom':
+              columnMainAxisAlignment = MainAxisAlignment.end;
+              break;
+            case 'justify':
+              // 只有多个字符时才使用spaceBetween，单字符使用center
+              columnMainAxisAlignment = columnChars.length > 1 
+                ? MainAxisAlignment.spaceBetween 
+                : MainAxisAlignment.center;
+              break;
+            default:
+              columnMainAxisAlignment = MainAxisAlignment.start;
+          }
+
+          // 计算字符总高度，用于判断是否需要滚动
+          final characterHeight = charHeight;
+          final totalCharacterSpacing = effectiveLetterSpacing * (columnChars.length - 1);
+          final totalCharactersHeight = (characterHeight * columnChars.length) + totalCharacterSpacing;
+          
+          // 如果内容超出容器高度，使用滚动视图；否则使用固定布局
+          Widget columnContent;
+          if (totalCharactersHeight > constraints.maxHeight && verticalAlign != 'justify') {
+            // 内容过长且非justify模式时使用滚动
+            columnContent = SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start, // 滚动模式下总是从顶部开始
+                children: TextRendererHelpers.buildCharacterWidgets(
+                  columnChars,
+                  columnWidth,
+                  textAlign,
+                  style,
+                  effectiveLetterSpacing
+                ),
+              ),
+            );
+          } else {
+            // 内容适中或justify模式时使用固定布局，能正确处理对齐
+            columnContent = Column(
+              mainAxisSize: MainAxisSize.max, // 🔧 使用max确保占满容器高度
+              mainAxisAlignment: columnMainAxisAlignment, // 🔧 应用正确的垂直对齐
+              children: verticalAlign == 'justify' && columnChars.length > 1
+                ? TextRendererHelpers.buildCharacterWidgets(columnChars, columnWidth, textAlign, style, 0.0) // justify模式下不使用字符间距
+                : TextRendererHelpers.buildCharacterWidgets(columnChars, columnWidth, textAlign, style, effectiveLetterSpacing),
+            );
+          }
 
           columnWidget = Container(
             width: columnWidth,
             height: constraints.maxHeight,
-            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: getVerticalMainAlignment(verticalAlign),
-              children: columnChars.map((char) {
-                // 确保 letterSpacing 不为负值
-                final effectivePadding =
-                    effectiveLetterSpacing > 0 ? effectiveLetterSpacing : 0.0;
-
-                // 处理水平对齐
-                Widget charWidget;
-
-                // 对于两端对齐，我们需要特殊处理
-                if (textAlign == 'justify') {
-                  // 对于单个字符，两端对齐没有意义，使用居中对齐
-                  // 使用固定宽度的容器，确保在画布和预览区中保持一致
-                  charWidget = SizedBox(
-                    width: columnWidth, // 使用与列相同的宽度
-                    child: Center(
-                      child: Builder(
-                        builder: (context) {
-                          // 删除过度详细的字符渲染日志
-
-                          return Text(
-                            softWrap: true, // 允许文本换行
-                            char,
-                            style: style,
-                            textAlign: TextAlign.center, // 确保字符居中显示
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                } else {
-                  // 对于其他对齐方式，我们使用 Container 和 Alignment 来实现
-                  Alignment alignment;
-                  switch (textAlign) {
-                    case 'left':
-                      alignment = Alignment.centerLeft;
-                      break;
-                    case 'center':
-                      alignment = Alignment.center;
-                      break;
-                    case 'right':
-                      alignment = Alignment.centerRight;
-                      break;
-                    default:
-                      alignment = Alignment.center;
-                  }
-
-                  // 使用固定宽度的容器，确保在画布和预览区中保持一致
-                  charWidget = Container(
-                    width: columnWidth, // 使用与列相同的宽度
-                    alignment: alignment,
-                    child: Text(
-                      softWrap: true, // 允许文本换行
-                      char,
-                      style: style,
-                      textAlign: TextAlign.center, // 确保字符居中显示
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: effectivePadding,
-                  ),
-                  child: charWidget,
-                );
-              }).toList(),
-            ),
+            margin: EdgeInsets.symmetric(horizontal: math.max(columnSpacing / 2, 2.0)), // 使用计算出的列间距
+            decoration: const BoxDecoration(), // 添加decoration以支持clipBehavior
+            clipBehavior: Clip.hardEdge, // 添加剪裁防止溢出
+            child: columnContent,
           );
         }
 
         allColumns.add(columnWidget);
-        charIdx += charsInThisColumn;
+        charIdx += actualCharsInColumn; // 使用安全的字符数增量
+        columnCount++; // 增加列计数器
       }
     }
 
@@ -988,46 +1048,101 @@ class TextRenderer {
       // 对于水平两端对齐，我们需要确保列在整个预览区域内平均分布
       // 并且首尾两排紧贴预览区边缘
 
-      // 使用 Flexible 包裹每个列，确保它们能够适应可用空间
-      final wrappedColumns = columns.map((column) {
-        return Flexible(
-          // 使用 FlexFit.loose 允许列收缩
-          fit: FlexFit.loose,
-          child: column,
-        );
-      }).toList();
+      // 直接使用列，不需要Flexible包装，因为我们使用spaceBetween布局
+      final wrappedColumns = columns;
 
       // 使用 LayoutBuilder 动态获取可用空间
       return LayoutBuilder(
         builder: (context, constraints) {
           return Container(
             width: constraints.maxWidth,
-            // 添加剪裁以防止溢出
-            clipBehavior: Clip.hardEdge,
-            decoration: const BoxDecoration(),
+            height: constraints.maxHeight, // 添加高度限制
+            decoration: const BoxDecoration(), // 添加decoration以支持clipBehavior
+            clipBehavior: Clip.hardEdge, // 添加剪裁以防止溢出
             child: Row(
-              // textDirection:
-              //     isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
               mainAxisAlignment:
                   MainAxisAlignment.spaceBetween, // 使用 spaceBetween 实现两端对齐
               // 使用 MainAxisSize.max 确保 Row 占据所有可用空间
               mainAxisSize: MainAxisSize.max,
-              children: wrappedColumns,
+              crossAxisAlignment: CrossAxisAlignment.start, // 确保列顶部对齐
+              children: wrappedColumns, // 直接使用列，不需要包装
             ),
           );
         },
       );
     } else {
-      // 对于其他对齐方式，我们使用原来的实现
-      return SingleChildScrollView(
-        controller: scrollController,
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          // textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-          mainAxisSize: MainAxisSize.min,
-          children: columns,
-        ),
-      );
+      // 🔧 对于其他水平对齐方式，需要根据textAlign设置正确的MainAxisAlignment
+      MainAxisAlignment rowMainAxisAlignment;
+      switch (textAlign) {
+        case 'left':
+          rowMainAxisAlignment = MainAxisAlignment.start;
+          break;
+        case 'center':
+          rowMainAxisAlignment = MainAxisAlignment.center;
+          break;
+        case 'right':
+          rowMainAxisAlignment = MainAxisAlignment.end;
+          break;
+        case 'justify':
+          // 注意：这里不应该到达，因为justify在上面已经处理了
+          rowMainAxisAlignment = MainAxisAlignment.spaceBetween;
+          break;
+        default:
+          rowMainAxisAlignment = MainAxisAlignment.start;
+      }
+
+      // 计算所有列的总宽度，判断是否需要滚动
+      // 获取单列宽度，包括间距（重用方法开始处的变量）
+      final columnSpacing = (effectiveLineHeight - 1.0) * charHeight;
+      final columnWidth = charHeight; // 基础列宽
+      final totalColumnSpacing = math.max(columnSpacing, 4.0); // 每列的总宽度（包括间距）
+      final totalColumnsWidth = (columnWidth + totalColumnSpacing) * columns.length;
+      
+      // 如果总宽度超过容器宽度，使用滚动视图；否则使用固定布局
+      if (totalColumnsWidth > constraints.maxWidth) {
+        // 内容过宽，需要滚动
+        return Container(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          decoration: const BoxDecoration(), // 添加decoration以支持clipBehavior
+          clipBehavior: Clip.hardEdge, // 添加剪裁防止溢出
+          child: SingleChildScrollView(
+            controller: scrollController,
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min, // 滚动模式下使用min
+              crossAxisAlignment: CrossAxisAlignment.start, // 确保列顶部对齐
+              children: columns.map((column) {
+                // 确保每个列都被包装在固定高度的容器中
+                return SizedBox(
+                  height: constraints.maxHeight, // 限制列的最大高度
+                  child: column,
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      } else {
+        // 内容适中，可以使用正确的对齐
+        return Container(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          decoration: const BoxDecoration(), // 添加decoration以支持clipBehavior
+          clipBehavior: Clip.hardEdge, // 添加剪裁防止溢出
+          child: Row(
+            mainAxisSize: MainAxisSize.max, // 🔧 使用max确保Row占满容器宽度
+            mainAxisAlignment: rowMainAxisAlignment, // 🔧 应用正确的水平对齐
+            crossAxisAlignment: CrossAxisAlignment.start, // 确保列顶部对齐
+            children: columns.map((column) {
+              // 确保每个列都被包装在固定高度的容器中
+              return SizedBox(
+                height: constraints.maxHeight, // 限制列的最大高度
+                child: column,
+              );
+            }).toList(),
+          ),
+        );
+      }
     }
   }
 

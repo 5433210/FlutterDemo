@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -32,10 +33,11 @@ class VerticalColumnJustifiedText extends StatelessWidget {
       );
     }
 
-    // 计算字符高度和间距
-    final charHeight = style.fontSize ?? 16.0;
-    final effectiveLineHeight = style.height ?? 1.2;
-    final effectiveCharHeight = charHeight * effectiveLineHeight;
+    // 计算字符高度和间距，添加安全检查
+    // 在竖排模式下，letterSpacing 控制字符纵向间距，lineHeight 控制列间距
+    final charHeight = math.max(style.fontSize ?? 16.0, 1.0);
+    final effectiveLetterSpacing = math.max(style.letterSpacing ?? 0.0, 0.0); // 纵向字符间距
+    final effectiveCharHeight = math.max(charHeight + effectiveLetterSpacing, 10.0); // 字符高度+纵向间距
 
     // 计算总字符高度
     final totalCharsHeight = effectiveCharHeight * characters.length;
@@ -77,16 +79,30 @@ class VerticalColumnJustifiedText extends StatelessWidget {
     return SizedBox(
       width: columnWidth,
       height: maxHeight,
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: columnAlignment, // 根据垂直对齐方式决定列内文字的对齐方式
-        children: characters.map((char) {
-          return Text(
-            char,
-            style: style,
-            textAlign: TextAlign.center,
-          );
-        }).toList(),
+      child: ClipRect( // 添加剪裁防止溢出
+        child: verticalAlign == 'justify' && characters.length > 1
+          ? Column( // 🔧 垂直分佈时不使用滚动视图，确保spaceBetween生效
+              mainAxisSize: MainAxisSize.max, // 使用max确保占满容器高度
+              mainAxisAlignment: columnAlignment, // 根据垂直对齐方式决定列内文字的对齐方式
+              children: characters.map((char) {
+                return Text(
+                  char,
+                  style: style,
+                  textAlign: TextAlign.center,
+                );
+              }).toList(),
+            )
+          : Column( // 🔧 对于非justify垂直对齐，也不使用ScrollView，这样才能正确处理center和bottom对齐
+              mainAxisSize: MainAxisSize.max, // 🔧 使用max确保占满容器高度，让MainAxisAlignment生效
+              mainAxisAlignment: columnAlignment, // 🔧 这样center和bottom对齐才能正确工作
+              children: characters.map((char) {
+                return Text(
+                  char,
+                  style: style,
+                  textAlign: TextAlign.center,
+                );
+              }).toList(),
+            ),
       ),
     );
   }
@@ -116,16 +132,30 @@ class VerticalColumnJustifiedText extends StatelessWidget {
     return SizedBox(
       width: columnWidth,
       height: maxHeight,
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: columnAlignment, // 根据垂直对齐方式决定列内文字的对齐方式
-        children: characters.map((char) {
-          return Text(
-            char,
-            style: style,
-            textAlign: TextAlign.center,
-          );
-        }).toList(),
+      child: ClipRect( // 添加剪裁防止溢出
+        child: verticalAlign == 'justify' && characters.length > 1
+          ? Column( // 🔧 垂直分佈时不使用滚动视图，确保spaceBetween生效
+              mainAxisSize: MainAxisSize.max, // 使用max确保占满容器高度
+              mainAxisAlignment: columnAlignment, // 根据垂直对齐方式决定列内文字的对齐方式
+              children: characters.map((char) {
+                return Text(
+                  char,
+                  style: style,
+                  textAlign: TextAlign.center,
+                );
+              }).toList(),
+            )
+          : Column( // 🔧 对于非justify垂直对齐，也不使用ScrollView，这样才能正确处理center和bottom对齐
+              mainAxisSize: MainAxisSize.max, // 🔧 使用max确保占满容器高度，让MainAxisAlignment生效
+              mainAxisAlignment: columnAlignment, // 🔧 这样center和bottom对齐才能正确工作
+              children: characters.map((char) {
+                return Text(
+                  char,
+                  style: style,
+                  textAlign: TextAlign.center,
+                );
+              }).toList(),
+            ),
       ),
     );
   }
