@@ -61,7 +61,7 @@ void main() async {
       center: true,
       backgroundColor: Colors.white,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
+      titleBarStyle: TitleBarStyle.normal,
       title: '字字珠玑',
     );
 
