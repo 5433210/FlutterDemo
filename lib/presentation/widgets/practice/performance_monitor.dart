@@ -12,11 +12,12 @@ class PerformanceMonitor extends ChangeNotifier {
 
   // 🚀 优化：增强节流通知机制，减少不必要的通知开销
   DateTime _lastNotificationTime = DateTime.now();
-  static const Duration _notificationThrottle = Duration(milliseconds: 1000); // 增加到1秒
+  static const Duration _notificationThrottle =
+      Duration(milliseconds: 1000); // 增加到1秒
   bool _isMonitoringActive = false;
 
-  // 🚀 优化：降低性能监控频率的阈值设置  
-  static const double _fpsThresholdHigh = 50.0;  // 降低阈值减少监控敏感度
+  // 🚀 优化：降低性能监控频率的阈值设置
+  static const double _fpsThresholdHigh = 50.0; // 降低阈值减少监控敏感度
   static const double _fpsThresholdMedium = 25.0;
   static const double _fpsThresholdLow = 10.0;
   static const int _frameTimeThresholdMs = 33; // 提高阈值，减少误报
@@ -50,7 +51,7 @@ class PerformanceMonitor extends ChangeNotifier {
 
   // Drag performance tracking
   DateTime? _dragStartTime;
-  int _dragStartFrameCount = 0;
+  final int _dragStartFrameCount = 0;
   final List<double> _dragFrameTimes = [];
   final List<double> _dragFpsValues = [];
   factory PerformanceMonitor() => _instance;
@@ -385,7 +386,7 @@ class PerformanceMonitor extends ChangeNotifier {
     if (!kDebugMode || _isMonitoringActive) {
       return; // 避免重复启动和生产环境监控
     }
-    
+
     _isMonitoringActive = true;
     EditPageLogger.performanceInfo('调试模式启动帧监控');
     SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
@@ -542,13 +543,14 @@ class PerformanceMonitor extends ChangeNotifier {
     if (!kDebugMode || !_isMonitoringActive) {
       return; // 监控已停止或生产环境，不重新调度
     }
-    
+
     // 🚀 优化：降低帧跟踪频率，减少CPU开销
     _frameCount++;
-    if (_frameCount % 3 == 0) { // 每3帧跟踪一次
+    if (_frameCount % 3 == 0) {
+      // 每3帧跟踪一次
       trackFrame();
     }
-    
+
     // Schedule next frame callback - only when monitoring is active
     SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
   }

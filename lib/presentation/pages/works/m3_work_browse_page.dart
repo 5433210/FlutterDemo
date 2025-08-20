@@ -472,7 +472,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                             color: Theme.of(context)
                                 .colorScheme
                                 .outline
-                                .withOpacity(0.2),
+                                .withValues(alpha: 51), // 0.2 * 255 ≈ 51
                           ),
                         ),
                       ),

@@ -598,7 +598,10 @@ class _M3LibraryBrowsingPanelState
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: Border(
               bottom: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 51), // 0.2 * 255 ≈ 51
               ),
             ),
           ),

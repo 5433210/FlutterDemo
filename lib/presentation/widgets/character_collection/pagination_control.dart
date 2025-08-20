@@ -216,8 +216,9 @@ class PaginationControl extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: enabled
-              ? theme.colorScheme.primary.withOpacity(0.1)
-              : theme.disabledColor.withOpacity(0.1),
+              ? theme.colorScheme.primary
+                  .withValues(alpha: 26) // 0.1 * 255 ≈ 26
+              : theme.disabledColor.withValues(alpha: 26), // 0.1 * 255 ≈ 26
         ),
         child: Icon(
           icon,

@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +39,7 @@ Future<Uint8List> consolidateHttpClientResponseBytes(
 class AdvancedCollectionPainter extends CustomPainter {
   // 用于跟踪已记录日志的字符ID，避免重复日志
   static final Set<String> _loggedCharacters = <String>{};
-  
+
   // 基本属性
   final List<String> characters;
   final List<CharacterPosition> positions;
@@ -701,13 +700,13 @@ class AdvancedCollectionPainter extends CustomPainter {
     if (_loadingTextures.contains(cacheKey)) {
       return null; // 已在加载中，避免重复请求
     }
-    
+
     _loadingTextures.add(cacheKey);
 
     // 异步加载图像 - 🚀 优化：添加防抖机制
     _loadCharacterImage(imagePath, cacheKey).then((success) {
       _loadingTextures.remove(cacheKey);
-      
+
       if (success && _repaintCallback != null) {
         // 🚀 优化：使用防抖，避免频繁重绘导致GPU高负载
         _debounceRepaint();
@@ -722,8 +721,9 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   // 🚀 优化：添加重绘防抖机制，减少GPU使用率
   Timer? _repaintDebounceTimer;
-  static const Duration _repaintDebounceDelay = Duration(milliseconds: 16); // 约60fps
-  
+  static const Duration _repaintDebounceDelay =
+      Duration(milliseconds: 16); // 约60fps
+
   void _debounceRepaint() {
     _repaintDebounceTimer?.cancel();
     _repaintDebounceTimer = Timer(_repaintDebounceDelay, () {

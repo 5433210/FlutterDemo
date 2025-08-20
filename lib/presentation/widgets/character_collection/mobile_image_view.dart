@@ -182,7 +182,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
     // 调试输出：检查工具模式
     if (toolMode == Tool.select) {
-      print('💆 MobileImageView build - toolMode: $toolMode');
+      AppLogger.debug('💆 MobileImageView build', data: {'toolMode': toolMode});
     }
 
     return Scaffold(
@@ -266,7 +266,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
                     builder: (context) {
                       // 调试信息
                       if (regions.isNotEmpty) {
-                        print('📐 MobileImageView: 正在绘制 ${regions.length} 个选区');
+                        AppLogger.debug('📐 MobileImageView: 正在绘制选区',
+                            data: {'count': regions.length});
                       }
                       return GestureDetector(
                         // 优化手势检测：允许多指手势透传给InteractiveViewer
@@ -488,7 +489,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     final toolMode = ref.read(toolModeProvider);
 
     // 简单的调试输出，确保被调用
-    print('🔄 _onPanStart 被调用: ${position.dx}, ${position.dy}');
+    AppLogger.debug('🔄 _onPanStart 被调用',
+        data: {'position': '${position.dx}, ${position.dy}'});
 
     AppLogger.debug('🔄 移动端平移开始', data: {
       'position': '${position.dx}, ${position.dy}',
@@ -1584,13 +1586,19 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
         _cancelCurrentGesture();
       }
 
-      print(
-          '💆 多指檢測: ${event.pointer}, 數量: ${_activePointers.length}, 最大: $_maxPointerCount');
+      AppLogger.debug('💆 多指检测', data: {
+        'pointer': event.pointer,
+        'count': _activePointers.length,
+        'maxCount': _maxPointerCount
+      });
       return; // 多指操作交給InteractiveViewer處理
     }
 
-    print(
-        '💆 指針按下: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
+    AppLogger.debug('💆 指针按下', data: {
+      'pointer': event.pointer,
+      'count': _activePointers.length,
+      'hadBeenMultiPointer': _hasBeenMultiPointer
+    });
 
     // 只有在真正的單指操作且從未變成多指時才處理
     if (!_hasBeenMultiPointer && !_isMultiPointer) {
@@ -1627,7 +1635,9 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       final regions = ref.read(characterCollectionProvider).regions;
       bool hitHandle = false;
 
-      print('💆 檢查控制點碰撞: 選中區域數量: ${regions.where((r) => r.isSelected).length}');
+      AppLogger.debug('💆 检查控制点碰撞', data: {
+        'selectedRegionsCount': regions.where((r) => r.isSelected).length
+      });
 
       for (final region in regions.reversed) {
         if (!region.isSelected) continue;
@@ -1638,7 +1648,8 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
 
         if (handleIndex != null) {
           // 點擊了控制點
-          print('💆 控制點碰撞成功: region: ${region.id}, handle: $handleIndex');
+          AppLogger.debug('💆 控制点碰撞成功',
+              data: {'regionId': region.id, 'handleIndex': handleIndex});
           setState(() {
             _isHandlePressed = true;
             _pressedRegionId = region.id;
@@ -1657,12 +1668,15 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       if (!hitHandle) {
         // 沒有點擊控制點，可能是選區操作
         final hitRegion = _hitTestRegion(_singlePointerStart!, regions);
-        print(
-            '💆 選區碰撞檢查: ${hitRegion?.id}, selected: ${hitRegion?.isSelected}, adjusting: $_isAdjusting');
+        AppLogger.debug('💆 选区碰撞检查', data: {
+          'regionId': hitRegion?.id,
+          'selected': hitRegion?.isSelected,
+          'adjusting': _isAdjusting
+        });
 
         if (hitRegion != null && hitRegion.isSelected) {
           // 點擊了已選中的選區，開始拖拽
-          print('💆 選區拖拽準備: ${hitRegion.id}');
+          AppLogger.debug('💆 选区拖拽准备', data: {'regionId': hitRegion.id});
           setState(() {
             _isDraggingRegion = true;
             _draggingRegion = hitRegion;
@@ -1678,13 +1692,13 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           });
         } else if (hitRegion != null && !hitRegion.isSelected) {
           // 点击了未选中的选区，先选中它
-          print('💆 選中未選中的選區: ${hitRegion.id}');
+          AppLogger.debug('💆 选中未选中的选区', data: {'regionId': hitRegion.id});
           ref
               .read(characterCollectionProvider.notifier)
               .selectRegion(hitRegion.id);
           ref.read(selectedRegionProvider.notifier).setRegion(hitRegion);
         } else {
-          print('💆 準備創建新選區');
+          AppLogger.debug('💆 准备创建新选区');
         }
       }
     }
@@ -1734,8 +1748,11 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     // 只在采集工具模式下处理拖拽操作
     if (toolMode != Tool.select) return;
 
-    print(
-        '💆 指針移動: ${event.pointer}, 位置: ${event.localPosition.dx.toStringAsFixed(1)}, ${event.localPosition.dy.toStringAsFixed(1)}');
+    AppLogger.debug('💆 指针移动', data: {
+      'pointer': event.pointer,
+      'position':
+          '${event.localPosition.dx.toStringAsFixed(1)}, ${event.localPosition.dy.toStringAsFixed(1)}'
+    });
 
     if (_activePointers.containsKey(event.pointer)) {
       // 邊界檢查：確保移動位置在圖像範圍內
@@ -1765,20 +1782,27 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           });
           _cancelCurrentGesture();
         }
-        print('💆 移動中多指檢測: 數量: ${_activePointers.length}');
+        AppLogger.debug('💆 移动中多指检测', data: {'count': _activePointers.length});
         return;
       }
     }
 
     // 多指手勢不處理，讓InteractiveViewer處理
     if (_isMultiPointer || _hasBeenMultiPointer) {
-      print(
-          '💆 忽略多指移動: isMulti: $_isMultiPointer, hadBeenMulti: $_hasBeenMultiPointer');
+      AppLogger.debug('💆 忽略多指移动', data: {
+        'isMultiPointer': _isMultiPointer,
+        'hadBeenMultiPointer': _hasBeenMultiPointer
+      });
       return;
     }
 
-    print(
-        '💆 單指移動處理: start: $_singlePointerStart, hasBeenMulti: $_hasBeenMultiPointer, isMulti: $_isMultiPointer');
+    AppLogger.debug('💆 单指移动处理', data: {
+      'start': _singlePointerStart != null
+          ? '${_singlePointerStart!.dx}, ${_singlePointerStart!.dy}'
+          : 'null',
+      'hadBeenMultiPointer': _hasBeenMultiPointer,
+      'isMultiPointer': _isMultiPointer
+    });
 
     // 單指手勢處理 - 只有在從未變成多指且當前確實是單指時才處理
     if (_singlePointerStart != null &&
@@ -1795,32 +1819,38 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
       );
 
       final distance = (clampedPosition - _singlePointerStart!).distance;
-      print(
-          '💆 移動距離: ${distance.toStringAsFixed(1)}, 閾值: $_dragThreshold, isDragging: $_isDragging');
+      AppLogger.debug('💆 移动距离', data: {
+        'distance': distance.toStringAsFixed(1),
+        'threshold': _dragThreshold,
+        'isDragging': _isDragging
+      });
 
       if (!_isDragging && distance > _dragThreshold) {
         // 開始拖拽
         _isDragging = true;
-        print('💆 開始拖拽操作');
+        AppLogger.debug('💆 开始拖拽操作');
 
         if (_isAdjustingHandle) {
           // 控制點調整
-          print('🎯 開始控制點調整');
+          AppLogger.debug('🎯 开始控制点调整');
         } else if (_isDraggingRegion) {
           // 選區拖拽
-          print('📊 開始選區拖拽');
+          AppLogger.debug('📊 开始选区拖拽');
         } else {
           // 創建新選區
           ref.read(characterCollectionProvider.notifier).clearSelections();
           ref.read(selectedRegionProvider.notifier).clearRegion();
           _startRegionCreation(_singlePointerStart!);
-          print('🆕 開始創建選區');
+          AppLogger.debug('🆕 开始创建选区');
         }
       }
 
       if (_isDragging) {
-        print(
-            '💆 執行拖拽更新: adjustingHandle: $_isAdjustingHandle, draggingRegion: $_isDraggingRegion, selecting: $_isSelecting');
+        AppLogger.debug('💆 执行拖拽更新', data: {
+          'adjustingHandle': _isAdjustingHandle,
+          'draggingRegion': _isDraggingRegion,
+          'selecting': _isSelecting
+        });
         if (_isAdjustingHandle) {
           _updateHandleAdjustment(clampedPosition);
         } else if (_isDraggingRegion) {
@@ -1840,8 +1870,11 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
     _activePointers.remove(event.pointer);
     _isMultiPointer = _activePointers.length > 1;
 
-    print(
-        '💆 指針釋放: ${event.pointer}, 數量: ${_activePointers.length}, 曾經多指: $_hasBeenMultiPointer');
+    AppLogger.debug('💆 指针释放', data: {
+      'pointer': event.pointer,
+      'count': _activePointers.length,
+      'hadBeenMultiPointer': _hasBeenMultiPointer
+    });
 
     // 如果所有指針都釋放了，重置手勢狀態
     if (_activePointers.isEmpty) {

@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -794,7 +793,7 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
                 ),
-                child: child != null 
+                child: child != null
                     ? Center(child: child) // 旋转控制点显示图标
                     : null, // 其他控制点不显示任何可视元素
               ),
@@ -1851,7 +1850,8 @@ class _CornerMarksBorderPainter extends CustomPainter {
     _drawControlPointMarks(canvas, centerX, centerY, angle);
   }
 
-  void _drawElementBorder(Canvas canvas, double centerX, double centerY, double angle) {
+  void _drawElementBorder(
+      Canvas canvas, double centerX, double centerY, double angle) {
     final borderPaint = Paint()
       ..color = color.withValues(alpha: 0.5)
       ..strokeWidth = 1.0
@@ -1881,7 +1881,8 @@ class _CornerMarksBorderPainter extends CustomPainter {
     canvas.drawPath(path, borderPaint);
   }
 
-  void _drawControlPointMarks(Canvas canvas, double centerX, double centerY, double angle) {
+  void _drawControlPointMarks(
+      Canvas canvas, double centerX, double centerY, double angle) {
     final markPaint = Paint()
       ..color = color
       ..strokeWidth = 2.5
@@ -1906,61 +1907,89 @@ class _CornerMarksBorderPainter extends CustomPainter {
 
     // 为每个控制点位置绘制L形标记
     for (int i = 0; i < controlPoints.length; i++) {
-      _drawControlPointMark(canvas, markPaint, controlPoints[i], i, centerX, centerY, angle, markLength);
+      _drawControlPointMark(canvas, markPaint, controlPoints[i], i, centerX,
+          centerY, angle, markLength);
     }
   }
 
-  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint, 
-      int index, double centerX, double centerY, double angle, double markLength) {
-    
+  void _drawControlPointMark(
+      Canvas canvas,
+      Paint paint,
+      Offset controlPoint,
+      int index,
+      double centerX,
+      double centerY,
+      double angle,
+      double markLength) {
     // 应用旋转变换到控制点位置
-    final rotatedControlPoint = _rotatePoint(controlPoint.dx, controlPoint.dy, centerX, centerY, angle);
+    final rotatedControlPoint =
+        _rotatePoint(controlPoint.dx, controlPoint.dy, centerX, centerY, angle);
 
     // 根据控制点位置确定L形标记的方向
     Offset horizontal, vertical;
-    
+
     switch (index) {
       case 0: // 左上角 - L形开口向右下
-        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength,
+            centerX, centerY, angle);
         break;
       case 1: // 上中 - T形向下
-        horizontal = _rotatePoint(controlPoint.dx - markLength/2, controlPoint.dy, centerX, centerY, angle);
-        final horizontal2 = _rotatePoint(controlPoint.dx + markLength/2, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx - markLength / 2,
+            controlPoint.dy, centerX, centerY, angle);
+        final horizontal2 = _rotatePoint(controlPoint.dx + markLength / 2,
+            controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength,
+            centerX, centerY, angle);
         canvas.drawLine(horizontal, horizontal2, paint);
         canvas.drawLine(rotatedControlPoint, vertical, paint);
         return;
       case 2: // 右上角 - L形开口向左下
-        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength,
+            centerX, centerY, angle);
         break;
       case 3: // 右中 - T形向左
-        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength/2, centerX, centerY, angle);
-        final vertical2 = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength/2, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx,
+            controlPoint.dy - markLength / 2, centerX, centerY, angle);
+        final vertical2 = _rotatePoint(controlPoint.dx,
+            controlPoint.dy + markLength / 2, centerX, centerY, angle);
         canvas.drawLine(rotatedControlPoint, horizontal, paint);
         canvas.drawLine(vertical, vertical2, paint);
         return;
       case 4: // 右下角 - L形开口向左上
-        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx - markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength,
+            centerX, centerY, angle);
         break;
       case 5: // 下中 - T形向上
-        horizontal = _rotatePoint(controlPoint.dx - markLength/2, controlPoint.dy, centerX, centerY, angle);
-        final horizontal2 = _rotatePoint(controlPoint.dx + markLength/2, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx - markLength / 2,
+            controlPoint.dy, centerX, centerY, angle);
+        final horizontal2 = _rotatePoint(controlPoint.dx + markLength / 2,
+            controlPoint.dy, centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength,
+            centerX, centerY, angle);
         canvas.drawLine(horizontal, horizontal2, paint);
         canvas.drawLine(rotatedControlPoint, vertical, paint);
         return;
       case 6: // 左下角 - L形开口向右上
-        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength,
+            centerX, centerY, angle);
         break;
       case 7: // 左中 - T形向右
-        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy, centerX, centerY, angle);
-        vertical = _rotatePoint(controlPoint.dx, controlPoint.dy - markLength/2, centerX, centerY, angle);
-        final vertical2 = _rotatePoint(controlPoint.dx, controlPoint.dy + markLength/2, centerX, centerY, angle);
+        horizontal = _rotatePoint(controlPoint.dx + markLength, controlPoint.dy,
+            centerX, centerY, angle);
+        vertical = _rotatePoint(controlPoint.dx,
+            controlPoint.dy - markLength / 2, centerX, centerY, angle);
+        final vertical2 = _rotatePoint(controlPoint.dx,
+            controlPoint.dy + markLength / 2, centerX, centerY, angle);
         canvas.drawLine(rotatedControlPoint, horizontal, paint);
         canvas.drawLine(vertical, vertical2, paint);
         return;
