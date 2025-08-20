@@ -318,7 +318,7 @@ class _ImportDialogWithVersionState
       final filePickerService = FilePickerServiceImpl();
       final selectedFile = await filePickerService.pickFile(
         dialogTitle: AppLocalizations.of(context).selectImportFile,
-        allowedExtensions: ['cgw', 'cgc', 'cgb', 'zip'], // 支持新格式和旧格式
+        allowedExtensions: ['cgw', 'cgc', 'cgb'], // 🔧 移除zip格式，只支持專用格式
       );
 
       if (selectedFile != null) {

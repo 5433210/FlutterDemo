@@ -347,7 +347,6 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
               '${widget.selectedIds.length} 个${_getItemTypeName()}'),
           _buildSummaryRow(
               l10n.exportType, _getExportTypeLabel(l10n, _exportType)),
-          _buildSummaryRow(l10n.exportFormat, 'ZIP'),
           if (_targetPath.isNotEmpty)
             _buildSummaryRow(l10n.exportLocation, _targetPath),
         ],
@@ -463,7 +462,7 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       final selectedPath = await filePickerService.pickSaveFile(
         dialogTitle: 'Select Export Location',
         suggestedName: suggestedName,
-        allowedExtensions: [extension, 'zip'], // 支持新格式和旧格式
+        allowedExtensions: [extension], // 🔧 移除zip格式，只支持對應的專用格式
       );
 
       if (selectedPath != null) {

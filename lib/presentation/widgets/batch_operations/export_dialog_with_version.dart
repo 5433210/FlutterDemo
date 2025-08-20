@@ -310,7 +310,6 @@ class _ExportDialogWithVersionState
           ),
           const SizedBox(height: 16),
           _buildPreviewItem('导出类型', _getExportTypeLabel(l10n, _exportType)),
-          _buildPreviewItem('导出格式', _exportFormat.name.toUpperCase()),
           _buildPreviewItem('选中项目', '${widget.selectedIds.length} 项'),
           if (_currentDataVersion != null)
             _buildPreviewItem('数据版本', _currentDataVersion!),
@@ -396,12 +395,23 @@ class _ExportDialogWithVersionState
     try {
       final filePickerService = FilePickerServiceImpl();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final suggestedName = 'export_${widget.pageType.name}_$timestamp.zip';
+      // 根據頁面類型確定文件擴展名
+      String extension;
+      switch (widget.pageType) {
+        case PageType.works:
+          extension = 'cgw';
+          break;
+        case PageType.characters:
+          extension = 'cgc';
+          break;
+      }
+      
+      final suggestedName = 'export_${widget.pageType.name}_$timestamp.$extension';
 
       final selectedPath = await filePickerService.pickSaveFile(
         dialogTitle: '选择导出位置',
         suggestedName: suggestedName,
-        allowedExtensions: ['zip'],
+        allowedExtensions: [extension], // 🔧 移除zip格式，使用對應的專用格式
       );
 
       if (selectedPath != null) {

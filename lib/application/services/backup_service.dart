@@ -1068,9 +1068,10 @@ class BackupService {
   /// 验证外部备份文件是否有效（直接使用File API）
   Future<bool> _isValidBackupFileExternal(String filePath) async {
     try {
-      // 检查文件扩展名
-      if (!filePath.toLowerCase().endsWith('.zip')) {
-        AppLogger.warning('文件扩展名不是.zip',
+      // 🔧 恢復原始邏輯：只檢查 .cgb 格式
+      final lowerFilePath = filePath.toLowerCase();
+      if (!lowerFilePath.endsWith('.cgb')) {
+        AppLogger.warning('文件擴展名不是 .cgb',
             tag: 'BackupService', data: {'path': filePath});
         return false;
       }

@@ -138,6 +138,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                     : null,
                 onCreateElement: onCreateCollectionElement,
               ),
+            ]),
+            _buildVerticalDivider(context),
+            // 🔧 修復：選擇、全選、取消選擇按鈕獨立成一個工具組
+            ..._buildCompactToolbarGroup([
               _buildToolbarButton(
                 context: context,
                 icon: Icons.select_all,

@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
 
 import '../../application/services/backup_registry_manager.dart';
+import '../../application/services/data_path_config_service.dart';
 import '../../domain/models/backup_models.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
@@ -60,8 +64,26 @@ class _BackupPathSettingsState extends State<BackupPathSettings> {
   Future<void> _selectNewBackupPath() async {
     final l10n = AppLocalizations.of(context);
     try {
+      // 🔧 修復：自動選擇在默認數據路徑下的backup目錄作為默認備份路徑
+      String? initialDirectory;
+      try {
+        final defaultDataPath = await _getDefaultDataPath();
+        initialDirectory = path.join(defaultDataPath, 'backup');
+        
+        // 確保備份目錄存在
+        final backupDir = Directory(initialDirectory);
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+      } catch (e) {
+        AppLogger.warning('無法創建默認備份目錄，使用系統默認路徑',
+            error: e, tag: 'BackupPathSettings');
+        initialDirectory = null;
+      }
+
       final newPath = await FilePicker.platform.getDirectoryPath(
         dialogTitle: l10n.selectBackupStorageLocation,
+        initialDirectory: initialDirectory,
       );
 
       if (newPath != null) {
@@ -91,6 +113,11 @@ class _BackupPathSettingsState extends State<BackupPathSettings> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// 獲取默認數據路徑
+  Future<String> _getDefaultDataPath() async {
+    return await DataPathConfigService.getDefaultDataPath();
   }
 
   @override

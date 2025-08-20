@@ -128,36 +128,34 @@ class _UnifiedBackupManagementPageState
       appBar: AppBar(
         title: Text(l10n.backupManagement),
         actions: [
+          // 🔧 修復：將三個圖標按鈕作為獨立的工具組，與後面的菜單用豎線分割
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
             tooltip: l10n.refresh,
           ),
+          IconButton(
+            icon: const Icon(Icons.backup),
+            onPressed: () => _handleMenuAction('create_backup'),
+            tooltip: l10n.createBackup,
+          ),
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: () => _handleMenuAction('import_backup'),
+            tooltip: l10n.importBackup,
+          ),
+          // 豎線分割
+          Container(
+            height: 32,
+            width: 1,
+            color: Theme.of(context).dividerColor,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: _handleMenuAction,
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'create_backup',
-                child: Row(
-                  children: [
-                    const Icon(Icons.backup),
-                    const SizedBox(width: 8),
-                    Text(l10n.createBackup),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'import_backup',
-                child: Row(
-                  children: [
-                    const Icon(Icons.upload_file),
-                    const SizedBox(width: 8),
-                    Text(l10n.importBackup),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
+              // 移除 create_backup 和 import_backup，因為它們現在是獨立按鈕
               PopupMenuItem(
                 value: 'clean_duplicate_backups',
                 child: Row(
@@ -902,7 +900,7 @@ class _UnifiedBackupManagementPageState
     final result = await FilePicker.platform.pickFiles(
       dialogTitle: l10n.selectBackupFileToImportDialog,
       type: FileType.custom,
-      allowedExtensions: ['cgb', 'zip'], // 支持新备份格式和旧格式
+      allowedExtensions: ['cgb'], // 🔧 移除zip格式，只支持專用備份格式
     );
 
     if (result == null || result.files.isEmpty) {
