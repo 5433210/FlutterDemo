@@ -13,6 +13,7 @@ import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../routes/app_routes.dart';
 import '../../providers/navigation/global_navigation_provider.dart';
 import '../../utils/cross_navigation_helper.dart';
+import '../../widgets/window/m3_title_bar.dart';
 import '../library/m3_library_management_page.dart';
 import '../practices/m3_practice_edit_page.dart';
 import '../practices/m3_practice_list_page.dart';
@@ -208,7 +209,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                   body: Column(
                     children: [
                       // 标题栏
-                      // const M3TitleBar(),
+                      const M3TitleBar(),
 
                       // 内容区域
                       Expanded(
