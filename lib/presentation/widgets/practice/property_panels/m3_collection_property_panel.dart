@@ -88,6 +88,12 @@ class _M3CollectionPropertyPanelState
           element: widget.element,
           onPropertyChanged: _updateProperty,
           onContentPropertyChanged: _updateContentProperty,
+          onPropertyUpdateStart: _updatePropertyStart,
+          onPropertyUpdatePreview: _updatePropertyPreview,
+          onPropertyUpdateWithUndo: _updatePropertyWithUndo,
+          onContentPropertyUpdateStart: _updateContentPropertyStart,
+          onContentPropertyUpdatePreview: _updateContentPropertyPreview,
+          onContentPropertyUpdateWithUndo: _updateContentPropertyWithUndo,
         ),
 
         // Background texture section
@@ -95,6 +101,12 @@ class _M3CollectionPropertyPanelState
           element: widget.element,
           onPropertyChanged: _updateProperty,
           onContentPropertyChanged: _updateContentProperty,
+          onPropertyUpdateStart: _updatePropertyStart,
+          onPropertyUpdatePreview: _updatePropertyPreview,
+          onPropertyUpdateWithUndo: _updatePropertyWithUndo,
+          onContentPropertyUpdateStart: _updateContentPropertyStart,
+          onContentPropertyUpdatePreview: _updateContentPropertyPreview,
+          onContentPropertyUpdateWithUndo: _updateContentPropertyWithUndo,
         ),
 
         // Content settings section
@@ -110,6 +122,9 @@ class _M3CollectionPropertyPanelState
           onInvertDisplayToggled: _onInvertDisplayToggled,
           onCharacterInvertToggled: _onCharacterInvertToggled,
           onContentPropertyChanged: _updateContentProperty,
+          onContentPropertyUpdateStart: _updateContentPropertyStart,
+          onContentPropertyUpdatePreview: _updateContentPropertyPreview,
+          onContentPropertyUpdateWithUndo: _updateContentPropertyWithUndo,
         ),
       ],
     );
@@ -767,8 +782,10 @@ class _M3CollectionPropertyPanelState
         widget.onElementPropertiesChanged({'content': updatedContent});
 
         // 优化日志：只记录有意义的文本更新，避免高频日志
-        if (value.length != oldCharacters.length || 
-            (value.isNotEmpty && oldCharacters.isNotEmpty && value != oldCharacters)) {
+        if (value.length != oldCharacters.length ||
+            (value.isNotEmpty &&
+                oldCharacters.isNotEmpty &&
+                value != oldCharacters)) {
           EditPageLogger.propertyPanelDebug(
             '文本内容更新并重新映射字符图像',
             tag: EditPageLoggingConfig.tagCollectionPanel,
@@ -1030,10 +1047,11 @@ class _M3CollectionPropertyPanelState
 
   // 更新内容属性 - 完全重写版本，防止嵌套问题，添加性能监控
   void _updateContentProperty(String key, dynamic value) {
-    final timer = PerformanceTimer('集字内容属性更新: $key',
+    final timer = PerformanceTimer(
+      '集字内容属性更新: $key',
       customThreshold: EditPageLoggingConfig.operationPerformanceThreshold,
     );
-    
+
     try {
       // 获取当前元素的内容
       final Map<String, dynamic> originalContent = Map<String, dynamic>.from(
@@ -1103,7 +1121,7 @@ class _M3CollectionPropertyPanelState
           'operation': 'update_content_property_complete',
         },
       );
-      
+
       timer.finish();
     } catch (e) {
       timer.finish(); // 确保异常情况下也完成计时
@@ -1212,5 +1230,184 @@ class _M3CollectionPropertyPanelState
         duration: const Duration(seconds: 1),
       ),
     );
+  }
+
+  // 滑块拖动开始回调 - 现在由子面板处理原始值保存，主面板只记录日志
+  void _updatePropertyStart(String key, dynamic originalValue) {
+    EditPageLogger.propertyPanelDebug(
+      '集字属性透明度拖动开始',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'key': key,
+        'originalValue': originalValue,
+        'operation': '${key}_drag_start',
+      },
+    );
+  }
+
+  // 滑块拖动预览回调 - 临时禁用undo并更新预览
+  void _updatePropertyPreview(String key, dynamic value) {
+    EditPageLogger.propertyPanelDebug(
+      '集字属性预览更新',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'key': key,
+        'value': value,
+        'operation': 'property_preview_update',
+      },
+    );
+
+    // 临时禁用undo
+    widget.controller.undoRedoManager.undoEnabled = false;
+    _updateProperty(key, value);
+    // 重新启用undo
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  // 属性滑块拖动结束回调 - 基于原始值创建undo操作
+  void _updatePropertyWithUndo(
+      String key, dynamic newValue, dynamic originalValue) {
+    if (key == 'opacity' &&
+        originalValue != null &&
+        originalValue != newValue) {
+      try {
+        EditPageLogger.propertyPanelDebug(
+          '集字属性透明度undo优化更新开始',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'originalOpacity': originalValue,
+            'newOpacity': newValue,
+            'operation': 'opacity_undo_optimized_update',
+          },
+        );
+
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        _updateProperty(key, originalValue);
+
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        _updateProperty(key, newValue);
+
+        EditPageLogger.propertyPanelDebug(
+          '集字属性透明度undo优化更新完成',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'originalOpacity': originalValue,
+            'newOpacity': newValue,
+            'operation': 'opacity_undo_optimized_update_complete',
+          },
+        );
+      } catch (error) {
+        // 确保在错误情况下也重新启用undo
+        widget.controller.undoRedoManager.undoEnabled = true;
+        EditPageLogger.propertyPanelError(
+          '集字属性透明度undo更新失败',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          error: error,
+          data: {
+            'key': key,
+            'newValue': newValue,
+            'originalValue': originalValue,
+            'operation': 'property_undo_update_error',
+          },
+        );
+
+        // 发生错误时，回退到直接更新
+        _updateProperty(key, newValue);
+      }
+    } else {
+      // 如果没有原始值或值没有改变，直接更新
+      _updateProperty(key, newValue);
+    }
+  } // 内容属性滑块拖动开始回调 - 现在由子面板处理原始值保存，主面板只记录日志
+
+  void _updateContentPropertyStart(String key, dynamic originalValue) {
+    EditPageLogger.propertyPanelDebug(
+      '集字内容属性拖动开始',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'key': key,
+        'originalValue': originalValue,
+        'operation': '${key}_drag_start',
+      },
+    );
+  }
+
+  // 内容属性滑块拖动预览回调 - 临时禁用undo并更新预览
+  void _updateContentPropertyPreview(String key, dynamic value) {
+    EditPageLogger.propertyPanelDebug(
+      '集字内容属性预览更新',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'key': key,
+        'value': value,
+        'operation': 'content_property_preview_update',
+      },
+    );
+
+    // 临时禁用undo
+    widget.controller.undoRedoManager.undoEnabled = false;
+    _updateContentProperty(key, value);
+    // 重新启用undo
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  // 内容属性滑块拖动结束回调 - 基于原始值创建undo操作
+  void _updateContentPropertyWithUndo(
+      String key, dynamic newValue, dynamic originalValue) {
+    if (originalValue != null && originalValue != newValue) {
+      try {
+        EditPageLogger.propertyPanelDebug(
+          '集字内容属性undo优化更新开始',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'key': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation': '${key}_undo_optimized_update',
+          },
+        );
+
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        _updateContentProperty(key, originalValue);
+
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        _updateContentProperty(key, newValue);
+
+        EditPageLogger.propertyPanelDebug(
+          '集字内容属性undo优化更新完成',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'key': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation': '${key}_undo_optimized_update_complete',
+          },
+        );
+      } catch (error) {
+        // 确保在错误情况下也重新启用undo
+        widget.controller.undoRedoManager.undoEnabled = true;
+        EditPageLogger.propertyPanelError(
+          '集字内容属性undo更新失败',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          error: error,
+          data: {
+            'key': key,
+            'newValue': newValue,
+            'originalValue': originalValue,
+            'operation': 'content_property_undo_update_error',
+          },
+        );
+
+        // 发生错误时，回退到直接更新
+        _updateContentProperty(key, newValue);
+      }
+    } else {
+      // 如果没有原始值或值没有改变，直接更新
+      _updateContentProperty(key, newValue);
+    }
   }
 }

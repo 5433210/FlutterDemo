@@ -17,6 +17,9 @@ class UndoRedoManager {
   // 状态变化回调
   final VoidCallback? onStateChanged;
 
+  // 是否启用undo记录（用于滑块拖动时临时禁用）
+  bool _undoEnabled = true;
+
   /// 构造函数
   UndoRedoManager({
     int maxStackSize = 100,
@@ -29,12 +32,25 @@ class UndoRedoManager {
   /// 是否可以撤销
   bool get canUndo => _undoStack.isNotEmpty;
 
+  /// 获取undo启用状态
+  bool get undoEnabled => _undoEnabled;
+
+  /// 设置undo启用状态
+  set undoEnabled(bool enabled) {
+    _undoEnabled = enabled;
+  }
+
   /// 添加操作
   void addOperation(UndoableOperation operation, {bool executeImmediately = true}) {
     try {
       // 条件执行操作
       if (executeImmediately) {
         operation.execute();
+      }
+
+      // 如果undo被禁用，不添加到栈中
+      if (!_undoEnabled) {
+        return;
       }
 
       // 添加到撤销栈

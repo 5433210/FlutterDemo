@@ -21,30 +21,44 @@ class ColumnData {
 }
 
 /// 文本内容属性面板
-class M3TextPropertyPanel extends M3PracticePropertyPanel {
+class M3TextPropertyPanel extends StatefulWidget {
   // 文本控制器静态变量
   static final TextEditingController _textController = TextEditingController();
 
+  final PracticeEditController controller;
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
 
   const M3TextPropertyPanel({
     Key? key,
-    required PracticeEditController controller,
+    required this.controller,
     required this.element,
     required this.onElementPropertiesChanged,
-  }) : super(key: key, controller: controller);
+  }) : super(key: key);
+
+  @override
+  State<M3TextPropertyPanel> createState() => _M3TextPropertyPanelState();
+}
+
+class _M3TextPropertyPanelState extends State<M3TextPropertyPanel> {
+  // 滑块拖动时的原始值
+  double? _originalFontSize;
+  double? _originalFontWeight;
+  double? _originalLetterSpacing;
+  double? _originalLineHeight;
+  double? _originalOpacity;
+  double? _originalPadding;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    final layerId = element['layerId'] as String?;
+    final layerId = widget.element['layerId'] as String?;
 
     // 获取图层信息
     Map<String, dynamic>? layer;
     if (layerId != null) {
-      layer = controller.state.getLayerById(layerId);
+      layer = widget.controller.state.getLayerById(layerId);
     }
 
     return ListView(
@@ -52,9 +66,9 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
       children: [
         // 基本属性面板 (放在最前面)
         M3ElementCommonPropertyPanel(
-          element: element,
-          onElementPropertiesChanged: onElementPropertiesChanged,
-          controller: controller,
+          element: widget.element,
+          onElementPropertiesChanged: widget.onElementPropertiesChanged,
+          controller: widget.controller,
         ),
 
         // 图层信息
@@ -113,11 +127,11 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
   Widget _buildGeometryPropertiesPanel(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    final x = (element['x'] as num).toDouble();
-    final y = (element['y'] as num).toDouble();
-    final width = (element['width'] as num).toDouble();
-    final height = (element['height'] as num).toDouble();
-    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
+    final x = (widget.element['x'] as num).toDouble();
+    final y = (widget.element['y'] as num).toDouble();
+    final width = (widget.element['width'] as num).toDouble();
+    final height = (widget.element['height'] as num).toDouble();
+    final rotation = (widget.element['rotation'] as num?)?.toDouble() ?? 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,14 +223,14 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
   // 辅助方法：构建文本内容输入字段
   Widget _buildTextContentField(String initialText, BuildContext context) {
     // 确保控制器内容与初始文本一致
-    if (_textController.text != initialText) {
-      _textController.text = initialText;
+    if (M3TextPropertyPanel._textController.text != initialText) {
+      M3TextPropertyPanel._textController.text = initialText;
     }
 
     final colorScheme = Theme.of(context).colorScheme;
 
     return TextField(
-      controller: _textController,
+      controller: M3TextPropertyPanel._textController,
       decoration: InputDecoration(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
@@ -241,7 +255,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     final colorScheme = Theme.of(context).colorScheme;
 
     // 文本特有属性
-    final content = element['content'] as Map<String, dynamic>? ?? {};
+    final content = widget.element['content'] as Map<String, dynamic>? ?? {};
     final text = content['text'] as String? ?? '';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 100.0;
     final fontFamily = content['fontFamily'] as String? ?? 'sans-serif';
@@ -310,8 +324,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalFontSize = fontSize;
+                },
                 onChanged: (value) {
-                  _updateContentProperty('fontSize', value);
+                  _updateContentPropertyPreview('fontSize', value);
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo('fontSize', value, _originalFontSize);
+                  _originalFontSize = null;
                 },
               ),
             ),
@@ -524,6 +546,10 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                     activeColor: colorScheme.primary,
                     inactiveColor: colorScheme.surfaceContainerHighest,
                     thumbColor: colorScheme.primary,
+                    onChangeStart: (value) {
+                      // 拖动开始时保存原始值
+                      _originalFontWeight = _getFontWeightValue(fontWeight);
+                    },
                     onChanged: (value) {
                       // 将滑块值转换为字重字符串
                       final weightValue = value.round();
@@ -537,7 +563,36 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                         weightString = 'w$weightValue';
                       }
 
-                      _updateContentProperty('fontWeight', weightString);
+                      _updateContentPropertyPreview('fontWeight', weightString);
+                    },
+                    onChangeEnd: (value) {
+                      // 将滑块值转换为字重字符串
+                      final weightValue = value.round();
+                      String weightString;
+
+                      if (weightValue == 400) {
+                        weightString = 'normal';
+                      } else if (weightValue == 700) {
+                        weightString = 'bold';
+                      } else {
+                        weightString = 'w$weightValue';
+                      }
+
+                      // 需要将原始值也转换为字符串格式
+                      String? originalWeightString;
+                      if (_originalFontWeight != null) {
+                        final originalValue = _originalFontWeight!.round();
+                        if (originalValue == 400) {
+                          originalWeightString = 'normal';
+                        } else if (originalValue == 700) {
+                          originalWeightString = 'bold';
+                        } else {
+                          originalWeightString = 'w$originalValue';
+                        }
+                      }
+
+                      _updateContentPropertyWithUndo('fontWeight', weightString, originalWeightString);
+                      _originalFontWeight = null;
                     },
                   ),
                 ),
@@ -904,8 +959,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalLetterSpacing = letterSpacing;
+                },
                 onChanged: (value) {
-                  _updateContentProperty('letterSpacing', value);
+                  _updateContentPropertyPreview('letterSpacing', value);
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo('letterSpacing', value, _originalLetterSpacing);
+                  _originalLetterSpacing = null;
                 },
               ),
             ),
@@ -944,8 +1007,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalLineHeight = lineHeight;
+                },
                 onChanged: (value) {
-                  _updateContentProperty('lineHeight', value);
+                  _updateContentPropertyPreview('lineHeight', value);
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo('lineHeight', value, _originalLineHeight);
+                  _originalLineHeight = null;
                 },
               ),
             ),
@@ -984,10 +1055,10 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final opacity = (widget.element['opacity'] as num?)?.toDouble() ?? 1.0;
 
     // 文本特有属性
-    final content = element['content'] as Map<String, dynamic>? ?? {};
+    final content = widget.element['content'] as Map<String, dynamic>? ?? {};
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
 
     return Column(
@@ -1008,8 +1079,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalOpacity = opacity;
+                },
                 onChanged: (value) {
-                  _updateProperty('opacity', value);
+                  _updatePropertyPreview('opacity', value);
+                },
+                onChangeEnd: (value) {
+                  _updatePropertyWithUndo('opacity', value, _originalOpacity);
+                  _originalOpacity = null;
                 },
               ),
             ),
@@ -1049,8 +1128,16 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalPadding = padding;
+                },
                 onChanged: (value) {
-                  _updateContentProperty('padding', value);
+                  _updateContentPropertyPreview('padding', value);
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo('padding', value, _originalPadding);
+                  _originalPadding = null;
                 },
               ),
             ),
@@ -1145,7 +1232,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     }
 
     final content = Map<String, dynamic>.from(
-        element['content'] as Map<String, dynamic>? ?? {});
+        widget.element['content'] as Map<String, dynamic>? ?? {});
     content[key] = value;
     _updateProperty('content', content);
     
@@ -1154,7 +1241,57 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
 
   void _updateProperty(String key, dynamic value) {
     final updates = {key: value};
-    onElementPropertiesChanged(updates);
+    widget.onElementPropertiesChanged(updates);
+  }
+  
+  /// 仅预览更新元素属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updatePropertyPreview(String key, dynamic value) {
+    // 临时禁用undo记录
+    widget.controller.undoRedoManager.undoEnabled = false;
+    
+    // 实际更新元素属性以实现实时预览
+    _updateProperty(key, value);
+    
+    // 重新启用undo记录
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  /// 仅预览更新内容属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateContentPropertyPreview(String key, dynamic value) {
+    // 临时禁用undo记录
+    widget.controller.undoRedoManager.undoEnabled = false;
+    
+    // 实际更新内容属性以实现实时预览
+    _updateContentProperty(key, value);
+    
+    // 重新启用undo记录
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  /// 基于原始值更新内容属性并记录undo操作（用于滑块拖动结束）
+  void _updateContentPropertyWithUndo(String key, dynamic newValue, dynamic originalValue) {
+    if (originalValue != null && originalValue != newValue) {
+      // 临时禁用undo，先恢复到原始值
+      widget.controller.undoRedoManager.undoEnabled = false;
+      _updateContentProperty(key, originalValue);
+      
+      // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+      widget.controller.undoRedoManager.undoEnabled = true;
+      _updateContentProperty(key, newValue);
+    }
+  }
+
+  /// 基于原始值更新元素属性并记录undo操作（用于滑块拖动结束）
+  void _updatePropertyWithUndo(String key, dynamic newValue, dynamic originalValue) {
+    if (originalValue != null && originalValue != newValue) {
+      // 临时禁用undo，先恢复到原始值
+      widget.controller.undoRedoManager.undoEnabled = false;
+      _updateProperty(key, originalValue);
+      
+      // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+      widget.controller.undoRedoManager.undoEnabled = true;
+      _updateProperty(key, newValue);
+    }
   }
   
   /// 判断是否应该记录属性变化日志
@@ -1172,7 +1309,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
     
     // 字号变化只在较大距离时记录
     if (key == 'fontSize') {
-      final currentFontSize = (element['content']?['fontSize'] as num?)?.toDouble() ?? 100.0;
+      final currentFontSize = (widget.element['content']?['fontSize'] as num?)?.toDouble() ?? 100.0;
       final newFontSize = (value as num).toDouble();
       return (newFontSize - currentFontSize).abs() >= 5.0; // 字号差距大于5px才记录
     }

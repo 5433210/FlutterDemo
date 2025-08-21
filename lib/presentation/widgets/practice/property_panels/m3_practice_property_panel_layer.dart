@@ -57,6 +57,9 @@ class _M3LayerPropertyPanelContentState
   final FocusNode _elementNameFocusNode = FocusNode();
   String? _editingElementId;
 
+  // 🚀 方案B：原始值追踪用于优化undo记录
+  double? _originalOpacity;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -339,19 +342,37 @@ class _M3LayerPropertyPanelContentState
                             label: '${(opacity * 100).round()}%',
                             activeColor: colorScheme.primary,
                             thumbColor: colorScheme.primary,
-                            onChanged: (value) {
+                            onChangeStart: (value) {
+                              // 🚀 方案B：拖动开始时保存原始值
+                              _originalOpacity = opacity;
                               EditPageLogger.propertyPanelDebug(
-                                '图层不透明度变更',
+                                '图层不透明度拖动开始',
                                 tag: EditPageLoggingConfig.tagLayerPanel,
                                 data: {
                                   'layerId': widget.layer['id'],
                                   'layerName': widget.layer['name'],
-                                  'newOpacity': value,
-                                  'operation': 'opacity_change',
+                                  'originalOpacity': opacity,
+                                  'operation': 'opacity_drag_start',
                                 },
                               );
-                              widget
-                                  .onLayerPropertiesChanged({'opacity': value});
+                            },
+                            onChanged: (value) {
+                              // 只更新UI预览，不记录undo
+                              EditPageLogger.propertyPanelDebug(
+                                '图层不透明度预览更新',
+                                tag: EditPageLoggingConfig.tagLayerPanel,
+                                data: {
+                                  'layerId': widget.layer['id'],
+                                  'layerName': widget.layer['name'],
+                                  'previewOpacity': value,
+                                  'operation': 'opacity_preview',
+                                },
+                              );
+                              _updateLayerPropertyPreview('opacity', value);
+                            },
+                            onChangeEnd: (value) {
+                              // 拖动结束时基于原始值记录undo
+                              _updateLayerPropertyWithUndo('opacity', value);
                             },
                           ),
                         ),
@@ -971,5 +992,74 @@ class _M3LayerPropertyPanelContentState
   // 切换元素可见性
   void _toggleElementVisibility(String id, bool isHidden) {
     widget.controller.updateElementProperties(id, {'hidden': !isHidden});
+  }
+
+  /// 仅预览更新图层属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateLayerPropertyPreview(String property, dynamic value) {
+    try {
+      // 🚀 方案B：预览更新时暂时禁用undo，只更新UI
+      widget.controller.undoRedoManager.undoEnabled = false;
+      widget.onLayerPropertiesChanged({property: value});
+      // 重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+    } catch (error) {
+      // 确保在错误情况下也重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+      EditPageLogger.propertyPanelError(
+        '图层属性预览更新失败',
+        tag: EditPageLoggingConfig.tagLayerPanel,
+        error: error,
+        data: {
+          'layerId': widget.layer['id'],
+          'property': property,
+          'value': value,
+          'operation': 'layer_property_preview_update_error',
+        },
+      );
+    }
+  }
+
+  /// 🚀 方案B：基于原始值更新图层属性并记录undo操作（用于滑块拖动结束）
+  void _updateLayerPropertyWithUndo(String property, dynamic value) {
+    try {
+      if (_originalOpacity != null && _originalOpacity != value) {
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        widget.onLayerPropertiesChanged({property: _originalOpacity});
+        
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        widget.onLayerPropertiesChanged({property: value});
+        
+        EditPageLogger.propertyPanelDebug(
+          '图层属性undo优化更新',
+          tag: EditPageLoggingConfig.tagLayerPanel,
+          data: {
+            'layerId': widget.layer['id'],
+            'layerName': widget.layer['name'],
+            'property': property,
+            'originalValue': _originalOpacity,
+            'newValue': value,
+            'operation': 'layer_property_undo_optimized_update',
+          },
+        );
+      }
+      // 清空原始值
+      _originalOpacity = null;
+    } catch (error) {
+      // 确保在错误情况下也重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+      EditPageLogger.propertyPanelError(
+        '图层属性undo更新失败',
+        tag: EditPageLoggingConfig.tagLayerPanel,
+        error: error,
+        data: {
+          'layerId': widget.layer['id'],
+          'property': property,
+          'value': value,
+          'operation': 'layer_property_undo_update_error',
+        },
+      );
+    }
   }
 }

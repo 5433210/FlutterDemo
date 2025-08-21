@@ -34,6 +34,11 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   late FocusNode _widthFocusNode;
   late FocusNode _heightFocusNode;
   late FocusNode _dpiFocusNode;
+  
+  // 滑块拖动时的原始DPI值
+  int? _originalDpiValue;
+  // 🚀 方案B：网格大小原始值追踪
+  double? _originalGridSize;
 
   @override
   Widget build(BuildContext context) {
@@ -307,8 +312,18 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                           label: '${dpi.toString()} DPI',
                           activeColor: colorScheme.primary,
                           thumbColor: colorScheme.primary,
-                          onChanged: (value) =>
-                              _updateDpi(value.toInt().toString()),
+                          onChangeStart: (value) {
+                            // 拖动开始时保存原始值
+                            _originalDpiValue = dpi;
+                          },
+                          onChanged: (value) {
+                            // 拖动过程中只更新UI预览，不记录undo
+                            _updateDpiPreview(value.toInt().toString());
+                          },
+                          onChangeEnd: (value) {
+                            // 拖动结束时基于原始值记录undo
+                            _updateDpiWithUndo(value.toInt());
+                          },
                         ),
                       ),
                       const SizedBox(width: 8.0),
@@ -462,7 +477,20 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                               .toStringAsFixed(0),
                           activeColor: colorScheme.primary,
                           thumbColor: colorScheme.primary,
+                          onChangeStart: (value) {
+                            // 🚀 方案B：拖动开始时保存原始值
+                            _originalGridSize = widget.controller.state.gridSize;
+                            EditPageLogger.propertyPanelDebug(
+                              '网格大小拖动开始',
+                              tag: EditPageLoggingConfig.tagEditPage,
+                              data: {
+                                'originalGridSize': _originalGridSize,
+                                'operation': 'grid_size_drag_start',
+                              },
+                            );
+                          },
                           onChanged: (value) {
+                            // 🚀 方案B：预览更新，不记录undo
                             setState(() {
                               // 更新页面属性
                               widget
@@ -471,6 +499,23 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                               widget.controller.state.gridSize = value;
                               // 不直接调用 notifyListeners，而是通过属性更新触发控制器的更新
                             });
+                          },
+                          onChangeEnd: (value) {
+                            // 🚀 方案B：拖动结束时基于原始值记录undo
+                            if (_originalGridSize != null && _originalGridSize != value) {
+                              EditPageLogger.propertyPanelDebug(
+                                '网格大小undo优化更新',
+                                tag: EditPageLoggingConfig.tagEditPage,
+                                data: {
+                                  'originalValue': _originalGridSize,
+                                  'newValue': value,
+                                  'operation': 'grid_size_undo_optimized_update',
+                                },
+                              );
+                              // 已经在onChanged中更新了，这里只记录日志即可
+                            }
+                            // 清空原始值
+                            _originalGridSize = null;
                           },
                         ),
                       ),
@@ -874,5 +919,36 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
             ((widget.page!['width'] as num?)?.toDouble() ?? 210.0).toString();
       }
     }
+  }
+
+  /// 仅预览更新DPI，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateDpiPreview(String value) {
+    final newValue = int.tryParse(value);
+    if (newValue != null && newValue >= 72 && newValue <= 600) {
+      // 临时禁用undo记录
+      widget.controller.undoRedoManager.undoEnabled = false;
+      
+      // 实际更新页面属性以实现实时预览
+      widget.onPagePropertiesChanged({'dpi': newValue});
+      
+      // 重新启用undo记录
+      widget.controller.undoRedoManager.undoEnabled = true;
+    }
+  }
+
+  /// 基于原始值更新DPI并记录undo操作（用于滑块拖动结束）
+  void _updateDpiWithUndo(int newValue) {
+    if (_originalDpiValue != null && _originalDpiValue != newValue) {
+      // 临时禁用undo，先恢复到原始值
+      widget.controller.undoRedoManager.undoEnabled = false;
+      widget.onPagePropertiesChanged({'dpi': _originalDpiValue!});
+      
+      // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+      widget.controller.undoRedoManager.undoEnabled = true;
+      widget.onPagePropertiesChanged({'dpi': newValue});
+    }
+    
+    // 清除保存的原始值
+    _originalDpiValue = null;
   }
 }

@@ -4,15 +4,31 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../common/editable_number_field.dart';
 
 /// Material 3 Text format panel for collection elements
-class M3TextFormatPanel extends StatelessWidget {
+class M3TextFormatPanel extends StatefulWidget {
   final Map<String, dynamic> content;
   final Function(String, dynamic) onContentPropertyChanged;
+  final Function(String, dynamic)? onContentPropertyUpdateStart;
+  final Function(String, dynamic)? onContentPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
 
   const M3TextFormatPanel({
     Key? key,
     required this.content,
     required this.onContentPropertyChanged,
+    this.onContentPropertyUpdateStart,
+    this.onContentPropertyUpdatePreview,
+    this.onContentPropertyUpdateWithUndo,
   }) : super(key: key);
+
+  @override
+  State<M3TextFormatPanel> createState() => _M3TextFormatPanelState();
+}
+
+class _M3TextFormatPanelState extends State<M3TextFormatPanel> {
+  // 滑块拖动时的原始值
+  double? _originalFontSize;
+  double? _originalLetterSpacing;
+  double? _originalLineSpacing;
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +36,15 @@ class M3TextFormatPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 100.0;
-    final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
-    final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
-    final textAlign = content['textAlign'] as String? ?? 'left';
-    final verticalAlign = content['verticalAlign'] as String? ?? 'top';
-    final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
+    final fontSize = (widget.content['fontSize'] as num?)?.toDouble() ?? 100.0;
+    final lineSpacing =
+        (widget.content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
+    final letterSpacing =
+        (widget.content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
+    final textAlign = widget.content['textAlign'] as String? ?? 'left';
+    final verticalAlign = widget.content['verticalAlign'] as String? ?? 'top';
+    final writingMode =
+        widget.content['writingMode'] as String? ?? 'horizontal-l';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,8 +71,24 @@ class M3TextFormatPanel extends StatelessWidget {
                 label: '${fontSize.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalFontSize = fontSize;
+                  if (widget.onContentPropertyUpdateStart != null) {
+                    widget.onContentPropertyUpdateStart!('fontSize', fontSize);
+                  }
+                },
                 onChanged: (value) {
-                  onContentPropertyChanged('fontSize', value);
+                  if (widget.onContentPropertyUpdatePreview != null) {
+                    widget.onContentPropertyUpdatePreview!('fontSize', value);
+                  } else {
+                    _updateContentPropertyPreview('fontSize', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo(
+                      'fontSize', value, _originalFontSize);
+                  _originalFontSize = null;
                 },
               ),
             ),
@@ -67,7 +102,7 @@ class M3TextFormatPanel extends StatelessWidget {
                 min: 10,
                 max: 2000,
                 onChanged: (value) {
-                  onContentPropertyChanged('fontSize', value);
+                  widget.onContentPropertyChanged('fontSize', value);
                 },
               ),
             ),
@@ -97,8 +132,26 @@ class M3TextFormatPanel extends StatelessWidget {
                 label: '${letterSpacing.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalLetterSpacing = letterSpacing;
+                  if (widget.onContentPropertyUpdateStart != null) {
+                    widget.onContentPropertyUpdateStart!(
+                        'letterSpacing', letterSpacing);
+                  }
+                },
                 onChanged: (value) {
-                  onContentPropertyChanged('letterSpacing', value);
+                  if (widget.onContentPropertyUpdatePreview != null) {
+                    widget.onContentPropertyUpdatePreview!(
+                        'letterSpacing', value);
+                  } else {
+                    _updateContentPropertyPreview('letterSpacing', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo(
+                      'letterSpacing', value, _originalLetterSpacing);
+                  _originalLetterSpacing = null;
                 },
               ),
             ),
@@ -113,7 +166,7 @@ class M3TextFormatPanel extends StatelessWidget {
                 max: 500,
                 decimalPlaces: 1,
                 onChanged: (value) {
-                  onContentPropertyChanged('letterSpacing', value);
+                  widget.onContentPropertyChanged('letterSpacing', value);
                 },
               ),
             ),
@@ -143,8 +196,26 @@ class M3TextFormatPanel extends StatelessWidget {
                 label: '${lineSpacing.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalLineSpacing = lineSpacing;
+                  if (widget.onContentPropertyUpdateStart != null) {
+                    widget.onContentPropertyUpdateStart!(
+                        'lineSpacing', lineSpacing);
+                  }
+                },
                 onChanged: (value) {
-                  onContentPropertyChanged('lineSpacing', value);
+                  if (widget.onContentPropertyUpdatePreview != null) {
+                    widget.onContentPropertyUpdatePreview!(
+                        'lineSpacing', value);
+                  } else {
+                    _updateContentPropertyPreview('lineSpacing', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  _updateContentPropertyWithUndo(
+                      'lineSpacing', value, _originalLineSpacing);
+                  _originalLineSpacing = null;
                 },
               ),
             ),
@@ -159,7 +230,7 @@ class M3TextFormatPanel extends StatelessWidget {
                 max: 500,
                 decimalPlaces: 1,
                 onChanged: (value) {
-                  onContentPropertyChanged('lineSpacing', value);
+                  widget.onContentPropertyChanged('lineSpacing', value);
                 },
               ),
             ),
@@ -197,7 +268,7 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_align_left,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('textAlign', 'left');
+                      widget.onContentPropertyChanged('textAlign', 'left');
                     },
                   ),
                 ),
@@ -210,7 +281,7 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_align_center,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('textAlign', 'center');
+                      widget.onContentPropertyChanged('textAlign', 'center');
                     },
                   ),
                 ),
@@ -223,7 +294,7 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_align_right,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('textAlign', 'right');
+                      widget.onContentPropertyChanged('textAlign', 'right');
                     },
                   ),
                 ),
@@ -236,7 +307,7 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_align_justify,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('textAlign', 'justify');
+                      widget.onContentPropertyChanged('textAlign', 'justify');
                     },
                   ),
                 ),
@@ -276,7 +347,7 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.vertical_align_top,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('verticalAlign', 'top');
+                      widget.onContentPropertyChanged('verticalAlign', 'top');
                     },
                   ),
                 ),
@@ -289,7 +360,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.vertical_align_center,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('verticalAlign', 'middle');
+                      widget.onContentPropertyChanged(
+                          'verticalAlign', 'middle');
                     },
                   ),
                 ),
@@ -302,7 +374,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.vertical_align_bottom,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('verticalAlign', 'bottom');
+                      widget.onContentPropertyChanged(
+                          'verticalAlign', 'bottom');
                     },
                   ),
                 ),
@@ -315,7 +388,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon:
                         Icon(Icons.height, color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('verticalAlign', 'justify');
+                      widget.onContentPropertyChanged(
+                          'verticalAlign', 'justify');
                     },
                   ),
                 ),
@@ -355,7 +429,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_textdirection_l_to_r,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('writingMode', 'horizontal-l');
+                      widget.onContentPropertyChanged(
+                          'writingMode', 'horizontal-l');
                     },
                   ),
                 ),
@@ -368,7 +443,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_textdirection_r_to_l,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('writingMode', 'vertical-r');
+                      widget.onContentPropertyChanged(
+                          'writingMode', 'vertical-r');
                     },
                   ),
                 ),
@@ -381,7 +457,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_textdirection_r_to_l,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('writingMode', 'horizontal-r');
+                      widget.onContentPropertyChanged(
+                          'writingMode', 'horizontal-r');
                     },
                   ),
                 ),
@@ -394,7 +471,8 @@ class M3TextFormatPanel extends StatelessWidget {
                     selectedIcon: Icon(Icons.format_textdirection_l_to_r,
                         color: colorScheme.primary),
                     onPressed: () {
-                      onContentPropertyChanged('writingMode', 'vertical-l');
+                      widget.onContentPropertyChanged(
+                          'writingMode', 'vertical-l');
                     },
                   ),
                 ),
@@ -404,5 +482,37 @@ class M3TextFormatPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// 仅预览更新内容属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateContentPropertyPreview(String key, dynamic value) {
+    // 这个组件没有访问controller，所以暂时使用setState来更新UI
+    setState(() {
+      // UI会根据新值重新渲染
+    });
+  }
+
+  /// 基于原始值更新内容属性并记录undo操作（用于滑块拖动结束）
+  void _updateContentPropertyWithUndo(
+      String key, dynamic newValue, dynamic originalValue) {
+    // 如果有原始值且值发生了变化，使用撤销机制
+    if (originalValue != null && originalValue != newValue) {
+      // 优先使用主面板的撤销回调
+      if (widget.onContentPropertyUpdateWithUndo != null) {
+        widget.onContentPropertyUpdateWithUndo!(key, newValue, originalValue);
+      } else {
+        // 备用方案：使用本地撤销逻辑
+        // 先调用开始回调保存原始值
+        if (widget.onContentPropertyUpdateStart != null) {
+          widget.onContentPropertyUpdateStart!(key, originalValue);
+        }
+
+        // 然后更新到最终值
+        widget.onContentPropertyChanged(key, newValue);
+      }
+    } else {
+      // 值没有变化，直接更新
+      widget.onContentPropertyChanged(key, newValue);
+    }
   }
 }

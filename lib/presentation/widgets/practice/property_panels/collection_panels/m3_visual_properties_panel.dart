@@ -13,12 +13,24 @@ class M3VisualPropertiesPanel extends ConsumerStatefulWidget {
   final Map<String, dynamic> element;
   final Function(String, dynamic) onPropertyChanged;
   final Function(String, dynamic) onContentPropertyChanged;
+  final Function(String, dynamic)? onPropertyUpdateStart;
+  final Function(String, dynamic)? onPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onPropertyUpdateWithUndo;
+  final Function(String, dynamic)? onContentPropertyUpdateStart;
+  final Function(String, dynamic)? onContentPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
 
   const M3VisualPropertiesPanel({
     Key? key,
     required this.element,
     required this.onPropertyChanged,
     required this.onContentPropertyChanged,
+    this.onPropertyUpdateStart,
+    this.onPropertyUpdatePreview,
+    this.onPropertyUpdateWithUndo,
+    this.onContentPropertyUpdateStart,
+    this.onContentPropertyUpdatePreview,
+    this.onContentPropertyUpdateWithUndo,
   }) : super(key: key);
 
   @override
@@ -28,6 +40,10 @@ class M3VisualPropertiesPanel extends ConsumerStatefulWidget {
 
 class _M3VisualPropertiesPanelState
     extends ConsumerState<M3VisualPropertiesPanel> {
+  // 滑块拖动时的原始值
+  double? _originalOpacity;
+  double? _originalPadding;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -67,9 +83,9 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  AppLogger.debug('Setting fontColor', tag: 'VisualPropertiesPanel', data: {
-                    'hexColor': hexColor
-                  });
+                  AppLogger.debug('Setting fontColor',
+                      tag: 'VisualPropertiesPanel',
+                      data: {'hexColor': hexColor});
                   widget.onContentPropertyChanged('fontColor', hexColor);
                 }
               },
@@ -103,9 +119,9 @@ class _M3VisualPropertiesPanelState
                 );
                 if (color != null) {
                   final hexColor = CollectionColorUtils.colorToHex(color);
-                  AppLogger.debug('Setting backgroundColor', tag: 'VisualPropertiesPanel', data: {
-                    'hexColor': hexColor
-                  });
+                  AppLogger.debug('Setting backgroundColor',
+                      tag: 'VisualPropertiesPanel',
+                      data: {'hexColor': hexColor});
                   widget.onContentPropertyChanged('backgroundColor', hexColor);
                 }
               },
@@ -139,8 +155,28 @@ class _M3VisualPropertiesPanelState
                 label: '${(opacity * 100).round()}%',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalOpacity = opacity;
+                  if (widget.onPropertyUpdateStart != null) {
+                    widget.onPropertyUpdateStart!('opacity', opacity);
+                  }
+                },
                 onChanged: (value) {
-                  widget.onPropertyChanged('opacity', value);
+                  if (widget.onPropertyUpdatePreview != null) {
+                    widget.onPropertyUpdatePreview!('opacity', value);
+                  } else {
+                    _updatePropertyPreview('opacity', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  if (widget.onPropertyUpdateWithUndo != null) {
+                    widget.onPropertyUpdateWithUndo!(
+                        'opacity', value, _originalOpacity);
+                  } else {
+                    _updatePropertyWithUndo('opacity', value, _originalOpacity);
+                  }
+                  _originalOpacity = null;
                 },
               ),
             ),
@@ -177,8 +213,29 @@ class _M3VisualPropertiesPanelState
                 label: '${padding.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalPadding = padding;
+                  if (widget.onContentPropertyUpdateStart != null) {
+                    widget.onContentPropertyUpdateStart!('padding', padding);
+                  }
+                },
                 onChanged: (value) {
-                  widget.onContentPropertyChanged('padding', value);
+                  if (widget.onContentPropertyUpdatePreview != null) {
+                    widget.onContentPropertyUpdatePreview!('padding', value);
+                  } else {
+                    _updatePropertyPreview('padding', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  if (widget.onContentPropertyUpdateWithUndo != null) {
+                    widget.onContentPropertyUpdateWithUndo!(
+                        'padding', value, _originalPadding);
+                  } else {
+                    _updateContentPropertyWithUndo(
+                        'padding', value, _originalPadding);
+                  }
+                  _originalPadding = null;
                 },
               ),
             ),
@@ -203,5 +260,50 @@ class _M3VisualPropertiesPanelState
         const SizedBox(height: 16.0),
       ],
     );
+  }
+
+  /// 仅预览更新属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updatePropertyPreview(String key, dynamic value) {
+    // 这个组件没有访问controller，所以暂时使用setState来更新UI
+    // 实际的预览功能需要在父组件中实现
+    setState(() {
+      // UI会根据新值重新渲染
+    });
+  }
+
+  /// 基于原始值更新属性并记录undo操作（用于滑块拖动结束）
+  void _updatePropertyWithUndo(
+      String key, dynamic newValue, dynamic originalValue) {
+    // 如果有原始值且值发生了变化，使用主面板的撤销机制
+    if (originalValue != null && originalValue != newValue) {
+      // 先调用开始回调保存原始值
+      if (widget.onPropertyUpdateStart != null) {
+        widget.onPropertyUpdateStart!(key, originalValue);
+      }
+
+      // 然后更新到最终值
+      widget.onPropertyChanged(key, newValue);
+    } else {
+      // 值没有变化，直接更新
+      widget.onPropertyChanged(key, newValue);
+    }
+  }
+
+  /// 基于原始值更新内容属性并记录undo操作（用于滑块拖动结束）
+  void _updateContentPropertyWithUndo(
+      String key, dynamic newValue, dynamic originalValue) {
+    // 如果有原始值且值发生了变化，使用主面板的撤销机制
+    if (originalValue != null && originalValue != newValue) {
+      // 先调用开始回调保存原始值
+      if (widget.onContentPropertyUpdateStart != null) {
+        widget.onContentPropertyUpdateStart!(key, originalValue);
+      }
+
+      // 然后更新到最终值
+      widget.onContentPropertyChanged(key, newValue);
+    } else {
+      // 值没有变化，直接更新
+      widget.onContentPropertyChanged(key, newValue);
+    }
   }
 }

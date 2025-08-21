@@ -22,6 +22,9 @@ class M3ContentSettingsPanel extends ConsumerWidget {
   final Function(bool) onInvertDisplayToggled;
   final Function(String, dynamic) onContentPropertyChanged;
   final Function(int, bool) onCharacterInvertToggled;
+  final Function(String, dynamic)? onContentPropertyUpdateStart;
+  final Function(String, dynamic)? onContentPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
 
   const M3ContentSettingsPanel({
     Key? key,
@@ -36,6 +39,9 @@ class M3ContentSettingsPanel extends ConsumerWidget {
     required this.onInvertDisplayToggled,
     required this.onContentPropertyChanged,
     required this.onCharacterInvertToggled,
+    this.onContentPropertyUpdateStart,
+    this.onContentPropertyUpdatePreview,
+    this.onContentPropertyUpdateWithUndo,
   }) : super(key: key);
 
   @override
@@ -51,8 +57,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
       defaultExpanded: true,
       children: [
         // Character content
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.characterCollection),
+        M3PanelStyles.buildSectionTitle(context, l10n.characterCollection),
         M3CharacterInputField(
           initialText: characters,
           selectedCharIndex: selectedCharIndex,
@@ -86,18 +91,19 @@ class M3ContentSettingsPanel extends ConsumerWidget {
         ),
 
         const SizedBox(height: 16.0), // Text format settings
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.textSettings),
+        M3PanelStyles.buildSectionTitle(context, l10n.textSettings),
         M3TextFormatPanel(
           content: content,
           onContentPropertyChanged: onContentPropertyChanged,
+          onContentPropertyUpdateStart: onContentPropertyUpdateStart,
+          onContentPropertyUpdatePreview: onContentPropertyUpdatePreview,
+          onContentPropertyUpdateWithUndo: onContentPropertyUpdateWithUndo,
         ),
 
         const SizedBox(height: 16.0),
 
         // Auto line break setting
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.autoLineBreak),
+        M3PanelStyles.buildSectionTitle(context, l10n.autoLineBreak),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

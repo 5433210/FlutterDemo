@@ -171,13 +171,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // 🔧 修复：在didChangeDependencies中初始化UI组件，此时MediaQuery可用
     if (!_hasInitializedUI && !_isDisposed) {
       try {
         _initializeUIComponents();
         _hasInitializedUI = true;
-        
+
         EditPageLogger.editPageInfo(
           'UI组件初始化完成',
           data: {
@@ -589,7 +589,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     if (_shouldInterceptNextPanGesture) {
       return true;
     }
-    
+
     // 其他情况让InteractiveViewer完全接管画布平移和缩放
     return false;
   }
@@ -788,17 +788,20 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       _handleElementDrop(data.data, data.offset);
                     },
                     builder: (context, candidateData, rejectedData) {
-                      final needsSpecialGestureHandling = shouldHandleAnySpecialGesture(elements);
-                      
+                      final needsSpecialGestureHandling =
+                          shouldHandleAnySpecialGesture(elements);
+
                       return GestureDetector(
                         // 🔧 关键修复：移动端智能手势行为 - 始终使用deferToChild让InteractiveViewer处理缩放平移
                         // 只在确实需要拦截时才在onTapDown中动态设置标志
-                        behavior: _isMobile 
-                            ? HitTestBehavior.deferToChild  // 移动端：让InteractiveViewer优先处理，支持平移缩放
-                            : (needsSpecialGestureHandling 
-                                ? HitTestBehavior.translucent  // 桌面端：需要特殊处理时拦截手势
-                                : HitTestBehavior.deferToChild), // 桌面端：不需要时完全让子组件处理
-                        
+                        behavior: _isMobile
+                            ? HitTestBehavior
+                                .deferToChild // 移动端：让InteractiveViewer优先处理，支持平移缩放
+                            : (needsSpecialGestureHandling
+                                ? HitTestBehavior.translucent // 桌面端：需要特殊处理时拦截手势
+                                : HitTestBehavior
+                                    .deferToChild), // 桌面端：不需要时完全让子组件处理
+
                         // 🔧 关键修复：在tapDown时检查是否点击在选中元素上，动态决定是否拦截pan手势
                         onTapDown: (details) {
                           // 移动端：如果是多指手势，不处理tapDown
@@ -811,25 +814,31 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           if (controller.state.selectedElementIds.isNotEmpty) {
                             for (final element in elements) {
                               final id = element['id'] as String;
-                              if (controller.state.selectedElementIds.contains(id)) {
+                              if (controller.state.selectedElementIds
+                                  .contains(id)) {
                                 final x = (element['x'] as num).toDouble();
                                 final y = (element['y'] as num).toDouble();
-                                final width = (element['width'] as num).toDouble();
-                                final height = (element['height'] as num).toDouble();
+                                final width =
+                                    (element['width'] as num).toDouble();
+                                final height =
+                                    (element['height'] as num).toDouble();
 
                                 // 检查是否隐藏或在隐藏的图层中
                                 if (element['hidden'] == true) continue;
                                 final layerId = element['layerId'] as String?;
                                 if (layerId != null) {
-                                  final layer = controller.state.getLayerById(layerId);
-                                  if (layer != null && layer['isVisible'] == false) continue;
+                                  final layer =
+                                      controller.state.getLayerById(layerId);
+                                  if (layer != null &&
+                                      layer['isVisible'] == false) continue;
                                 }
 
                                 // 检查点击是否在元素内部
-                                final bool isInside = details.localPosition.dx >= x &&
-                                    details.localPosition.dx <= x + width &&
-                                    details.localPosition.dy >= y &&
-                                    details.localPosition.dy <= y + height;
+                                final bool isInside =
+                                    details.localPosition.dx >= x &&
+                                        details.localPosition.dx <= x + width &&
+                                        details.localPosition.dy >= y &&
+                                        details.localPosition.dy <= y + height;
 
                                 if (isInside) {
                                   // 点击在选中元素上，需要拦截后续的pan手势用于拖拽
@@ -841,13 +850,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           }
 
                           // 设置拖拽准备状态
-                          if (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select') {
+                          if (_shouldInterceptNextPanGesture ||
+                              controller.state.currentTool == 'select') {
                             _isReadyForDrag = true;
                           } else {
                             _isReadyForDrag = false;
                           }
                         },
-                        
+
                         onTapUp: (details) {
                           // 移动端：如果是多指手势，不处理tapUp
                           if (_isMobile && _isMultiTouchGesture) return;
@@ -857,124 +867,163 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                           _isReadyForDrag = false;
 
                           _gestureHandler.handleTapUp(
-                              details,
-                              elements.cast<Map<String, dynamic>>());
+                              details, elements.cast<Map<String, dynamic>>());
 
                           // 调试选择状态变化后的情况（不触发重建）
                           _debugCanvasState('元素选择后');
                         },
-                        
+
                         // 处理右键点击事件，用于上下文菜单等功能
-                        onSecondaryTapDown: needsSpecialGestureHandling ? (details) =>
-                            _gestureHandler.handleSecondaryTapDown(details) : null,
-                        onSecondaryTapUp: needsSpecialGestureHandling ? (details) =>
-                            _gestureHandler.handleSecondaryTapUp(
-                                details, elements.cast<Map<String, dynamic>>()) : null,
-                        
+                        onSecondaryTapDown: needsSpecialGestureHandling
+                            ? (details) =>
+                                _gestureHandler.handleSecondaryTapDown(details)
+                            : null,
+                        onSecondaryTapUp: needsSpecialGestureHandling
+                            ? (details) => _gestureHandler.handleSecondaryTapUp(
+                                details, elements.cast<Map<String, dynamic>>())
+                            : null,
+
                         // 🔧 关键修复：移动端和桌面端差异化处理pan手势
-                        onPanStart: (_isMobile 
-                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select'  // 移动端：仅在真正需要时处理
+                        onPanStart: (_isMobile
+                            ? (_shouldInterceptNextPanGesture ||
+                                    controller.state.currentTool ==
+                                        'select' // 移动端：仅在真正需要时处理
                                 ? (details) {
                                     // 移动端：如果是多指手势，让InteractiveViewer处理
-                                    if (_isMobile && _isMultiTouchGesture) return;
+                                    if (_isMobile && _isMultiTouchGesture)
+                                      return;
 
                                     // 🔧 修复：优先处理元素拖拽，无论当前工具是什么
                                     if (_shouldInterceptNextPanGesture) {
                                       // 点击在选中元素上，开始元素拖拽（任何工具模式下都可以）
                                       _gestureHandler.handlePanStart(
-                                          details, elements.cast<Map<String, dynamic>>());
-                                      
+                                          details,
+                                          elements
+                                              .cast<Map<String, dynamic>>());
+
                                       // 如果开始了真正的拖拽，更新panEnabled状态
                                       if (mounted &&
-                                          (_isDragging || _dragStateManager.isDragging)) {
+                                          (_isDragging ||
+                                              _dragStateManager.isDragging)) {
                                         setState(() {});
                                       }
-                                    } else if (controller.state.currentTool == 'select') {
+                                    } else if (controller.state.currentTool ==
+                                        'select') {
                                       // 仅在Select工具且不是拖拽元素时：开始选择框
                                       _gestureHandler.handlePanStart(
-                                          details, elements.cast<Map<String, dynamic>>());
+                                          details,
+                                          elements
+                                              .cast<Map<String, dynamic>>());
                                     }
                                   }
-                                : null)  // 移动端：点击空白区域时不设置处理器，让InteractiveViewer处理
-                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                : null) // 移动端：点击空白区域时不设置处理器，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling // 桌面端：使用原有逻辑
                                 ? (details) {
                                     // 🔧 修复：优先处理元素拖拽，无论当前工具是什么
                                     if (_shouldInterceptNextPanGesture) {
                                       // 点击在选中元素上，开始元素拖拽（任何工具模式下都可以）
                                       _gestureHandler.handlePanStart(
-                                          details, elements.cast<Map<String, dynamic>>());
-                                      
+                                          details,
+                                          elements
+                                              .cast<Map<String, dynamic>>());
+
                                       // 如果开始了真正的拖拽，更新panEnabled状态
                                       if (mounted &&
-                                          (_isDragging || _dragStateManager.isDragging)) {
+                                          (_isDragging ||
+                                              _dragStateManager.isDragging)) {
                                         setState(() {});
                                       }
-                                    } else if (controller.state.currentTool == 'select') {
+                                    } else if (controller.state.currentTool ==
+                                        'select') {
                                       // 仅在Select工具且不是拖拽元素时：开始选择框
                                       _gestureHandler.handlePanStart(
-                                          details, elements.cast<Map<String, dynamic>>());
+                                          details,
+                                          elements
+                                              .cast<Map<String, dynamic>>());
                                     }
                                   }
                                 : null)),
-                        
-                        onPanUpdate: (_isMobile 
-                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+
+                        onPanUpdate: (_isMobile
+                            ? (_shouldInterceptNextPanGesture ||
+                                    controller.state.currentTool == 'select' ||
+                                    _isDragging ||
+                                    _dragStateManager.isDragging ||
+                                    _gestureHandler.isSelectionBoxActive
                                 ? (details) {
                                     // 移动端：如果是多指手势，让InteractiveViewer处理
-                                    if (_isMobile && _isMultiTouchGesture) return;
+                                    if (_isMobile && _isMultiTouchGesture)
+                                      return;
 
                                     // 只有在真正拖拽时才处理update事件
-                                    if (_isDragging || _dragStateManager.isDragging) {
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging) {
                                       _gestureHandler.handlePanUpdate(details);
                                       return;
                                     }
 
                                     // 处理选择框更新
-                                    if (widget.controller.state.currentTool == 'select' &&
+                                    if (widget.controller.state.currentTool ==
+                                            'select' &&
                                         _gestureHandler.isSelectionBoxActive) {
                                       _gestureHandler.handlePanUpdate(details);
-                                      _selectionBoxNotifier.value = SelectionBoxState(
+                                      _selectionBoxNotifier.value =
+                                          SelectionBoxState(
                                         isActive: true,
-                                        startPoint: _gestureHandler.selectionBoxStart,
-                                        endPoint: _gestureHandler.selectionBoxEnd,
+                                        startPoint:
+                                            _gestureHandler.selectionBoxStart,
+                                        endPoint:
+                                            _gestureHandler.selectionBoxEnd,
                                       );
                                       return;
                                     }
                                   }
-                                : null)  // 移动端：空白区域不处理update，让InteractiveViewer处理
-                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                : null) // 移动端：空白区域不处理update，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling // 桌面端：使用原有逻辑
                                 ? (details) {
                                     // 只有在真正拖拽时才处理update事件
-                                    if (_isDragging || _dragStateManager.isDragging) {
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging) {
                                       _gestureHandler.handlePanUpdate(details);
                                       return;
                                     }
 
                                     // 处理选择框更新
-                                    if (widget.controller.state.currentTool == 'select' &&
+                                    if (widget.controller.state.currentTool ==
+                                            'select' &&
                                         _gestureHandler.isSelectionBoxActive) {
                                       _gestureHandler.handlePanUpdate(details);
-                                      _selectionBoxNotifier.value = SelectionBoxState(
+                                      _selectionBoxNotifier.value =
+                                          SelectionBoxState(
                                         isActive: true,
-                                        startPoint: _gestureHandler.selectionBoxStart,
-                                        endPoint: _gestureHandler.selectionBoxEnd,
+                                        startPoint:
+                                            _gestureHandler.selectionBoxStart,
+                                        endPoint:
+                                            _gestureHandler.selectionBoxEnd,
                                       );
                                       return;
                                     }
                                   }
                                 : null)),
-                        
-                        onPanEnd: (_isMobile 
-                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+
+                        onPanEnd: (_isMobile
+                            ? (_shouldInterceptNextPanGesture ||
+                                    controller.state.currentTool == 'select' ||
+                                    _isDragging ||
+                                    _dragStateManager.isDragging ||
+                                    _gestureHandler.isSelectionBoxActive
                                 ? (details) {
                                     // 只有在真正处理拖拽或选择框时才需要结束处理
-                                    if (_isDragging || _dragStateManager.isDragging || 
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging ||
                                         _gestureHandler.isSelectionBoxActive) {
-                                      
                                       // 重置选择框状态
-                                      if (widget.controller.state.currentTool == 'select' &&
-                                          _gestureHandler.isSelectionBoxActive) {
-                                        _selectionBoxNotifier.value = SelectionBoxState();
+                                      if (widget.controller.state.currentTool ==
+                                              'select' &&
+                                          _gestureHandler
+                                              .isSelectionBoxActive) {
+                                        _selectionBoxNotifier.value =
+                                            SelectionBoxState();
                                       }
 
                                       // 处理手势结束
@@ -985,17 +1034,20 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                     _shouldInterceptNextPanGesture = false;
                                     _isReadyForDrag = false;
                                   }
-                                : null)  // 移动端：空白区域不处理end，让InteractiveViewer处理
-                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                : null) // 移动端：空白区域不处理end，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling // 桌面端：使用原有逻辑
                                 ? (details) {
                                     // 只有在真正处理拖拽或选择框时才需要结束处理
-                                    if (_isDragging || _dragStateManager.isDragging || 
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging ||
                                         _gestureHandler.isSelectionBoxActive) {
-                                      
                                       // 重置选择框状态
-                                      if (widget.controller.state.currentTool == 'select' &&
-                                          _gestureHandler.isSelectionBoxActive) {
-                                        _selectionBoxNotifier.value = SelectionBoxState();
+                                      if (widget.controller.state.currentTool ==
+                                              'select' &&
+                                          _gestureHandler
+                                              .isSelectionBoxActive) {
+                                        _selectionBoxNotifier.value =
+                                            SelectionBoxState();
                                       }
 
                                       // 处理手势结束
@@ -1007,18 +1059,25 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                     _isReadyForDrag = false;
                                   }
                                 : null)),
-                        
-                        onPanCancel: (_isMobile 
-                            ? (_shouldInterceptNextPanGesture || controller.state.currentTool == 'select' || _isDragging || _dragStateManager.isDragging || _gestureHandler.isSelectionBoxActive
+
+                        onPanCancel: (_isMobile
+                            ? (_shouldInterceptNextPanGesture ||
+                                    controller.state.currentTool == 'select' ||
+                                    _isDragging ||
+                                    _dragStateManager.isDragging ||
+                                    _gestureHandler.isSelectionBoxActive
                                 ? () {
                                     // 重置选择框状态
-                                    if (widget.controller.state.currentTool == 'select' &&
+                                    if (widget.controller.state.currentTool ==
+                                            'select' &&
                                         _gestureHandler.isSelectionBoxActive) {
-                                      _selectionBoxNotifier.value = SelectionBoxState();
+                                      _selectionBoxNotifier.value =
+                                          SelectionBoxState();
                                     }
 
                                     // 处理手势取消
-                                    if (_isDragging || _dragStateManager.isDragging ||
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging ||
                                         _gestureHandler.isSelectionBoxActive) {
                                       _gestureHandler.handlePanCancel();
                                     }
@@ -1027,17 +1086,20 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                     _shouldInterceptNextPanGesture = false;
                                     _isReadyForDrag = false;
                                   }
-                                : null)  // 移动端：空白区域不处理cancel，让InteractiveViewer处理
-                            : (needsSpecialGestureHandling  // 桌面端：使用原有逻辑
+                                : null) // 移动端：空白区域不处理cancel，让InteractiveViewer处理
+                            : (needsSpecialGestureHandling // 桌面端：使用原有逻辑
                                 ? () {
                                     // 重置选择框状态
-                                    if (widget.controller.state.currentTool == 'select' &&
+                                    if (widget.controller.state.currentTool ==
+                                            'select' &&
                                         _gestureHandler.isSelectionBoxActive) {
-                                      _selectionBoxNotifier.value = SelectionBoxState();
+                                      _selectionBoxNotifier.value =
+                                          SelectionBoxState();
                                     }
 
                                     // 处理手势取消
-                                    if (_isDragging || _dragStateManager.isDragging ||
+                                    if (_isDragging ||
+                                        _dragStateManager.isDragging ||
                                         _gestureHandler.isSelectionBoxActive) {
                                       _gestureHandler.handlePanCancel();
                                     }
@@ -1301,10 +1363,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
               setState(() {});
               EditPageLogger.canvasDebug('Canvas UI监听器触发重建');
             } catch (e, stackTrace) {
-              EditPageLogger.canvasError('Canvas UI监听器setState失败', 
-                error: e, 
-                stackTrace: stackTrace,
-                data: {'component': 'canvas_ui_listener'});
+              EditPageLogger.canvasError('Canvas UI监听器setState失败',
+                  error: e,
+                  stackTrace: stackTrace,
+                  data: {'component': 'canvas_ui_listener'});
             }
           }
         };
@@ -1343,7 +1405,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
 
       // 🔧 确保RepaintBoundary key被初始化
       _repaintBoundaryKey = GlobalKey();
-      
+
       // 注册必要的基础层级
       // 1. 背景层 - 必需的，用于页面背景和网格
       _layerRenderManager.registerLayer(
@@ -1354,9 +1416,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           enableCaching: false, // 禁用缓存避免潜在问题
           useRepaintBoundary: true,
         ),
-        builder: (config) => _buildLayerWidget(RenderLayerType.staticBackground, config),
+        builder: (config) =>
+            _buildLayerWidget(RenderLayerType.staticBackground, config),
       );
-      
+
       // 2. 内容层
       _layerRenderManager.registerLayer(
         type: RenderLayerType.content,
@@ -1378,7 +1441,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
           enableCaching: false,
           useRepaintBoundary: true,
         ),
-        builder: (config) => _buildLayerWidget(RenderLayerType.interaction, config),
+        builder: (config) =>
+            _buildLayerWidget(RenderLayerType.interaction, config),
       );
 
       EditPageLogger.canvasDebug('画布已切换到基础模式');
@@ -1789,28 +1853,28 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       final screenSize = mediaQuery.size;
       final devicePixelRatio = mediaQuery.devicePixelRatio;
       final viewPadding = mediaQuery.viewPadding;
-      
+
       // 移动设备的典型特征：
       // 1. 较小的屏幕宽度（通常 < 800px）
       // 2. 较高的像素密度（通常 > 1.5）
       // 3. 有状态栏/导航栏（viewPadding.top > 0）
       // 4. 屏幕宽高比通常更接近 16:9 或更窄
-      
+
       final aspectRatio = screenSize.width / screenSize.height;
       final hasStatusBar = viewPadding.top > 0;
       final hasHighDensity = devicePixelRatio > 1.5;
       final hasSmallWidth = screenSize.width < 800;
       final hasMobileAspectRatio = aspectRatio < 1.5; // 移动设备通常是竖屏或接近方形
-      
+
       // 组合判断：满足多个条件的设备很可能是移动设备
       int mobileScore = 0;
-      if (hasSmallWidth) mobileScore += 3;  // 小屏幕权重最高
+      if (hasSmallWidth) mobileScore += 3; // 小屏幕权重最高
       if (hasHighDensity) mobileScore += 2; // 高像素密度
-      if (hasStatusBar) mobileScore += 2;   // 有状态栏
+      if (hasStatusBar) mobileScore += 2; // 有状态栏
       if (hasMobileAspectRatio) mobileScore += 1; // 移动设备宽高比
-      
+
       final isMobile = mobileScore >= 4; // 分数阈值
-      
+
       EditPageLogger.editPageDebug('UI特征移动设备检测', data: {
         'screenSize': '${screenSize.width}x${screenSize.height}',
         'devicePixelRatio': devicePixelRatio,
@@ -1822,7 +1886,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         'mobileScore': mobileScore,
         'isMobile': isMobile,
       });
-      
+
       return isMobile;
     } catch (e) {
       // 最终回退：简单的屏幕宽度检测
@@ -1863,13 +1927,66 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 },
               );
             } catch (e, stackTrace) {
-              EditPageLogger.canvasError('Canvas UI监听器setState失败', 
-                error: e, 
-                stackTrace: stackTrace,
-                data: {'component': 'canvas_ui_listener', 'context': 'guideline_update'});
+              EditPageLogger.canvasError('Canvas UI监听器setState失败',
+                  error: e,
+                  stackTrace: stackTrace,
+                  data: {
+                    'component': 'canvas_ui_listener',
+                    'context': 'guideline_update'
+                  });
             }
           }
         };
+        intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
+
+        // 🔧 修复：注册撤销/重做操作的特殊处理监听器
+        intelligentDispatcher.registerOperationListener('undo_force_refresh',
+            () {
+          if (mounted && !_isDisposed) {
+            try {
+              setState(() {
+                // 撤销操作后强制刷新画布以立即显示透明度等变化
+              });
+
+              EditPageLogger.canvasDebug(
+                '撤销操作触发Canvas强制刷新',
+                data: {
+                  'reason': 'undo_operation_force_refresh',
+                  'fix': '修复图层透明度撤销后不立即显示的问题',
+                },
+              );
+            } catch (e, stackTrace) {
+              EditPageLogger.canvasError('撤销操作Canvas刷新失败',
+                  error: e,
+                  stackTrace: stackTrace,
+                  data: {'operation': 'undo_force_refresh'});
+            }
+          }
+        });
+
+        intelligentDispatcher.registerOperationListener('redo_force_refresh',
+            () {
+          if (mounted && !_isDisposed) {
+            try {
+              setState(() {
+                // 重做操作后强制刷新画布以立即显示透明度等变化
+              });
+
+              EditPageLogger.canvasDebug(
+                '重做操作触发Canvas强制刷新',
+                data: {
+                  'reason': 'redo_operation_force_refresh',
+                  'fix': '修复图层透明度重做后不立即显示的问题',
+                },
+              );
+            } catch (e, stackTrace) {
+              EditPageLogger.canvasError('重做操作Canvas刷新失败',
+                  error: e,
+                  stackTrace: stackTrace,
+                  data: {'operation': 'redo_force_refresh'});
+            }
+          }
+        });
         intelligentDispatcher.registerUIListener('canvas', _canvasUIListener!);
 
         // 🔍 验证注册是否成功 - 添加重试机制
@@ -1886,10 +2003,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                       setState(() {});
                       EditPageLogger.canvasDebug('Canvas UI监听器触发重建(重试)');
                     } catch (e, stackTrace) {
-                      EditPageLogger.canvasError('Canvas UI监听器setState失败(重试)', 
-                        error: e, 
-                        stackTrace: stackTrace,
-                        data: {'component': 'canvas_ui_listener', 'context': 'retry'});
+                      EditPageLogger.canvasError('Canvas UI监听器setState失败(重试)',
+                          error: e,
+                          stackTrace: stackTrace,
+                          data: {
+                            'component': 'canvas_ui_listener',
+                            'context': 'retry'
+                          });
                     }
                   }
                 };

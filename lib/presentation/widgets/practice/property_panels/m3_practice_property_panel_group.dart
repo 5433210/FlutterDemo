@@ -54,6 +54,9 @@ class _M3GroupPropertyPanelContentState
   late FocusNode _nameFocusNode;
   bool _isEditingName = false;
 
+  // 🚀 方案B：原始值追踪用于优化undo记录
+  double? _originalOpacity;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -397,8 +400,17 @@ class _M3GroupPropertyPanelContentState
                                 label: '${(opacity * 100).round()}%',
                                 activeColor: colorScheme.primary,
                                 thumbColor: colorScheme.primary,
+                                onChangeStart: (value) {
+                                  // 🚀 方案B：拖动开始时保存原始值
+                                  _originalOpacity = opacity;
+                                },
                                 onChanged: (value) {
-                                  _updateElementProperty('opacity', value);
+                                  // 只更新UI，不记录undo
+                                  _updateElementPropertyPreview('opacity', value);
+                                },
+                                onChangeEnd: (value) {
+                                  // 拖动结束时基于原始值记录undo
+                                  _updateElementPropertyWithUndo('opacity', value);
                                 },
                               ),
                             ),
@@ -1064,6 +1076,81 @@ class _M3GroupPropertyPanelContentState
           },
         );
       }
+    }
+  }
+
+  /// 仅预览更新元素属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateElementPropertyPreview(String key, dynamic value) {
+    try {
+      // 🚀 方案B：预览更新时暂时禁用undo，只更新UI
+      widget.controller.undoRedoManager.undoEnabled = false;
+      final id = widget.element['id'] as String;
+      widget.onElementPropertiesChanged({
+        'id': id,
+        key: value,
+      });
+      // 重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+    } catch (error) {
+      // 确保在错误情况下也重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+      EditPageLogger.propertyPanelError(
+        '分组属性预览更新失败',
+        error: error,
+        data: {
+          'propertyKey': key,
+          'value': value,
+          'operation': 'group_property_preview_update_error',
+        },
+      );
+    }
+  }
+
+  /// 🚀 方案B：基于原始值更新元素属性并记录undo操作（用于滑块拖动结束）
+  void _updateElementPropertyWithUndo(String key, dynamic value) {
+    try {
+      if (_originalOpacity != null && _originalOpacity != value) {
+        final id = widget.element['id'] as String;
+        
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        widget.onElementPropertiesChanged({
+          'id': id,
+          key: _originalOpacity,
+        });
+        
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        widget.onElementPropertiesChanged({
+          'id': id,
+          key: value,
+        });
+        
+        EditPageLogger.propertyPanelDebug(
+          '分组属性undo优化更新',
+          data: {
+            'groupId': id,
+            'propertyKey': key,
+            'originalValue': _originalOpacity,
+            'newValue': value,
+            'operation': 'group_property_undo_optimized_update',
+          },
+        );
+      }
+      // 清空原始值
+      _originalOpacity = null;
+    } catch (error) {
+      // 确保在错误情况下也重新启用undo
+      widget.controller.undoRedoManager.undoEnabled = true;
+      EditPageLogger.propertyPanelError(
+        '分组属性undo更新失败',
+        error: error,
+        data: {
+          'propertyKey': key,
+          'value': value,
+          'operation': 'group_property_undo_update_error',
+        },
+      );
     }
   }
 }

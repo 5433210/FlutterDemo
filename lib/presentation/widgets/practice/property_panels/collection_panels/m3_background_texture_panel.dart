@@ -17,12 +17,24 @@ class M3BackgroundTexturePanel extends ConsumerStatefulWidget {
   final Map<String, dynamic> element;
   final Function(String, dynamic) onPropertyChanged;
   final Function(String, dynamic) onContentPropertyChanged;
+  final Function(String, dynamic)? onPropertyUpdateStart;
+  final Function(String, dynamic)? onPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onPropertyUpdateWithUndo;
+  final Function(String, dynamic)? onContentPropertyUpdateStart;
+  final Function(String, dynamic)? onContentPropertyUpdatePreview;
+  final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
 
   const M3BackgroundTexturePanel({
     Key? key,
     required this.element,
     required this.onPropertyChanged,
     required this.onContentPropertyChanged,
+    this.onPropertyUpdateStart,
+    this.onPropertyUpdatePreview,
+    this.onPropertyUpdateWithUndo,
+    this.onContentPropertyUpdateStart,
+    this.onContentPropertyUpdatePreview,
+    this.onContentPropertyUpdateWithUndo,
   }) : super(key: key);
 
   @override
@@ -32,6 +44,9 @@ class M3BackgroundTexturePanel extends ConsumerStatefulWidget {
 
 class _M3BackgroundTexturePanelState
     extends ConsumerState<M3BackgroundTexturePanel> {
+  // 滑块拖动时的原始值
+  double? _originalTextureOpacity;
+
   // 加载纹理图片 - 优化版
   // 使用内存缓存避免重复加载
   // static final Map<String, List<int>> _textureCache = {};
@@ -42,7 +57,7 @@ class _M3BackgroundTexturePanelState
   // 🚀 性能优化：纹理查询结果缓存
   static final Map<String, Map<String, dynamic>?> _textureQueryCache = {};
   static String? _lastQueryKey;
-  
+
   // 🚀 优化：纹理预览构建状态缓存
   static String? _lastPreviewKey;
   static int _previewBuildCount = 0;
@@ -179,8 +194,28 @@ class _M3BackgroundTexturePanelState
                 label: '${(textureOpacity * 100).round()}%',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
+                onChangeStart: (value) {
+                  // 拖动开始时保存原始值
+                  _originalTextureOpacity = textureOpacity;
+                  if (widget.onContentPropertyUpdateStart != null) {
+                    widget.onContentPropertyUpdateStart!(
+                        'textureOpacity', textureOpacity);
+                  }
+                },
                 onChanged: (value) {
-                  _updateTextureProperty('textureOpacity', value);
+                  // 只更新UI状态，不记录undo
+                  if (widget.onContentPropertyUpdatePreview != null) {
+                    widget.onContentPropertyUpdatePreview!(
+                        'textureOpacity', value);
+                  } else {
+                    _updateTexturePropertyPreview('textureOpacity', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  // 拖动结束时基于原始值记录undo
+                  _updateTexturePropertyWithUndo(
+                      'textureOpacity', value, _originalTextureOpacity);
+                  _originalTextureOpacity = null;
                 },
               ),
             ),
@@ -339,11 +374,11 @@ class _M3BackgroundTexturePanelState
   Widget _buildTexturePreview(Map<String, dynamic> content) {
     // 递归查找纹理数据
     final texture = _findTextureData(content);
-    
+
     // 🚀 优化：减少纹理预览构建的重复日志
     final previewKey = '${texture?.hashCode ?? 'null'}_${content.hashCode}';
     _previewBuildCount++;
-    
+
     if (_lastPreviewKey != previewKey) {
       AppLogger.debug(
         '构建纹理预览',
@@ -351,7 +386,8 @@ class _M3BackgroundTexturePanelState
         data: {
           'hasTexture': texture != null,
           'buildCount': _previewBuildCount,
-          'changeType': _lastPreviewKey == null ? 'first_build' : 'content_changed',
+          'changeType':
+              _lastPreviewKey == null ? 'first_build' : 'content_changed',
           'operation': 'build_texture_preview',
           'optimization': 'texture_preview_optimized',
         },
@@ -1139,6 +1175,64 @@ class _M3BackgroundTexturePanelState
           'operation': 'update_texture_property_error',
         },
       );
+    }
+  }
+
+  /// 基于原始值更新纹理属性并记录undo操作（用于滑块拖动结束）
+  void _updateTexturePropertyWithUndo(
+      String propertyName, dynamic newValue, dynamic originalValue) {
+    // 优先使用主面板提供的撤销回调
+    if (widget.onContentPropertyUpdateWithUndo != null) {
+      widget.onContentPropertyUpdateWithUndo!(
+          propertyName, newValue, originalValue);
+    } else {
+      // 备用方案：如果有原始值且值发生了变化，使用主面板的撤销机制
+      if (originalValue != null && originalValue != newValue) {
+        // 先调用开始回调保存原始值
+        if (widget.onContentPropertyUpdateStart != null) {
+          widget.onContentPropertyUpdateStart!(propertyName, originalValue);
+        }
+
+        // 然后使用正常的更新方法更新到最终值
+        _updateTextureProperty(propertyName, newValue);
+      } else {
+        // 值没有变化，直接调用正常的更新方法
+        _updateTextureProperty(propertyName, newValue);
+      }
+    }
+  }
+
+  /// 仅预览更新纹理属性，不记录undo（用于滑块拖动过程中的实时预览）
+  void _updateTexturePropertyPreview(String propertyName, dynamic value) {
+    try {
+      // 获取当前内容
+      final originalContent = widget.element['content'] as Map<String, dynamic>;
+
+      // 创建全新的内容对象
+      final content = <String, dynamic>{};
+
+      // 复制所有属性
+      for (final key in originalContent.keys) {
+        content[key] = originalContent[key];
+      }
+
+      // 更新指定属性
+      content[propertyName] = value;
+
+      // 只更新UI，不记录undo - 直接更新本地状态和UI
+      if (propertyName == 'textureOpacity') {
+        // 直接更新UI状态，不调用onPropertyChanged避免记录undo
+        setState(() {
+          // 本地状态会在下次widget更新时同步
+        });
+
+        // 通过临时的属性回调来更新画布预览，但不记录到历史栈
+        final tempElement = Map<String, dynamic>.from(widget.element);
+        tempElement['content'] = content;
+        widget.onPropertyChanged('_preview_content', content); // 使用特殊前缀标识这是预览更新
+      }
+    } catch (e) {
+      AppLogger.error('预览纹理属性更新失败', tag: 'texture_panel', error: e);
     }
   }
 }

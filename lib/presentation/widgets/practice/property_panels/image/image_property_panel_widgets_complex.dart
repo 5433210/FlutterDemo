@@ -216,6 +216,8 @@ class ImagePropertyVisualPanel extends StatelessWidget {
                         thumbColor: colorScheme.primary,
                         onChanged: (value) =>
                             onPropertyUpdate('opacity', value),
+                        onChangeEnd: (value) =>
+                            onPropertyUpdate('opacity', value),
                       ),
                     ),
                     const SizedBox(width: 8.0),

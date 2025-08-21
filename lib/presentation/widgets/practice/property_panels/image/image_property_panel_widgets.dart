@@ -142,6 +142,9 @@ class ImagePropertyVisualPanel extends StatelessWidget {
   final Color Function() backgroundColor;
   final Function(String, dynamic) onPropertyUpdate;
   final Function(String, dynamic) onContentPropertyUpdate;
+  final Function(String, dynamic)? onPropertyUpdatePreview; // 新增预览回调
+  final Function(String, dynamic)? onPropertyUpdateStart; // 新增开始回调
+  final Function(String, dynamic)? onPropertyUpdateWithUndo; // 新增基于原始值的undo回调
 
   const ImagePropertyVisualPanel({
     super.key,
@@ -149,6 +152,9 @@ class ImagePropertyVisualPanel extends StatelessWidget {
     required this.backgroundColor,
     required this.onPropertyUpdate,
     required this.onContentPropertyUpdate,
+    this.onPropertyUpdatePreview, // 可选参数
+    this.onPropertyUpdateStart, // 可选参数
+    this.onPropertyUpdateWithUndo, // 可选参数
   });
 
   @override
@@ -179,7 +185,24 @@ class ImagePropertyVisualPanel extends StatelessWidget {
                 label: '${(opacity * 100).toStringAsFixed(0)}%',
                 activeColor: colorScheme.primary,
                 thumbColor: colorScheme.primary,
-                onChanged: (value) => onPropertyUpdate('opacity', value),
+                onChangeStart: onPropertyUpdateStart != null
+                    ? (value) => onPropertyUpdateStart!('opacity', opacity)
+                    : null,
+                onChanged: (value) {
+                  if (onPropertyUpdatePreview != null) {
+                    onPropertyUpdatePreview!('opacity', value);
+                  } else {
+                    onPropertyUpdate('opacity', value);
+                  }
+                },
+                onChangeEnd: (value) {
+                  // 优先使用基于原始值的undo回调
+                  if (onPropertyUpdateWithUndo != null) {
+                    onPropertyUpdateWithUndo!('opacity', value);
+                  } else {
+                    onPropertyUpdate('opacity', value);
+                  }
+                },
               ),
             ),
             const SizedBox(width: 8.0),
@@ -1210,6 +1233,10 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
   final Function(String, dynamic) onContentPropertyUpdate;
   final Function(bool) onBinarizationToggle;
   final Function(String, dynamic) onBinarizationParameterChange;
+  final Function(String, dynamic)? onContentPropertyUpdatePreview; // 新增预览回调
+  final Function(String, dynamic)? onContentPropertyUpdateStart; // 新增开始回调
+  final Function(String, dynamic)?
+      onContentPropertyUpdateWithUndo; // 新增基于原始值的undo回调
 
   const ImagePropertyBinarizationPanel({
     super.key,
@@ -1220,6 +1247,9 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
     required this.onContentPropertyUpdate,
     required this.onBinarizationToggle,
     required this.onBinarizationParameterChange,
+    this.onContentPropertyUpdatePreview, // 可选参数
+    this.onContentPropertyUpdateStart, // 可选参数
+    this.onContentPropertyUpdateWithUndo, // 可选参数
   });
 
   @override
@@ -1291,16 +1321,34 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                           thumbColor: isBinarizationEnabled
                               ? colorScheme.primary
                               : colorScheme.onSurface.withValues(alpha: 0.38),
+                          onChangeStart: (isBinarizationEnabled &&
+                                  onContentPropertyUpdateStart != null)
+                              ? (value) => onContentPropertyUpdateStart!(
+                                  'binaryThreshold', threshold)
+                              : null,
                           onChanged: isBinarizationEnabled
                               ? (value) {
-                                  onContentPropertyUpdate(
-                                      'binaryThreshold', value);
+                                  // 仅预览更新，不记录undo
+                                  if (onContentPropertyUpdatePreview != null) {
+                                    onContentPropertyUpdatePreview!(
+                                        'binaryThreshold', value);
+                                  } else {
+                                    onContentPropertyUpdate(
+                                        'binaryThreshold', value);
+                                  }
                                 }
                               : null,
                           onChangeEnd: isBinarizationEnabled
                               ? (value) {
-                                  onBinarizationParameterChange(
-                                      'binaryThreshold', value);
+                                  // 优先使用基于原始值的undo回调
+                                  if (onContentPropertyUpdateWithUndo != null) {
+                                    onContentPropertyUpdateWithUndo!(
+                                        'binaryThreshold', value);
+                                  } else {
+                                    // 拖动结束时记录undo
+                                    onBinarizationParameterChange(
+                                        'binaryThreshold', value);
+                                  }
                                 }
                               : null,
                         ),
@@ -1384,18 +1432,39 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     isNoiseReductionEnabled)
                                 ? colorScheme.primary
                                 : colorScheme.onSurface.withValues(alpha: 0.38),
+                            onChangeStart: ((isBinarizationEnabled &&
+                                        isNoiseReductionEnabled) &&
+                                    onContentPropertyUpdateStart != null)
+                                ? (value) => onContentPropertyUpdateStart!(
+                                    'noiseReductionLevel', noiseReductionLevel)
+                                : null,
                             onChanged: (isBinarizationEnabled &&
                                     isNoiseReductionEnabled)
                                 ? (value) {
-                                    onContentPropertyUpdate(
-                                        'noiseReductionLevel', value);
+                                    // 仅预览更新，不记录undo
+                                    if (onContentPropertyUpdatePreview !=
+                                        null) {
+                                      onContentPropertyUpdatePreview!(
+                                          'noiseReductionLevel', value);
+                                    } else {
+                                      onContentPropertyUpdate(
+                                          'noiseReductionLevel', value);
+                                    }
                                   }
                                 : null,
                             onChangeEnd: (isBinarizationEnabled &&
                                     isNoiseReductionEnabled)
                                 ? (value) {
-                                    onBinarizationParameterChange(
-                                        'noiseReductionLevel', value);
+                                    // 优先使用基于原始值的undo回调
+                                    if (onContentPropertyUpdateWithUndo !=
+                                        null) {
+                                      onContentPropertyUpdateWithUndo!(
+                                          'noiseReductionLevel', value);
+                                    } else {
+                                      // 拖动结束时记录undo
+                                      onBinarizationParameterChange(
+                                          'noiseReductionLevel', value);
+                                    }
                                   }
                                 : null,
                           ),

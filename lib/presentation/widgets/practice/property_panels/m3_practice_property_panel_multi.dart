@@ -76,7 +76,6 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
     }
 
     // 计算共同属性
-    final commonOpacity = _getCommonOpacity(elements);
     final commonLocked = _getCommonLocked(elements);
     final commonHidden = _getCommonHidden(elements);
     final commonLayerId = _getCommonLayerId(elements);
@@ -210,60 +209,6 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
-
-            // 透明度控制
-            if (commonOpacity != null) ...[
-              Text(
-                '${l10n.opacity}:',
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 0,
-                color: colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: commonOpacity,
-                          min: 0.0,
-                          max: 1.0,
-                          divisions: 100,
-                          label: '${(commonOpacity * 100).round()}%',
-                          activeColor: colorScheme.primary,
-                          thumbColor: colorScheme.primary,
-                          inactiveColor: colorScheme.surfaceContainerHighest,
-                          onChanged: (value) {
-                            _updateAllElements('opacity', value);
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          '${(commonOpacity * 100).round()}%',
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 16),
 
@@ -678,22 +623,6 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
       }
     }
     return commonLocked;
-  }
-
-  // 获取共同的不透明度
-  double? _getCommonOpacity(List<Map<String, dynamic>> elements) {
-    if (elements.isEmpty) return null;
-
-    double? commonOpacity;
-    for (var element in elements) {
-      final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
-      if (commonOpacity == null) {
-        commonOpacity = opacity;
-      } else if ((commonOpacity - opacity).abs() > 0.001) {
-        return null; // 有不同值，返回null（考虑浮点数精度）
-      }
-    }
-    return commonOpacity;
   }
 
   // 更新所有选中元素的共同属性

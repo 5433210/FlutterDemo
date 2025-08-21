@@ -17,6 +17,9 @@ class IntelligentStateDispatcher {
   final Map<String, Set<VoidCallback>> _elementListeners = {};
   final Map<String, Set<VoidCallback>> _uiListeners = {};
 
+  // 🔧 操作监听器管理（用于撤销/重做等特殊操作）
+  final Map<String, Set<VoidCallback>> _operationListeners = {};
+
   // 🔧 状态变化缓存
   final Map<String, dynamic> _lastStates = {};
 
@@ -152,6 +155,19 @@ class IntelligentStateDispatcher {
       }
     }
 
+    // 4. 🔧 通知操作监听器（用于撤销/重做等特殊操作）
+    final operationListeners = _operationListeners[operation];
+    if (operationListeners != null && operationListeners.isNotEmpty) {
+      _notifyOperationListeners(operation, changeType);
+      hasListeners = true;
+      notificationCount += operationListeners.length;
+      notificationDetails['operation_$operation'] = {
+        'type': 'operation',
+        'id': operation,
+        'listenerCount': operationListeners.length,
+      };
+    }
+
     // 4. 根据变更类型进行精确分发
     if (notificationCount > 0) {
       hasListeners = true;
@@ -217,7 +233,26 @@ class IntelligentStateDispatcher {
     }
   }
 
-  /// 🚀 分发拖拽变化 - 只影响拖拽预览层
+  /// � notify方法的别名，用于向后兼容
+  void notify({
+    required String changeType,
+    required Map<String, dynamic> eventData,
+    required String operation,
+    List<String>? affectedElements,
+    List<String>? affectedLayers,
+    List<String>? affectedUIComponents,
+  }) {
+    dispatch(
+      changeType: changeType,
+      eventData: eventData,
+      operation: operation,
+      affectedElements: affectedElements,
+      affectedLayers: affectedLayers,
+      affectedUIComponents: affectedUIComponents,
+    );
+  }
+
+  /// �🚀 分发拖拽变化 - 只影响拖拽预览层
   void dispatchDragChange({
     required bool isDragging,
     required List<String> draggingElementIds,
@@ -393,6 +428,26 @@ class IntelligentStateDispatcher {
     _uiListeners[uiComponent]?.remove(listener);
   }
 
+  /// 🔧 注册操作监听器（用于撤销/重做等特殊操作）
+  void registerOperationListener(String operation, VoidCallback listener) {
+    _operationListeners.putIfAbsent(operation, () => <VoidCallback>{});
+    _operationListeners[operation]!.add(listener);
+
+    EditPageLogger.performanceInfo(
+      '注册操作监听器',
+      data: {
+        'operation': operation,
+        'listenerCount': _operationListeners[operation]!.length,
+        'optimization': 'operation_listener_registration',
+      },
+    );
+  }
+
+  /// 移除操作监听器
+  void removeOperationListener(String operation, VoidCallback listener) {
+    _operationListeners[operation]?.remove(listener);
+  }
+
   /// 检查是否没有实际变化
   bool _hasNoActualChange(String changeType, Map<String, dynamic> eventData) {
     final stateKey = '$changeType:${eventData.hashCode}';
@@ -508,6 +563,37 @@ class IntelligentStateDispatcher {
             'UI监听器执行失败',
             data: {
               'uiComponent': uiComponent,
+              'changeType': changeType,
+              'error': e.toString(),
+            },
+          );
+        }
+      }
+    }
+  }
+
+  /// 🔧 通知操作监听器（用于撤销/重做等特殊操作）
+  void _notifyOperationListeners(String operation, String changeType) {
+    final listeners = _operationListeners[operation];
+    if (listeners != null && listeners.isNotEmpty) {
+      EditPageLogger.performanceInfo(
+        '通知操作监听器',
+        data: {
+          'operation': operation,
+          'changeType': changeType,
+          'listenerCount': listeners.length,
+          'optimization': 'operation_notification',
+        },
+      );
+
+      for (final listener in listeners) {
+        try {
+          listener();
+        } catch (e) {
+          EditPageLogger.performanceWarning(
+            '操作监听器执行失败',
+            data: {
+              'operation': operation,
               'changeType': changeType,
               'error': e.toString(),
             },

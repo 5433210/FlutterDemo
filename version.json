@@ -7,12 +7,12 @@
     "prerelease": ""
   },
   "git": {
-    "commit": "817a998c",
+    "commit": "643c85e3",
     "branch": "main",
     "tag": null,
-    "is_dirty": true
+    "is_dirty": false
   },
-  "build_time": "2025-08-21T00:54:47.776978",
+  "build_time": "2025-08-22T06:01:36.166290",
   "platforms": {
     "android": {
       "versionName": "0.0.0",

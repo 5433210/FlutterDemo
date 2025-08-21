@@ -152,6 +152,7 @@ class M3PanelStyles {
     required double max,
     required String label,
     required Function(double) onChanged,
+    Function(double)? onChangeEnd, // 新增：拖动结束时的回调
     int? divisions,
     String? suffix,
   }) {
@@ -171,6 +172,7 @@ class M3PanelStyles {
             inactiveColor: colorScheme.surfaceContainerHighest,
             thumbColor: colorScheme.primary,
             onChanged: onChanged,
+            onChangeEnd: onChangeEnd, // 拖动结束时调用
           ),
         ),
         SizedBox(

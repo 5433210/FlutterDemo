@@ -42,6 +42,11 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   bool _isImporting = false;
   BuildContext? _dialogContext;
 
+  // 滑块拖动时的原始值保存
+  double? _originalOpacity;
+  double? _originalBinaryThreshold;
+  double? _originalNoiseReductionLevel;
+
   @override
   PracticeEditController get controller => widget.controller;
 
@@ -150,7 +155,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         '🔧 已为现有图像元素添加二值化默认属性',
         tag: 'ImagePropertyPanel',
       );
-      
+
       // 延迟到构建完成后再更新属性，避免在build过程中调用setState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -202,6 +207,9 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           backgroundColor: getBackgroundColor,
           onPropertyUpdate: updateProperty,
           onContentPropertyUpdate: updateContentProperty,
+          onPropertyUpdatePreview: _updatePropertyPreview,
+          onPropertyUpdateStart: _updatePropertyStart,
+          onPropertyUpdateWithUndo: _updatePropertyWithUndo,
         ),
 
         // Image selection section
@@ -349,6 +357,9 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
           onContentPropertyUpdate: updateContentProperty,
           onBinarizationToggle: handleBinarizationToggle,
           onBinarizationParameterChange: handleBinarizationParameterChange,
+          onContentPropertyUpdatePreview: _updateContentPropertyPreview,
+          onContentPropertyUpdateStart: _updateContentPropertyStart,
+          onContentPropertyUpdateWithUndo: _updateContentPropertyWithUndo,
         ),
       ],
     );
@@ -444,6 +455,227 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
   void onSelectImage() {
     if (!_isImporting) {
       widget.onSelectImage();
+    }
+  }
+
+  // 内容属性滑块拖动开始回调 - 保存原始值
+  void _updateContentPropertyStart(String key, dynamic originalValue) {
+    if (key == 'binaryThreshold') {
+      _originalBinaryThreshold = originalValue as double?;
+      AppLogger.debug(
+        '图像二值化阈值拖动开始',
+        tag: 'ImagePropertyPanel',
+        data: {
+          'originalBinaryThreshold': _originalBinaryThreshold,
+          'operation': 'binary_threshold_drag_start',
+        },
+      );
+    } else if (key == 'noiseReductionLevel') {
+      _originalNoiseReductionLevel = originalValue as double?;
+      AppLogger.debug(
+        '图像降噪级别拖动开始',
+        tag: 'ImagePropertyPanel',
+        data: {
+          'originalNoiseReductionLevel': _originalNoiseReductionLevel,
+          'operation': 'noise_reduction_level_drag_start',
+        },
+      );
+    }
+  }
+
+  // 内容属性滑块拖动预览回调 - 临时禁用undo并更新预览
+  void _updateContentPropertyPreview(String key, dynamic value) {
+    AppLogger.debug(
+      '图像内容属性预览更新',
+      tag: 'ImagePropertyPanel',
+      data: {
+        'key': key,
+        'value': value,
+        'operation': 'content_property_preview_update',
+      },
+    );
+
+    // 临时禁用undo
+    widget.controller.undoRedoManager.undoEnabled = false;
+    updateContentProperty(key, value);
+    // 重新启用undo
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  // 内容属性滑块拖动结束回调 - 基于原始值创建undo操作
+  void _updateContentPropertyWithUndo(String key, dynamic newValue) {
+    double? originalValue;
+    String operationName = '';
+
+    switch (key) {
+      case 'binaryThreshold':
+        originalValue = _originalBinaryThreshold;
+        operationName = 'binary_threshold_undo_optimized_update';
+        break;
+      case 'noiseReductionLevel':
+        originalValue = _originalNoiseReductionLevel;
+        operationName = 'noise_reduction_level_undo_optimized_update';
+        break;
+    }
+
+    if (originalValue != null && originalValue != newValue) {
+      try {
+        AppLogger.debug(
+          '图像内容属性undo优化更新开始',
+          tag: 'ImagePropertyPanel',
+          data: {
+            'key': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation': operationName,
+          },
+        );
+
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        updateContentProperty(key, originalValue);
+
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        updateContentProperty(key, newValue);
+
+        AppLogger.debug(
+          '图像内容属性undo优化更新完成',
+          tag: 'ImagePropertyPanel',
+          data: {
+            'key': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation': '${operationName}_complete',
+          },
+        );
+      } catch (error) {
+        // 确保在错误情况下也重新启用undo
+        widget.controller.undoRedoManager.undoEnabled = true;
+        AppLogger.error(
+          '图像内容属性undo更新失败',
+          tag: 'ImagePropertyPanel',
+          error: error,
+          data: {
+            'key': key,
+            'newValue': newValue,
+            'originalValue': originalValue,
+            'operation': 'content_property_undo_update_error',
+          },
+        );
+
+        // 发生错误时，回退到直接更新
+        updateContentProperty(key, newValue);
+      }
+    } else {
+      // 如果没有原始值或值没有改变，直接更新
+      updateContentProperty(key, newValue);
+    }
+
+    // 清空相应的原始值
+    switch (key) {
+      case 'binaryThreshold':
+        _originalBinaryThreshold = null;
+        break;
+      case 'noiseReductionLevel':
+        _originalNoiseReductionLevel = null;
+        break;
+    }
+  }
+
+  // 属性滑块拖动开始回调 - 保存原始值
+  void _updatePropertyStart(String key, dynamic originalValue) {
+    if (key == 'opacity') {
+      _originalOpacity = originalValue as double?;
+      AppLogger.debug(
+        '图像属性透明度拖动开始',
+        tag: 'ImagePropertyPanel',
+        data: {
+          'originalOpacity': _originalOpacity,
+          'operation': 'opacity_drag_start',
+        },
+      );
+    }
+  }
+
+  // 属性滑块拖动预览回调 - 临时禁用undo并更新预览
+  void _updatePropertyPreview(String key, dynamic value) {
+    AppLogger.debug(
+      '图像属性预览更新',
+      tag: 'ImagePropertyPanel',
+      data: {
+        'key': key,
+        'value': value,
+        'operation': 'property_preview_update',
+      },
+    );
+
+    // 临时禁用undo
+    widget.controller.undoRedoManager.undoEnabled = false;
+    updateProperty(key, value);
+    // 重新启用undo
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  // 属性滑块拖动结束回调 - 基于原始值创建undo操作
+  void _updatePropertyWithUndo(String key, dynamic newValue) {
+    if (key == 'opacity' &&
+        _originalOpacity != null &&
+        _originalOpacity != newValue) {
+      try {
+        AppLogger.debug(
+          '图像属性透明度undo优化更新开始',
+          tag: 'ImagePropertyPanel',
+          data: {
+            'originalOpacity': _originalOpacity,
+            'newOpacity': newValue,
+            'operation': 'opacity_undo_optimized_update',
+          },
+        );
+
+        // 先临时禁用undo，恢复到原始值
+        widget.controller.undoRedoManager.undoEnabled = false;
+        updateProperty(key, _originalOpacity!);
+
+        // 重新启用undo，然后更新到新值（这会记录一次从原始值到新值的undo）
+        widget.controller.undoRedoManager.undoEnabled = true;
+        updateProperty(key, newValue);
+
+        AppLogger.debug(
+          '图像属性透明度undo优化更新完成',
+          tag: 'ImagePropertyPanel',
+          data: {
+            'originalOpacity': _originalOpacity,
+            'newOpacity': newValue,
+            'operation': 'opacity_undo_optimized_update_complete',
+          },
+        );
+      } catch (error) {
+        // 确保在错误情况下也重新启用undo
+        widget.controller.undoRedoManager.undoEnabled = true;
+        AppLogger.error(
+          '图像属性透明度undo更新失败',
+          tag: 'ImagePropertyPanel',
+          error: error,
+          data: {
+            'key': key,
+            'newValue': newValue,
+            'originalValue': _originalOpacity,
+            'operation': 'property_undo_update_error',
+          },
+        );
+
+        // 发生错误时，回退到直接更新
+        updateProperty(key, newValue);
+      }
+    } else {
+      // 如果没有原始值或值没有改变，直接更新
+      updateProperty(key, newValue);
+    }
+
+    // 清空原始值
+    if (key == 'opacity') {
+      _originalOpacity = null;
     }
   }
 }

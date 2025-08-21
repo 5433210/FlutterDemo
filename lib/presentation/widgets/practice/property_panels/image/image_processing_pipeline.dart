@@ -53,10 +53,12 @@ mixin ImageProcessingPipeline {
     final imageUrl = content['imageUrl'] as String? ?? '';
 
     // 🔍 调试：打印翻转参数状态（翻转现在在画布渲染阶段处理）
-    AppLogger.debug('🔍 [处理管线] 开始执行，检查参数状态', tag: 'ImageProcessingPipeline', data: {
-      'flipHandlingNote': '💡 翻转参数现在在画布渲染阶段处理，不影响图像处理管线',
-      'triggerByTransform': triggerByTransform
-    });
+    AppLogger.debug('🔍 [处理管线] 开始执行，检查参数状态',
+        tag: 'ImageProcessingPipeline',
+        data: {
+          'flipHandlingNote': '💡 翻转参数现在在画布渲染阶段处理，不影响图像处理管线',
+          'triggerByTransform': triggerByTransform
+        });
 
     EditPageLogger.editPageInfo('开始执行图像处理管线',
         tag: EditPageLoggingConfig.tagImagePanel,
@@ -127,10 +129,13 @@ mixin ImageProcessingPipeline {
             });
       } else {
         // 🔧 重要修复：当不需要变换时，彻底清除所有变换相关数据
-        AppLogger.debug('🔧 清除变换数据（参数为默认值）', tag: 'ImageProcessingPipeline', data: {
-          'transformedImageDataExists': content.containsKey('transformedImageData'),
-          'isTransformApplied': content['isTransformApplied']
-        });
+        AppLogger.debug('🔧 清除变换数据（参数为默认值）',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'transformedImageDataExists':
+                  content.containsKey('transformedImageData'),
+              'isTransformApplied': content['isTransformApplied']
+            });
 
         // 清除所有可能的变换数据
         final transformDataKeys = [
@@ -143,7 +148,8 @@ mixin ImageProcessingPipeline {
 
         for (final key in transformDataKeys) {
           if (content.containsKey(key)) {
-            AppLogger.debug('移除变换数据键', tag: 'ImageProcessingPipeline', data: {'removedKey': key});
+            AppLogger.debug('移除变换数据键',
+                tag: 'ImageProcessingPipeline', data: {'removedKey': key});
             content.remove(key);
           }
         }
@@ -151,7 +157,8 @@ mixin ImageProcessingPipeline {
         content['isTransformApplied'] = false;
 
         AppLogger.debug('变换数据清除完成', tag: 'ImageProcessingPipeline', data: {
-          'transformedImageDataExists': content.containsKey('transformedImageData'),
+          'transformedImageDataExists':
+              content.containsKey('transformedImageData'),
           'isTransformApplied': content['isTransformApplied'],
           'contentKeys': content.keys.toList()
         });
@@ -199,16 +206,22 @@ mixin ImageProcessingPipeline {
             });
       } else {
         // 清除二值化数据
-        AppLogger.debug('🔧 二值化已禁用，清除二值化数据 (主处理管线)', tag: 'ImageProcessingPipeline', data: {
-          'binarizedImageDataExists': content.containsKey('binarizedImageData')
-        });
+        AppLogger.debug('🔧 二值化已禁用，清除二值化数据 (主处理管线)',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'binarizedImageDataExists':
+                  content.containsKey('binarizedImageData')
+            });
 
         content.remove('binarizedImageData');
 
-        AppLogger.debug('二值化数据清除完成 (主处理管线)', tag: 'ImageProcessingPipeline', data: {
-          'binarizedImageDataExists': content.containsKey('binarizedImageData'),
-          'contentKeys': content.keys.toList()
-        });
+        AppLogger.debug('二值化数据清除完成 (主处理管线)',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'binarizedImageDataExists':
+                  content.containsKey('binarizedImageData'),
+              'contentKeys': content.keys.toList()
+            });
 
         EditPageLogger.editPageInfo('跳过二值化处理（未启用或已禁用）',
             tag: EditPageLoggingConfig.tagImagePanel,
@@ -270,14 +283,16 @@ mixin ImageProcessingPipeline {
         hasRotation ||
         (isTransformApplied && hasTransformedImageData);
 
-    AppLogger.debug('🔍 _shouldApplyTransform 检查', tag: 'ImageProcessingPipeline', data: {
-      'hasCropping': hasCropping,
-      'hasRotation': hasRotation,
-      'isTransformApplied': isTransformApplied,
-      'hasTransformedImageData': hasTransformedImageData,
-      'needsTransformProcessing': needsTransformProcessing,
-      'flipProcessingNote': '💡 翻转处理已移至画布渲染阶段'
-    });
+    AppLogger.debug('🔍 _shouldApplyTransform 检查',
+        tag: 'ImageProcessingPipeline',
+        data: {
+          'hasCropping': hasCropping,
+          'hasRotation': hasRotation,
+          'isTransformApplied': isTransformApplied,
+          'hasTransformedImageData': hasTransformedImageData,
+          'needsTransformProcessing': needsTransformProcessing,
+          'flipProcessingNote': '💡 翻转处理已移至画布渲染阶段'
+        });
 
     return needsTransformProcessing;
   }
@@ -297,11 +312,13 @@ mixin ImageProcessingPipeline {
     final contentRotation = (content['rotation'] as num?)?.toDouble() ?? 0.0;
 
     // 🔍 调试：打印传递给图像处理器的参数
-    AppLogger.debug('🔍 [图像变换] 传递给图像处理器的参数', tag: 'ImageProcessingPipeline', data: {
-      'cropRect': '($cropX, $cropY, $cropWidth, $cropHeight)',
-      'rotation': contentRotation,
-      'flipParameterNote': '💡 翻转参数已移除，现在在画布渲染阶段处理'
-    });
+    AppLogger.debug('🔍 [图像变换] 传递给图像处理器的参数',
+        tag: 'ImageProcessingPipeline',
+        data: {
+          'cropRect': '($cropX, $cropY, $cropWidth, $cropHeight)',
+          'rotation': contentRotation,
+          'flipParameterNote': '💡 翻转参数已移除，现在在画布渲染阶段处理'
+        });
 
     final cropRect = Rect.fromLTWH(cropX, cropY, cropWidth, cropHeight);
 
@@ -367,9 +384,9 @@ mixin ImageProcessingPipeline {
         samplePixels.add('(${pixel.r},${pixel.g},${pixel.b})');
       }
     }
-    AppLogger.debug('二值化结果采样', tag: 'ImageProcessingPipeline', data: {
-      'samplePixels': samplePixels.join(', ')
-    });
+    AppLogger.debug('二值化结果采样',
+        tag: 'ImageProcessingPipeline',
+        data: {'samplePixels': samplePixels.join(', ')});
 
     EditPageLogger.editPageInfo('二值化处理完成',
         tag: EditPageLoggingConfig.tagImagePanel,
@@ -437,12 +454,13 @@ mixin ImageProcessingPipeline {
 
     // 检查是否需要变换
     final shouldTransform = _shouldApplyTransform(content);
-    AppLogger.debug('变换需求检查', tag: 'ImageProcessingPipeline', data: {
-      'shouldTransform': shouldTransform
-    });
+    AppLogger.debug('变换需求检查',
+        tag: 'ImageProcessingPipeline',
+        data: {'shouldTransform': shouldTransform});
 
     if (!shouldTransform) {
-      AppLogger.debug('💡 参数为默认值，将清除所有变换数据并恢复原始图像', tag: 'ImageProcessingPipeline');
+      AppLogger.debug('💡 参数为默认值，将清除所有变换数据并恢复原始图像',
+          tag: 'ImageProcessingPipeline');
     }
 
     executeImageProcessingPipeline(triggerByTransform: true);
@@ -453,27 +471,33 @@ mixin ImageProcessingPipeline {
     EditPageLogger.editPageInfo('二值化开关变化（通过向后兼容接口）',
         tag: EditPageLoggingConfig.tagImagePanel, data: {'enabled': enabled});
 
-    AppLogger.debug('🔍 handleBinarizationToggle 被调用', tag: 'ImageProcessingPipeline', data: {
-      'enabled': enabled,
-      'elementId': element['id']
-    });
+    AppLogger.debug('🔍 handleBinarizationToggle 被调用',
+        tag: 'ImageProcessingPipeline',
+        data: {'enabled': enabled, 'elementId': element['id']});
 
     final currentContent = element['content'] as Map<String, dynamic>;
     AppLogger.debug('二值化状态检查', tag: 'ImageProcessingPipeline', data: {
-      'beforeToggle_isBinarizationEnabled': currentContent['isBinarizationEnabled']
+      'beforeToggle_isBinarizationEnabled':
+          currentContent['isBinarizationEnabled']
     });
+
+    // 🔧 修复撤销功能：先记录撤销操作，再执行处理管线
+    updateContentProperty('isBinarizationEnabled', enabled,
+        createUndoOperation: true);
 
     // 🔧 关键修复：创建包含新状态的临时content并立即执行处理管线
     final updatedContent = Map<String, dynamic>.from(currentContent);
     updatedContent['isBinarizationEnabled'] = enabled;
 
     AppLogger.debug('临时内容更新', tag: 'ImageProcessingPipeline', data: {
-      'afterTempUpdate_isBinarizationEnabled': updatedContent['isBinarizationEnabled']
+      'afterTempUpdate_isBinarizationEnabled':
+          updatedContent['isBinarizationEnabled']
     });
 
     // 立即执行处理管线，使用临时更新的content
     Future.microtask(() async {
-      AppLogger.debug('🔍 开始执行处理管线 (开关变化，使用临时content)', tag: 'ImageProcessingPipeline');
+      AppLogger.debug('🔍 开始执行处理管线 (开关变化，使用临时content)',
+          tag: 'ImageProcessingPipeline');
 
       // 使用临时content执行处理管线
       await _executeImageProcessingPipelineWithContent(
@@ -481,10 +505,8 @@ mixin ImageProcessingPipeline {
         triggerByBinarization: true,
       );
 
-      // 🔧 关键修复：不再调用updateContentProperty，因为处理管线已经更新了完整的content
-      // updateContentProperty('isBinarizationEnabled', enabled, createUndoOperation: true);
-
-      AppLogger.debug('🔍 处理管线执行完成 (开关变化) - 已跳过updateContentProperty以保留二值化数据', tag: 'ImageProcessingPipeline');
+      AppLogger.debug('🔍 处理管线执行完成 (开关变化) - 撤销操作已提前记录',
+          tag: 'ImageProcessingPipeline');
     });
   }
 
@@ -563,10 +585,13 @@ mixin ImageProcessingPipeline {
             });
       } else {
         // 🔧 重要修复：当不需要变换时，彻底清除所有变换相关数据
-        AppLogger.debug('🔧 清除变换数据（参数为默认值）', tag: 'ImageProcessingPipeline', data: {
-          'transformedImageDataExists': content.containsKey('transformedImageData'),
-          'isTransformApplied': content['isTransformApplied']
-        });
+        AppLogger.debug('🔧 清除变换数据（参数为默认值）',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'transformedImageDataExists':
+                  content.containsKey('transformedImageData'),
+              'isTransformApplied': content['isTransformApplied']
+            });
 
         // 清除所有可能的变换数据
         final transformDataKeys = [
@@ -579,7 +604,8 @@ mixin ImageProcessingPipeline {
 
         for (final key in transformDataKeys) {
           if (content.containsKey(key)) {
-            AppLogger.debug('移除变换数据键', tag: 'ImageProcessingPipeline', data: {'removedKey': key});
+            AppLogger.debug('移除变换数据键',
+                tag: 'ImageProcessingPipeline', data: {'removedKey': key});
             content.remove(key);
           }
         }
@@ -587,7 +613,8 @@ mixin ImageProcessingPipeline {
         content['isTransformApplied'] = false;
 
         AppLogger.debug('变换数据清除完成', tag: 'ImageProcessingPipeline', data: {
-          'transformedImageDataExists': content.containsKey('transformedImageData'),
+          'transformedImageDataExists':
+              content.containsKey('transformedImageData'),
           'isTransformApplied': content['isTransformApplied'],
           'contentKeys': content.keys.toList()
         });
@@ -642,16 +669,22 @@ mixin ImageProcessingPipeline {
             });
       } else {
         // 清除二值化数据
-        AppLogger.debug('🔧 二值化已禁用，清除二值化数据 (临时处理管线)', tag: 'ImageProcessingPipeline', data: {
-          'binarizedImageDataExists': content.containsKey('binarizedImageData')
-        });
+        AppLogger.debug('🔧 二值化已禁用，清除二值化数据 (临时处理管线)',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'binarizedImageDataExists':
+                  content.containsKey('binarizedImageData')
+            });
 
         content.remove('binarizedImageData');
 
-        AppLogger.debug('二值化数据清除完成 (主处理管线)', tag: 'ImageProcessingPipeline', data: {
-          'binarizedImageDataExists': content.containsKey('binarizedImageData'),
-          'contentKeys': content.keys.toList()
-        });
+        AppLogger.debug('二值化数据清除完成 (主处理管线)',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'binarizedImageDataExists':
+                  content.containsKey('binarizedImageData'),
+              'contentKeys': content.keys.toList()
+            });
 
         EditPageLogger.editPageInfo('跳过二值化处理（未启用或已禁用）',
             tag: EditPageLoggingConfig.tagImagePanel,
@@ -676,7 +709,8 @@ mixin ImageProcessingPipeline {
         // 🔧 保持Uint8List格式，不转换为List<int>
         // content['binarizedImageData'] = data.toList(); // 移除这行转换
       } else {
-        AppLogger.debug('💡 binarizedImageData 已被清除，将回退到原始/变换图像', tag: 'ImageProcessingPipeline');
+        AppLogger.debug('💡 binarizedImageData 已被清除，将回退到原始/变换图像',
+            tag: 'ImageProcessingPipeline');
       }
 
       updateProperty('content', content,
@@ -716,29 +750,27 @@ mixin ImageProcessingPipeline {
         tag: EditPageLoggingConfig.tagImagePanel,
         data: {'parameter': parameterName, 'value': value});
 
-    AppLogger.debug('🔍 handleBinarizationParameterChange 被调用', tag: 'ImageProcessingPipeline', data: {
-      'parameter': parameterName,
-      'value': value
-    });
+    AppLogger.debug('🔍 handleBinarizationParameterChange 被调用',
+        tag: 'ImageProcessingPipeline',
+        data: {'parameter': parameterName, 'value': value});
 
     // 如果二值化已启用，执行完整的处理管线
     final content = element['content'] as Map<String, dynamic>;
     final isBinarizationEnabled =
         content['isBinarizationEnabled'] as bool? ?? false;
 
-    AppLogger.debug('二值化参数变化检查', tag: 'ImageProcessingPipeline', data: {
-      'currentBinarizationEnabled': isBinarizationEnabled
-    });
+    AppLogger.debug('二值化参数变化检查',
+        tag: 'ImageProcessingPipeline',
+        data: {'currentBinarizationEnabled': isBinarizationEnabled});
 
     if (isBinarizationEnabled) {
       // 创建临时content来包含新参数值
       final tempContent = Map<String, dynamic>.from(content);
       tempContent[parameterName] = value;
 
-      AppLogger.debug('执行处理管线，使用临时参数', tag: 'ImageProcessingPipeline', data: {
-        'parameter': parameterName,
-        'value': value
-      });
+      AppLogger.debug('执行处理管线，使用临时参数',
+          tag: 'ImageProcessingPipeline',
+          data: {'parameter': parameterName, 'value': value});
 
       Future.microtask(() async {
         await _executeImageProcessingPipelineWithContent(
@@ -750,7 +782,8 @@ mixin ImageProcessingPipeline {
         // 🔧 关键修复：不再调用updateContentProperty，因为处理管线已经更新了完整的content
         // updateContentProperty(parameterName, value, createUndoOperation: false);
 
-        AppLogger.debug('🔍 参数处理管线执行完成 - 已跳过updateContentProperty以保留二值化数据', tag: 'ImageProcessingPipeline');
+        AppLogger.debug('🔍 参数处理管线执行完成 - 已跳过updateContentProperty以保留二值化数据',
+            tag: 'ImageProcessingPipeline');
       });
     } else {
       // 如果二值化未启用，直接更新属性（这种情况不会丢失二值化数据，因为二值化未启用）
@@ -760,9 +793,8 @@ mixin ImageProcessingPipeline {
 
   /// 🔧 向后兼容的方法：重置变换
   void resetTransform(BuildContext context) {
-    AppLogger.debug('🔍 resetTransform 开始执行', tag: 'ImageProcessingPipeline', data: {
-      'elementId': element['id']
-    });
+    AppLogger.debug('🔍 resetTransform 开始执行',
+        tag: 'ImageProcessingPipeline', data: {'elementId': element['id']});
 
     final l10n = AppLocalizations.of(context);
     final content =
@@ -791,9 +823,9 @@ mixin ImageProcessingPipeline {
     if (imageSize != null) {
       resetValues['cropWidth'] = imageSize!.width;
       resetValues['cropHeight'] = imageSize!.height;
-      AppLogger.debug('使用imageSize设置裁剪尺寸', tag: 'ImageProcessingPipeline', data: {
-        'cropSize': '${imageSize!.width}x${imageSize!.height}'
-      });
+      AppLogger.debug('使用imageSize设置裁剪尺寸',
+          tag: 'ImageProcessingPipeline',
+          data: {'cropSize': '${imageSize!.width}x${imageSize!.height}'});
     } else {
       resetValues['cropWidth'] = 100.0;
       resetValues['cropHeight'] = 100.0;
@@ -815,7 +847,8 @@ mixin ImageProcessingPipeline {
 
     for (final prop in oldPropertiesToRemove) {
       if (content.containsKey(prop)) {
-        AppLogger.debug('移除旧属性', tag: 'ImageProcessingPipeline', data: {'removedProperty': prop});
+        AppLogger.debug('移除旧属性',
+            tag: 'ImageProcessingPipeline', data: {'removedProperty': prop});
         content.remove(prop);
       }
     }
@@ -829,7 +862,9 @@ mixin ImageProcessingPipeline {
       'flipParameterNote': '💡 翻转参数保持不变，由画布渲染阶段处理'
     });
 
-    AppLogger.debug('🔍 准备调用updateProperty更新content (createUndoOperation=false)', tag: 'ImageProcessingPipeline');
+    AppLogger.debug(
+        '🔍 准备调用updateProperty更新content (createUndoOperation=false)',
+        tag: 'ImageProcessingPipeline');
     updateProperty('content', content,
         createUndoOperation: false); // 不创建撤销操作，避免冲突
     AppLogger.debug('🔍 updateProperty调用完成', tag: 'ImageProcessingPipeline');
@@ -890,17 +925,20 @@ mixin ImageProcessingPipeline {
       bool parametersChanged = false;
       for (final entry in resetValues.entries) {
         if (postPipelineContent[entry.key] != entry.value) {
-          AppLogger.error('❌ 处理管线后参数发生变化', tag: 'ImageProcessingPipeline', data: {
-            'paramKey': entry.key,
-            'actualValue': postPipelineContent[entry.key],
-            'expectedValue': entry.value
-          });
+          AppLogger.error('❌ 处理管线后参数发生变化',
+              tag: 'ImageProcessingPipeline',
+              data: {
+                'paramKey': entry.key,
+                'actualValue': postPipelineContent[entry.key],
+                'expectedValue': entry.value
+              });
           parametersChanged = true;
         }
       }
 
       if (parametersChanged) {
-        AppLogger.warning('🚨 检测到参数在处理管线执行后发生了变化，需要调查回调机制', tag: 'ImageProcessingPipeline');
+        AppLogger.warning('🚨 检测到参数在处理管线执行后发生了变化，需要调查回调机制',
+            tag: 'ImageProcessingPipeline');
 
         // 强制再次应用重置值
         AppLogger.debug('🔧 强制再次应用重置值', tag: 'ImageProcessingPipeline');
