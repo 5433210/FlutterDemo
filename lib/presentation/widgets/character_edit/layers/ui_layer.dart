@@ -26,126 +26,22 @@ class BrushCursorPainter extends CustomPainter {
   void paint(Canvas canvas, Size canvasSize) {
     final radius = size;
 
-    // 移动端优化：更加明显的颜色和线条
-    final double fillAlpha = isMobile ? 0.4 : 0.3; // 移动端更不透明
-    final double borderWidth = isMobile ? 2.0 : 1.0; // 移动端更粗的边框
-
-    // 移动端增强对比度：添加白色背景光环
-    if (isMobile) {
-      final haloRadius = radius + 3.0;
-      final haloPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0
-        ..isAntiAlias = true;
-      canvas.drawCircle(position, haloRadius, haloPaint);
-    }
-
-    // 笔刷区域填充
-    final fillPaint = Paint()
-      ..color = color.withValues(alpha: fillAlpha)
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    canvas.drawCircle(position, radius, fillPaint);
-
-    // 笔刷边框
-    final borderPaint = Paint()
-      ..color = color
+    // 简化设计：只绘制一个半透明黑色圆圈清楚标示擦除范围
+    // 线条厚度根据笔刷大小动态调整，确保在不同尺寸下都清晰可见
+    final strokeWidth = (radius / 8).clamp(1.5, 4.0);
+    
+    // 调整绘制半径，让圆圈线条恰好在擦除半径内
+    // 圆圈的外边缘应该恰好对应擦除区域的边界
+    final drawRadius = radius - strokeWidth / 2;
+    
+    final eraserCirclePaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.6) // 半透明黑色，在白色背景下清晰可见
       ..style = PaintingStyle.stroke
-      ..strokeWidth = borderWidth
+      ..strokeWidth = strokeWidth
       ..isAntiAlias = true;
 
-    canvas.drawCircle(position, radius, borderPaint);
-
-    // 移动端优化的十字线：更粗更明显
-    final crosshairColor =
-        isMobile ? Colors.red : Colors.red.withValues(alpha: 0.7);
-    final crosshairStrokeWidth =
-        isMobile ? math.max(2.0, size / 15) : size / 20;
-
-    final crosshairPaint = Paint()
-      ..color = crosshairColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = crosshairStrokeWidth
-      ..isAntiAlias = true;
-
-    final crosshairSize = radius * (isMobile ? 0.8 : 0.7); // 移动端稍大一些
-
-    // 移动端增强十字线：添加白色背景描边
-    if (isMobile) {
-      final backgroundPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = crosshairStrokeWidth + 2.0
-        ..isAntiAlias = true;
-
-      // 白色背景线
-      canvas.drawLine(
-        Offset(position.dx - crosshairSize, position.dy),
-        Offset(position.dx + crosshairSize, position.dy),
-        backgroundPaint,
-      );
-      canvas.drawLine(
-        Offset(position.dx, position.dy - crosshairSize),
-        Offset(position.dx, position.dy + crosshairSize),
-        backgroundPaint,
-      );
-    }
-
-    // 主十字线
-    canvas.drawLine(
-      Offset(position.dx - crosshairSize, position.dy),
-      Offset(position.dx + crosshairSize, position.dy),
-      crosshairPaint,
-    );
-
-    canvas.drawLine(
-      Offset(position.dx, position.dy - crosshairSize),
-      Offset(position.dx, position.dy + crosshairSize),
-      crosshairPaint,
-    );
-
-    // 移动端优化的尺寸指示器：更大更清晰
-    final sizeThreshold = isMobile ? 10 : 15; // 移动端更容易显示尺寸
-    if (size > sizeThreshold) {
-      final fontSize = isMobile ? 13.0 : 11.0; // 移动端更大字体
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: size.round().toString(),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(
-                offset: const Offset(1, 1),
-                blurRadius: isMobile ? 3 : 2, // 移动端更强的阴影
-                color: Colors.black.withValues(alpha: 0.9), // 更深的阴影
-              ),
-            ],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-
-      // 移动端增强：添加文本背景圆圈
-      if (isMobile) {
-        final textBgRadius =
-            math.max(textPainter.width, textPainter.height) / 2 + 4;
-        final textBgPaint = Paint()
-          ..color = Colors.black.withValues(alpha: 0.6)
-          ..style = PaintingStyle.fill
-          ..isAntiAlias = true;
-        canvas.drawCircle(position, textBgRadius, textBgPaint);
-      }
-
-      textPainter.paint(
-        canvas,
-        position.translate(-textPainter.width / 2, -textPainter.height / 2),
-      );
-    }
+    // 绘制擦除范围圆圈，确保圆圈外边缘恰好是擦除边界
+    canvas.drawCircle(position, drawRadius, eraserCirclePaint);
   }
 
   @override

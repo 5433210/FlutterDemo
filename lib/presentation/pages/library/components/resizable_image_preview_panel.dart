@@ -140,8 +140,13 @@ class _ResizableImagePreviewPanelState
     final imagePath = widget.selectedItem!.path;
     final itemId = widget.selectedItem!.id;
 
+    final theme = Theme.of(context);
+    final backgroundColor = _isDarkBackground 
+        ? theme.colorScheme.onInverseSurface  // 深色背景
+        : theme.colorScheme.surface;         // 跟随主题的浅色背景
+
     return Container(
-      color: _isDarkBackground ? Colors.black : Colors.white,
+      color: backgroundColor,
       child: AdvancedImagePreview(
         // Use a ValueKey with the selectedItem's ID to ensure rebuild when a new image is selected
         key: ValueKey(itemId),
@@ -150,7 +155,7 @@ class _ResizableImagePreviewPanelState
         enableZoom: true,
         showThumbnails: false,
         previewDecoration: BoxDecoration(
-          color: _isDarkBackground ? Colors.black : Colors.white,
+          color: backgroundColor,
           border: Border.all(color: Colors.transparent),
         ),
       ),
@@ -316,8 +321,8 @@ class _ResizableImagePreviewPanelState
               enableZoom: true,
               showThumbnails: true, // Enable thumbnails in full screen mode
               isFullScreen: true,
-              previewDecoration: const BoxDecoration(
-                color: Colors.black,
+              previewDecoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onInverseSurface, // 跟随主题的深色背景
               ),
             ),
 

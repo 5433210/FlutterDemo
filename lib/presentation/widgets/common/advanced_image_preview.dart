@@ -78,9 +78,11 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
       child: Container(
         decoration: widget.previewDecoration ??
             BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
               borderRadius: BorderRadius.circular(4),
-              color: _isDarkBackground ? Colors.black : Colors.white,
+              color: _isDarkBackground 
+                  ? Theme.of(context).colorScheme.onInverseSurface
+                  : Theme.of(context).colorScheme.surface,
             ),
         child: widget.imagePaths.isEmpty
             ? Center(child: Text(AppLocalizations.of(context).noImages))
