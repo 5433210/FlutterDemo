@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../application/providers/import_export_providers.dart';
@@ -15,6 +14,7 @@ import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_sizes.dart';
 import '../../utils/app_restart_service.dart';
+import '../../utils/date_formatter.dart';
 import '../../utils/file_size_formatter.dart';
 import '../utils/localized_string_extensions.dart';
 import '../widgets/dialogs/backup_progress_dialog.dart';
@@ -564,7 +564,7 @@ class _UnifiedBackupManagementPageState
                   Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormat.yMd().add_Hm().format(backup.createdTime),
+                    DateFormatter.formatWithTime(backup.createdTime),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                   ),
                   const SizedBox(width: 16),
@@ -957,9 +957,8 @@ class _UnifiedBackupManagementPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(l10n.existingBackupInfo(duplicateBackup.filename)),
-                      Text(l10n.backupCreationTime(DateFormat.yMd()
-                          .add_Hm()
-                          .format(duplicateBackup.createdTime))),
+                      Text(l10n.backupCreationTime(DateFormatter
+                          .formatWithTime(duplicateBackup.createdTime))),
                       Text(l10n.backupSize(
                           FileSizeFormatter.format(duplicateBackup.size))),
                       if (duplicateBackup.checksum != null)
@@ -1438,7 +1437,7 @@ class _UnifiedBackupManagementPageState
             Text(l10n.backupFileLabel(backup.filename)),
             Text(l10n.backupDescriptionLabel(backup.description)),
             Text(l10n.backupTimeLabel(
-                DateFormat.yMd().add_Hm().format(backup.createdTime))),
+                DateFormatter.formatWithTime(backup.createdTime))),
             const SizedBox(height: AppSizes.p8),
             Text(
               l10n.restoreWarningMessage,
@@ -1844,7 +1843,7 @@ class _UnifiedBackupManagementPageState
             Text(l10n.backupFileLabel(backup.filename)),
             Text(l10n.backupDescriptionLabel(backup.description)),
             Text(l10n.backupTimeLabel(
-                DateFormat.yMd().add_Hm().format(backup.createdTime))),
+                DateFormatter.formatWithTime(backup.createdTime))),
             const SizedBox(height: AppSizes.p8),
             Text(l10n.importToCurrentPathDescription),
           ],

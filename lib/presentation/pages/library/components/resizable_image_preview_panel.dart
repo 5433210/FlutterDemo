@@ -319,7 +319,7 @@ class _ResizableImagePreviewPanelState
               imagePaths: allImagePaths,
               initialIndex: currentIndex,
               enableZoom: true,
-              showThumbnails: true, // Enable thumbnails in full screen mode
+              showThumbnails: false, // Hide thumbnails in full screen mode for cleaner viewing
               isFullScreen: true,
               previewDecoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.onInverseSurface, // 跟随主题的深色背景

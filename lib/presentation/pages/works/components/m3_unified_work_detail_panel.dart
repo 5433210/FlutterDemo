@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../application/providers/repository_providers.dart';
 import '../../../../domain/models/character/character_view.dart';
@@ -8,6 +7,7 @@ import '../../../../domain/models/work/work_entity.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../../utils/date_formatter.dart';
 import '../../../pages/characters/components/m3_character_detail_panel.dart';
 import '../../../pages/characters/components/m3_character_grid_view.dart';
 import '../../../providers/work_detail_provider.dart';
@@ -372,9 +372,9 @@ class _M3UnifiedWorkDetailPanelState
     );
   }
 
-  // Format DateTime for display
+  // Format DateTime for display using localized formatter
   String _formatDateTime(DateTime dateTime) {
-    return DateFormat.yMMMd().add_Hm().format(dateTime);
+    return DateFormatter.formatWithTime(dateTime);
   }
 
   // Get the current value of a field

@@ -75,6 +75,17 @@ class LibraryImportService {
         throw Exception('文件不存在：$filePath');
       }
 
+      // 检查文件是否已经存在于图库中
+      final existingItem = await _findExistingItemByPath(filePath);
+      if (existingItem != null) {
+        AppLogger.info('文件已存在于图库中，跳过导入', data: {
+          'filePath': filePath,
+          'existingItemId': existingItem.id,
+          'existingItemPath': existingItem.path,
+        });
+        return existingItem; // 返回已存在的项目而不是null，避免调用方认为导入失败
+      }
+
       // 读取文件信息
       final fileStats = await file.stat();
       final fileName = path.basename(filePath);
@@ -171,5 +182,45 @@ class LibraryImportService {
     }
 
     return files;
+  }
+
+  /// 检查文件是否已经存在于图库中
+  /// 通过比较绝对路径来检测重复
+  Future<LibraryItem?> _findExistingItemByPath(String filePath) async {
+    try {
+      // 获取绝对路径用于比较
+      final absolutePath = File(filePath).absolute.path;
+      
+      // 首先尝试通过数据库查询找到相同路径的项目
+      // 由于路径可能以相对路径存储，我们需要查询所有项目并比较绝对路径
+      final result = await _repository.getAll(
+        page: 1,
+        pageSize: 1000, // 使用较大的页面大小来减少查询次数
+      );
+      
+      for (final item in result.items) {
+        // 将存储的路径转换为绝对路径进行比较
+        final itemAbsolutePath = File(item.path).absolute.path;
+        if (itemAbsolutePath == absolutePath) {
+          AppLogger.debug('找到重复文件', data: {
+            'inputPath': filePath,
+            'inputAbsolutePath': absolutePath,
+            'existingItemPath': item.path,
+            'existingItemAbsolutePath': itemAbsolutePath,
+            'existingItemId': item.id,
+          });
+          return item;
+        }
+      }
+      
+      // 如果没有找到重复项，返回null
+      return null;
+    } catch (e) {
+      AppLogger.warning('检查重复文件时出错', error: e, data: {
+        'filePath': filePath,
+      });
+      // 如果检查失败，为了安全起见返回null，允许导入继续
+      return null;
+    }
   }
 }

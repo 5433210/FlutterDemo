@@ -10,6 +10,7 @@ import '../../application/services/work/work_service.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../l10n/app_localizations.dart';
+import '../providers/library/library_management_provider.dart';
 import '../providers/work_image_editor_provider.dart'; // 导入ImageSource枚举
 import '../widgets/library/m3_library_picker_dialog.dart';
 import 'states/work_import_state.dart';
@@ -18,8 +19,9 @@ import 'states/work_import_state.dart';
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
   final LibraryImportService _libraryImportService;
+  final Ref _ref;
 
-  WorkImportViewModel(this._workService, this._libraryImportService)
+  WorkImportViewModel(this._workService, this._libraryImportService, this._ref)
       : super(WorkImportState.initial());
 
   /// 判断是否可以保存
@@ -68,14 +70,14 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
           children: [
             ListTile(
               leading: const Icon(Icons.folder),
-              title: const Text('从本地文件选择'),
-              subtitle: const Text('选择的图片将自动添加到图库'),
+              title: Text(l10n.fromLocal),
+              subtitle: Text(l10n.imagePropertyPanelAutoImportNotice),
               onTap: () => Navigator.of(context).pop(ImageSource.local),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('从图库选择'),
-              subtitle: const Text('选择已存在的图库图片'),
+              title: Text(l10n.fromGallery),
+              subtitle: Text(l10n.existingItem),
               onTap: () => Navigator.of(context).pop(ImageSource.library),
             ),
           ],
@@ -560,6 +562,24 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   /// 重置状态
   void reset() {
     state = WorkImportState.clean();
+    
+    // 清除图库选择状态
+    try {
+      final libraryNotifier = _ref.read(libraryManagementProvider.notifier);
+      final libraryState = _ref.read(libraryManagementProvider);
+      
+      // 清空选择状态
+      libraryNotifier.clearSelection();
+      
+      // 如果处于批量模式，退出批量模式
+      if (libraryState.isBatchMode) {
+        libraryNotifier.toggleBatchMode();
+      }
+      
+      AppLogger.debug('作品导入重置时已清除图库选择状态');
+    } catch (e) {
+      AppLogger.warning('重置时清除图库选择状态失败', error: e);
+    }
   }
 
   /// 选择图片
@@ -570,12 +590,12 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
   /// 设置作者
   void setAuthor(String? author) {
-    state = state.copyWith(author: author?.trim() ?? '');
+    state = state.copyWith(author: author ?? '');
   }
 
   /// 设置备注
   void setRemark(String? remark) {
-    state = state.copyWith(remark: remark?.trim() ?? '');
+    state = state.copyWith(remark: remark ?? '');
   }
 
   /// 设置画风
@@ -591,7 +611,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
   /// 设置标题
   void setTitle(String? title) {
-    state = state.copyWith(title: title?.trim() ?? '');
+    state = state.copyWith(title: title ?? '');
   }
 
   /// 设置创作工具

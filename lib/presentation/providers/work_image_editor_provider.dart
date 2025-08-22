@@ -481,14 +481,14 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
           children: [
             ListTile(
               leading: const Icon(Icons.folder),
-              title: const Text('从本地文件选择'),
-              subtitle: const Text('选择的图片将自动添加到图库'),
+              title: Text(l10n.fromLocal),
+              subtitle: Text(l10n.imagePropertyPanelAutoImportNotice),
               onTap: () => Navigator.of(context).pop(ImageSource.local),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('从图库选择'),
-              subtitle: const Text('选择已存在的图库图片'),
+              title: Text(l10n.fromGallery),
+              subtitle: Text(l10n.existingItem),
               onTap: () => Navigator.of(context).pop(ImageSource.library),
             ),
           ],
