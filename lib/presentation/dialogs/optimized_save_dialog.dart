@@ -69,11 +69,11 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
     final l10n = AppLocalizations.of(context);
     
     try {
-      // 更新保存阶段信息
+      // 更新保存阶段信息 - 优化：避免重复显示相同信息
       setState(() {
         _progress = 0.1;
         _currentStage = l10n.savingToStorage;
-        _stageDetail = l10n.savingToStorage;
+        _stageDetail = ''; // 避免重复显示相同信息
       });
 
       final result = await widget.saveFuture;
@@ -86,7 +86,7 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
         _hasError = !result.success;
         if (result.success) {
           _currentStage = l10n.saveSuccess;
-          _stageDetail = l10n.saveComplete;
+          _stageDetail = ''; // 简化显示，避免冗余
         } else {
           _currentStage = l10n.saveFailure;
           _stageDetail = result.message ?? l10n.saveFailed;
@@ -120,7 +120,7 @@ class _OptimizedSaveDialogState extends State<OptimizedSaveDialog>
         _completed = true;
         _hasError = true;
         _currentStage = l10n.saveFailure;
-        _stageDetail = l10n.saveFailed;
+        _stageDetail = ''; // 错误详情会单独显示，避免冗余
         _errorMessage = errorMessage;
       });
 

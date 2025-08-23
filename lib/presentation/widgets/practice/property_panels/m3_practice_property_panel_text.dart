@@ -10,7 +10,6 @@ import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
 import 'm3_panel_styles.dart';
-import 'm3_practice_property_panel_base.dart';
 
 // 列数据类，用于存储列的Widget和字符
 class ColumnData {

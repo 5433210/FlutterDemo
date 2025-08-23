@@ -27,6 +27,7 @@ mixin _$ProcessingOptions {
   double get brushSize => throw _privateConstructorUsedError;
   double get contrast => throw _privateConstructorUsedError;
   double get brightness => throw _privateConstructorUsedError;
+  double? get characterAspectRatio => throw _privateConstructorUsedError;
 
   /// Serializes this ProcessingOptions to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,7 +52,8 @@ abstract class $ProcessingOptionsCopyWith<$Res> {
       double noiseReduction,
       double brushSize,
       double contrast,
-      double brightness});
+      double brightness,
+      double? characterAspectRatio});
 }
 
 /// @nodoc
@@ -76,6 +78,7 @@ class _$ProcessingOptionsCopyWithImpl<$Res, $Val extends ProcessingOptions>
     Object? brushSize = null,
     Object? contrast = null,
     Object? brightness = null,
+    Object? characterAspectRatio = freezed,
   }) {
     return _then(_value.copyWith(
       inverted: null == inverted
@@ -106,6 +109,10 @@ class _$ProcessingOptionsCopyWithImpl<$Res, $Val extends ProcessingOptions>
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as double,
+      characterAspectRatio: freezed == characterAspectRatio
+          ? _value.characterAspectRatio
+          : characterAspectRatio // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -125,7 +132,8 @@ abstract class _$$ProcessingOptionsImplCopyWith<$Res>
       double noiseReduction,
       double brushSize,
       double contrast,
-      double brightness});
+      double brightness,
+      double? characterAspectRatio});
 }
 
 /// @nodoc
@@ -148,6 +156,7 @@ class __$$ProcessingOptionsImplCopyWithImpl<$Res>
     Object? brushSize = null,
     Object? contrast = null,
     Object? brightness = null,
+    Object? characterAspectRatio = freezed,
   }) {
     return _then(_$ProcessingOptionsImpl(
       inverted: null == inverted
@@ -178,6 +187,10 @@ class __$$ProcessingOptionsImplCopyWithImpl<$Res>
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as double,
+      characterAspectRatio: freezed == characterAspectRatio
+          ? _value.characterAspectRatio
+          : characterAspectRatio // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -192,7 +205,8 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
       this.noiseReduction = 0.0,
       this.brushSize = 10.0,
       this.contrast = 1.0,
-      this.brightness = 0.0});
+      this.brightness = 0.0,
+      this.characterAspectRatio});
 
   factory _$ProcessingOptionsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProcessingOptionsImplFromJson(json);
@@ -218,10 +232,12 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
   @override
   @JsonKey()
   final double brightness;
+  @override
+  final double? characterAspectRatio;
 
   @override
   String toString() {
-    return 'ProcessingOptions(inverted: $inverted, showContour: $showContour, threshold: $threshold, noiseReduction: $noiseReduction, brushSize: $brushSize, contrast: $contrast, brightness: $brightness)';
+    return 'ProcessingOptions(inverted: $inverted, showContour: $showContour, threshold: $threshold, noiseReduction: $noiseReduction, brushSize: $brushSize, contrast: $contrast, brightness: $brightness, characterAspectRatio: $characterAspectRatio)';
   }
 
   @override
@@ -242,13 +258,15 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
             (identical(other.contrast, contrast) ||
                 other.contrast == contrast) &&
             (identical(other.brightness, brightness) ||
-                other.brightness == brightness));
+                other.brightness == brightness) &&
+            (identical(other.characterAspectRatio, characterAspectRatio) ||
+                other.characterAspectRatio == characterAspectRatio));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, inverted, showContour, threshold,
-      noiseReduction, brushSize, contrast, brightness);
+      noiseReduction, brushSize, contrast, brightness, characterAspectRatio);
 
   /// Create a copy of ProcessingOptions
   /// with the given fields replaced by the non-null parameter values.
@@ -275,7 +293,8 @@ abstract class _ProcessingOptions implements ProcessingOptions {
       final double noiseReduction,
       final double brushSize,
       final double contrast,
-      final double brightness}) = _$ProcessingOptionsImpl;
+      final double brightness,
+      final double? characterAspectRatio}) = _$ProcessingOptionsImpl;
 
   factory _ProcessingOptions.fromJson(Map<String, dynamic> json) =
       _$ProcessingOptionsImpl.fromJson;
@@ -294,6 +313,8 @@ abstract class _ProcessingOptions implements ProcessingOptions {
   double get contrast;
   @override
   double get brightness;
+  @override
+  double? get characterAspectRatio;
 
   /// Create a copy of ProcessingOptions
   /// with the given fields replaced by the non-null parameter values.

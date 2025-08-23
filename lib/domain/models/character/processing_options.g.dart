@@ -16,6 +16,7 @@ _$ProcessingOptionsImpl _$$ProcessingOptionsImplFromJson(
       brushSize: (json['brushSize'] as num?)?.toDouble() ?? 10.0,
       contrast: (json['contrast'] as num?)?.toDouble() ?? 1.0,
       brightness: (json['brightness'] as num?)?.toDouble() ?? 0.0,
+      characterAspectRatio: (json['characterAspectRatio'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$ProcessingOptionsImplToJson(
@@ -28,4 +29,5 @@ Map<String, dynamic> _$$ProcessingOptionsImplToJson(
       'brushSize': instance.brushSize,
       'contrast': instance.contrast,
       'brightness': instance.brightness,
+      'characterAspectRatio': instance.characterAspectRatio,
     };

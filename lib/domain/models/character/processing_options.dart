@@ -13,6 +13,7 @@ class ProcessingOptions with _$ProcessingOptions {
     @Default(10.0) double brushSize,
     @Default(1.0) double contrast,
     @Default(0.0) double brightness,
+    double? characterAspectRatio, // 🔧 NEW: 字符的真实宽高比
   }) = _ProcessingOptions;
 
   factory ProcessingOptions.fromJson(Map<String, dynamic> json) =>

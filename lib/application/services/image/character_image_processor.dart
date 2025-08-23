@@ -196,9 +196,6 @@ class CharacterImageProcessor {
       final croppedImage =
           _rotateAndCropImage(sourceImage, params.region, params.rotation);
 
-      // 保存原始裁剪图像（PNG格式）
-      final originalCropBytes = Uint8List.fromList(img.encodePng(croppedImage));
-
       // 分辨率增强处理
       final enhancedImage = _enhanceResolution(croppedImage);
 
@@ -246,28 +243,67 @@ class CharacterImageProcessor {
       binaryImage = _denoise(binaryImage, params.options.noiseReduction);
       // }
 
-      // 获取处理后的二值化图像数据 (确保为透明背景)
-      final binaryBytes =
-          _createTransparentBinary(binaryImage, options.inverted);
-
       // 进行轮廓检测
       final outline = _detectOutline(binaryImage, options.inverted);
 
-      // 生成去背景透明图像 (使用二值图像作为参考改进背景去除)
-      Uint8List transparentPng = _createBetterTransparentPng(
-          enhancedImage, binaryImage, outline, options.inverted); // 使用分辨率增强后的图像
+      // 🔧 NEW: 计算字符轮廓的精确边界框和宽高比
+      final characterBoundingInfo = _calculateCharacterBoundingInfo(outline, binaryImage);
+      
+      AppLogger.debug('字符轮廓分析结果', data: {
+        'hasValidOutline': characterBoundingInfo.isValid,
+        'tightBoundingBox': characterBoundingInfo.isValid 
+            ? '${characterBoundingInfo.tightBoundingBox!.left},${characterBoundingInfo.tightBoundingBox!.top},${characterBoundingInfo.tightBoundingBox!.width}x${characterBoundingInfo.tightBoundingBox!.height}'
+            : 'null',
+        'aspectRatio': characterBoundingInfo.aspectRatio,
+        'selectionAspectRatio': params.region.width / params.region.height,
+      });
 
-      // 生成正方形版本的图像 - 使用修正后的计算逻辑
+      // 🔧 NEW: 根据字符轮廓的紧密边界框重新裁剪图像
+      final CharacterCropResult cropResult;
+      if (characterBoundingInfo.isValid) {
+        cropResult = _cropByCharacterOutline(
+          enhancedImage, 
+          binaryImage, 
+          characterBoundingInfo.tightBoundingBox!,
+          options.inverted
+        );
+      } else {
+        // 如果没有有效轮廓，使用原来的方法
+        cropResult = CharacterCropResult(
+          originalCrop: enhancedImage,
+          binaryImage: binaryImage,
+          actualBoundingBox: Rect.fromLTWH(0, 0, enhancedImage.width.toDouble(), enhancedImage.height.toDouble()),
+          aspectRatio: enhancedImage.width / enhancedImage.height,
+        );
+      }
+
+      AppLogger.debug('字符图像重新裁剪完成', data: {
+        'originalSize': '${enhancedImage.width}x${enhancedImage.height}',
+        'croppedSize': '${cropResult.originalCrop.width}x${cropResult.originalCrop.height}',
+        'finalAspectRatio': cropResult.aspectRatio,
+      });
+
+      // 使用重新裁剪的图像生成最终结果
+      final reprocessedOriginalBytes = Uint8List.fromList(img.encodePng(cropResult.originalCrop));
+      final reprocessedBinaryBytes = _createTransparentBinary(cropResult.binaryImage, options.inverted);
+
+      // 重新检测轮廓（基于新的裁剪）
+      final finalOutline = _detectOutline(cropResult.binaryImage, options.inverted);
+
+      // 生成去背景透明图像
+      Uint8List transparentPng = _createBetterTransparentPng(
+          cropResult.originalCrop, cropResult.binaryImage, finalOutline, options.inverted);
+
+      // 生成正方形版本的图像
       Uint8List squareBinary;
       String? squareSvgOutline;
       Uint8List? squareTransparentPng;
 
-      if (outline.contourPoints.isNotEmpty) {
-        // 使用改进的方法创建正方形图像 - 确保保持正方形且图像居中
+      if (finalOutline.contourPoints.isNotEmpty) {
         final squareResults = _createProperSquareImages(
-            originalImage: enhancedImage, // 使用分辨率增强后的图像
-            binaryImage: binaryImage,
-            outline: outline,
+            originalImage: cropResult.originalCrop,
+            binaryImage: cropResult.binaryImage,
+            outline: finalOutline,
             options: params.options);
 
         squareBinary = squareResults.binary;
@@ -282,30 +318,30 @@ class CharacterImageProcessor {
           'transparentSize': squareTransparentPng?.length,
         });
       } else {
-        // 如果没有轮廓，创建居中的方形二值化图像
         squareBinary = _createProperSquareBinaryWithoutContour(
-            binaryImage, options.inverted);
+            cropResult.binaryImage, options.inverted);
         squareSvgOutline = null;
         squareTransparentPng = _createProperSquareTransparentWithoutContour(
-            enhancedImage); // 使用分辨率增强后的图像
+            cropResult.originalCrop);
       }
 
       // 生成保持宽高比的缩略图 (100x100)
       final thumbnailBytes = _generateProperThumbnail(squareBinary.isNotEmpty
           ? img.decodeImage(squareBinary)!
-          : binaryImage);
+          : cropResult.binaryImage);
 
       // 创建处理结果，确保每个字段都有正确格式的图像
       final result = ResultForSave(
-        originalCrop: originalCropBytes, // 原始裁剪图像 (PNG)
-        binaryImage: binaryBytes, // 二值化图像 (PNG)
+        originalCrop: reprocessedOriginalBytes, // 按字符轮廓重新裁剪的原始图像 (PNG)
+        binaryImage: reprocessedBinaryBytes, // 重新裁剪的二值化图像 (PNG)
         thumbnail: thumbnailBytes, // 缩略图 (JPG)
-        svgOutline: generateSvgOutline(outline, options.inverted),
+        svgOutline: generateSvgOutline(finalOutline, options.inverted),
         transparentPng: transparentPng,
         squareBinary: squareBinary,
         squareSvgOutline: squareSvgOutline,
         squareTransparentPng: squareTransparentPng,
-        boundingBox: outline.boundingRect,
+        boundingBox: cropResult.actualBoundingBox,
+        characterAspectRatio: cropResult.aspectRatio, // 🔧 NEW: 添加字符真实宽高比
       );
 
       await _binaryCache.put(cacheKey, await result.toArchiveBytes());
@@ -1069,6 +1105,189 @@ class CharacterImageProcessor {
     // Replace with a call to the processor's method
     return _processor.rotateAndCropImage(sourceImage, region, rotation);
   }
+
+  /// 🔧 NEW: 计算字符轮廓的精确边界框信息
+  _CharacterBoundingInfo _calculateCharacterBoundingInfo(DetectedOutline outline, img.Image binaryImage) {
+    try {
+      if (outline.contourPoints.isEmpty) {
+        return _CharacterBoundingInfo.invalid();
+      }
+
+      // 方法1：基于轮廓点计算边界框
+      double minX = double.infinity, minY = double.infinity;
+      double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+      bool hasValidPoints = false;
+
+      for (final contour in outline.contourPoints) {
+        for (final point in contour) {
+          if (!point.dx.isFinite || !point.dy.isFinite) continue;
+          minX = math.min(minX, point.dx);
+          minY = math.min(minY, point.dy);
+          maxX = math.max(maxX, point.dx);
+          maxY = math.max(maxY, point.dy);
+          hasValidPoints = true;
+        }
+      }
+
+      if (!hasValidPoints || minX >= maxX || minY >= maxY) {
+        return _CharacterBoundingInfo.invalid();
+      }
+
+      // 方法2：基于像素分析验证和优化边界框
+      final pixelBasedBounds = _findTightPixelBounds(binaryImage);
+      if (pixelBasedBounds != null) {
+        // 使用像素分析的结果，它通常更准确
+        minX = pixelBasedBounds.left;
+        minY = pixelBasedBounds.top;
+        maxX = pixelBasedBounds.right;
+        maxY = pixelBasedBounds.bottom;
+      }
+
+      // 确保边界框在图像范围内
+      minX = minX.clamp(0, binaryImage.width - 1);
+      minY = minY.clamp(0, binaryImage.height - 1);
+      maxX = maxX.clamp(0, binaryImage.width - 1);
+      maxY = maxY.clamp(0, binaryImage.height - 1);
+
+      final width = maxX - minX;
+      final height = maxY - minY;
+
+      if (width <= 0 || height <= 0) {
+        return _CharacterBoundingInfo.invalid();
+      }
+
+      final tightBoundingBox = Rect.fromLTWH(minX, minY, width, height);
+      final aspectRatio = width / height;
+
+      return _CharacterBoundingInfo(
+        tightBoundingBox: tightBoundingBox,
+        aspectRatio: aspectRatio,
+        isValid: true,
+      );
+    } catch (e) {
+      AppLogger.error('计算字符边界框失败', error: e);
+      return _CharacterBoundingInfo.invalid();
+    }
+  }
+
+  /// 🔧 NEW: 基于像素分析找到紧密的边界框
+  Rect? _findTightPixelBounds(img.Image binaryImage) {
+    try {
+      int minX = binaryImage.width, minY = binaryImage.height;
+      int maxX = -1, maxY = -1;
+      bool hasContent = false;
+
+      // 扫描所有像素，找到非透明且为前景的像素
+      for (int y = 0; y < binaryImage.height; y++) {
+        for (int x = 0; x < binaryImage.width; x++) {
+          final pixel = binaryImage.getPixel(x, y);
+          
+          // 检查是否为有效的前景像素（非透明且为黑色/白色前景）
+          if (pixel.a > 128) { // 非透明
+            final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+            final isForeground = luminance < 128; // 假设前景为暗色
+            
+            if (isForeground) {
+              minX = math.min(minX, x);
+              minY = math.min(minY, y);
+              maxX = math.max(maxX, x);
+              maxY = math.max(maxY, y);
+              hasContent = true;
+            }
+          }
+        }
+      }
+
+      if (!hasContent || minX > maxX || minY > maxY) {
+        return null;
+      }
+
+      return Rect.fromLTRB(
+        minX.toDouble(),
+        minY.toDouble(),
+        (maxX + 1).toDouble(), // +1 因为我们要包含这个像素
+        (maxY + 1).toDouble(),
+      );
+    } catch (e) {
+      AppLogger.error('像素边界框分析失败', error: e);
+      return null;
+    }
+  }
+
+  /// 🔧 NEW: 根据字符轮廓的紧密边界框重新裁剪图像
+  CharacterCropResult _cropByCharacterOutline(
+    img.Image originalImage,
+    img.Image binaryImage,
+    Rect tightBoundingBox,
+    bool isInverted,
+  ) {
+    try {
+      final cropX = tightBoundingBox.left.round();
+      final cropY = tightBoundingBox.top.round();
+      final cropWidth = tightBoundingBox.width.round();
+      final cropHeight = tightBoundingBox.height.round();
+
+      // 确保裁剪区域在图像范围内
+      final safeX = cropX.clamp(0, originalImage.width - 1);
+      final safeY = cropY.clamp(0, originalImage.height - 1);
+      final safeWidth = math.min(cropWidth, originalImage.width - safeX);
+      final safeHeight = math.min(cropHeight, originalImage.height - safeY);
+
+      if (safeWidth <= 0 || safeHeight <= 0) {
+        throw Exception('无效的裁剪尺寸');
+      }
+
+      // 裁剪原始图像
+      final croppedOriginal = img.copyCrop(
+        originalImage,
+        x: safeX,
+        y: safeY,
+        width: safeWidth,
+        height: safeHeight,
+      );
+
+      // 裁剪二值化图像
+      final croppedBinary = img.copyCrop(
+        binaryImage,
+        x: safeX,
+        y: safeY,
+        width: safeWidth,
+        height: safeHeight,
+      );
+
+      final actualBoundingBox = Rect.fromLTWH(
+        0, 0, 
+        croppedOriginal.width.toDouble(), 
+        croppedOriginal.height.toDouble()
+      );
+      
+      final aspectRatio = croppedOriginal.width / croppedOriginal.height;
+
+      AppLogger.debug('字符轮廓裁剪详情', data: {
+        'tightBoundingBox': '${tightBoundingBox.left},${tightBoundingBox.top},${tightBoundingBox.width}x${tightBoundingBox.height}',
+        'safeCrop': '${safeX},${safeY},${safeWidth}x${safeHeight}',
+        'croppedSize': '${croppedOriginal.width}x${croppedOriginal.height}',
+        'aspectRatio': aspectRatio,
+      });
+
+      return CharacterCropResult(
+        originalCrop: croppedOriginal,
+        binaryImage: croppedBinary,
+        actualBoundingBox: actualBoundingBox,
+        aspectRatio: aspectRatio,
+      );
+    } catch (e) {
+      AppLogger.error('字符轮廓裁剪失败', error: e);
+      
+      // 返回原始图像作为回退
+      return CharacterCropResult(
+        originalCrop: originalImage,
+        binaryImage: binaryImage,
+        actualBoundingBox: Rect.fromLTWH(0, 0, originalImage.width.toDouble(), originalImage.height.toDouble()),
+        aspectRatio: originalImage.width / originalImage.height,
+      );
+    }
+  }
 }
 
 /// 图像处理异常
@@ -1150,5 +1369,41 @@ class _SquareImageResults {
     required this.binary,
     this.svg,
     this.transparent,
+  });
+}
+
+/// 🔧 NEW: 字符边界框信息
+class _CharacterBoundingInfo {
+  final Rect? tightBoundingBox;
+  final double aspectRatio;
+  final bool isValid;
+
+  _CharacterBoundingInfo({
+    this.tightBoundingBox,
+    required this.aspectRatio,
+    required this.isValid,
+  });
+
+  factory _CharacterBoundingInfo.invalid() {
+    return _CharacterBoundingInfo(
+      tightBoundingBox: null,
+      aspectRatio: 1.0,
+      isValid: false,
+    );
+  }
+}
+
+/// 🔧 NEW: 字符裁剪结果
+class CharacterCropResult {
+  final img.Image originalCrop;
+  final img.Image binaryImage;
+  final Rect actualBoundingBox;
+  final double aspectRatio;
+
+  CharacterCropResult({
+    required this.originalCrop,
+    required this.binaryImage,
+    required this.actualBoundingBox,
+    required this.aspectRatio,
   });
 }

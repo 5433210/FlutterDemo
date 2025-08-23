@@ -110,6 +110,58 @@ class CharacterService {
     }
   }
 
+  /// Clear character-specific image caches
+  /// 
+  /// This method clears all cache entries related to a specific character ID
+  /// including binary cache, UI image cache, and Flutter image cache
+  Future<void> clearCharacterImageCaches(String characterId) async {
+    try {
+      // Clear binary cache entries for this character
+      await Future.wait([
+        _binaryCache.invalidate(characterId),
+        _binaryCache.invalidate('${characterId}_original'),
+        _binaryCache.invalidate('${characterId}_binary'),
+        _binaryCache.invalidate('${characterId}_thumbnail'),
+        _binaryCache.invalidate('${characterId}_squareBinary'),
+        _binaryCache.invalidate('${characterId}_squareTransparent'),
+        _binaryCache.invalidate('${characterId}_outline'),
+        _binaryCache.invalidate('${characterId}_squareOutline'),
+        _binaryCache.invalidate('${characterId}_transparent'),
+      ]);
+
+      // Clear UI image cache entries for this character
+      await _imageCacheService.clearCharacterImageCaches(characterId);
+
+      // Clear specific file-based caches
+      try {
+        final imagePaths = await Future.wait([
+          _storageService.getOriginalImagePath(characterId),
+          _storageService.getBinaryImagePath(characterId),
+          _storageService.getThumbnailPath(characterId),
+          _storageService.getSquareBinaryPath(characterId),
+          _storageService.getSquareTransparentPngPath(characterId),
+          _storageService.getSvgOutlinePath(characterId),
+          _storageService.getSquareSvgOutlinePath(characterId),
+          _storageService.getTransparentPngPath(characterId),
+        ]);
+
+        // Evict each image path from Flutter cache
+        for (final path in imagePaths) {
+          _imageCacheService.evictImage(path);
+        }
+      } catch (e) {
+        AppLogger.warning('清除文件路径缓存时出现错误', error: e, data: {
+          'characterId': characterId,
+        });
+      }
+
+      AppLogger.info('字符图像缓存已全部清除', data: {'characterId': characterId});
+    } catch (e) {
+      AppLogger.error('清除字符图像缓存失败', error: e, data: {'characterId': characterId});
+      rethrow;
+    }
+  }
+
   /// Clear cache
   Future<void> clearCache() async {
     try {
@@ -214,10 +266,8 @@ class CharacterService {
       // 批量删除文件
       for (final id in ids) {
         await _deleteCharacterImages(id);
-        await _binaryCache.invalidate(id);
-        await _binaryCache.invalidate('${id}_original');
-        await _binaryCache.invalidate('${id}_binary');
-        await _binaryCache.invalidate('${id}_thumbnail');
+        // 使用综合缓存清理方法
+        await clearCharacterImageCaches(id);
       }
     } catch (e) {
       AppLogger.error('批量删除字符失败', error: e);
@@ -234,11 +284,8 @@ class CharacterService {
       // 删除相关文件
       await _deleteCharacterImages(id);
 
-      // 清除缓存
-      await _binaryCache.invalidate(id);
-      await _binaryCache.invalidate('${id}_original');
-      await _binaryCache.invalidate('${id}_binary');
-      await _binaryCache.invalidate('${id}_thumbnail');
+      // 使用综合缓存清理方法
+      await clearCharacterImageCaches(id);
     } catch (e) {
       AppLogger.error('删除字符失败', error: e);
       rethrow;
@@ -479,27 +526,10 @@ class CharacterService {
         character,
       );
 
-      // Explicitly invalidate any cached images
-      await Future.wait([
-        _binaryCache.invalidate(id),
-        _binaryCache.invalidate('${id}_original'),
-        _binaryCache.invalidate('${id}_binary'),
-        _binaryCache.invalidate('${id}_thumbnail'),
-      ]);
+      // 🔧 NEW: 使用新的综合缓存清理方法，清除该字符ID相关的所有图像缓存
+      await clearCharacterImageCaches(id);
 
-      final thumbnailPath = await _storageService.getThumbnailPath(id);
-      // Clear the UI image cache of the thumbnail file
-      _imageCacheService.evictImage(thumbnailPath);
-
-      // Clear any memory image caches if we have a new result
-      if (result.thumbnail.isNotEmpty) {
-        _imageCacheService.evictMemoryImage(result.thumbnail);
-      }
-      if (result.originalCrop.isNotEmpty) {
-        _imageCacheService.evictMemoryImage(result.originalCrop);
-      }
-
-      AppLogger.debug('更新字符完成，缓存已失效', data: {'characterId': id});
+      AppLogger.debug('更新字符完成，所有相关缓存已清除', data: {'characterId': id});
     } catch (e) {
       AppLogger.error('更新字符失败',
           error: e, data: {'characterId': id, 'character': character});
@@ -553,12 +583,23 @@ class CharacterService {
       }
 
       // 创建实体并保存到数据库
+      // 🔧 NEW: 在region中添加字符真实宽高比信息
+      final regionWithAspectRatio = result.characterAspectRatio != null
+          ? region.copyWith(characterId: region.id).addCharacterAspectRatio(result.characterAspectRatio!)
+          : region.copyWith(characterId: region.id);
+      
       final entity = CharacterEntity.create(
         workId: workId,
         pageId: region.pageId,
-        region: region.copyWith(characterId: region.id),
+        region: regionWithAspectRatio,
         character: region.character,
       );
+
+      AppLogger.debug('字符实体创建完成，包含宽高比信息', data: {
+        'characterId': region.id,
+        'characterAspectRatio': result.characterAspectRatio,
+        'hasAspectRatio': result.characterAspectRatio != null,
+      });
 
       return await _repository.create(entity);
     } catch (e) {
@@ -573,10 +614,19 @@ class CharacterService {
     try {
       // 使用更新后的字符内容和时间戳
       final now = DateTime.now();
-      final updatedRegion = region.copyWith(
+      var updatedRegion = region.copyWith(
         character: character,
         updateTime: now,
       );
+
+      // 🔧 NEW: 如果有新的处理结果且包含字符宽高比，更新region中的宽高比信息
+      if (newResult?.characterAspectRatio != null) {
+        updatedRegion = updatedRegion.addCharacterAspectRatio(newResult!.characterAspectRatio!);
+        AppLogger.debug('更新字符宽高比信息', data: {
+          'characterId': id,
+          'newAspectRatio': newResult.characterAspectRatio,
+        });
+      }
 
       // 如果有新的处理结果，则更新图像文件
       if (newResult != null) {

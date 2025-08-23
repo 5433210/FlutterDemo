@@ -83,6 +83,43 @@ extension CharacterRegionExt on CharacterRegion {
     };
   }
 
+  /// 🔧 NEW: 添加字符真实宽高比到region数据中
+  CharacterRegion addCharacterAspectRatio(double aspectRatio) {
+    try {
+      // 获取现有的region JSON数据
+      final regionJson = toDbJson();
+      
+      // 解析现有的options JSON
+      Map<String, dynamic> optionsJson;
+      if (regionJson['options'] != null && regionJson['options'] is String) {
+        optionsJson = jsonDecode(regionJson['options'] as String) as Map<String, dynamic>;
+      } else {
+        optionsJson = options.toJson();
+      }
+      
+      // 添加字符宽高比信息
+      optionsJson['characterAspectRatio'] = aspectRatio;
+      
+      // 创建新的ProcessingOptions对象
+      final updatedOptions = ProcessingOptions.fromJson(optionsJson);
+      
+      AppLogger.debug('添加字符宽高比到region', data: {
+        'regionId': id,
+        'aspectRatio': aspectRatio,
+        'updatedOptions': optionsJson.toString(),
+      });
+      
+      return copyWith(options: updatedOptions);
+    } catch (e) {
+      AppLogger.error('添加字符宽高比失败', error: e, data: {
+        'regionId': id,
+        'aspectRatio': aspectRatio,
+      });
+      // 如果失败，返回原始region
+      return this;
+    }
+  }
+
   // Helper method to ensure eraseData contains proper brush information
   List<Map<String, dynamic>> _sanitizeEraseData(
       List<Map<String, dynamic>> data) {

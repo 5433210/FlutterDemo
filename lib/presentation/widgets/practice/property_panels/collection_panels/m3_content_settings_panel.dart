@@ -15,13 +15,10 @@ class M3ContentSettingsPanel extends ConsumerWidget {
   final int selectedCharIndex;
   final List<CharacterEntity> candidateCharacters;
   final bool isLoading;
-  final bool invertDisplay;
   final Function(String) onTextChanged;
   final Function(int) onCharacterSelected;
   final Function(CharacterEntity) onCandidateCharacterSelected;
-  final Function(bool) onInvertDisplayToggled;
   final Function(String, dynamic) onContentPropertyChanged;
-  final Function(int, bool) onCharacterInvertToggled;
   final Function(String, dynamic)? onContentPropertyUpdateStart;
   final Function(String, dynamic)? onContentPropertyUpdatePreview;
   final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
@@ -32,13 +29,10 @@ class M3ContentSettingsPanel extends ConsumerWidget {
     required this.selectedCharIndex,
     required this.candidateCharacters,
     required this.isLoading,
-    required this.invertDisplay,
     required this.onTextChanged,
     required this.onCharacterSelected,
     required this.onCandidateCharacterSelected,
-    required this.onInvertDisplayToggled,
     required this.onContentPropertyChanged,
-    required this.onCharacterInvertToggled,
     this.onContentPropertyUpdateStart,
     this.onContentPropertyUpdatePreview,
     this.onContentPropertyUpdateWithUndo,
@@ -84,10 +78,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
           selectedCharIndex: selectedCharIndex,
           candidateCharacters: candidateCharacters,
           isLoading: isLoading,
-          invertDisplay: invertDisplay,
           onCharacterSelected: onCandidateCharacterSelected,
-          onInvertDisplayToggled: onInvertDisplayToggled,
-          onCharacterInvertToggled: onCharacterInvertToggled,
         ),
 
         const SizedBox(height: 16.0), // Text format settings

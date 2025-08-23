@@ -35,6 +35,7 @@ class ResultForSave {
 
   // 边界信息
   final Rect? boundingBox; // 字符边界框
+  final double? characterAspectRatio; // 🔧 NEW: 字符的真实宽高比
 
   /// 创建处理结果
   const ResultForSave({
@@ -47,6 +48,7 @@ class ResultForSave {
     this.squareSvgOutline,
     this.squareTransparentPng,
     this.boundingBox,
+    this.characterAspectRatio, // 🔧 NEW: 添加字符宽高比参数
   });
 
   /// 检查处理结果是否包含有效数据
@@ -76,6 +78,8 @@ class ResultForSave {
           'width': boundingBox!.width,
           'height': boundingBox!.height,
         },
+      if (characterAspectRatio != null) // 🔧 NEW: 保存字符宽高比
+        'characterAspectRatio': characterAspectRatio,
     };
 
     return Uint8List.fromList(utf8.encode(jsonEncode(archive)));
@@ -104,6 +108,12 @@ class ResultForSave {
         );
       }
 
+      // 🔧 NEW: 恢复字符宽高比
+      double? characterAspectRatio;
+      if (json.containsKey('characterAspectRatio')) {
+        characterAspectRatio = (json['characterAspectRatio'] as num).toDouble();
+      }
+
       return ResultForSave(
         originalCrop: originalCrop,
         binaryImage: binaryImage,
@@ -118,6 +128,7 @@ class ResultForSave {
             ? base64Decode(json['squareTransparentPng'] as String)
             : null,
         boundingBox: boundingBox,
+        characterAspectRatio: characterAspectRatio, // 🔧 NEW: 传递字符宽高比
       );
     } catch (e) {
       debugPrint('处理结果反序列化失败: $e');

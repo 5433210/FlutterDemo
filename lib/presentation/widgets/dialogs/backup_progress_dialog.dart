@@ -174,26 +174,24 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.message != null) ...[
+          // 优化：简化信息显示，优先显示当前步骤，避免冗余信息
+          Text(
+            _currentStep.isNotEmpty ? _currentStep : (
+              widget.message ?? '正在处理...'
+            ),
+            style: theme.textTheme.titleSmall,
+          ),
+          // 仅在当前步骤与详细信息不同时显示详细信息
+          if (_currentDetail.isNotEmpty && _currentDetail != _currentStep) ...[
+            const SizedBox(height: 8),
             Text(
-              widget.message!,
+              _currentDetail,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
           ],
-          Text(
-            _currentStep,
-            style: theme.textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _currentDetail,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+          // 优化進度显示：简化進度文本
           if (_processedFiles > 0 && _totalFiles > 0) ...[
             const SizedBox(height: 16),
             LinearProgressIndicator(
@@ -201,7 +199,7 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${(_processedFiles / _totalFiles * 100).toStringAsFixed(1)}% 完成',
+              '${(_processedFiles / _totalFiles * 100).toStringAsFixed(1)}% ($_processedFiles/$_totalFiles)',
               style: theme.textTheme.bodySmall,
             ),
           ],

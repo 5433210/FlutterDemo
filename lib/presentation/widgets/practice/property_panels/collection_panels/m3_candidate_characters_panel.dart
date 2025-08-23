@@ -14,10 +14,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
   final int selectedCharIndex;
   final List<CharacterEntity> candidateCharacters;
   final bool isLoading;
-  final bool invertDisplay;
   final Function(CharacterEntity) onCharacterSelected;
-  final Function(bool) onInvertDisplayToggled;
-  final Function(int, bool) onCharacterInvertToggled;
 
   const M3CandidateCharactersPanel({
     Key? key,
@@ -25,10 +22,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     required this.selectedCharIndex,
     required this.candidateCharacters,
     required this.isLoading,
-    required this.invertDisplay,
     required this.onCharacterSelected,
-    required this.onInvertDisplayToggled,
-    required this.onCharacterInvertToggled,
   }) : super(key: key);
 
   @override
@@ -43,9 +37,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
         ? characters[selectedCharIndex]
         : '';
 
-    // Check if the current character is inverted
-    final isCurrentCharInverted =
-        _isCharacterInverted(content, selectedCharIndex);
+    // Character inversion functionality removed
 
     // Filter matching characters
     final matchingCharacters = candidateCharacters
@@ -151,30 +143,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                   ),
                 ),
 
-                // Current character inversion button
-                FilterChip(
-                  label: Text(l10n.currentCharInversion),
-                  selected: isCurrentCharInverted,
-                  showCheckmark: true,
-                  checkmarkColor: colorScheme.onSecondaryContainer,
-                  backgroundColor: colorScheme.surfaceContainerHighest,
-                  selectedColor: colorScheme.secondaryContainer,
-                  labelStyle: TextStyle(
-                    color: isCurrentCharInverted
-                        ? colorScheme.onSecondaryContainer
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  avatar: Icon(
-                    Icons.format_color_reset,
-                    size: 18.0,
-                    color: isCurrentCharInverted
-                        ? colorScheme.onSecondaryContainer
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  onSelected: (value) {
-                    onCharacterInvertToggled(selectedCharIndex, value);
-                  },
-                ),
+                // Character inversion feature removed
               ],
             ),
           ),
@@ -202,7 +171,6 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                   entity,
                   isSelected,
                   index,
-                  isCurrentCharInverted,
                 );
               },
             ),
@@ -219,7 +187,6 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     CharacterEntity entity,
     bool isSelected,
     int index,
-    bool isCurrentCharInverted,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -305,43 +272,12 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                             fit: BoxFit.contain,
                           );
 
-                          // Determine if inversion should be applied
-                          final shouldInvert =
-                              invertDisplay || isCurrentCharInverted;
-
+                          // Character inversion removed - show image directly
                           return Center(
-                            child: shouldInvert
-                                ? Stack(
-                                    children: [
-                                      ColorFiltered(
-                                        colorFilter: const ColorFilter.matrix([
-                                          -1, 0, 0, 0, 255, // Red channel
-                                          0, -1, 0, 0, 255, // Green channel
-                                          0, 0, -1, 0, 255, // Blue channel
-                                          0, 0, 0, 1, 0, // Alpha channel
-                                        ]),
-                                        child: Stack(
-                                          children: [
-                                            // Convert transparent to white first (white background)
-                                            Container(
-                                              color: Colors.white,
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                            ),
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              child: imageWidget,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: imageWidget,
-                                  ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: imageWidget,
+                            ),
                           );
                         } else {
                           return Center(
@@ -382,26 +318,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                       ),
                     ),
 
-                  // Inversion indicator
-                  if (isCurrentCharInverted)
-                    Positioned(
-                      right: isSelected ? 24 : 4,
-                      bottom: 4,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.secondaryContainer,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: colorScheme.secondary, width: 1),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.format_color_reset,
-                          size: 14,
-                          color: colorScheme.secondary,
-                        ),
-                      ),
-                    ),
+                  // Inversion indicator removed
                 ],
               ),
             ),
@@ -411,34 +328,5 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     );
   }
 
-  /// Check if a character has the invert transform property
-  bool _isCharacterInverted(Map<String, dynamic> content, int charIndex) {
-    if (!content.containsKey('characterImages')) {
-      return false;
-    }
-
-    final characterImages = content['characterImages'] as Map<String, dynamic>?;
-    if (characterImages == null) {
-      return false;
-    }
-
-    final charImageInfo =
-        characterImages['$charIndex'] as Map<String, dynamic>?;
-    if (charImageInfo == null) {
-      return false;
-    }
-
-    // Check for transform property
-    if (!charImageInfo.containsKey('transform')) {
-      return false;
-    }
-
-    final transform = charImageInfo['transform'] as Map<String, dynamic>?;
-    if (transform == null) {
-      return false;
-    }
-
-    // Get invert state
-    return transform['invert'] == true;
-  }
+  // Character inversion check function removed
 }

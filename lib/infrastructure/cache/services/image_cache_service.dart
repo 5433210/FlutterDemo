@@ -78,6 +78,42 @@ class ImageCacheService {
     }
   }
 
+  /// 清除指定字符ID相关的所有缓存
+  /// 
+  /// [characterId] 字符ID
+  /// 清除该字符相关的所有UI图像缓存和Flutter缓存
+  Future<void> clearCharacterImageCaches(String characterId) async {
+    try {
+      // 清除内存UI图像缓存中所有与此字符ID相关的缓存
+      final keysToRemove = <String>[];
+      for (final key in _inMemoryUiImageCache.keys) {
+        if (key.contains(characterId)) {
+          keysToRemove.add(key);
+        }
+      }
+      
+      for (final key in keysToRemove) {
+        _inMemoryUiImageCache.remove(key);
+      }
+      
+      // 清除持久化UI图像缓存中所有与此字符ID相关的缓存
+      // 注意：这里需要根据具体的缓存实现来清除
+      
+      // 清除Flutter图像缓存（通过模式匹配）
+      _flutterImageCache.clear();
+      _flutterImageCache.clearLiveImages();
+      
+      AppLogger.debug('已清除字符相关的所有图像缓存', data: {
+        'characterId': characterId,
+        'removedKeysCount': keysToRemove.length,
+      });
+    } catch (e) {
+      AppLogger.error('清除字符图像缓存失败', error: e, data: {
+        'characterId': characterId,
+      });
+    }
+  }
+
   /// 清除所有图像缓存
   Future<void> clearAll() async {
     await _binaryCache.clear();

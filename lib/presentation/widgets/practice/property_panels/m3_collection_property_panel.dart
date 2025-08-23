@@ -54,8 +54,7 @@ class _M3CollectionPropertyPanelState
   // Debounce timer
   Timer? _debounceTimer;
 
-  // Controls candidate character color inversion
-  bool _invertCandidateDisplay = false;
+  // Character inversion functionality removed
   @override
   Widget build(BuildContext context) {
     final layerId = widget.element['layerId'] as String?;
@@ -115,12 +114,9 @@ class _M3CollectionPropertyPanelState
           selectedCharIndex: _selectedCharIndex,
           candidateCharacters: _candidateCharacters,
           isLoading: _isLoadingCharacters,
-          invertDisplay: _invertCandidateDisplay,
           onTextChanged: _onTextChanged,
           onCharacterSelected: _selectCharacter,
           onCandidateCharacterSelected: _selectCandidateCharacter,
-          onInvertDisplayToggled: _onInvertDisplayToggled,
-          onCharacterInvertToggled: _onCharacterInvertToggled,
           onContentPropertyChanged: _updateContentProperty,
           onContentPropertyUpdateStart: _updateContentPropertyStart,
           onContentPropertyUpdatePreview: _updateContentPropertyPreview,
@@ -739,18 +735,7 @@ class _M3CollectionPropertyPanelState
     }
   }
 
-  // Handle current character invert state toggle
-  void _onCharacterInvertToggled(int charIndex, bool invertState) {
-    // Use single character transform property update method
-    _updateSingleCharacterTransformProperty(charIndex, 'invert', invertState);
-  }
-
-  // Toggle invert display
-  void _onInvertDisplayToggled(bool value) {
-    setState(() {
-      _invertCandidateDisplay = value;
-    });
-  }
+  // Character inversion methods removed
 
   // Handle text changes
   void _onTextChanged(String value) {
