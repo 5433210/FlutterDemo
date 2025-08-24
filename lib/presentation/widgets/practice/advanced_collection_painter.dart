@@ -653,7 +653,7 @@ class AdvancedCollectionPainter extends CustomPainter {
           '${scaledRect.left.toStringAsFixed(1)},${scaledRect.top.toStringAsFixed(1)} ${scaledRect.width.toStringAsFixed(1)}x${scaledRect.height.toStringAsFixed(1)}',
       'offsetX': offsetX,
       'offsetY': offsetY,
-      'centerTranslation': '(${offsetX}, ${offsetY})',
+      'centerTranslation': '($offsetX, $offsetY)',
       'operation': 'character_scale_application_details',
     });
 

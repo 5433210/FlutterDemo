@@ -830,7 +830,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                   final layer =
                                       controller.state.getLayerById(layerId);
                                   if (layer != null &&
-                                      layer['isVisible'] == false) continue;
+                                      layer['isVisible'] == false) {
+                                    continue;
+                                  }
                                 }
 
                                 // 检查点击是否在元素内部
@@ -890,8 +892,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                         'select' // 移动端：仅在真正需要时处理
                                 ? (details) {
                                     // 移动端：如果是多指手势，让InteractiveViewer处理
-                                    if (_isMobile && _isMultiTouchGesture)
+                                    if (_isMobile && _isMultiTouchGesture) {
                                       return;
+                                    }
 
                                     // 🔧 修复：优先处理元素拖拽，无论当前工具是什么
                                     if (_shouldInterceptNextPanGesture) {
@@ -952,8 +955,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                                     _gestureHandler.isSelectionBoxActive
                                 ? (details) {
                                     // 移动端：如果是多指手势，让InteractiveViewer处理
-                                    if (_isMobile && _isMultiTouchGesture)
+                                    if (_isMobile && _isMultiTouchGesture) {
                                       return;
+                                    }
 
                                     // 只有在真正拖拽时才处理update事件
                                     if (_isDragging ||

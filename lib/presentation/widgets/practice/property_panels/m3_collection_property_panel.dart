@@ -1489,8 +1489,9 @@ class _M3CollectionPropertyPanelState
   // 字符变换属性更新方法
   void _updateCharacterTransformProperty(
       int charIndex, String key, dynamic value) {
-    print(
-        '*** UNDO调试 *** _updateCharacterTransformProperty: charIndex=$charIndex, key=$key, value=$value, undoEnabled=${widget.controller.undoRedoManager.undoEnabled}');
+    EditPageLogger.propertyPanelDebug(
+        'UNDO调试 - _updateCharacterTransformProperty: charIndex=$charIndex, key=$key, value=$value, undoEnabled=${widget.controller.undoRedoManager.undoEnabled}',
+        tag: EditPageLoggingConfig.tagCollectionPanel);
 
     try {
       final content = Map<String, dynamic>.from(
@@ -1621,8 +1622,9 @@ class _M3CollectionPropertyPanelState
   // 字符变换属性拖动结束回调 - 基于原始值创建undo操作
   void _updateCharacterTransformPropertyWithUndo(
       int charIndex, String key, dynamic newValue, dynamic originalValue) {
-    print(
-        '*** UNDO调试 *** _updateCharacterTransformPropertyWithUndo 被调用: charIndex=$charIndex, key=$key, originalValue=$originalValue, newValue=$newValue');
+    EditPageLogger.propertyPanelDebug(
+        'UNDO调试 - _updateCharacterTransformPropertyWithUndo 被调用: charIndex=$charIndex, key=$key, originalValue=$originalValue, newValue=$newValue',
+        tag: EditPageLoggingConfig.tagCollectionPanel);
 
     if (originalValue != null && originalValue != newValue) {
       try {
@@ -1638,7 +1640,8 @@ class _M3CollectionPropertyPanelState
           },
         );
 
-        print('*** UNDO调试 *** 开始执行undo优化: 原始值=$originalValue, 新值=$newValue');
+        EditPageLogger.propertyPanelDebug('UNDO调试 - 开始执行undo优化: 原始值=$originalValue, 新值=$newValue',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
 
         // 🔧 修复：直接创建一个undo操作，而不是通过两次更新
         // 获取当前完整的元素状态作为新状态
@@ -1672,7 +1675,8 @@ class _M3CollectionPropertyPanelState
         // 添加undo操作到管理器
         widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
 
-        print('*** UNDO调试 *** undo优化更新完成 - 创建了单个undo操作');
+        EditPageLogger.propertyPanelDebug('UNDO调试 - undo优化更新完成 - 创建了单个undo操作',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
 
         EditPageLogger.propertyPanelDebug(
           '单字符变换属性undo优化更新完成',
@@ -1687,7 +1691,8 @@ class _M3CollectionPropertyPanelState
           },
         );
       } catch (error) {
-        print('*** UNDO调试 *** undo更新发生错误: $error');
+        EditPageLogger.propertyPanelError('UNDO调试 - undo更新发生错误: $error',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
 
         EditPageLogger.propertyPanelError(
           '单字符变换属性undo更新失败',
@@ -1706,8 +1711,9 @@ class _M3CollectionPropertyPanelState
         _updateCharacterTransformProperty(charIndex, key, newValue);
       }
     } else {
-      print(
-          '*** UNDO调试 *** 跳过undo: originalValue=$originalValue, newValue=$newValue (值相同或原始值为null)');
+      EditPageLogger.propertyPanelDebug(
+          'UNDO调试 - 跳过undo: originalValue=$originalValue, newValue=$newValue (值相同或原始值为null)',
+          tag: EditPageLoggingConfig.tagCollectionPanel);
       // 如果没有原始值或值没有改变，直接更新
       _updateCharacterTransformProperty(charIndex, key, newValue);
     }
@@ -1716,8 +1722,9 @@ class _M3CollectionPropertyPanelState
   // 批量字符变换属性undo操作 - 用于位置偏移等需要同时更新多个属性的操作
   void _updateCharacterTransformPropertiesWithBatchUndo(int charIndex,
       Map<String, dynamic> changes, Map<String, dynamic> originalValues) {
-    print(
-        '*** UNDO调试 *** 批量undo被调用: charIndex=$charIndex, changes=$changes, originalValues=$originalValues');
+    EditPageLogger.propertyPanelDebug(
+        'UNDO调试 - 批量undo被调用: charIndex=$charIndex, changes=$changes, originalValues=$originalValues',
+        tag: EditPageLoggingConfig.tagCollectionPanel);
 
     // 检查是否有实际的变化
     bool hasChanges = false;
@@ -1730,7 +1737,8 @@ class _M3CollectionPropertyPanelState
 
     if (hasChanges) {
       try {
-        print('*** UNDO调试 *** 开始执行批量undo优化');
+        EditPageLogger.propertyPanelDebug('UNDO调试 - 开始执行批量undo优化',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
 
         // 🔧 修复：直接创建一个undo操作，而不是通过多次更新
         // 获取当前完整的元素状态作为新状态
@@ -1769,9 +1777,11 @@ class _M3CollectionPropertyPanelState
         // 添加undo操作到管理器
         widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
 
-        print('*** UNDO调试 *** 批量undo优化更新完成 - 创建了单个undo操作');
+        EditPageLogger.propertyPanelDebug('UNDO调试 - 批量undo优化更新完成 - 创建了单个undo操作',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
       } catch (error) {
-        print('*** UNDO调试 *** 批量undo更新发生错误: $error');
+        EditPageLogger.propertyPanelError('UNDO调试 - 批量undo更新发生错误: $error',
+            tag: EditPageLoggingConfig.tagCollectionPanel);
 
         // 发生错误时，回退到直接更新
         for (String key in changes.keys) {
@@ -1779,7 +1789,8 @@ class _M3CollectionPropertyPanelState
         }
       }
     } else {
-      print('*** UNDO调试 *** 批量undo: 无变化，跳过');
+      EditPageLogger.propertyPanelDebug('UNDO调试 - 批量undo: 无变化，跳过',
+          tag: EditPageLoggingConfig.tagCollectionPanel);
     }
   }
 }
