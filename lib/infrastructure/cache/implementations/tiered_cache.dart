@@ -81,4 +81,10 @@ class TieredCache<K, V> implements ICache<K, V> {
     await _primaryCache.remove(key);
     await _secondaryCache.remove(key);
   }
+  
+  @override
+  Future<void> evict(K key) async {
+    // evict与remove行为相同
+    await remove(key);
+  }
 }

@@ -437,23 +437,41 @@ class AdvancedCollectionPainter extends CustomPainter {
                   return cachedImage;
                 }
 
-                // 使用CharacterImageService加载图像
-                // 首先获取可用的格式
-                _loadCharacterImageViaService(characterId, cacheKey)
-                    .then((success) {
-                  if (success && _repaintCallback != null) {
-                    // 🚀 优化：使用防抖重绘，避免GPU高负载
-                    _debounceRepaint();
-                  } else {
-                    // 如果无法使用服务加载，创建占位图像
-                    _createPlaceholderImage(cacheKey)
-                        .then((placeholderSuccess) {
-                      if (placeholderSuccess && _repaintCallback != null) {
-                        // 🚀 优化：使用防抖重绘，避免GPU高负载
-                        _debounceRepaint();
-                      }
-                    });
+                // 在加载之前，先检查字符是否仍然存在
+                // 如果字符已被删除，直接返回null以触发fallback文本渲染
+                _characterImageService.hasCharacterImage(
+                  characterId,
+                  imageData['type'] ?? 'square-binary',
+                  imageData['format'] ?? 'png-binary'
+                ).then((exists) {
+                  if (!exists) {
+                    // 字符已被删除，清除缓存并触发重绘以显示fallback
+                    _imageCacheService.clearCharacterImageCaches(characterId);
+                    if (_repaintCallback != null) {
+                      _debounceRepaint();
+                    }
+                    return;
                   }
+
+                  // 字符存在，继续正常加载流程
+                  // 使用CharacterImageService加载图像
+                  // 首先获取可用的格式
+                  _loadCharacterImageViaService(characterId, cacheKey)
+                      .then((success) {
+                    if (success && _repaintCallback != null) {
+                      // 🚀 优化：使用防抖重绘，避免GPU高负载
+                      _debounceRepaint();
+                    } else {
+                      // 如果无法使用服务加载，创建占位图像
+                      _createPlaceholderImage(cacheKey)
+                          .then((placeholderSuccess) {
+                        if (placeholderSuccess && _repaintCallback != null) {
+                          // 🚀 优化：使用防抖重绘，避免GPU高负载
+                          _debounceRepaint();
+                        }
+                      });
+                    }
+                  });
                 });
               }
             }

@@ -84,7 +84,7 @@ class ImageCacheService {
   /// 清除该字符相关的所有UI图像缓存和Flutter缓存
   Future<void> clearCharacterImageCaches(String characterId) async {
     try {
-      // 清除内存UI图像缓存中所有与此字符ID相关的缓存
+      // 1. 清除内存UI图像缓存中所有与此字符ID相关的缓存
       final keysToRemove = <String>[];
       for (final key in _inMemoryUiImageCache.keys) {
         if (key.contains(characterId)) {
@@ -96,22 +96,58 @@ class ImageCacheService {
         _inMemoryUiImageCache.remove(key);
       }
       
-      // 清除持久化UI图像缓存中所有与此字符ID相关的缓存
-      // 注意：这里需要根据具体的缓存实现来清除
+      // 2. 清除持久化UI图像缓存和二进制缓存中与字符ID相关的缓存项
+      // 构造可能的缓存键模式
+      final possibleCacheKeys = <String>[
+        // 文件路径格式的缓存键
+        'file:${_getCharacterPath(characterId, 'square-binary', 'png')}',
+        'file:${_getCharacterPath(characterId, 'square-transparent', 'png')}',
+        'file:${_getCharacterPath(characterId, 'square-outline', 'svg')}',
+        'file:${_getCharacterPath(characterId, 'thumbnail', 'jpg')}',
+        'file:${_getCharacterPath(characterId, 'binary', 'png')}',
+        'file:${_getCharacterPath(characterId, 'transparent', 'png')}',
+        // 字符ID格式的缓存键
+        characterId,
+        '${characterId}_original',
+        '${characterId}_binary',
+        '${characterId}_thumbnail',
+        '${characterId}_squareBinary',
+        '${characterId}_squareTransparent',
+        '${characterId}_outline',
+        '${characterId}_squareOutline',
+        '${characterId}_transparent',
+        // AdvancedCollectionPainter使用的缓存键格式
+        'char_$characterId',
+      ];
       
-      // 清除Flutter图像缓存（通过模式匹配）
+      // 清除所有可能的缓存键
+      for (final key in possibleCacheKeys) {
+        await _binaryCache.evict(key);
+        await _uiImageCache.evict(key);
+      }
+      
+      // 3. 强制清除Flutter图像缓存（保持现有逻辑以确保彻底清除）
       _flutterImageCache.clear();
       _flutterImageCache.clearLiveImages();
       
       AppLogger.debug('已清除字符相关的所有图像缓存', data: {
         'characterId': characterId,
-        'removedKeysCount': keysToRemove.length,
+        'removedMemoryKeys': keysToRemove.length,
+        'checkedCacheKeys': possibleCacheKeys.length,
       });
     } catch (e) {
       AppLogger.error('清除字符图像缓存失败', error: e, data: {
         'characterId': characterId,
       });
     }
+  }
+  
+  /// 生成字符图像文件路径（私有辅助方法）
+  String _getCharacterPath(String characterId, String type, String format) {
+    // 这里应该与 CharacterImageServiceImpl._getImagePath 逻辑一致
+    // 简化版本，实际路径构建应该使用相同的逻辑
+    final extension = format == 'svg' ? 'svg' : (format == 'jpg' ? 'jpg' : 'png');
+    return 'characters/$characterId/$characterId-$type.$extension';
   }
 
   /// 清除所有图像缓存

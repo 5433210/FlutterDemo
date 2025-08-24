@@ -39,4 +39,9 @@ abstract class ICache<K, V> {
   ///
   /// [key] 要移除的缓存键
   Future<void> remove(K key);
+  
+  /// 驱逐缓存项（与remove等效）
+  ///
+  /// [key] 要驱逐的缓存键
+  Future<void> evict(K key);
 }

@@ -190,6 +190,9 @@ class _M3CollectionPropertyPanelState
       // 首先清理嵌套的 content 结构
       _cleanupNestedContent();
 
+      // 🔧 FIX: 修复现有字符图像中可能存在的非零rotation值
+      _fixCharacterImageRotations();
+
       // Load candidate characters
       _loadCandidateCharacters();
 
@@ -198,6 +201,73 @@ class _M3CollectionPropertyPanelState
         _autoUpdateMissingCharacterImages(characters);
       }
     });
+  }
+
+  // 🔧 FIX: 修复现有字符图像中可能存在的非零rotation值
+  void _fixCharacterImageRotations() {
+    try {
+      final content = widget.element['content'] as Map<String, dynamic>? ?? {};
+      if (!content.containsKey('characterImages')) {
+        return;
+      }
+
+      final characterImages = Map<String, dynamic>.from(
+          content['characterImages'] as Map<String, dynamic>? ?? {});
+
+      bool hasFixedRotations = false;
+
+      // 遍历所有字符图像，修复rotation值
+      for (final entry in characterImages.entries) {
+        final imageInfo = entry.value;
+        if (imageInfo is Map<String, dynamic> && 
+            imageInfo.containsKey('transform')) {
+          final transform = imageInfo['transform'] as Map<String, dynamic>?;
+          if (transform != null && transform.containsKey('rotation')) {
+            final currentRotation = transform['rotation'] as num?;
+            if (currentRotation != null && currentRotation != 0.0) {
+              // 发现非零rotation值，将其修正为0.0
+              transform['rotation'] = 0.0;
+              hasFixedRotations = true;
+              
+              EditPageLogger.propertyPanelDebug(
+                '修复字符图像rotation值',
+                tag: EditPageLoggingConfig.tagCollectionPanel,
+                data: {
+                  'charIndex': entry.key,
+                  'oldRotation': currentRotation,
+                  'newRotation': 0.0,
+                  'operation': 'fix_character_rotation',
+                },
+              );
+            }
+          }
+        }
+      }
+
+      // 如果修复了任何rotation值，更新内容
+      if (hasFixedRotations) {
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = characterImages;
+        widget.onElementPropertiesChanged({'content': updatedContent});
+
+        EditPageLogger.editPageInfo(
+          '字符图像rotation值修复完成',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'operation': 'fix_character_rotations_complete',
+          },
+        );
+      }
+    } catch (e) {
+      EditPageLogger.propertyPanelError(
+        '修复字符图像rotation值时出错',
+        tag: EditPageLoggingConfig.tagCollectionPanel,
+        error: e,
+        data: {
+          'operation': 'fix_character_rotations_error',
+        },
+      );
+    }
   }
 
   // Auto-update missing character images

@@ -138,4 +138,10 @@ class ImageCache implements ICache<String, Uint8List> {
     // 实现与invalidate相同的功能，以满足接口要求
     await invalidate(key);
   }
+
+  @override
+  Future<void> evict(String key) async {
+    // evict与remove行为相同
+    await remove(key);
+  }
 }

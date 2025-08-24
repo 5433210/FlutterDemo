@@ -1265,7 +1265,7 @@ class CharacterImageProcessor {
 
       AppLogger.debug('字符轮廓裁剪详情', data: {
         'tightBoundingBox': '${tightBoundingBox.left},${tightBoundingBox.top},${tightBoundingBox.width}x${tightBoundingBox.height}',
-        'safeCrop': '${safeX},${safeY},${safeWidth}x${safeHeight}',
+        'safeCrop': '$safeX,$safeY,${safeWidth}x$safeHeight',
         'croppedSize': '${croppedOriginal.width}x${croppedOriginal.height}',
         'aspectRatio': aspectRatio,
       });

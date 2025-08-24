@@ -50,6 +50,12 @@ class UIImageCache implements ICache<String, ui.Image> {
   }
 
   @override
+  Future<void> evict(String key) async {
+    // evict与remove行为相同
+    await remove(key);
+  }
+
+  @override
   Future<int> size() async {
     return _cache.length;
   }

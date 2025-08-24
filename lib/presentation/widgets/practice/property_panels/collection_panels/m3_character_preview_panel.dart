@@ -99,9 +99,21 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
       if (characterId != null && type != null && format != null) {
         return FutureBuilder<Uint8List?>(
           future: Future.any([
+            // 先检查字符是否存在，如果不存在直接返回null
             ref
                 .read(characterImageServiceProvider)
-                .getCharacterImage(characterId, type, format),
+                .hasCharacterImage(characterId, type, format)
+                .then((exists) async {
+              if (!exists) {
+                // 字符已被删除，清除相关缓存
+                await ref.read(characterImageServiceProvider).clearAllImageCache();
+                return null;
+              }
+              // 字符存在，获取图像数据
+              return await ref
+                  .read(characterImageServiceProvider)
+                  .getCharacterImage(characterId, type, format);
+            }),
             // Add a 3-second timeout
             Future.delayed(const Duration(seconds: 3), () => null),
           ]),

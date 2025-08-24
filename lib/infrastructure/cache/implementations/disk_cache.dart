@@ -211,6 +211,12 @@ class DiskCache<K, V> implements ICache<K, V> {
     // 调用已有的invalidate方法，功能相同
     await invalidate(key);
   }
+  
+  @override
+  Future<void> evict(K key) async {
+    // evict与remove行为相同
+    await remove(key);
+  }
 
   /// 获取缓存文件路径
   String _getFilePath(K key) {
