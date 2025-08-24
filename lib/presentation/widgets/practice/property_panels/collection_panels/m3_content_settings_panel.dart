@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +9,7 @@ import '../m3_panel_styles.dart';
 import 'm3_candidate_characters_panel.dart';
 import 'm3_character_input_field.dart';
 import 'm3_character_preview_panel.dart';
+import 'm3_character_transform_controller.dart';
 import 'm3_text_format_panel.dart';
 
 /// Material 3 content settings panel for collection elements
@@ -22,6 +25,14 @@ class M3ContentSettingsPanel extends ConsumerWidget {
   final Function(String, dynamic)? onContentPropertyUpdateStart;
   final Function(String, dynamic)? onContentPropertyUpdatePreview;
   final Function(String, dynamic, dynamic)? onContentPropertyUpdateWithUndo;
+  // 新增：字符变换回调函数
+  final Function(int, String, dynamic)? onCharacterTransformChanged;
+  final Function(int, String, dynamic)? onCharacterTransformUpdateStart;
+  final Function(int, String, dynamic)? onCharacterTransformUpdatePreview;
+  final Function(int, String, dynamic, dynamic)?
+      onCharacterTransformUpdateWithUndo;
+  final Function(int, Map<String, dynamic>, Map<String, dynamic>)?
+      onCharacterTransformBatchUndo;
 
   const M3ContentSettingsPanel({
     Key? key,
@@ -36,6 +47,12 @@ class M3ContentSettingsPanel extends ConsumerWidget {
     this.onContentPropertyUpdateStart,
     this.onContentPropertyUpdatePreview,
     this.onContentPropertyUpdateWithUndo,
+    // 新增参数
+    this.onCharacterTransformChanged,
+    this.onCharacterTransformUpdateStart,
+    this.onCharacterTransformUpdatePreview,
+    this.onCharacterTransformUpdateWithUndo,
+    this.onCharacterTransformBatchUndo,
   }) : super(key: key);
 
   @override
@@ -68,6 +85,38 @@ class M3ContentSettingsPanel extends ConsumerWidget {
           element: element,
           selectedCharIndex: selectedCharIndex,
           onCharacterSelected: onCharacterSelected,
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Single character transform controller
+        M3PanelStyles.buildSectionTitle(context, '单字符调整'),
+        M3CharacterTransformController(
+          element: element,
+          selectedCharIndex: selectedCharIndex,
+          onTransformPropertyChanged: (key, value) {
+            onCharacterTransformChanged?.call(selectedCharIndex, key, value);
+          },
+          onTransformPropertyUpdateStart: (charIndex, key, value) {
+            onCharacterTransformUpdateStart?.call(charIndex, key, value);
+          },
+          onTransformPropertyUpdatePreview: (charIndex, key, value) {
+            onCharacterTransformUpdatePreview?.call(charIndex, key, value);
+          },
+          onTransformPropertyUpdateWithUndo: (charIndex, key, value, oldValue) {
+            developer.log(
+                '内容设置面板 - undo回调: charIndex=$charIndex, key=$key, value=$value, oldValue=$oldValue',
+                name: 'CharacterTransform');
+            onCharacterTransformUpdateWithUndo?.call(
+                charIndex, key, value, oldValue);
+          },
+          onTransformPropertiesBatchUndo: (charIndex, changes, originalValues) {
+            developer.log(
+                '内容设置面板 - 批量undo回调: charIndex=$charIndex, changes=$changes, originalValues=$originalValues',
+                name: 'CharacterTransform');
+            onCharacterTransformBatchUndo?.call(
+                charIndex, changes, originalValues);
+          },
         ),
 
         const SizedBox(height: 16.0),

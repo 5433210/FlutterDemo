@@ -11,6 +11,7 @@ import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../utils/config/edit_page_logging_config.dart';
 import '../practice_edit_controller.dart';
+import '../undo_operations.dart';
 import 'collection_panels/m3_background_texture_panel.dart';
 import 'collection_panels/m3_content_settings_panel.dart';
 import 'collection_panels/m3_geometry_properties_panel.dart';
@@ -121,6 +122,16 @@ class _M3CollectionPropertyPanelState
           onContentPropertyUpdateStart: _updateContentPropertyStart,
           onContentPropertyUpdatePreview: _updateContentPropertyPreview,
           onContentPropertyUpdateWithUndo: _updateContentPropertyWithUndo,
+          // Character transform callbacks
+          onCharacterTransformChanged: _updateCharacterTransformProperty,
+          onCharacterTransformUpdateStart:
+              _updateCharacterTransformPropertyStart,
+          onCharacterTransformUpdatePreview:
+              _updateCharacterTransformPropertyPreview,
+          onCharacterTransformUpdateWithUndo:
+              _updateCharacterTransformPropertyWithUndo,
+          onCharacterTransformBatchUndo:
+              _updateCharacterTransformPropertiesWithBatchUndo,
         ),
       ],
     );
@@ -219,7 +230,7 @@ class _M3CollectionPropertyPanelState
       // 遍历所有字符图像，修复rotation值
       for (final entry in characterImages.entries) {
         final imageInfo = entry.value;
-        if (imageInfo is Map<String, dynamic> && 
+        if (imageInfo is Map<String, dynamic> &&
             imageInfo.containsKey('transform')) {
           final transform = imageInfo['transform'] as Map<String, dynamic>?;
           if (transform != null && transform.containsKey('rotation')) {
@@ -228,7 +239,7 @@ class _M3CollectionPropertyPanelState
               // 发现非零rotation值，将其修正为0.0
               transform['rotation'] = 0.0;
               hasFixedRotations = true;
-              
+
               EditPageLogger.propertyPanelDebug(
                 '修复字符图像rotation值',
                 tag: EditPageLoggingConfig.tagCollectionPanel,
@@ -367,6 +378,9 @@ class _M3CollectionPropertyPanelState
             'color': content['fontColor'] ?? '#000000',
             'opacity': 1.0,
             'invert': false,
+            'characterScale': 1.0, // 新增：字符独立缩放
+            'offsetX': 0.0, // 新增：X轴偏移
+            'offsetY': 0.0, // 新增：Y轴偏移
           }
         };
 
@@ -992,6 +1006,9 @@ class _M3CollectionPropertyPanelState
             'color': content['fontColor'] ?? '#000000',
             'opacity': 1.0,
             'invert': false,
+            'characterScale': 1.0, // 新增：字符独立缩放
+            'offsetX': 0.0, // 新增：X轴偏移
+            'offsetY': 0.0, // 新增：Y轴偏移
           };
         }
 
@@ -1236,6 +1253,9 @@ class _M3CollectionPropertyPanelState
         'color': content['fontColor'] ?? '#000000',
         'opacity': 1.0,
         'invert': false,
+        'characterScale': 1.0, // 新增：字符独立缩放
+        'offsetX': 0.0, // 新增：X轴偏移
+        'offsetY': 0.0, // 新增：Y轴偏移
       };
     }
 
@@ -1463,6 +1483,303 @@ class _M3CollectionPropertyPanelState
     } else {
       // 如果没有原始值或值没有改变，直接更新
       _updateContentProperty(key, newValue);
+    }
+  }
+
+  // 字符变换属性更新方法
+  void _updateCharacterTransformProperty(
+      int charIndex, String key, dynamic value) {
+    print(
+        '*** UNDO调试 *** _updateCharacterTransformProperty: charIndex=$charIndex, key=$key, value=$value, undoEnabled=${widget.controller.undoRedoManager.undoEnabled}');
+
+    try {
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>);
+
+      // 确保characterImages存在
+      if (!content.containsKey('characterImages')) {
+        content['characterImages'] = <String, dynamic>{};
+      }
+
+      var characterImages = content['characterImages'] as Map<String, dynamic>;
+
+      // 确保字符图像信息存在
+      if (!characterImages.containsKey('$charIndex')) {
+        // 如果字符图像信息不存在，创建默认信息
+        characterImages['$charIndex'] = {
+          'characterId': null,
+          'transform': {
+            'scale': 1.0,
+            'rotation': 0.0,
+            'color': content['fontColor'] ?? '#000000',
+            'opacity': 1.0,
+            'invert': false,
+            'characterScale': 1.0,
+            'offsetX': 0.0,
+            'offsetY': 0.0,
+          }
+        };
+      }
+
+      var charInfo = characterImages['$charIndex'] as Map<String, dynamic>;
+
+      // 确保transform属性存在
+      if (!charInfo.containsKey('transform')) {
+        charInfo['transform'] = {
+          'scale': 1.0,
+          'rotation': 0.0,
+          'color': content['fontColor'] ?? '#000000',
+          'opacity': 1.0,
+          'invert': false,
+          'characterScale': 1.0,
+          'offsetX': 0.0,
+          'offsetY': 0.0,
+        };
+      }
+
+      // 更新指定属性
+      var transform = charInfo['transform'] as Map<String, dynamic>;
+      transform[key] = value;
+
+      // 更新字符图像信息
+      characterImages['$charIndex'] = charInfo;
+
+      // 更新元素内容
+      _updateProperty('content', content);
+
+      EditPageLogger.propertyPanelDebug(
+        '单字符变换属性更新',
+        tag: EditPageLoggingConfig.tagCollectionPanel,
+        data: {
+          'charIndex': charIndex,
+          'property': key,
+          'value': value,
+          'updatedTransform': transform,
+          'characterImagesKeys': characterImages.keys.toList(),
+          'operation': 'character_transform_update',
+        },
+      );
+
+      // 🔥 强制触发重绘：通过添加微小的时间戳来确保painter检测到变化
+      final now = DateTime.now().millisecondsSinceEpoch;
+      content['_forceRepaintTimestamp'] = now;
+      _updateProperty('content', content);
+
+      // 强制刷新UI
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      EditPageLogger.propertyPanelError(
+        '单字符变换属性更新失败',
+        tag: EditPageLoggingConfig.tagCollectionPanel,
+        error: e,
+        data: {
+          'charIndex': charIndex,
+          'property': key,
+          'operation': 'character_transform_update_error',
+        },
+      );
+    }
+  }
+
+  // 字符变换属性拖动开始回调
+  void _updateCharacterTransformPropertyStart(
+      int charIndex, String key, dynamic originalValue) {
+    EditPageLogger.propertyPanelDebug(
+      '单字符变换属性拖动开始',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'charIndex': charIndex,
+        'property': key,
+        'originalValue': originalValue,
+        'operation': '${key}_character_transform_drag_start',
+      },
+    );
+  }
+
+  // 字符变换属性拖动预览回调
+  void _updateCharacterTransformPropertyPreview(
+      int charIndex, String key, dynamic value) {
+    EditPageLogger.propertyPanelDebug(
+      '单字符变换属性预览更新',
+      tag: EditPageLoggingConfig.tagCollectionPanel,
+      data: {
+        'charIndex': charIndex,
+        'property': key,
+        'value': value,
+        'operation': 'character_transform_preview_update',
+      },
+    );
+
+    // 临时禁用undo并更新预览
+    widget.controller.undoRedoManager.undoEnabled = false;
+    _updateCharacterTransformProperty(charIndex, key, value);
+    widget.controller.undoRedoManager.undoEnabled = true;
+  }
+
+  // 字符变换属性拖动结束回调 - 基于原始值创建undo操作
+  void _updateCharacterTransformPropertyWithUndo(
+      int charIndex, String key, dynamic newValue, dynamic originalValue) {
+    print(
+        '*** UNDO调试 *** _updateCharacterTransformPropertyWithUndo 被调用: charIndex=$charIndex, key=$key, originalValue=$originalValue, newValue=$newValue');
+
+    if (originalValue != null && originalValue != newValue) {
+      try {
+        EditPageLogger.propertyPanelDebug(
+          '单字符变换属性undo优化更新开始',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'charIndex': charIndex,
+            'property': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation': '${key}_character_transform_undo_optimized_update',
+          },
+        );
+
+        print('*** UNDO调试 *** 开始执行undo优化: 原始值=$originalValue, 新值=$newValue');
+
+        // 🔧 修复：直接创建一个undo操作，而不是通过两次更新
+        // 获取当前完整的元素状态作为新状态
+        final currentElement = Map<String, dynamic>.from(widget.element);
+        
+        // 创建旧状态（将指定属性恢复到原始值）
+        final oldElement = Map<String, dynamic>.from(widget.element);
+        final oldContent = Map<String, dynamic>.from(oldElement['content'] as Map<String, dynamic>);
+        final oldCharacterImages = Map<String, dynamic>.from(oldContent['characterImages'] as Map<String, dynamic>? ?? {});
+        
+        if (oldCharacterImages.containsKey('$charIndex')) {
+          final oldCharInfo = Map<String, dynamic>.from(oldCharacterImages['$charIndex'] as Map<String, dynamic>);
+          final oldTransform = Map<String, dynamic>.from(oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
+          oldTransform[key] = originalValue;
+          oldCharInfo['transform'] = oldTransform;
+          oldCharacterImages['$charIndex'] = oldCharInfo;
+        }
+        oldContent['characterImages'] = oldCharacterImages;
+        oldElement['content'] = oldContent;
+
+        // 创建undo操作
+        final operation = ElementPropertyOperation(
+          elementId: widget.element['id'] as String,
+          oldProperties: oldElement,
+          newProperties: currentElement,
+          updateElement: (id, props) {
+            widget.controller.updateElementPropertiesInternal(id, props, createUndoOperation: false);
+          },
+        );
+
+        // 添加undo操作到管理器
+        widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
+
+        print('*** UNDO调试 *** undo优化更新完成 - 创建了单个undo操作');
+
+        EditPageLogger.propertyPanelDebug(
+          '单字符变换属性undo优化更新完成',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          data: {
+            'charIndex': charIndex,
+            'property': key,
+            'originalValue': originalValue,
+            'newValue': newValue,
+            'operation':
+                '${key}_character_transform_undo_optimized_update_complete',
+          },
+        );
+      } catch (error) {
+        print('*** UNDO调试 *** undo更新发生错误: $error');
+
+        EditPageLogger.propertyPanelError(
+          '单字符变换属性undo更新失败',
+          tag: EditPageLoggingConfig.tagCollectionPanel,
+          error: error,
+          data: {
+            'charIndex': charIndex,
+            'property': key,
+            'newValue': newValue,
+            'originalValue': originalValue,
+            'operation': 'character_transform_undo_update_error',
+          },
+        );
+
+        // 发生错误时，回退到直接更新
+        _updateCharacterTransformProperty(charIndex, key, newValue);
+      }
+    } else {
+      print(
+          '*** UNDO调试 *** 跳过undo: originalValue=$originalValue, newValue=$newValue (值相同或原始值为null)');
+      // 如果没有原始值或值没有改变，直接更新
+      _updateCharacterTransformProperty(charIndex, key, newValue);
+    }
+  }
+
+  // 批量字符变换属性undo操作 - 用于位置偏移等需要同时更新多个属性的操作
+  void _updateCharacterTransformPropertiesWithBatchUndo(int charIndex,
+      Map<String, dynamic> changes, Map<String, dynamic> originalValues) {
+    print(
+        '*** UNDO调试 *** 批量undo被调用: charIndex=$charIndex, changes=$changes, originalValues=$originalValues');
+
+    // 检查是否有实际的变化
+    bool hasChanges = false;
+    for (String key in changes.keys) {
+      if (originalValues[key] != changes[key]) {
+        hasChanges = true;
+        break;
+      }
+    }
+
+    if (hasChanges) {
+      try {
+        print('*** UNDO调试 *** 开始执行批量undo优化');
+
+        // 🔧 修复：直接创建一个undo操作，而不是通过多次更新
+        // 获取当前完整的元素状态作为新状态
+        final currentElement = Map<String, dynamic>.from(widget.element);
+        
+        // 创建旧状态（将所有指定属性恢复到原始值）
+        final oldElement = Map<String, dynamic>.from(widget.element);
+        final oldContent = Map<String, dynamic>.from(oldElement['content'] as Map<String, dynamic>);
+        final oldCharacterImages = Map<String, dynamic>.from(oldContent['characterImages'] as Map<String, dynamic>? ?? {});
+        
+        if (oldCharacterImages.containsKey('$charIndex')) {
+          final oldCharInfo = Map<String, dynamic>.from(oldCharacterImages['$charIndex'] as Map<String, dynamic>);
+          final oldTransform = Map<String, dynamic>.from(oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
+          
+          // 恢复所有原始值
+          for (String key in originalValues.keys) {
+            oldTransform[key] = originalValues[key];
+          }
+          
+          oldCharInfo['transform'] = oldTransform;
+          oldCharacterImages['$charIndex'] = oldCharInfo;
+        }
+        oldContent['characterImages'] = oldCharacterImages;
+        oldElement['content'] = oldContent;
+
+        // 创建undo操作
+        final operation = ElementPropertyOperation(
+          elementId: widget.element['id'] as String,
+          oldProperties: oldElement,
+          newProperties: currentElement,
+          updateElement: (id, props) {
+            widget.controller.updateElementPropertiesInternal(id, props, createUndoOperation: false);
+          },
+        );
+
+        // 添加undo操作到管理器
+        widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
+
+        print('*** UNDO调试 *** 批量undo优化更新完成 - 创建了单个undo操作');
+      } catch (error) {
+        print('*** UNDO调试 *** 批量undo更新发生错误: $error');
+
+        // 发生错误时，回退到直接更新
+        for (String key in changes.keys) {
+          _updateCharacterTransformProperty(charIndex, key, changes[key]);
+        }
+      }
+    } else {
+      print('*** UNDO调试 *** 批量undo: 无变化，跳过');
     }
   }
 }

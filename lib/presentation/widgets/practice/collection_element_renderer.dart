@@ -68,6 +68,16 @@ class CollectionElementRenderer {
     double textureHeight = 0, // 纹理高度
     WidgetRef? ref,
   }) {
+    // 🔧 DEBUG: 验证buildCollectionLayout是否被调用
+    EditPageLogger.rendererDebug('buildCollectionLayout被调用', data: {
+      'characters': characters,
+      'characterImages': characterImages is Map
+          ? (characterImages).keys.toList()
+          : characterImages?.runtimeType.toString(),
+      'hasCharacterTexture': hasCharacterTexture,
+      'constraints': '${constraints.maxWidth}x${constraints.maxHeight}',
+      'operation': 'build_collection_layout_entry',
+    });
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
     if (ref != null) {
       // 强制清除纹理缓存
@@ -267,6 +277,33 @@ class CollectionElementRenderer {
           lineSpacing: lineSpacing,
         );
 
+        // 🔍 调试日志：检查painter实例创建
+        final customPaintKey = 'custom_paint_${painter.hashCode}';
+        final sizedBoxKey = textureChangeKey.value;
+
+        EditPageLogger.rendererDebug('CollectionRenderer创建Painter', data: {
+          'painterHashCode': painter.hashCode,
+          'customPaintKey': customPaintKey,
+          'sizedBoxKey': sizedBoxKey,
+          'characterImagesHashCode': characterImages.hashCode,
+          'characterImagesKeys': characterImages is Map
+              ? (characterImages).keys.toList()
+              : 'not_map',
+          'textureConfigHashCode': textureConfig.hashCode,
+          'widgetRebuild': 'sizedbox_and_custompaint_keys_updated',
+          'operation': 'collection_renderer_painter_creation',
+        });
+
+        // 🔧 DEBUG: 验证painter类型和方法
+        EditPageLogger.rendererDebug('验证Painter类型和方法', data: {
+          'painterType': painter.runtimeType.toString(),
+          'hasEqualsOperator': painter.runtimeType
+              .toString()
+              .contains('AdvancedCollectionPainter'),
+          'hasHashCode': painter.hashCode != 0,
+          'operation': 'painter_method_verification',
+        });
+
         // 设置重绘回调 - 高级版本
         // 注意：如果 AdvancedCollectionPainter 没有实现 setRepaintCallback方法，这里会抛出异常
         // 在生产环境中应该添加适当的类型检查
@@ -315,18 +352,40 @@ class CollectionElementRenderer {
           'lineSpacing': lineSpacing,
           'enableSoftLineBreak': enableSoftLineBreak
         }); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
+
+        // 🔧 调试：记录widget创建前的最终状态
+        EditPageLogger.rendererDebug('即将创建CustomPaint Widget', data: {
+          'customPaintKey': customPaintKey,
+          'sizedBoxKey': sizedBoxKey,
+          'painterHashCode': painter.hashCode,
+          'widgetSize': '${constraints.maxWidth}x${constraints.maxHeight}',
+          'operation': 'pre_custom_paint_creation',
+        });
+
         return SizedBox(
           key: textureChangeKey, // 使用纹理变化键确保纹理变化时widget重建
           width: constraints.maxWidth,
           height: constraints.maxHeight,
           child: ClipRect(
             child: RepaintBoundary(
-              child: CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: painter,
-                // 确保子组件扩展以填满整个区域
-                child: const SizedBox.expand(),
-              ),
+              child: Builder(builder: (context) {
+                // 🔧 调试：记录CustomPaint创建时机
+                EditPageLogger.rendererDebug('Builder中创建CustomPaint', data: {
+                  'customPaintKey': customPaintKey,
+                  'painterHashCode': painter.hashCode,
+                  'buildContext': context.hashCode,
+                  'operation': 'custom_paint_in_builder',
+                });
+
+                return CustomPaint(
+                  key: ValueKey(
+                      'custom_paint_${painter.hashCode}'), // 🔧 强制使用painter的hashCode作为key
+                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                  painter: painter,
+                  // 确保子组件扩展以填满整个区域
+                  child: const SizedBox.expand(),
+                );
+              }),
             ),
           ),
         );

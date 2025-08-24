@@ -40,6 +40,15 @@ class AdvancedCollectionPainter extends CustomPainter {
   // 用于跟踪已记录日志的字符ID，避免重复日志
   static final Set<String> _loggedCharacters = <String>{};
 
+  // 构造函数调用计数器，用于限制调试日志频率
+  static int _constructorCallCount = 0;
+  static DateTime? _lastConstructorLog;
+  static const Duration _logThrottleDelay = Duration(milliseconds: 500);
+
+  // shouldRepaint调用计数器
+  static int _shouldRepaintCallCount = 0;
+  static DateTime? _lastShouldRepaintLog;
+
   // 基本属性
   final List<String> characters;
   final List<CharacterPosition> positions;
@@ -62,6 +71,9 @@ class AdvancedCollectionPainter extends CustomPainter {
   bool _needsRepaint = false;
   VoidCallback? _repaintCallback;
   String? _cacheKey;
+
+  // 临时存储：在paint过程中使用的过滤后字符图像数据
+  dynamic _currentFilteredCharacterImages;
 
   // 服务
   late ImageCacheService _imageCacheService;
@@ -86,12 +98,90 @@ class AdvancedCollectionPainter extends CustomPainter {
   }) {
     _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
     _characterImageService = ref.read(characterImageServiceProvider);
+
+    // 🔍 调试日志：构造函数调用（限频）
+    _constructorCallCount++;
+    final now = DateTime.now();
+    final shouldLog = _lastConstructorLog == null ||
+        now.difference(_lastConstructorLog!) > _logThrottleDelay;
+
+    if (shouldLog) {
+      EditPageLogger.rendererDebug('AdvancedCollectionPainter构造函数', data: {
+        'callCount': _constructorCallCount,
+        'charactersLength': characters.length,
+        'positionsLength': positions.length,
+        'characterImagesType': characterImages.runtimeType.toString(),
+        'characterImagesData': characterImages is Map
+            ? (characterImages as Map).keys.toList()
+            : 'not_map',
+        'painterHashCode': hashCode,
+        'operation': 'painter_constructor_throttled',
+      });
+      _lastConstructorLog = now;
+    }
+  }
+
+  /// 调试用：显示characterImages内容的简要信息
+  Map<String, dynamic> _debugCharacterImagesContent(Map characterImages) {
+    final debug = <String, dynamic>{};
+    for (final entry in characterImages.entries) {
+      if (entry.value is Map) {
+        final imageInfo = entry.value as Map;
+        final transform = imageInfo['transform'] as Map?;
+        debug[entry.key.toString()] = {
+          'characterId': imageInfo['characterId'],
+          'transform': transform != null
+              ? {
+                  'characterScale': transform['characterScale'],
+                  'offsetX': transform['offsetX'],
+                  'offsetY': transform['offsetY'],
+                }
+              : null,
+        };
+      }
+    }
+    return debug;
   }
 
   /// 主绘制方法
   @override
   void paint(Canvas canvas, Size size) {
     try {
+      // � 过滤掉强制重绘标志，避免影响实际渲染
+      dynamic filteredCharacterImages = characterImages;
+      if (characterImages is Map &&
+          characterImages.containsKey('_forceRepaintTimestamp')) {
+        filteredCharacterImages = Map.from(characterImages);
+        (filteredCharacterImages as Map).remove('_forceRepaintTimestamp');
+        EditPageLogger.rendererDebug('已过滤强制重绘标志', data: {
+          'operation': 'filter_force_repaint_timestamp',
+        });
+      }
+
+      // 保存过滤后的数据，供其他方法使用
+      _currentFilteredCharacterImages = filteredCharacterImages;
+
+      // �🔍 DEBUG: 详细输出characterImages结构
+      if (filteredCharacterImages is Map) {
+        EditPageLogger.rendererDebug('Paint方法开始 - characterImages详细结构', data: {
+          'characterImagesKeys': filteredCharacterImages.keys.toList(),
+          'characterImagesValues': filteredCharacterImages
+              .map((k, v) => MapEntry(k.toString(), v.runtimeType.toString())),
+          'operation': 'paint_method_character_images_debug',
+        });
+
+        // characterImages现在应该直接是字符图像数据，如果仍有嵌套说明数据传递有问题
+        if (filteredCharacterImages.containsKey('characterImages')) {
+          final nested = filteredCharacterImages['characterImages'];
+          EditPageLogger.rendererDebug(
+              '⚠️ Paint方法中发现嵌套characterImages，数据传递可能有问题',
+              data: {
+                'nestedType': nested.runtimeType.toString(),
+                'operation': 'unexpected_nested_structure_in_paint',
+              });
+        }
+      }
+
       // 计算实际可用区域（考虑内边距）
       final availableRect = Rect.fromLTWH(padding, padding,
           size.width - padding * 2, size.height - padding * 2);
@@ -153,6 +243,32 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant AdvancedCollectionPainter oldDelegate) {
+    // 🔍 调试日志：shouldRepaint调用（限频）
+    _shouldRepaintCallCount++;
+    final now = DateTime.now();
+    final shouldLogRepaint = _lastShouldRepaintLog == null ||
+        now.difference(_lastShouldRepaintLog!) > _logThrottleDelay;
+
+    if (shouldLogRepaint) {
+      EditPageLogger.rendererDebug('shouldRepaint被调用', data: {
+        'callCount': _shouldRepaintCallCount,
+        'thisHashCode': hashCode,
+        'otherHashCode': oldDelegate.hashCode,
+        'operation': 'should_repaint_called_throttled',
+      });
+      _lastShouldRepaintLog = now;
+    }
+
+    // 🔧 强制触发：如果hashCode不同，立即返回true
+    if (hashCode != oldDelegate.hashCode) {
+      EditPageLogger.rendererDebug('检测到hashCode差异，强制重绘', data: {
+        'thisHashCode': hashCode,
+        'otherHashCode': oldDelegate.hashCode,
+        'operation': 'hashcode_diff_force_repaint',
+      });
+      return true;
+    }
+
     // 优先检查纹理配置变化 - 这是最关键的
     bool textureChanged = false;
 
@@ -183,19 +299,113 @@ class AdvancedCollectionPainter extends CustomPainter {
     }
 
     // 检查其他基本属性变化
-    bool basicChanged = oldDelegate.characters != characters ||
-        oldDelegate.positions != positions ||
-        oldDelegate.fontSize != fontSize ||
-        oldDelegate.characterImages != characterImages ||
-        oldDelegate.writingMode != writingMode ||
-        oldDelegate.textAlign != textAlign ||
-        oldDelegate.verticalAlign != verticalAlign ||
-        oldDelegate.enableSoftLineBreak != enableSoftLineBreak ||
-        oldDelegate.padding != padding ||
-        oldDelegate.letterSpacing != letterSpacing ||
-        oldDelegate.lineSpacing != lineSpacing;
+    bool charactersChanged = oldDelegate.characters != characters;
+    bool positionsChanged = oldDelegate.positions != positions;
+    bool fontSizeChanged = oldDelegate.fontSize != fontSize;
 
-    return basicChanged;
+    // 🔍 特别检查characterImages - 使用更详细的比较
+    bool characterImagesChanged = false;
+    try {
+      if (oldDelegate.characterImages == null && characterImages != null) {
+        characterImagesChanged = true;
+        EditPageLogger.rendererDebug('字符图像变化：从null变为非null');
+      } else if (oldDelegate.characterImages != null &&
+          characterImages == null) {
+        characterImagesChanged = true;
+        EditPageLogger.rendererDebug('字符图像变化：从非null变为null');
+      } else if (oldDelegate.characterImages != null &&
+          characterImages != null) {
+        // 🔥 检查强制重绘标志
+        bool forceRepaintChanged = false;
+        if (characterImages is Map &&
+            characterImages.containsKey('_forceRepaintTimestamp')) {
+          final newTimestamp = characterImages['_forceRepaintTimestamp'];
+          final oldTimestamp = (oldDelegate.characterImages is Map)
+              ? (oldDelegate.characterImages as Map)['_forceRepaintTimestamp']
+              : null;
+          if (newTimestamp != oldTimestamp) {
+            forceRepaintChanged = true;
+            EditPageLogger.rendererDebug('检测到强制重绘标志变化', data: {
+              'newTimestamp': newTimestamp,
+              'oldTimestamp': oldTimestamp,
+              'operation': 'force_repaint_timestamp_changed',
+            });
+          }
+        }
+
+        characterImagesChanged = forceRepaintChanged ||
+            !_deepEqual(oldDelegate.characterImages, characterImages);
+        if (characterImagesChanged) {
+          EditPageLogger.rendererDebug('字符图像变化：深度比较检测到变化', data: {
+            'oldKeys':
+                (oldDelegate.characterImages as Map?)?.keys.toList() ?? [],
+            'newKeys': (characterImages as Map?)?.keys.toList() ?? [],
+            'forceRepaintChanged': forceRepaintChanged,
+            'operation': 'character_images_deep_changed',
+          });
+        }
+      }
+    } catch (e) {
+      EditPageLogger.rendererError('字符图像比较异常', error: e);
+      characterImagesChanged = true; // 发生异常时强制重绘
+    }
+
+    bool writingModeChanged = oldDelegate.writingMode != writingMode;
+    bool textAlignChanged = oldDelegate.textAlign != textAlign;
+    bool verticalAlignChanged = oldDelegate.verticalAlign != verticalAlign;
+    bool enableSoftLineBreakChanged =
+        oldDelegate.enableSoftLineBreak != enableSoftLineBreak;
+    bool paddingChanged = oldDelegate.padding != padding;
+    bool letterSpacingChanged = oldDelegate.letterSpacing != letterSpacing;
+    bool lineSpacingChanged = oldDelegate.lineSpacing != lineSpacing;
+
+    bool basicChanged = charactersChanged ||
+        positionsChanged ||
+        fontSizeChanged ||
+        characterImagesChanged ||
+        writingModeChanged ||
+        textAlignChanged ||
+        verticalAlignChanged ||
+        enableSoftLineBreakChanged ||
+        paddingChanged ||
+        letterSpacingChanged ||
+        lineSpacingChanged;
+
+    final shouldRepaint = basicChanged || textureChanged || _needsRepaint;
+
+    // 只在需要重绘或有重要变化时记录详情
+    if (shouldRepaint || shouldLogRepaint) {
+      EditPageLogger.rendererDebug('shouldRepaint检查详情', data: {
+        'callCount': _shouldRepaintCallCount,
+        'charactersChanged': charactersChanged,
+        'positionsChanged': positionsChanged,
+        'fontSizeChanged': fontSizeChanged,
+        'characterImagesChanged': characterImagesChanged,
+        'writingModeChanged': writingModeChanged,
+        'textAlignChanged': textAlignChanged,
+        'verticalAlignChanged': verticalAlignChanged,
+        'enableSoftLineBreakChanged': enableSoftLineBreakChanged,
+        'paddingChanged': paddingChanged,
+        'letterSpacingChanged': letterSpacingChanged,
+        'lineSpacingChanged': lineSpacingChanged,
+        'textureChanged': textureChanged,
+        'needsRepaint': _needsRepaint,
+        'basicChanged': basicChanged,
+        'finalResult': shouldRepaint,
+        'operation': 'should_repaint_detailed_check_conditional',
+      });
+    }
+
+    // 只在需要重绘时记录结果
+    if (shouldRepaint) {
+      EditPageLogger.rendererDebug('shouldRepaint结果：需要重绘', data: {
+        'result': true,
+        'callCount': _shouldRepaintCallCount,
+        'operation': 'should_repaint_result_true',
+      });
+    }
+
+    return shouldRepaint;
   }
 
   /// 根据FitMode计算处理后的纹理尺寸
@@ -276,6 +486,10 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 绘制字符图像
   void _drawCharacterImage(
       Canvas canvas, Rect rect, CharacterPosition position, ui.Image image) {
+    // 使用过滤后的字符图像数据
+    final characterImagesData =
+        _currentFilteredCharacterImages ?? characterImages;
+
     final paint = Paint()
       ..filterQuality = FilterQuality.high
       ..isAntiAlias = true;
@@ -284,31 +498,192 @@ class AdvancedCollectionPainter extends CustomPainter {
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
 
+    // 获取字符变换信息
+    double characterScale = 1.0;
+    double offsetX = 0.0;
+    double offsetY = 0.0;
+
+    // 从characterImages中获取变换信息
+    if (characterImagesData is Map) {
+      final String indexKey = position.originalIndex.toString();
+      Map<dynamic, dynamic> targetMap = characterImagesData;
+
+      // 🔍 调试：检查characterImages结构
+      EditPageLogger.rendererDebug('characterImages结构检查', data: {
+        'component': 'renderer',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'char': position.char,
+        'index': position.originalIndex,
+        'indexKey': indexKey,
+        'characterImagesType': characterImagesData.runtimeType.toString(),
+        'characterImagesKeys': characterImagesData.keys.toList(),
+        'operation': 'character_images_structure_check',
+      });
+
+      // characterImages现在应该直接是字符图像数据，不再有嵌套结构
+      // 如果仍有嵌套，说明数据传递可能存在问题，记录但继续处理
+      if (characterImagesData.containsKey('characterImages')) {
+        final subMap = characterImagesData['characterImages'];
+        if (subMap is Map) {
+          targetMap = subMap;
+          EditPageLogger.rendererDebug('⚠️ 仍然发现嵌套characterImages结构，数据传递可能存在问题',
+              data: {
+                'component': 'renderer',
+                'timestamp': DateTime.now().millisecondsSinceEpoch,
+                'char': position.char,
+                'index': position.originalIndex,
+                'nestedKeys': subMap.keys.toList(),
+                'operation': 'unexpected_nested_structure_found',
+              });
+        }
+      }
+
+      // 🔍 调试：查找字符数据
+      EditPageLogger.rendererDebug('查找字符数据', data: {
+        'component': 'renderer',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'char': position.char,
+        'index': position.originalIndex,
+        'indexKey': indexKey,
+        'targetMapKeys': targetMap.keys.toList(),
+        'hasTargetKey': targetMap.containsKey(indexKey),
+        'operation': 'search_character_data',
+      });
+
+      // 获取字符图像信息
+      if (targetMap.containsKey(indexKey)) {
+        final imageData = targetMap[indexKey];
+
+        // 🔍 调试：字符图像数据结构
+        EditPageLogger.rendererDebug('字符图像数据结构', data: {
+          'component': 'renderer',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+          'char': position.char,
+          'index': position.originalIndex,
+          'imageDataType': imageData.runtimeType.toString(),
+          'imageDataKeys': (imageData is Map) ? imageData.keys.toList() : [],
+          'hasTransform':
+              (imageData is Map) ? imageData.containsKey('transform') : false,
+          'operation': 'character_image_data_structure',
+        });
+
+        if (imageData is Map && imageData.containsKey('transform')) {
+          final transform = imageData['transform'];
+
+          // 🔍 调试：transform数据结构
+          EditPageLogger.rendererDebug('transform数据结构', data: {
+            'component': 'renderer',
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+            'char': position.char,
+            'index': position.originalIndex,
+            'transformType': transform.runtimeType.toString(),
+            'transformKeys': (transform is Map) ? transform.keys.toList() : [],
+            'transformValues':
+                (transform is Map) ? transform.values.toList() : [],
+            'operation': 'transform_data_structure',
+          });
+
+          if (transform is Map) {
+            characterScale =
+                (transform['characterScale'] as num?)?.toDouble() ?? 1.0;
+            offsetX = (transform['offsetX'] as num?)?.toDouble() ?? 0.0;
+            offsetY = (transform['offsetY'] as num?)?.toDouble() ?? 0.0;
+
+            // 🔍 调试日志：确认变换数据被正确读取
+            EditPageLogger.rendererDebug('字符变换数据读取成功', data: {
+              'char': position.char,
+              'index': position.originalIndex,
+              'indexKey': indexKey,
+              'characterScale': characterScale,
+              'offsetX': offsetX,
+              'offsetY': offsetY,
+              'rectSize': rect.size.toString(),
+              'rectCenter': rect.center.toString(),
+              'scaledSize': (rect.width * characterScale).toString(),
+              'operation': 'character_transform_data_read_success',
+            });
+          } else {
+            EditPageLogger.rendererDebug('字符变换transform不是Map', data: {
+              'char': position.char,
+              'index': position.originalIndex,
+              'transformType': transform.runtimeType.toString(),
+              'operation': 'character_transform_invalid',
+            });
+          }
+        } else {
+          EditPageLogger.rendererDebug('字符图像数据缺少transform', data: {
+            'char': position.char,
+            'index': position.originalIndex,
+            'imageDataKeys': (imageData is Map) ? imageData.keys.toList() : [],
+            'operation': 'character_transform_missing',
+          });
+        }
+      } else {
+        // 🔍 调试日志：索引键不存在
+        EditPageLogger.rendererDebug('字符变换索引键不存在', data: {
+          'char': position.char,
+          'index': position.originalIndex,
+          'indexKey': indexKey,
+          'availableKeys': targetMap.keys.toList(),
+          'operation': 'character_transform_key_missing',
+        });
+      }
+    }
+
+    // 保存画布状态
+    canvas.save();
+
+    // 计算应用字符缩放后的目标矩形
+    final scaledSize = rect.width * characterScale;
+    final scaledRect = Rect.fromCenter(
+      center: rect.center.translate(offsetX, offsetY),
+      width: scaledSize,
+      height: scaledSize,
+    );
+
+    // 🔍 详细的缩放调试日志
+    EditPageLogger.rendererDebug('字符缩放应用详情', data: {
+      'char': position.char,
+      'index': position.originalIndex,
+      'originalRect':
+          '${rect.left.toStringAsFixed(1)},${rect.top.toStringAsFixed(1)} ${rect.width.toStringAsFixed(1)}x${rect.height.toStringAsFixed(1)}',
+      'characterScale': characterScale,
+      'scaledSize': scaledSize.toStringAsFixed(1),
+      'scaledRect':
+          '${scaledRect.left.toStringAsFixed(1)},${scaledRect.top.toStringAsFixed(1)} ${scaledRect.width.toStringAsFixed(1)}x${scaledRect.height.toStringAsFixed(1)}',
+      'offsetX': offsetX,
+      'offsetY': offsetY,
+      'centerTranslation': '(${offsetX}, ${offsetY})',
+      'operation': 'character_scale_application_details',
+    });
+
     // 检查是否需要应用颜色处理
     final bool needsColorProcessing = position.fontColor != Colors.black;
 
     // 如果不需要任何颜色处理，直接绘制原始图像
     if (!needsColorProcessing) {
-      canvas.drawImageRect(image, srcRect, rect, paint);
+      canvas.drawImageRect(image, srcRect, scaledRect, paint);
+      canvas.restore();
       return;
     }
 
     // 需要进行颜色处理
-    canvas.saveLayer(rect, Paint());
+    canvas.saveLayer(scaledRect, Paint());
 
     // 创建基础绘制配置
     final basePaint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high;
 
-    canvas.drawImageRect(image, srcRect, rect, basePaint);
+    canvas.drawImageRect(image, srcRect, scaledRect, basePaint);
     canvas.drawRect(
-        rect,
+        scaledRect,
         Paint()
           ..color = position.fontColor
           ..blendMode = BlendMode.srcIn);
 
     // 完成绘制
+    canvas.restore();
     canvas.restore();
   }
 
@@ -387,28 +762,39 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   /// 查找字符图像
   ui.Image? _findCharacterImage(String char, int index) {
+    // 使用过滤后的字符图像数据
+    final characterImagesData =
+        _currentFilteredCharacterImages ?? characterImages;
+
     // 如果没有字符图像，直接返回null
-    if (characterImages == null) {
+    if (characterImagesData == null) {
       return null;
     }
 
     try {
       // 如果是图像对象，直接返回
-      if (characterImages is ui.Image) {
-        return characterImages;
+      if (characterImagesData is ui.Image) {
+        return characterImagesData;
       }
 
       // 处理用户的JSON结构 - 字符图像是一个以索引为键的Map
-      if (characterImages is Map) {
+      if (characterImagesData is Map) {
         // 尝试使用字符索引作为键 - 使用原始位置索引
         final String indexKey = index.toString();
 
-        // 首先检查是否有嵌套的characterImages结构
-        Map<dynamic, dynamic> targetMap = characterImages;
-        if (characterImages.containsKey('characterImages')) {
-          final subMap = characterImages['characterImages'];
+        // characterImages现在应该直接是字符数据，不再有嵌套结构
+        Map<dynamic, dynamic> targetMap = characterImagesData;
+        if (characterImagesData.containsKey('characterImages')) {
+          final subMap = characterImagesData['characterImages'];
           if (subMap is Map) {
             targetMap = subMap;
+            EditPageLogger.rendererDebug(
+                '⚠️ _loadCharacterImage中发现嵌套结构，数据传递可能有问题',
+                data: {
+                  'index': index,
+                  'char': char,
+                  'operation': 'unexpected_nested_in_load_character_image',
+                });
           }
         }
 
@@ -439,11 +825,12 @@ class AdvancedCollectionPainter extends CustomPainter {
 
                 // 在加载之前，先检查字符是否仍然存在
                 // 如果字符已被删除，直接返回null以触发fallback文本渲染
-                _characterImageService.hasCharacterImage(
-                  characterId,
-                  imageData['type'] ?? 'square-binary',
-                  imageData['format'] ?? 'png-binary'
-                ).then((exists) {
+                _characterImageService
+                    .hasCharacterImage(
+                        characterId,
+                        imageData['type'] ?? 'square-binary',
+                        imageData['format'] ?? 'png-binary')
+                    .then((exists) {
                   if (!exists) {
                     // 字符已被删除，清除缓存并触发重绘以显示fallback
                     _imageCacheService.clearCharacterImageCaches(characterId);
@@ -653,6 +1040,34 @@ class AdvancedCollectionPainter extends CustomPainter {
         }
       }
     });
+  }
+
+  /// 深度比较两个对象是否相等
+  bool _deepEqual(dynamic obj1, dynamic obj2) {
+    if (identical(obj1, obj2)) return true;
+    if (obj1 == null || obj2 == null) return obj1 == obj2;
+
+    if (obj1.runtimeType != obj2.runtimeType) return false;
+
+    if (obj1 is Map && obj2 is Map) {
+      if (obj1.length != obj2.length) return false;
+      for (final key in obj1.keys) {
+        if (!obj2.containsKey(key) || !_deepEqual(obj1[key], obj2[key])) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (obj1 is List && obj2 is List) {
+      if (obj1.length != obj2.length) return false;
+      for (int i = 0; i < obj1.length; i++) {
+        if (!_deepEqual(obj1[i], obj2[i])) return false;
+      }
+      return true;
+    }
+
+    return obj1 == obj2;
   }
 
   /// 深度比较两个Map是否相等
@@ -901,5 +1316,99 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 直接拉伸到整个背景区域
     canvas.drawImageRect(image, srcRect, rect, paint);
     canvas.restore();
+  }
+
+  /// 🔧 重写相等性比较，确保Flutter能正确检测painter变化
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! AdvancedCollectionPainter) return false;
+
+    final result =
+        // 基本属性比较
+        _listEquals(characters, other.characters) &&
+            _listEquals(positions, other.positions) &&
+            fontSize == other.fontSize &&
+            _deepEqual(characterImages, other.characterImages) &&
+            textureConfig == other.textureConfig &&
+            // 布局参数比较
+            writingMode == other.writingMode &&
+            textAlign == other.textAlign &&
+            verticalAlign == other.verticalAlign &&
+            enableSoftLineBreak == other.enableSoftLineBreak &&
+            padding == other.padding &&
+            letterSpacing == other.letterSpacing &&
+            lineSpacing == other.lineSpacing;
+
+    // 🔍 调试日志：相等性比较结果
+    EditPageLogger.rendererDebug('Painter相等性比较', data: {
+      'result': result,
+      'thisHashCode': hashCode,
+      'otherHashCode': other.hashCode,
+      'characterImagesEqual':
+          _deepEqual(characterImages, other.characterImages),
+      'operation': 'painter_equality_check',
+    });
+
+    return result;
+  }
+
+  /// 🔧 重写hashCode，确保相等的painter有相同的hash值
+  @override
+  int get hashCode {
+    return Object.hashAll([
+      // 基本属性hash
+      Object.hashAll(characters),
+      Object.hashAll(
+          positions.map((p) => Object.hashAll([p.char, p.x, p.y, p.size]))),
+      fontSize,
+      _computeCharacterImagesHash(characterImages),
+      textureConfig.hashCode,
+      // 布局参数hash
+      writingMode,
+      textAlign,
+      verticalAlign,
+      enableSoftLineBreak,
+      padding,
+      letterSpacing,
+      lineSpacing,
+    ]);
+  }
+
+  /// 计算characterImages的hash值
+  int _computeCharacterImagesHash(dynamic images) {
+    if (images == null) return 0;
+    if (images is Map) {
+      final sortedEntries = images.entries.toList()
+        ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+      return Object.hashAll(sortedEntries
+          .map((e) => Object.hashAll([e.key, _computeValueHash(e.value)])));
+    }
+    return images.hashCode;
+  }
+
+  /// 递归计算复杂值的hash
+  int _computeValueHash(dynamic value) {
+    if (value == null) return 0;
+    if (value is Map) {
+      final sortedEntries = value.entries.toList()
+        ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+      return Object.hashAll(sortedEntries
+          .map((e) => Object.hashAll([e.key, _computeValueHash(e.value)])));
+    }
+    if (value is List) {
+      return Object.hashAll(value.map(_computeValueHash));
+    }
+    return value.hashCode;
+  }
+
+  /// 列表相等性比较
+  bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }

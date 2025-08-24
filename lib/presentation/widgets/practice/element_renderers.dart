@@ -17,6 +17,18 @@ class ElementRenderers {
   static Widget buildCollectionElement(
       BuildContext context, Map<String, dynamic> element,
       {WidgetRef? ref, bool isPreviewMode = false}) {
+    // 🔧 DEBUG: 验证buildCollectionElement是否被调用
+    EditPageLogger.rendererDebug('buildCollectionElement被调用', data: {
+      'elementId': element['id'],
+      'element': element.keys.toList(),
+      'content': element['content'] is Map
+          ? (element['content'] as Map).keys.toList()
+          : 'not_map',
+      'isPreviewMode': isPreviewMode,
+      'hasRef': ref != null,
+      'operation': 'build_collection_element_entry',
+    });
+
     final startTime = DateTime.now();
 
     // 🚀 记录性能监控
@@ -170,7 +182,8 @@ class ElementRenderers {
                 lineSpacing: lineSpacing,
                 textAlign: textAlign,
                 verticalAlign: verticalAlign,
-                characterImages: content, // 传递完整的 content 以包含所有纹理相关设置
+                characterImages: content['characterImages'] ??
+                    {}, // 传递正确的characterImages数据而不是整个content
                 constraints: constraints,
                 padding: padding,
                 fontColor: safeFontColorStr,
@@ -262,8 +275,8 @@ class ElementRenderers {
                     buildTextElement(child, isPreviewMode: isPreviewMode);
                 break;
               case 'image':
-                childWidget =
-                    buildImageElement(context, child, isPreviewMode: isPreviewMode);
+                childWidget = buildImageElement(context, child,
+                    isPreviewMode: isPreviewMode);
                 break;
               case 'collection':
                 childWidget = buildCollectionElement(context, child,
@@ -332,9 +345,9 @@ class ElementRenderers {
   }
 
   /// 构建图片元素
-  static Widget buildImageElement(BuildContext context, Map<String, dynamic> element,
+  static Widget buildImageElement(
+      BuildContext context, Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
-    
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
@@ -344,8 +357,10 @@ class ElementRenderers {
     final imageAlignment = content['alignment'] as String? ?? 'center';
 
     // 🔧 新增：获取翻转参数（现在在画布渲染阶段处理）
-    final isFlippedHorizontally = content['isFlippedHorizontally'] as bool? ?? false;
-    final isFlippedVertically = content['isFlippedVertically'] as bool? ?? false;
+    final isFlippedHorizontally =
+        content['isFlippedHorizontally'] as bool? ?? false;
+    final isFlippedVertically =
+        content['isFlippedVertically'] as bool? ?? false;
 
     // 记录图像元素基本信息（仅在需要时）
     EditPageLogger.rendererDebug('构建图像元素', data: {
@@ -370,7 +385,7 @@ class ElementRenderers {
     // 处理binarizedImageData，可能是Uint8List或List<int>
     Uint8List? binarizedImageData;
     final dynamic rawBinarizedData = content['binarizedImageData'];
-    
+
     // 记录二值化数据状态
     if (rawBinarizedData != null) {
       EditPageLogger.rendererDebug('二值化数据检测', data: {
@@ -379,7 +394,7 @@ class ElementRenderers {
         'enabled': content['isBinarizationEnabled'] ?? false,
       });
     }
-    
+
     if (rawBinarizedData is Uint8List) {
       binarizedImageData = rawBinarizedData;
     } else if (rawBinarizedData is List<int>) {
@@ -396,7 +411,7 @@ class ElementRenderers {
         });
       }
     }
-    
+
     // 添加调试信息
     if (binarizedImageData != null) {
       EditPageLogger.rendererDebug('检测到二值化图像数据', data: {
@@ -424,9 +439,10 @@ class ElementRenderers {
         rawImageData == null &&
         transformedImageData == null &&
         binarizedImageData == null) {
-      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
+      return _buildImagePlaceholder(
+          context, AppLocalizations.of(context).selectImage);
     } // 优先级：二值化图像数据 > 转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
-    
+
     Widget imageWidget = _buildImageWidget(
       context: context,
       imageUrl: transformedImageUrl ?? imageUrl,
@@ -445,7 +461,7 @@ class ElementRenderers {
         'horizontal': isFlippedHorizontally,
         'vertical': isFlippedVertically,
       });
-      
+
       imageWidget = Transform(
         alignment: Alignment.center,
         transform: Matrix4.identity()
@@ -456,7 +472,7 @@ class ElementRenderers {
         child: imageWidget,
       );
     }
-    
+
     return Container(
         width: double.infinity,
         height: double.infinity,
@@ -580,7 +596,8 @@ class ElementRenderers {
   }
 
   /// 构建图片占位符组件
-  static Widget _buildImagePlaceholder(BuildContext context, String placeholderText) {
+  static Widget _buildImagePlaceholder(
+      BuildContext context, String placeholderText) {
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -597,8 +614,8 @@ class ElementRenderers {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.image_outlined, 
-            size: 48, 
+            Icons.image_outlined,
+            size: 48,
             color: Colors.grey.shade400,
           ),
           const SizedBox(height: 8),
@@ -643,7 +660,7 @@ class ElementRenderers {
         'imageUrl': imageUrl,
         'priority': 'highest'
       });
-      
+
       return Image.memory(
         binarizedImageData,
         fit: fit,
@@ -726,19 +743,16 @@ class ElementRenderers {
 
     // 最后使用URL（文件或网络，原始来源）
     if (imageUrl.isEmpty) {
-      EditPageLogger.rendererDebug('❌ 没有可用的图像数据', data: {
-        'imageUrl': imageUrl,
-        'priority': 'none'
-      });
-      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
+      EditPageLogger.rendererDebug('❌ 没有可用的图像数据',
+          data: {'imageUrl': imageUrl, 'priority': 'none'});
+      return _buildImagePlaceholder(
+          context, AppLocalizations.of(context).selectImage);
     }
 
     // 检查是否是本地文件路径（原始来源）
     if (imageUrl.startsWith('file://')) {
-      EditPageLogger.rendererDebug('🗂️ 使用本地文件URL', data: {
-        'imageUrl': imageUrl,
-        'priority': 'lowest'
-      });
+      EditPageLogger.rendererDebug('🗂️ 使用本地文件URL',
+          data: {'imageUrl': imageUrl, 'priority': 'lowest'});
       // 提取文件路径（去掉file://前缀）
       final filePath = imageUrl.substring(7);
 
@@ -754,11 +768,10 @@ class ElementRenderers {
           return _buildImageErrorWidget('加载本地图片失败');
         },
       );
-    } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      EditPageLogger.rendererDebug('🌐 使用网络图片URL', data: {
-        'imageUrl': imageUrl,
-        'priority': 'lowest'
-      });
+    } else if (imageUrl.startsWith('http://') ||
+        imageUrl.startsWith('https://')) {
+      EditPageLogger.rendererDebug('🌐 使用网络图片URL',
+          data: {'imageUrl': imageUrl, 'priority': 'lowest'});
       // 只有当URL明确是HTTP/HTTPS协议时才尝试加载网络图片
       return Image.network(
         imageUrl,
@@ -772,11 +785,10 @@ class ElementRenderers {
       );
     } else {
       // 对于其他类型的URL或无效URL，显示占位符而不是错误
-      EditPageLogger.rendererDebug('❓ 未识别的图片URL格式，显示占位符', data: {
-        'imageUrl': imageUrl,
-        'urlType': 'unknown'
-      });
-      return _buildImagePlaceholder(context, AppLocalizations.of(context).selectImage);
+      EditPageLogger.rendererDebug('❓ 未识别的图片URL格式，显示占位符',
+          data: {'imageUrl': imageUrl, 'urlType': 'unknown'});
+      return _buildImagePlaceholder(
+          context, AppLocalizations.of(context).selectImage);
     }
   }
 
@@ -846,7 +858,8 @@ class ElementRenderers {
             '无效的颜色格式',
             data: {'colorStr': colorStr},
           );
-          return Colors.transparent; // Invalid format, use transparent instead of black
+          return Colors
+              .transparent; // Invalid format, use transparent instead of black
         }
       } else {
         buffer.write('ff'); // Default full opacity
