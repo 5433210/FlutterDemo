@@ -909,6 +909,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get collectionElement => '収集要素';
 
   @override
+  String get collectionTextElement => 'テキスト';
+
+  @override
+  String get candidateCharacters => '候補文字';
+
+  @override
+  String get characterScale => '文字スケール';
+
+  @override
+  String get positionOffset => '位置オフセット';
+
+  @override
+  String get scale => '拡大縮小';
+
+  @override
+  String get xOffset => 'Xオフセット';
+
+  @override
+  String get yOffset => 'Yオフセット';
+
+  @override
+  String get reset => 'リセット';
+
+  @override
   String get collectionIdCannotBeEmpty => '収集IDは空にできません';
 
   @override
@@ -3515,9 +3539,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reselectFile => 'ファイルを再選択';
 
   @override
-  String get reset => 'リセット';
-
-  @override
   String resetCategoryConfig(Object category) {
     return '$categoryの設定をリセット';
   }
@@ -3674,9 +3695,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get savingToStorage => 'ストレージに保存中...';
-
-  @override
-  String get scale => '拡大縮小';
 
   @override
   String get scannedBackupFileDescription => 'スキャンで検出されたバックアップファイル';

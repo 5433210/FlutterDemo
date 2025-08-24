@@ -909,6 +909,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collectionElement => '集字元素';
 
   @override
+  String get collectionTextElement => '文本';
+
+  @override
+  String get candidateCharacters => '候选集字';
+
+  @override
+  String get characterScale => '字符缩放';
+
+  @override
+  String get positionOffset => '位置偏移';
+
+  @override
+  String get scale => '缩放';
+
+  @override
+  String get xOffset => 'X偏移';
+
+  @override
+  String get yOffset => 'Y偏移';
+
+  @override
+  String get reset => '重置';
+
+  @override
   String get collectionIdCannotBeEmpty => '集字ID不能为空';
 
   @override
@@ -3515,9 +3539,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reselectFile => '重新选择文件';
 
   @override
-  String get reset => '重置';
-
-  @override
   String resetCategoryConfig(Object category) {
     return '重置$category配置';
   }
@@ -3674,9 +3695,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get savingToStorage => '保存到存储中...';
-
-  @override
-  String get scale => '缩放';
 
   @override
   String get scannedBackupFileDescription => '扫描发现的备份文件';
@@ -5415,6 +5433,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get collectionElement => '集字元素';
+
+  @override
+  String get collectionTextElement => '文本';
+
+  @override
+  String get candidateCharacters => '候選集字';
+
+  @override
+  String get characterScale => '字符縮放';
+
+  @override
+  String get positionOffset => '位置偏移';
+
+  @override
+  String get scale => '縮放';
+
+  @override
+  String get xOffset => 'X偏移';
+
+  @override
+  String get yOffset => 'Y偏移';
+
+  @override
+  String get reset => '重設';
 
   @override
   String get collectionIdCannotBeEmpty => '集字 ID 不能為空';
@@ -8023,9 +8065,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get reselectFile => '重新選擇檔案';
 
   @override
-  String get reset => '重設';
-
-  @override
   String resetCategoryConfig(Object category) {
     return '重設 $category 設定';
   }
@@ -8182,9 +8221,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get savingToStorage => '正在儲存至儲存空間...';
-
-  @override
-  String get scale => '縮放';
 
   @override
   String get scannedBackupFileDescription => '掃描發現的備份檔案';

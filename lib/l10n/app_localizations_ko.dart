@@ -909,6 +909,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get collectionElement => '수집 요소';
 
   @override
+  String get collectionTextElement => '텍스트';
+
+  @override
+  String get candidateCharacters => '후보 문자';
+
+  @override
+  String get characterScale => '문자 크기';
+
+  @override
+  String get positionOffset => '위치 오프셋';
+
+  @override
+  String get scale => '크기 조정';
+
+  @override
+  String get xOffset => 'X 오프셋';
+
+  @override
+  String get yOffset => 'Y 오프셋';
+
+  @override
+  String get reset => '재설정';
+
+  @override
   String get collectionIdCannotBeEmpty => '수집 ID는 비워둘 수 없습니다';
 
   @override
@@ -3515,9 +3539,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reselectFile => '파일 다시 선택';
 
   @override
-  String get reset => '재설정';
-
-  @override
   String resetCategoryConfig(Object category) {
     return '$category 구성 재설정';
   }
@@ -3674,9 +3695,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get savingToStorage => '저장소에 저장 중...';
-
-  @override
-  String get scale => '크기 조정';
 
   @override
   String get scannedBackupFileDescription => '스캔에서 발견된 백업 파일';

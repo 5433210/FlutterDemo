@@ -15,6 +15,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
   final List<CharacterEntity> candidateCharacters;
   final bool isLoading;
   final Function(CharacterEntity) onCharacterSelected;
+  final Widget? additionalContent; // 新增：用於放置額外內容（如字符變換控制器）
 
   const M3CandidateCharactersPanel({
     Key? key,
@@ -23,6 +24,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     required this.candidateCharacters,
     required this.isLoading,
     required this.onCharacterSelected,
+    this.additionalContent, // 新增參數
   }) : super(key: key);
 
   @override
@@ -127,26 +129,6 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Display control buttons
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              alignment: WrapAlignment.start,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  '${l10n.displayMode}:',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-
-                // Character inversion feature removed
-              ],
-            ),
-          ),
 
           // Character grid
           Wrap(
@@ -175,6 +157,12 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
               },
             ),
           ),
+          
+          // 添加額外內容（如字符變換控制器）
+          if (additionalContent != null) ...[
+            const SizedBox(height: 16.0),
+            additionalContent!,
+          ],
         ],
       ),
     );

@@ -95,44 +95,12 @@ class _M3CharacterTransformControllerState
     final offsetX = (transform['offsetX'] as num?)?.toDouble() ?? 0.0;
     final offsetY = (transform['offsetY'] as num?)?.toDouble() ?? 0.0;
 
-    final selectedChar = characters[widget.selectedCharIndex];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 标题和当前选中字符显示
-        Row(
-          children: [
-            Text(
-              '当前字符：',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(width: 8.0),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(6.0),
-              ),
-              child: Text(
-                '"$selectedChar" (索引: ${widget.selectedCharIndex})',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12.0),
-
         // 字符缩放控制
         Text(
-          '字符缩放 (${(characterScale * 100).round()}%)',
+          '${l10n.characterScale} (${(characterScale * 100).round()}%)',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
@@ -198,7 +166,7 @@ class _M3CharacterTransformControllerState
             Expanded(
               flex: 2,
               child: EditableNumberField(
-                label: '缩放',
+                label: l10n.scale,
                 value: characterScale,
                 suffix: '×',
                 min: 0.3,
@@ -216,7 +184,7 @@ class _M3CharacterTransformControllerState
 
         // 位置偏移控制
         Text(
-          '位置偏移 (X: ${offsetX.toStringAsFixed(1)}px, Y: ${offsetY.toStringAsFixed(1)}px)',
+          '${l10n.positionOffset} (X: ${offsetX.toStringAsFixed(1)}px, Y: ${offsetY.toStringAsFixed(1)}px)',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
@@ -234,7 +202,7 @@ class _M3CharacterTransformControllerState
           children: [
             Expanded(
               child: EditableNumberField(
-                label: 'X偏移',
+                label: l10n.xOffset,
                 value: offsetX,
                 suffix: 'px',
                 min: -100,
@@ -248,7 +216,7 @@ class _M3CharacterTransformControllerState
             const SizedBox(width: 8.0),
             Expanded(
               child: EditableNumberField(
-                label: 'Y偏移',
+                label: l10n.yOffset,
                 value: offsetY,
                 suffix: 'px',
                 min: -100,
@@ -261,91 +229,28 @@ class _M3CharacterTransformControllerState
             ),
           ],
         ),
-
-        const SizedBox(height: 16.0),
-
-        // 快捷缩放按钮 - 支持undo机制
-        Wrap(
-          spacing: 4.0,
-          runSpacing: 4.0,
-          alignment: WrapAlignment.spaceEvenly,
-          children: [
-            SizedBox(
-              width: 50,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: () => _setCharacterScaleWithUndo(0.3),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('30%'),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: () => _setCharacterScaleWithUndo(0.5),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('50%'),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: () => _setCharacterScaleWithUndo(1.0),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('100%'),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: () => _setCharacterScaleWithUndo(1.5),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('150%'),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: () => _setCharacterScaleWithUndo(2.0),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('200%'),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 16.0),
-
-        // 重置按钮
+        
+        const SizedBox(height: 12.0),
+        
+        // 重置變換按鈕 - 放在縮放和偏移控制的下方
         Center(
-          child: FilledButton.tonal(
-            onPressed: () => _resetTransform(),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.refresh, size: 18),
-                SizedBox(width: 4),
-                Text('重置变换'),
-              ],
+          child: SizedBox(
+            width: 80,
+            height: 36,
+            child: FilledButton.tonal(
+              onPressed: () => _resetTransform(),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                textStyle: const TextStyle(fontSize: 12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.refresh, size: 16),
+                  const SizedBox(width: 4),
+                  Text(l10n.reset),
+                ],
+              ),
             ),
           ),
         ),

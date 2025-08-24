@@ -1768,6 +1768,54 @@ abstract class AppLocalizations {
   /// **'Collection Element'**
   String get collectionElement;
 
+  /// No description provided for @collectionTextElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get collectionTextElement;
+
+  /// No description provided for @candidateCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Candidate Characters'**
+  String get candidateCharacters;
+
+  /// No description provided for @characterScale.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Scale'**
+  String get characterScale;
+
+  /// No description provided for @positionOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Position Offset'**
+  String get positionOffset;
+
+  /// No description provided for @scale.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale'**
+  String get scale;
+
+  /// No description provided for @xOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'X Offset'**
+  String get xOffset;
+
+  /// No description provided for @yOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Y Offset'**
+  String get yOffset;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
   /// No description provided for @collectionIdCannotBeEmpty.
   ///
   /// In en, this message translates to:
@@ -6688,12 +6736,6 @@ abstract class AppLocalizations {
   /// **'Reselect File'**
   String get reselectFile;
 
-  /// No description provided for @reset.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset'**
-  String get reset;
-
   /// No description provided for @resetCategoryConfig.
   ///
   /// In en, this message translates to:
@@ -6993,12 +7035,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving to Storage...'**
   String get savingToStorage;
-
-  /// No description provided for @scale.
-  ///
-  /// In en, this message translates to:
-  /// **'Scale'**
-  String get scale;
 
   /// No description provided for @scannedBackupFileDescription.
   ///

@@ -909,6 +909,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionElement => 'Collection Element';
 
   @override
+  String get collectionTextElement => 'Text';
+
+  @override
+  String get candidateCharacters => 'Candidate Characters';
+
+  @override
+  String get characterScale => 'Character Scale';
+
+  @override
+  String get positionOffset => 'Position Offset';
+
+  @override
+  String get scale => 'Scale';
+
+  @override
+  String get xOffset => 'X Offset';
+
+  @override
+  String get yOffset => 'Y Offset';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
   String get collectionIdCannotBeEmpty => 'Collection ID cannot be empty';
 
   @override
@@ -3515,9 +3539,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reselectFile => 'Reselect File';
 
   @override
-  String get reset => 'Reset';
-
-  @override
   String resetCategoryConfig(Object category) {
     return 'Reset $category Configuration';
   }
@@ -3674,9 +3695,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingToStorage => 'Saving to Storage...';
-
-  @override
-  String get scale => 'Scale';
 
   @override
   String get scannedBackupFileDescription => 'Scanned backup file';

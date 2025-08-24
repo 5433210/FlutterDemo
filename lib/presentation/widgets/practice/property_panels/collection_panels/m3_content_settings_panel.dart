@@ -68,7 +68,7 @@ class M3ContentSettingsPanel extends ConsumerWidget {
       defaultExpanded: true,
       children: [
         // Character content
-        M3PanelStyles.buildSectionTitle(context, l10n.characterCollection),
+        M3PanelStyles.buildSectionTitle(context, l10n.collectionTextElement), // 修改標題為"文本"
         M3CharacterInputField(
           initialText: characters,
           selectedCharIndex: selectedCharIndex,
@@ -89,45 +89,41 @@ class M3ContentSettingsPanel extends ConsumerWidget {
 
         const SizedBox(height: 16.0),
 
-        // Single character transform controller
-        M3PanelStyles.buildSectionTitle(context, '单字符调整'),
-        M3CharacterTransformController(
-          element: element,
-          selectedCharIndex: selectedCharIndex,
-          onTransformPropertyChanged: (key, value) {
-            onCharacterTransformChanged?.call(selectedCharIndex, key, value);
-          },
-          onTransformPropertyUpdateStart: (charIndex, key, value) {
-            onCharacterTransformUpdateStart?.call(charIndex, key, value);
-          },
-          onTransformPropertyUpdatePreview: (charIndex, key, value) {
-            onCharacterTransformUpdatePreview?.call(charIndex, key, value);
-          },
-          onTransformPropertyUpdateWithUndo: (charIndex, key, value, oldValue) {
-            developer.log(
-                '内容设置面板 - undo回调: charIndex=$charIndex, key=$key, value=$value, oldValue=$oldValue',
-                name: 'CharacterTransform');
-            onCharacterTransformUpdateWithUndo?.call(
-                charIndex, key, value, oldValue);
-          },
-          onTransformPropertiesBatchUndo: (charIndex, changes, originalValues) {
-            developer.log(
-                '内容设置面板 - 批量undo回调: charIndex=$charIndex, changes=$changes, originalValues=$originalValues',
-                name: 'CharacterTransform');
-            onCharacterTransformBatchUndo?.call(
-                charIndex, changes, originalValues);
-          },
-        ),
-
-        const SizedBox(height: 16.0),
-
-        // Candidate characters
+        // Candidate characters - 包含字符變換控制器
+        M3PanelStyles.buildSectionTitle(context, l10n.candidateCharacters), // 修改標題為"候選集字"
         M3CandidateCharactersPanel(
           element: element,
           selectedCharIndex: selectedCharIndex,
           candidateCharacters: candidateCharacters,
           isLoading: isLoading,
           onCharacterSelected: onCandidateCharacterSelected,
+          additionalContent: M3CharacterTransformController(
+            element: element,
+            selectedCharIndex: selectedCharIndex,
+            onTransformPropertyChanged: (key, value) {
+              onCharacterTransformChanged?.call(selectedCharIndex, key, value);
+            },
+            onTransformPropertyUpdateStart: (charIndex, key, value) {
+              onCharacterTransformUpdateStart?.call(charIndex, key, value);
+            },
+            onTransformPropertyUpdatePreview: (charIndex, key, value) {
+              onCharacterTransformUpdatePreview?.call(charIndex, key, value);
+            },
+            onTransformPropertyUpdateWithUndo: (charIndex, key, value, oldValue) {
+              developer.log(
+                  '内容设置面板 - undo回调: charIndex=$charIndex, key=$key, value=$value, oldValue=$oldValue',
+                  name: 'CharacterTransform');
+              onCharacterTransformUpdateWithUndo?.call(
+                  charIndex, key, value, oldValue);
+            },
+            onTransformPropertiesBatchUndo: (charIndex, changes, originalValues) {
+              developer.log(
+                  '内容设置面板 - 批量undo回调: charIndex=$charIndex, changes=$changes, originalValues=$originalValues',
+                  name: 'CharacterTransform');
+              onCharacterTransformBatchUndo?.call(
+                  charIndex, changes, originalValues);
+            },
+          ),
         ),
 
         const SizedBox(height: 16.0), // Text format settings
