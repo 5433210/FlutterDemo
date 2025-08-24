@@ -1,8 +1,8 @@
 {
   "app": {
     "bundleName": "com.charasgem.app",
-    "versionCode": 20250822001,
-    "versionName": "0.0.1",
+    "versionCode": 20250825002,
+    "versionName": "0.0.2",
     "minAPIVersion": 9,
     "targetAPIVersion": 12,
     "apiReleaseType": "Release",

@@ -254,7 +254,8 @@ class VersionGenerator:
             },
             'windows': {
                 'FileVersion': f"{major}.{minor}.{patch}.{build}",
-                'ProductVersion': f"{major}.{minor}.{patch}.{build}"
+                'ProductVersion': f"{major}.{minor}.{patch}.{build}",
+                'MSIXVersion': f"{min(major, 65535)}.{min(minor, 65535)}.{min(patch, 65535)}.0"  # UWP要求第四部分为0
             },
             'macos': {
                 'CFBundleShortVersionString': version_string,
@@ -461,7 +462,8 @@ class VersionGenerator:
                     sys.executable, str(script_path),
                     str(self.project_root),
                     version_info['FileVersion'],
-                    version_info['ProductVersion']
+                    version_info['ProductVersion'],
+                    version_info.get('MSIXVersion', version_info['FileVersion'])  # 添加MSIX版本参数
                 ], capture_output=True, text=True)
                 return result.returncode == 0
             else:

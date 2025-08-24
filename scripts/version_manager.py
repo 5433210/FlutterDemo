@@ -50,6 +50,16 @@ class VersionManager:
         print(f"完整版本: {version['major']}.{version['minor']}.{version['patch']}+{version['build']}")
         if version['prerelease']:
             print(f"预发布版本: {version['major']}.{version['minor']}.{version['patch']}-{version['prerelease']}+{version['build']}")
+        
+        # 显示UWP版本号说明
+        major = min(version['major'], 65535)
+        minor = min(version['minor'], 65535)
+        patch = min(version['patch'], 65535)
+        msix_version = f"{major}.{minor}.{patch}.0"
+        
+        print(f"\n🪟 Windows MSIX: {msix_version}")
+        print("💡 UWP要求: 第四部分保留为0")
+        print("💡 各部分范围: 0-65535")
         print("="*50)
     
     def update_build_number(self):

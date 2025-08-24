@@ -38,8 +38,8 @@ release:
   - alpha
   - dev
 version:
-  build: '20250822001'
+  build: '20250825002'
   major: 0
   minor: 0
-  patch: 1
+  patch: 2
   prerelease: ''

@@ -20,7 +20,10 @@
       "Bash(grep:*)",
       "Bash(r)",
       "Bash(taskkill:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(chcp 65001)",
+      "Bash(set:*)",
+      "Bash(del:*)"
     ],
     "deny": []
   }

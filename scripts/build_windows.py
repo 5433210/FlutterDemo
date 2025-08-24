@@ -53,6 +53,17 @@ class WindowsBuilder:
         print(f"完整版本: {version['major']}.{version['minor']}.{version['patch']}+{version['build']}")
         if version['prerelease']:
             print(f"预发布版本: {version['major']}.{version['minor']}.{version['patch']}-{version['prerelease']}+{version['build']}")
+        
+        # 显示UWP版本号说明
+        major = min(version['major'], 65535)
+        minor = min(version['minor'], 65535)
+        patch = min(version['patch'], 65535)
+        msix_version = f"{major}.{minor}.{patch}.0"
+        
+        print(f"\n🪟 Windows MSIX 版本号:")
+        print(f"MSIX版本: {msix_version}")
+        print("注意: UWP软件包要求第四部分保留为0（应用商店专用）")
+        print("注意: 各部分范围为0-65535")
         print("="*60)
     
     def update_version(self, version_type):

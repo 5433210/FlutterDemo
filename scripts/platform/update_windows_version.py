@@ -7,13 +7,14 @@ import sys
 import re
 from pathlib import Path
 
-def update_windows_version(project_root, file_version, product_version):
+def update_windows_version(project_root, file_version, product_version, msix_version=None):
     """更新Windows平台版本信息
     
     Args:
         project_root: 项目根目录
         file_version: 文件版本 (如: 1.0.0.20250620001)
-        product_version: 产品版本 (如: 1.0.0.20250620001)
+        product_version: 产品版本 (如: 1.0.0.20250620001)  
+        msix_version: MSIX版本 (如: 1.0.0.0，符合UWP要求)
     
     Returns:
         bool: 更新是否成功
@@ -44,25 +45,24 @@ def update_windows_version(project_root, file_version, product_version):
     # 更新 pubspec.yaml 中的 MSIX 配置
     pubspec_file = Path(project_root) / 'pubspec.yaml'
     if pubspec_file.exists():
-        # 从版本号生成MSIX版本（使用构建序号作为第4位）
-        # 例如：1.0.3.20250717008 -> 1.0.3.8
-        version_parts = file_version.split('.')
-        if len(version_parts) >= 4:
-            # 提取构建号的最后3位作为构建序号
-            build_number = version_parts[3]
-            if len(build_number) >= 3:
-                build_sequence = int(build_number[-3:])  # 取最后3位
-                # 确保不超过65535的限制
-                build_sequence = min(build_sequence, 65535)
-            else:
-                build_sequence = int(build_number) if build_number.isdigit() else 0
-            msix_version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2]}.{build_sequence}"
-        elif len(version_parts) >= 3:
-            msix_version = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2]}.0"
+        # 如果传入了特定的MSIX版本，使用它；否则按照UWP规则生成
+        if msix_version:
+            final_msix_version = msix_version
         else:
-            msix_version = f"{file_version}.0"
+            # Windows 10/11 UWP 软件包要求：第四部分必须保留为 0
+            # 版本号格式：主版本.次版本.修订版本.0（第四部分保留给应用商店使用）
+            version_parts = file_version.split('.')
+            if len(version_parts) >= 3:
+                # 确保前三部分都在0-65535范围内
+                major = min(int(version_parts[0]), 65535)
+                minor = min(int(version_parts[1]), 65535)
+                patch = min(int(version_parts[2]), 65535)
+                # UWP 要求：第四部分必须为 0
+                final_msix_version = f"{major}.{minor}.{patch}.0"
+            else:
+                final_msix_version = f"{file_version}.0"
 
-        if not update_pubspec_msix(pubspec_file, msix_version):
+        if not update_pubspec_msix(pubspec_file, final_msix_version):
             success = False
 
     return success
@@ -190,15 +190,17 @@ def update_cmake_version(file_path, version):
 def main():
     """主函数，用于独立运行此脚本"""
     if len(sys.argv) < 4:
-        print("用法: python update_windows_version.py <项目根目录> <文件版本> <产品版本>")
+        print("用法: python update_windows_version.py <项目根目录> <文件版本> <产品版本> [MSIX版本]")
         print("示例: python update_windows_version.py . 1.0.0.20250620001 1.0.0.20250620001")
+        print("示例: python update_windows_version.py . 1.0.0.20250620001 1.0.0.20250620001 1.0.0.0")
         sys.exit(1)
     
     project_root = sys.argv[1]
     file_version = sys.argv[2]
     product_version = sys.argv[3]
+    msix_version = sys.argv[4] if len(sys.argv) > 4 else None
     
-    if update_windows_version(project_root, file_version, product_version):
+    if update_windows_version(project_root, file_version, product_version, msix_version):
         print("Windows版本信息更新成功")
     else:
         print("Windows版本信息更新失败")
