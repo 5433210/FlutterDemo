@@ -539,7 +539,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
         widget.controller.undoRedoManager.undoEnabled = true;
         updateContentProperty(key, newValue);
 
-        // 🔧 关键修复：对于二值化参数，需要触发图像处理管线
+        // 对于二值化参数，触发图像处理管线
         if ((key == 'binaryThreshold' || key == 'noiseReductionLevel')) {
           handleBinarizationParameterChange(key, newValue);
         }
@@ -571,7 +571,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
         // 发生错误时，回退到直接更新
         updateContentProperty(key, newValue);
-        // 也要触发图像处理
+        // 对于二值化参数，触发图像处理管线
         if ((key == 'binaryThreshold' || key == 'noiseReductionLevel')) {
           handleBinarizationParameterChange(key, newValue);
         }
@@ -579,7 +579,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     } else {
       // 如果没有原始值或值没有改变，直接更新
       updateContentProperty(key, newValue);
-      // 仍然需要触发图像处理
+      // 对于二值化参数，触发图像处理管线
       if ((key == 'binaryThreshold' || key == 'noiseReductionLevel')) {
         handleBinarizationParameterChange(key, newValue);
       }

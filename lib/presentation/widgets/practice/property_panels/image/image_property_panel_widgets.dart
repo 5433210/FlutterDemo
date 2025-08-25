@@ -1345,9 +1345,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                     onContentPropertyUpdateWithUndo!(
                                         'binaryThreshold', value);
                                   } else {
-                                    // 拖动结束时记录undo
-                                    onBinarizationParameterChange(
-                                        'binaryThreshold', value);
+                                    // 拖动结束时记录undo - 只调用一次
+                                    onContentPropertyUpdate('binaryThreshold', value);
                                   }
                                 }
                               : null,
@@ -1391,8 +1390,9 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                         ? (value) {
                             onContentPropertyUpdate(
                                 'isNoiseReductionEnabled', value);
-                            onBinarizationParameterChange(
-                                'isNoiseReductionEnabled', value);
+                            // 移除重复调用：onBinarizationParameterChange 会创建额外的undo操作
+                            // onBinarizationParameterChange(
+                            //     'isNoiseReductionEnabled', value);
                           }
                         : null,
                   ),
@@ -1461,9 +1461,8 @@ class ImagePropertyBinarizationPanel extends StatelessWidget {
                                       onContentPropertyUpdateWithUndo!(
                                           'noiseReductionLevel', value);
                                     } else {
-                                      // 拖动结束时记录undo
-                                      onBinarizationParameterChange(
-                                          'noiseReductionLevel', value);
+                                      // 拖动结束时记录undo - 只调用一次
+                                      onContentPropertyUpdate('noiseReductionLevel', value);
                                     }
                                   }
                                 : null,

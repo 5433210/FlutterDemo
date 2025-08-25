@@ -229,7 +229,9 @@ mixin ImageProcessingPipeline {
       }
 
       // 步骤4：更新元素内容，触发UI重新渲染
-      updateProperty('content', content, createUndoOperation: true);
+      // 🔧 关键修复：当由二值化参数变化触发时，不创建undo操作，因为参数变化已经创建了undo
+      final shouldCreateUndo = !triggerByBinarization;
+      updateProperty('content', content, createUndoOperation: shouldCreateUndo);
 
       EditPageLogger.editPageInfo('图像处理管线执行完成',
           tag: EditPageLoggingConfig.tagImagePanel,
@@ -788,8 +790,10 @@ mixin ImageProcessingPipeline {
             tag: 'ImageProcessingPipeline');
       }
 
+      // 🔧 关键修复：当由二值化参数变化触发时，不创建undo操作，因为参数变化已经创建了undo
+      final shouldCreateUndo = !triggerByBinarization;
       updateProperty('content', content,
-          createUndoOperation: false); // 不创建撤销操作，避免状态冲突
+          createUndoOperation: shouldCreateUndo);
 
       AppLogger.debug('🔍 元素内容已更新', tag: 'ImageProcessingPipeline');
 
