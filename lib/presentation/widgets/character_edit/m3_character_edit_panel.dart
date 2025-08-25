@@ -1085,7 +1085,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   }
 
   Widget _buildToolbar(AppLocalizations l10n) {
-    final eraseState = ref.watch(erase.eraseStateProvider);
+    // 使用select来监听特定属性，避免整个面板重建
+    final canUndo = ref.watch(erase.eraseStateProvider.select((s) => s.canUndo));
+    final canRedo = ref.watch(erase.eraseStateProvider.select((s) => s.canRedo));
+    final isReversed = ref.watch(erase.eraseStateProvider.select((s) => s.isReversed));
+    final imageInvertMode = ref.watch(erase.eraseStateProvider.select((s) => s.imageInvertMode));
+    final brushSize = ref.watch(erase.eraseStateProvider.select((s) => s.brushSize));
+    final threshold = ref.watch(erase.eraseStateProvider.select((s) => s.processingOptions.threshold));
     final colorScheme = Theme.of(context).colorScheme;
 
     return LayoutBuilder(
@@ -1104,15 +1110,15 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               vertical: shouldUseCompactMode ? 6 : 8),
           color: colorScheme.surface,
           child: shouldUseCompactMode
-              ? _buildCompactToolbar(l10n, eraseState, colorScheme)
-              : _buildFullToolbar(l10n, eraseState, colorScheme),
+              ? _buildCompactToolbar(l10n, canUndo, canRedo, isReversed, imageInvertMode, brushSize, threshold, colorScheme)
+              : _buildFullToolbar(l10n, canUndo, canRedo, isReversed, imageInvertMode, brushSize, threshold, colorScheme),
         );
       },
     );
   }
 
   Widget _buildCompactToolbar(
-      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+      AppLocalizations l10n, bool canUndo, bool canRedo, bool isReversed, bool imageInvertMode, double brushSize, double threshold, ColorScheme colorScheme) {
     return ExpansionTile(
       initiallyExpanded: _isParameterPanelExpanded,
       onExpansionChanged: (bool expanded) {
@@ -1129,7 +1135,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             _ToolbarButton(
               icon: Icons.undo,
               tooltip: l10n.undo,
-              onPressed: eraseState.canUndo
+              onPressed: canUndo
                   ? () => ref.read(erase.eraseStateProvider.notifier).undo()
                   : null,
               shortcut: EditorShortcuts.undo,
@@ -1137,7 +1143,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             _ToolbarButton(
               icon: Icons.redo,
               tooltip: l10n.redo,
-              onPressed: eraseState.canRedo
+              onPressed: canRedo
                   ? () => ref.read(erase.eraseStateProvider.notifier).redo()
                   : null,
               shortcut: EditorShortcuts.redo,
@@ -1152,7 +1158,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               onPressed: () {
                 ref.read(erase.eraseStateProvider.notifier).toggleReverse();
               },
-              isActive: eraseState.isReversed,
+              isActive: isReversed,
               shortcut: EditorShortcuts.toggleInvert,
             ),
             _ToolbarButton(
@@ -1161,7 +1167,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               onPressed: () {
                 ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
               },
-              isActive: eraseState.imageInvertMode,
+              isActive: imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
             ),
           ]),
@@ -1170,13 +1176,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       children: [
         // 参数控制区域
         const SizedBox(height: 8),
-        _buildParameterControls(l10n, eraseState, colorScheme),
+        _buildParameterControls(l10n, brushSize, threshold, colorScheme),
       ],
     );
   }
 
   Widget _buildFullToolbar(
-      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+      AppLocalizations l10n, bool canUndo, bool canRedo, bool isReversed, bool imageInvertMode, double brushSize, double threshold, ColorScheme colorScheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1190,7 +1196,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               _ToolbarButton(
                 icon: Icons.undo,
                 tooltip: l10n.undo,
-                onPressed: eraseState.canUndo
+                onPressed: canUndo
                     ? () => ref.read(erase.eraseStateProvider.notifier).undo()
                     : null,
                 shortcut: EditorShortcuts.undo,
@@ -1198,7 +1204,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               _ToolbarButton(
                 icon: Icons.redo,
                 tooltip: l10n.redo,
-                onPressed: eraseState.canRedo
+                onPressed: canRedo
                     ? () => ref.read(erase.eraseStateProvider.notifier).redo()
                     : null,
                 shortcut: EditorShortcuts.redo,
@@ -1215,7 +1221,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 onPressed: () {
                   ref.read(erase.eraseStateProvider.notifier).toggleReverse();
                 },
-                isActive: eraseState.isReversed,
+                isActive: isReversed,
                 shortcut: EditorShortcuts.toggleInvert,
               ),
               _ToolbarButton(
@@ -1226,7 +1232,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                       .read(erase.eraseStateProvider.notifier)
                       .toggleImageInvert();
                 },
-                isActive: eraseState.imageInvertMode,
+                isActive: imageInvertMode,
                 shortcut: EditorShortcuts.toggleImageInvert,
               ),
               // 参数控制开合按钮
@@ -1256,13 +1262,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ]),
           ],
         ),
-        _buildFullToolbarContent(l10n, eraseState, colorScheme),
+        _buildFullToolbarContent(l10n, brushSize, threshold, colorScheme),
       ],
     );
   }
 
   Widget _buildFullToolbarContent(
-      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+      AppLocalizations l10n, double brushSize, double threshold, ColorScheme colorScheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1270,7 +1276,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         // 参数控制区域 - 使用简单的条件显示，不再使用ExpansionTile
         if (_isParameterPanelExpanded) ...[
           const SizedBox(height: 8),
-          _buildParameterControls(l10n, eraseState, colorScheme),
+          _buildParameterControls(l10n, brushSize, threshold, colorScheme),
         ],
       ],
     );
@@ -1278,7 +1284,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   /// 构建参数控制区域
   Widget _buildParameterControls(
-      AppLocalizations l10n, dynamic eraseState, ColorScheme colorScheme) {
+      AppLocalizations l10n, double brushSize, double threshold, ColorScheme colorScheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1308,7 +1314,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               width: 32,
               alignment: Alignment.centerRight,
               child: Text(
-                eraseState.brushSize.toStringAsFixed(0),
+                brushSize.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -1344,7 +1350,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               width: 32,
               alignment: Alignment.centerRight,
               child: Text(
-                eraseState.processingOptions.threshold.toStringAsFixed(0),
+                threshold.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -2334,17 +2340,34 @@ class _NoiseReductionSlider extends ConsumerWidget {
           value: noiseReduction.clamp(0.0, 1.0),
           min: 0.0,
           max: 1.0,
-          divisions: 10,
+          divisions: 100,
           activeColor: isEnabled
               ? colorScheme.primary
               : colorScheme.surfaceContainerHighest,
           inactiveColor: colorScheme.surfaceContainerHighest,
           thumbColor:
               isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          onChangeStart: isEnabled
+              ? (value) {
+                  // 保存原始值，开始拖动时
+                  eraseStateNotifier.startNoiseReductionChange(noiseReduction);
+                  // 同步预览provider与当前值
+                  ref.read(erase.previewNoiseReductionProvider.notifier).state = noiseReduction;
+                }
+              : null,
           onChanged: isEnabled
               ? (value) {
-                  // Use optimized method for smoother slider interaction
-                  eraseStateNotifier.setNoiseReductionOptimized(value);
+                  // 仅更新预览provider，不影响实际状态
+                  ref.read(erase.previewNoiseReductionProvider.notifier).state = value;
+                }
+              : null,
+          onChangeEnd: isEnabled
+              ? (value) {
+                  // 拖动结束，触发最终的图像更新
+                  eraseStateNotifier.finishNoiseReductionChange(value);
+                  // 重置预览provider为实际值
+                  final actualValue = ref.read(erase.noiseReductionProvider);
+                  ref.read(erase.previewNoiseReductionProvider.notifier).state = actualValue;
                 }
               : null,
         ),
@@ -2451,12 +2474,26 @@ class _ThresholdSlider extends ConsumerWidget {
           value: threshold,
           min: 0.0,
           max: 255.0,
+          divisions: 255,
           activeColor: colorScheme.primary,
           inactiveColor: colorScheme.surfaceContainerHighest,
           thumbColor: colorScheme.primary,
+          onChangeStart: (value) {
+            // 保存原始值，开始拖动时
+            eraseStateNotifier.startThresholdChange(threshold);
+            // 同步预览provider与当前值
+            ref.read(erase.previewThresholdProvider.notifier).state = threshold;
+          },
           onChanged: (double value) {
-            // Use a single state update to improve performance
-            eraseStateNotifier.setThresholdOptimized(value);
+            // 仅更新预览provider，不影响实际状态
+            ref.read(erase.previewThresholdProvider.notifier).state = value;
+          },
+          onChangeEnd: (value) {
+            // 拖动结束，触发最终的图像更新
+            eraseStateNotifier.finishThresholdChange(value);
+            // 重置预览provider为实际值
+            final actualValue = ref.read(erase.thresholdProvider);
+            ref.read(erase.previewThresholdProvider.notifier).state = actualValue;
           },
         ),
       ),

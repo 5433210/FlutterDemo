@@ -257,6 +257,60 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     _scheduleAutoSave();
   }
 
+  // 滑块拖动开始时保存原始值
+  double? _originalThreshold;
+  double? _originalNoiseReduction;
+
+  void setThresholdPreview(double threshold) {
+    // 只更新预览provider，不影响实际状态
+    // 这个方法需要通过WidgetRef调用预览provider
+    // 实际实现将在组件中直接调用预览provider
+  }
+
+  void startThresholdChange(double originalThreshold) {
+    _originalThreshold = originalThreshold;
+  }
+
+  void finishThresholdChange(double finalThreshold) {
+    if (_originalThreshold != null && _originalThreshold != finalThreshold) {
+      // 直接设置最终值并触发图像更新
+      final newOptions = state.processingOptions.copyWith(
+        threshold: finalThreshold,
+      );
+      state = state.copyWith(processingOptions: newOptions);
+      
+      // 触发图像更新
+      triggerDelayedImageUpdate();
+      _scheduleAutoSave();
+    }
+    _originalThreshold = null;
+  }
+
+  void setNoiseReductionPreview(double value) {
+    // 只更新预览provider，不影响实际状态
+    // 这个方法需要通过WidgetRef调用预览provider
+    // 实际实现将在组件中直接调用预览provider
+  }
+
+  void startNoiseReductionChange(double originalValue) {
+    _originalNoiseReduction = originalValue;
+  }
+
+  void finishNoiseReductionChange(double finalValue) {
+    if (_originalNoiseReduction != null && _originalNoiseReduction != finalValue) {
+      // 直接设置最终值并触发图像更新
+      final newOptions = state.processingOptions.copyWith(
+        noiseReduction: finalValue,
+      );
+      state = state.copyWith(processingOptions: newOptions);
+      
+      // 触发图像更新
+      triggerDelayedImageUpdate();
+      _scheduleAutoSave();
+    }
+    _originalNoiseReduction = null;
+  }
+
   /// 开始一个新的路径
   void startPath(Offset position) {
     if (state.mode != EraseMode.draw) return;

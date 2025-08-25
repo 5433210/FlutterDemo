@@ -50,11 +50,28 @@ final memoizedBrushSizeProvider = Provider<double>((ref) {
   return value;
 }, dependencies: [brushSizeProvider]);
 
+// 专用于预览的阈值和降噪providers - 与实际处理状态分离
+final previewThresholdProvider = StateProvider<double>((ref) {
+  // 初始值从实际处理选项获取
+  final eraseState = ref.read(eraseStateProvider);
+  return eraseState.processingOptions.threshold;
+});
+
+final previewNoiseReductionProvider = StateProvider<double>((ref) {
+  // 初始值从实际处理选项获取
+  final eraseState = ref.read(eraseStateProvider);
+  return eraseState.processingOptions.noiseReduction;
+});
+
 // 经过记忆化处理的降噪提供者 - 仅当实际值变化时才触发更新
 final memoizedNoiseReductionProvider = Provider<double>((ref) {
-  final value = ref.watch(noiseReductionProvider);
-  return value;
-}, dependencies: [noiseReductionProvider]);
+  // 在拖动时使用预览值，否则使用实际值
+  final previewValue = ref.watch(previewNoiseReductionProvider);
+  final actualValue = ref.watch(noiseReductionProvider);
+  
+  // 如果预览值与实际值相同，返回实际值；否则返回预览值
+  return previewValue != actualValue ? previewValue : actualValue;
+}, dependencies: [noiseReductionProvider, previewNoiseReductionProvider]);
 
 // 经过记忆化处理的完整处理选项 - 仅当选项实际变化时才触发更新
 final memoizedProcessingOptionsProvider = Provider((ref) {
@@ -64,9 +81,13 @@ final memoizedProcessingOptionsProvider = Provider((ref) {
 
 // 经过记忆化处理的阈值提供者 - 仅当实际值变化时才触发更新
 final memoizedThresholdProvider = Provider<double>((ref) {
-  final value = ref.watch(thresholdProvider);
-  return value;
-}, dependencies: [thresholdProvider]);
+  // 在拖动时使用预览值，否则使用实际值
+  final previewValue = ref.watch(previewThresholdProvider);
+  final actualValue = ref.watch(thresholdProvider);
+  
+  // 如果预览值与实际值相同，返回实际值；否则返回预览值
+  return previewValue != actualValue ? previewValue : actualValue;
+}, dependencies: [thresholdProvider, previewThresholdProvider]);
 
 // 降噪的provider - 为滑块专门优化
 final noiseReductionProvider = Provider<double>((ref) {
