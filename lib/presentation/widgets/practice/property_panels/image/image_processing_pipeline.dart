@@ -481,32 +481,52 @@ mixin ImageProcessingPipeline {
           currentContent['isBinarizationEnabled']
     });
 
-    // 🔧 修复撤销功能：先记录撤销操作，再执行处理管线
+    // 🔧 关键修复：防止开关自动关闭，确保状态持久化
+    AppLogger.debug('🔍 准备更新二值化开关状态',
+        tag: 'ImageProcessingPipeline',
+        data: {'requestedState': enabled, 'currentState': currentContent['isBinarizationEnabled']});
+
+    // 先记录撤销操作，再执行处理管线
     updateContentProperty('isBinarizationEnabled', enabled,
         createUndoOperation: true);
 
-    // 🔧 关键修复：创建包含新状态的临时content并立即执行处理管线
-    final updatedContent = Map<String, dynamic>.from(currentContent);
-    updatedContent['isBinarizationEnabled'] = enabled;
+    // 🔧 增加延迟执行以确保UI状态更新完成
+    Future.delayed(const Duration(milliseconds: 30), () async {
+      // 再次验证状态是否正确设置
+      final verifyContent = element['content'] as Map<String, dynamic>;
+      final actualState = verifyContent['isBinarizationEnabled'] as bool? ?? false;
+      
+      AppLogger.debug('🔍 开关状态验证',
+          tag: 'ImageProcessingPipeline',
+          data: {
+            'requestedState': enabled,
+            'actualState': actualState,
+            'stateMatches': actualState == enabled
+          });
 
-    AppLogger.debug('临时内容更新', tag: 'ImageProcessingPipeline', data: {
-      'afterTempUpdate_isBinarizationEnabled':
-          updatedContent['isBinarizationEnabled']
-    });
+      if (actualState == enabled) {
+        AppLogger.debug('🔍 开始执行处理管线 (开关变化)',
+            tag: 'ImageProcessingPipeline');
 
-    // 立即执行处理管线，使用临时更新的content
-    Future.microtask(() async {
-      AppLogger.debug('🔍 开始执行处理管线 (开关变化，使用临时content)',
-          tag: 'ImageProcessingPipeline');
+        await _executeImageProcessingPipelineWithContent(
+          verifyContent,
+          triggerByBinarization: true,
+        );
 
-      // 使用临时content执行处理管线
-      await _executeImageProcessingPipelineWithContent(
-        updatedContent,
-        triggerByBinarization: true,
-      );
-
-      AppLogger.debug('🔍 处理管线执行完成 (开关变化) - 撤销操作已提前记录',
-          tag: 'ImageProcessingPipeline');
+        AppLogger.debug('🔍 处理管线执行完成 (开关变化)',
+            tag: 'ImageProcessingPipeline');
+      } else {
+        AppLogger.warning('⚠️ 开关状态不匹配，重新设置状态',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'expected': enabled,
+              'actual': actualState
+            });
+        
+        // 强制重新设置状态
+        updateContentProperty('isBinarizationEnabled', enabled,
+            createUndoOperation: false);
+      }
     });
   }
 
@@ -653,12 +673,67 @@ mixin ImageProcessingPipeline {
             Uint8List.fromList(img.encodePng(processedImage));
         content['binarizedImageData'] = binarizedImageData;
 
-        // 🔍 调试：验证二值化数据
-        AppLogger.debug('🎯 二值化图像数据已生成', tag: 'ImageProcessingPipeline', data: {
+        // 🔍 调试：验证二值化数据实际更新
+        final dataHash = binarizedImageData.fold(0, (prev, byte) => prev ^ byte.hashCode);
+        
+        // 🔍 增强调试：采样像素验证二值化效果并计算更多统计信息
+        final samplePixels = <String>[];
+        int whitePixels = 0;
+        int blackPixels = 0;
+        const sampleCount = 20; // 增加采样数量
+        
+        for (int i = 0; i < sampleCount; i++) {
+          final x = (processedImage.width * i / sampleCount).round();
+          final y = (processedImage.height / 2).round();
+          if (x < processedImage.width && y < processedImage.height) {
+            final pixel = processedImage.getPixel(x, y);
+            samplePixels.add('(${pixel.r},${pixel.g},${pixel.b})');
+            // 统计黑白像素
+            if (pixel.r > 200 && pixel.g > 200 && pixel.b > 200) {
+              whitePixels++;
+            } else if (pixel.r < 50 && pixel.g < 50 && pixel.b < 50) {
+              blackPixels++;
+            }
+          }
+        }
+        
+        // 🔍 计算整体图像统计
+        int totalWhite = 0;
+        int totalBlack = 0;
+        final step = math.max(1, (processedImage.width * processedImage.height) ~/ 10000); // 采样1万个像素
+        for (int i = 0; i < processedImage.width * processedImage.height; i += step) {
+          final x = i % processedImage.width;
+          final y = i ~/ processedImage.width;
+          final pixel = processedImage.getPixel(x, y);
+          if (pixel.r > 200) totalWhite++;
+          else if (pixel.r < 50) totalBlack++;
+        }
+        
+        AppLogger.debug('🎯 二值化图像数据已生成 (增强验证)', tag: 'ImageProcessingPipeline', data: {
           'dataSize': '${binarizedImageData.length} bytes',
           'imageSize': '${processedImage.width}x${processedImage.height}',
           'storagePath': 'content[binarizedImageData]',
-          'contentKeys': content.keys.toList()
+          'contentKeys': content.keys.toList(),
+          'dataHash': dataHash, // 用于验证数据实际变化
+          'dataHashHex': dataHash.toRadixString(16), // 十六进制显示更容易看出差异
+          'threshold': content['binaryThreshold'], // 使用实际保存的参数值
+          'isNoiseReductionEnabled': content['isNoiseReductionEnabled'],
+          'noiseReductionLevel': content['noiseReductionLevel'],
+          'pixelSample': samplePixels.take(10).join(', '),
+          'pixelStats': {
+            'sampleWhite': whitePixels,
+            'sampleBlack': blackPixels, 
+            'sampleOther': sampleCount - whitePixels - blackPixels,
+            'totalWhiteApprox': totalWhite,
+            'totalBlackApprox': totalBlack,
+            'whiteRatio': (totalWhite * 100 / (totalWhite + totalBlack)).toStringAsFixed(1) + '%'
+          },
+          'processingParams': {
+            'threshold': content['binaryThreshold'],
+            'noiseReductionEnabled': content['isNoiseReductionEnabled'],
+            'noiseLevel': content['isNoiseReductionEnabled'] ? content['noiseReductionLevel'] : 0
+          },
+          'isBinarizationEnabled': content['isBinarizationEnabled']
         });
 
         EditPageLogger.editPageInfo('二值化处理完成',
@@ -754,40 +829,82 @@ mixin ImageProcessingPipeline {
         tag: 'ImageProcessingPipeline',
         data: {'parameter': parameterName, 'value': value});
 
-    // 如果二值化已启用，执行完整的处理管线
+    // 首先保存参数值
+    updateContentProperty(parameterName, value, createUndoOperation: false);
+
+    // 获取更新后的内容以确保参数值已生效
     final content = element['content'] as Map<String, dynamic>;
     final isBinarizationEnabled =
         content['isBinarizationEnabled'] as bool? ?? false;
 
-    AppLogger.debug('二值化参数变化检查',
+    // 🔍 增强调试：详细记录参数变化
+    AppLogger.debug('🎯 参数变化详情',
         tag: 'ImageProcessingPipeline',
-        data: {'currentBinarizationEnabled': isBinarizationEnabled});
+        data: {
+          'parameterName': parameterName,
+          'newValue': value,
+          'actualValueInContent': content[parameterName],
+          'currentBinarizationEnabled': isBinarizationEnabled,
+          'currentThreshold': content['binaryThreshold'],
+          'currentNoiseEnabled': content['isNoiseReductionEnabled'], 
+          'currentNoiseLevel': content['noiseReductionLevel'],
+          'allContentKeys': content.keys.toList()
+        });
 
     if (isBinarizationEnabled) {
-      // 创建临时content来包含新参数值
-      final tempContent = Map<String, dynamic>.from(content);
-      tempContent[parameterName] = value;
-
-      AppLogger.debug('执行处理管线，使用临时参数',
+      AppLogger.debug('执行处理管线，参数已保存',
           tag: 'ImageProcessingPipeline',
           data: {'parameter': parameterName, 'value': value});
 
-      Future.microtask(() async {
-        await _executeImageProcessingPipelineWithContent(
-          tempContent,
-          triggerByBinarization: true,
-          changedParameter: parameterName,
-        );
+      // 🔧 关键修复：增加延迟并验证参数状态，确保降噪开关不会自动关闭
+      Future.delayed(const Duration(milliseconds: 50), () async {
+        // 再次验证参数状态，防止并发修改
+        final verifyContent = element['content'] as Map<String, dynamic>;
+        final verifyBinarizationEnabled = verifyContent['isBinarizationEnabled'] as bool? ?? false;
+        final verifyParameterValue = verifyContent[parameterName];
+        
+        AppLogger.debug('🔍 处理管线执行前最终验证',
+            tag: 'ImageProcessingPipeline',
+            data: {
+              'verifyBinarizationEnabled': verifyBinarizationEnabled,
+              'verifyParameterValue': verifyParameterValue,
+              'expectedValue': value,
+              'parameterChanged': verifyParameterValue != value,
+              'parameterName': parameterName
+            });
 
-        // 🔧 关键修复：不再调用updateContentProperty，因为处理管线已经更新了完整的content
-        // updateContentProperty(parameterName, value, createUndoOperation: false);
+        if (verifyBinarizationEnabled && verifyParameterValue == value) {
+          AppLogger.debug('🚀 开始执行图像处理管线 (参数变化)', 
+              tag: 'ImageProcessingPipeline',
+              data: {
+                'trigger': 'parameter_change',
+                'parameter': parameterName,
+                'value': value
+              });
+              
+          await executeImageProcessingPipeline(
+            triggerByBinarization: true,
+            changedParameter: parameterName,
+          );
 
-        AppLogger.debug('🔍 参数处理管线执行完成 - 已跳过updateContentProperty以保留二值化数据',
-            tag: 'ImageProcessingPipeline');
+          AppLogger.debug('🔍 参数处理管线执行完成',
+              tag: 'ImageProcessingPipeline');
+        } else {
+          AppLogger.warning('⚠️ 参数状态已改变，跳过处理管线',
+              tag: 'ImageProcessingPipeline',
+              data: {
+                'binarizationEnabled': verifyBinarizationEnabled,
+                'parameterStillMatches': verifyParameterValue == value,
+                'parameterName': parameterName,
+                'expectedValue': value,
+                'actualValue': verifyParameterValue
+              });
+        }
       });
     } else {
-      // 如果二值化未启用，直接更新属性（这种情况不会丢失二值化数据，因为二值化未启用）
-      updateContentProperty(parameterName, value, createUndoOperation: false);
+      AppLogger.debug('🔧 二值化未启用，跳过处理管线', 
+          tag: 'ImageProcessingPipeline',
+          data: {'parameter': parameterName, 'value': value});
     }
   }
 
