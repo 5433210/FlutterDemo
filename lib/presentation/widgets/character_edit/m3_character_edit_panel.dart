@@ -22,7 +22,6 @@ import '../../providers/character/selected_region_provider.dart';
 import '../../providers/user_preferences_provider.dart';
 import '../image/cached_image.dart';
 import 'character_edit_canvas.dart';
-import 'dialogs/m3_save_confirmation_dialog.dart';
 import 'keyboard/shortcut_handler.dart';
 
 /// M3 Character Edit Panel
@@ -1743,21 +1742,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     final collectionNotifier = ref.read(characterCollectionProvider.notifier);
 
     try {
-      // Show confirmation dialog
-      final confirmed = await showM3SaveConfirmationDialog(
-        context,
-        character: characterToSave,
-      );
-
-      // Handle dialog result
-      if (confirmed != true) {
-        AppLogger.debug('User canceled save operation');
-        _progressTimer?.cancel();
-        saveNotifier.finishSaving();
-        return;
-      }
-
-      // Start save process immediately, ensure progress is shown after dialog dismissal
+      // Start save process immediately without confirmation
       if (!mounted) {
         AppLogger.debug('Component unmounted, canceling save');
         _progressTimer?.cancel();
@@ -1765,7 +1750,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         return;
       }
 
-      // Immediately update UI state, ensure progress is shown after dialog closes
+      // Start save operation
       AppLogger.debug('Starting save operation');
       saveNotifier.startSaving();
 
