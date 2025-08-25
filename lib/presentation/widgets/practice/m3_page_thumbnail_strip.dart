@@ -260,9 +260,9 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? colorScheme.primary
-                                        .withAlpha(179) // 0.7 opacity
+                                        .withValues(alpha: 0.7) // 0.7 opacity
                                     : colorScheme.surfaceContainerHighest
-                                        .withAlpha(153), // 0.6 opacity
+                                        .withValues(alpha: 0.6), // 0.6 opacity
                                 borderRadius: const BorderRadius.only(
                                   bottomLeft: Radius.circular(7),
                                   bottomRight: Radius.circular(7),
@@ -290,26 +290,22 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                     // Drag handle - 页面下方的拖拽手柄
                     MouseRegion(
                       cursor: SystemMouseCursors.grab,
-                      child: Tooltip(
-                        message: '拖拽重新排序',
-                        preferBelow: true,
-                        child: Container(
-                          width: 32,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: colorScheme.outline.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
+                      child: Container(
+                        width: 32,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.3),
+                            width: 1,
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.drag_handle,
-                              size: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.drag_handle,
+                            size: 12,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -360,7 +356,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                         ? [
                             BoxShadow(
                               color: colorScheme.primary
-                                  .withAlpha(77), // 0.3 opacity
+                                  .withValues(alpha: 0.3), // 0.3 opacity
                               spreadRadius: 1,
                               blurRadius: 4,
                             )
