@@ -5,6 +5,14 @@ abstract class UndoableOperation {
   String get description;
   void execute();
   void undo();
+  
+  /// 获取操作相关的页面索引（如果适用）
+  /// 返回null表示操作不特定于某个页面
+  int? get associatedPageIndex => null;
+  
+  /// 获取操作相关的页面ID（如果适用）
+  /// 返回null表示操作不特定于某个页面
+  String? get associatedPageId => null;
 }
 
 /// 添加元素操作
@@ -12,14 +20,24 @@ class AddElementOperation implements UndoableOperation {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) addElement;
   final Function(String) removeElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '添加元素';
+  
+  @override
+  int get associatedPageIndex => pageIndex;
+  
+  @override
+  String get associatedPageId => pageId;
 
   AddElementOperation({
     required this.element,
     required this.addElement,
     required this.removeElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -29,6 +47,8 @@ class AddElementOperation implements UndoableOperation {
       data: {
         'elementId': element['id'],
         'elementType': element['type'],
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'add_element_execute',
       },
     );
@@ -41,6 +61,8 @@ class AddElementOperation implements UndoableOperation {
       '撤销添加元素操作',
       data: {
         'elementId': element['id'],
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'add_element_undo',
       },
     );
@@ -53,14 +75,24 @@ class DeleteElementOperation implements UndoableOperation {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) addElement;
   final Function(String) removeElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '删除元素';
+  
+  @override
+  int get associatedPageIndex => pageIndex;
+  
+  @override
+  String get associatedPageId => pageId;
 
   DeleteElementOperation({
     required this.element,
     required this.addElement,
     required this.removeElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -70,6 +102,8 @@ class DeleteElementOperation implements UndoableOperation {
       data: {
         'elementId': element['id'],
         'elementType': element['type'],
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'delete_element_execute',
       },
     );
@@ -82,6 +116,8 @@ class DeleteElementOperation implements UndoableOperation {
       '撤销删除元素操作',
       data: {
         'elementId': element['id'],
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'delete_element_undo',
       },
     );
@@ -95,15 +131,25 @@ class ElementPropertyOperation implements UndoableOperation {
   final Map<String, dynamic> oldProperties;
   final Map<String, dynamic> newProperties;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '更新元素属性';
+  
+  @override
+  int get associatedPageIndex => pageIndex;
+  
+  @override
+  String get associatedPageId => pageId;
 
   ElementPropertyOperation({
     required this.elementId,
     required this.oldProperties,
     required this.newProperties,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -113,6 +159,8 @@ class ElementPropertyOperation implements UndoableOperation {
       data: {
         'elementId': elementId,
         'changedProperties': newProperties.keys.toList(),
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'property_update_execute',
       },
     );
@@ -126,6 +174,8 @@ class ElementPropertyOperation implements UndoableOperation {
       data: {
         'elementId': elementId,
         'restoredProperties': oldProperties.keys.toList(),
+        'pageIndex': pageIndex,
+        'pageId': pageId,
         'operation': 'property_update_undo',
       },
     );
@@ -143,6 +193,18 @@ class BatchOperation implements UndoableOperation {
     required this.operations,
     required this.description,
   });
+
+  @override
+  int? get associatedPageIndex {
+    // 批量操作返回第一个操作的页面索引
+    return operations.isNotEmpty ? operations.first.associatedPageIndex : null;
+  }
+
+  @override
+  String? get associatedPageId {
+    // 批量操作返回第一个操作的页面ID
+    return operations.isNotEmpty ? operations.first.associatedPageId : null;
+  }
 
   @override
   void execute() {
@@ -183,15 +245,25 @@ class ElementTranslationOperation implements UndoableOperation {
   final List<Map<String, dynamic>> oldPositions;
   final List<Map<String, dynamic>> newPositions;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '移动元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   ElementTranslationOperation({
     required this.elementIds,
     required this.oldPositions,
     required this.newPositions,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -249,15 +321,25 @@ class ResizeElementOperation implements UndoableOperation {
   final List<Map<String, dynamic>> oldSizes;
   final List<Map<String, dynamic>> newSizes;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '调整元素大小';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   ResizeElementOperation({
     required this.elementIds,
     required this.oldSizes,
     required this.newSizes,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -315,15 +397,25 @@ class ElementRotationOperation implements UndoableOperation {
   final List<double> oldRotations;
   final List<double> newRotations;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '旋转元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   ElementRotationOperation({
     required this.elementIds,
     required this.oldRotations,
     required this.newRotations,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -367,15 +459,25 @@ class GroupElementRotationOperation implements UndoableOperation {
   final Map<String, dynamic> oldGroupState;
   final Map<String, dynamic> newGroupState;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '旋转组合元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   GroupElementRotationOperation({
     required this.groupElementId,
     required this.oldGroupState,
     required this.newGroupState,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -443,14 +545,24 @@ class AddLayerOperation implements UndoableOperation {
   final Map<String, dynamic> layer;
   final Function(Map<String, dynamic>) addLayer;
   final Function(String) removeLayer;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '添加图层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   AddLayerOperation({
     required this.layer,
     required this.addLayer,
     required this.removeLayer,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -487,9 +599,17 @@ class DeleteLayerOperation implements UndoableOperation {
   final Function(Map<String, dynamic>, int) insertLayer;
   final Function(String) removeLayer;
   final Function(List<Map<String, dynamic>>) addElements;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '删除图层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   DeleteLayerOperation({
     required this.layer,
@@ -498,6 +618,8 @@ class DeleteLayerOperation implements UndoableOperation {
     required this.insertLayer,
     required this.removeLayer,
     required this.addElements,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -518,15 +640,25 @@ class UpdateLayerPropertyOperation implements UndoableOperation {
   final Map<String, dynamic> oldProperties;
   final Map<String, dynamic> newProperties;
   final Function(String, Map<String, dynamic>) updateLayer;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '更新图层属性';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   UpdateLayerPropertyOperation({
     required this.layerId,
     required this.oldProperties,
     required this.newProperties,
     required this.updateLayer,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -545,14 +677,24 @@ class ReorderLayerOperation implements UndoableOperation {
   final int oldIndex;
   final int newIndex;
   final Function(int, int) reorderLayer;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '重新排序图层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   ReorderLayerOperation({
     required this.oldIndex,
     required this.newIndex,
     required this.reorderLayer,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -574,6 +716,12 @@ class AddPageOperation implements UndoableOperation {
 
   @override
   final String description = '添加页面';
+
+  @override
+  int? get associatedPageIndex => null; // 页面操作不关联特定页面
+
+  @override
+  String? get associatedPageId => null; // 页面操作不关联特定页面
 
   AddPageOperation({
     required this.page,
@@ -600,6 +748,12 @@ class ReorderPageOperation implements UndoableOperation {
 
   @override
   final String description = '重新排序页面';
+
+  @override
+  int? get associatedPageIndex => null; // 页面操作不关联特定页面
+
+  @override
+  String? get associatedPageId => null; // 页面操作不关联特定页面
 
   ReorderPageOperation({
     required this.oldIndex,
@@ -628,6 +782,12 @@ class UpdatePagePropertyOperation implements UndoableOperation {
   @override
   final String description = '更新页面属性';
 
+  @override
+  int get associatedPageIndex => pageIndex; // 页面属性操作关联特定页面
+
+  @override
+  String? get associatedPageId => null; // 页面属性操作通过索引标识
+
   UpdatePagePropertyOperation({
     required this.pageIndex,
     required this.oldProperties,
@@ -653,9 +813,17 @@ class GroupElementsOperation implements UndoableOperation {
   final Function(Map<String, dynamic>) addElement;
   final Function(String) removeElement;
   final Function(List<String>) removeElements;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '组合元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   GroupElementsOperation({
     required this.elements,
@@ -663,6 +831,8 @@ class GroupElementsOperation implements UndoableOperation {
     required this.addElement,
     required this.removeElement,
     required this.removeElements,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -713,9 +883,17 @@ class UngroupElementOperation implements UndoableOperation {
   final Function(Map<String, dynamic>) addElement;
   final Function(String) removeElement;
   final Function(List<Map<String, dynamic>>) addElements;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '取消组合元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   UngroupElementOperation({
     required this.groupElement,
@@ -723,6 +901,8 @@ class UngroupElementOperation implements UndoableOperation {
     required this.addElement,
     required this.removeElement,
     required this.addElements,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -772,15 +952,25 @@ class FormatPainterOperation implements UndoableOperation {
   final List<Map<String, dynamic>> oldPropertiesList;
   final List<Map<String, dynamic>> newPropertiesList;
   final Function(String, Map<String, dynamic>) updateElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '应用格式刷';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   FormatPainterOperation({
     required this.targetElementIds,
     required this.oldPropertiesList,
     required this.newPropertiesList,
     required this.updateElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -822,15 +1012,25 @@ class BringElementToFrontOperation implements UndoableOperation {
   final int oldIndex;
   final int newIndex;
   final Function(String, int, int) reorderElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '置于顶层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   BringElementToFrontOperation({
     required this.elementId,
     required this.oldIndex,
     required this.newIndex,
     required this.reorderElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -850,15 +1050,25 @@ class SendElementToBackOperation implements UndoableOperation {
   final int oldIndex;
   final int newIndex;
   final Function(String, int, int) reorderElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '置于底层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   SendElementToBackOperation({
     required this.elementId,
     required this.oldIndex,
     required this.newIndex,
     required this.reorderElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -878,15 +1088,25 @@ class MoveElementUpOperation implements UndoableOperation {
   final int oldIndex;
   final int newIndex;
   final Function(String, int, int) reorderElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '上移一层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   MoveElementUpOperation({
     required this.elementId,
     required this.oldIndex,
     required this.newIndex,
     required this.reorderElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -906,15 +1126,25 @@ class MoveElementDownOperation implements UndoableOperation {
   final int oldIndex;
   final int newIndex;
   final Function(String, int, int) reorderElement;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '下移一层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   MoveElementDownOperation({
     required this.elementId,
     required this.oldIndex,
     required this.newIndex,
     required this.reorderElement,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -933,14 +1163,24 @@ class PasteElementOperation implements UndoableOperation {
   final List<Map<String, dynamic>> newElements;
   final Function(List<Map<String, dynamic>>) addElements;
   final Function(List<String>) removeElements;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '粘贴元素';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   PasteElementOperation({
     required this.newElements,
     required this.addElements,
     required this.removeElements,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -977,15 +1217,25 @@ class DeleteAllLayersOperation implements UndoableOperation {
   final String? selectedLayerId;
   final Function() deleteLayers;
   final Function(List<Map<String, dynamic>>, String?) restoreLayers;
+  final int pageIndex;
+  final String pageId;
 
   @override
   final String description = '删除所有图层';
+
+  @override
+  int get associatedPageIndex => pageIndex;
+
+  @override
+  String get associatedPageId => pageId;
 
   DeleteAllLayersOperation({
     required this.layers,
     required this.selectedLayerId,
     required this.deleteLayers,
     required this.restoreLayers,
+    required this.pageIndex,
+    required this.pageId,
   });
 
   @override
@@ -1011,6 +1261,12 @@ class DeletePageOperation implements UndoableOperation {
 
   @override
   final String description = '删除页面';
+
+  @override
+  int get associatedPageIndex => pageIndex; // 删除页面操作关联被删除的页面
+
+  @override
+  String? get associatedPageId => page['id'] as String?;
 
   DeletePageOperation({
     required this.page,

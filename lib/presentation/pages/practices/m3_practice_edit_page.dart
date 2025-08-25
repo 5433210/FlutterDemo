@@ -302,8 +302,25 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Add a new page
   void _addNewPage() {
+    EditPageLogger.editPageInfo(
+      '🆕 M3PracticeEditPage._addNewPage 被调用',
+      data: {
+        'currentPagesCount': _controller.state.pages.length,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
     // Use enhanced version with template inheritance from previous page
     PracticeEditUtils.addNewPage(_controller, context);
+
+    EditPageLogger.editPageInfo(
+      '✅ PracticeEditUtils.addNewPage 调用完成',
+      data: {
+        'finalPagesCount': _controller.state.pages.length,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
     // The controller will notify listeners automatically through intelligent notification
   }
 
@@ -529,6 +546,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       targetElementIds: targetElementIds,
       oldPropertiesList: oldPropertiesList,
       newPropertiesList: newPropertiesList,
+      pageIndex: _controller.state.currentPageIndex,
+      pageId: _controller.state.currentPage?['id'] ?? 'unknown',
       updateElement: (elementId, properties) {
         // 更新指定元素的属性
         if (_controller.state.currentPageIndex >= 0 &&
@@ -880,15 +899,47 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Build the page thumbnails area
   Widget _buildPageThumbnails() {
-    return M3PageThumbnailStrip(
-      pages: _controller.state.pages,
-      currentPageIndex: _controller.state.currentPageIndex,
-      onPageSelected: (index) {
-        _controller.switchToPage(index);
+    EditPageLogger.editPageInfo(
+      '🏗️ _buildPageThumbnails 被调用',
+      data: {
+        'pagesCount': _controller.state.pages.length,
+        'currentPageIndex': _controller.state.currentPageIndex,
+        'timestamp': DateTime.now().toIso8601String(),
       },
-      onAddPage: _addNewPage,
-      onDeletePage: _deletePage,
-      onReorderPages: _reorderPages,
+    );
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        EditPageLogger.editPageInfo(
+          '🔄 M3PageThumbnailStrip AnimatedBuilder 重建',
+          data: {
+            'pagesCount': _controller.state.pages.length,
+            'currentPageIndex': _controller.state.currentPageIndex,
+            'hasUnsavedChanges': _controller.state.hasUnsavedChanges,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+
+        return M3PageThumbnailStrip(
+          pages: _controller.state.pages,
+          currentPageIndex: _controller.state.currentPageIndex,
+          onPageSelected: (index) {
+            EditPageLogger.editPageInfo(
+              '👆 页面缩略图被点击',
+              data: {
+                'selectedIndex': index,
+                'currentIndex': _controller.state.currentPageIndex,
+                'timestamp': DateTime.now().toIso8601String(),
+              },
+            );
+            _controller.switchToPage(index);
+          },
+          onAddPage: _addNewPage,
+          onDeletePage: _deletePage,
+          onReorderPages: _reorderPages,
+        );
+      },
     );
   }
 
@@ -1667,6 +1718,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     // 创建新元素ID
     final newId = const Uuid().v4();
 
+    // 获取本地化文本
+    final l10n = AppLocalizations.of(context);
+
     // 创建文本元素
     final newElement = {
       'id': newId,
@@ -1681,7 +1735,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           _controller.state.layers.first['id'],
       'isLocked': false,
       'isHidden': false,
-      'name': '文本元素',
+      'name': l10n.textElement, // 🌍 使用多语言支持
       'content': {
         'text': text,
         'fontSize': 24.0,
@@ -3021,75 +3075,83 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Synchronize local _currentTool with controller's state.currentTool
   void _syncToolState() {
-    // 只更新本地变量，不触发页面重建
-    // 工具状态变化的UI更新应该通过智能状态分发器和局部组件处理
-    final controllerTool = _controller.state.currentTool;
-    if (_currentTool != controllerTool) {
-      _currentTool = controllerTool;
-    }
+    // 🔧 修复：确保所有状态更新都在下一帧执行，避免在构建期间修改状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-    // 🆕 检测页面切换并更新剪贴板状态
-    final currentPageIndex = _controller.state.currentPageIndex;
+      // 只更新本地变量，不触发页面重建
+      // 工具状态变化的UI更新应该通过智能状态分发器和局部组件处理
+      final controllerTool = _controller.state.currentTool;
+      if (_currentTool != controllerTool) {
+        _currentTool = controllerTool;
+      }
 
-    if (_lastPageIndex != currentPageIndex) {
-      final oldPageIndex = _lastPageIndex;
-      _lastPageIndex = currentPageIndex;
+      // 🆕 检测页面切换并更新剪贴板状态
+      final currentPageIndex = _controller.state.currentPageIndex;
+
+      if (_lastPageIndex != currentPageIndex) {
+        final oldPageIndex = _lastPageIndex;
+        _lastPageIndex = currentPageIndex;
+
+        AppLogger.debug(
+          '检测到页面切换，立即更新剪贴板状态',
+          tag: 'PracticeEdit',
+          data: {
+            'oldPageIndex': oldPageIndex,
+            'newPageIndex': currentPageIndex,
+          },
+        );
+
+        // 在下一帧异步执行剪贴板状态更新
+        _updateClipboardStateAfterPageSwitch(currentPageIndex);
+      }
+    });
+  }
+
+  /// 页面切换后更新剪贴板状态
+  void _updateClipboardStateAfterPageSwitch(int pageIndex) async {
+    if (!mounted) return;
+
+    try {
+      final hasContent = await _checkClipboardContent();
 
       AppLogger.debug(
-        '检测到页面切换，立即更新剪贴板状态',
+        '页面切换剪贴板检查结果',
         tag: 'PracticeEdit',
         data: {
-          'oldPageIndex': oldPageIndex,
-          'newPageIndex': currentPageIndex,
+          'hasContent': hasContent,
+          'oldState': _clipboardHasContent,
+          'pageIndex': pageIndex,
+          'clipboardElement':
+              _clipboardElement != null ? _clipboardElement!['type'] : 'null',
         },
       );
 
-      // 🔧 立即检查剪贴板内容并强制更新按钮状态
-      // 使用scheduleMicrotask确保在当前帧结束后立即执行
-      scheduleMicrotask(() async {
-        try {
-          final hasContent = await _checkClipboardContent();
+      if (mounted) {
+        // 强制更新状态，无论是否有变化
+        _clipboardHasContent = hasContent;
+        _clipboardNotifier.value = hasContent;
 
-          AppLogger.debug(
-            '页面切换剪贴板检查结果',
-            tag: 'PracticeEdit',
-            data: {
-              'hasContent': hasContent,
-              'oldState': _clipboardHasContent,
-              'pageIndex': currentPageIndex,
-              'clipboardElement': _clipboardElement != null
-                  ? _clipboardElement!['type']
-                  : 'null',
-            },
-          );
+        AppLogger.info(
+          '页面切换后强制更新剪贴板状态',
+          tag: 'PracticeEdit',
+          data: {
+            'hasContent': hasContent,
+            'pageIndex': pageIndex,
+            'forceUpdate': true,
+            'notifierValue': _clipboardNotifier.value,
+          },
+        );
 
-          if (mounted) {
-            // 强制更新状态，无论是否有变化
-            _clipboardHasContent = hasContent;
-            _clipboardNotifier.value = hasContent;
-
-            AppLogger.info(
-              '页面切换后强制更新剪贴板状态',
-              tag: 'PracticeEdit',
-              data: {
-                'hasContent': hasContent,
-                'pageIndex': currentPageIndex,
-                'forceUpdate': true,
-                'notifierValue': _clipboardNotifier.value,
-              },
-            );
-
-            // 使用setState确保UI更新
-            setState(() {});
-          }
-        } catch (e) {
-          AppLogger.error(
-            '页面切换时检查剪贴板状态失败',
-            tag: 'PracticeEdit',
-            error: e,
-          );
-        }
-      });
+        // 安全地使用setState更新UI
+        setState(() {});
+      }
+    } catch (e) {
+      AppLogger.error(
+        '页面切换时检查剪贴板状态失败',
+        tag: 'PracticeEdit',
+        error: e,
+      );
     }
   }
 

@@ -145,6 +145,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
       scrollController: _scrollController,
+      buildDefaultDragHandles: false, // 禁用默认拖拽手柄
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       proxyDecorator: (child, index, animation) {
         // Add nice visual effect during drag
@@ -173,7 +174,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
         if (widget.onReorderPages != null) {
           try {
             widget.onReorderPages!(oldIndex, newIndex);
-            
+
             EditPageLogger.editPageInfo(
               '頁面排序成功',
               data: {
@@ -199,82 +200,122 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
         final page = widget.pages[index];
         final isSelected = index == widget.currentPageIndex;
 
-        return Padding(
+        return ReorderableDragStartListener(
           key: ValueKey('page_${page['id']}'),
-          padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: () => widget.onPageSelected(index), // 簡化選擇操作
-            child: MouseRegion(
-              cursor: SystemMouseCursors.grab,
-              child: Stack(
-                children: [
-                  // Page thumbnail
-                  Container(
-                    width: 60,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      border: Border.all(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.outline,
-                        width: isSelected ? 2 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.description,
-                        size: 24,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-
-                  // Delete button
-                  Positioned(
-                    top: -8,
-                    right: -8,
-                    child: IconButton(
-                      icon: const Icon(Icons.cancel, size: 18),
-                      color: colorScheme.error,
-                      onPressed: () => widget.onDeletePage(index),
-                      splashRadius: 18,
-                      tooltip: l10n.deletePage,
-                    ),
-                  ),
-
-                  // Page number indicator
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 20,
+          index: index,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () => widget.onPageSelected(index), // 簡化選擇操作
+              child: SizedBox(
+                width: 60,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Page thumbnail
+                    Container(
+                      width: 60,
+                      height: 80,
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? colorScheme.primary.withAlpha(179) // 0.7 opacity
-                            : colorScheme.surfaceContainerHighest
-                                .withAlpha(153), // 0.6 opacity
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(7),
-                          bottomRight: Radius.circular(7),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
+                        color: colorScheme.surface,
+                        border: Border.all(
                           color: isSelected
-                              ? colorScheme.onPrimary
-                              : colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                              ? colorScheme.primary
+                              : colorScheme.outline,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Page content
+                          Center(
+                            child: Icon(
+                              Icons.description,
+                              size: 24,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+
+                          // Delete button
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: IconButton(
+                              icon: const Icon(Icons.cancel, size: 18),
+                              color: colorScheme.error,
+                              onPressed: () => widget.onDeletePage(index),
+                              splashRadius: 18,
+                              tooltip: l10n.deletePage,
+                            ),
+                          ),
+
+                          // Page number indicator
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorScheme.primary
+                                        .withAlpha(179) // 0.7 opacity
+                                    : colorScheme.surfaceContainerHighest
+                                        .withAlpha(153), // 0.6 opacity
+                                borderRadius: const BorderRadius.only(
+                                  bottomLeft: Radius.circular(7),
+                                  bottomRight: Radius.circular(7),
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Drag handle - 页面下方的拖拽手柄
+                    MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: Tooltip(
+                        message: '拖拽重新排序',
+                        preferBelow: true,
+                        child: Container(
+                          width: 32,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: colorScheme.outline.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.drag_handle,
+                              size: 12,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

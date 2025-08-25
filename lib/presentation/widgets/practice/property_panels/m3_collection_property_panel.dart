@@ -1640,21 +1640,26 @@ class _M3CollectionPropertyPanelState
           },
         );
 
-        EditPageLogger.propertyPanelDebug('UNDO调试 - 开始执行undo优化: 原始值=$originalValue, 新值=$newValue',
+        EditPageLogger.propertyPanelDebug(
+            'UNDO调试 - 开始执行undo优化: 原始值=$originalValue, 新值=$newValue',
             tag: EditPageLoggingConfig.tagCollectionPanel);
 
         // 🔧 修复：直接创建一个undo操作，而不是通过两次更新
         // 获取当前完整的元素状态作为新状态
         final currentElement = Map<String, dynamic>.from(widget.element);
-        
+
         // 创建旧状态（将指定属性恢复到原始值）
         final oldElement = Map<String, dynamic>.from(widget.element);
-        final oldContent = Map<String, dynamic>.from(oldElement['content'] as Map<String, dynamic>);
-        final oldCharacterImages = Map<String, dynamic>.from(oldContent['characterImages'] as Map<String, dynamic>? ?? {});
-        
+        final oldContent = Map<String, dynamic>.from(
+            oldElement['content'] as Map<String, dynamic>);
+        final oldCharacterImages = Map<String, dynamic>.from(
+            oldContent['characterImages'] as Map<String, dynamic>? ?? {});
+
         if (oldCharacterImages.containsKey('$charIndex')) {
-          final oldCharInfo = Map<String, dynamic>.from(oldCharacterImages['$charIndex'] as Map<String, dynamic>);
-          final oldTransform = Map<String, dynamic>.from(oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
+          final oldCharInfo = Map<String, dynamic>.from(
+              oldCharacterImages['$charIndex'] as Map<String, dynamic>);
+          final oldTransform = Map<String, dynamic>.from(
+              oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
           oldTransform[key] = originalValue;
           oldCharInfo['transform'] = oldTransform;
           oldCharacterImages['$charIndex'] = oldCharInfo;
@@ -1667,13 +1672,17 @@ class _M3CollectionPropertyPanelState
           elementId: widget.element['id'] as String,
           oldProperties: oldElement,
           newProperties: currentElement,
+          pageIndex: widget.controller.state.currentPageIndex,
+          pageId: widget.controller.state.currentPage?['id'] ?? 'unknown',
           updateElement: (id, props) {
-            widget.controller.updateElementPropertiesInternal(id, props, createUndoOperation: false);
+            widget.controller.updateElementPropertiesInternal(id, props,
+                createUndoOperation: false);
           },
         );
 
         // 添加undo操作到管理器
-        widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
+        widget.controller.undoRedoManager
+            .addOperation(operation, executeImmediately: false);
 
         EditPageLogger.propertyPanelDebug('UNDO调试 - undo优化更新完成 - 创建了单个undo操作',
             tag: EditPageLoggingConfig.tagCollectionPanel);
@@ -1743,21 +1752,25 @@ class _M3CollectionPropertyPanelState
         // 🔧 修复：直接创建一个undo操作，而不是通过多次更新
         // 获取当前完整的元素状态作为新状态
         final currentElement = Map<String, dynamic>.from(widget.element);
-        
+
         // 创建旧状态（将所有指定属性恢复到原始值）
         final oldElement = Map<String, dynamic>.from(widget.element);
-        final oldContent = Map<String, dynamic>.from(oldElement['content'] as Map<String, dynamic>);
-        final oldCharacterImages = Map<String, dynamic>.from(oldContent['characterImages'] as Map<String, dynamic>? ?? {});
-        
+        final oldContent = Map<String, dynamic>.from(
+            oldElement['content'] as Map<String, dynamic>);
+        final oldCharacterImages = Map<String, dynamic>.from(
+            oldContent['characterImages'] as Map<String, dynamic>? ?? {});
+
         if (oldCharacterImages.containsKey('$charIndex')) {
-          final oldCharInfo = Map<String, dynamic>.from(oldCharacterImages['$charIndex'] as Map<String, dynamic>);
-          final oldTransform = Map<String, dynamic>.from(oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
-          
+          final oldCharInfo = Map<String, dynamic>.from(
+              oldCharacterImages['$charIndex'] as Map<String, dynamic>);
+          final oldTransform = Map<String, dynamic>.from(
+              oldCharInfo['transform'] as Map<String, dynamic>? ?? {});
+
           // 恢复所有原始值
           for (String key in originalValues.keys) {
             oldTransform[key] = originalValues[key];
           }
-          
+
           oldCharInfo['transform'] = oldTransform;
           oldCharacterImages['$charIndex'] = oldCharInfo;
         }
@@ -1769,13 +1782,17 @@ class _M3CollectionPropertyPanelState
           elementId: widget.element['id'] as String,
           oldProperties: oldElement,
           newProperties: currentElement,
+          pageIndex: widget.controller.state.currentPageIndex,
+          pageId: widget.controller.state.currentPage?['id'] ?? 'unknown',
           updateElement: (id, props) {
-            widget.controller.updateElementPropertiesInternal(id, props, createUndoOperation: false);
+            widget.controller.updateElementPropertiesInternal(id, props,
+                createUndoOperation: false);
           },
         );
 
         // 添加undo操作到管理器
-        widget.controller.undoRedoManager.addOperation(operation, executeImmediately: false);
+        widget.controller.undoRedoManager
+            .addOperation(operation, executeImmediately: false);
 
         EditPageLogger.propertyPanelDebug('UNDO调试 - 批量undo优化更新完成 - 创建了单个undo操作',
             tag: EditPageLoggingConfig.tagCollectionPanel);

@@ -28,15 +28,28 @@ import 'undo_redo_mixin.dart';
 class CustomOperation implements UndoableOperation {
   final VoidCallback _executeCallback;
   final VoidCallback _undoCallback;
+  final int? _pageIndex;
+  final String? _pageId;
+  
   @override
   final String description;
+  
+  @override
+  int? get associatedPageIndex => _pageIndex;
+  
+  @override
+  String? get associatedPageId => _pageId;
 
   CustomOperation({
     required VoidCallback execute,
     required VoidCallback undo,
     required this.description,
+    int? pageIndex,
+    String? pageId,
   })  : _executeCallback = execute,
-        _undoCallback = undo;
+        _undoCallback = undo,
+        _pageIndex = pageIndex,
+        _pageId = pageId;
 
   @override
   void execute() {
@@ -216,6 +229,24 @@ class PracticeEditController extends ChangeNotifier
   }
 
   /// 释放资源
+  /// 调试撤销栈状态
+  void debugUndoStack() {
+    undoRedoManager.debugPrintStackState();
+    
+    EditPageLogger.controllerInfo(
+      '🎯 当前页面上下文信息',
+      data: {
+        'currentPageIndex': state.currentPageIndex,
+        'currentPageId': state.currentPage?['id'],
+        'currentPageName': state.currentPage?['name'],
+        'totalPages': state.pages.length,
+        'selectedElementIds': state.selectedElementIds,
+        'selectedElement': state.selectedElement?['id'],
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
   @override
   void dispose() {
     final disposeSession = PracticeEditLogger.startOperation('controller_dispose');
@@ -278,8 +309,27 @@ class PracticeEditController extends ChangeNotifier
       return;
     }
 
+    EditPageLogger.controllerDebug(
+      '🔔 PracticeEditController.notifyListeners() 被调用',
+      data: {
+        'pagesCount': _state.pages.length,
+        'currentPageIndex': _state.currentPageIndex,
+        'hasUnsavedChanges': _state.hasUnsavedChanges,
+        'timestamp': DateTime.now().toIso8601String(),
+        'stackTrace': StackTrace.current.toString().split('\n').take(5).join('\\n'),
+      },
+    );
+
     // 🔧 临时恢复传统的 notifyListeners，确保UI更新
     super.notifyListeners();
+    
+    EditPageLogger.controllerDebug(
+      '✅ PracticeEditController.notifyListeners() 调用完成',
+      data: {
+        'pagesCount': _state.pages.length,
+        'currentPageIndex': _state.currentPageIndex,
+      },
+    );
   }
 
   /// 处理预览模式变化

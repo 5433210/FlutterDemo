@@ -179,6 +179,8 @@ mixin BatchUpdateMixin on ChangeNotifier {
             elementId: elementId,
             oldProperties: oldProps,
             newProperties: newProps,
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             updateElement: (id, props) {
               if (state.currentPageIndex >= 0 &&
                   state.currentPageIndex < state.pages.length) {

@@ -167,6 +167,8 @@ mixin ElementOperationsMixin on ChangeNotifier
           elementIds: [id],
           oldPositions: [originalPositions[id]!],
           newPositions: [newPositions[id]!],
+          pageIndex: state.currentPageIndex,
+          pageId: state.currentPage?['id'] ?? 'unknown',
           updateElement: (elementId, positionProps) {
             final index = state.currentPageElements
                 .indexWhere((e) => e['id'] == elementId);
@@ -244,6 +246,8 @@ mixin ElementOperationsMixin on ChangeNotifier
       elementIds: elementIds,
       oldSizes: oldSizes,
       newSizes: newSizes,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       updateElement: (elementId, sizeProps) {
         _updateElementInCurrentPage(elementId, sizeProps);
       },
@@ -283,6 +287,8 @@ mixin ElementOperationsMixin on ChangeNotifier
       elementIds: elementIds,
       oldRotations: oldRotations,
       newRotations: newRotations,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       updateElement: (elementId, rotationProps) {
         _updateElementInCurrentPage(elementId, rotationProps);
       },
@@ -322,6 +328,8 @@ mixin ElementOperationsMixin on ChangeNotifier
       elementIds: elementIds,
       oldPositions: oldPositions,
       newPositions: newPositions,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       updateElement: (elementId, positionProps) {
         _updateElementInCurrentPage(elementId, positionProps);
       },
@@ -348,6 +356,8 @@ mixin ElementOperationsMixin on ChangeNotifier
       groupElementId: groupElementId,
       oldGroupState: Map<String, dynamic>.from(oldGroupState),
       newGroupState: Map<String, dynamic>.from(newGroupState),
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       updateElement: (id, properties) {
         _updateElementInCurrentPage(id, properties);
       },
@@ -656,6 +666,8 @@ mixin ElementOperationsMixin on ChangeNotifier
     final operation = GroupElementsOperation(
       elements: selectedElements,
       groupElement: groupElement,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       addElement: (e) {
         if (state.currentPageIndex >= 0 &&
             state.currentPageIndex < state.pages.length) {
@@ -879,6 +891,8 @@ mixin ElementOperationsMixin on ChangeNotifier
     final operation = UngroupElementOperation(
       groupElement: groupElement,
       childElements: childElements,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       addElement: (e) {
         if (state.currentPageIndex >= 0 &&
             state.currentPageIndex < state.pages.length) {
@@ -1194,6 +1208,8 @@ mixin ElementOperationsMixin on ChangeNotifier
       execute: execute,
       undo: undo,
       description: description,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
     );
   }
 

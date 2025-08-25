@@ -351,6 +351,8 @@ mixin ElementManagementMixin on ChangeNotifier
       // 创建删除操作
       final operation = DeleteElementOperation(
         element: element,
+        pageIndex: state.currentPageIndex,
+        pageId: state.currentPage?['id'] ?? 'unknown',
         addElement: (e) {
           EditPageLogger.controllerDebug('【Undo/Redo】撤销删除 - 恢复元素: ${e['id']}');
           if (state.currentPageIndex >= 0 &&
@@ -453,6 +455,8 @@ mixin ElementManagementMixin on ChangeNotifier
 
           final operation = DeleteElementOperation(
             element: Map<String, dynamic>.from(element as Map<String, dynamic>),
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             addElement: (e) {
               if (state.currentPageIndex >= 0 &&
                   state.currentPageIndex < state.pages.length) {
@@ -895,6 +899,8 @@ mixin ElementManagementMixin on ChangeNotifier
                 'y': newProperties['y'],
               }
             ],
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             updateElement: (elementId, positionProps) {
               updateElementPropertiesInternal(elementId, positionProps,
                   createUndoOperation: false);
@@ -904,6 +910,8 @@ mixin ElementManagementMixin on ChangeNotifier
           // 创建通用属性变化操作
           operation = ElementPropertyOperation(
             elementId: id,
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             oldProperties: oldProperties,
             newProperties: newProperties,
             updateElement: (id, props) {
@@ -1009,6 +1017,8 @@ mixin ElementManagementMixin on ChangeNotifier
 
     final operation = AddElementOperation(
         element: element,
+        pageIndex: state.currentPageIndex,
+        pageId: state.currentPage?['id'] ?? 'unknown',
         addElement: (e) {
           EditPageLogger.controllerDebug('执行添加元素操作');
           if (state.currentPageIndex >= 0 &&
@@ -1160,6 +1170,8 @@ mixin ElementManagementMixin on ChangeNotifier
             elementId: elementId,
             oldProperties: oldProps,
             newProperties: newProps,
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             updateElement: (id, props) {
               if (state.currentPageIndex >= 0 &&
                   state.currentPageIndex < state.pages.length) {

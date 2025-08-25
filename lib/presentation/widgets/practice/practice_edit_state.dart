@@ -17,6 +17,9 @@ class PracticeEditState {
   List<Map<String, dynamic>> pages = [];
 
   int currentPageIndex = -1;
+  
+  // 页面模板（用于传递模板信息给 addNewPage）
+  Map<String, dynamic>? pageTemplate;
 
   // 当前工具
   String currentTool = '';

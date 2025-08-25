@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/page_operations.dart';
@@ -66,30 +67,30 @@ class PracticeEditUtils {
         template.removeWhere((key, value) => value == null);
       }
 
-      // 使用 PageOperations 创建新页面，传递模板
-      final newPage = PageOperations.addPage(controller.state.pages, template);
-
-      // 添加默认图层（如果模板中没有图层）
-      if (!newPage.containsKey('layers') ||
-          (newPage['layers'] as List).isEmpty) {
-        newPage['layers'] = [
-          {
-            'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
-            'name': AppLocalizations.of(context).practiceEditDefaultLayer,
-            'isVisible': true,
-            'isLocked': false,
-          }
-        ];
+      // 🔧 修复：使用 PageManagementMixin 的 addNewPage 方法以支持撤销操作
+      // 但首先需要应用模板到默认页面创建中
+      if (template != null) {
+        EditPageLogger.editPageInfo(
+          '📋 应用页面模板到新页面',
+          data: {
+            'templateKeys': template.keys.toList(),
+            'hasLayers': template.containsKey('layers'),
+          },
+        );
+        
+        // 临时保存模板，让 addNewPage 使用
+        controller.state.pageTemplate = template;
       }
 
-      // 添加到页面列表
-      controller.state.pages.add(newPage);
-
-      // 切换到新页面
-      controller.state.currentPageIndex = controller.state.pages.length - 1;
-
-      // 标记有未保存的更改
-      controller.state.hasUnsavedChanges = true;
+      EditPageLogger.editPageInfo('🔄 调用 controller.addNewPage() - 支持撤销操作');
+      
+      // 使用控制器的 addNewPage 方法，支持完整的撤销/重做功能
+      controller.addNewPage();
+      
+      EditPageLogger.editPageInfo('✅ controller.addNewPage() 调用完成 - 支持撤销操作');
+      
+      // 清理临时模板
+      controller.state.pageTemplate = null;
 
       // 简化业务操作记录 - 只记录核心指标
       PracticeEditLogger.logBusinessOperation('页面管理', '新页面添加', metrics: {
@@ -122,6 +123,8 @@ class PracticeEditUtils {
         elementId: id,
         oldIndex: index,
         newIndex: newIndex,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         reorderElement: controller.reorderElement,
       );
 
@@ -331,6 +334,8 @@ class PracticeEditUtils {
         elementId: id,
         oldIndex: index,
         newIndex: newIndex,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         reorderElement: controller.reorderElement,
       );
 
@@ -354,6 +359,8 @@ class PracticeEditUtils {
         elementId: id,
         oldIndex: index,
         newIndex: newIndex,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         reorderElement: controller.reorderElement,
       );
 
@@ -445,6 +452,8 @@ class PracticeEditUtils {
     controller.undoRedoManager.addOperation(
       PasteElementOperation(
         newElements: newElements,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         addElements: (elements) {
           if (controller.state.currentPageIndex >= 0 &&
               controller.state.currentPageIndex <
@@ -710,6 +719,8 @@ class PracticeEditUtils {
       UngroupElementOperation(
         groupElement: groupElement,
         childElements: childElements,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         addElement: (e) {
           if (controller.state.currentPageIndex >= 0 &&
               controller.state.currentPageIndex <
@@ -824,6 +835,8 @@ class PracticeEditUtils {
         elementId: id,
         oldIndex: index,
         newIndex: newIndex,
+        pageIndex: controller.state.currentPageIndex,
+        pageId: controller.state.currentPage?['id'] ?? 'unknown',
         reorderElement: controller.reorderElement,
       );
 

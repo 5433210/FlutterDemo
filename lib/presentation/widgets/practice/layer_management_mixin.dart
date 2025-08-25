@@ -34,6 +34,8 @@ mixin LayerManagementMixin on ChangeNotifier
 
     final operation = AddLayerOperation(
       layer: newLayer,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       addLayer: (layer) {
         // 直接操作当前页面的图层列表
         if (!state.currentPage!.containsKey('layers')) {
@@ -94,6 +96,8 @@ mixin LayerManagementMixin on ChangeNotifier
     final operation = DeleteAllLayersOperation(
       layers: oldLayers,
       selectedLayerId: oldSelectedLayerId,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       deleteLayers: () {
         state.layers.clear();
         state.selectedLayerId = null;
@@ -127,7 +131,8 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('layers')) {
       return;
     }
 
@@ -146,6 +151,8 @@ mixin LayerManagementMixin on ChangeNotifier
       layer: deletedLayer,
       layerIndex: layerIndex,
       elementsOnLayer: elementsOnLayer,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       insertLayer: (layer, index) {
         if (state.currentPage != null &&
             state.currentPage!.containsKey('layers')) {
@@ -256,6 +263,8 @@ mixin LayerManagementMixin on ChangeNotifier
         // Add the new layer
         AddLayerOperation(
           layer: duplicatedLayer,
+          pageIndex: state.currentPageIndex,
+          pageId: state.currentPage?['id'] ?? 'unknown',
           addLayer: (l) {
             if (state.currentPage != null) {
               final layers = state.currentPage!['layers'] as List<dynamic>;
@@ -336,7 +345,8 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('layers')) {
       return;
     }
 
@@ -350,6 +360,8 @@ mixin LayerManagementMixin on ChangeNotifier
     final operation = ReorderLayerOperation(
       oldIndex: currentIndex,
       newIndex: newIndex,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       reorderLayer: (fromIndex, toIndex) {
         if (state.currentPage != null &&
             state.currentPage!.containsKey('layers')) {
@@ -446,6 +458,8 @@ mixin LayerManagementMixin on ChangeNotifier
     final operation = ReorderLayerOperation(
       oldIndex: oldIndex,
       newIndex: newIndex,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       reorderLayer: (oldIndex, newIndex) {
         if (state.currentPage != null &&
             state.currentPage!.containsKey('layers')) {
@@ -487,7 +501,8 @@ mixin LayerManagementMixin on ChangeNotifier
     checkDisposed();
 
     // 确保有当前页面
-    if (state.currentPage == null || !state.currentPage!.containsKey('layers')) {
+    if (state.currentPage == null ||
+        !state.currentPage!.containsKey('layers')) {
       return;
     }
 
@@ -550,6 +565,8 @@ mixin LayerManagementMixin on ChangeNotifier
             layerId: layerId,
             oldProperties: oldProperties,
             newProperties: newProperties,
+            pageIndex: state.currentPageIndex,
+            pageId: state.currentPage?['id'] ?? 'unknown',
             updateLayer: (id, props) {
               if (state.currentPage != null &&
                   state.currentPage!.containsKey('layers')) {
@@ -675,6 +692,8 @@ mixin LayerManagementMixin on ChangeNotifier
       layerId: layerId,
       oldProperties: oldProperties,
       newProperties: properties,
+      pageIndex: state.currentPageIndex,
+      pageId: state.currentPage?['id'] ?? 'unknown',
       updateLayer: (id, props) {
         if (state.currentPage != null &&
             state.currentPage!.containsKey('layers')) {
