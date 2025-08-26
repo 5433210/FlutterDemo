@@ -1,6 +1,6 @@
 name: charasgem
 description: A versatile calligraphy management and practice application.
-version: 0.0.4+20250827001
+version: 0.0.5+20250827001
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -90,7 +90,7 @@ msix_config:
   display_name: Char As Gem
   publisher_display_name: 大力出奇迹
   identity_name: C82AF157.CharAsGem
-  msix_version: 0.0.4.0
+  msix_version: 0.0.5.0
   logo_path: assets/images/logo.png
   architecture: x64
   publisher: CN=53293241-CEA8-41F3-8141-C7ABB9B773E3
