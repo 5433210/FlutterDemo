@@ -1325,7 +1325,50 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           ],
         ),
         const SizedBox(height: 12),
-        // 阈值控制
+        // 降噪调节控制
+        Row(
+          children: [
+            Icon(
+              Icons.auto_fix_high,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '降噪调节',
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: _NoiseReductionSlider(),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              alignment: Alignment.centerRight,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  // Use dedicated text provider to only listen to the text value changes
+                  final noiseReductionText =
+                      ref.watch(erase.noiseReductionTextProvider);
+                  return Text(
+                    noiseReductionText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // 灰度阈值控制
         Row(
           children: [
             Icon(
@@ -1335,7 +1378,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
             const SizedBox(width: 8),
             Text(
-              l10n.threshold,
+              '灰度阈值',
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.onSurfaceVariant,
@@ -1359,78 +1402,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        // 降噪控制
-        RepaintBoundary(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                RepaintBoundary(
-                  child: Tooltip(
-                    message: l10n.noiseReduction,
-                    child: Icon(Icons.auto_fix_high,
-                        size: 16, color: colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                RepaintBoundary(
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      // Use dedicated provider for more efficient rebuilds
-                      final noiseReduction =
-                          ref.watch(erase.noiseReductionProvider);
-                      return Switch(
-                        value: noiseReduction > 0,
-                        onChanged: (value) {
-                          ref
-                              .read(erase.eraseStateProvider.notifier)
-                              .toggleNoiseReduction(value);
-                        },
-                        activeColor: colorScheme.primary,
-                        inactiveThumbColor: colorScheme.onSurfaceVariant,
-                        inactiveTrackColor: colorScheme.surfaceContainerHighest,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: _NoiseReductionSlider(),
-                ),
-                RepaintBoundary(
-                  child: Container(
-                    width: 32, // Fixed width for the text display
-                    alignment: Alignment.center,
-                    child: Consumer(
-                      builder: (context, ref, child) {
-                        // Use dedicated text provider to only listen to the text value changes
-                        final noiseReductionText =
-                            ref.watch(erase.noiseReductionTextProvider);
-                        return Text(
-                          noiseReductionText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: noiseReductionText != '0.0'
-                                ? colorScheme.onSurfaceVariant
-                                : colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.5),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
         const SizedBox(height: 8),
       ],
@@ -2330,9 +2301,6 @@ class _NoiseReductionSlider extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final eraseStateNotifier = ref.read(erase.eraseStateProvider.notifier);
 
-    // Enabled when noiseReduction > 0
-    final isEnabled = noiseReduction > 0;
-
     return RepaintBoundary(
       child: SizedBox(
         height: 24, // Fixed height to prevent layout shifts
@@ -2341,35 +2309,26 @@ class _NoiseReductionSlider extends ConsumerWidget {
           min: 0.0,
           max: 1.0,
           divisions: 100,
-          activeColor: isEnabled
-              ? colorScheme.primary
-              : colorScheme.surfaceContainerHighest,
+          activeColor: colorScheme.primary,
           inactiveColor: colorScheme.surfaceContainerHighest,
-          thumbColor:
-              isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
-          onChangeStart: isEnabled
-              ? (value) {
-                  // 保存原始值，开始拖动时
-                  eraseStateNotifier.startNoiseReductionChange(noiseReduction);
-                  // 同步预览provider与当前值
-                  ref.read(erase.previewNoiseReductionProvider.notifier).state = noiseReduction;
-                }
-              : null,
-          onChanged: isEnabled
-              ? (value) {
-                  // 仅更新预览provider，不影响实际状态
-                  ref.read(erase.previewNoiseReductionProvider.notifier).state = value;
-                }
-              : null,
-          onChangeEnd: isEnabled
-              ? (value) {
-                  // 拖动结束，触发最终的图像更新
-                  eraseStateNotifier.finishNoiseReductionChange(value);
-                  // 重置预览provider为实际值
-                  final actualValue = ref.read(erase.noiseReductionProvider);
-                  ref.read(erase.previewNoiseReductionProvider.notifier).state = actualValue;
-                }
-              : null,
+          thumbColor: colorScheme.primary,
+          onChangeStart: (value) {
+            // 保存原始值，开始拖动时
+            eraseStateNotifier.startNoiseReductionChange(noiseReduction);
+            // 同步预览provider与当前值
+            ref.read(erase.previewNoiseReductionProvider.notifier).state = noiseReduction;
+          },
+          onChanged: (value) {
+            // 仅更新预览provider，不影响实际状态
+            ref.read(erase.previewNoiseReductionProvider.notifier).state = value;
+          },
+          onChangeEnd: (value) {
+            // 拖动结束，触发最终的图像更新
+            eraseStateNotifier.finishNoiseReductionChange(value);
+            // 重置预览provider为实际值
+            final actualValue = ref.read(erase.noiseReductionProvider);
+            ref.read(erase.previewNoiseReductionProvider.notifier).state = actualValue;
+          },
         ),
       ),
     );

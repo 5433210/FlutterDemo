@@ -694,7 +694,8 @@ class CharacterCollectionNotifier
     }
 
     try {
-      state = state.copyWith(processing: true);
+      // 移除全局处理状态设置，因为编辑面板已经有自己的保存进度指示器
+      // state = state.copyWith(processing: true);
 
       // 使用已获取的选中区域，如果没有则查找currentId对应的区域
       final region = selectedRegion ?? state.regions.firstWhere(
@@ -768,7 +769,7 @@ class CharacterCollectionNotifier
 
         state = state.copyWith(
           regions: updatedRegions,
-          processing: false,
+          // processing: false, // 移除全局处理状态设置
           isAdjusting: false, // 退出调整状态
         );
         AppLogger.debug('状态更新完成 (现有区域)', data: {
@@ -836,7 +837,7 @@ class CharacterCollectionNotifier
         state = state.copyWith(
           regions: updatedRegions,
           currentId: newRegion.id, // 确保当前ID更新为新的ID
-          processing: false,
+          // processing: false, // 移除全局处理状态设置
           isAdjusting: false, // 退出调整状态
         );
         AppLogger.debug('状态更新完成 (新区域)', data: {
@@ -877,7 +878,7 @@ class CharacterCollectionNotifier
     } catch (e) {
       AppLogger.error('保存区域失败', error: e);
       state = state.copyWith(
-        processing: false,
+        // processing: false, // 移除全局处理状态设置
         error: e.toString(),
       );
     }

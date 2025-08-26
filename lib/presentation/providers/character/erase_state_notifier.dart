@@ -373,31 +373,6 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     }
   }
 
-  /// 切换降噪是否开启
-  void toggleNoiseReduction(bool enabled) {
-    // 如果禁用，将降噪值设为0，否则设为之前的值或默认值0.5
-    final newValue = enabled
-        ? (state.processingOptions.noiseReduction > 0
-            ? state.processingOptions.noiseReduction
-            : 0.5)
-        : 0.0;
-
-    final newProcessingOptions = state.processingOptions.copyWith(
-      noiseReduction: newValue,
-    );
-
-    AppLogger.debug('切换降噪状态', data: {
-      'enabled': enabled,
-      'oldNoiseReduction': state.processingOptions.noiseReduction,
-      'newNoiseReduction': newValue,
-    });
-
-    // 当开关切换时，总是需要立即更新图像
-    state = state.copyWith(
-        processingOptions: newProcessingOptions,
-        forceImageUpdate: true // 切换开关时立即更新图像
-        );
-  }
 
   /// 切换颜色反转
   void toggleReverse() {
