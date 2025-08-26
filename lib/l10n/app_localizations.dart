@@ -8781,6 +8781,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ZIP Archive'**
   String get zipFile;
+
+  /// No description provided for @zoomPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Preview'**
+  String get zoomPreview;
+
+  /// No description provided for @imagePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Preview'**
+  String get imagePreview;
+
+  /// No description provided for @resetView.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset View'**
+  String get resetView;
+
+  /// No description provided for @fitToWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to Window'**
+  String get fitToWindow;
+
+  /// No description provided for @actualSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual Size'**
+  String get actualSize;
+
+  /// No description provided for @modified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get modified;
+
+  /// No description provided for @resetCropArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Crop Area'**
+  String get resetCropArea;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

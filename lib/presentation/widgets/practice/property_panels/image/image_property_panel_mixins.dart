@@ -558,7 +558,8 @@ mixin ImagePropertyUpdaters {
       },
     );
 
-    updateProperty('content', content);
+    // 🔧 修复：初次加载图像时不创建撤销操作，避免选择元素时立即出现undo记录
+    updateProperty('content', content, createUndoOperation: false);
   }
 
   /// 仅更新图像尺寸信息，不重置裁剪区域（用于避免预览重复重置）
@@ -598,27 +599,24 @@ mixin ImagePropertyUpdaters {
     final currentRenderWidth = (content['renderWidth'] as num?)?.toDouble();
     final currentRenderHeight = (content['renderHeight'] as num?)?.toDouble();
 
-    // 只有当图像尺寸确实改变时才更新并重置裁剪区域
-    final imageSizeChanged = currentImageWidth != imageSize.width || 
-                            currentImageHeight != imageSize.height;
-    final renderSizeChanged = currentRenderWidth != renderSize.width || 
-                             currentRenderHeight != renderSize.height;
+    // 区分是初次加载图像还是图像真正改变
+    final isInitialLoad = currentImageWidth == null || currentImageHeight == null;
+    final imageSizeChanged = !isInitialLoad && 
+                            (currentImageWidth != imageSize.width || 
+                             currentImageHeight != imageSize.height);
+    final renderSizeChanged = !isInitialLoad && 
+                             currentRenderWidth != null && 
+                             currentRenderHeight != null &&
+                             (currentRenderWidth != renderSize.width || 
+                              currentRenderHeight != renderSize.height);
 
-    if (imageSizeChanged || renderSizeChanged) {
+    if (isInitialLoad) {
       AppLogger.debug(
-        '🔍 图像尺寸发生变化，需要更新和重置裁剪区域',
+        '🔄 首次加载图像，初始化尺寸信息（不创建撤销操作）',
         tag: 'ImagePropertyPanelMixins',
         data: {
-          'sizeChanges': {
-            'originalImageSize': {
-              'from': '${currentImageWidth ?? 'null'}x${currentImageHeight ?? 'null'}',
-              'to': '${imageSize.width}x${imageSize.height}',
-            },
-            'renderSize': {
-              'from': '${currentRenderWidth ?? 'null'}x${currentRenderHeight ?? 'null'}',
-              'to': '${renderSize.width}x${renderSize.height}',
-            },
-          },
+          'imageSize': '${imageSize.width}x${imageSize.height}',
+          'renderSize': '${renderSize.width}x${renderSize.height}',
           'willUpdateAfterBuild': true,
         },
       );
@@ -627,12 +625,67 @@ mixin ImagePropertyUpdaters {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         updateImageSizeInfo(imageSize, renderSize);
       });
+    } else if (imageSizeChanged || renderSizeChanged) {
+      AppLogger.debug(
+        '🔍 图像尺寸发生变化，需要更新和重置裁剪区域',
+        tag: 'ImagePropertyPanelMixins',
+        data: {
+          'sizeChanges': {
+            'originalImageSize': {
+              'from': '${currentImageWidth}x${currentImageHeight}',
+              'to': '${imageSize.width}x${imageSize.height}',
+            },
+            'renderSize': {
+              'from': '${currentRenderWidth}x${currentRenderHeight}',
+              'to': '${renderSize.width}x${renderSize.height}',
+            },
+          },
+          'willUpdateAfterBuild': true,
+        },
+      );
+      
+      // 真正的图像变更时才创建撤销操作（比如切换到不同的图像文件）
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        updateImageSizeInfoWithUndo(imageSize, renderSize);
+      });
     } else {
       AppLogger.debug(
         '🔍 图像尺寸未改变，跳过更新',
         tag: 'ImagePropertyPanelMixins',
       );
     }
+  }
+
+  /// 更新图像尺寸信息（带撤销操作）
+  void updateImageSizeInfoWithUndo(Size imageSize, Size renderSize) {
+    final content =
+        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+
+    // 更新图像尺寸信息
+    content['originalWidth'] = imageSize.width;
+    content['originalHeight'] = imageSize.height;
+    content['renderWidth'] = renderSize.width;
+    content['renderHeight'] = renderSize.height;
+
+    // 强制重新初始化裁剪区域，确保新图片加载时使用新的尺寸
+    content['cropX'] = 0.0;
+    content['cropY'] = 0.0;
+    content['cropWidth'] = imageSize.width;
+    content['cropHeight'] = imageSize.height;
+
+    EditPageLogger.propertyPanelDebug(
+      '更新图像尺寸信息并重置裁剪区域（带撤销操作）',
+      tag: EditPageLoggingConfig.tagImagePanel,
+      data: {
+        'operation': 'update_image_size_and_reset_crop_with_undo',
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'renderSize': '${renderSize.width}x${renderSize.height}',
+        'cropArea': '0,0,${imageSize.width},${imageSize.height}',
+      },
+    );
+
+    // 真正的图像变更时创建撤销操作
+    updateProperty('content', content, createUndoOperation: true);
   }
 
   /// 处理属性变更（需要被实现类重写）

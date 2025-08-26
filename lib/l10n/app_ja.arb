@@ -1449,5 +1449,12 @@
   "no": "いいえ",
   "yes": "はい",
   "yesterday": "昨日",
-  "zipFile": "ZIP圧縮ファイル"
+  "zipFile": "ZIP圧縮ファイル",
+  "zoomPreview": "ズーム プレビュー",
+  "imagePreview": "画像プレビュー",
+  "resetView": "ビューリセット",
+  "fitToWindow": "ウィンドウに合わせる",
+  "actualSize": "実際のサイズ",
+  "modified": "変更済み",
+  "resetCropArea": "クロップエリアリセット"
 }

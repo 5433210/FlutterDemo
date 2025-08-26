@@ -1449,5 +1449,12 @@
   "no": "No",
   "yes": "Yes",
   "yesterday": "Yesterday",
-  "zipFile": "ZIP Archive"
+  "zipFile": "ZIP Archive",
+  "zoomPreview": "Zoom Preview",
+  "imagePreview": "Image Preview",
+  "resetView": "Reset View",
+  "fitToWindow": "Fit to Window",
+  "actualSize": "Actual Size",
+  "modified": "Modified",
+  "resetCropArea": "Reset Crop Area"
 }

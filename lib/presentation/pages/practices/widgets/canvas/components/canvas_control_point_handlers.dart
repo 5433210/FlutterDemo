@@ -1149,8 +1149,7 @@ mixin CanvasControlPointHandlers {
         '使用FreeControlPoints权威位置数据',
         data: {
           'elementId': elementId,
-          'reason': 'control_point_dominated_mode',
-          'authoritative_position': finalPreviewProperties,
+          'reason': 'control_point_dominated_mode'
         },
       );
     } else {
@@ -1166,11 +1165,7 @@ mixin CanvasControlPointHandlers {
 
       EditPageLogger.canvasDebug(
         '使用计算后的位置数据',
-        data: {
-          'elementId': elementId,
-          'reason': 'normal_drag_mode',
-          'calculated_position': finalPreviewProperties,
-        },
+        data: {'elementId': elementId, 'reason': 'normal_drag_mode'},
       );
     }
 
@@ -1184,8 +1179,7 @@ mixin CanvasControlPointHandlers {
         'DragStateManager同步预览属性',
         data: {
           'elementId': elementId,
-          'isControlPointDominated': _isControlPointDominated(elementId),
-          'properties': finalPreviewProperties,
+          'isControlPointDominated': _isControlPointDominated(elementId)
         },
       );
     }

@@ -4600,4 +4600,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 압축 파일';
+
+  @override
+  String get zoomPreview => '줌 미리보기';
+
+  @override
+  String get imagePreview => '이미지 미리보기';
+
+  @override
+  String get resetView => '뷰 재설정';
+
+  @override
+  String get fitToWindow => '창에 맞추기';
+
+  @override
+  String get actualSize => '실제 크기';
+
+  @override
+  String get modified => '수정됨';
+
+  @override
+  String get resetCropArea => '자르기 영역 재설정';
 }

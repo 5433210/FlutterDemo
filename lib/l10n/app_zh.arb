@@ -1447,6 +1447,13 @@
   "dartVersionLabel": "Dart版本",
   "deviceInfo": "设备信息",
   "no": "否",
+  "zoomPreview": "放大预览",
+  "imagePreview": "图像预览",
+  "resetView": "重置视图",
+  "fitToWindow": "适合窗口",
+  "actualSize": "实际大小",
+  "modified": "已修改",
+  "resetCropArea": "重置裁剪区域",
   "yes": "是",
   "yesterday": "昨天",
   "zipFile": "ZIP 压缩包"

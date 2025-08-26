@@ -143,7 +143,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
     final noiseReductionLevel =
         (content['noiseReductionLevel'] as num?)?.toDouble() ?? 3.0;
 
-    // 🔧 修复：如果现有元素缺少二值化属性，则添加默认值
+    // 🔧 修复：如果现有元素缺少二值化属性，则静默添加默认值（不创建撤销操作）
     if (!content.containsKey('isBinarizationEnabled')) {
       content['isBinarizationEnabled'] = false;
       content['binaryThreshold'] = 128.0;
@@ -152,16 +152,13 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
       content['binarizedImageData'] = null;
 
       AppLogger.debug(
-        '🔧 已为现有图像元素添加二值化默认属性',
+        '🔧 静默为现有图像元素添加二值化默认属性（不创建撤销操作）',
         tag: 'ImagePropertyPanel',
       );
 
-      // 延迟到构建完成后再更新属性，避免在build过程中调用setState
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          updateProperty('content', content, createUndoOperation: false);
-        }
-      });
+      // 使用控制器直接更新元素属性，不创建撤销操作
+      final elementId = widget.element['id'];
+      widget.controller.updateElementPropertiesWithoutUndo(elementId, {'content': content});
     }
 
     // 🔍 调试日志：检查二值化开关状态

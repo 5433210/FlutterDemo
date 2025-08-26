@@ -4600,6 +4600,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP 压缩包';
+
+  @override
+  String get zoomPreview => '放大预览';
+
+  @override
+  String get imagePreview => '图像预览';
+
+  @override
+  String get resetView => '重置视图';
+
+  @override
+  String get fitToWindow => '适合窗口';
+
+  @override
+  String get actualSize => '实际大小';
+
+  @override
+  String get modified => '已修改';
+
+  @override
+  String get resetCropArea => '重置裁剪区域';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9198,4 +9219,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get zipFile => 'ZIP 壓縮檔';
+
+  @override
+  String get zoomPreview => '縮放預覽';
+
+  @override
+  String get imagePreview => '圖像預覽';
+
+  @override
+  String get resetView => '重置視圖';
+
+  @override
+  String get fitToWindow => '適合視窗';
+
+  @override
+  String get actualSize => '實際大小';
+
+  @override
+  String get modified => '已修改';
+
+  @override
+  String get resetCropArea => '重置裁剪區域';
 }

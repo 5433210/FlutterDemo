@@ -1449,5 +1449,12 @@
   "no": "아니오",
   "yes": "예",
   "yesterday": "어제",
-  "zipFile": "ZIP 압축 파일"
+  "zipFile": "ZIP 압축 파일",
+  "zoomPreview": "줌 미리보기",
+  "imagePreview": "이미지 미리보기",
+  "resetView": "뷰 재설정",
+  "fitToWindow": "창에 맞추기",
+  "actualSize": "실제 크기",
+  "modified": "수정됨",
+  "resetCropArea": "자르기 영역 재설정"
 }

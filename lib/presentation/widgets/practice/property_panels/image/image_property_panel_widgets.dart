@@ -10,6 +10,7 @@ import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
 import '../../../image/cached_image.dart';
 import '../m3_panel_styles.dart';
+import 'image_zoom_preview_dialog.dart';
 import 'interactive_crop_overlay.dart';
 
 /// 几何属性面板
@@ -550,78 +551,159 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
         color:
             colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
       ),
-      child: imageUrl.isNotEmpty
-          ? LayoutBuilder(
-              builder: (context, constraints) {
-                Size? currentImageSize = imageSize;
-                Size? currentRenderSize = renderSize;
+      child: Stack(
+        children: [
+          // 主要图像显示区域
+          Positioned.fill(
+            child: imageUrl.isNotEmpty
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      Size? currentImageSize = imageSize;
+                      Size? currentRenderSize = renderSize;
 
-                return Stack(
-                  children: [
-                    // Simple centered image with Transform
-                    Positioned.fill(
-                      child: Center(
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..rotateZ(contentRotation * (math.pi / 180.0))
-                            ..scale(
-                              flipHorizontal ? -1.0 : 1.0,
-                              flipVertical ? -1.0 : 1.0,
+                      return Stack(
+                        children: [
+                          // Simple centered image with Transform
+                          Positioned.fill(
+                            child: Center(
+                              child: Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()
+                                  ..rotateZ(contentRotation * (math.pi / 180.0))
+                                  ..scale(
+                                    flipHorizontal ? -1.0 : 1.0,
+                                    flipVertical ? -1.0 : 1.0,
+                                  ),
+                                child: _buildImageWithSizeListener(
+                                  context: context,
+                                  imageUrl: imageUrl,
+                                  fitMode: _getFitMode(fitMode),
+                                  onImageSizeAvailable:
+                                      (detectedImageSize, detectedRenderSize) {
+                                    // Always call when image size is detected
+                                    // This ensures that when a new image is loaded,
+                                    // the size information gets updated properly
+                                    onImageSizeAvailable(
+                                        detectedImageSize, detectedRenderSize);
+                                  },
+                                ),
+                              ),
                             ),
-                          child: _buildImageWithSizeListener(
-                            context: context,
-                            imageUrl: imageUrl,
-                            fitMode: _getFitMode(fitMode),
-                            onImageSizeAvailable:
-                                (detectedImageSize, detectedRenderSize) {
-                              // Always call when image size is detected
-                              // This ensures that when a new image is loaded,
-                              // the size information gets updated properly
-                              onImageSizeAvailable(
-                                  detectedImageSize, detectedRenderSize);
-                            },
+                          ),
+
+                          // Simple crop overlay
+                          if (currentImageSize != null &&
+                              currentRenderSize != null &&
+                              onCropChanged != null)
+                            Positioned.fill(
+                              child: InteractiveCropOverlay(
+                                imageSize: currentImageSize,
+                                renderSize: currentRenderSize,
+                                cropX: cropX,
+                                cropY: cropY,
+                                cropWidth: cropWidth,
+                                cropHeight: cropHeight,
+                                contentRotation: contentRotation,
+                                flipHorizontal: flipHorizontal,
+                                flipVertical: flipVertical,
+                                onCropChanged: onCropChanged!,
+                                enabled: true,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  )
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_not_supported,
+                            size: 48, color: colorScheme.outline),
+                        const SizedBox(height: 12),
+                        Text(l10n.noImageSelected,
+                            style: TextStyle(color: colorScheme.outline)),
+                      ],
+                    ),
+                  ),
+          ),
+
+          // 放大预览按钮
+          if (imageUrl.isNotEmpty)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _showZoomPreviewDialog(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withAlpha((0.9 * 255).toInt()),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha((0.1 * 255).toInt()),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.zoom_in,
+                          size: 16,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.zoomPreview,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.primary,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-
-                    // Simple crop overlay
-                    if (currentImageSize != null &&
-                        currentRenderSize != null &&
-                        onCropChanged != null)
-                      Positioned.fill(
-                        child: InteractiveCropOverlay(
-                          imageSize: currentImageSize,
-                          renderSize: currentRenderSize,
-                          cropX: cropX,
-                          cropY: cropY,
-                          cropWidth: cropWidth,
-                          cropHeight: cropHeight,
-                          contentRotation: contentRotation,
-                          flipHorizontal: flipHorizontal,
-                          flipVertical: flipVertical,
-                          onCropChanged: onCropChanged!,
-                          enabled: true,
-                        ),
-                      ),
-                  ],
-                );
-              },
-            )
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.image_not_supported,
-                      size: 48, color: colorScheme.outline),
-                  const SizedBox(height: 12),
-                  Text(l10n.noImageSelected,
-                      style: TextStyle(color: colorScheme.outline)),
-                ],
+                  ),
+                ),
               ),
             ),
+        ],
+      ),
     );
+  }
+
+  /// 显示放大预览对话框
+  Future<void> _showZoomPreviewDialog(BuildContext context) async {
+    if (imageUrl.isEmpty || imageSize == null || renderSize == null) return;
+
+    await showDialog<bool>(
+      context: context,
+      builder: (context) => ImageZoomPreviewDialog(
+        imageUrl: imageUrl,
+        fitMode: fitMode,
+        cropX: cropX,
+        cropY: cropY,
+        cropWidth: cropWidth,
+        cropHeight: cropHeight,
+        flipHorizontal: flipHorizontal,
+        flipVertical: flipVertical,
+        contentRotation: contentRotation,
+        imageSize: imageSize,
+        renderSize: renderSize,
+        onImageSizeAvailable: onImageSizeAvailable,
+        onCropChanged: onCropChanged,
+      ),
+    );
+
+    // 如果用户确认了更改，对话框内部已经通过 onCropChanged 回调更新了裁剪参数
+    // 这里不需要额外处理
   }
 
   Widget _buildImageWithSizeListener({

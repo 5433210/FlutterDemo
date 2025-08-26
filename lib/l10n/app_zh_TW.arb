@@ -1449,5 +1449,12 @@
   "no": "否",
   "yes": "是",
   "yesterday": "昨天",
-  "zipFile": "ZIP 壓縮檔"
+  "zipFile": "ZIP 壓縮檔",
+  "zoomPreview": "縮放預覽",
+  "imagePreview": "圖像預覽",
+  "resetView": "重置視圖",
+  "fitToWindow": "適合視窗",
+  "actualSize": "實際大小",
+  "modified": "已修改",
+  "resetCropArea": "重置裁剪區域"
 }

@@ -4600,4 +4600,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP Archive';
+
+  @override
+  String get zoomPreview => 'Zoom Preview';
+
+  @override
+  String get imagePreview => 'Image Preview';
+
+  @override
+  String get resetView => 'Reset View';
+
+  @override
+  String get fitToWindow => 'Fit to Window';
+
+  @override
+  String get actualSize => 'Actual Size';
+
+  @override
+  String get modified => 'Modified';
+
+  @override
+  String get resetCropArea => 'Reset Crop Area';
 }

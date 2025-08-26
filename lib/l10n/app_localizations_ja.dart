@@ -4600,4 +4600,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get zipFile => 'ZIP圧縮ファイル';
+
+  @override
+  String get zoomPreview => 'ズーム プレビュー';
+
+  @override
+  String get imagePreview => '画像プレビュー';
+
+  @override
+  String get resetView => 'ビューリセット';
+
+  @override
+  String get fitToWindow => 'ウィンドウに合わせる';
+
+  @override
+  String get actualSize => '実際のサイズ';
+
+  @override
+  String get modified => '変更済み';
+
+  @override
+  String get resetCropArea => 'クロップエリアリセット';
 }

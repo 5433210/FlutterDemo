@@ -121,25 +121,43 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
       }
     }
 
-    // 始终更新本地状态以确保同步
+    // 🔧 关键修复：始终更新本地状态以确保同步，特别是对于undo/redo操作
     if (oldWidget.cropX != widget.cropX ||
         oldWidget.cropY != widget.cropY ||
         oldWidget.cropWidth != widget.cropWidth ||
         oldWidget.cropHeight != widget.cropHeight) {
-      AppLogger.debug('=== 检测到外部状态变化，更新本地状态 ===', tag: 'InteractiveCropOverlay', data: {
+      AppLogger.debug('=== 🎯 检测到外部状态变化（可能是undo/redo），立即更新本地状态 ===', tag: 'InteractiveCropOverlay', data: {
         'cropXChange': '${oldWidget.cropX.toStringAsFixed(1)} -> ${widget.cropX.toStringAsFixed(1)}',
         'cropYChange': '${oldWidget.cropY.toStringAsFixed(1)} -> ${widget.cropY.toStringAsFixed(1)}',
         'cropWidthChange': '${oldWidget.cropWidth.toStringAsFixed(1)} -> ${widget.cropWidth.toStringAsFixed(1)}',
-        'cropHeightChange': '${oldWidget.cropHeight.toStringAsFixed(1)} -> ${widget.cropHeight.toStringAsFixed(1)}'
+        'cropHeightChange': '${oldWidget.cropHeight.toStringAsFixed(1)} -> ${widget.cropHeight.toStringAsFixed(1)}',
+        'possibleUndoRedo': '这可能是undo/redo操作导致的外部状态变化'
       });
 
-      _updateCurrentCropValues();
+      // 🔧 关键修复：更新本地状态，但使用更安全的方式避免layout冲突
+      _currentCropX = widget.cropX;
+      _currentCropY = widget.cropY;
+      _currentCropWidth = widget.cropWidth;
+      _currentCropHeight = widget.cropHeight;
 
-      AppLogger.debug('更新后本地状态:', tag: 'InteractiveCropOverlay', data: {
+      AppLogger.debug('✅ 本地状态已同步更新:', tag: 'InteractiveCropOverlay', data: {
         '_currentCropX': _currentCropX.toStringAsFixed(1),
         '_currentCropY': _currentCropY.toStringAsFixed(1),
         '_currentCropWidth': _currentCropWidth.toStringAsFixed(1),
-        '_currentCropHeight': _currentCropHeight.toStringAsFixed(1)
+        '_currentCropHeight': _currentCropHeight.toStringAsFixed(1),
+        'syncMethod': '直接赋值，避免layout期间setState'
+      });
+
+      // 🔧 安全的UI更新：在下一帧更新UI，避免layout期间的setState冲突
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppLogger.debug('🔄 PostFrameCallback确认UI更新', tag: 'InteractiveCropOverlay', data: {
+            'finalCropValues': '(${_currentCropX.toStringAsFixed(1)}, ${_currentCropY.toStringAsFixed(1)}, ${_currentCropWidth.toStringAsFixed(1)}, ${_currentCropHeight.toStringAsFixed(1)})'
+          });
+          setState(() {
+            // 安全的UI重建，避免在layout期间调用
+          });
+        }
       });
     }
   }
@@ -154,10 +172,27 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
   }
 
   void _updateCurrentCropValues() {
+    // 🔧 安全检查：避免在initState期间访问未初始化的late变量
+    String beforeValues = 'uninitialized';
+    try {
+      beforeValues = '(${_currentCropX.toStringAsFixed(1)}, ${_currentCropY.toStringAsFixed(1)}, ${_currentCropWidth.toStringAsFixed(1)}, ${_currentCropHeight.toStringAsFixed(1)})';
+    } catch (e) {
+      // 初次调用时变量未初始化，这是正常的
+    }
+    
+    AppLogger.debug('📝 更新当前裁剪值', tag: 'InteractiveCropOverlay', data: {
+      'before': beforeValues,
+      'widgetValues': '(${widget.cropX.toStringAsFixed(1)}, ${widget.cropY.toStringAsFixed(1)}, ${widget.cropWidth.toStringAsFixed(1)}, ${widget.cropHeight.toStringAsFixed(1)})',
+    });
+    
     _currentCropX = widget.cropX;
     _currentCropY = widget.cropY;
     _currentCropWidth = widget.cropWidth;
     _currentCropHeight = widget.cropHeight;
+    
+    AppLogger.debug('✅ 当前裁剪值已更新', tag: 'InteractiveCropOverlay', data: {
+      'after': '(${_currentCropX.toStringAsFixed(1)}, ${_currentCropY.toStringAsFixed(1)}, ${_currentCropWidth.toStringAsFixed(1)}, ${_currentCropHeight.toStringAsFixed(1)})'
+    });
   }
 
   /// 🔧 新增方法：当旋转角度变化时，自动调整裁剪框到新的动态边界
@@ -1484,12 +1519,44 @@ class _ZoomedCropOverlayState extends State<ZoomedCropOverlay> {
       _initializeCoordinator();
     }
 
-    // 更新本地状态
+    // 🔧 关键修复：始终更新本地状态以确保同步，特别是对于undo/redo操作
     if (oldWidget.cropX != widget.cropX ||
         oldWidget.cropY != widget.cropY ||
         oldWidget.cropWidth != widget.cropWidth ||
         oldWidget.cropHeight != widget.cropHeight) {
-      _updateCurrentCropValues();
+      AppLogger.debug('=== 🎯 ZoomedCropOverlay检测到外部状态变化（可能是undo/redo），更新本地状态 ===', tag: 'ZoomedCropOverlay', data: {
+        'cropXChange': '${oldWidget.cropX.toStringAsFixed(1)} -> ${widget.cropX.toStringAsFixed(1)}',
+        'cropYChange': '${oldWidget.cropY.toStringAsFixed(1)} -> ${widget.cropY.toStringAsFixed(1)}',
+        'cropWidthChange': '${oldWidget.cropWidth.toStringAsFixed(1)} -> ${widget.cropWidth.toStringAsFixed(1)}',
+        'cropHeightChange': '${oldWidget.cropHeight.toStringAsFixed(1)} -> ${widget.cropHeight.toStringAsFixed(1)}',
+        'possibleUndoRedo': '这可能是undo/redo操作导致的外部状态变化'
+      });
+
+      // 🔧 关键修复：更新本地状态，使用安全的方式避免layout冲突
+      _currentCropX = widget.cropX;
+      _currentCropY = widget.cropY;
+      _currentCropWidth = widget.cropWidth;
+      _currentCropHeight = widget.cropHeight;
+
+      AppLogger.debug('✅ ZoomedCropOverlay本地状态已同步更新:', tag: 'ZoomedCropOverlay', data: {
+        '_currentCropX': _currentCropX.toStringAsFixed(1),
+        '_currentCropY': _currentCropY.toStringAsFixed(1),
+        '_currentCropWidth': _currentCropWidth.toStringAsFixed(1),
+        '_currentCropHeight': _currentCropHeight.toStringAsFixed(1),
+        'syncMethod': '直接赋值，避免layout期间setState'
+      });
+
+      // 🔧 安全的UI更新：在下一帧更新UI，避免layout期间的setState冲突
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppLogger.debug('🔄 ZoomedCropOverlay PostFrameCallback确认UI更新', tag: 'ZoomedCropOverlay', data: {
+            'finalCropValues': '(${_currentCropX.toStringAsFixed(1)}, ${_currentCropY.toStringAsFixed(1)}, ${_currentCropWidth.toStringAsFixed(1)}, ${_currentCropHeight.toStringAsFixed(1)})'
+          });
+          setState(() {
+            // 安全的UI重建，避免在layout期间调用
+          });
+        }
+      });
     }
   }
 
