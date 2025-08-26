@@ -101,6 +101,9 @@ class _ExportDialogState extends State<ExportDialog> {
   /// 页面边距 (上, 右, 下, 左) 以厘米为单位
   final List<double> _margins = [0.0, 0.0, 0.0, 0.0];
 
+  /// 🔧 边距输入框控制器 (上, 右, 下, 左)
+  late List<TextEditingController> _marginControllers;
+
   /// 适配方式
   PdfFitPolicy _fitPolicy = PdfFitPolicy.width;
 
@@ -214,6 +217,12 @@ class _ExportDialogState extends State<ExportDialog> {
   void dispose() {
     _fileNameController.dispose();
     _pageRangeController.dispose();
+    
+    // 🔧 释放边距输入框控制器
+    for (final controller in _marginControllers) {
+      controller.dispose();
+    }
+    
     super.dispose();
   }
 
@@ -222,6 +231,11 @@ class _ExportDialogState extends State<ExportDialog> {
     super.initState();
     _fileNameController = TextEditingController(text: widget.defaultFileName);
     _pageRangeController = TextEditingController(text: '1-${widget.pageCount}');
+    
+    // 🔧 初始化边距输入框控制器
+    _marginControllers = List.generate(4, (index) => 
+      TextEditingController(text: _margins[index].toStringAsFixed(1)));
+    
     _initDefaultPath();
 
     // 使用延迟任务生成预览，避免在构建过程中触发setState
@@ -354,10 +368,8 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建单个边距输入
   Widget _buildMarginInput(String label, int index) {
-    final l10n = AppLocalizations.of(context);
-    // 使用TextEditingController以保持输入框状态
-    final controller =
-        TextEditingController(text: _margins[index].toStringAsFixed(1));
+    // 🔧 使用类级别的控制器，确保状态正确维护
+    final controller = _marginControllers[index];
 
     // 更新边距值的函数
     void updateMargin(double value) {
@@ -385,11 +397,11 @@ class _ExportDialogState extends State<ExportDialog> {
           children: [
             Expanded(
               child: TextField(
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  suffixText: l10n.centimeter,
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  // 🔧 移除suffixText，因为标题中已经标注了单位 (cm)
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),

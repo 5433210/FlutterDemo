@@ -207,10 +207,12 @@ class _M3CharacterCollectionPageState
                         else
                           _buildImageErrorState(),
 
-                        // Use Stack to display loading overlay and error messages
-                        if (collectionState.loading ||
+                        // 🔧 修复重复加载对话框问题：只有在非初始加载状态时才显示覆盖层
+                        // 避免初始加载状态和提供商加载状态同时显示两个对话框
+                        if (!_isInitialLoading && 
+                            (collectionState.loading ||
                             collectionState.processing ||
-                            imageState.loading)
+                            imageState.loading))
                           const Positioned.fill(child: M3LoadingOverlay()),
 
                         // Error message
@@ -637,6 +639,16 @@ class _M3CharacterCollectionPageState
     final imageState = ref.read(workImageProvider);
 
     if (imageState.hasNext) {
+      // 🔧 防止重复加载：检查是否已经在加载状态
+      final collectionState = ref.read(characterCollectionProvider);
+      if (collectionState.loading || collectionState.processing) {
+        AppLogger.debug('页面切换被跳过，正在加载中', data: {
+          'loading': collectionState.loading,
+          'processing': collectionState.processing,
+        });
+        return;
+      }
+
       // First execute page switch
       await ref.read(workImageProvider.notifier).nextPage();
 
@@ -659,6 +671,16 @@ class _M3CharacterCollectionPageState
     final imageState = ref.read(workImageProvider);
 
     if (imageState.hasPrevious) {
+      // 🔧 防止重复加载：检查是否已经在加载状态
+      final collectionState = ref.read(characterCollectionProvider);
+      if (collectionState.loading || collectionState.processing) {
+        AppLogger.debug('页面切换被跳过，正在加载中', data: {
+          'loading': collectionState.loading,
+          'processing': collectionState.processing,
+        });
+        return;
+      }
+
       // First execute page switch
       await ref.read(workImageProvider.notifier).previousPage();
 

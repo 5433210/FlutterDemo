@@ -321,6 +321,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       },
     );
 
+    // 🆕 根据页面数量自动更新缩略图显示状态
+    _updateThumbnailVisibilityBasedOnPageCount();
+
     // The controller will notify listeners automatically through intelligent notification
   }
 
@@ -1788,6 +1791,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _deletePage(int index) {
     // Use controller's mixin method which includes proper state management
     _controller.deletePage(index);
+    
+    // 🆕 根据页面数量自动更新缩略图显示状态
+    _updateThumbnailVisibilityBasedOnPageCount();
+    
     // The controller will notify listeners automatically through intelligent notification
   }
 
@@ -2338,6 +2345,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
       // 更新控制器状态
       _controller.updatePractice(practice);
+
+      // 🆕 根据页面数量自动决定是否显示缩略图面板
+      _updateThumbnailVisibilityBasedOnPageCount();
     } catch (e, stackTrace) {
       if (!mounted) return;
 
@@ -3073,6 +3083,42 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     });
   }
 
+  /// 🆕 根据页面数量自动决定是否显示页面缩略图栏
+  /// 多页字帖显示，单页字帖隐藏
+  void _updateThumbnailVisibilityBasedOnPageCount() {
+    if (!mounted) return;
+
+    final pageCount = _controller.state.pages.length;
+    final shouldShowThumbnails = pageCount > 1;
+    
+    // 只有当状态真正改变时才更新UI
+    if (_showThumbnails != shouldShowThumbnails) {
+      setState(() {
+        _showThumbnails = shouldShowThumbnails;
+      });
+
+      EditPageLogger.editPageInfo(
+        '根据页面数量自动更新缩略图显示状态',
+        data: {
+          'pageCount': pageCount,
+          'shouldShowThumbnails': shouldShowThumbnails,
+          'previousState': _showThumbnails,
+          'operation': 'auto_update_thumbnail_visibility',
+        },
+      );
+
+      AppLogger.info(
+        '缩略图显示状态已自动更新',
+        tag: 'PracticeEdit',
+        data: {
+          'pageCount': pageCount,
+          'isMultiPage': pageCount > 1,
+          'thumbnailsVisible': shouldShowThumbnails,
+        },
+      );
+    }
+  }
+
   /// Synchronize local _currentTool with controller's state.currentTool
   void _syncToolState() {
     // 🔧 修复：确保所有状态更新都在下一帧执行，避免在构建期间修改状态
@@ -3105,6 +3151,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         // 在下一帧异步执行剪贴板状态更新
         _updateClipboardStateAfterPageSwitch(currentPageIndex);
       }
+
+      // 🆕 检测页面数量变化并更新缩略图显示状态
+      // 这用于处理通过其他方式（如撤销/重做）改变页面数量的情况
+      _updateThumbnailVisibilityBasedOnPageCount();
     });
   }
 
