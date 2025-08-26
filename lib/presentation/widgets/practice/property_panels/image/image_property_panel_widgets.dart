@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
 import '../../../common/editable_number_field.dart';
@@ -763,22 +764,50 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 // Simple image size calculation for contain mode
                 final imageSize = size;
 
-                // Calculate render size based on container and fit mode
-                final renderSize = _calculateRenderSize(
-                    imageSize,
-                    constraints.biggest,
-                    fitMode == BoxFit.contain
-                        ? 'contain'
-                        : fitMode == BoxFit.cover
-                            ? 'cover'
-                            : fitMode == BoxFit.fill
-                                ? 'fill'
-                                : 'none');
-
                 // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (context.mounted) {
-                    onImageSizeAvailable(imageSize, renderSize);
+                    // 🔧 智能修复：只有在确实需要时才调用onImageSizeAvailable
+                    // 检查当前是否缺少图像尺寸信息（新建元素）还是已有完整信息（防止重置）
+                    
+                    final hasExistingImageSize = this.imageSize != null;
+                    final hasExistingRenderSize = renderSize != null;
+                    
+                    if (!hasExistingImageSize || !hasExistingRenderSize) {
+                      // 情况1：新建元素或缺少尺寸信息，需要初始化
+                      final fitModeString = _boxFitToString(fitMode);
+                      final renderSize = _calculateRenderSize(
+                        imageSize,
+                        constraints.biggest,
+                        fitModeString, // 使用转换后的String类型
+                      );
+                      
+                      AppLogger.debug(
+                        '🔍 新建图像元素需要初始化尺寸信息',
+                        tag: 'ImagePropertyPreviewPanel', 
+                        data: {
+                          'imageSize': '${imageSize.width}x${imageSize.height}',
+                          'renderSize': '${renderSize.width}x${renderSize.height}',
+                          'reason': '新建元素或缺少尺寸信息',
+                          'hasExistingImageSize': hasExistingImageSize,
+                          'hasExistingRenderSize': hasExistingRenderSize,
+                        },
+                      );
+                      
+                      onImageSizeAvailable(imageSize, renderSize);
+                    } else {
+                      // 情况2：已有完整尺寸信息，跳过调用以保护现有裁剪区域
+                      AppLogger.debug(
+                        '✅ 图像元素已有完整尺寸信息，跳过onImageSizeAvailable调用以保护裁剪区域',
+                        tag: 'ImagePropertyPreviewPanel', 
+                        data: {
+                          'imageSize': '${imageSize.width}x${imageSize.height}',
+                          'reason': '避免重置现有裁剪区域',
+                          'hasExistingImageSize': hasExistingImageSize,
+                          'hasExistingRenderSize': hasExistingRenderSize,
+                        },
+                      );
+                    }
                   }
                 });
               },
@@ -818,22 +847,50 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                 info.image.height.toDouble(),
               );
 
-              final renderSize = _calculateRenderSize(
-                imageSize,
-                constraints.biggest,
-                fitMode == BoxFit.contain
-                    ? 'contain'
-                    : fitMode == BoxFit.cover
-                        ? 'cover'
-                        : fitMode == BoxFit.fill
-                            ? 'fill'
-                            : 'none',
-              );
-
               // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
-                  onImageSizeAvailable(imageSize, renderSize);
+                  // 🔧 智能修复：只有在确实需要时才调用onImageSizeAvailable（网络图像）
+                  // 检查当前是否缺少图像尺寸信息（新建元素）还是已有完整信息（防止重置）
+                  
+                  final hasExistingImageSize = this.imageSize != null;
+                  final hasExistingRenderSize = renderSize != null;
+                  
+                  if (!hasExistingImageSize || !hasExistingRenderSize) {
+                    // 情况1：新建元素或缺少尺寸信息，需要初始化
+                    final fitModeString = _boxFitToString(fitMode);
+                    final renderSize = _calculateRenderSize(
+                      imageSize,
+                      constraints.biggest,
+                      fitModeString, // 使用转换后的String类型
+                    );
+                    
+                    AppLogger.debug(
+                      '🔍 新建网络图像元素需要初始化尺寸信息',
+                      tag: 'ImagePropertyPreviewPanel',
+                      data: {
+                        'imageSize': '${imageSize.width}x${imageSize.height}',
+                        'renderSize': '${renderSize.width}x${renderSize.height}',
+                        'reason': '新建元素或缺少尺寸信息（网络图像）',
+                        'hasExistingImageSize': hasExistingImageSize,
+                        'hasExistingRenderSize': hasExistingRenderSize,
+                      },
+                    );
+                    
+                    onImageSizeAvailable(imageSize, renderSize);
+                  } else {
+                    // 情况2：已有完整尺寸信息，跳过调用以保护现有裁剪区域
+                    AppLogger.debug(
+                      '✅ 网络图像元素已有完整尺寸信息，跳过onImageSizeAvailable调用以保护裁剪区域',
+                      tag: 'ImagePropertyPreviewPanel',
+                      data: {
+                        'imageSize': '${imageSize.width}x${imageSize.height}',
+                        'reason': '避免重置现有裁剪区域（网络图像）',
+                        'hasExistingImageSize': hasExistingImageSize,
+                        'hasExistingRenderSize': hasExistingRenderSize,
+                      },
+                    );
+                  }
                 }
               });
             },
@@ -953,6 +1010,22 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
         return BoxFit.none;
       default:
         return BoxFit.contain;
+    }
+  }
+
+  /// 将BoxFit枚举转换为字符串
+  String _boxFitToString(BoxFit fitMode) {
+    switch (fitMode) {
+      case BoxFit.contain:
+        return 'contain';
+      case BoxFit.cover:
+        return 'cover';
+      case BoxFit.fill:
+        return 'fill';
+      case BoxFit.none:
+        return 'none';
+      default:
+        return 'contain';
     }
   }
 }

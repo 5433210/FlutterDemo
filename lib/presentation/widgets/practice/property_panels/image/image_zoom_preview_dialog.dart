@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../image/cached_image.dart';
 import 'interactive_crop_overlay.dart';
@@ -364,7 +365,37 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
                       _currentImageSize = imageSize;
                       _currentRenderSize = renderSize;
                     });
-                    widget.onImageSizeAvailable(imageSize, renderSize);
+                    
+                    // 🔧 重要修复：只检查图像原始尺寸，忽略渲染尺寸变化
+                    // 避免预览对话框重置已有的裁剪区域
+                    final hasImageSizeChanged = widget.imageSize == null ||
+                        (widget.imageSize!.width - imageSize.width).abs() > 0.1 ||
+                        (widget.imageSize!.height - imageSize.height).abs() > 0.1;
+                    
+                    // 🔧 关键改进：完全跳过渲染尺寸检查，因为预览对话框的容器大小不同
+                    // 只有图像文件本身改变时才需要重置裁剪区域
+                    
+                    if (hasImageSizeChanged) {
+                      AppLogger.debug(
+                        '🔍 预览对话框中检测到图像文件变化，调用onImageSizeAvailable',
+                        tag: 'ImageZoomPreviewDialog',
+                        data: {
+                          'oldImageSize': widget.imageSize?.toString() ?? 'null',
+                          'newImageSize': '${imageSize.width}x${imageSize.height}',
+                          'reason': '图像文件本身发生了变化',
+                        },
+                      );
+                      widget.onImageSizeAvailable(imageSize, renderSize);
+                    } else {
+                      AppLogger.debug(
+                        '✅ 预览对话框中图像文件未变化，跳过onImageSizeAvailable调用',
+                        tag: 'ImageZoomPreviewDialog',
+                        data: {
+                          'imageSize': '${imageSize.width}x${imageSize.height}',
+                          'reason': '避免重置现有裁剪区域，仅容器尺寸不同',
+                        },
+                      );
+                    }
                   }
                 });
               },

@@ -355,6 +355,9 @@ class ElementRenderers {
     final fitMode = content['fitMode'] as String? ?? 'contain';
     final backgroundColor = content['backgroundColor'] as String?;
     final imageAlignment = content['alignment'] as String? ?? 'center';
+    
+    // 🔧 关键修复：检查是否应用了变换
+    final isTransformApplied = content['isTransformApplied'] as bool? ?? false;
 
     // 🔧 新增：获取翻转参数（现在在画布渲染阶段处理）
     final isFlippedHorizontally =
@@ -367,6 +370,7 @@ class ElementRenderers {
       'elementId': element['id'],
       'isPreviewMode': isPreviewMode,
       'hasFlip': isFlippedHorizontally || isFlippedVertically,
+      'isTransformApplied': isTransformApplied,  // 添加变换状态记录
     });
 
     // 新增支持：直接存储图像数据
@@ -376,10 +380,48 @@ class ElementRenderers {
     // 处理transformedImageData，可能是Uint8List或List<int>
     Uint8List? transformedImageData;
     final dynamic rawTransformedData = content['transformedImageData'];
+    
+    // 🔧 调试：记录原始数据类型和内容
+    if (rawTransformedData != null) {
+      EditPageLogger.rendererDebug('🔍 检测到 transformedImageData', data: {
+        'elementId': element['id'],
+        'dataType': rawTransformedData.runtimeType.toString(),
+        'isUint8List': rawTransformedData is Uint8List,
+        'isList': rawTransformedData is List,
+        'isListInt': rawTransformedData is List<int>,
+        'isListDynamic': rawTransformedData is List<dynamic>,
+        'dataSize': rawTransformedData is List ? rawTransformedData.length : 'unknown',
+      });
+    } else {
+      EditPageLogger.rendererDebug('❌ transformedImageData 为 null', data: {
+        'elementId': element['id'],
+        'contentKeys': content.keys.toList(),
+        'hasTransformedImageData': content.containsKey('transformedImageData'),
+        'transformedImageDataValue': content['transformedImageData'],
+      });
+    }
+    
     if (rawTransformedData is Uint8List) {
       transformedImageData = rawTransformedData;
     } else if (rawTransformedData is List<int>) {
       transformedImageData = Uint8List.fromList(rawTransformedData);
+    } else if (rawTransformedData is List<dynamic>) {
+      // 🔧 修复：处理JSON反序列化后的List<dynamic>类型
+      try {
+        final intList = rawTransformedData.cast<int>();
+        transformedImageData = Uint8List.fromList(intList);
+        EditPageLogger.rendererDebug('✅ 成功转换 List<dynamic> 到 Uint8List', data: {
+          'elementId': element['id'],
+          'originalSize': rawTransformedData.length,
+          'convertedSize': transformedImageData.length,
+        });
+      } catch (e) {
+        EditPageLogger.rendererError('❌ List<dynamic> 转换失败', error: e, data: {
+          'elementId': element['id'],
+          'dataType': rawTransformedData.runtimeType.toString(),
+          'sampleData': rawTransformedData.take(5).toList(),
+        });
+      }
     }
 
     // 处理binarizedImageData，可能是Uint8List或List<int>
@@ -399,6 +441,23 @@ class ElementRenderers {
       binarizedImageData = rawBinarizedData;
     } else if (rawBinarizedData is List<int>) {
       binarizedImageData = Uint8List.fromList(rawBinarizedData);
+    } else if (rawBinarizedData is List<dynamic>) {
+      // 🔧 修复：处理JSON反序列化后的List<dynamic>类型
+      try {
+        final intList = rawBinarizedData.cast<int>();
+        binarizedImageData = Uint8List.fromList(intList);
+        EditPageLogger.rendererDebug('✅ 成功转换二值化 List<dynamic> 到 Uint8List', data: {
+          'elementId': element['id'],
+          'originalSize': rawBinarizedData.length,
+          'convertedSize': binarizedImageData.length,
+        });
+      } catch (e) {
+        EditPageLogger.rendererError('❌ 二值化 List<dynamic> 转换失败', error: e, data: {
+          'elementId': element['id'],
+          'dataType': rawBinarizedData.runtimeType.toString(),
+          'sampleData': rawBinarizedData.take(5).toList(),
+        });
+      }
     } else if (rawBinarizedData is List) {
       // 处理可能的List<dynamic>情况
       try {
@@ -412,7 +471,24 @@ class ElementRenderers {
       }
     }
 
-    // 添加调试信息
+    // 🔧 关键修复：根据变换状态记录调试信息
+    if (isTransformApplied) {
+      if (transformedImageData != null) {
+        EditPageLogger.rendererDebug('✅ 变换已应用，检测到变换图像数据', data: {
+          'dataSize': transformedImageData.length,
+          'imageUrl': imageUrl,
+          'elementId': element['id'],
+        });
+      } else {
+        EditPageLogger.rendererError('❌ 变换已应用但未找到变换图像数据', data: {
+          'imageUrl': imageUrl,
+          'elementId': element['id'],
+          'hasTransformedUrl': transformedImageUrl != null,
+        });
+      }
+    }
+
+    // 添加二值化数据调试信息
     if (binarizedImageData != null) {
       EditPageLogger.rendererDebug('检测到二值化图像数据', data: {
         'dataSize': binarizedImageData.length,
@@ -441,18 +517,50 @@ class ElementRenderers {
         binarizedImageData == null) {
       return _buildImagePlaceholder(
           context, AppLocalizations.of(context).selectImage);
-    } // 优先级：二值化图像数据 > 转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
-
-    Widget imageWidget = _buildImageWidget(
-      context: context,
-      imageUrl: transformedImageUrl ?? imageUrl,
-      fitMode: fitMode,
-      imageAlignment: imageAlignment,
-      binarizedImageData: binarizedImageData,
-      transformedImageData: transformedImageData,
-      base64ImageData: base64ImageData,
-      rawImageData: rawImageData,
-    );
+    } 
+    
+    // 🔧 关键修复：根据变换状态决定使用哪种图像数据
+    // 优先级：二值化图像数据 > 变换后图像数据（当变换已应用时）> 原始图像数据
+    Widget imageWidget;
+    
+    if (isTransformApplied && transformedImageData != null) {
+      // 当变换已应用且存在变换数据时，强制使用变换后的图像数据
+      EditPageLogger.rendererDebug('🔧 使用变换后图像数据（变换已应用）', data: {
+        'elementId': element['id'],
+        'dataSize': transformedImageData.length,
+        'reason': '变换已应用且存在变换图像数据',
+      });
+      
+      imageWidget = _buildImageWidget(
+        context: context,
+        imageUrl: imageUrl, // 提供原始URL作为备用
+        fitMode: fitMode,
+        imageAlignment: imageAlignment,
+        binarizedImageData: binarizedImageData, // 仍然优先二值化数据
+        transformedImageData: transformedImageData, // 强制使用变换数据
+        base64ImageData: null, // 忽略原始数据
+        rawImageData: null,    // 忽略原始数据
+      );
+    } else {
+      // 正常优先级：二值化图像数据 > 原始图像数据 > 图像URL
+      EditPageLogger.rendererDebug('🔧 使用标准优先级选择图像数据', data: {
+        'elementId': element['id'],
+        'isTransformApplied': isTransformApplied,
+        'hasTransformedData': transformedImageData != null,
+        'reason': isTransformApplied ? '变换已应用但无变换数据' : '变换未应用',
+      });
+      
+      imageWidget = _buildImageWidget(
+        context: context,
+        imageUrl: transformedImageUrl ?? imageUrl,
+        fitMode: fitMode,
+        imageAlignment: imageAlignment,
+        binarizedImageData: binarizedImageData,
+        transformedImageData: null, // 不使用变换数据（未应用变换时）
+        base64ImageData: base64ImageData,
+        rawImageData: rawImageData,
+      );
+    }
 
     // 在画布渲染阶段应用翻转变换
     if (isFlippedHorizontally || isFlippedVertically) {
