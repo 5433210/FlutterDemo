@@ -73,8 +73,8 @@ IDI_APP_ICON            ICON                    "resources\\logo.ico"
 #endif
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 0,0,3,20250826001
-PRODUCTVERSION 0,0,3,20250826001
+FILEVERSION 0,0,4,20250827001
+PRODUCTVERSION 0,0,4,20250827001
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -91,12 +91,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "wailik" "\0"
             VALUE "FileDescription", "Char As Gem" "\0"
-            VALUE "FileVersion", "0.0.3.20250826001"
+            VALUE "FileVersion", "0.0.4.20250827001"
             VALUE "InternalName", "charasgem" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 wailik. All rights reserved." "\0"
             VALUE "OriginalFilename", "charasgem.exe" "\0"
             VALUE "ProductName", "charasgem" "\0"
-            VALUE "ProductVersion", "0.0.3.20250826001"
+            VALUE "ProductVersion", "0.0.4.20250827001"
         END
     END
     BLOCK "VarFileInfo"
