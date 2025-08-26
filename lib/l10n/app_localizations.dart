@@ -5944,6 +5944,12 @@ abstract class AppLocalizations {
   /// **'Noise Reduction'**
   String get noiseReduction;
 
+  /// No description provided for @noiseReductionAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Noise Adjustment'**
+  String get noiseReductionAdjustment;
+
   /// No description provided for @noiseReductionLevel.
   ///
   /// In en, this message translates to:
@@ -7923,6 +7929,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Threshold'**
   String get threshold;
+
+  /// No description provided for @grayThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray Threshold'**
+  String get grayThreshold;
 
   /// No description provided for @thumbnailCheckFailed.
   ///

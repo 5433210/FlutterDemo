@@ -3119,6 +3119,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noiseReduction => '降噪';
 
   @override
+  String get noiseReductionAdjustment => '降噪调节';
+
+  @override
   String get noiseReductionLevel => '降噪强度';
 
   @override
@@ -4159,6 +4162,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get threshold => '阈值';
+
+  @override
+  String get grayThreshold => '灰度阈值';
 
   @override
   String get thumbnailCheckFailed => '缩略图检查失败';
@@ -7645,6 +7651,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get noiseReduction => '降噪';
 
   @override
+  String get noiseReductionAdjustment => '降噪調節';
+
+  @override
   String get noiseReductionLevel => '降噪強度';
 
   @override
@@ -8685,6 +8694,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get threshold => '閾值';
+
+  @override
+  String get grayThreshold => '灰度閾值';
 
   @override
   String get thumbnailCheckFailed => '縮圖檢查失敗';

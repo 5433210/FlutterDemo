@@ -3119,6 +3119,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noiseReduction => '노이즈 감소';
 
   @override
+  String get noiseReductionAdjustment => '노이즈 조정';
+
+  @override
   String get noiseReductionLevel => '노이즈 감소 레벨';
 
   @override
@@ -4159,6 +4162,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get threshold => '임계값';
+
+  @override
+  String get grayThreshold => '회색조 임계값';
 
   @override
   String get thumbnailCheckFailed => '썸네일 확인 실패';

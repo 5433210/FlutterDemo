@@ -1335,7 +1335,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
             const SizedBox(width: 8),
             Text(
-              '降噪调节',
+              l10n.noiseReductionAdjustment,
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.onSurfaceVariant,
@@ -1378,7 +1378,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
             const SizedBox(width: 8),
             Text(
-              '灰度阈值',
+              l10n.grayThreshold,
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.onSurfaceVariant,

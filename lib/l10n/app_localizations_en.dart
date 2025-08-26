@@ -3119,6 +3119,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noiseReduction => 'Noise Reduction';
 
   @override
+  String get noiseReductionAdjustment => 'Noise Adjustment';
+
+  @override
   String get noiseReductionLevel => 'Noise Reduction Level';
 
   @override
@@ -4159,6 +4162,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get threshold => 'Threshold';
+
+  @override
+  String get grayThreshold => 'Gray Threshold';
 
   @override
   String get thumbnailCheckFailed => 'Thumbnail Check Failed';

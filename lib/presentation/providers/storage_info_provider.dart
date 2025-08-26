@@ -38,20 +38,21 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
   if (await baseDir.exists()) {
     await for (final entity in baseDir.list()) {
       if (entity is Directory) {
+        final size = await _calculateDirectorySize(entity.path);
+        
         // 特别处理缓存目录
         if (entity.path.contains('temp') || entity.path.contains('cache')) {
-          cacheSize += await _calculateDirectorySize(entity.path);
-          continue;
+          cacheSize += size;
+        } else {
+          subdirectories.add(DirectoryInfo(
+            name: entity.path.split(Platform.pathSeparator).last,
+            path: entity.path,
+            size: size,
+          ));
         }
-
-        final size = await _calculateDirectorySize(entity.path);
+        
+        // 将所有目录大小都计入总大小
         totalSize += size;
-
-        subdirectories.add(DirectoryInfo(
-          name: entity.path.split(Platform.pathSeparator).last,
-          path: entity.path,
-          size: size,
-        ));
       } else if (entity is File) {
         totalSize += await entity.length();
         fileCount++;
@@ -95,8 +96,8 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
 
   return StorageInfo(
     path: basePath,
-    totalSize: totalDiskSpace,
-    usedSize: totalSize,
+    totalSize: totalSize, // 使用实际应用数据总大小
+    usedSize: totalSize,  // 保持一致
     usagePercentage: usagePercentage,
     workCount: workCount,
     characterCount: characterCount,
