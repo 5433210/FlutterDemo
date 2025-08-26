@@ -4527,6 +4527,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get writingToolText => '书写工具';
 
   @override
+  String get hardwareInfo => '硬件信息';
+
+  @override
+  String get runtimeEnvironment => '运行环境';
+
+  @override
+  String get platform => '平台';
+
+  @override
+  String get deviceModel => '设备型号';
+
+  @override
+  String get manufacturer => '制造商';
+
+  @override
+  String get deviceId => '设备ID';
+
+  @override
+  String get physicalDevice => '物理设备';
+
+  @override
+  String get architecture => '架构';
+
+  @override
+  String get screenInfo => '屏幕信息';
+
+  @override
+  String get screenSize => '屏幕尺寸';
+
+  @override
+  String get pixelDensity => '像素密度';
+
+  @override
+  String get screenSizeCategory => '屏幕大小';
+
+  @override
+  String get memoryInfo => '内存信息';
+
+  @override
+  String get totalMemory => '总内存';
+
+  @override
+  String get availableMemory => '可用内存';
+
+  @override
+  String get applicationInfo => '应用信息';
+
+  @override
+  String get applicationName => '应用名称';
+
+  @override
+  String get buildMode => '构建模式';
+
+  @override
+  String get debugMode => '调试模式';
+
+  @override
+  String get runtimeInfo => '运行环境';
+
+  @override
+  String get flutterVersionLabel => 'Flutter版本';
+
+  @override
+  String get dartVersionLabel => 'Dart版本';
+
+  @override
   String get yes => '是';
 
   @override
@@ -6117,7 +6183,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get detailedReport => '詳細報告';
 
   @override
-  String get deviceInfo => '裝置資訊';
+  String get deviceInfo => '設備資訊';
 
   @override
   String get dimensions => '尺寸';
@@ -9057,6 +9123,72 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get writingToolText => '書寫工具';
+
+  @override
+  String get hardwareInfo => '硬體資訊';
+
+  @override
+  String get runtimeEnvironment => '執行環境';
+
+  @override
+  String get platform => '平台';
+
+  @override
+  String get deviceModel => '設備型號';
+
+  @override
+  String get manufacturer => '製造商';
+
+  @override
+  String get deviceId => '設備ID';
+
+  @override
+  String get physicalDevice => '實體設備';
+
+  @override
+  String get architecture => '架構';
+
+  @override
+  String get screenInfo => '螢幕資訊';
+
+  @override
+  String get screenSize => '螢幕尺寸';
+
+  @override
+  String get pixelDensity => '像素密度';
+
+  @override
+  String get screenSizeCategory => '螢幕大小';
+
+  @override
+  String get memoryInfo => '記憶體資訊';
+
+  @override
+  String get totalMemory => '總記憶體';
+
+  @override
+  String get availableMemory => '可用記憶體';
+
+  @override
+  String get applicationInfo => '應用程式資訊';
+
+  @override
+  String get applicationName => '應用程式名稱';
+
+  @override
+  String get buildMode => '建置模式';
+
+  @override
+  String get debugMode => '除錯模式';
+
+  @override
+  String get runtimeInfo => '執行環境';
+
+  @override
+  String get flutterVersionLabel => 'Flutter版本';
+
+  @override
+  String get dartVersionLabel => 'Dart版本';
 
   @override
   String get yes => '是';

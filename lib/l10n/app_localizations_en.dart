@@ -1585,7 +1585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailedReport => 'Detailed Report';
 
   @override
-  String get deviceInfo => 'Device Info';
+  String get deviceInfo => 'Device Information';
 
   @override
   String get dimensions => 'Dimensions';
@@ -4525,6 +4525,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writingToolText => 'Writing Tool';
+
+  @override
+  String get hardwareInfo => 'Hardware Information';
+
+  @override
+  String get runtimeEnvironment => 'Runtime Environment';
+
+  @override
+  String get platform => 'Platform';
+
+  @override
+  String get deviceModel => 'Device Model';
+
+  @override
+  String get manufacturer => 'Manufacturer';
+
+  @override
+  String get deviceId => 'Device ID';
+
+  @override
+  String get physicalDevice => 'Physical Device';
+
+  @override
+  String get architecture => 'Architecture';
+
+  @override
+  String get screenInfo => 'Screen Information';
+
+  @override
+  String get screenSize => 'Screen Size';
+
+  @override
+  String get pixelDensity => 'Pixel Density';
+
+  @override
+  String get screenSizeCategory => 'Screen Size Category';
+
+  @override
+  String get memoryInfo => 'Memory Information';
+
+  @override
+  String get totalMemory => 'Total Memory';
+
+  @override
+  String get availableMemory => 'Available Memory';
+
+  @override
+  String get applicationInfo => 'Application Information';
+
+  @override
+  String get applicationName => 'Application Name';
+
+  @override
+  String get buildMode => 'Build Mode';
+
+  @override
+  String get debugMode => 'Debug Mode';
+
+  @override
+  String get runtimeInfo => 'Runtime Information';
+
+  @override
+  String get flutterVersionLabel => 'Flutter Version';
+
+  @override
+  String get dartVersionLabel => 'Dart Version';
 
   @override
   String get yes => 'Yes';

@@ -4527,6 +4527,72 @@ class AppLocalizationsJa extends AppLocalizations {
   String get writingToolText => '筆記具';
 
   @override
+  String get hardwareInfo => 'ハードウェア情報';
+
+  @override
+  String get runtimeEnvironment => 'ランタイム環境';
+
+  @override
+  String get platform => 'プラットフォーム';
+
+  @override
+  String get deviceModel => 'デバイスモデル';
+
+  @override
+  String get manufacturer => '製造元';
+
+  @override
+  String get deviceId => 'デバイスID';
+
+  @override
+  String get physicalDevice => '物理デバイス';
+
+  @override
+  String get architecture => 'アーキテクチャ';
+
+  @override
+  String get screenInfo => '画面情報';
+
+  @override
+  String get screenSize => '画面サイズ';
+
+  @override
+  String get pixelDensity => 'ピクセル密度';
+
+  @override
+  String get screenSizeCategory => '画面サイズカテゴリ';
+
+  @override
+  String get memoryInfo => 'メモリ情報';
+
+  @override
+  String get totalMemory => '総メモリ';
+
+  @override
+  String get availableMemory => '利用可能メモリ';
+
+  @override
+  String get applicationInfo => 'アプリケーション情報';
+
+  @override
+  String get applicationName => 'アプリケーション名';
+
+  @override
+  String get buildMode => 'ビルドモード';
+
+  @override
+  String get debugMode => 'デバッグモード';
+
+  @override
+  String get runtimeInfo => 'ランタイム情報';
+
+  @override
+  String get flutterVersionLabel => 'Flutterバージョン';
+
+  @override
+  String get dartVersionLabel => 'Dartバージョン';
+
+  @override
   String get yes => 'はい';
 
   @override

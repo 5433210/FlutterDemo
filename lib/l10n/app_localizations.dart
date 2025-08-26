@@ -3031,7 +3031,7 @@ abstract class AppLocalizations {
   /// No description provided for @deviceInfo.
   ///
   /// In en, this message translates to:
-  /// **'Device Info'**
+  /// **'Device Information'**
   String get deviceInfo;
 
   /// No description provided for @dimensions.
@@ -8631,6 +8631,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Writing Tool'**
   String get writingToolText;
+
+  /// No description provided for @hardwareInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardware Information'**
+  String get hardwareInfo;
+
+  /// No description provided for @runtimeEnvironment.
+  ///
+  /// In en, this message translates to:
+  /// **'Runtime Environment'**
+  String get runtimeEnvironment;
+
+  /// No description provided for @platform.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get platform;
+
+  /// No description provided for @deviceModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Model'**
+  String get deviceModel;
+
+  /// No description provided for @manufacturer.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturer'**
+  String get manufacturer;
+
+  /// No description provided for @deviceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get deviceId;
+
+  /// No description provided for @physicalDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Physical Device'**
+  String get physicalDevice;
+
+  /// No description provided for @architecture.
+  ///
+  /// In en, this message translates to:
+  /// **'Architecture'**
+  String get architecture;
+
+  /// No description provided for @screenInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen Information'**
+  String get screenInfo;
+
+  /// No description provided for @screenSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen Size'**
+  String get screenSize;
+
+  /// No description provided for @pixelDensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixel Density'**
+  String get pixelDensity;
+
+  /// No description provided for @screenSizeCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen Size Category'**
+  String get screenSizeCategory;
+
+  /// No description provided for @memoryInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory Information'**
+  String get memoryInfo;
+
+  /// No description provided for @totalMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Memory'**
+  String get totalMemory;
+
+  /// No description provided for @availableMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Memory'**
+  String get availableMemory;
+
+  /// No description provided for @applicationInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Application Information'**
+  String get applicationInfo;
+
+  /// No description provided for @applicationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Application Name'**
+  String get applicationName;
+
+  /// No description provided for @buildMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Build Mode'**
+  String get buildMode;
+
+  /// No description provided for @debugMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug Mode'**
+  String get debugMode;
+
+  /// No description provided for @runtimeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Runtime Information'**
+  String get runtimeInfo;
+
+  /// No description provided for @flutterVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Flutter Version'**
+  String get flutterVersionLabel;
+
+  /// No description provided for @dartVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Dart Version'**
+  String get dartVersionLabel;
 
   /// No description provided for @yes.
   ///

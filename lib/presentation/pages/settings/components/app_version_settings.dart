@@ -1,20 +1,191 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../application/services/system/system_info_service.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../version_config.dart';
 import '../../../widgets/settings/settings_section.dart';
 
-final appVersionInfoProvider = FutureProvider<AppVersionInfoData>((ref) async {
-  return await AppVersionInfoService.getVersionInfo();
+final detailedSystemInfoProvider = FutureProvider<DetailedSystemInfo>((ref) async {
+  return await SystemInfoService.getDetailedSystemInfo();
 });
 
+class AppVersionSettings extends ConsumerWidget {
+  const AppVersionSettings({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final systemInfoAsync = ref.watch(detailedSystemInfoProvider);
+
+    return SettingsSection(
+      title: l10n.about,
+      children: [
+        systemInfoAsync.when(
+          data: (systemInfo) =>
+              _buildSystemInfo(context, l10n, theme, systemInfo),
+          loading: () => ListTile(
+            leading: const CircularProgressIndicator(),
+            title: Text(l10n.loading),
+          ),
+          error: (error, stack) => ListTile(
+            leading: Icon(Icons.error, color: theme.colorScheme.error),
+            title: Text(l10n.loadFailed),
+            subtitle: Text(error.toString()),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSystemInfo(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+    DetailedSystemInfo systemInfo,
+  ) {
+    return Column(
+      children: [
+        // 应用版本信息
+        ListTile(
+          leading: Icon(
+            Icons.info_outline,
+            color: theme.colorScheme.primary,
+          ),
+          title: Text(l10n.versionDetails),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${l10n.appVersion}: ${systemInfo.appVersion}'),
+            ],
+          ),
+        ),
+
+        // 系统信息
+        ListTile(
+          leading: Icon(
+            Icons.computer,
+            color: theme.colorScheme.secondary,
+          ),
+          title: Text(l10n.systemInfo),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${l10n.operatingSystem}: ${systemInfo.operatingSystem} ${systemInfo.osVersion}'),
+              Text('${l10n.deviceInfo}: ${systemInfo.deviceManufacturer} ${systemInfo.deviceModel}'),
+              if (systemInfo.architecture != null)
+                Text('${l10n.architecture}: ${systemInfo.architecture}'),
+            ],
+          ),
+          isThreeLine: true,
+        ),
+
+        // 硬件信息
+        ListTile(
+          leading: Icon(
+            Icons.memory,
+            color: theme.colorScheme.tertiary,
+          ),
+          title: Text(l10n.hardwareInfo),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${l10n.screenSize}: ${systemInfo.screenWidth.toInt()}×${systemInfo.screenHeight.toInt()} (${systemInfo.pixelRatio}x)'),
+              if (systemInfo.totalMemory != null)
+                Text('${l10n.totalMemory}: ${systemInfo.totalMemory}'),
+              Text('${l10n.physicalDevice}: ${systemInfo.isPhysicalDevice ? l10n.yes : l10n.no}'),
+            ],
+          ),
+          isThreeLine: true,
+        ),
+
+        // 运行环境信息
+        ListTile(
+          leading: Icon(
+            Icons.code,
+            color: theme.colorScheme.outline,
+          ),
+          title: Text(l10n.runtimeEnvironment),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${l10n.buildMode}: ${systemInfo.buildMode}'),
+              Text('${l10n.debugMode}: ${systemInfo.isDebugMode ? l10n.yes : l10n.no}'),
+            ],
+          ),
+          isThreeLine: true,
+        ),
+
+        // 复制系统信息按钮
+        ListTile(
+          leading: Icon(
+            Icons.copy,
+            color: theme.colorScheme.primary,
+          ),
+          title: Text(l10n.copyVersionInfo),
+          onTap: () => _copySystemInfo(context, l10n, systemInfo),
+          trailing: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _copySystemInfo(
+    BuildContext context,
+    AppLocalizations l10n,
+    DetailedSystemInfo systemInfo,
+  ) async {
+    try {
+      final formattedInfo = systemInfo.toFormattedString(l10n);
+      await Clipboard.setData(ClipboardData(text: formattedInfo));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.versionInfoCopied),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      AppLogger.info(
+        '用户复制系统信息',
+        data: {
+          'operation': 'copy_system_info',
+          'appVersion': systemInfo.appVersion,
+          'platform': systemInfo.platformName,
+        },
+        tag: 'ui',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        '复制系统信息失败',
+        data: {
+          'operation': 'copy_system_info',
+          'error': e.toString(),
+        },
+        tag: 'ui',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.copyFailed(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+// 保留旧的数据模型以兼容其他可能的引用
 class AppVersionInfoData {
   final String appName;
   final String appVersion;
@@ -65,307 +236,5 @@ class AppVersionInfoData {
     buffer.writeln('${l10n.dartVersion}: $dartVersion');
 
     return buffer.toString();
-  }
-}
-
-class AppVersionInfoService {
-  static Future<AppVersionInfoData> getVersionInfo() async {
-    try {
-      // 优先使用 VersionConfig 统一管理的版本信息
-      final versionInfo = await _getVersionFromConfig();
-      if (versionInfo != null) {
-        return versionInfo;
-      }
-      
-      // 如果 VersionConfig 未初始化，则使用 PackageInfo 作为回退
-      return await _getVersionFromPackageInfo();
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        '获取应用版本信息失败',
-        data: {
-          'operation': 'get_version_info',
-          'error': e.toString(),
-        },
-        tag: 'system',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      
-      // 返回默认信息，使用统一的版本管理系统
-      return _getDefaultVersionInfo();
-    }
-  }
-
-  /// 从 VersionConfig 获取版本信息
-  static Future<AppVersionInfoData?> _getVersionFromConfig() async {
-    try {
-      await VersionConfig.initialize(); // 确保已初始化
-      final versionInfo = VersionConfig.versionInfo;
-      
-      return AppVersionInfoData(
-        appName: 'Char As Gem', // 可以从配置中获取
-        appVersion: versionInfo.shortVersion,
-        buildNumber: versionInfo.buildNumber,
-        buildTime: versionInfo.buildTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
-        buildEnvironment: versionInfo.buildEnvironment ?? (kDebugMode ? 'debug' : 'release'),
-        gitCommit: versionInfo.gitCommit,
-        gitBranch: versionInfo.gitBranch,
-        platformName: _getPlatformName(),
-        operatingSystem: _getOperatingSystem(),
-        flutterVersion: _getFlutterVersion(),
-        dartVersion: _getDartVersion(),
-      );
-    } catch (e) {
-      AppLogger.warning('从 VersionConfig 获取版本信息失败，使用 PackageInfo 回退', 
-          tag: 'AppVersionInfoService', data: {'error': e.toString()});
-      return null;
-    }
-  }
-
-  /// 从 PackageInfo 获取版本信息（回退机制）
-  static Future<AppVersionInfoData> _getVersionFromPackageInfo() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-
-      // 处理Windows平台的版本格式问题
-      String version = packageInfo.version;
-      String buildNumber = packageInfo.buildNumber;
-
-      // Windows可能返回 "1.0.1.0" 格式，需要转换为 "1.0.1"
-      if (Platform.isWindows && version.contains('.')) {
-        final parts = version.split('.');
-        if (parts.length == 4 && parts[3] == '0') {
-          version = parts.take(3).join('.');
-        }
-      }
-
-      // 如果buildNumber为空，尝试从version中提取
-      if (buildNumber.isEmpty) {
-        if (version.contains('+')) {
-          final versionParts = version.split('+');
-          if (versionParts.length == 2) {
-            version = versionParts[0];
-            buildNumber = versionParts[1];
-          }
-        }
-        
-        // 如果仍然为空，抛出异常
-        if (buildNumber.isEmpty) {
-          throw StateError('构建号为空。请检查 pubspec.yaml 中的版本格式是否包含构建号 (例如: 1.0.0+20250620001)');
-        }
-      }
-
-    return AppVersionInfoData(
-      appName: packageInfo.appName,
-      appVersion: version,
-      buildNumber: buildNumber,
-      buildTime: DateTime.now().toIso8601String(),
-      buildEnvironment: kDebugMode ? 'debug' : 'release',
-      gitCommit: null,
-      gitBranch: null,
-      platformName: _getPlatformName(),
-      operatingSystem: _getOperatingSystem(),
-      flutterVersion: _getFlutterVersion(),
-      dartVersion: _getDartVersion(),
-    );
-  }
-
-  /// 获取默认版本信息
-  static AppVersionInfoData _getDefaultVersionInfo() {
-    try {
-      // 尝试从 VersionConfig 获取版本信息
-      final versionInfo = VersionConfig.versionInfo;
-      return AppVersionInfoData(
-        appName: 'Char As Gem',
-        appVersion: versionInfo.shortVersion,
-        buildNumber: versionInfo.buildNumber,
-        buildTime: versionInfo.buildTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
-        buildEnvironment: versionInfo.buildEnvironment ?? (kDebugMode ? 'debug' : 'release'),
-        gitCommit: versionInfo.gitCommit,
-        gitBranch: versionInfo.gitBranch,
-        platformName: _getPlatformName(),
-        operatingSystem: _getOperatingSystem(),
-        flutterVersion: _getFlutterVersion(),
-        dartVersion: _getDartVersion(),
-      );
-    } catch (e) {
-      // 如果所有方法都失败，返回硬编码的默认值
-      return AppVersionInfoData(
-        appName: 'Char As Gem',
-        appVersion: '1.0.0',
-        buildNumber: 'Unknown',
-        buildTime: DateTime.now().toIso8601String(),
-        buildEnvironment: kDebugMode ? 'debug' : 'release',
-        platformName: _getPlatformName(),
-        operatingSystem: _getOperatingSystem(),
-        flutterVersion: _getFlutterVersion(),
-        dartVersion: _getDartVersion(),
-      );
-    }
-  }
-
-  static String _getPlatformName() {
-    if (kIsWeb) return 'Web';
-    if (Platform.isAndroid) return 'Android';
-    if (Platform.isIOS) return 'iOS';
-    if (Platform.isWindows) return 'Windows';
-    if (Platform.isMacOS) return 'macOS';
-    if (Platform.isLinux) return 'Linux';
-    return 'Unknown Platform'; // 这里将在UI层显示时被替换为本地化文本
-  }
-
-  static String _getOperatingSystem() {
-    if (kIsWeb) return 'Web Browser';
-    return Platform.operatingSystem;
-  }
-
-  static String _getFlutterVersion() {
-    // 这里可以根据需要从构建信息中获取，暂时返回固定值
-    return 'Flutter ${const String.fromEnvironment('FLUTTER_VERSION', defaultValue: '3.29.2')}';
-  }
-
-  static String _getDartVersion() {
-    // 这里可以根据需要从构建信息中获取，暂时返回固定值
-    return 'Dart ${const String.fromEnvironment('DART_VERSION', defaultValue: '3.7.0')}';
-  }
-}
-
-class AppVersionSettings extends ConsumerWidget {
-  const AppVersionSettings({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final versionInfoAsync = ref.watch(appVersionInfoProvider);
-
-    return SettingsSection(
-      title: l10n.about,
-      children: [
-        versionInfoAsync.when(
-          data: (versionInfo) =>
-              _buildVersionInfo(context, l10n, theme, versionInfo),
-          loading: () => ListTile(
-            leading: const CircularProgressIndicator(),
-            title: Text(l10n.loading),
-          ),
-          error: (error, stack) => ListTile(
-            leading: Icon(Icons.error, color: theme.colorScheme.error),
-            title: Text(l10n.loadFailed),
-            subtitle: Text(error.toString()),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVersionInfo(
-    BuildContext context,
-    AppLocalizations l10n,
-    ThemeData theme,
-    AppVersionInfoData versionInfo,
-  ) {
-    return Column(
-      children: [
-        // 应用版本信息
-        ListTile(
-          leading: Icon(
-            Icons.info_outline,
-            color: theme.colorScheme.primary,
-          ),
-          title: Text(l10n.versionDetails),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${l10n.appVersion}: ${versionInfo.appVersion}'),
-              Text(
-                  '${l10n.buildNumber}: ${versionInfo.buildNumber == "Unknown" ? l10n.unknown : versionInfo.buildNumber}'),
-              Text('${l10n.buildEnvironment}: ${versionInfo.buildEnvironment}'),
-            ],
-          ),
-          isThreeLine: true,
-        ),
-
-        // 系统信息
-        ListTile(
-          leading: Icon(
-            Icons.phone_android,
-            color: theme.colorScheme.secondary,
-          ),
-          title: Text(l10n.systemInfo),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${l10n.operatingSystem}: ${versionInfo.operatingSystem}'),
-              Text(versionInfo.flutterVersion),
-              Text(versionInfo.dartVersion),
-            ],
-          ),
-          isThreeLine: true,
-        ),
-
-        // 复制版本信息按钮
-        ListTile(
-          leading: Icon(
-            Icons.copy,
-            color: theme.colorScheme.tertiary,
-          ),
-          title: Text(l10n.copyVersionInfo),
-          onTap: () => _copyVersionInfo(context, l10n, versionInfo),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _copyVersionInfo(
-    BuildContext context,
-    AppLocalizations l10n,
-    AppVersionInfoData versionInfo,
-  ) async {
-    try {
-      final formattedInfo = versionInfo.toFormattedString(l10n);
-      await Clipboard.setData(ClipboardData(text: formattedInfo));
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.versionInfoCopied),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-
-      AppLogger.info(
-        '用户复制版本信息',
-        data: {
-          'operation': 'copy_version_info',
-          'appVersion': versionInfo.appVersion,
-          'platform': versionInfo.platformName,
-        },
-        tag: 'ui',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        '复制版本信息失败',
-        data: {
-          'operation': 'copy_version_info',
-          'error': e.toString(),
-        },
-        tag: 'ui',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      if (context.mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.copyFailed(e.toString())),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 }

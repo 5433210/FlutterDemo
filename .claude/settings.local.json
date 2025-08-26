@@ -23,7 +23,8 @@
       "Bash(rg:*)",
       "Bash(chcp 65001)",
       "Bash(set:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "WebSearch"
     ],
     "deny": []
   }

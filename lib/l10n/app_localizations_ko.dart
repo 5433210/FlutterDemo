@@ -4527,6 +4527,72 @@ class AppLocalizationsKo extends AppLocalizations {
   String get writingToolText => '쓰기 도구';
 
   @override
+  String get hardwareInfo => '하드웨어 정보';
+
+  @override
+  String get runtimeEnvironment => '런타임 환경';
+
+  @override
+  String get platform => '플랫폼';
+
+  @override
+  String get deviceModel => '기기 모델';
+
+  @override
+  String get manufacturer => '제조업체';
+
+  @override
+  String get deviceId => '기기 ID';
+
+  @override
+  String get physicalDevice => '물리적 기기';
+
+  @override
+  String get architecture => '아키텍처';
+
+  @override
+  String get screenInfo => '화면 정보';
+
+  @override
+  String get screenSize => '화면 크기';
+
+  @override
+  String get pixelDensity => '픽셀 밀도';
+
+  @override
+  String get screenSizeCategory => '화면 크기 분류';
+
+  @override
+  String get memoryInfo => '메모리 정보';
+
+  @override
+  String get totalMemory => '총 메모리';
+
+  @override
+  String get availableMemory => '사용 가능한 메모리';
+
+  @override
+  String get applicationInfo => '애플리케이션 정보';
+
+  @override
+  String get applicationName => '애플리케이션 이름';
+
+  @override
+  String get buildMode => '빌드 모드';
+
+  @override
+  String get debugMode => '디버그 모드';
+
+  @override
+  String get runtimeInfo => '런타임 정보';
+
+  @override
+  String get flutterVersionLabel => 'Flutter 버전';
+
+  @override
+  String get dartVersionLabel => 'Dart 버전';
+
+  @override
   String get yes => '예';
 
   @override
