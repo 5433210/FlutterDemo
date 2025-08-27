@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../utils/image_validator.dart' as validator;
 import '../../../image/cached_image.dart';
-import 'interactive_crop_overlay.dart';
 
 /// 放大图像预览对话框
-/// 支持缩放、平移和精确裁剪
+import 'interactive_crop_overlay.dart';
 class ImageZoomPreviewDialog extends StatefulWidget {
   final String imageUrl;
   final String fitMode;
@@ -351,8 +351,20 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
                   ),
                 );
               },
-              onImageLoaded: (Size size) {
-                final imageSize = size;
+              onImageLoaded: (Size size) async {
+                // 🔧 关键修复：先尝试获取真实图像尺寸，解决Flutter的16384限制问题
+                Size? realImageSize;
+                
+                // 尝试直接从文件获取真实尺寸（绕过Flutter限制）
+                try {
+                  String filePath = widget.imageUrl.substring(7); // Remove 'file://' prefix
+                  realImageSize = await validator.ImageValidator.getRealImageSize(filePath);
+                } catch (e) {
+                  debugPrint('放大预览获取真实图像尺寸失败，使用Flutter检测尺寸: $e');
+                }
+                
+                // 使用真实尺寸或Flutter检测尺寸
+                final imageSize = realImageSize ?? size;
                 final renderSize = _calculateRenderSize(
                   imageSize,
                   constraints.biggest,

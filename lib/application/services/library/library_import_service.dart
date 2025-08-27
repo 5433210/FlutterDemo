@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/library_item.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../presentation/utils/image_validator.dart' as validator;
 import '../../repositories/library_repository_impl.dart';
 import '../storage/library_storage_service.dart';
 
@@ -155,11 +156,39 @@ class LibraryImportService {
     }
   }
 
-  /// 获取图片尺寸
+  /// 获取图片尺寸（修复Flutter 16384限制）
   Future<Size> _getImageSize(Uint8List bytes) async {
     try {
+      // 🔧 关键修复：先尝试使用 image 包获取真实尺寸，绕过Flutter限制
+      try {
+        final image = validator.ImageValidator.decodeImage(bytes);
+        if (image != null) {
+          final realSize = Size(image.width.toDouble(), image.height.toDouble());
+          AppLogger.debug('图库导入：使用 image 包检测到真实尺寸', data: {
+            'width': image.width,
+            'height': image.height,
+            'method': 'image_package'
+          });
+          return realSize;
+        }
+      } catch (e) {
+        AppLogger.debug('图库导入：image 包检测失败，降级到Flutter检测', data: {
+          'error': e.toString()
+        });
+      }
+      
+      // 降级方案：使用Flutter的decodeImageFromList（可能受16384限制）
       final image = await decodeImageFromList(bytes);
-      return Size(image.width.toDouble(), image.height.toDouble());
+      final flutterSize = Size(image.width.toDouble(), image.height.toDouble());
+      
+      AppLogger.debug('图库导入：使用 Flutter 检测尺寸', data: {
+        'width': image.width,
+        'height': image.height,
+        'method': 'flutter_decode',
+        'warning': '可能受到16384限制'
+      });
+      
+      return flutterSize;
     } catch (e) {
       AppLogger.warning('获取图片尺寸失败', error: e);
       return Size.zero;

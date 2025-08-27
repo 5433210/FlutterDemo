@@ -7,12 +7,13 @@ import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
+import '../../../../utils/image_validator.dart' as validator;
 import '../../../common/editable_number_field.dart';
 import '../../../common/m3_color_picker.dart';
 import '../../../image/cached_image.dart';
 import '../m3_panel_styles.dart';
-import 'image_zoom_preview_dialog.dart';
 import 'interactive_crop_overlay.dart';
+import 'image_zoom_preview_dialog.dart';
 
 /// 几何属性面板
 class ImagePropertyGeometryPanel extends StatelessWidget {
@@ -760,9 +761,29 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                   ),
                 );
               },
-              onImageLoaded: (Size size) {
-                // Simple image size calculation for contain mode
-                final imageSize = size;
+              onImageLoaded: (Size size) async {
+                // 🔧 关键修复：先尝试获取真实图像尺寸，解决Flutter的16384限制问题
+                Size? realImageSize;
+                
+                // 尝试直接从文件获取真实尺寸（绕过Flutter限制）
+                try {
+                  realImageSize = await validator.ImageValidator.getRealImageSize(filePath);
+                } catch (e) {
+                  AppLogger.debug('获取真实图像尺寸失败，使用Flutter检测尺寸', data: {
+                    'error': e.toString(),
+                    'filePath': filePath,
+                  });
+                }
+                
+                // 使用真实尺寸或Flutter检测尺寸
+                final imageSize = realImageSize ?? size;
+                
+                AppLogger.debug('图像尺寸检测结果', data: {
+                  'flutterDetected': '${size.width.toInt()}x${size.height.toInt()}',
+                  'realDetected': realImageSize != null ? '${realImageSize.width.toInt()}x${realImageSize.height.toInt()}' : 'null',
+                  'finalUsed': '${imageSize.width.toInt()}x${imageSize.height.toInt()}',
+                  'hasLimitation': realImageSize != null && (realImageSize.width != size.width || realImageSize.height != size.height),
+                });
 
                 // 🔧 修复：延迟到构建完成后再调用回调，避免setState during build错误
                 WidgetsBinding.instance.addPostFrameCallback((_) {

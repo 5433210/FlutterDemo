@@ -1,7 +1,24 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:image/image.dart' as img;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; // 导入 Size 类型
+
+/// 图像元数据
+class ImageMetadata {
+  final int width;
+  final int height;
+  final int sizeInBytes;
+  final String format;
+
+  const ImageMetadata({
+    required this.width,
+    required this.height,
+    required this.sizeInBytes,
+    required this.format,
+  });
+}
 
 /// 图像验证工具类
 class ImageValidator {
@@ -53,8 +70,49 @@ class ImageValidator {
     }
   }
 
-  /// 验证并获取图像信息
-  static Future<ImageInfo?> getImageInfo(String filePath) async {
+  /// 直接解码图像数据（绕过Flutter限制）
+  static img.Image? decodeImage(Uint8List bytes) {
+    try {
+      return img.decodeImage(bytes);
+    } catch (e) {
+      debugPrint('image包解码图像失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取图像的真实尺寸（使用 image 包绕过Flutter显示限制）
+  static Future<Size?> getRealImageSize(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) {
+        return null;
+      }
+
+      final bytes = await file.readAsBytes();
+      
+      // 🔧 关键修复：使用 image 包直接解码，避免Flutter的GPU纹理限制
+      final image = img.decodeImage(bytes);
+      if (image == null) {
+        debugPrint('image包无法解码图像: $filePath');
+        return null;
+      }
+
+      final realSize = Size(
+        image.width.toDouble(),
+        image.height.toDouble(),
+      );
+
+      debugPrint('通过image包检测到图像真实尺寸: ${realSize.width.toInt()}x${realSize.height.toInt()}');
+      return realSize;
+    } catch (e) {
+      debugPrint('获取图像真实尺寸失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取图像的真实尺寸（旧方法，受Flutter限制）
+  @deprecated
+  static Future<Size?> getRealImageSizeOld(String filePath) async {
     try {
       final file = File(filePath);
       if (!file.existsSync()) {
@@ -66,7 +124,36 @@ class ImageValidator {
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
-      return ImageInfo(
+      final realSize = Size(
+        image.width.toDouble(),
+        image.height.toDouble(),
+      );
+
+      image.dispose();
+      codec.dispose();
+      
+      debugPrint('检测到图像真实尺寸: ${realSize.width.toInt()}x${realSize.height.toInt()}');
+      return realSize;
+    } catch (e) {
+      debugPrint('获取图像真实尺寸失败: $e');
+      return null;
+    }
+  }
+
+  /// 验证并获取图像信息
+  static Future<ImageMetadata?> getImageInfo(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) {
+        return null;
+      }
+
+      final bytes = await file.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      return ImageMetadata(
         width: image.width,
         height: image.height,
         sizeInBytes: bytes.length,
