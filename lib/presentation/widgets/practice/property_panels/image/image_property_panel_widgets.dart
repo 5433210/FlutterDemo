@@ -578,7 +578,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                                 child: _buildImageWithSizeListener(
                                   context: context,
                                   imageUrl: imageUrl,
-                                  fitMode: _getFitMode(fitMode),
+                                  fitMode: BoxFit.contain, // 🔧 关键修复：预览面板固定使用 contain 模式，不受属性面板 fitMode 影响
                                   onImageSizeAvailable:
                                       (detectedImageSize, detectedRenderSize) {
                                     // Always call when image size is detected
@@ -775,11 +775,12 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                     
                     if (!hasExistingImageSize || !hasExistingRenderSize) {
                       // 情况1：新建元素或缺少尺寸信息，需要初始化
-                      final fitModeString = _boxFitToString(fitMode);
+                      // 🔧 关键修复：预览面板始终使用 'contain' 模式，不受属性面板 fitMode 影响
+                      const previewFitMode = 'contain'; // 预览面板固定使用 contain 模式
                       final renderSize = _calculateRenderSize(
                         imageSize,
                         constraints.biggest,
-                        fitModeString, // 使用转换后的String类型
+                        previewFitMode, // 使用固定的预览适配模式
                       );
                       
                       AppLogger.debug(
@@ -788,7 +789,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                         data: {
                           'imageSize': '${imageSize.width}x${imageSize.height}',
                           'renderSize': '${renderSize.width}x${renderSize.height}',
-                          'reason': '新建元素或缺少尺寸信息',
+                          'reason': '新建元素或缺少尺寸信息（预览面板固定contain模式）',
                           'hasExistingImageSize': hasExistingImageSize,
                           'hasExistingRenderSize': hasExistingRenderSize,
                         },
@@ -858,11 +859,12 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                   
                   if (!hasExistingImageSize || !hasExistingRenderSize) {
                     // 情况1：新建元素或缺少尺寸信息，需要初始化
-                    final fitModeString = _boxFitToString(fitMode);
+                    // 🔧 关键修复：预览面板始终使用 'contain' 模式，不受属性面板 fitMode 影响
+                    const previewFitMode = 'contain'; // 预览面板固定使用 contain 模式
                     final renderSize = _calculateRenderSize(
                       imageSize,
                       constraints.biggest,
-                      fitModeString, // 使用转换后的String类型
+                      previewFitMode, // 使用固定的预览适配模式
                     );
                     
                     AppLogger.debug(
@@ -871,7 +873,7 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
                       data: {
                         'imageSize': '${imageSize.width}x${imageSize.height}',
                         'renderSize': '${renderSize.width}x${renderSize.height}',
-                        'reason': '新建元素或缺少尺寸信息（网络图像）',
+                        'reason': '新建元素或缺少尺寸信息（网络图像，预览面板固定contain模式）',
                         'hasExistingImageSize': hasExistingImageSize,
                         'hasExistingRenderSize': hasExistingRenderSize,
                       },

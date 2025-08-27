@@ -334,7 +334,7 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
           builder: (BuildContext context, BoxConstraints constraints) {
             return CachedImage(
               path: filePath,
-              fit: _getFitMode(widget.fitMode),
+              fit: BoxFit.contain, // 🔧 关键修复：放大预览对话框固定使用 contain 模式，不受属性面板 fitMode 影响
               errorBuilder: (context, error, stackTrace) {
                 return Center(
                   child: Column(
@@ -356,7 +356,7 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
                 final renderSize = _calculateRenderSize(
                   imageSize,
                   constraints.biggest,
-                  widget.fitMode,
+                  'contain', // 🔧 关键修复：放大预览对话框固定使用 contain 模式计算渲染尺寸
                 );
 
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -424,7 +424,7 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
         builder: (BuildContext context, BoxConstraints constraints) {
           return Image.network(
             widget.imageUrl,
-            fit: _getFitMode(widget.fitMode),
+            fit: BoxFit.contain, // 🔧 关键修复：放大预览对话框固定使用 contain 模式，不受属性面板 fitMode 影响
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               if (frame == null) {
                 return const Center(
