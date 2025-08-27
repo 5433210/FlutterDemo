@@ -806,7 +806,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterDetailLoadError => '加载字符详情失败';
 
   @override
-  String get characterDetailSimplifiedChar => '简体字符';
+  String get characterDetailSimplifiedChar => '字符';
 
   @override
   String get characterDetailTitle => '字符详情';
@@ -5425,7 +5425,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get characterDetailLoadError => '載入字元詳情失敗';
 
   @override
-  String get characterDetailSimplifiedChar => '簡體字元';
+  String get characterDetailSimplifiedChar => '字元';
 
   @override
   String get characterDetailTitle => '字元詳情';

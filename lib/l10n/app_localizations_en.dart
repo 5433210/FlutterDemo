@@ -806,7 +806,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterDetailLoadError => 'Failed to Load Character Details';
 
   @override
-  String get characterDetailSimplifiedChar => 'Simplified Character';
+  String get characterDetailSimplifiedChar => 'Character';
 
   @override
   String get characterDetailTitle => 'Character Details';

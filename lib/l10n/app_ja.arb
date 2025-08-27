@@ -248,7 +248,7 @@
   "characterDetailFormatTransparent": "透明",
   "characterDetailFormatTransparentDesc": "背景を除去した透明PNG画像",
   "characterDetailLoadError": "文字詳細の読み込みに失敗しました",
-  "characterDetailSimplifiedChar": "簡体字",
+  "characterDetailSimplifiedChar": "文字",
   "characterDetailTitle": "文字詳細",
   "characterEditSaveConfirmMessage": "「{character}」を保存しますか？",
   "characterUpdated": "文字が更新されました",

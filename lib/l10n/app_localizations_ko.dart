@@ -806,7 +806,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get characterDetailLoadError => '문자 세부 정보 로드 실패';
 
   @override
-  String get characterDetailSimplifiedChar => '간체자';
+  String get characterDetailSimplifiedChar => '문자';
 
   @override
   String get characterDetailTitle => '문자 세부 정보';

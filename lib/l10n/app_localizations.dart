@@ -1597,7 +1597,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterDetailSimplifiedChar.
   ///
   /// In en, this message translates to:
-  /// **'Simplified Character'**
+  /// **'Character'**
   String get characterDetailSimplifiedChar;
 
   /// No description provided for @characterDetailTitle.

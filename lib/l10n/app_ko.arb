@@ -248,7 +248,7 @@
   "characterDetailFormatTransparent": "투명",
   "characterDetailFormatTransparentDesc": "배경이 제거된 투명 PNG 이미지",
   "characterDetailLoadError": "문자 세부 정보 로드 실패",
-  "characterDetailSimplifiedChar": "간체자",
+  "characterDetailSimplifiedChar": "문자",
   "characterDetailTitle": "문자 세부 정보",
   "characterEditSaveConfirmMessage": "\"{character}\"을(를) 저장하시겠습니까?",
   "characterUpdated": "문자가 업데이트되었습니다",

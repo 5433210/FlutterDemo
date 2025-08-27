@@ -248,7 +248,7 @@
   "characterDetailFormatTransparent": "Transparent",
   "characterDetailFormatTransparentDesc": "Background Removed Transparent Image",
   "characterDetailLoadError": "Failed to Load Character Details",
-  "characterDetailSimplifiedChar": "Simplified Character",
+  "characterDetailSimplifiedChar": "Character",
   "characterDetailTitle": "Character Details",
   "characterEditSaveConfirmMessage": "Confirm Save '{character}'?",
   "characterUpdated": "Character Updated",

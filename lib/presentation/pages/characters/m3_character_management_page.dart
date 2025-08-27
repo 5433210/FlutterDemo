@@ -317,7 +317,7 @@ class _M3CharacterManagementPageState
               panelId: 'character_management_detail_panel',
               initialWidth: 350,
               minWidth: 250,
-              maxWidth: 500,
+              maxWidth: 600, // 🔧 增加100像素：从500增加到600
               isLeftPanel: false,
               child: M3CharacterDetailPanel(
                 characterId: state.selectedCharacterId!,

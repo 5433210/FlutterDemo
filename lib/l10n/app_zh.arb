@@ -248,7 +248,7 @@
   "characterDetailFormatTransparent": "透明",
   "characterDetailFormatTransparentDesc": "去背景的透明PNG图像",
   "characterDetailLoadError": "加载字符详情失败",
-  "characterDetailSimplifiedChar": "简体字符",
+  "characterDetailSimplifiedChar": "字符",
   "characterDetailTitle": "字符详情",
   "characterEditSaveConfirmMessage": "确认保存「{character}」？",
   "characterUpdated": "字符已更新",

@@ -806,7 +806,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get characterDetailLoadError => '文字詳細の読み込みに失敗しました';
 
   @override
-  String get characterDetailSimplifiedChar => '簡体字';
+  String get characterDetailSimplifiedChar => '文字';
 
   @override
   String get characterDetailTitle => '文字詳細';
