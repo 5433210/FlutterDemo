@@ -135,6 +135,9 @@ class _M3CharacterDetailPanelState
                   ),
                 ),
 
+                // 🔧 添加预览区域与缩略图列表之间的间隙
+                const SizedBox(height: 12),
+
                 // Format thumbnails
                 _buildFormatSelector(ref, theme, selectedFormat, l10n),
 
@@ -432,49 +435,52 @@ class _M3CharacterDetailPanelState
             color: Colors.black87,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Image
-              if (isSvg)
-                // SVG 渲染 with error handling
-                _buildSvgImage(imagePath)
-              else
-                // 常规图片渲染，添加更好的错误处理
-                Image.file(
-                  File(imagePath),
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .errorContainer
-                          .withValues(alpha: 0.3),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.broken_image,
-                              size: 24,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '图像加载失败',
-                              style: TextStyle(
-                                fontSize: 10,
+          child: Container(
+            color: Colors.grey.shade50, // 🔧 使用固定的浅色背景，不跟随系统主题，提高黑白对比度
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Image
+                if (isSvg)
+                  // SVG 渲染 with error handling
+                  _buildSvgImage(imagePath)
+                else
+                  // 常规图片渲染，添加更好的错误处理
+                  Image.file(
+                    File(imagePath),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .errorContainer
+                            .withValues(alpha: 0.3),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                size: 24,
                                 color: Theme.of(context).colorScheme.error,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                '图像加载失败',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-            ],
+                      );
+                    },
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -601,8 +607,8 @@ class _M3CharacterDetailPanelState
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withAlpha(77), // 0.3 opacity = 77 alpha
+        // 🔧 使用固定的浅色背景，不跟随系统主题，提高黑白对比度
+        color: Colors.grey.shade50, // 固定浅色背景
         borderRadius: BorderRadius.circular(8),
       ),
       child: imagePath != null && imagePath.isNotEmpty

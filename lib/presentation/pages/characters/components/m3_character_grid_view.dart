@@ -90,7 +90,7 @@ class M3CharacterCard extends StatelessWidget {
                                 character.character,
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 12, // Slightly reduce font size
+                                  fontSize: 14, // 🔧 增大字符名称字体大小
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -106,14 +106,14 @@ class M3CharacterCard extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 1), // Reduce vertical spacing
+                        const SizedBox(height: 2), // 🔧 稍微增加间距
 
                         // Work title
                         Flexible(
                           child: Text(
                             character.title,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 10,
+                              fontSize: 11, // 🔧 增大作品标题字体大小
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -156,28 +156,32 @@ class M3CharacterCard extends StatelessWidget {
                 ),
               ),
 
-            // Favorite button
+            // Favorite button - 🔧 调整按钮大小，减小遮挡
             if (!isBatchMode && onToggleFavorite != null)
               Positioned(
                 top: 4,
                 right: 4,
-                child: IconButton(
-                  icon: Icon(
-                    character.isFavorite
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: character.isFavorite
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  onPressed: onToggleFavorite,
-                  tooltip: character.isFavorite
-                      ? l10n.removeFavorite
-                      : l10n.addFavorite,
-                  iconSize: 20,
-                  style: IconButton.styleFrom(
-                    backgroundColor: theme.colorScheme.surface
-                        .withAlpha(179), // 0.7 opacity = 179 alpha
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onToggleFavorite,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface.withAlpha(179), // 0.7 opacity
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        character.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: character.isFavorite
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurfaceVariant,
+                        size: 14, // 🔧 缩小图标尺寸
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -188,17 +192,21 @@ class M3CharacterCard extends StatelessWidget {
   }
 
   Widget _buildThumbnail(BuildContext context, ThemeData theme) {
+    // 🔧 使用固定的浅色背景，不跟随系统主题，提高黑白对比度
     return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: Colors.grey.shade50, // 固定浅色背景
+      padding: const EdgeInsets.all(8.0), // 🔧 添加20%左右的内边距，为字符图像提供留白
       child: thumbnailPath != null && thumbnailPath!.isNotEmpty
           ? Image.file(
               File(thumbnailPath!),
-              fit: BoxFit.cover,
+              fit: BoxFit.contain, // 🔧 改为contain以保持图像比例并显示完整内容
               errorBuilder: (context, error, stackTrace) {
                 return Center(
                   child: Text(
                     character.character,
-                    style: theme.textTheme.headlineMedium,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: Colors.black87, // 确保文字在浅色背景上清晰可见
+                    ),
                   ),
                 );
               },
@@ -206,7 +214,9 @@ class M3CharacterCard extends StatelessWidget {
           : Center(
               child: Text(
                 character.character,
-                style: theme.textTheme.headlineMedium,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: Colors.black87, // 确保文字在浅色背景上清晰可见
+                ),
               ),
             ),
     );
@@ -387,9 +397,9 @@ class M3CharacterGridView extends ConsumerWidget {
         } else {
           // 正常模式：根据可用宽度动态调整列数
           // 计算最佳列数
-          // 设置最小卡片宽度为120像素，最大为180像素
+          // 🔧 缩小网格最大尺寸，提高显示精度 - 设置最小卡片宽度为120像素，最大为140像素
           const double minCardWidth = 120.0;
-          const double maxCardWidth = 180.0;
+          const double maxCardWidth = 140.0;
 
           // 计算可用宽度（减去padding）
           final double adjustedWidth = availableWidth - padding * 2;
