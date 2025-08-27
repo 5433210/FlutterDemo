@@ -373,7 +373,7 @@ class M3CharacterGridView extends ConsumerWidget {
                       future: ref
                           .read(characterServiceProvider)
                           .getCharacterImagePath(
-                              character.id, CharacterImageType.thumbnail),
+                              character.id, CharacterImageType.squareBinary), // 🔧 使用方形二值化图像替代缩略图
                       builder: (context, snapshot) {
                         return Container(
                           key: ValueKey('character_${character.id}'),
@@ -445,7 +445,7 @@ class M3CharacterGridView extends ConsumerWidget {
                 future: ref
                     .read(characterServiceProvider)
                     .getCharacterImagePath(
-                        character.id, CharacterImageType.thumbnail),
+                        character.id, CharacterImageType.squareBinary), // 🔧 使用方形二值化图像替代缩略图
                 builder: (context, snapshot) {
                   return Container(
                     key: ValueKey('character_${character.id}'),
