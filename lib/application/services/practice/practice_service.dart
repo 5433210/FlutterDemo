@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/models/practice/practice_filter.dart';
 import '../../../domain/repositories/practice_repository.dart';
+import '../../../utils/image_path_converter.dart';
 import '../../repositories/practice_repository_impl.dart';
 import '../storage/practice_storage_service.dart';
 
@@ -346,5 +347,22 @@ class PracticeService {
     debugPrint('文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节');
 
     return Uint8List.fromList(jpgBytes);
+  }
+  
+  /// 迁移数据库中的图像路径从绝对路径到相对路径
+  /// 
+  /// 用于数据迁移，将存储在数据库中的绝对路径转换为相对路径以提高可移植性
+  Future<PathMigrationResult> migrateImagePathsToRelative({
+    void Function(int processed, int total)? onProgress,
+  }) async {
+    if (_repository is PracticeRepositoryImpl) {
+      final repo = _repository as PracticeRepositoryImpl;
+      return await repo.migrateImagePathsToRelative(onProgress: onProgress);
+    } else {
+      // 如果不是具体实现类，返回失败结果
+      return PathMigrationResult.failure(
+        errorMessage: '当前Repository实现不支持路径迁移功能',
+      );
+    }
   }
 }

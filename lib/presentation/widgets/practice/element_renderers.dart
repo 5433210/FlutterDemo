@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/logging/edit_page_logger_extension.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../utils/image_path_converter.dart';
 import '../image/cached_image.dart';
 import 'collection_element_renderer.dart';
 import 'text_renderer.dart';
@@ -348,9 +350,48 @@ class ElementRenderers {
   static Widget buildImageElement(
       BuildContext context, Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
-    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
+    return FutureBuilder<String>(
+      future: _getAbsoluteImagePath(element),
+      builder: (context, snapshot) {
+        final absoluteImageUrl = snapshot.data ?? '';
+        return _buildImageElementInternal(context, element, absoluteImageUrl,
+            isPreviewMode: isPreviewMode);
+      },
+    );
+  }
+
+  /// 获取绝对图像路径用于渲染
+  static Future<String> _getAbsoluteImagePath(Map<String, dynamic> element) async {
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
+    
+    if (imageUrl.isEmpty) {
+      return '';
+    }
+
+    // 如果是相对路径，转换为绝对路径用于渲染
+    if (ImagePathConverter.isRelativePath(imageUrl)) {
+      try {
+        final absolutePath = await ImagePathConverter.toAbsolutePath(imageUrl);
+        return absolutePath;
+      } catch (e) {
+        AppLogger.warning('渲染器路径转换失败，使用原路径', 
+          tag: 'ElementRenderers', 
+          data: {'path': imageUrl, 'error': e.toString()});
+        return imageUrl;
+      }
+    }
+    
+    return imageUrl;
+  }
+
+  /// 构建图像元素（内部实现）
+  static Widget _buildImageElementInternal(
+      BuildContext context, Map<String, dynamic> element, String absoluteImageUrl,
+      {bool isPreviewMode = false}) {
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
+    final content = element['content'] as Map<String, dynamic>;
+    final originalImageUrl = content['imageUrl'] as String? ?? ''; // 保留原始路径用于日志
     final transformedImageUrl = content['transformedImageUrl'] as String?;
     final fitMode = content['fitMode'] as String? ?? 'contain';
     final backgroundColor = content['backgroundColor'] as String?;
@@ -476,14 +517,15 @@ class ElementRenderers {
       if (transformedImageData != null) {
         EditPageLogger.rendererDebug('✅ 变换已应用，检测到变换图像数据', data: {
           'dataSize': transformedImageData.length,
-          'imageUrl': imageUrl,
+          'originalImageUrl': originalImageUrl,
           'elementId': element['id'],
         });
       } else {
-        EditPageLogger.rendererError('❌ 变换已应用但未找到变换图像数据', data: {
-          'imageUrl': imageUrl,
+        EditPageLogger.rendererDebug('⚠️ 变换已应用但未找到变换图像数据，将使用原始图像', data: {
+          'originalImageUrl': originalImageUrl,
           'elementId': element['id'],
           'hasTransformedUrl': transformedImageUrl != null,
+          'fallbackStrategy': 'use_original_image',
         });
       }
     }
@@ -492,12 +534,12 @@ class ElementRenderers {
     if (binarizedImageData != null) {
       EditPageLogger.rendererDebug('检测到二值化图像数据', data: {
         'dataSize': binarizedImageData.length,
-        'imageUrl': imageUrl,
+        'originalImageUrl': originalImageUrl,
       });
     } else {
       EditPageLogger.rendererDebug('未检测到二值化图像数据', data: {
         'rawBinarizedData': rawBinarizedData?.toString(),
-        'imageUrl': imageUrl,
+        'originalImageUrl': originalImageUrl,
       });
     } // 解析背景颜色
     Color? bgColor;
@@ -510,7 +552,7 @@ class ElementRenderers {
     }
 
     // 如果图片URL为空且没有图像数据，显示占位符
-    if (imageUrl.isEmpty &&
+    if (absoluteImageUrl.isEmpty &&
         base64ImageData == null &&
         rawImageData == null &&
         transformedImageData == null &&
@@ -533,7 +575,7 @@ class ElementRenderers {
       
       imageWidget = _buildImageWidget(
         context: context,
-        imageUrl: imageUrl, // 提供原始URL作为备用
+        imageUrl: absoluteImageUrl, // 使用转换后的绝对路径
         fitMode: fitMode,
         imageAlignment: imageAlignment,
         binarizedImageData: binarizedImageData, // 仍然优先二值化数据
@@ -552,7 +594,7 @@ class ElementRenderers {
       
       imageWidget = _buildImageWidget(
         context: context,
-        imageUrl: transformedImageUrl ?? imageUrl,
+        imageUrl: transformedImageUrl ?? absoluteImageUrl, // 使用转换后的绝对路径
         fitMode: fitMode,
         imageAlignment: imageAlignment,
         binarizedImageData: binarizedImageData,
@@ -857,12 +899,14 @@ class ElementRenderers {
           context, AppLocalizations.of(context).selectImage);
     }
 
-    // 检查是否是本地文件路径（原始来源）
+    // 检查是否是本地文件路径（转换后的绝对路径）
     if (imageUrl.startsWith('file://')) {
       EditPageLogger.rendererDebug('🗂️ 使用本地文件URL',
           data: {'imageUrl': imageUrl, 'priority': 'lowest'});
-      // 提取文件路径（去掉file://前缀）
-      final filePath = imageUrl.substring(7);
+      // 提取文件路径（去掉file:///前缀，Windows标准格式）
+      final filePath = imageUrl.startsWith('file:///')
+          ? imageUrl.substring(8)  // file:///C:/... -> C:/...
+          : imageUrl.substring(7); // file://path -> path (for compatibility)
 
       // 使用CachedImage加载本地文件
       return CachedImage(

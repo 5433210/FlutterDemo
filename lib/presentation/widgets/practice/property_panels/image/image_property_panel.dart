@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../infrastructure/logging/logger.dart';
+import '../../../../../utils/image_path_converter.dart';
 import '../../practice_edit_controller.dart';
 import '../m3_element_common_property_panel.dart';
 import '../m3_layer_info_panel.dart';
@@ -78,6 +79,41 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _getAbsoluteImagePath(),
+      builder: (context, snapshot) {
+        final absoluteImageUrl = snapshot.data ?? '';
+        return _buildPanelContent(context, absoluteImageUrl);
+      },
+    );
+  }
+
+  /// 获取绝对图像路径
+  Future<String> _getAbsoluteImagePath() async {
+    final content = element['content'] as Map<String, dynamic>;
+    final imageUrl = content['imageUrl'] as String? ?? '';
+    
+    if (imageUrl.isEmpty) {
+      return '';
+    }
+
+    // 如果是相对路径，转换为绝对路径
+    if (ImagePathConverter.isRelativePath(imageUrl)) {
+      try {
+        return await ImagePathConverter.toAbsolutePath(imageUrl);
+      } catch (e) {
+        AppLogger.warning('路径转换失败，使用原路径', 
+          tag: 'ImagePropertyPanel', 
+          data: {'path': imageUrl, 'error': e.toString()});
+        return imageUrl;
+      }
+    }
+    
+    return imageUrl;
+  }
+
+  /// 构建面板内容
+  Widget _buildPanelContent(BuildContext context, String absoluteImageUrl) {
     // Basic element properties
     final x = (element['x'] as num).toDouble();
     final y = (element['y'] as num).toDouble();
@@ -95,7 +131,6 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
     // Image specific properties
     final content = element['content'] as Map<String, dynamic>;
-    final imageUrl = content['imageUrl'] as String? ?? '';
 
     // Cropping properties - use new coordinate format directly
     final cropX = (content['cropX'] as num?)?.toDouble() ?? 0.0;
@@ -230,7 +265,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel>
 
         // Image preview section
         ImagePropertyPreviewPanel(
-          imageUrl: imageUrl,
+          imageUrl: absoluteImageUrl,
           fitMode: fitMode,
           cropX: cropX,
           cropY: cropY,

@@ -6,11 +6,14 @@ import 'package:uuid/uuid.dart';
 import '../../domain/models/practice/practice_entity.dart';
 import '../../domain/models/practice/practice_filter.dart';
 import '../../domain/repositories/practice_repository.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/persistence/database_interface.dart';
+import '../../presentation/widgets/practice/property_panels/image/practice_image_data_integration.dart';
 import '../../utils/date_time_helper.dart';
+import '../../utils/image_path_converter.dart';
 
 /// 字帖练习仓库实现
-class PracticeRepositoryImpl implements PracticeRepository {
+class PracticeRepositoryImpl with PracticeImageDataIntegration implements PracticeRepository {
   static const _table = 'practices';
   final DatabaseInterface _db;
   final Uuid _uuid = const Uuid();
@@ -67,7 +70,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
       if (data == null) return null;
 
       // 处理数据，确保pages字段格式正确
-      final processedData = _processDbData(data);
+      final processedData = await _processDbData(data);
 
       // 从实体创建对象
       final entity = PracticeEntity.fromJson(processedData);
@@ -88,7 +91,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
       for (final item in list) {
         try {
           // 处理数据，确保pages字段格式正确
-          final processedItem = _processDbData(item);
+          final processedItem = await _processDbData(item);
 
           // 创建PracticeEntity对象
           final practice = PracticeEntity.fromJson(processedItem);
@@ -115,7 +118,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
       for (final item in list) {
         try {
           // 处理数据，确保pages字段格式正确
-          final processedItem = _processDbData(item);
+          final processedItem = await _processDbData(item);
 
           // 创建PracticeEntity对象
           final practice = PracticeEntity.fromJson(processedItem);
@@ -202,6 +205,27 @@ class PracticeRepositoryImpl implements PracticeRepository {
                 }),
               );
               debugPrint('成功解析页面数据：${pages.length} 个页面');
+              
+              // 🔥 集成智能图像数据管理策略 - 加载后恢复
+              try {
+                debugPrint('loadPractice: 准备应用智能图像数据管理恢复');
+                
+                final restoredPagesData = restorePracticeDataFromSave({
+                  'id': practice['id'],
+                  'elements': pages, // 传入页面数组，不是元素数组
+                });
+                
+                final restoredPages = restoredPagesData['elements'] as List<dynamic>;
+                
+                // 替换原来的页面数据
+                pages.clear();
+                pages.addAll(restoredPages.cast<Map<String, dynamic>>());
+                
+                debugPrint('loadPractice: 已应用智能图像数据管理恢复，处理了 ${pages.length} 个页面');
+              } catch (restoreError) {
+                debugPrint('loadPractice: 智能图像恢复失败: $restoreError，使用原始数据');
+                // 继续使用已解析的数据
+              }
             } else {
               debugPrint('解析pages字段失败：不是有效的列表');
             }
@@ -284,7 +308,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
       for (final item in list) {
         try {
           // 处理数据，确保pages字段格式正确
-          final processedItem = _processDbData(item);
+          final processedItem = await _processDbData(item);
 
           // 创建PracticeEntity对象
           final practice = PracticeEntity.fromJson(processedItem);
@@ -403,8 +427,54 @@ class PracticeRepositoryImpl implements PracticeRepository {
       final now = DateTime.now().toIso8601String();
       final practiceId = id ?? _uuid.v4();
 
-      // 将页面列表转换为JSON字符串
-      final pagesJson = jsonEncode(pages);
+      // 🔥 集成智能图像数据管理策略 - 保存前优化
+      String pagesJson;
+      try {
+        debugPrint('savePracticeRaw: 准备优化 ${pages.length} 个页面');
+        for (int i = 0; i < pages.length; i++) {
+          final page = pages[i];
+          debugPrint('savePracticeRaw: 页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
+          if (page['elements'] is List) {
+            final elements = page['elements'] as List;
+            for (int j = 0; j < elements.length; j++) {
+              final element = elements[j];
+              if (element is Map<String, dynamic> && element['type'] == 'image') {
+                final content = element['content'] as Map<String, dynamic>?;
+                debugPrint('savePracticeRaw: 页面 $i 元素 $j (图像) 原始内容键: ${content?.keys.toList()}');
+              }
+            }
+          }
+        }
+        
+        final practiceData = {
+          'id': practiceId,
+          'elements': pages
+        };
+        final optimizedElements = preparePracticeDataForSave(practiceData);
+        
+        debugPrint('savePracticeRaw: 优化后得到 ${optimizedElements['elements'].length} 个页面');
+        final optimizedPages = optimizedElements['elements'] as List;
+        for (int i = 0; i < optimizedPages.length; i++) {
+          final page = optimizedPages[i];
+          debugPrint('savePracticeRaw: 优化页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
+          if (page['elements'] is List) {
+            final elements = page['elements'] as List;
+            for (int j = 0; j < elements.length; j++) {
+              final element = elements[j];
+              if (element is Map<String, dynamic> && element['type'] == 'image') {
+                final content = element['content'] as Map<String, dynamic>?;
+                debugPrint('savePracticeRaw: 优化页面 $i 元素 $j (图像) 优化内容键: ${content?.keys.toList()}');
+              }
+            }
+          }
+        }
+        
+        pagesJson = jsonEncode(optimizedElements['elements']);
+        debugPrint('savePracticeRaw: 已应用智能图像数据管理优化');
+      } catch (optimizeError) {
+        debugPrint('savePracticeRaw: 智能图像优化失败: $optimizeError，使用原始数据');
+        pagesJson = jsonEncode(pages);
+      }
 
       // 准备要保存的数据
       final data = {
@@ -659,7 +729,20 @@ class PracticeRepositoryImpl implements PracticeRepository {
         if (result['pages'] is List) {
           debugPrint(
               '_prepareForSave: 将pages字段转换为JSON字符串，pages数量: ${result['pages'].length}');
-          result['pages'] = jsonEncode(result['pages']);
+          
+          // 🔥 集成智能图像数据管理策略 - 保存前优化
+          try {
+            final practiceData = {
+              'id': result['id'] ?? 'temp-id',
+              'elements': result['pages']
+            };
+            final optimizedElements = preparePracticeDataForSave(practiceData);
+            result['pages'] = jsonEncode(optimizedElements['elements']);
+            debugPrint('_prepareForSave: 已应用智能图像数据管理优化');
+          } catch (optimizeError) {
+            debugPrint('_prepareForSave: 智能图像优化失败: $optimizeError，使用原始数据');
+            result['pages'] = jsonEncode(result['pages']);
+          }
         } else if (result['pages'] is String) {
           // 如果已经是字符串，不需要处理
           debugPrint('_prepareForSave: pages字段已经是字符串');
@@ -682,7 +765,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
   }
 
   /// 处理从数据库获取的数据，确保pages和tags字段格式正确
-  Map<String, dynamic> _processDbData(Map<String, dynamic> data) {
+  Future<Map<String, dynamic>> _processDbData(Map<String, dynamic> data) async {
     // 创建一个新的Map来存储处理后的数据
     final processedData = Map<String, dynamic>.from(data);
 
@@ -723,6 +806,24 @@ class PracticeRepositoryImpl implements PracticeRepository {
           // 如果解析结果是列表，则直接使用
           if (decodedPages is List) {
             processedData['pages'] = decodedPages;
+            
+            // 🔥 集成智能图像数据管理策略 - 加载后恢复
+            try {
+              final savedElements = List<Map<String, dynamic>>.from(decodedPages.cast<Map<String, dynamic>>());
+              final restoredElements = restorePracticeDataFromSave({
+                'id': processedData['id'],
+                'elements': savedElements,
+              });
+              processedData['pages'] = restoredElements['elements'];
+              debugPrint('_processDbData: 已应用智能图像数据管理恢复');
+              
+              // 🔄 路径转换：将相对路径转换为绝对路径（用于渲染）
+              await _convertImagePathsToAbsolute(processedData['pages']);
+              debugPrint('_processDbData: 已转换图像路径为绝对路径');
+            } catch (restoreError) {
+              debugPrint('_processDbData: 智能图像恢复失败: $restoreError，使用原始数据');
+              // 继续使用已解析的数据
+            }
           } else {
             // 如果不是列表，则使用空列表
             processedData['pages'] = [];
@@ -760,5 +861,182 @@ class PracticeRepositoryImpl implements PracticeRepository {
     }
 
     return processedData;
+  }
+
+  /// 将pages中的图像路径从相对路径转换为绝对路径
+  Future<void> _convertImagePathsToAbsolute(List<dynamic> pages) async {
+    if (pages.isEmpty) return;
+    
+    for (final page in pages) {
+      if (page is! List) continue;
+      
+      for (final element in page) {
+        if (element is! Map<String, dynamic>) continue;
+        
+        final elementType = element['type'] as String?;
+        if (elementType != 'image') continue;
+        
+        final content = element['content'];
+        if (content is! Map<String, dynamic>) continue;
+        
+        final imageUrl = content['imageUrl'] as String?;
+        if (imageUrl == null || imageUrl.isEmpty) continue;
+        
+        // 如果是相对路径，转换为绝对路径
+        if (ImagePathConverter.isRelativePath(imageUrl)) {
+          try {
+            content['imageUrl'] = await ImagePathConverter.toAbsolutePath(imageUrl);
+          } catch (e) {
+            debugPrint('路径转换失败，保持原路径: $imageUrl, 错误: $e');
+          }
+        }
+      }
+    }
+  }
+  
+  /// 迁移数据库中的绝对路径到相对路径
+  /// 
+  /// 扫描所有Practice记录，将其中的绝对图像路径转换为相对路径
+  Future<PathMigrationResult> migrateImagePathsToRelative({
+    void Function(int processed, int total)? onProgress,
+  }) async {
+    try {
+      AppLogger.info('开始迁移数据库中的图像路径', tag: 'PracticeRepository');
+      
+      // 获取所有practice记录
+      final allPractices = await _db.query(_table, {});
+      final totalCount = allPractices.length;
+      int processedCount = 0;
+      final failedPaths = <String>[];
+      
+      AppLogger.info('找到 $totalCount 个练习记录需要检查', tag: 'PracticeRepository');
+      
+      for (final practice in allPractices) {
+        try {
+          // 解析pages字段
+          if (practice['pages'] is String) {
+            final pagesJson = practice['pages'] as String;
+            if (pagesJson.isNotEmpty) {
+              final decodedPages = jsonDecode(pagesJson);
+              if (decodedPages is List) {
+                // 检查并转换图像路径
+                final convertedPages = await _convertImagePathsInPages(decodedPages, toRelative: true);
+                if (convertedPages != decodedPages) {
+                  // 更新数据库记录
+                  final updateData = {
+                    'pages': jsonEncode(convertedPages),
+                    'updateTime': DateTimeHelper.toStorageFormat(DateTime.now()),
+                  };
+                  
+                  await _db.save(_table, practice['id'] as String, updateData);
+                  AppLogger.debug('已更新练习记录的图像路径', 
+                      tag: 'PracticeRepository', 
+                      data: {'practiceId': practice['id']});
+                }
+              }
+            }
+          }
+          
+          processedCount++;
+          onProgress?.call(processedCount, totalCount);
+          
+        } catch (e) {
+          final practiceId = practice['id']?.toString() ?? 'unknown';
+          AppLogger.error('迁移练习记录失败', 
+              error: e, 
+              tag: 'PracticeRepository', 
+              data: {'practiceId': practiceId});
+          failedPaths.add(practiceId);
+        }
+      }
+      
+      AppLogger.info('图像路径迁移完成', tag: 'PracticeRepository', data: {
+        'totalCount': totalCount,
+        'processedCount': processedCount,
+        'failedCount': failedPaths.length,
+      });
+      
+      return PathMigrationResult.success(
+        processedCount: processedCount,
+        totalCount: totalCount,
+        failedPaths: failedPaths,
+      );
+      
+    } catch (e) {
+      AppLogger.error('图像路径迁移失败', error: e, tag: 'PracticeRepository');
+      return PathMigrationResult.failure(errorMessage: e.toString());
+    }
+  }
+  
+  /// 转换pages中的图像路径
+  /// 
+  /// [toRelative] 如果为true，将绝对路径转换为相对路径；如果为false，将相对路径转换为绝对路径
+  Future<List<dynamic>> _convertImagePathsInPages(List<dynamic> pages, {required bool toRelative}) async {
+    final convertedPages = <dynamic>[];
+    
+    for (final page in pages) {
+      if (page is! List) {
+        convertedPages.add(page);
+        continue;
+      }
+      
+      final convertedElements = <dynamic>[];
+      
+      for (final element in page) {
+        if (element is! Map<String, dynamic>) {
+          convertedElements.add(element);
+          continue;
+        }
+        
+        final convertedElement = Map<String, dynamic>.from(element);
+        final elementType = convertedElement['type'] as String?;
+        
+        if (elementType == 'image') {
+          final content = convertedElement['content'];
+          if (content is Map<String, dynamic>) {
+            final imageUrl = content['imageUrl'] as String?;
+            if (imageUrl != null && imageUrl.isNotEmpty) {
+              
+              if (toRelative) {
+                // 转换为相对路径（保存时使用）
+                if (!ImagePathConverter.isRelativePath(imageUrl)) {
+                  // 只转换绝对路径
+                  final convertedContent = Map<String, dynamic>.from(content);
+                  convertedContent['imageUrl'] = ImagePathConverter.toRelativePath(imageUrl);
+                  convertedElement['content'] = convertedContent;
+                  
+                  AppLogger.debug('转换绝对路径为相对路径', 
+                      tag: 'PracticeRepository',
+                      data: {
+                        'original': imageUrl,
+                        'converted': convertedContent['imageUrl'],
+                      });
+                }
+              } else {
+                // 转换为绝对路径（加载时使用）
+                if (ImagePathConverter.isRelativePath(imageUrl)) {
+                  try {
+                    final convertedContent = Map<String, dynamic>.from(content);
+                    convertedContent['imageUrl'] = await ImagePathConverter.toAbsolutePath(imageUrl);
+                    convertedElement['content'] = convertedContent;
+                  } catch (e) {
+                    AppLogger.warning('路径转换失败，保持原路径', 
+                        error: e, 
+                        tag: 'PracticeRepository', 
+                        data: {'path': imageUrl});
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        convertedElements.add(convertedElement);
+      }
+      
+      convertedPages.add(convertedElements);
+    }
+    
+    return convertedPages;
   }
 }

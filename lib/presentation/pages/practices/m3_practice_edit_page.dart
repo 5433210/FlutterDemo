@@ -33,6 +33,7 @@ import '../../widgets/practice/property_panels/m3_practice_property_panels.dart'
 import '../../widgets/practice/undo_operations.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
+import '../../../utils/image_path_converter.dart';
 import 'widgets/m3_practice_edit_canvas.dart';
 import 'widgets/practice_title_edit_dialog.dart';
 
@@ -2191,15 +2192,16 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
         setState(() {
           // 使用控制器的公共方法添加图片元素
-          // 将文件路径转换为正确的文件URI格式
-          final imageUrl = 'file://${item.path.replaceAll("\\", "/")}';
-          _controller.addImageElementAt(x, y, imageUrl);
+          // 将文件路径转换为相对路径存储
+          final absoluteImageUrl = 'file://${item.path.replaceAll("\\", "/")}';
+          final relativeImageUrl = ImagePathConverter.toRelativePath(absoluteImageUrl);
+          _controller.addImageElementAt(x, y, relativeImageUrl);
           AppLogger.info(
             '成功添加图片元素到页面',
             tag: 'PracticeEdit',
             data: {
               'position': {'x': x, 'y': y},
-              'imageUrl': imageUrl,
+              'imageUrl': relativeImageUrl,
               'itemId': itemId,
             },
           );

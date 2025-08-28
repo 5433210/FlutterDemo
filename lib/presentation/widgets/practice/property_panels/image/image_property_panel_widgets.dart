@@ -719,7 +719,10 @@ class ImagePropertyPreviewPanel extends StatelessWidget {
     // Handle local file paths
     if (imageUrl.startsWith('file://')) {
       try {
-        String filePath = imageUrl.substring(7); // Remove 'file://' prefix
+        // Remove file:/// prefix for Windows or file:// for compatibility
+        String filePath = imageUrl.startsWith('file:///')
+            ? imageUrl.substring(8)  // file:///C:/... -> C:/...
+            : imageUrl.substring(7); // file://path -> path (for compatibility)
         final file = File(filePath);
 
         if (!file.existsSync()) {

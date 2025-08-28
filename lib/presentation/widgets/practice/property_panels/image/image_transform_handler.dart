@@ -264,7 +264,10 @@ mixin ImageTransformHandler {
   Future<Uint8List?> _loadImageFromUrl(String imageUrl) async {
     try {
       if (imageUrl.startsWith('file://')) {
-        String filePath = imageUrl.substring(7);
+        // Remove file:/// prefix for Windows or file:// for compatibility
+        String filePath = imageUrl.startsWith('file:///')
+            ? imageUrl.substring(8)  // file:///C:/... -> C:/...
+            : imageUrl.substring(7); // file://path -> path (for compatibility)
         final file = File(filePath);
 
         if (await file.exists()) {

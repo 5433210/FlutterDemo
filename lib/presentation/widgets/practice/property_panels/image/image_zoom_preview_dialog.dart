@@ -310,7 +310,10 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
     // 处理本地文件路径
     if (widget.imageUrl.startsWith('file://')) {
       try {
-        String filePath = widget.imageUrl.substring(7);
+        // Remove file:/// prefix for Windows or file:// for compatibility
+        String filePath = widget.imageUrl.startsWith('file:///')
+            ? widget.imageUrl.substring(8)  // file:///C:/... -> C:/...
+            : widget.imageUrl.substring(7); // file://path -> path (for compatibility)
         final file = File(filePath);
 
         if (!file.existsSync()) {
@@ -357,7 +360,10 @@ class _ImageZoomPreviewDialogState extends State<ImageZoomPreviewDialog> {
                 
                 // 尝试直接从文件获取真实尺寸（绕过Flutter限制）
                 try {
-                  String filePath = widget.imageUrl.substring(7); // Remove 'file://' prefix
+                  // Remove file:/// prefix for Windows or file:// for compatibility
+                  String filePath = widget.imageUrl.startsWith('file:///')
+                      ? widget.imageUrl.substring(8)  // file:///C:/... -> C:/...
+                      : widget.imageUrl.substring(7); // file://path -> path (for compatibility)
                   realImageSize = await validator.ImageValidator.getRealImageSize(filePath);
                 } catch (e) {
                   debugPrint('放大预览获取真实图像尺寸失败，使用Flutter检测尺寸: $e');

@@ -8,6 +8,7 @@ import '../../../../../application/providers/service_providers.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
+import '../../../../../utils/image_path_converter.dart';
 import '../../../../providers/library/library_management_provider.dart';
 import '../../../library/m3_library_picker_dialog.dart';
 import '../../practice_edit_controller.dart';
@@ -53,8 +54,10 @@ mixin ImageSelectionHandler {
           // 更新图层属性
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
-          content['imageUrl'] =
-              'file://${selectedItem.path.replaceAll("\\", "/")}';
+          
+          // 使用相对路径存储图像URL
+          final absoluteImageUrl = 'file://${selectedItem.path.replaceAll("\\", "/")}';
+          content['imageUrl'] = ImagePathConverter.toRelativePath(absoluteImageUrl);
           content['sourceId'] = selectedItem.id;
           content['sourceType'] = 'library';
           content['libraryItem'] = selectedItem; // 保存图库项的完整引用
@@ -72,7 +75,7 @@ mixin ImageSelectionHandler {
           content['isFlippedHorizontally'] = false;
           content['isFlippedVertically'] = false;
           content['rotation'] = 0.0;
-          content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+          content['isTransformApplied'] = false; // 新选择的图像无需变换
 
           // 清除之前的图片尺寸信息，让系统重新检测
           content.remove('originalWidth');
@@ -304,7 +307,10 @@ mixin ImageSelectionHandler {
 
       final content =
           Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
-      content['imageUrl'] = 'file://${importedItem.path.replaceAll("\\", "/")}';
+      
+      // 使用相对路径存储图像URL
+      final absoluteImageUrl = 'file://${importedItem.path.replaceAll("\\", "/")}';
+      content['imageUrl'] = ImagePathConverter.toRelativePath(absoluteImageUrl);
       content['sourceId'] = importedItem.id;
       content['sourceType'] = 'library';
       content['libraryItem'] = importedItem;
@@ -322,7 +328,7 @@ mixin ImageSelectionHandler {
       content['isFlippedHorizontally'] = false;
       content['isFlippedVertically'] = false;
       content['rotation'] = 0.0;
-      content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+      content['isTransformApplied'] = false; // 新选择的图像无需变换
 
       // 清除之前的图片尺寸信息，让系统重新检测
       content.remove('originalWidth');
