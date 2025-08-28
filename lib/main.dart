@@ -20,6 +20,7 @@ import 'utils/config/edit_page_logging_config.dart';
 import 'utils/config/logging_config.dart';
 import 'utils/keyboard/keyboard_monitor.dart';
 import 'utils/keyboard/keyboard_utils.dart';
+import 'version_config.dart';
 
 // 添加标志位，防止重复初始化
 bool _unifiedPathConfigInitialized = false;
@@ -96,10 +97,11 @@ void main() async {
   }
 
   try {
-    // 🚀 优化：并行初始化SharedPreferences和路径配置
+    // 🚀 优化：并行初始化SharedPreferences、路径配置和版本配置
     final futures = await Future.wait([
       SharedPreferences.getInstance(),
       _initializePathConfig(),
+      VersionConfig.initialize(),
     ]);
 
     final prefs = futures[0] as SharedPreferences;

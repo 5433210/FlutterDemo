@@ -24,7 +24,8 @@
       "Bash(chcp 65001)",
       "Bash(set:*)",
       "Bash(del:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(sqlite3:*)"
     ],
     "deny": []
   }
