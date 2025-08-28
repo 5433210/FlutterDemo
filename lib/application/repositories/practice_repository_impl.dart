@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -14,7 +13,9 @@ import '../../utils/date_time_helper.dart';
 import '../../utils/image_path_converter.dart';
 
 /// 字帖练习仓库实现
-class PracticeRepositoryImpl with PracticeImageDataIntegration implements PracticeRepository {
+class PracticeRepositoryImpl
+    with PracticeImageDataIntegration
+    implements PracticeRepository {
   static const _table = 'practices';
   final DatabaseInterface _db;
   final Uuid _uuid = const Uuid();
@@ -206,23 +207,25 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
                 }),
               );
               debugPrint('成功解析页面数据：${pages.length} 个页面');
-              
+
               // 🔥 集成智能图像数据管理策略 - 加载后恢复
               try {
                 debugPrint('loadPractice: 准备应用智能图像数据管理恢复');
-                
+
                 final restoredPagesData = restorePracticeDataFromSave({
                   'id': practice['id'],
                   'elements': pages, // 传入页面数组，不是元素数组
                 });
-                
-                final restoredPages = restoredPagesData['elements'] as List<dynamic>;
-                
+
+                final restoredPages =
+                    restoredPagesData['elements'] as List<dynamic>;
+
                 // 替换原来的页面数据
                 pages.clear();
                 pages.addAll(restoredPages.cast<Map<String, dynamic>>());
-                
-                debugPrint('loadPractice: 已应用智能图像数据管理恢复，处理了 ${pages.length} 个页面');
+
+                debugPrint(
+                    'loadPractice: 已应用智能图像数据管理恢复，处理了 ${pages.length} 个页面');
               } catch (restoreError) {
                 debugPrint('loadPractice: 智能图像恢复失败: $restoreError，使用原始数据');
                 // 继续使用已解析的数据
@@ -330,21 +333,22 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
   @override
   Future<List<PracticeEntity>> queryList(PracticeFilter filter) async {
     try {
-      debugPrint('查询字帖列表（不包含pages）: filter.isFavorite=${filter.isFavorite}, keyword=${filter.keyword}');
+      debugPrint(
+          '查询字帖列表（不包含pages）: filter.isFavorite=${filter.isFavorite}, keyword=${filter.keyword}');
       final queryParams = _buildQuery(filter);
       debugPrint('生成查询参数: $queryParams');
 
       // 使用原生SQL查询，排除pages字段
       final whereClause = _buildWhereClause(queryParams);
       final whereArgs = _buildWhereArgs(queryParams);
-      
+
       final sql = '''
-        SELECT id, title, tags, createTime, updateTime, status, isFavorite, thumbnail, author, pageCount
+        SELECT id, title, tags, createTime, updateTime, isFavorite, thumbnail
         FROM $_table 
         ${whereClause.isNotEmpty ? 'WHERE $whereClause' : ''}
         ORDER BY updateTime DESC
       ''';
-      
+
       final list = await _db.rawQuery(sql, whereArgs);
       debugPrint('查询结果数量: ${list.length}');
 
@@ -354,10 +358,10 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
           // 创建不包含pages的PracticeEntity对象
           final practiceData = Map<String, dynamic>.from(item);
           practiceData['pages'] = <Map<String, dynamic>>[]; // 设置空pages数组
-          
+
           // 处理数据，确保格式正确
           final processedItem = await _processDbDataForList(practiceData);
-          
+
           // 创建PracticeEntity对象
           final practice = PracticeEntity.fromJson(processedItem);
           result.add(practice);
@@ -482,42 +486,46 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
         debugPrint('savePracticeRaw: 准备优化 ${pages.length} 个页面');
         for (int i = 0; i < pages.length; i++) {
           final page = pages[i];
-          debugPrint('savePracticeRaw: 页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
+          debugPrint(
+              'savePracticeRaw: 页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
           if (page['elements'] is List) {
             final elements = page['elements'] as List;
             for (int j = 0; j < elements.length; j++) {
               final element = elements[j];
-              if (element is Map<String, dynamic> && element['type'] == 'image') {
+              if (element is Map<String, dynamic> &&
+                  element['type'] == 'image') {
                 final content = element['content'] as Map<String, dynamic>?;
-                debugPrint('savePracticeRaw: 页面 $i 元素 $j (图像) 原始内容键: ${content?.keys.toList()}');
+                debugPrint(
+                    'savePracticeRaw: 页面 $i 元素 $j (图像) 原始内容键: ${content?.keys.toList()}');
               }
             }
           }
         }
-        
-        final practiceData = {
-          'id': practiceId,
-          'elements': pages
-        };
+
+        final practiceData = {'id': practiceId, 'elements': pages};
         final optimizedElements = preparePracticeDataForSave(practiceData);
-        
-        debugPrint('savePracticeRaw: 优化后得到 ${optimizedElements['elements'].length} 个页面');
+
+        debugPrint(
+            'savePracticeRaw: 优化后得到 ${optimizedElements['elements'].length} 个页面');
         final optimizedPages = optimizedElements['elements'] as List;
         for (int i = 0; i < optimizedPages.length; i++) {
           final page = optimizedPages[i];
-          debugPrint('savePracticeRaw: 优化页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
+          debugPrint(
+              'savePracticeRaw: 优化页面 $i 包含 ${(page['elements'] as List?)?.length ?? 0} 个元素');
           if (page['elements'] is List) {
             final elements = page['elements'] as List;
             for (int j = 0; j < elements.length; j++) {
               final element = elements[j];
-              if (element is Map<String, dynamic> && element['type'] == 'image') {
+              if (element is Map<String, dynamic> &&
+                  element['type'] == 'image') {
                 final content = element['content'] as Map<String, dynamic>?;
-                debugPrint('savePracticeRaw: 优化页面 $i 元素 $j (图像) 优化内容键: ${content?.keys.toList()}');
+                debugPrint(
+                    'savePracticeRaw: 优化页面 $i 元素 $j (图像) 优化内容键: ${content?.keys.toList()}');
               }
             }
           }
         }
-        
+
         pagesJson = jsonEncode(optimizedElements['elements']);
         debugPrint('savePracticeRaw: 已应用智能图像数据管理优化');
       } catch (optimizeError) {
@@ -778,7 +786,7 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
         if (result['pages'] is List) {
           debugPrint(
               '_prepareForSave: 将pages字段转换为JSON字符串，pages数量: ${result['pages'].length}');
-          
+
           // 🔥 集成智能图像数据管理策略 - 保存前优化
           try {
             final practiceData = {
@@ -817,13 +825,15 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
           // JSON序列化后的Uint8List变成List<int>，需要转换回Uint8List
           final thumbnailList = result['thumbnail'] as List<int>;
           result['thumbnail'] = Uint8List.fromList(thumbnailList);
-          debugPrint('_prepareForSave: 将thumbnail从List<int>转换为Uint8List，大小: ${thumbnailList.length} 字节');
+          debugPrint(
+              '_prepareForSave: 将thumbnail从List<int>转换为Uint8List，大小: ${thumbnailList.length} 字节');
         } else if (result['thumbnail'] is Uint8List) {
           // 已经是Uint8List，不需要处理
           debugPrint('_prepareForSave: thumbnail字段已经是Uint8List');
         } else {
           // 如果是其他类型，移除该字段
-          debugPrint('_prepareForSave: thumbnail字段类型未知，移除该字段: ${result['thumbnail'].runtimeType}');
+          debugPrint(
+              '_prepareForSave: thumbnail字段类型未知，移除该字段: ${result['thumbnail'].runtimeType}');
           result.remove('thumbnail');
         }
       } catch (e) {
@@ -881,17 +891,18 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
           // 如果解析结果是列表，则直接使用
           if (decodedPages is List) {
             processedData['pages'] = decodedPages;
-            
+
             // 🔥 集成智能图像数据管理策略 - 加载后恢复
             try {
-              final savedElements = List<Map<String, dynamic>>.from(decodedPages.cast<Map<String, dynamic>>());
+              final savedElements = List<Map<String, dynamic>>.from(
+                  decodedPages.cast<Map<String, dynamic>>());
               final restoredElements = restorePracticeDataFromSave({
                 'id': processedData['id'],
                 'elements': savedElements,
               });
               processedData['pages'] = restoredElements['elements'];
               debugPrint('_processDbData: 已应用智能图像数据管理恢复');
-              
+
               // 🔄 路径转换：将相对路径转换为绝对路径（用于渲染）
               await _convertImagePathsToAbsolute(processedData['pages']);
               debugPrint('_processDbData: 已转换图像路径为绝对路径');
@@ -941,26 +952,27 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
   /// 将pages中的图像路径从相对路径转换为绝对路径
   Future<void> _convertImagePathsToAbsolute(List<dynamic> pages) async {
     if (pages.isEmpty) return;
-    
+
     for (final page in pages) {
       if (page is! List) continue;
-      
+
       for (final element in page) {
         if (element is! Map<String, dynamic>) continue;
-        
+
         final elementType = element['type'] as String?;
         if (elementType != 'image') continue;
-        
+
         final content = element['content'];
         if (content is! Map<String, dynamic>) continue;
-        
+
         final imageUrl = content['imageUrl'] as String?;
         if (imageUrl == null || imageUrl.isEmpty) continue;
-        
+
         // 如果是相对路径，转换为绝对路径
         if (ImagePathConverter.isRelativePath(imageUrl)) {
           try {
-            content['imageUrl'] = await ImagePathConverter.toAbsolutePath(imageUrl);
+            content['imageUrl'] =
+                await ImagePathConverter.toAbsolutePath(imageUrl);
           } catch (e) {
             debugPrint('路径转换失败，保持原路径: $imageUrl, 错误: $e');
           }
@@ -968,24 +980,24 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
       }
     }
   }
-  
+
   /// 迁移数据库中的绝对路径到相对路径
-  /// 
+  ///
   /// 扫描所有Practice记录，将其中的绝对图像路径转换为相对路径
   Future<PathMigrationResult> migrateImagePathsToRelative({
     void Function(int processed, int total)? onProgress,
   }) async {
     try {
       AppLogger.info('开始迁移数据库中的图像路径', tag: 'PracticeRepository');
-      
+
       // 获取所有practice记录
       final allPractices = await _db.query(_table, {});
       final totalCount = allPractices.length;
       int processedCount = 0;
       final failedPaths = <String>[];
-      
+
       AppLogger.info('找到 $totalCount 个练习记录需要检查', tag: 'PracticeRepository');
-      
+
       for (final practice in allPractices) {
         try {
           // 解析pages字段
@@ -995,92 +1007,94 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
               final decodedPages = jsonDecode(pagesJson);
               if (decodedPages is List) {
                 // 检查并转换图像路径
-                final convertedPages = await _convertImagePathsInPages(decodedPages, toRelative: true);
+                final convertedPages = await _convertImagePathsInPages(
+                    decodedPages,
+                    toRelative: true);
                 if (convertedPages != decodedPages) {
                   // 更新数据库记录
                   final updateData = {
                     'pages': jsonEncode(convertedPages),
-                    'updateTime': DateTimeHelper.toStorageFormat(DateTime.now()),
+                    'updateTime':
+                        DateTimeHelper.toStorageFormat(DateTime.now()),
                   };
-                  
+
                   await _db.save(_table, practice['id'] as String, updateData);
-                  AppLogger.debug('已更新练习记录的图像路径', 
-                      tag: 'PracticeRepository', 
+                  AppLogger.debug('已更新练习记录的图像路径',
+                      tag: 'PracticeRepository',
                       data: {'practiceId': practice['id']});
                 }
               }
             }
           }
-          
+
           processedCount++;
           onProgress?.call(processedCount, totalCount);
-          
         } catch (e) {
           final practiceId = practice['id']?.toString() ?? 'unknown';
-          AppLogger.error('迁移练习记录失败', 
-              error: e, 
-              tag: 'PracticeRepository', 
+          AppLogger.error('迁移练习记录失败',
+              error: e,
+              tag: 'PracticeRepository',
               data: {'practiceId': practiceId});
           failedPaths.add(practiceId);
         }
       }
-      
+
       AppLogger.info('图像路径迁移完成', tag: 'PracticeRepository', data: {
         'totalCount': totalCount,
         'processedCount': processedCount,
         'failedCount': failedPaths.length,
       });
-      
+
       return PathMigrationResult.success(
         processedCount: processedCount,
         totalCount: totalCount,
         failedPaths: failedPaths,
       );
-      
     } catch (e) {
       AppLogger.error('图像路径迁移失败', error: e, tag: 'PracticeRepository');
       return PathMigrationResult.failure(errorMessage: e.toString());
     }
   }
-  
+
   /// 转换pages中的图像路径
-  /// 
+  ///
   /// [toRelative] 如果为true，将绝对路径转换为相对路径；如果为false，将相对路径转换为绝对路径
-  Future<List<dynamic>> _convertImagePathsInPages(List<dynamic> pages, {required bool toRelative}) async {
+  Future<List<dynamic>> _convertImagePathsInPages(List<dynamic> pages,
+      {required bool toRelative}) async {
     final convertedPages = <dynamic>[];
-    
+
     for (final page in pages) {
       if (page is! List) {
         convertedPages.add(page);
         continue;
       }
-      
+
       final convertedElements = <dynamic>[];
-      
+
       for (final element in page) {
         if (element is! Map<String, dynamic>) {
           convertedElements.add(element);
           continue;
         }
-        
+
         final convertedElement = Map<String, dynamic>.from(element);
         final elementType = convertedElement['type'] as String?;
-        
+
         if (elementType == 'image') {
           final content = convertedElement['content'];
           if (content is Map<String, dynamic>) {
             final imageUrl = content['imageUrl'] as String?;
             if (imageUrl != null && imageUrl.isNotEmpty) {
-              
               if (toRelative) {
                 // 转换为相对路径（保存时使用）
                 if (!ImagePathConverter.isRelativePath(imageUrl)) {
                   // 只转换绝对路径
                   final convertedContent = Map<String, dynamic>.from(content);
-                  convertedContent['imageUrl'] = ImagePathConverter.toRelativePath(imageUrl);
+                  convertedContent['imageUrl'] =
+                      ImagePathConverter.toRelativePath(imageUrl);
                   convertedElement['content'] = convertedContent;
-                  
-                  AppLogger.debug('转换绝对路径为相对路径', 
+
+                  AppLogger.debug('转换绝对路径为相对路径',
                       tag: 'PracticeRepository',
                       data: {
                         'original': imageUrl,
@@ -1092,12 +1106,13 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
                 if (ImagePathConverter.isRelativePath(imageUrl)) {
                   try {
                     final convertedContent = Map<String, dynamic>.from(content);
-                    convertedContent['imageUrl'] = await ImagePathConverter.toAbsolutePath(imageUrl);
+                    convertedContent['imageUrl'] =
+                        await ImagePathConverter.toAbsolutePath(imageUrl);
                     convertedElement['content'] = convertedContent;
                   } catch (e) {
-                    AppLogger.warning('路径转换失败，保持原路径', 
-                        error: e, 
-                        tag: 'PracticeRepository', 
+                    AppLogger.warning('路径转换失败，保持原路径',
+                        error: e,
+                        tag: 'PracticeRepository',
                         data: {'path': imageUrl});
                   }
                 }
@@ -1105,40 +1120,41 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
             }
           }
         }
-        
+
         convertedElements.add(convertedElement);
       }
-      
+
       convertedPages.add(convertedElements);
     }
-    
+
     return convertedPages;
   }
 
   /// 构建WHERE子句
   String _buildWhereClause(Map<String, dynamic> queryParams) {
     if (!queryParams.containsKey('conditions')) return '';
-    
+
     final conditions = queryParams['conditions'] as List;
     final whereClause = conditions.map((condition) {
       final field = condition['field'];
       final op = condition['op'];
       return '$field $op ?';
     }).join(' AND ');
-    
+
     return whereClause;
   }
 
   /// 构建WHERE参数
   List<dynamic> _buildWhereArgs(Map<String, dynamic> queryParams) {
     if (!queryParams.containsKey('conditions')) return [];
-    
+
     final conditions = queryParams['conditions'] as List;
     return conditions.map((condition) => condition['val']).toList();
   }
 
   /// 处理从数据库获取的数据（列表专用，不包含pages字段）
-  Future<Map<String, dynamic>> _processDbDataForList(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> _processDbDataForList(
+      Map<String, dynamic> data) async {
     // 创建一个新的Map来存储处理后的数据
     final processedData = Map<String, dynamic>.from(data);
 

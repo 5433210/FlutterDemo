@@ -27,14 +27,27 @@ class UnifiedPathConfigNotifier extends StateNotifier<AsyncValue<UnifiedPathConf
   /// 加载配置
   Future<void> _loadConfig() async {
     try {
+      AppLogger.info('开始加载统一路径配置', tag: 'PathTrace');
       state = const AsyncValue.loading();
       final config = await UnifiedPathConfigService.readConfig();
       state = AsyncValue.data(config);
-      AppLogger.info('统一路径配置加载成功', tag: 'UnifiedPathProvider');
+      
+      // 记录详细的配置信息
+      final actualDataPath = await config.dataPath.getActualDataPath();
+      AppLogger.info('统一路径配置加载成功', 
+          tag: 'PathTrace', 
+          data: {
+            'dataPath.useDefaultPath': config.dataPath.useDefaultPath,
+            'dataPath.customPath': config.dataPath.customPath,
+            'dataPath.actualPath': actualDataPath,
+            'dataPath.historyPaths': config.dataPath.historyPaths,
+            'backupPath.path': config.backupPath.path,
+            'lastUpdated': config.lastUpdated.toIso8601String(),
+          });
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
       AppLogger.error('统一路径配置加载失败',
-          error: e, stackTrace: stack, tag: 'UnifiedPathProvider');
+          error: e, stackTrace: stack, tag: 'PathTrace');
     }
   }
 
@@ -221,14 +234,43 @@ final actualDataPathProvider = FutureProvider<String>((ref) async {
   final configAsync = ref.watch(unifiedPathConfigProvider);
 
   return configAsync.when(
-    data: (config) => config.dataPath.getActualDataPath(),
+    data: (config) async {
+      final actualPath = await config.dataPath.getActualDataPath();
+      AppLogger.info('actualDataPathProvider获取数据路径', 
+          tag: 'PathTrace', 
+          data: {
+            'useDefaultPath': config.dataPath.useDefaultPath,
+            'customPath': config.dataPath.customPath,
+            'actualPath': actualPath,
+            'source': 'config.data'
+          });
+      return actualPath;
+    },
     loading: () async {
       final appSupportDir = await getApplicationSupportDirectory();
-      return path.join(appSupportDir.path, PathConfigConstants.defaultDataSubDirectory);
+      final defaultPath = path.join(appSupportDir.path, PathConfigConstants.defaultDataSubDirectory);
+      AppLogger.info('actualDataPathProvider加载中时使用默认路径', 
+          tag: 'PathTrace', 
+          data: {
+            'appSupportDir': appSupportDir.path,
+            'defaultSubDirectory': PathConfigConstants.defaultDataSubDirectory,
+            'defaultPath': defaultPath,
+            'source': 'loading_fallback'
+          });
+      return defaultPath;
     },
     error: (_, __) async {
       final appSupportDir = await getApplicationSupportDirectory();
-      return path.join(appSupportDir.path, PathConfigConstants.defaultDataSubDirectory);
+      final fallbackPath = path.join(appSupportDir.path, PathConfigConstants.defaultDataSubDirectory);
+      AppLogger.info('actualDataPathProvider错误时使用回退路径', 
+          tag: 'PathTrace', 
+          data: {
+            'appSupportDir': appSupportDir.path,
+            'defaultSubDirectory': PathConfigConstants.defaultDataSubDirectory,
+            'fallbackPath': fallbackPath,
+            'source': 'error_fallback'
+          });
+      return fallbackPath;
     },
   );
 });

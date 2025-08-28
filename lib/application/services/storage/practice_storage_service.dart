@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
-// import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/storage/storage_interface.dart';
 
 /// 字帖练习存储服务
@@ -84,11 +84,33 @@ class PracticeStorageService {
   /// 获取应用文档目录路径
   Future<Directory> getAppDocumentsDirectory() async {
     try {
-      return await getApplicationDocumentsDirectory();
+      final documentsDir = await getApplicationDocumentsDirectory();
+      
+      AppLogger.info('PracticeStorageService获取应用文档目录', 
+          tag: 'PathTrace', 
+          data: {
+            'documentsDir': documentsDir.path,
+            'service': 'PracticeStorageService',
+            'method': 'getAppDocumentsDirectory',
+            'pathProvider': 'getApplicationDocumentsDirectory'
+          });
+      
+      return documentsDir;
     } catch (e, stack) {
+      AppLogger.error('获取应用文档目录路径失败', 
+          error: e, stackTrace: stack, tag: 'PathTrace');
       _handleError('获取应用文档目录路径失败', e, stack);
       // 如果无法获取应用文档目录，则返回一个临时目录
-      return Directory(path.join(_storage.getAppTempPath(), 'documents'));
+      final fallbackDir = Directory(path.join(_storage.getAppTempPath(), 'documents'));
+      
+      AppLogger.info('PracticeStorageService使用回退目录', 
+          tag: 'PathTrace', 
+          data: {
+            'fallbackDir': fallbackDir.path,
+            'reason': 'getApplicationDocumentsDirectory_failed'
+          });
+      
+      return fallbackDir;
     }
   }
 

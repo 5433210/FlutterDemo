@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../interfaces/i_cache.dart';
+import '../../logging/logger.dart';
 
 /// 图片缓存
 class ImageCache implements ICache<String, Uint8List> {
@@ -29,8 +30,23 @@ class ImageCache implements ICache<String, Uint8List> {
   Future<void> _initCacheDir() async {
     final appDir = await getApplicationDocumentsDirectory();
     _cacheDir = Directory(path.join(appDir.path, 'cache', 'images'));
+    
+    AppLogger.info('ImageCache初始化缓存目录', 
+        tag: 'PathTrace', 
+        data: {
+          'appDocumentsDir': appDir.path,
+          'cacheDir': _cacheDir.path,
+          'service': 'ImageCache',
+          'pathProvider': 'getApplicationDocumentsDirectory'
+        });
+    
     if (!await _cacheDir.exists()) {
       await _cacheDir.create(recursive: true);
+      AppLogger.info('ImageCache创建缓存目录', 
+          tag: 'PathTrace', 
+          data: {
+            'createdPath': _cacheDir.path
+          });
     }
   }
 

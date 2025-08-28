@@ -173,25 +173,42 @@ void _delayedWindowSetup() {
 
 // 🚀 优化：异步路径配置初始化
 Future<void> _initializePathConfig() async {
+  AppLogger.info('开始初始化路径配置', tag: 'PathTrace');
+  
   if (!_unifiedPathConfigInitialized) {
     _unifiedPathConfigInitialized = true;
     try {
-      await UnifiedPathConfigService.readConfig();
-      AppLogger.info('统一路径配置初始化成功', tag: 'App');
+      AppLogger.info('调用UnifiedPathConfigService.readConfig()', tag: 'PathTrace');
+      final config = await UnifiedPathConfigService.readConfig();
+      final actualDataPath = await config.dataPath.getActualDataPath();
+      
+      AppLogger.info('统一路径配置初始化成功', 
+          tag: 'PathTrace',
+          data: {
+            'dataPath.useDefaultPath': config.dataPath.useDefaultPath,
+            'dataPath.customPath': config.dataPath.customPath,
+            'dataPath.actualPath': actualDataPath,
+            'backupPath': config.backupPath.path,
+            'source': 'main_initialize'
+          });
 
       // 立即检查备份恢复，在任何Provider被触发之前
       try {
+        AppLogger.info('开始检查备份恢复', tag: 'PathTrace');
         await _checkAndCompleteBackupRestore();
+        AppLogger.info('备份恢复检查完成', tag: 'PathTrace');
       } catch (restoreError, restoreStack) {
         // 备份恢复失败记录详细错误，但不影响应用启动
         AppLogger.error('主程序备份恢复失败',
-            error: restoreError, stackTrace: restoreStack, tag: 'App');
+            error: restoreError, stackTrace: restoreStack, tag: 'PathTrace');
       }
 
-      AppLogger.info('数据路径配置预加载完成', tag: 'App');
+      AppLogger.info('数据路径配置预加载完成', tag: 'PathTrace');
     } catch (e) {
-      AppLogger.warning('统一路径配置初始化失败', error: e, tag: 'App');
+      AppLogger.error('统一路径配置初始化失败', error: e, tag: 'PathTrace');
     }
+  } else {
+    AppLogger.info('路径配置已经初始化，跳过', tag: 'PathTrace');
   }
 }
 

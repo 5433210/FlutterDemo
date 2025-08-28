@@ -1,6 +1,8 @@
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../../../infrastructure/logging/logger.dart';
+
 /// 数据路径配置模型
 class DataPathConfig {
   /// 是否使用默认路径
@@ -30,9 +32,32 @@ class DataPathConfig {
   Future<String> getActualDataPath() async {
     if (useDefaultPath || customPath == null) {
       final appSupportDir = await getApplicationSupportDirectory();
-      return path.join(
+      final defaultPath = path.join(
           appSupportDir.path, DataPathConstants.defaultSubDirectory);
+      
+      AppLogger.info('DataPathConfig获取默认数据路径', 
+          tag: 'PathTrace', 
+          data: {
+            'useDefaultPath': useDefaultPath,
+            'customPath': customPath,
+            'appSupportDir': appSupportDir.path,
+            'defaultSubDirectory': DataPathConstants.defaultSubDirectory,
+            'finalPath': defaultPath,
+            'source': 'getActualDataPath_default'
+          });
+      
+      return defaultPath;
     }
+    
+    AppLogger.info('DataPathConfig获取自定义数据路径', 
+        tag: 'PathTrace', 
+        data: {
+          'useDefaultPath': useDefaultPath,
+          'customPath': customPath,
+          'finalPath': customPath!,
+          'source': 'getActualDataPath_custom'
+        });
+    
     return customPath!;
   }
 

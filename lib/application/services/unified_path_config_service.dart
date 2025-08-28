@@ -27,11 +27,21 @@ class UnifiedPathConfigService {
 
   /// 读取统一路径配置
   static Future<UnifiedPathConfig> readConfig() async {
+    AppLogger.info('UnifiedPathConfigService开始读取配置', tag: 'PathTrace');
+    
     try {
       final prefs = await SharedPreferences.getInstance();
+      final hasConfigInPrefs = prefs.containsKey(_configKey);
+      
+      AppLogger.info('检查SharedPreferences中的配置', 
+          tag: 'PathTrace', 
+          data: {
+            'hasConfigInPrefs': hasConfigInPrefs,
+            'configKey': _configKey,
+          });
 
       // 检查SharedPreferences中是否已有统一配置
-      if (prefs.containsKey(_configKey)) {
+      if (hasConfigInPrefs) {
         final configJson = prefs.getString(_configKey);
         if (configJson != null) {
           final config = UnifiedPathConfig.fromJson(
@@ -49,32 +59,62 @@ class UnifiedPathConfigService {
                 ),
               );
               await writeConfig(updatedConfig);
+              
+              AppLogger.info('更新配置中的备份路径', 
+                  tag: 'PathTrace', 
+                  data: {
+                    'oldBackupPath': oldBackupPath,
+                    'source': 'backup_path_update'
+                  });
+              
               return updatedConfig;
             }
           }
 
-          AppLogger.debug('从SharedPreferences读取统一路径配置成功',
-              tag: 'UnifiedPathConfig');
+          final actualDataPath = await config.dataPath.getActualDataPath();
+          AppLogger.info('从SharedPreferences读取统一路径配置成功',
+              tag: 'PathTrace',
+              data: {
+                'configJson': configJson,
+                'dataPath.useDefaultPath': config.dataPath.useDefaultPath,
+                'dataPath.customPath': config.dataPath.customPath,
+                'dataPath.actualPath': actualDataPath,
+                'backupPath': config.backupPath.path,
+                'source': 'shared_preferences'
+              });
           return config;
         }
       }
 
       // 如果SharedPreferences中没有配置，尝试从旧配置迁移
-      AppLogger.debug('SharedPreferences中无统一配置，尝试从旧配置迁移',
-          tag: 'UnifiedPathConfig');
+      AppLogger.info('SharedPreferences中无统一配置，尝试从旧配置迁移',
+          tag: 'PathTrace');
 
       // 防止递归迁移
       if (_migrationInProgress) {
-        AppLogger.warning('检测到迁移过程正在进行，返回默认配置', tag: 'UnifiedPathConfig');
+        AppLogger.warning('检测到迁移过程正在进行，返回默认配置', tag: 'PathTrace');
         return UnifiedPathConfig.defaultConfig();
       }
 
       return await _migrateFromOldConfig();
     } catch (e, stack) {
       AppLogger.error('读取统一路径配置失败',
-          error: e, stackTrace: stack, tag: 'UnifiedPathConfig');
+          error: e, stackTrace: stack, tag: 'PathTrace');
+          
       // 发生错误时返回默认配置
-      return UnifiedPathConfig.defaultConfig();
+      final defaultConfig = UnifiedPathConfig.defaultConfig();
+      final actualDataPath = await defaultConfig.dataPath.getActualDataPath();
+      
+      AppLogger.info('使用默认配置作为回退', 
+          tag: 'PathTrace', 
+          data: {
+            'dataPath.useDefaultPath': defaultConfig.dataPath.useDefaultPath,
+            'dataPath.customPath': defaultConfig.dataPath.customPath,
+            'dataPath.actualPath': actualDataPath,
+            'source': 'default_fallback'
+          });
+          
+      return defaultConfig;
     }
   }
 

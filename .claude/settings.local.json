@@ -25,7 +25,8 @@
       "Bash(set:*)",
       "Bash(del:*)",
       "WebSearch",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(dir \"C:\\Users\\wailik\\AppData\\Roaming\\wailik\\charasgem\" /s)"
     ],
     "deny": []
   }
