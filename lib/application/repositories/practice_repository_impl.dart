@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -322,6 +323,54 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
       return result;
     } catch (e) {
       debugPrint('查询练习失败: $e');
+      return []; // 出错时返回空列表
+    }
+  }
+
+  @override
+  Future<List<PracticeEntity>> queryList(PracticeFilter filter) async {
+    try {
+      debugPrint('查询字帖列表（不包含pages）: filter.isFavorite=${filter.isFavorite}, keyword=${filter.keyword}');
+      final queryParams = _buildQuery(filter);
+      debugPrint('生成查询参数: $queryParams');
+
+      // 使用原生SQL查询，排除pages字段
+      final whereClause = _buildWhereClause(queryParams);
+      final whereArgs = _buildWhereArgs(queryParams);
+      
+      final sql = '''
+        SELECT id, title, tags, createTime, updateTime, status, isFavorite, thumbnail, author, pageCount
+        FROM $_table 
+        ${whereClause.isNotEmpty ? 'WHERE $whereClause' : ''}
+        ORDER BY updateTime DESC
+      ''';
+      
+      final list = await _db.rawQuery(sql, whereArgs);
+      debugPrint('查询结果数量: ${list.length}');
+
+      final result = <PracticeEntity>[];
+      for (final item in list) {
+        try {
+          // 创建不包含pages的PracticeEntity对象
+          final practiceData = Map<String, dynamic>.from(item);
+          practiceData['pages'] = <Map<String, dynamic>>[]; // 设置空pages数组
+          
+          // 处理数据，确保格式正确
+          final processedItem = await _processDbDataForList(practiceData);
+          
+          // 创建PracticeEntity对象
+          final practice = PracticeEntity.fromJson(processedItem);
+          result.add(practice);
+        } catch (e) {
+          debugPrint('处理单个练习实体失败: $e');
+          // 跳过这个有问题的记录，但继续处理其他记录
+        }
+      }
+
+      debugPrint('成功解析练习列表：${result.length} 个');
+      return result;
+    } catch (e) {
+      debugPrint('查询字帖列表失败: $e');
       return []; // 出错时返回空列表
     }
   }
@@ -761,6 +810,32 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
       debugPrint('_prepareForSave: pages字段不存在，设为空列表');
     }
 
+    // 处理thumbnail字段，确保SQLite兼容的BLOB类型
+    if (result.containsKey('thumbnail') && result['thumbnail'] != null) {
+      try {
+        if (result['thumbnail'] is List<int>) {
+          // JSON序列化后的Uint8List变成List<int>，需要转换回Uint8List
+          final thumbnailList = result['thumbnail'] as List<int>;
+          result['thumbnail'] = Uint8List.fromList(thumbnailList);
+          debugPrint('_prepareForSave: 将thumbnail从List<int>转换为Uint8List，大小: ${thumbnailList.length} 字节');
+        } else if (result['thumbnail'] is Uint8List) {
+          // 已经是Uint8List，不需要处理
+          debugPrint('_prepareForSave: thumbnail字段已经是Uint8List');
+        } else {
+          // 如果是其他类型，移除该字段
+          debugPrint('_prepareForSave: thumbnail字段类型未知，移除该字段: ${result['thumbnail'].runtimeType}');
+          result.remove('thumbnail');
+        }
+      } catch (e) {
+        debugPrint('_prepareForSave: 转换thumbnail字段失败: $e，移除该字段');
+        result.remove('thumbnail');
+      }
+    } else if (result.containsKey('thumbnail')) {
+      // 如果thumbnail字段存在但为null，移除该字段以避免数据库错误
+      result.remove('thumbnail');
+      debugPrint('_prepareForSave: thumbnail字段为null，已移除');
+    }
+
     return result;
   }
 
@@ -1038,5 +1113,84 @@ class PracticeRepositoryImpl with PracticeImageDataIntegration implements Practi
     }
     
     return convertedPages;
+  }
+
+  /// 构建WHERE子句
+  String _buildWhereClause(Map<String, dynamic> queryParams) {
+    if (!queryParams.containsKey('conditions')) return '';
+    
+    final conditions = queryParams['conditions'] as List;
+    final whereClause = conditions.map((condition) {
+      final field = condition['field'];
+      final op = condition['op'];
+      return '$field $op ?';
+    }).join(' AND ');
+    
+    return whereClause;
+  }
+
+  /// 构建WHERE参数
+  List<dynamic> _buildWhereArgs(Map<String, dynamic> queryParams) {
+    if (!queryParams.containsKey('conditions')) return [];
+    
+    final conditions = queryParams['conditions'] as List;
+    return conditions.map((condition) => condition['val']).toList();
+  }
+
+  /// 处理从数据库获取的数据（列表专用，不包含pages字段）
+  Future<Map<String, dynamic>> _processDbDataForList(Map<String, dynamic> data) async {
+    // 创建一个新的Map来存储处理后的数据
+    final processedData = Map<String, dynamic>.from(data);
+
+    // 处理tags字段，如果是字符串，则解析为JSON
+    if (processedData['tags'] is String) {
+      final tagsJson = processedData['tags'] as String;
+      if (tagsJson.isNotEmpty) {
+        try {
+          // 解析JSON字符串
+          final decodedTags = jsonDecode(tagsJson);
+
+          // 如果解析结果是列表，则直接使用
+          if (decodedTags is List) {
+            processedData['tags'] = decodedTags;
+          } else {
+            // 如果不是列表，则使用空列表
+            processedData['tags'] = [];
+          }
+        } catch (e) {
+          debugPrint('解析tags字段失败: $e');
+          processedData['tags'] = []; // 解析失败时使用空列表
+        }
+      } else {
+        processedData['tags'] = []; // 空字符串时使用空列表
+      }
+    } else if (processedData['tags'] == null) {
+      processedData['tags'] = []; // null时使用空列表
+    }
+
+    // 处理isFavorite字段，确保是布尔类型
+    if (processedData.containsKey('isFavorite')) {
+      // SQLite中0表示false，1表示true
+      processedData['isFavorite'] = processedData['isFavorite'] == 1;
+      debugPrint(
+          '_processDbDataForList: 从数据库读取 isFavorite=${processedData['isFavorite']}');
+    } else {
+      // 如果不存在，设置为默认值false
+      processedData['isFavorite'] = false;
+      debugPrint('_processDbDataForList: isFavorite字段不存在，设为默认值false');
+    }
+
+    // 处理status字段，数据库表中不存在但实体模型中需要
+    if (!processedData.containsKey('status')) {
+      processedData['status'] = 'active'; // 使用默认值
+      debugPrint('_processDbDataForList: status字段不存在于数据库，设为默认值active');
+    }
+
+    // 保留thumbnail字段（从数据库获取）
+    if (processedData['thumbnail'] != null) {
+      debugPrint('_processDbDataForList: 保留缩略图数据');
+    }
+
+    return processedData;
   }
 }

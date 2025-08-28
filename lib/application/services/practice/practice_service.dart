@@ -111,6 +111,11 @@ class PracticeService {
     return _repository.query(filter);
   }
 
+  /// 查询字帖练习列表（优化版本，不包含pages字段）
+  Future<List<PracticeEntity>> queryPracticesList(PracticeFilter filter) {
+    return _repository.queryList(filter);
+  }
+
   /// 保存字帖练习
   Future<PracticeEntity> savePractice({
     String? id,
@@ -135,14 +140,19 @@ class PracticeService {
       // 如果提供了页面数据，更新页面
       if (pages.isNotEmpty) {
         debugPrint('检测到页面数据，将更新页面');
-        final updatedPractice = newPractice.copyWith(pages: pages);
+        final updatedPractice = newPractice.copyWith(
+          pages: pages,
+          thumbnail: thumbnail != null && thumbnail.isNotEmpty 
+              ? await _compressThumbnail(thumbnail) 
+              : null,
+        );
         debugPrint('准备保存更新后的实体，调用 _repository.save...');
         final result = await _repository.save(updatedPractice);
         debugPrint('_repository.save 调用成功，返回ID=${result.id}');
 
-        // 保存缩略图
+        // 同时保存缩略图到文件系统（兼容性）
         if (thumbnail != null && thumbnail.isNotEmpty) {
-          debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+          debugPrint('准备保存缩略图到文件系统, 大小=${thumbnail.length} 字节');
           final compressedThumbnail = await _compressThumbnail(thumbnail);
           debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
           await _storageService.saveCoverThumbnail(
@@ -154,14 +164,24 @@ class PracticeService {
         return result;
       }
 
-      // 保存缩略图
+      // 保存缩略图到数据库
       if (thumbnail != null && thumbnail.isNotEmpty) {
-        debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+        debugPrint('准备保存缩略图到数据库, 大小=${thumbnail.length} 字节');
         final compressedThumbnail = await _compressThumbnail(thumbnail);
         debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+        
+        final updatedPractice = newPractice.copyWith(
+          thumbnail: compressedThumbnail,
+        );
+        final result = await _repository.save(updatedPractice);
+        
+        // 同时保存到文件系统（兼容性）
         await _storageService.saveCoverThumbnail(
             newPractice.id, compressedThumbnail);
-        debugPrint('已保存新字帖缩略图到文件系统: ${newPractice.id}');
+        debugPrint('已保存新字帖缩略图到数据库和文件系统: ${newPractice.id}');
+        
+        debugPrint('=== PracticeService.savePractice 完成(有缩略图分支) ===');
+        return result;
       }
 
       debugPrint('=== PracticeService.savePractice 完成(无页面分支) ===');
@@ -184,6 +204,9 @@ class PracticeService {
       pages: pages,
       tags: tags,
       updateTime: DateTime.now(),
+      thumbnail: thumbnail != null && thumbnail.isNotEmpty 
+          ? await _compressThumbnail(thumbnail) 
+          : existingPractice.thumbnail, // 保留现有缩略图
     );
     debugPrint('创建了更新后的实体, 准备调用 _repository.save...');
 
@@ -191,9 +214,9 @@ class PracticeService {
     final result = await _repository.save(updatedPractice);
     debugPrint('_repository.save 调用成功，返回ID=${result.id}');
 
-    // 保存缩略图
+    // 同时保存缩略图到文件系统（兼容性）
     if (thumbnail != null && thumbnail.isNotEmpty) {
-      debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+      debugPrint('准备保存缩略图到文件系统, 大小=${thumbnail.length} 字节');
       final compressedThumbnail = await _compressThumbnail(thumbnail);
       debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
       await _storageService.saveCoverThumbnail(result.id, compressedThumbnail);

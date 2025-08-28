@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -32,6 +34,10 @@ class PracticeEntity with _$PracticeEntity {
 
     /// 是否收藏
     @Default(false) bool isFavorite,
+
+    /// 缩略图数据 (BLOB)
+    @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+    Uint8List? thumbnail,
   }) = _PracticeEntity;
 
   /// 新建练习，自动生成ID和时间戳
@@ -100,4 +106,26 @@ class PracticeEntity with _$PracticeEntity {
       updateTime: DateTime.now(),
     );
   }
+}
+
+/// JSON到Uint8List转换函数
+Uint8List? _bytesFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is List<int>) {
+    return Uint8List.fromList(value);
+  }
+  if (value is String && value.isNotEmpty) {
+    // 处理base64编码的情况
+    try {
+      return Uint8List.fromList(value.codeUnits);
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+/// Uint8List到JSON转换函数
+List<int>? _bytesToJson(Uint8List? bytes) {
+  return bytes?.toList();
 }

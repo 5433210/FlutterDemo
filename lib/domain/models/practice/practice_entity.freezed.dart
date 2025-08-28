@@ -44,6 +44,10 @@ mixin _$PracticeEntity {
   /// 是否收藏
   bool get isFavorite => throw _privateConstructorUsedError;
 
+  /// 缩略图数据 (BLOB)
+  @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+  Uint8List? get thumbnail => throw _privateConstructorUsedError;
+
   /// Serializes this PracticeEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -68,7 +72,9 @@ abstract class $PracticeEntityCopyWith<$Res> {
       String status,
       DateTime createTime,
       DateTime updateTime,
-      bool isFavorite});
+      bool isFavorite,
+      @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+      Uint8List? thumbnail});
 }
 
 /// @nodoc
@@ -94,6 +100,7 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
+    Object? thumbnail = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -128,6 +135,10 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      thumbnail: freezed == thumbnail
+          ? _value.thumbnail
+          : thumbnail // ignore: cast_nullable_to_non_nullable
+              as Uint8List?,
     ) as $Val);
   }
 }
@@ -148,7 +159,9 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
       String status,
       DateTime createTime,
       DateTime updateTime,
-      bool isFavorite});
+      bool isFavorite,
+      @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+      Uint8List? thumbnail});
 }
 
 /// @nodoc
@@ -172,6 +185,7 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
+    Object? thumbnail = freezed,
   }) {
     return _then(_$PracticeEntityImpl(
       id: null == id
@@ -206,6 +220,10 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      thumbnail: freezed == thumbnail
+          ? _value.thumbnail
+          : thumbnail // ignore: cast_nullable_to_non_nullable
+              as Uint8List?,
     ));
   }
 }
@@ -221,7 +239,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       this.status = 'active',
       required this.createTime,
       required this.updateTime,
-      this.isFavorite = false})
+      this.isFavorite = false,
+      @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson) this.thumbnail})
       : _pages = pages,
         _tags = tags,
         super._();
@@ -279,6 +298,11 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   @JsonKey()
   final bool isFavorite;
 
+  /// 缩略图数据 (BLOB)
+  @override
+  @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+  final Uint8List? thumbnail;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -294,7 +318,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
             (identical(other.updateTime, updateTime) ||
                 other.updateTime == updateTime) &&
             (identical(other.isFavorite, isFavorite) ||
-                other.isFavorite == isFavorite));
+                other.isFavorite == isFavorite) &&
+            const DeepCollectionEquality().equals(other.thumbnail, thumbnail));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -308,7 +333,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       status,
       createTime,
       updateTime,
-      isFavorite);
+      isFavorite,
+      const DeepCollectionEquality().hash(thumbnail));
 
   /// Create a copy of PracticeEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -336,7 +362,9 @@ abstract class _PracticeEntity extends PracticeEntity {
       final String status,
       required final DateTime createTime,
       required final DateTime updateTime,
-      final bool isFavorite}) = _$PracticeEntityImpl;
+      final bool isFavorite,
+      @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+      final Uint8List? thumbnail}) = _$PracticeEntityImpl;
   const _PracticeEntity._() : super._();
 
   factory _PracticeEntity.fromJson(Map<String, dynamic> json) =
@@ -373,6 +401,11 @@ abstract class _PracticeEntity extends PracticeEntity {
   /// 是否收藏
   @override
   bool get isFavorite;
+
+  /// 缩略图数据 (BLOB)
+  @override
+  @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
+  Uint8List? get thumbnail;
 
   /// Create a copy of PracticeEntity
   /// with the given fields replaced by the non-null parameter values.

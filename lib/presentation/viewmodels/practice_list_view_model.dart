@@ -166,10 +166,10 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
       );
 
       debugPrint(
-          'PracticeListViewModel: 查询过滤条件: limit=${filter.limit}, offset=${filter.offset}, isFavorite=${filter.isFavorite}'); // 查询练习
-      debugPrint('PracticeListViewModel: 调用 _practiceService.queryPractices');
+          'PracticeListViewModel: 查询过滤条件: limit=${filter.limit}, offset=${filter.offset}, isFavorite=${filter.isFavorite}'); // 查询练习（使用优化版本，不包含pages字段）
+      debugPrint('PracticeListViewModel: 调用 _practiceService.queryPracticesList (优化版本)');
       debugPrint('PracticeListViewModel: 详细过滤条件: ${filter.toJson()}');
-      final practicesResult = await _practiceService.queryPractices(filter);
+      final practicesResult = await _practiceService.queryPracticesList(filter);
       debugPrint('PracticeListViewModel: 查询结果数量: ${practicesResult.length}');
       if (practicesResult.isEmpty) {
         debugPrint('PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库');
@@ -196,6 +196,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
             'pageCount': practice.pages.length,
             'isFavorite': practice.isFavorite,
             'tags': practice.tags,
+            'thumbnail': practice.thumbnail, // 从数据库获取的缩略图
           };
 
           practicesMap.add(practiceMap);

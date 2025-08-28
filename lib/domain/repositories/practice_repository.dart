@@ -44,6 +44,9 @@ abstract class PracticeRepository {
   /// 查询练习
   Future<List<PracticeEntity>> query(PracticeFilter filter);
 
+  /// 查询练习列表（不包含 pages 字段，优化性能）
+  Future<List<PracticeEntity>> queryList(PracticeFilter filter);
+
   /// 根据字段查询
   Future<List<Map<String, dynamic>>> queryByField(
     String field,
