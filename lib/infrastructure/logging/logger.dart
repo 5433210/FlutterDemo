@@ -91,8 +91,8 @@ class AppLogger {
     bool enableConsole = true,
     bool enableFile = false,
     String? filePath,
-    int? maxFileSizeBytes,
-    int? maxFiles,
+    int maxFileSizeBytes = 10 * 1024 * 1024, // 默认10MB
+    int maxFiles = 5, // 默认保留5个文件
   }) async {
     _minLevel = minLevel;
 

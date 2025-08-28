@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -75,21 +76,8 @@ void main() async {
     });
   }
 
-  // 🚀 优化：简化日志初始化，减少启动开销
-  String? logFilePath;
-  if (Platform.isAndroid || Platform.isIOS) {
-    // 移动端：禁用文件日志，避免权限问题
-    logFilePath = null;
-  } else {
-    // 桌面端：使用相对路径
-    logFilePath = 'app.log';
-  }
-
-  await AppLogger.init(
-      enableFile: logFilePath != null,
-      enableConsole: kDebugMode, // 只在调试模式启用控制台
-      minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
-      filePath: logFilePath);
+  // 🚀 优化：初始化日志系统，使用数据路径
+  await _initializeLogging();
 
   // 🚀 优化：只在调试模式启动性能监控器
   if (kDebugMode) {
@@ -209,6 +197,58 @@ Future<void> _initializePathConfig() async {
     }
   } else {
     AppLogger.info('路径配置已经初始化，跳过', tag: 'PathTrace');
+  }
+}
+
+/// 初始化日志系统，使用数据存储路径
+Future<void> _initializeLogging() async {
+  try {
+    String? logFilePath;
+    String? dataPath;
+    
+    if (Platform.isAndroid || Platform.isIOS) {
+      // 移动端：禁用文件日志，避免权限问题
+      logFilePath = null;
+    } else {
+      // 桌面端：获取数据路径并创建日志路径
+      try {
+        // 先尝试获取配置的数据路径
+        final config = await UnifiedPathConfigService.readConfig();
+        dataPath = await config.dataPath.getActualDataPath();
+        logFilePath = path.join(dataPath, 'logs', 'app.log');
+      } catch (e) {
+        // 如果获取数据路径失败，回退到临时目录
+        final tempDir = Directory.systemTemp;
+        dataPath = path.join(tempDir.path, 'charasgem');
+        logFilePath = path.join(dataPath, 'logs', 'app.log');
+        debugPrint('获取数据路径失败，使用临时目录作为日志路径: $logFilePath');
+      }
+    }
+
+    // 初始化日志系统
+    await AppLogger.init(
+      enableFile: logFilePath != null,
+      enableConsole: kDebugMode, // 只在调试模式启用控制台
+      minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
+      filePath: logFilePath,
+      maxFileSizeBytes: 10 * 1024 * 1024, // 10MB
+      maxFiles: 5, // 保留最多5个日志文件
+    );
+    
+    // 日志系统初始化完成后再记录信息
+    if (logFilePath != null && dataPath != null) {
+      AppLogger.info('日志系统初始化完成', 
+          tag: 'PathTrace', 
+          data: {
+            'dataPath': dataPath,
+            'logFilePath': logFilePath,
+            'maxSize': '10MB',
+            'maxFiles': 5,
+            'source': 'data_path_logging'
+          });
+    }
+  } catch (e) {
+    debugPrint('日志系统初始化失败: $e');
   }
 }
 

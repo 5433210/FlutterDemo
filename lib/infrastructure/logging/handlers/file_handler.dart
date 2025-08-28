@@ -18,8 +18,8 @@ Future<T> synchronized<T>(Object lock, Future<T> Function() computation) async {
 
 class FileLogHandler implements LogHandler {
   final String filePath;
-  final int? maxSizeBytes;
-  final int? maxFiles;
+  final int maxSizeBytes;
+  final int maxFiles;
 
   File? _currentFile;
   IOSink? _sink;
@@ -29,8 +29,8 @@ class FileLogHandler implements LogHandler {
 
   FileLogHandler({
     required this.filePath,
-    this.maxSizeBytes,
-    this.maxFiles,
+    this.maxSizeBytes = 10 * 1024 * 1024, // 默认10MB
+    this.maxFiles = 5, // 默认保留5个文件
   });
 
   // 清理资源
@@ -51,54 +51,78 @@ class FileLogHandler implements LogHandler {
   }
 
   Future<void> init() async {
+    // 确保日志目录存在
+    final directory = Directory(path.dirname(filePath));
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
     await _openLogFile();
   }
 
   Future<void> _checkRotation() async {
     final currentSize = await _currentFile?.length() ?? 0;
-    if (maxSizeBytes != null && currentSize > maxSizeBytes!) {
+    if (currentSize > maxSizeBytes) {
       await _rotateLogFile();
     }
   }
 
   Future<void> _deleteOldLogFiles() async {
-    final directory = Directory(path.dirname(filePath));
-    final baseFileName = path.basenameWithoutExtension(filePath);
-    final extension = path.extension(filePath);
+    try {
+      final directory = Directory(path.dirname(filePath));
+      final baseFileName = path.basenameWithoutExtension(filePath);
+      final extension = path.extension(filePath);
 
-    final files = await directory
-        .list()
-        .where((entity) =>
-            entity is File &&
-            path.basename(entity.path).startsWith(baseFileName) &&
-            path.basename(entity.path).endsWith(extension) &&
-            entity.path != filePath)
-        .toList();
+      // 获取所有日志文件（包括回滚的文件）
+      final files = await directory
+          .list()
+          .where((entity) =>
+              entity is File &&
+              path.basename(entity.path).startsWith('${baseFileName}_') &&
+              path.basename(entity.path).endsWith(extension))
+          .cast<File>()
+          .toList();
 
-    if (files.length > maxFiles! - 1) {
-      // 按修改时间排序（旧的先）
-      files.sort((a, b) {
-        return a.statSync().modified.compareTo(b.statSync().modified);
-      });
+      if (files.length >= maxFiles) {
+        // 按修改时间排序（旧的先）
+        files.sort((a, b) {
+          try {
+            return a.statSync().modified.compareTo(b.statSync().modified);
+          } catch (e) {
+            // 如果无法获取文件状态，按文件名排序
+            return a.path.compareTo(b.path);
+          }
+        });
 
-      // 删除最旧的文件
-      for (var i = 0; i < files.length - maxFiles! + 1; i++) {
-        try {
-          await (files[i] as File).delete();
-        } catch (e) {
-          debugPrint('Failed to delete old log file: $e');
+        // 删除最旧的文件，保持文件数量不超过maxFiles
+        final filesToDelete = files.length - maxFiles + 1;
+        for (var i = 0; i < filesToDelete; i++) {
+          try {
+            await files[i].delete();
+            debugPrint('删除旧日志文件: ${files[i].path}');
+          } catch (e) {
+            debugPrint('删除旧日志文件失败: $e');
+          }
         }
       }
+    } catch (e) {
+      debugPrint('清理旧日志文件时发生错误: $e');
     }
   }
 
   // 格式化日志条目
   String _formatLogEntry(LogEntry entry) {
-    final timestamp = entry.timestamp.toIso8601String();
-    final level = entry.level.name.padRight(7);
+    final timestamp = entry.timestamp.toIso8601String().replaceAll('T', ' ').substring(0, 19);
+    final level = entry.level.name.toUpperCase().padRight(7);
     final tag = entry.tag != null ? '[${entry.tag}] ' : '';
-
-    return '$timestamp [$level] $tag${entry.message}';
+    
+    String formatted = '$timestamp [$level] $tag${entry.message}';
+    
+    // 添加数据信息
+    if (entry.data != null && entry.data!.isNotEmpty) {
+      formatted += ' | Data: ${entry.data}';
+    }
+    
+    return formatted;
   }
 
   Future<void> _openLogFile() async {
@@ -134,14 +158,24 @@ class FileLogHandler implements LogHandler {
 
         try {
           _sink?.writeln(formattedLog);
-          await _sink?.flush();
+          
+          // 写入错误信息
           if (entry.error != null) {
-            _sink?.writeln('Error: ${entry.error}');
+            _sink?.writeln('  Error: ${entry.error}');
           }
+          
+          // 写入堆栈跟踪
           if (entry.stackTrace != null) {
-            _sink?.writeln('Stack Trace:');
-            _sink?.writeln(entry.stackTrace);
+            _sink?.writeln('  Stack Trace:');
+            final stackLines = entry.stackTrace.toString().split('\n');
+            for (final line in stackLines) {
+              if (line.trim().isNotEmpty) {
+                _sink?.writeln('    $line');
+              }
+            }
           }
+          
+          await _sink?.flush();
         } catch (e) {
           debugPrint('Error writing to log file (sink): $e');
         }
@@ -159,36 +193,49 @@ class FileLogHandler implements LogHandler {
   }
 
   Future<void> _rotateLogFile() async {
-    // 关闭当前文件
-    await _sink?.flush();
-    await _sink?.close();
-    _sink = null;
-
-    // 创建新文件并重命名旧文件
-    final baseFileName = path.basenameWithoutExtension(filePath);
-    final extension = path.extension(filePath);
-    final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-    final rotatedPath =
-        '${path.dirname(filePath)}/${baseFileName}_$timestamp$extension';
-
     try {
-      await _currentFile?.rename(rotatedPath);
-    } catch (e) {
-      // 如果重命名失败，尝试复制然后删除
-      try {
-        await _currentFile?.copy(rotatedPath);
-        await _currentFile?.delete();
-      } catch (e) {
-        debugPrint('Failed to rotate log file: $e');
+      // 关闭当前文件
+      await _sink?.flush();
+      await _sink?.close();
+      _sink = null;
+
+      // 创建带时间戳的回滚文件名
+      final baseFileName = path.basenameWithoutExtension(filePath);
+      final extension = path.extension(filePath);
+      final timestamp = DateTime.now().toIso8601String()
+          .replaceAll(':', '-')
+          .replaceAll('T', '_')
+          .substring(0, 19); // 格式: 2024-01-01_12-30-45
+      
+      final rotatedPath = path.join(
+        path.dirname(filePath),
+        '${baseFileName}_$timestamp$extension'
+      );
+
+      // 重命名当前文件
+      if (await _currentFile!.exists()) {
+        try {
+          await _currentFile!.rename(rotatedPath);
+          debugPrint('日志文件已回滚: $rotatedPath');
+        } catch (e) {
+          // 如果重命名失败，尝试复制然后删除
+          try {
+            await _currentFile!.copy(rotatedPath);
+            await _currentFile!.delete();
+            debugPrint('日志文件已复制并回滚: $rotatedPath');
+          } catch (e) {
+            debugPrint('回滚日志文件失败: $e');
+          }
+        }
       }
-    }
 
-    // 打开新的日志文件
-    await _openLogFile();
+      // 打开新的日志文件
+      await _openLogFile();
 
-    // 删除旧文件（如果需要）
-    if (maxFiles != null) {
-      await _deleteOldLogFiles();
+      // 删除旧文件（异步执行，不阻塞日志写入）
+      Future.microtask(() => _deleteOldLogFiles());
+    } catch (e) {
+      debugPrint('日志文件回滚过程中发生错误: $e');
     }
   }
 }
