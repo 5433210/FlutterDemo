@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../application/providers/feature_flag_provider.dart';
@@ -80,36 +81,76 @@ class MyApp extends ConsumerWidget {
     return initialization.when(
       loading: () {
         AppLogger.info('应用处于加载状态，显示初始化屏幕', tag: 'UI');
-        return MaterialApp(
-          home: const InitializationScreen(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: detectedSystemLocale,
+        
+        // 尝试从SharedPreferences直接读取用户语言偏好
+        return FutureBuilder<Locale?>(
+          future: _getUserLanguagePreference(),
+          builder: (context, snapshot) {
+            Locale? initLocale;
+            
+            if (snapshot.hasData && snapshot.data != null) {
+              // 如果有用户设置的语言，使用用户设置
+              initLocale = snapshot.data;
+              AppLogger.debug('初始化屏幕使用用户设置语言', tag: 'UI', data: {
+                'userLocale': initLocale?.languageCode ?? 'null',
+              });
+            } else {
+              // 否则使用检测到的系统语言
+              initLocale = detectedSystemLocale;
+              AppLogger.debug('初始化屏幕使用系统语言', tag: 'UI', data: {
+                'systemLocale': initLocale?.languageCode ?? 'null',
+              });
+            }
+            
+            return MaterialApp(
+              home: const InitializationScreen(),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: initLocale,
+            );
+          },
         );
       },
       error: (error, stack) {
         AppLogger.error('应用初始化失败', error: error, stackTrace: stack, tag: 'UI');
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Builder(builder: (context) {
-                AppLocalizations? l10n;
-                try {
-                  l10n = AppLocalizations.of(context);
-                } catch (e) {
-                  l10n = null;
-                }
-                return Text(
-                  l10n?.initializationFailed(error.toString()) ??
-                      'Initialization failed: $error',
-                  style: const TextStyle(color: Colors.red),
-                );
-              }),
-            ),
-          ),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: detectedSystemLocale,
+        
+        // 尝试从SharedPreferences直接读取用户语言偏好
+        return FutureBuilder<Locale?>(
+          future: _getUserLanguagePreference(),
+          builder: (context, snapshot) {
+            Locale? initLocale;
+            
+            if (snapshot.hasData && snapshot.data != null) {
+              // 如果有用户设置的语言，使用用户设置
+              initLocale = snapshot.data;
+            } else {
+              // 否则使用检测到的系统语言
+              initLocale = detectedSystemLocale;
+            }
+            
+            return MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: Builder(builder: (context) {
+                    AppLocalizations? l10n;
+                    try {
+                      l10n = AppLocalizations.of(context);
+                    } catch (e) {
+                      l10n = null;
+                    }
+                    return Text(
+                      l10n?.initializationFailed(error.toString()) ??
+                          'Initialization failed: $error',
+                      style: const TextStyle(color: Colors.red),
+                    );
+                  }),
+                ),
+              ),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: initLocale,
+            );
+          },
         );
       },
       data: (_) {
@@ -251,5 +292,34 @@ class MyApp extends ConsumerWidget {
     return MaterialPageRoute(
       builder: (context) => const M3MainWindow(),
     );
+  }
+
+  /// 从SharedPreferences直接获取用户语言偏好
+  /// 用于初始化阶段在settingsProvider可用之前获取语言设置
+  Future<Locale?> _getUserLanguagePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final languageString = prefs.getString('language');
+      
+      AppLogger.debug('从SharedPreferences读取语言设置', tag: 'UI', data: {
+        'languageString': languageString ?? 'null',
+      });
+      
+      if (languageString != null) {
+        final appLanguage = AppLanguage.fromString(languageString);
+        final locale = appLanguage.toLocale();
+        
+        AppLogger.debug('解析用户语言设置', tag: 'UI', data: {
+          'appLanguage': appLanguage.toString(),
+          'locale': locale?.languageCode ?? 'null',
+        });
+        
+        return locale;
+      }
+    } catch (e) {
+      AppLogger.warning('读取用户语言偏好失败', error: e, tag: 'UI');
+    }
+    
+    return null;  // 返回null表示使用系统默认
   }
 }

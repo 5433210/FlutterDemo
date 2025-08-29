@@ -2501,6 +2501,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get incompatibleCharset => '• 호환되지 않는 문자 집합 사용';
 
   @override
+  String get initializationComplete => '초기화 완료';
+
+  @override
+  String get initializationCompleteMessage => '초기화가 완료되었습니다. 시작할 준비가 되었습니다...';
+
+  @override
+  String get startingApplication => '애플리케이션 시작 중...';
+
+  @override
+  String get initializationError => '초기화 실패';
+
+  @override
+  String get initializationErrorDetails => '오류 세부 정보:';
+
+  @override
+  String get initializationErrorMessage => '애플리케이션을 다시 시작하세요. 문제가 계속되면 지원팀에 문의하세요';
+
+  @override
+  String get retry => '재시도';
+
+  @override
+  String get connectingDatabase => '데이터베이스 연결 중...';
+
+  @override
+  String get loadingUserSettings => '사용자 설정 로드 중...';
+
+  @override
+  String get initializingServices => '서비스 초기화 중...';
+
+  @override
+  String get preparingComplete => '준비 완료...';
+
+  @override
   String initializationFailed(Object error) {
     return '초기화 실패: $error';
   }
@@ -3630,9 +3663,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get restoringBackupMessage => '백업 복원 중...';
-
-  @override
-  String get retry => '재시도';
 
   @override
   String get retryAction => '재시도';

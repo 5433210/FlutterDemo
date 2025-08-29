@@ -4744,6 +4744,72 @@ abstract class AppLocalizations {
   /// **'• Used incompatible character set'**
   String get incompatibleCharset;
 
+  /// No description provided for @initializationComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialization Complete'**
+  String get initializationComplete;
+
+  /// No description provided for @initializationCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialization complete, ready to start...'**
+  String get initializationCompleteMessage;
+
+  /// No description provided for @startingApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting application...'**
+  String get startingApplication;
+
+  /// No description provided for @initializationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialization Failed'**
+  String get initializationError;
+
+  /// No description provided for @initializationErrorDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error details:'**
+  String get initializationErrorDetails;
+
+  /// No description provided for @initializationErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please restart the application. If the problem persists, please contact support team'**
+  String get initializationErrorMessage;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @connectingDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to database...'**
+  String get connectingDatabase;
+
+  /// No description provided for @loadingUserSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading user settings...'**
+  String get loadingUserSettings;
+
+  /// No description provided for @initializingServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing services...'**
+  String get initializingServices;
+
+  /// No description provided for @preparingComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing complete...'**
+  String get preparingComplete;
+
   /// No description provided for @initializationFailed.
   ///
   /// In en, this message translates to:
@@ -6909,12 +6975,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restoring backup...'**
   String get restoringBackupMessage;
-
-  /// No description provided for @retry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get retry;
 
   /// No description provided for @retryAction.
   ///

@@ -2501,6 +2501,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incompatibleCharset => '• Used incompatible character set';
 
   @override
+  String get initializationComplete => 'Initialization Complete';
+
+  @override
+  String get initializationCompleteMessage => 'Initialization complete, ready to start...';
+
+  @override
+  String get startingApplication => 'Starting application...';
+
+  @override
+  String get initializationError => 'Initialization Failed';
+
+  @override
+  String get initializationErrorDetails => 'Error details:';
+
+  @override
+  String get initializationErrorMessage => 'Please restart the application. If the problem persists, please contact support team';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get connectingDatabase => 'Connecting to database...';
+
+  @override
+  String get loadingUserSettings => 'Loading user settings...';
+
+  @override
+  String get initializingServices => 'Initializing services...';
+
+  @override
+  String get preparingComplete => 'Preparing complete...';
+
+  @override
   String initializationFailed(Object error) {
     return 'Initialization Failed: $error';
   }
@@ -3630,9 +3663,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restoringBackupMessage => 'Restoring backup...';
-
-  @override
-  String get retry => 'Retry';
 
   @override
   String get retryAction => 'Retry';

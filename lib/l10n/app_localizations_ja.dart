@@ -2501,6 +2501,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String get incompatibleCharset => '• 互換性のない文字セットが使用されています';
 
   @override
+  String get initializationComplete => '初期化完了';
+
+  @override
+  String get initializationCompleteMessage => '初期化が完了しました、起動の準備ができました...';
+
+  @override
+  String get startingApplication => 'アプリケーションを起動中...';
+
+  @override
+  String get initializationError => '初期化に失敗しました';
+
+  @override
+  String get initializationErrorDetails => 'エラーの詳細：';
+
+  @override
+  String get initializationErrorMessage => 'アプリケーションを再起動してください。問題が続く場合は、サポートチームにお問い合わせください';
+
+  @override
+  String get retry => '再試行';
+
+  @override
+  String get connectingDatabase => 'データベースに接続中...';
+
+  @override
+  String get loadingUserSettings => 'ユーザー設定を読み込み中...';
+
+  @override
+  String get initializingServices => 'サービスを初期化中...';
+
+  @override
+  String get preparingComplete => '準備完了...';
+
+  @override
   String initializationFailed(Object error) {
     return '初期化に失敗しました：$error';
   }
@@ -3630,9 +3663,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get restoringBackupMessage => 'バックアップを復元中...';
-
-  @override
-  String get retry => '再試行';
 
   @override
   String get retryAction => '再試行';

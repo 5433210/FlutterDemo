@@ -2501,6 +2501,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incompatibleCharset => '• 使用了不兼容的字符集';
 
   @override
+  String get initializationComplete => '初始化完成';
+
+  @override
+  String get initializationCompleteMessage => '初始化完成，准备启动...';
+
+  @override
+  String get startingApplication => '正在启动应用...';
+
+  @override
+  String get initializationError => '初始化失败';
+
+  @override
+  String get initializationErrorDetails => '错误详情:';
+
+  @override
+  String get initializationErrorMessage => '请重新启动应用，如果问题持续存在，请联系支持团队';
+
+  @override
+  String get retry => '重试';
+
+  @override
+  String get connectingDatabase => '正在连接数据库...';
+
+  @override
+  String get loadingUserSettings => '正在加载用户设置...';
+
+  @override
+  String get initializingServices => '正在初始化服务...';
+
+  @override
+  String get preparingComplete => '准备完成...';
+
+  @override
   String initializationFailed(Object error) {
     return '初始化失败：$error';
   }
@@ -3630,9 +3663,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restoringBackupMessage => '正在恢复备份...';
-
-  @override
-  String get retry => '重试';
 
   @override
   String get retryAction => '重试';
@@ -7120,6 +7150,39 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get incompatibleCharset => '• 使用了不相容的字元集';
 
   @override
+  String get initializationComplete => '初始化完成';
+
+  @override
+  String get initializationCompleteMessage => '初始化完成，準備啟動...';
+
+  @override
+  String get startingApplication => '正在啟動應用程式...';
+
+  @override
+  String get initializationError => '初始化失敗';
+
+  @override
+  String get initializationErrorDetails => '錯誤詳情：';
+
+  @override
+  String get initializationErrorMessage => '請重新啟動應用程式，如果問題持續存在，請聯絡支援團隊';
+
+  @override
+  String get retry => '重試';
+
+  @override
+  String get connectingDatabase => '正在連線資料庫...';
+
+  @override
+  String get loadingUserSettings => '正在載入使用者設定...';
+
+  @override
+  String get initializingServices => '正在初始化服務...';
+
+  @override
+  String get preparingComplete => '準備完成...';
+
+  @override
   String initializationFailed(Object error) {
     return '初始化失敗：$error';
   }
@@ -8249,9 +8312,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get restoringBackupMessage => '正在還原備份...';
-
-  @override
-  String get retry => '重試';
 
   @override
   String get retryAction => '重試';
