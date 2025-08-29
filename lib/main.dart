@@ -9,7 +9,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'application/providers/app_initialization_provider.dart';
 import 'application/services/enhanced_backup_service.dart';
 import 'application/services/unified_path_config_service.dart';
 import 'infrastructure/logging/log_level.dart';
@@ -23,267 +22,326 @@ import 'utils/keyboard/keyboard_monitor.dart';
 import 'utils/keyboard/keyboard_utils.dart';
 import 'version_config.dart';
 
-// 添加标志位，防止重复初始化
-bool _unifiedPathConfigInitialized = false;
+// 全局初始化状态管理
+class _GlobalInitializationState {
+  static bool _pathConfigInitialized = false;
+  static bool _loggingInitialized = false;
+  static bool _preferencesInitialized = false;
+  static bool _versionConfigInitialized = false;
+  static bool _windowInitialized = false;
+
+  // 初始化结果缓存
+  static SharedPreferences? _cachedPreferences;
+  static String? _cachedDataPath;
+
+  static void reset() {
+    _pathConfigInitialized = false;
+    _loggingInitialized = false;
+    _preferencesInitialized = false;
+    _versionConfigInitialized = false;
+    _windowInitialized = false;
+    _cachedPreferences = null;
+    _cachedDataPath = null;
+  }
+
+  static bool get isInitialized =>
+      _pathConfigInitialized &&
+      _loggingInitialized &&
+      _preferencesInitialized &&
+      _versionConfigInitialized;
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🚀 优化：延迟非关键初始化，加速应用启动
-  // 初始化SQLite FFI (对于桌面平台)
-  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-    // Windows和macOS使用默认初始化
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+  // 重置初始化状态（用于热重载）
+  if (kDebugMode) {
+    _GlobalInitializationState.reset();
   }
 
-  // 🚀 优化：最小化启动时的日志配置
+  // 🚀 优化：最小化启动日志配置
+  _configureMinimalLogging();
+
+  // 🚀 优化：简化SQLite初始化
+  _initializeSQLite();
+
+  // 🚀 优化：后台初始化窗口管理
+  _initializeWindowAsync();
+
+  try {
+    // 🚀 优化：分阶段并行初始化，避免重复操作
+    await _performOptimizedInitialization();
+
+    // 🚀 优化：立即启动应用，使用优化版本
+    final container = _createOptimizedProviderContainer();
+
+    runApp(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildOptimizedApp(),
+      ),
+    );
+  } catch (e, stack) {
+    _handleStartupError(e, stack);
+  }
+}
+
+/// 最小化日志配置
+void _configureMinimalLogging() {
   LoggingConfig.verboseStorageLogging = false;
   LoggingConfig.verboseThumbnailLogging = false;
   LoggingConfig.verboseDatabaseLogging = false;
 
-  // 🚀 优化：简化启动时的日志配置，推迟到需要时配置详细日志
   if (kDebugMode) {
     EditPageLoggingConfig.configureForDevelopment();
   } else {
     EditPageLoggingConfig.configureForProduction();
   }
+}
 
-  // 🚀 优化：延迟键盘工具初始化到实际需要时
-  // KeyboardUtils.initialize();
+/// 初始化SQLite
+void _initializeSQLite() {
+  if (_GlobalInitializationState._windowInitialized) return;
 
-  // 🚀 优化：简化窗口管理器初始化
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-    await windowManager.ensureInitialized();
-
-    // 🚀 优化：使用更简单的窗口配置，减少启动时间
-    WindowOptions windowOptions = const WindowOptions(
-      size: Size(1400, 800),
-      minimumSize: Size(800, 600),
-      center: true,
-      backgroundColor: Colors.white,
-      skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
-      title: '字字珠玑',
-    );
-
-    // 🚀 优化：简化窗口显示流程
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-      // 延迟设置图标和背景色到窗口显示后
-      _delayedWindowSetup();
-    });
-  }
-
-  // 🚀 优化：初始化日志系统，使用数据路径
-  await _initializeLogging();
-
-  // 🚀 优化：只在调试模式启动性能监控器
-  if (kDebugMode) {
-    PerformanceMonitor().startMonitoring();
-  }
-
-  try {
-    // 🚀 优化：并行初始化SharedPreferences、路径配置和版本配置
-    final futures = await Future.wait([
-      SharedPreferences.getInstance(),
-      _initializePathConfig(),
-      VersionConfig.initialize(),
-    ]);
-
-    final prefs = futures[0] as SharedPreferences;
-
-    // 🚀 优化：使用优化的ProviderContainer配置
-    final container = ProviderContainer(
-      observers: [SilentObserver()], // 避免Riverpod日志开销
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
-    );
-
-    // 🚀 优化：简化预加载流程，减少启动阻塞
-    _preloadAppDataAsync(container);
-
-    // 🚀 优化：立即启动应用，避免阻塞主线程
-    runApp(
-      UncontrolledProviderScope(
-        container: container,
-        child: _buildAppWithDelayedKeyboardMonitor(),
-      ),
-    );
-  } catch (e, stack) {
-    // 确保在初始化过程中的错误也能被记录
-    if (AppLogger.hasHandlers) {
-      AppLogger.fatal('应用启动失败', error: e, stackTrace: stack, tag: 'App');
-    } else {
-      // 如果日志系统未初始化，使用调试打印
-      debugPrint('Critical error: App startup failed: $e');
-      debugPrint('$stack');
-    }
-
-    // 显示基本的错误界面
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  'App startup failed: $e',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
 }
 
-// 🚀 优化：延迟窗口设置，减少启动阻塞
-void _delayedWindowSetup() {
-  Future.delayed(const Duration(milliseconds: 100), () async {
-    try {
-      await windowManager.setIcon('assets/images/logo.ico');
+/// 异步初始化窗口管理
+void _initializeWindowAsync() {
+  if (_GlobalInitializationState._windowInitialized) return;
+  _GlobalInitializationState._windowInitialized = true;
 
-      await windowManager.setBackgroundColor(Colors.white);
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    Future(() async {
+      try {
+        await windowManager.ensureInitialized();
+
+        const windowOptions = WindowOptions(
+          size: Size(1400, 800),
+          minimumSize: Size(800, 600),
+          center: true,
+          backgroundColor: Colors.white,
+          skipTaskbar: false,
+          titleBarStyle: TitleBarStyle.hidden,
+          title: '字字珠玑',
+        );
+
+        await windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+
+          // 延迟设置非关键属性
+          Future.delayed(const Duration(milliseconds: 200), () async {
+            try {
+              await windowManager.setIcon('assets/images/logo.ico');
+              await windowManager.setBackgroundColor(Colors.white);
+            } catch (e) {
+              AppLogger.warning('延迟窗口设置失败', error: e, tag: 'App');
+            }
+          });
+        });
+      } catch (e) {
+        debugPrint('窗口管理器初始化失败: $e');
+      }
+    });
+  }
+}
+
+/// 执行优化的初始化流程
+Future<void> _performOptimizedInitialization() async {
+  // 第一阶段：关键路径初始化（顺序执行）
+  await _initializeCriticalPath();
+
+  // 第二阶段：并行初始化非关键组件
+  await _initializeNonCriticalComponents();
+
+  // 第三阶段：后台初始化可延迟组件
+  _initializeDeferredComponents();
+}
+
+/// 初始化关键路径组件
+Future<void> _initializeCriticalPath() async {
+  // 1. 初始化路径配置（必须最先初始化，为日志系统提供路径）
+  if (!_GlobalInitializationState._pathConfigInitialized) {
+    await _initializePathConfig();
+    _GlobalInitializationState._pathConfigInitialized = true;
+  }
+
+  // 2. 初始化日志系统（使用路径配置的数据路径）
+  if (!_GlobalInitializationState._loggingInitialized) {
+    await _initializeLogging();
+    _GlobalInitializationState._loggingInitialized = true;
+  }
+
+  // 3. 检查备份恢复（必须在应用启动前）
+  await _checkBackupRestore();
+}
+
+/// 初始化非关键组件
+Future<void> _initializeNonCriticalComponents() async {
+  final futures = <Future<void>>[];
+
+  // 并行初始化SharedPreferences和版本配置
+  if (!_GlobalInitializationState._preferencesInitialized) {
+    futures.add(_initializePreferences());
+  }
+
+  if (!_GlobalInitializationState._versionConfigInitialized) {
+    futures.add(_initializeVersionConfig());
+  }
+
+  await Future.wait(futures, eagerError: false);
+}
+
+/// 初始化可延迟组件
+void _initializeDeferredComponents() {
+  // 后台启动性能监控
+  if (kDebugMode) {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      PerformanceMonitor().startMonitoring();
+    });
+  }
+
+  // 延迟初始化键盘工具
+  Future.delayed(const Duration(milliseconds: 300), () {
+    try {
+      KeyboardUtils.initialize();
     } catch (e) {
-      AppLogger.warning('延迟窗口设置失败', error: e, tag: 'App');
+      AppLogger.warning('键盘工具初始化失败', error: e, tag: 'App');
     }
   });
 }
 
-// 🚀 优化：异步路径配置初始化
-Future<void> _initializePathConfig() async {
-  AppLogger.info('开始初始化路径配置', tag: 'PathTrace');
-  
-  if (!_unifiedPathConfigInitialized) {
-    _unifiedPathConfigInitialized = true;
-    try {
-      AppLogger.info('调用UnifiedPathConfigService.readConfig()', tag: 'PathTrace');
-      final config = await UnifiedPathConfigService.readConfig();
-      final actualDataPath = await config.dataPath.getActualDataPath();
-      
-      AppLogger.info('统一路径配置初始化成功', 
-          tag: 'PathTrace',
-          data: {
-            'dataPath.useDefaultPath': config.dataPath.useDefaultPath,
-            'dataPath.customPath': config.dataPath.customPath,
-            'dataPath.actualPath': actualDataPath,
-            'backupPath': config.backupPath.path,
-            'source': 'main_initialize'
-          });
-
-      // 立即检查备份恢复，在任何Provider被触发之前
-      try {
-        AppLogger.info('开始检查备份恢复', tag: 'PathTrace');
-        await _checkAndCompleteBackupRestore();
-        AppLogger.info('备份恢复检查完成', tag: 'PathTrace');
-      } catch (restoreError, restoreStack) {
-        // 备份恢复失败记录详细错误，但不影响应用启动
-        AppLogger.error('主程序备份恢复失败',
-            error: restoreError, stackTrace: restoreStack, tag: 'PathTrace');
-      }
-
-      AppLogger.info('数据路径配置预加载完成', tag: 'PathTrace');
-    } catch (e) {
-      AppLogger.error('统一路径配置初始化失败', error: e, tag: 'PathTrace');
-    }
-  } else {
-    AppLogger.info('路径配置已经初始化，跳过', tag: 'PathTrace');
-  }
-}
-
-/// 初始化日志系统，使用数据存储路径
+/// 初始化日志系统
 Future<void> _initializeLogging() async {
   try {
     String? logFilePath;
-    String? dataPath;
-    
+
     if (Platform.isAndroid || Platform.isIOS) {
-      // 移动端：禁用文件日志，避免权限问题
-      logFilePath = null;
+      logFilePath = null; // 移动端禁用文件日志
     } else {
-      // 桌面端：获取数据路径并创建日志路径
-      try {
-        // 先尝试获取配置的数据路径
-        final config = await UnifiedPathConfigService.readConfig();
-        dataPath = await config.dataPath.getActualDataPath();
-        logFilePath = path.join(dataPath, 'logs', 'app.log');
-      } catch (e) {
-        // 如果获取数据路径失败，回退到临时目录
-        final tempDir = Directory.systemTemp;
-        dataPath = path.join(tempDir.path, 'charasgem');
-        logFilePath = path.join(dataPath, 'logs', 'app.log');
-        debugPrint('获取数据路径失败，使用临时目录作为日志路径: $logFilePath');
-      }
+      // 使用已缓存的数据路径（由_initializePathConfig提供）
+      String dataPath = _GlobalInitializationState._cachedDataPath ??
+          path.join(Directory.systemTemp.path, 'charasgem');
+      logFilePath = path.join(dataPath, 'logs', 'app.log');
     }
 
-    // 初始化日志系统
     await AppLogger.init(
       enableFile: logFilePath != null,
-      enableConsole: kDebugMode, // 只在调试模式启用控制台
+      enableConsole: kDebugMode,
       minLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
       filePath: logFilePath,
-      maxFileSizeBytes: 10 * 1024 * 1024, // 10MB
-      maxFiles: 5, // 保留最多5个日志文件
+      maxFileSizeBytes: 10 * 1024 * 1024,
+      maxFiles: 5,
     );
-    
-    // 日志系统初始化完成后再记录信息
-    if (logFilePath != null && dataPath != null) {
-      AppLogger.info('日志系统初始化完成', 
-          tag: 'PathTrace', 
-          data: {
-            'dataPath': dataPath,
-            'logFilePath': logFilePath,
-            'maxSize': '10MB',
-            'maxFiles': 5,
-            'source': 'data_path_logging'
-          });
+
+    if (logFilePath != null) {
+      AppLogger.info('日志系统初始化完成', tag: 'PathTrace', data: {
+        'dataPath': _GlobalInitializationState._cachedDataPath,
+        'logFilePath': logFilePath,
+        'maxSize': '10MB',
+        'maxFiles': 5,
+        'source': 'optimized_logging'
+      });
     }
   } catch (e) {
     debugPrint('日志系统初始化失败: $e');
   }
 }
 
-/// 检查并完成备份恢复
-Future<void> _checkAndCompleteBackupRestore() async {
+/// 初始化路径配置（去重版本）
+Future<void> _initializePathConfig() async {
+  debugPrint('开始初始化路径配置');
+
   try {
-    // 获取当前数据路径
     final config = await UnifiedPathConfigService.readConfig();
     final actualDataPath = await config.dataPath.getActualDataPath();
 
-    // 调用备份恢复检查
-    await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(
-        actualDataPath);
-  } catch (e, stack) {
-    AppLogger.error('主程序中备份恢复检查失败', error: e, stackTrace: stack, tag: 'App');
-    // 备份恢复失败不应该阻止应用启动
+    // 缓存数据路径，供日志系统和其他初始化使用
+    _GlobalInitializationState._cachedDataPath = actualDataPath;
+
+    debugPrint('路径配置初始化完成: $actualDataPath');
+
+    // 路径配置完成后，AppLogger应该已经可用了
+    if (AppLogger.hasHandlers) {
+      AppLogger.info('统一路径配置初始化完成', tag: 'PathTrace', data: {
+        'dataPath.useDefaultPath': config.dataPath.useDefaultPath,
+        'dataPath.customPath': config.dataPath.customPath,
+        'dataPath.actualPath': actualDataPath,
+        'backupPath': config.backupPath.path,
+        'source': 'optimized_main_initialize'
+      });
+    }
+  } catch (e) {
+    debugPrint('路径配置初始化失败: $e');
+    if (AppLogger.hasHandlers) {
+      AppLogger.error('统一路径配置初始化失败', error: e, tag: 'PathTrace');
+    }
+    rethrow;
   }
 }
 
-// 🚀 优化：异步预加载数据，不阻塞UI启动
-void _preloadAppDataAsync(ProviderContainer container) {
-  Future(() async {
-    try {
-      final initResult = await container.read(appInitializationProvider.future);
-      if (initResult.isSuccess) {
-        AppLogger.info('数据路径配置预加载完成', tag: 'App');
-      }
-    } catch (e) {
-      AppLogger.error('数据预加载失败', error: e, tag: 'App');
+/// 检查备份恢复
+Future<void> _checkBackupRestore() async {
+  try {
+    final dataPath = _GlobalInitializationState._cachedDataPath;
+    if (dataPath != null) {
+      AppLogger.info('开始检查备份恢复', tag: 'PathTrace');
+      await EnhancedBackupService.checkAndCompleteRestoreAfterRestart(dataPath);
+      AppLogger.info('备份恢复检查完成', tag: 'PathTrace');
+    } else {
+      AppLogger.warning('数据路径未缓存，跳过备份恢复检查', tag: 'PathTrace');
     }
-  });
+  } catch (e, stack) {
+    AppLogger.error('备份恢复检查失败', error: e, stackTrace: stack, tag: 'PathTrace');
+    // 不影响应用启动
+  }
 }
 
-// 🚀 优化：延迟键盘监控初始化
-Widget _buildAppWithDelayedKeyboardMonitor() {
+/// 初始化SharedPreferences
+Future<void> _initializePreferences() async {
+  if (_GlobalInitializationState._cachedPreferences != null) return;
+
+  try {
+    _GlobalInitializationState._cachedPreferences =
+        await SharedPreferences.getInstance();
+    _GlobalInitializationState._preferencesInitialized = true;
+    AppLogger.info('SharedPreferences初始化完成', tag: 'App');
+  } catch (e) {
+    AppLogger.error('SharedPreferences初始化失败', error: e, tag: 'App');
+    rethrow;
+  }
+}
+
+/// 初始化版本配置
+Future<void> _initializeVersionConfig() async {
+  try {
+    await VersionConfig.initialize();
+    _GlobalInitializationState._versionConfigInitialized = true;
+    AppLogger.info('版本配置初始化完成', tag: 'App');
+  } catch (e) {
+    AppLogger.error('版本配置初始化失败', error: e, tag: 'App');
+    // 版本配置失败不影响应用启动
+  }
+}
+
+/// 创建优化的ProviderContainer
+ProviderContainer _createOptimizedProviderContainer() {
+  final prefs = _GlobalInitializationState._cachedPreferences!;
+
+  return ProviderContainer(
+    observers: [SilentObserver()], // 避免过多的Riverpod日志
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+    ],
+  );
+}
+
+/// 构建优化的应用
+Widget _buildOptimizedApp() {
   return FutureBuilder(
     future: _delayedInitializeKeyboard(),
     builder: (context, snapshot) {
@@ -291,27 +349,59 @@ Widget _buildAppWithDelayedKeyboardMonitor() {
           snapshot.data == true) {
         return KeyboardMonitor.wrapApp(const MyApp());
       }
-      return const MyApp(); // 直接显示应用，不等待键盘监控
+      return const MyApp(); // 不等待键盘监控
     },
   );
 }
 
-// 🚀 优化：异步初始化键盘工具
+/// 延迟初始化键盘工具
 Future<bool> _delayedInitializeKeyboard() async {
   await Future.delayed(const Duration(milliseconds: 200));
-  try {
-    KeyboardUtils.initialize();
-    return true;
-  } catch (e) {
-    AppLogger.warning('键盘工具初始化失败', error: e, tag: 'App');
-    return false;
-  }
+  return true; // 键盘工具在后台已初始化
 }
 
-/// Custom provider observer that filters log messages
-class FilteredProviderObserver extends ProviderObserver {
-  // List of providers to ignore in logs
-  static final _ignoredProviders = ['cursor', 'position', 'render', 'path'];
+/// 处理启动错误
+void _handleStartupError(Object e, StackTrace stack) {
+  if (AppLogger.hasHandlers) {
+    AppLogger.fatal('应用启动失败', error: e, stackTrace: stack, tag: 'App');
+  } else {
+    debugPrint('Critical error: App startup failed: $e');
+    debugPrint('$stack');
+  }
+
+  runApp(
+    MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'App startup failed: $e',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// 静默Observer，减少Riverpod日志噪音
+class SilentObserver extends ProviderObserver {
+  // 过滤频繁更新的provider
+  static final _noisyProviders = {
+    'cursor',
+    'position',
+    'render',
+    'path',
+    'scroll',
+    'animation'
+  };
 
   @override
   void didUpdateProvider(
@@ -320,66 +410,26 @@ class FilteredProviderObserver extends ProviderObserver {
     Object? newValue,
     ProviderContainer container,
   ) {
-    // Skip logging for certain providers that update frequently
-    final name = provider.name ?? '';
-    if (_ignoredProviders.any((term) => name.contains(term))) {
-      return; // Skip logging entirely
+    final name = provider.name?.toLowerCase() ?? '';
+
+    // 跳过噪音provider的日志
+    if (_noisyProviders.any((noise) => name.contains(noise))) {
+      return;
     }
 
-    // For other providers, only log significant updates
-    if (previousValue != newValue) {
-      debugPrint('[Provider] ${provider.name}: updated');
+    // 只记录重要的provider变化
+    if (kDebugMode && previousValue != newValue) {
+      debugPrint('[Provider] ${provider.name}: changed');
     }
   }
-}
 
-/// Riverpod 日志记录器 - This class won't be used anymore
-class ProviderLogger extends ProviderObserver {
-  @override
-  void didAddProvider(
-    ProviderBase<dynamic> provider,
-    Object? value,
-    ProviderContainer container,
-  ) {
-    AppLogger.debug(
-      'Provider $provider was initialized with $value',
-      tag: 'Riverpod',
-    );
-  }
-
-  @override
-  void didDisposeProvider(
-    ProviderBase<dynamic> provider,
-    ProviderContainer container,
-  ) {
-    AppLogger.debug('Provider $provider was disposed', tag: 'Riverpod');
-  }
-
-  @override
-  void didUpdateProvider(
-    ProviderBase<dynamic> provider,
-    Object? previousValue,
-    Object? newValue,
-    ProviderContainer container,
-  ) {
-    if (previousValue != newValue) {
-      AppLogger.debug(
-        'Provider $provider updated from $previousValue to $newValue',
-        tag: 'Riverpod',
-      );
-    }
-  }
-}
-
-/// Silent observer that disables Riverpod's default logging
-class SilentObserver extends ProviderObserver {
   @override
   void didAddProvider(
     ProviderBase<Object?> provider,
     Object? value,
     ProviderContainer container,
   ) {
-    // Do nothing - silence logging
+    // 静默添加
   }
 
   @override
@@ -387,27 +437,6 @@ class SilentObserver extends ProviderObserver {
     ProviderBase<Object?> provider,
     ProviderContainer container,
   ) {
-    // Do nothing - silence logging
-  }
-
-  @override
-  void didUpdateProvider(
-    ProviderBase<Object?> provider,
-    Object? previousValue,
-    Object? newValue,
-    ProviderContainer container,
-  ) {
-    // Do nothing - silence logging
-  }
-
-  @override
-  void providerDidFail(
-    ProviderBase<Object?> provider,
-    Object error,
-    StackTrace stackTrace,
-    ProviderContainer container,
-  ) {
-    // Optional: You might want to still log critical errors
-    // print('Provider $provider failed with: $error');
+    // 静默销毁
   }
 }

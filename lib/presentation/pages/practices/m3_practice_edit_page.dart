@@ -17,6 +17,7 @@ import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/logging/practice_edit_logger.dart';
 import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../utils/image_path_converter.dart';
 import '../../dialogs/practice_save_dialog.dart';
 import '../../providers/persistent_panel_provider.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
@@ -33,7 +34,6 @@ import '../../widgets/practice/property_panels/m3_practice_property_panels.dart'
 import '../../widgets/practice/undo_operations.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
-import '../../../utils/image_path_converter.dart';
 import 'widgets/m3_practice_edit_canvas.dart';
 import 'widgets/practice_title_edit_dialog.dart';
 
@@ -1682,7 +1682,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   /// 创建图片元素（工具栏按钮调用）
   void _createImageElement() {
     // 使用默认图片URL创建图片元素，用户之后可以更换
-    const defaultImageUrl = 'assets/images/placeholder_image.png';
+    const defaultImageUrl = 'assets/images/transparent_bg.png';
     _controller.addImageElement(defaultImageUrl);
 
     AppLogger.info(
@@ -1792,10 +1792,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   void _deletePage(int index) {
     // Use controller's mixin method which includes proper state management
     _controller.deletePage(index);
-    
+
     // 🆕 根据页面数量自动更新缩略图显示状态
     _updateThumbnailVisibilityBasedOnPageCount();
-    
+
     // The controller will notify listeners automatically through intelligent notification
   }
 
@@ -2194,7 +2194,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           // 使用控制器的公共方法添加图片元素
           // 将文件路径转换为相对路径存储
           final absoluteImageUrl = 'file://${item.path.replaceAll("\\", "/")}';
-          final relativeImageUrl = ImagePathConverter.toRelativePath(absoluteImageUrl);
+          final relativeImageUrl =
+              ImagePathConverter.toRelativePath(absoluteImageUrl);
           _controller.addImageElementAt(x, y, relativeImageUrl);
           AppLogger.info(
             '成功添加图片元素到页面',
@@ -3092,7 +3093,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
     final pageCount = _controller.state.pages.length;
     final shouldShowThumbnails = pageCount > 1;
-    
+
     // 只有当状态真正改变时才更新UI
     if (_showThumbnails != shouldShowThumbnails) {
       setState(() {
