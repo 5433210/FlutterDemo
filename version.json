@@ -3,48 +3,48 @@
     "build": "20250829001",
     "major": 0,
     "minor": 0,
-    "patch": 7,
+    "patch": 8,
     "prerelease": ""
   },
   "git": {
-    "commit": "20632b4f",
+    "commit": "075a2fcc",
     "branch": "main",
     "tag": null,
     "is_dirty": true
   },
-  "build_time": "2025-08-29T05:40:50.167802",
+  "build_time": "2025-08-29T16:53:14.147014",
   "platforms": {
     "android": {
-      "versionName": "0.0.7",
+      "versionName": "0.0.8",
       "versionCode": 20250829001
     },
     "ios": {
-      "CFBundleShortVersionString": "0.0.7",
+      "CFBundleShortVersionString": "0.0.8",
       "CFBundleVersion": "20250829001"
     },
     "ohos": {
-      "versionName": "0.0.7",
+      "versionName": "0.0.8",
       "versionCode": 20250829001
     },
     "web": {
-      "version": "0.0.7",
-      "version_name": "0.0.7-20250829001"
+      "version": "0.0.8",
+      "version_name": "0.0.8-20250829001"
     },
     "windows": {
-      "FileVersion": "0.0.7.20250829001",
-      "ProductVersion": "0.0.7.20250829001",
-      "MSIXVersion": "0.0.7.0"
+      "FileVersion": "0.0.8.20250829001",
+      "ProductVersion": "0.0.8.20250829001",
+      "MSIXVersion": "0.0.8.0"
     },
     "macos": {
-      "CFBundleShortVersionString": "0.0.7",
+      "CFBundleShortVersionString": "0.0.8",
       "CFBundleVersion": "20250829001"
     },
     "linux": {
       "APP_VERSION_MAJOR": 0,
       "APP_VERSION_MINOR": 0,
-      "APP_VERSION_PATCH": 7,
+      "APP_VERSION_PATCH": 8,
       "APP_BUILD_NUMBER": "20250829001",
-      "APP_VERSION_STRING": "0.0.7-20250829001"
+      "APP_VERSION_STRING": "0.0.8-20250829001"
     }
   }
 }
