@@ -13,6 +13,7 @@ import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
 import '../../../../../infrastructure/logging/logger.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../utils/config/edit_page_logging_config.dart';
+import '../../../../../utils/image_path_converter.dart';
 
 /// 统一的图像处理管线混合类
 /// 实现连续的处理流程：原始图像 → 变换处理 → 二值化处理 → 最终显示
@@ -413,6 +414,29 @@ mixin ImageProcessingPipeline {
           EditPageLogger.editPageError('图像文件不存在',
               tag: EditPageLoggingConfig.tagImagePanel,
               data: {'filePath': filePath, 'imageUrl': imageUrl});
+          return null;
+        }
+      } else if (!imageUrl.contains('://')) {
+        // 处理相对路径，转换为绝对路径
+        String absolutePath = await ImagePathConverter.toAbsolutePath(imageUrl);
+        
+        // 如果返回的是 file:// URI，转换为文件系统路径
+        String filePath = absolutePath;
+        if (absolutePath.startsWith('file://')) {
+          filePath = absolutePath.substring(7);
+          // Windows路径修正：移除开头的斜杠
+          if (filePath.startsWith('/') && filePath.length > 1 && filePath[2] == ':') {
+            filePath = filePath.substring(1);
+          }
+        }
+        
+        final file = File(filePath);
+        if (await file.exists()) {
+          return await file.readAsBytes();
+        } else {
+          EditPageLogger.editPageError('相对路径图像文件不存在',
+              tag: EditPageLoggingConfig.tagImagePanel,
+              data: {'relativePath': imageUrl, 'absolutePath': absolutePath, 'filePath': filePath});
           return null;
         }
       } else {

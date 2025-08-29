@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../../../application/providers/service_providers.dart';
 import '../../../../../infrastructure/logging/edit_page_logger_extension.dart';
@@ -51,13 +52,30 @@ mixin ImageSelectionHandler {
 
         try {
           final l10n = AppLocalizations.of(context);
+          
+          // 检查文件是否存在
+          final tempImageUrl = 'file://${selectedItem.path.replaceAll("\\", "/")}';
+          final absolutePath = await ImagePathConverter.toAbsolutePath(
+            ImagePathConverter.toRelativePath(tempImageUrl)
+          );
+          final imageFile = File(absolutePath);
+          
+          if (!await imageFile.exists()) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('图像文件不存在，请重新选择'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+            return;
+          }
+          
           // 更新图层属性
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
           
           // 使用相对路径存储图像URL
-          final absoluteImageUrl = 'file://${selectedItem.path.replaceAll("\\", "/")}';
-          content['imageUrl'] = ImagePathConverter.toRelativePath(absoluteImageUrl);
+          content['imageUrl'] = ImagePathConverter.toRelativePath(tempImageUrl);
           content['sourceId'] = selectedItem.id;
           content['sourceType'] = 'library';
           content['libraryItem'] = selectedItem; // 保存图库项的完整引用
@@ -72,6 +90,11 @@ mixin ImageSelectionHandler {
           content['cropY'] = 0.0;
           content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
           content.remove('cropHeight');
+          
+          // 清除所有裁剪相关的缓存和变换数据
+          content.remove('cropRect');
+          content.remove('cropParameters');
+          content.remove('lastCropSettings');
           content['isFlippedHorizontally'] = false;
           content['isFlippedVertically'] = false;
           content['rotation'] = 0.0;
@@ -82,14 +105,60 @@ mixin ImageSelectionHandler {
           content.remove('originalHeight');
           content.remove('renderWidth');
           content.remove('renderHeight');
+          
+          // 立即加载新图像尺寸，避免界面显示错误的裁剪区域
+          try {
+            final file = File(selectedItem.path);
+            if (await file.exists()) {
+              final imageBytes = await file.readAsBytes();
+              final sourceImage = img.decodeImage(imageBytes);
+              if (sourceImage != null) {
+                content['originalWidth'] = sourceImage.width.toDouble();
+                content['originalHeight'] = sourceImage.height.toDouble();
+                // 初始渲染尺寸等于原始尺寸
+                content['renderWidth'] = sourceImage.width.toDouble();
+                content['renderHeight'] = sourceImage.height.toDouble();
+              }
+            }
+          } catch (e) {
+            // 如果获取尺寸失败，记录但不中断流程，让处理管道自行处理
+            EditPageLogger.propertyPanelError(
+              '获取新图像尺寸失败',
+              tag: EditPageLoggingConfig.tagImagePanel,
+              error: e,
+              data: {
+                'selectedItemId': selectedItem.id,
+                'selectedItemPath': selectedItem.path,
+              },
+            );
+          }
 
+          // 清除所有图像变换和处理相关的缓存数据
           content.remove('transformedImageData');
           content.remove('transformedImageUrl');
           content.remove('transformRect');
+          content.remove('binarizedImageData');
+          content.remove('processedImageData');
+          content.remove('cachedProcessedImage');
+          content.remove('imageProcessingCache');
+          
+          // 重置二值化和处理标记，让图像处理管道重新开始
+          content['needsReprocessing'] = true;
+          content.remove('lastProcessingSettings');
+          
+          // 清除所有UI状态和预览缓存
+          content.remove('previewImageData');
+          content.remove('displayImageData');
+          content.remove('uiCacheData');
+          content.remove('lastRenderSize');
+          content.remove('lastImageSize');
+          
+          // 强制重新初始化图像处理管道
+          content['forceReload'] = true;
 
           // 检查文件是否存在
-          final file = File(selectedItem.path);
-          if (!await file.exists()) {
+          final localFile = File(selectedItem.path);
+          if (!await localFile.exists()) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -325,6 +394,11 @@ mixin ImageSelectionHandler {
       content['cropY'] = 0.0;
       content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
       content.remove('cropHeight');
+      
+      // 清除所有裁剪相关的缓存和变换数据
+      content.remove('cropRect');
+      content.remove('cropParameters');
+      content.remove('lastCropSettings');
       content['isFlippedHorizontally'] = false;
       content['isFlippedVertically'] = false;
       content['rotation'] = 0.0;
@@ -335,9 +409,56 @@ mixin ImageSelectionHandler {
       content.remove('originalHeight');
       content.remove('renderWidth');
       content.remove('renderHeight');
+      
+      // 立即加载新图像尺寸，避免界面显示错误的裁剪区域
+      try {
+        final file = File(importedItem.path);
+        if (await file.exists()) {
+          final imageBytes = await file.readAsBytes();
+          final sourceImage = img.decodeImage(imageBytes);
+          if (sourceImage != null) {
+            content['originalWidth'] = sourceImage.width.toDouble();
+            content['originalHeight'] = sourceImage.height.toDouble();
+            // 初始渲染尺寸等于原始尺寸
+            content['renderWidth'] = sourceImage.width.toDouble();
+            content['renderHeight'] = sourceImage.height.toDouble();
+          }
+        }
+      } catch (e) {
+        // 如果获取尺寸失败，记录但不中断流程，让处理管道自行处理
+        EditPageLogger.propertyPanelError(
+          '获取新图像尺寸失败',
+          tag: EditPageLoggingConfig.tagImagePanel,
+          error: e,
+          data: {
+            'importedItemId': importedItem.id,
+            'importedItemPath': importedItem.path,
+          },
+        );
+      }
+      
+      // 清除所有图像变换和处理相关的缓存数据
       content.remove('transformedImageData');
       content.remove('transformedImageUrl');
       content.remove('transformRect');
+      content.remove('binarizedImageData');
+      content.remove('processedImageData');
+      content.remove('cachedProcessedImage');
+      content.remove('imageProcessingCache');
+      
+      // 重置二值化和处理标记，让图像处理管道重新开始
+      content['needsReprocessing'] = true;
+      content.remove('lastProcessingSettings');
+      
+      // 清除所有UI状态和预览缓存
+      content.remove('previewImageData');
+      content.remove('displayImageData');
+      content.remove('uiCacheData');
+      content.remove('lastRenderSize');
+      content.remove('lastImageSize');
+      
+      // 强制重新初始化图像处理管道
+      content['forceReload'] = true;
 
       // Update the property (outside of setState to avoid nested setState calls)
       updateProperty('content', content);
