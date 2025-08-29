@@ -77,7 +77,7 @@ class _M3PersistentPaginationControlsState
 
           // 仅当与父组件提供的默认 pageSize 不一致时才通知父组件，避免重复刷新
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (size != widget.defaultPageSize) {
+            if (mounted && size != widget.defaultPageSize) {
               widget.onPageSizeChanged(size);
             }
           });

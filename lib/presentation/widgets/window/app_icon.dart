@@ -22,17 +22,26 @@ class AppIconWidget extends StatefulWidget {
 class _AppIconWidgetState extends State<AppIconWidget> {
   @override
   Widget build(BuildContext context) {
-    // Try to load from a specific file path
+    // Try to load the icon, fallback to default if fails
     try {
-      return CachedImage(
-        path: Theme.of(context).brightness == Brightness.dark
-            ? 'assets/images/logo.ico'
-            : 'assets/images/logo.ico',
-
+      return Image.asset(
+        'assets/images/logo.png',
         width: widget.size,
         height: widget.size,
-        // Note: CachedImage doesn't support color and colorBlendMode directly
-        // Consider using a ColorFiltered widget if needed
+        color: widget.color,
+        errorBuilder: (context, error, stackTrace) {
+          AppLogger.warning('Failed to load logo.png: $error');
+          // Try ICO format as fallback
+          return Image.asset(
+            'assets/images/logo.ico',
+            width: widget.size,
+            height: widget.size,
+            errorBuilder: (context, error, stackTrace) {
+              AppLogger.warning('Failed to load logo.ico: $error');
+              return _fallbackIcon();
+            },
+          );
+        },
       );
     } catch (e) {
       AppLogger.error('Error loading icon: $e');

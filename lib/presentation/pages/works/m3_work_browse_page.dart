@@ -41,7 +41,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
 
     // 添加帧回调，确认首帧渲染完成
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLogger.info('M3WorkBrowsePage 首帧渲染完成', tag: 'WorkBrowse');
+      if (mounted) {
+        AppLogger.info('M3WorkBrowsePage 首帧渲染完成', tag: 'WorkBrowse');
+      }
     });
   }
 

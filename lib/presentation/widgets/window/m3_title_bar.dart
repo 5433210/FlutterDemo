@@ -62,7 +62,7 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
             // 应用图标 - 使用与任务栏相同的图标样式
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: AppSizes.s),
-              child: AppIconWidget(size: AppSizes.iconLarge),
+              child: AppIconWidget(size: AppSizes.iconMedium),
             ),
 
             // 标题拖动区域

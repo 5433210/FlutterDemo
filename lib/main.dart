@@ -123,21 +123,25 @@ void _initializeWindowAsync() {
           size: Size(1400, 800),
           minimumSize: Size(800, 600),
           center: true,
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
           skipTaskbar: false,
           titleBarStyle: TitleBarStyle.hidden,
+          windowButtonVisibility: false,
           title: '字字珠玑',
         );
-
+        await windowManager.setIcon('assets/images/logo.ico');
         await windowManager.waitUntilReadyToShow(windowOptions, () async {
+          // await windowManager.setAsFrameless();
+          await windowManager.setHasShadow(false);
           await windowManager.show();
           await windowManager.focus();
 
           // 延迟设置非关键属性
           Future.delayed(const Duration(milliseconds: 200), () async {
             try {
-              await windowManager.setIcon('assets/images/logo.ico');
-              await windowManager.setBackgroundColor(Colors.white);
+              // 确保窗口背景色与主题一致
+              // await windowManager.setBackgroundColor(Colors.white);
+              if (Platform.isWindows) {}
             } catch (e) {
               AppLogger.warning('延迟窗口设置失败', error: e, tag: 'App');
             }

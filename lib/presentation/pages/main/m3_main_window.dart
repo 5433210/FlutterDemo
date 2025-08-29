@@ -139,172 +139,177 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
               });
 
           return PopScope(
-            // 处理返回按钮事件，先尝试在当前功能区内返回，否则尝试跨功能区返回
-            canPop: false, // 禁止默认的返回行为，我们将自己处理
-            onPopInvokedWithResult: (bool didPop, dynamic result) async {
-              // 如果系统已处理了弹出操作，不需要进一步处理
-              if (didPop) return;
+              // 处理返回按钮事件，先尝试在当前功能区内返回，否则尝试跨功能区返回
+              canPop: false, // 禁止默认的返回行为，我们将自己处理
+              onPopInvokedWithResult: (bool didPop, dynamic result) async {
+                // 如果系统已处理了弹出操作，不需要进一步处理
+                if (didPop) return;
 
-              // 如果正在导航过渡中，不处理返回
-              if (navState.isNavigating) return;
+                // 如果正在导航过渡中，不处理返回
+                if (navState.isNavigating) return;
 
-              // 先尝试在当前功能区内的Navigator返回
-              final currentNavigator =
-                  _navigatorKeys[selectedIndex]?.currentState;
-              final canPopInCurrentSection =
-                  currentNavigator != null && currentNavigator.canPop();
+                // 先尝试在当前功能区内的Navigator返回
+                final currentNavigator =
+                    _navigatorKeys[selectedIndex]?.currentState;
+                final canPopInCurrentSection =
+                    currentNavigator != null && currentNavigator.canPop();
 
-              if (canPopInCurrentSection) {
-                currentNavigator.pop();
-                return; // 已在功能区内处理返回，不需要退出应用
-              }
+                if (canPopInCurrentSection) {
+                  currentNavigator.pop();
+                  return; // 已在功能区内处理返回，不需要退出应用
+                }
 
-              // 如果当前功能区内无法返回，尝试回到上一个功能区
-              await CrossNavigationHelper.handleBackNavigation(context, ref);
-            },
-            child: Shortcuts(
-              shortcuts: <LogicalKeySet, Intent>{
-                // 导航快捷键
-                LogicalKeySet(
-                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
-                    const ActivateTabIntent(0),
-                LogicalKeySet(
-                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
-                    const ActivateTabIntent(1),
-                LogicalKeySet(
-                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
-                    const ActivateTabIntent(2),
-                LogicalKeySet(
-                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
-                    const ActivateTabIntent(3),
-                LogicalKeySet(
-                        LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
-                    const ActivateTabIntent(4),
-
-                // 侧边栏快捷键
-                LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
-                    const ToggleNavigationIntent(),
+                // 如果当前功能区内无法返回，尝试回到上一个功能区
+                await CrossNavigationHelper.handleBackNavigation(context, ref);
               },
-              child: Actions(
-                actions: <Type, Action<Intent>>{
-                  ActivateTabIntent: CallbackAction<ActivateTabIntent>(
-                    onInvoke: (intent) {
-                      ref
-                          .read(globalNavigationProvider.notifier)
-                          .navigateToSection(intent.index);
-                      return null;
-                    },
-                  ),
-                  ToggleNavigationIntent:
-                      CallbackAction<ToggleNavigationIntent>(
-                    onInvoke: (intent) {
-                      ref
-                          .read(globalNavigationProvider.notifier)
-                          .toggleNavigationExtended();
-                      return null;
-                    },
-                  ),
+              child: Shortcuts(
+                shortcuts: <LogicalKeySet, Intent>{
+                  // 导航快捷键
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
+                      const ActivateTabIntent(0),
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
+                      const ActivateTabIntent(1),
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
+                      const ActivateTabIntent(2),
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
+                      const ActivateTabIntent(3),
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
+                      const ActivateTabIntent(4),
+
+                  // 侧边栏快捷键
+                  LogicalKeySet(
+                          LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
+                      const ToggleNavigationIntent(),
                 },
-                child: Scaffold(
-                  body: Column(
-                    children: [
-                      // 标题栏
-                      const M3TitleBar(),
+                child: Actions(
+                  actions: <Type, Action<Intent>>{
+                    ActivateTabIntent: CallbackAction<ActivateTabIntent>(
+                      onInvoke: (intent) {
+                        ref
+                            .read(globalNavigationProvider.notifier)
+                            .navigateToSection(intent.index);
+                        return null;
+                      },
+                    ),
+                    ToggleNavigationIntent:
+                        CallbackAction<ToggleNavigationIntent>(
+                      onInvoke: (intent) {
+                        ref
+                            .read(globalNavigationProvider.notifier)
+                            .toggleNavigationExtended();
+                        return null;
+                      },
+                    ),
+                  },
+                  child: Container(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    child: Scaffold(
+                      backgroundColor: Colors.transparent, // 让Container处理背景色
+                      body: Column(
+                        children: [
+                          // 标题栏
+                          const M3TitleBar(),
 
-                      // 内容区域
-                      Expanded(
-                        child: Row(
-                          children: [
-                            // 侧边导航栏
-                            M3NavigationSidebar(
-                              selectedIndex: selectedIndex,
-                              onDestinationSelected: (index) {
-                                // 使用全局导航提供者切换功能区
-                                ref
-                                    .read(globalNavigationProvider.notifier)
-                                    .navigateToSection(index);
-                              },
-                              extended: navState.isNavigationExtended,
-                              onToggleExtended: () {
-                                ref
-                                    .read(globalNavigationProvider.notifier)
-                                    .toggleNavigationExtended();
-                              },
-                            ), // 内容区域
-                            Expanded(
-                              // 使用Stack+Offstage实现懒加载功能区
-                              child: Stack(
-                                children: List.generate(5, (index) {
-                                  // 检查当前索引是否应该被初始化
-                                  final shouldInitialize =
-                                      index == selectedIndex;
-                                  final isInitialized =
-                                      _initializedSections.contains(index);
+                          // 内容区域
+                          Expanded(
+                            child: Row(
+                              children: [
+                                // 侧边导航栏
+                                M3NavigationSidebar(
+                                  selectedIndex: selectedIndex,
+                                  onDestinationSelected: (index) {
+                                    // 使用全局导航提供者切换功能区
+                                    ref
+                                        .read(globalNavigationProvider.notifier)
+                                        .navigateToSection(index);
+                                  },
+                                  extended: navState.isNavigationExtended,
+                                  onToggleExtended: () {
+                                    ref
+                                        .read(globalNavigationProvider.notifier)
+                                        .toggleNavigationExtended();
+                                  },
+                                ), // 内容区域
+                                Expanded(
+                                  // 使用Stack+Offstage实现懒加载功能区
+                                  child: Stack(
+                                    children: List.generate(5, (index) {
+                                      // 检查当前索引是否应该被初始化
+                                      final shouldInitialize =
+                                          index == selectedIndex;
+                                      final isInitialized =
+                                          _initializedSections.contains(index);
 
-                                  // 如果当前索引应该被初始化但还未初始化，延迟初始化
-                                  if (shouldInitialize && !isInitialized) {
-                                    AppLogger.info('初始化功能区',
-                                        tag: 'MainWindow',
-                                        data: {
-                                          'index': index,
-                                        });
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      if (mounted &&
-                                          !_initializedSections
-                                              .contains(index)) {
-                                        setState(() {
-                                          _initializedSections.add(index);
+                                      // 如果当前索引应该被初始化但还未初始化，延迟初始化
+                                      if (shouldInitialize && !isInitialized) {
+                                        AppLogger.info('初始化功能区',
+                                            tag: 'MainWindow',
+                                            data: {
+                                              'index': index,
+                                            });
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted &&
+                                              !_initializedSections
+                                                  .contains(index)) {
+                                            setState(() {
+                                              _initializedSections.add(index);
+                                            });
+                                          }
                                         });
                                       }
-                                    });
-                                  }
 
-                                  // 仅当当前选中或已初始化时才创建导航器
-                                  if (index == selectedIndex && isInitialized) {
-                                    AppLogger.info('构建功能区导航器',
-                                        tag: 'MainWindow',
-                                        data: {
-                                          'index': index,
-                                          'isSelected': true,
-                                        });
-                                    // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
-                                    return KeyedSubtree(
-                                      key: ValueKey('navigator_$index'),
-                                      child: _buildNavigator(index),
-                                    );
-                                  } else if (isInitialized) {
-                                    // 已初始化但未选中的功能区，使用Offstage隐藏
-                                    AppLogger.info('隐藏功能区导航器',
-                                        tag: 'MainWindow',
-                                        data: {
-                                          'index': index,
-                                          'isSelected': false,
-                                        });
-                                    return Offstage(
-                                      offstage: true,
-                                      child: KeyedSubtree(
-                                        key:
-                                            ValueKey('navigator_hidden_$index'),
-                                        child: _buildNavigator(index),
-                                      ),
-                                    );
-                                  } else {
-                                    // 未初始化的功能区，返回空容器
-                                    return const SizedBox.shrink();
-                                  }
-                                }),
-                              ),
+                                      // 仅当当前选中或已初始化时才创建导航器
+                                      if (index == selectedIndex &&
+                                          isInitialized) {
+                                        AppLogger.info('构建功能区导航器',
+                                            tag: 'MainWindow',
+                                            data: {
+                                              'index': index,
+                                              'isSelected': true,
+                                            });
+                                        // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
+                                        return KeyedSubtree(
+                                          key: ValueKey('navigator_$index'),
+                                          child: _buildNavigator(index),
+                                        );
+                                      } else if (isInitialized) {
+                                        // 已初始化但未选中的功能区，使用Offstage隐藏
+                                        AppLogger.info('隐藏功能区导航器',
+                                            tag: 'MainWindow',
+                                            data: {
+                                              'index': index,
+                                              'isSelected': false,
+                                            });
+                                        return Offstage(
+                                          offstage: true,
+                                          child: KeyedSubtree(
+                                            key: ValueKey(
+                                                'navigator_hidden_$index'),
+                                            child: _buildNavigator(index),
+                                          ),
+                                        );
+                                      } else {
+                                        // 未初始化的功能区，返回空容器
+                                        return const SizedBox.shrink();
+                                      }
+                                    }),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          );
+              ));
         },
       );
     } catch (e, stack) {

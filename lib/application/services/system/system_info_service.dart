@@ -187,7 +187,10 @@ class SystemInfoService {
         info['manufacturer'] = 'Microsoft Windows';
         info['deviceId'] = windowsInfo.computerName;
         info['isPhysicalDevice'] = true;
-        info['osVersion'] = '${windowsInfo.majorVersion}.${windowsInfo.minorVersion}.${windowsInfo.buildNumber}';
+        
+        // 改进Windows版本检测，特别是Windows 11
+        final osVersion = await _getEnhancedWindowsVersion(windowsInfo);
+        info['osVersion'] = osVersion;
         info['architecture'] = _getWindowsArchitecture();
         
         // 尝试获取内存信息
@@ -251,6 +254,84 @@ class SystemInfoService {
     }
     
     return info;
+  }
+
+  /// 获取增强的Windows版本信息，正确识别Windows 11
+  static Future<String> _getEnhancedWindowsVersion(dynamic windowsInfo) async {
+    try {
+      // 首先尝试使用wmic获取准确的版本信息
+      final result = await Process.run('cmd', [
+        '/c', 
+        'ver'
+      ]);
+      
+      if (result.exitCode == 0) {
+        final output = result.stdout.toString().trim();
+        AppLogger.debug('Windows version command output: $output');
+        
+        // 解析ver命令的输出
+        final match = RegExp(r'Microsoft Windows \[Version ([\d.]+)\]').firstMatch(output);
+        if (match != null) {
+          final version = match.group(1);
+          if (version != null) {
+            return _formatWindowsVersion(version, windowsInfo.buildNumber);
+          }
+        }
+      }
+      
+      // 如果ver命令失败，尝试使用systeminfo
+      final systemInfoResult = await Process.run('systeminfo', []);
+      if (systemInfoResult.exitCode == 0) {
+        final output = systemInfoResult.stdout.toString();
+        
+        // 查找OS Name行
+        final lines = output.split('\n');
+        for (final line in lines) {
+          if (line.startsWith('OS Name:') || line.startsWith('操作系统名称:')) {
+            final osName = line.split(':')[1].trim();
+            AppLogger.debug('System OS Name: $osName');
+            
+            if (osName.contains('Windows 11')) {
+              return 'windows 11.0.${windowsInfo.buildNumber}';
+            } else if (osName.contains('Windows 10')) {
+              return 'windows 10.0.${windowsInfo.buildNumber}';
+            }
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Enhanced Windows version detection failed: $e');
+    }
+    
+    // 备用方案：基于build number判断
+    final buildNumber = windowsInfo.buildNumber;
+    if (buildNumber >= 22000) {
+      return 'windows 11.0.$buildNumber';
+    } else if (buildNumber >= 10240) {
+      return 'windows 10.0.$buildNumber';
+    } else {
+      return '${windowsInfo.majorVersion}.${windowsInfo.minorVersion}.$buildNumber';
+    }
+  }
+  
+  /// 格式化Windows版本信息
+  static String _formatWindowsVersion(String version, int buildNumber) {
+    final parts = version.split('.');
+    if (parts.length >= 3) {
+      final major = int.tryParse(parts[0]) ?? 0;
+      final minor = int.tryParse(parts[1]) ?? 0;
+      final build = int.tryParse(parts[2]) ?? 0;
+      
+      // Windows 11的判断逻辑
+      if (major == 10 && minor == 0 && build >= 22000) {
+        return 'windows 11.0.$buildNumber';
+      } else if (major == 10 && minor == 0) {
+        return 'windows 10.0.$buildNumber';
+      }
+    }
+    
+    return 'windows $version';
   }
 
   /// 获取Windows架构信息
