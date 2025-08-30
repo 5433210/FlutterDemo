@@ -174,8 +174,10 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color:
-              isSelected ? colorScheme.primaryContainer : colorScheme.surface,
+          // 使用亮色背景以更好地显示字符
+          color: isSelected 
+              ? colorScheme.primaryContainer 
+              : Colors.white, // 无论主题如何都使用白色背景
           borderRadius: BorderRadius.circular(8.0),
           border: Border.all(
             color:

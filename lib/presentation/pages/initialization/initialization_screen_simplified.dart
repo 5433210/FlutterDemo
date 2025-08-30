@@ -25,10 +25,8 @@ class _InitializationScreenState extends ConsumerState<InitializationScreen>
   late Animation<double> _progressAnimation;
 
   Timer? _displayTimer;
-  Timer? _minimumDurationTimer;
   String _currentStatus = '';
   int _currentStep = 0;
-  bool _minimumTimeElapsed = false;
 
   // 预定义的显示步骤，不执行实际初始化
   final List<String> _displaySteps = [
@@ -46,7 +44,6 @@ class _InitializationScreenState extends ConsumerState<InitializationScreen>
 
     _setupAnimations();
     _startDisplaySequence();
-    _startMinimumDurationTimer();
   }
 
   void _setupAnimations() {
@@ -80,18 +77,6 @@ class _InitializationScreenState extends ConsumerState<InitializationScreen>
     _logoAnimationController.forward();
   }
 
-  void _startMinimumDurationTimer() {
-    // 设置最小显示时间（5秒）
-    _minimumDurationTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _minimumTimeElapsed = true;
-        });
-        AppLogger.info('初始化屏幕最小显示时间完成', tag: 'InitScreen');
-      }
-    });
-  }
-
   void _startDisplaySequence() {
     // 仅用于显示的步骤序列，不执行实际初始化
     _displayTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
@@ -109,41 +94,21 @@ class _InitializationScreenState extends ConsumerState<InitializationScreen>
         }
       } else {
         timer.cancel();
-        // 显示完成后短暂停留，但要等待最小时间完成
+        // 显示完成后短暂停留
         Timer(const Duration(milliseconds: 500), () {
           if (mounted) {
             setState(() {
               _currentStatus = 'initializationComplete';
             });
-            // 只有在最小时间完成后才允许应用继续
-            _waitForMinimumTime();
           }
         });
       }
     });
   }
 
-  void _waitForMinimumTime() {
-    // 如果最小时间还没完成，等待完成后再继续
-    if (!_minimumTimeElapsed) {
-      AppLogger.info('等待最小显示时间完成', tag: 'InitScreen');
-      Timer.periodic(const Duration(milliseconds: 100), (timer) {
-        if (_minimumTimeElapsed || !mounted) {
-          timer.cancel();
-          if (mounted) {
-            AppLogger.info('初始化屏幕准备完成，可以退出', tag: 'InitScreen');
-          }
-        }
-      });
-    } else {
-      AppLogger.info('最小时间已完成，初始化屏幕可以退出', tag: 'InitScreen');
-    }
-  }
-
   @override
   void dispose() {
     _displayTimer?.cancel();
-    _minimumDurationTimer?.cancel();
     _logoAnimationController.dispose();
     _progressAnimationController.dispose();
     super.dispose();
