@@ -241,12 +241,8 @@ class AppLogger {
     final entry = _logQueue.removeAt(0);
 
     try {
-      // 实际的日志处理 - 添加安全检查
-      log(entry.level, entry.message,
-          tag: entry.tag,
-          error: entry.error,
-          stackTrace: entry.stackTrace,
-          data: entry.data);
+      // 直接处理日志条目，避免通过log方法造成递归
+      _directLogHandle(entry);
     } catch (e) {
       // 使用debugPrint避免递归日志错误
       try {
@@ -257,6 +253,35 @@ class AppLogger {
     } finally {
       // 继续处理队列中的下一个日志
       _processLogQueue();
+    }
+  }
+
+  // 直接处理日志条目，避免递归
+  static void _directLogHandle(_LogEntry queueEntry) {
+    if (queueEntry.level.index < _minLevel.index) return;
+
+    final entry = LogEntry(
+      level: queueEntry.level,
+      message: queueEntry.message,
+      timestamp: queueEntry.timestamp,
+      tag: queueEntry.tag ?? _getCallerTag(),
+      error: queueEntry.error,
+      stackTrace: queueEntry.stackTrace ?? (queueEntry.error != null ? StackTrace.current : null),
+      data: queueEntry.data,
+    );
+
+    // 使用try-catch保护每个handler调用
+    for (final handler in _handlers) {
+      try {
+        handler.handle(entry);
+      } catch (e) {
+        // 如果某个handler失败，继续处理其他handler
+        try {
+          debugPrint('Log handler failed: $e');
+        } catch (_) {
+          // 静默忽略
+        }
+      }
     }
   }
 

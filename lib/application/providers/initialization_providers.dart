@@ -1,15 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/providers/config_providers.dart';
 import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 
 /// 应用初始化Provider
 final appInitializationProvider = FutureProvider<void>((ref) async {
-  AppLogger.info('开始应用初始化', tag: 'Initialization');
+  // 使用debugPrint替代AppLogger，避免在provider初始化期间的ref问题
+  debugPrint('[Initialization] 开始应用初始化');
   
   // 记录开始时间
   final startTime = DateTime.now();
@@ -19,7 +20,7 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
   Timer(const Duration(seconds: 5), () {
     if (!minimumDurationCompleter.isCompleted) {
       minimumDurationCompleter.complete();
-      AppLogger.info('最小显示时间完成', tag: 'Initialization');
+      debugPrint('[Initialization] 最小显示时间完成');
     }
   });
   
@@ -32,9 +33,11 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
     // 等待配置初始化完成（这会确保默认配置被创建）
     await ref.watch(configInitializationProvider.future);
     
-    AppLogger.info('应用核心初始化完成', tag: 'Initialization');
+    // 使用debugPrint避免在初始化期间可能的ref问题
+    debugPrint('[Initialization] 应用核心初始化完成');
   } catch (e) {
-    AppLogger.error('应用初始化失败', error: e, tag: 'Initialization');
+    // 使用debugPrint而不是AppLogger，避免在provider重建期间使用ref
+    debugPrint('[Initialization] 应用初始化失败: $e');
     rethrow;
   }
   
@@ -42,8 +45,5 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
   await minimumDurationCompleter.future;
   
   final duration = DateTime.now().difference(startTime);
-  AppLogger.info('应用初始化全部完成', 
-    tag: 'Initialization', 
-    data: {'totalDuration': '${duration.inMilliseconds}ms'}
-  );
+  debugPrint('[Initialization] 应用初始化全部完成，总耗时: ${duration.inMilliseconds}ms');
 });

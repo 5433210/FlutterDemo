@@ -27,7 +27,6 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
   try {
     AppLogger.info('开始加载统一路径配置', tag: 'AppInit');
     // 确保统一路径配置加载
-    bool unifiedConfigLoaded = false;
     try {
       // 重要：使用read而不是watch来获取provider
       // 这样可以避免在异步操作中使用watch导致的依赖变化问题
@@ -41,7 +40,6 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
 
       // 如果已经加载完成，直接使用
       if (currentState is AsyncData) {
-        unifiedConfigLoaded = true;
         final config = currentState.value;
         AppLogger.info('统一路径配置已加载', tag: 'AppInit', data: {
           'dataPath': config?.dataPath.useDefaultPath == true
@@ -49,65 +47,47 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
               : config?.dataPath.customPath ?? '未知',
           'backupPath': config?.backupPath.path.isEmpty == true
               ? '未设置'
-              : config?.backupPath.path ?? '未知',
+              : config?.backupPath.path,
         });
       } else {
         // 否则等待加载完成
         AppLogger.info('等待统一路径配置加载完成', tag: 'AppInit');
 
-        // 使用超时保护
-        bool timeoutOccurred = false;
-        final timeout = Future.delayed(const Duration(seconds: 5), () {
-          if (!unifiedConfigLoaded) {
-            timeoutOccurred = true;
-            AppLogger.warning('统一配置加载超时', tag: 'AppInit');
-            throw Exception('统一配置加载超时');
-          }
-        });
-
-        // 手动监听配置加载完成
-        final completer = Completer<void>();
-        final subscription = ref.listen<AsyncValue<dynamic>>(
-          unified.unifiedPathConfigProvider,
-          (_, next) {
-            if (next is AsyncData && !completer.isCompleted) {
-              unifiedConfigLoaded = true;
-              final config = next.value;
-              if (config != null) {
-                AppLogger.info('统一路径配置加载成功', tag: 'AppInit', data: {
-                  'dataPath': config.dataPath?.useDefaultPath == true
-                      ? '默认路径'
-                      : config.dataPath?.customPath ?? '未知',
-                  'backupPath': config.backupPath?.path?.isEmpty == true
-                      ? '未设置'
-                      : config.backupPath?.path ?? '未知',
-                });
-              } else {
-                AppLogger.warning('统一路径配置为null', tag: 'AppInit');
-              }
-              completer.complete();
-            } else if (next is AsyncError && !completer.isCompleted) {
-              AppLogger.error('统一路径配置加载失败',
-                  error: next.error,
-                  stackTrace: next.stackTrace,
-                  tag: 'AppInit');
-              completer.completeError(next.error, next.stackTrace);
-            }
-          },
-          fireImmediately: true,
-        );
-
-        // 等待配置加载完成或超时
+        // 使用直接读取而非等待Future，避免在provider重建期间使用ref.listen
         try {
-          await Future.any([completer.future, timeout]);
-          subscription.close();
-          if (timeoutOccurred) {
-            throw Exception('统一配置加载超时');
+          final currentState = ref.read(unified.unifiedPathConfigProvider);
+          if (currentState is AsyncData) {
+            final config = currentState.value;
+            
+            if (config != null) {
+              AppLogger.info('统一路径配置加载成功', tag: 'AppInit', data: {
+                'dataPath': config.dataPath.useDefaultPath == true
+                    ? '默认路径'
+                    : config.dataPath.customPath ?? '未知',
+                'backupPath': config.backupPath.path.isEmpty == true
+                    ? '未设置'
+                    : config.backupPath.path,
+              });
+            } else {
+              AppLogger.warning('统一路径配置为null', tag: 'AppInit');
+            }
+          } else if (currentState is AsyncLoading) {
+            // 等待一个简短的时间后重试
+            await Future.delayed(const Duration(milliseconds: 100));
+            final retryState = ref.read(unified.unifiedPathConfigProvider);
+            if (retryState is AsyncData) {
+              AppLogger.info('统一路径配置重试后加载成功', tag: 'AppInit');
+            } else {
+              throw Exception('统一配置加载超时');
+            }
+          } else if (currentState is AsyncError) {
+            throw currentState.error!;
           }
         } catch (e, stack) {
-          subscription.close();
-          AppLogger.warning('统一配置加载出错',
-              error: e, stackTrace: stack, tag: 'AppInit');
+          AppLogger.error('统一路径配置加载失败',
+              error: e,
+              stackTrace: stack,
+              tag: 'AppInit');
           rethrow;
         }
       }
@@ -134,50 +114,27 @@ Future<AppInitializationResult> _initializeAppWithRef(Ref ref) async {
             AppLogger.warning('旧数据路径配置为null', tag: 'AppInit');
           }
         } else {
-          // 等待配置加载完成
-          bool configLoaded = false;
-
-          // 使用超时保护
-          final timeout = Future.delayed(const Duration(seconds: 3), () {
-            if (!configLoaded) {
-              AppLogger.warning('旧配置加载超时', tag: 'AppInit');
-              throw Exception('配置加载超时');
-            }
-          });
-
-          // 手动监听配置加载完成
-          final completer = Completer<void>();
-          final subscription = ref.listen<AsyncValue<dynamic>>(
-            dataPathConfigProvider,
-            (_, next) {
-              if (next is AsyncData && !completer.isCompleted) {
-                configLoaded = true;
-                final config = next.value;
-                if (config != null) {
-                  AppLogger.info('旧数据路径配置加载成功', tag: 'AppInit', data: {
-                    'useDefaultPath': config.useDefaultPath,
-                    'customPath': config.customPath,
-                  });
-                } else {
-                  AppLogger.warning('旧数据路径配置为null', tag: 'AppInit');
-                }
-                completer.complete();
-              } else if (next is AsyncError && !completer.isCompleted) {
-                AppLogger.error('旧数据路径配置加载失败',
-                    error: next.error,
-                    stackTrace: next.stackTrace,
-                    tag: 'AppInit');
-                completer.completeError(next.error, next.stackTrace);
-              }
-            },
-            fireImmediately: true,
-          );
-
-          // 等待配置加载完成或超时
+          // 等待配置加载完成，使用直接读取避免ref.listen问题
           try {
-            await Future.any([completer.future, timeout]);
-          } finally {
-            subscription.close();
+            await Future.delayed(const Duration(milliseconds: 100));
+            final retryDataPathAsync = ref.read(dataPathConfigProvider);
+            if (retryDataPathAsync is AsyncData) {
+              final config = retryDataPathAsync.value;
+              if (config != null) {
+                AppLogger.info('旧数据路径配置重试后加载成功', tag: 'AppInit', data: {
+                  'useDefaultPath': config.useDefaultPath,
+                  'customPath': config.customPath,
+                });
+              } else {
+                AppLogger.warning('旧数据路径配置重试后仍为null', tag: 'AppInit');
+              }
+            } else {
+              throw Exception('旧数据路径配置加载超时');
+            }
+          } catch (e, stack) {
+            AppLogger.error('旧数据路径配置重试失败',
+                error: e, stackTrace: stack, tag: 'AppInit');
+            rethrow;
           }
         }
       } catch (innerError, innerStack) {
