@@ -52,15 +52,62 @@ mixin ImageSelectionHandler {
 
         try {
           final l10n = AppLocalizations.of(context);
-          
+
           // 检查文件是否存在
-          final tempImageUrl = 'file://${selectedItem.path.replaceAll("\\", "/")}';
-          final absolutePath = await ImagePathConverter.toAbsolutePath(
-            ImagePathConverter.toRelativePath(tempImageUrl)
-          );
-          final imageFile = File(absolutePath);
+          // 构建正确的图像URL，处理可能已经包含file://前缀的情况
+          String tempImageUrl;
+          if (selectedItem.path.startsWith('file://')) {
+            // 如果已经是file://格式，直接使用
+            tempImageUrl = selectedItem.path;
+          } else {
+            // 如果是普通路径，添加file://前缀
+            tempImageUrl = 'file:///${selectedItem.path.replaceAll("\\", "/")}';
+          }
           
+          final absolutePath = await ImagePathConverter.toAbsolutePath(
+              ImagePathConverter.toRelativePath(tempImageUrl));
+          
+          // 处理 absolutePath：如果包含 file:// 前缀，则去除前缀
+          String imageFilePath = absolutePath;
+          if (imageFilePath.startsWith('file://')) {
+            // 去除 file:// 前缀，转换为标准文件路径
+            imageFilePath = imageFilePath.startsWith('file:///')
+                ? imageFilePath.substring(8)  // file:///C:/... -> C:/...
+                : imageFilePath.substring(7); // file://path -> path
+          }
+          
+          final imageFile = File(imageFilePath);
+
           if (!await imageFile.exists()) {
+            // 记录详细的文件不存在错误信息
+            EditPageLogger.propertyPanelError(
+              '从图库选择的图像文件不存在',
+              tag: EditPageLoggingConfig.tagImagePanel,
+              error: 'File not found: Image file does not exist at computed path',
+              data: {
+                'operation': 'selectImageFromLibrary_file_validation',
+                'selectedItemId': selectedItem.id,
+                'selectedItemFileName': selectedItem.fileName,
+                'selectedItemPath': selectedItem.path,
+                'tempImageUrl': tempImageUrl,
+                'computedAbsolutePath': absolutePath,
+                'pathExists': await Directory(File(absolutePath).parent.path).exists(),
+                'parentDirectory': File(absolutePath).parent.path,
+                'possibleCauses': [
+                  'File was moved or deleted after library indexing',
+                  'Path conversion error between relative and absolute paths',
+                  'File permissions issue',
+                  'Library database out of sync with filesystem',
+                  'Platform-specific path separator issues'
+                ],
+                'debugInfo': {
+                  'originalPath': selectedItem.path,
+                  'platformSeparator': Platform.pathSeparator,
+                  'currentDirectory': Directory.current.path,
+                }
+              },
+            );
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('图像文件不存在，请重新选择'),
@@ -69,11 +116,11 @@ mixin ImageSelectionHandler {
             );
             return;
           }
-          
+
           // 更新图层属性
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
-          
+
           // 使用相对路径存储图像URL
           content['imageUrl'] = ImagePathConverter.toRelativePath(tempImageUrl);
           content['sourceId'] = selectedItem.id;
@@ -88,9 +135,9 @@ mixin ImageSelectionHandler {
           // 重置新的坐标格式裁剪区域
           content['cropX'] = 0.0;
           content['cropY'] = 0.0;
-          content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+          content.remove('cropWidth'); // 移除裁剪宽高，让系统根据新图片尺寸重新计算
           content.remove('cropHeight');
-          
+
           // 清除所有裁剪相关的缓存和变换数据
           content.remove('cropRect');
           content.remove('cropParameters');
@@ -105,10 +152,19 @@ mixin ImageSelectionHandler {
           content.remove('originalHeight');
           content.remove('renderWidth');
           content.remove('renderHeight');
-          
+
           // 立即加载新图像尺寸，避免界面显示错误的裁剪区域
           try {
-            final file = File(selectedItem.path);
+            // 处理文件路径：如果包含 file:// 前缀，则去除前缀
+            String filePath = selectedItem.path;
+            if (filePath.startsWith('file://')) {
+              // 去除 file:// 前缀，转换为标准文件路径
+              filePath = filePath.startsWith('file:///')
+                  ? filePath.substring(8)  // file:///C:/... -> C:/...
+                  : filePath.substring(7); // file://path -> path
+            }
+            
+            final file = File(filePath);
             if (await file.exists()) {
               final imageBytes = await file.readAsBytes();
               final sourceImage = img.decodeImage(imageBytes);
@@ -141,24 +197,64 @@ mixin ImageSelectionHandler {
           content.remove('processedImageData');
           content.remove('cachedProcessedImage');
           content.remove('imageProcessingCache');
-          
+
           // 重置二值化和处理标记，让图像处理管道重新开始
           content['needsReprocessing'] = true;
           content.remove('lastProcessingSettings');
-          
+
           // 清除所有UI状态和预览缓存
           content.remove('previewImageData');
           content.remove('displayImageData');
           content.remove('uiCacheData');
           content.remove('lastRenderSize');
           content.remove('lastImageSize');
-          
+
           // 强制重新初始化图像处理管道
           content['forceReload'] = true;
 
           // 检查文件是否存在
-          final localFile = File(selectedItem.path);
+          // 处理文件路径：如果包含 file:// 前缀，则去除前缀
+          String filePath = selectedItem.path;
+          if (filePath.startsWith('file://')) {
+            // 去除 file:// 前缀，转换为标准文件路径
+            filePath = filePath.startsWith('file:///')
+                ? filePath.substring(8)  // file:///C:/... -> C:/...
+                : filePath.substring(7); // file://path -> path
+          }
+          
+          final localFile = File(filePath);
           if (!await localFile.exists()) {
+            // 记录详细的文件不存在错误信息
+            EditPageLogger.propertyPanelError(
+              '从图库选择的本地文件不存在',
+              tag: EditPageLoggingConfig.tagImagePanel,
+              error: 'Local file not found: Image file does not exist at processed path',
+              data: {
+                'operation': 'selectImageFromLibrary_local_file_validation',
+                'selectedItemId': selectedItem.id,
+                'selectedItemFileName': selectedItem.fileName,
+                'selectedItemPath': selectedItem.path,
+                'processedFilePath': filePath,
+                'fileExists': await localFile.exists(),
+                'parentDirExists': await Directory(localFile.parent.path).exists(),
+                'parentDirectory': localFile.parent.path,
+                'possibleCauses': [
+                  'Original file was moved or deleted',
+                  'File permissions changed',
+                  'Storage device disconnected (external drive)',
+                  'Network path no longer accessible',
+                  'Library database contains stale references',
+                  'URI path processing error'
+                ],
+                'debugInfo': {
+                  'originalHadFilePrefix': selectedItem.path.startsWith('file://'),
+                  'isAbsolute': localFile.isAbsolute,
+                  'platformSeparator': Platform.pathSeparator,
+                  'currentDirectory': Directory.current.path,
+                }
+              },
+            );
+            
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -376,9 +472,10 @@ mixin ImageSelectionHandler {
 
       final content =
           Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
-      
+
       // 使用相对路径存储图像URL
-      final absoluteImageUrl = 'file://${importedItem.path.replaceAll("\\", "/")}';
+      final absoluteImageUrl =
+          'file://${importedItem.path.replaceAll("\\", "/")}';
       content['imageUrl'] = ImagePathConverter.toRelativePath(absoluteImageUrl);
       content['sourceId'] = importedItem.id;
       content['sourceType'] = 'library';
@@ -392,9 +489,9 @@ mixin ImageSelectionHandler {
       // 重置新的坐标格式裁剪区域
       content['cropX'] = 0.0;
       content['cropY'] = 0.0;
-      content.remove('cropWidth');  // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+      content.remove('cropWidth'); // 移除裁剪宽高，让系统根据新图片尺寸重新计算
       content.remove('cropHeight');
-      
+
       // 清除所有裁剪相关的缓存和变换数据
       content.remove('cropRect');
       content.remove('cropParameters');
@@ -409,10 +506,19 @@ mixin ImageSelectionHandler {
       content.remove('originalHeight');
       content.remove('renderWidth');
       content.remove('renderHeight');
-      
+
       // 立即加载新图像尺寸，避免界面显示错误的裁剪区域
       try {
-        final file = File(importedItem.path);
+        // 处理文件路径：如果包含 file:// 前缀，则去除前缀
+        String filePath = importedItem.path;
+        if (filePath.startsWith('file://')) {
+          // 去除 file:// 前缀，转换为标准文件路径
+          filePath = filePath.startsWith('file:///')
+              ? filePath.substring(8)  // file:///C:/... -> C:/...
+              : filePath.substring(7); // file://path -> path
+        }
+        
+        final file = File(filePath);
         if (await file.exists()) {
           final imageBytes = await file.readAsBytes();
           final sourceImage = img.decodeImage(imageBytes);
@@ -436,7 +542,7 @@ mixin ImageSelectionHandler {
           },
         );
       }
-      
+
       // 清除所有图像变换和处理相关的缓存数据
       content.remove('transformedImageData');
       content.remove('transformedImageUrl');
@@ -445,18 +551,18 @@ mixin ImageSelectionHandler {
       content.remove('processedImageData');
       content.remove('cachedProcessedImage');
       content.remove('imageProcessingCache');
-      
+
       // 重置二值化和处理标记，让图像处理管道重新开始
       content['needsReprocessing'] = true;
       content.remove('lastProcessingSettings');
-      
+
       // 清除所有UI状态和预览缓存
       content.remove('previewImageData');
       content.remove('displayImageData');
       content.remove('uiCacheData');
       content.remove('lastRenderSize');
       content.remove('lastImageSize');
-      
+
       // 强制重新初始化图像处理管道
       content['forceReload'] = true;
 
