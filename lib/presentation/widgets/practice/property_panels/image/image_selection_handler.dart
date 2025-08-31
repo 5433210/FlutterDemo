@@ -125,7 +125,8 @@ mixin ImageSelectionHandler {
           content['imageUrl'] = ImagePathConverter.toRelativePath(tempImageUrl);
           content['sourceId'] = selectedItem.id;
           content['sourceType'] = 'library';
-          content['libraryItem'] = selectedItem; // 保存图库项的完整引用
+          // 移除完整 libraryItem 引用以避免隐私泄露
+          // content['libraryItem'] = selectedItem; // 🔴 隐私风险：包含绝对路径、文件名等敏感信息
 
           // 重置变换属性和裁剪区域
           content['cropTop'] = 0.0;
@@ -479,7 +480,8 @@ mixin ImageSelectionHandler {
       content['imageUrl'] = ImagePathConverter.toRelativePath(absoluteImageUrl);
       content['sourceId'] = importedItem.id;
       content['sourceType'] = 'library';
-      content['libraryItem'] = importedItem;
+      // 移除完整 libraryItem 引用以避免隐私泄露
+      // content['libraryItem'] = importedItem; // 🔴 隐私风险：包含绝对路径、文件名等敏感信息
 
       // 重置变换属性和裁剪区域
       content['cropTop'] = 0.0;
