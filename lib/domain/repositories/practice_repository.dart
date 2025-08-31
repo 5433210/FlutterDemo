@@ -65,11 +65,15 @@ abstract class PracticeRepository {
     String? id,
     required String title,
     required List<Map<String, dynamic>> pages,
+    Map<String, dynamic>? metadata,
     Uint8List? thumbnail,
   });
 
   /// 搜索练习
   Future<List<PracticeEntity>> search(String query, {int? limit});
+
+  /// 修复现有字帖的pageCount字段（一次性数据迁移）
+  Future<void> fixPageCountForAllPractices();
 
   /// 标签建议
   Future<List<String>> suggestTags(String prefix, {int limit = 10});

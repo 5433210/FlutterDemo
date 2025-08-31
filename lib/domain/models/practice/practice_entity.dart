@@ -35,6 +35,12 @@ class PracticeEntity with _$PracticeEntity {
     /// 是否收藏
     @Default(false) bool isFavorite,
 
+    /// 页数 - 数据库存储字段，与pages.length保持同步
+    @Default(0) int pageCount,
+
+    /// 元数据 - JSON格式存储的扩展信息
+    @Default({}) Map<String, dynamic> metadata,
+
     /// 缩略图数据 (BLOB)
     @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
     Uint8List? thumbnail,
@@ -45,6 +51,7 @@ class PracticeEntity with _$PracticeEntity {
     required String title,
     List<String> tags = const [],
     String status = 'active',
+    Map<String, dynamic> metadata = const {},
   }) {
     final now = DateTime.now();
     return PracticeEntity(
@@ -52,6 +59,8 @@ class PracticeEntity with _$PracticeEntity {
       title: title,
       tags: tags,
       status: status,
+      pageCount: 0, // 新建时页数为0
+      metadata: metadata, // 初始化元数据
       createTime: now,
       updateTime: now,
     );
@@ -64,6 +73,32 @@ class PracticeEntity with _$PracticeEntity {
   /// 私有构造函数
   const PracticeEntity._();
 
+  /// 获取metadata中的指定值
+  T? getMetadata<T>(String key) {
+    final value = metadata[key];
+    return value is T ? value : null;
+  }
+
+  /// 设置metadata中的值（注意：需要等待freezed重新生成后才能使用）
+  // PracticeEntity setMetadata(String key, dynamic value) {
+  //   final newMetadata = Map<String, dynamic>.from(metadata);
+  //   newMetadata[key] = value;
+  //   return copyWith(
+  //     metadata: newMetadata,
+  //     updateTime: DateTime.now(),
+  //   );
+  // }
+
+  /// 批量更新metadata（注意：需要等待freezed重新生成后才能使用）
+  // PracticeEntity updateMetadata(Map<String, dynamic> updates) {
+  //   final newMetadata = Map<String, dynamic>.from(metadata);
+  //   newMetadata.addAll(updates);
+  //   return copyWith(
+  //     metadata: newMetadata,
+  //     updateTime: DateTime.now(),
+  //   );
+  // }
+
   /// 获取下一个可用的页面索引
   int get nextPageIndex {
     if (pages.isEmpty) return 0;
@@ -71,21 +106,25 @@ class PracticeEntity with _$PracticeEntity {
     return (lastPage['index'] as int?) ?? 0 + 1;
   }
 
-  /// 获取页面数量
-  int get pageCount => pages.length;
+  /// 获取实际页面数量（优先使用数据库存储的pageCount，fallback到计算值）
+  int get actualPageCount => pageCount > 0 ? pageCount : pages.length;
 
   /// 添加页面
   PracticeEntity addPage(Map<String, dynamic> page) {
+    final newPages = [...pages, page];
     return copyWith(
-      pages: [...pages, page],
+      pages: newPages,
+      pageCount: newPages.length,
       updateTime: DateTime.now(),
     );
   }
 
   /// 删除页面
   PracticeEntity removePage(int index) {
+    final newPages = pages.where((p) => (p['index'] as int?) != index).toList();
     return copyWith(
-      pages: pages.where((p) => (p['index'] as int?) != index).toList(),
+      pages: newPages,
+      pageCount: newPages.length,
       updateTime: DateTime.now(),
     );
   }
@@ -99,10 +138,12 @@ class PracticeEntity with _$PracticeEntity {
     final pageIndex = page['index'] as int?;
     if (pageIndex == null) return this;
 
+    final newPages =
+        pages.map((p) => (p['index'] as int?) == pageIndex ? page : p).toList();
+
     return copyWith(
-      pages: pages
-          .map((p) => (p['index'] as int?) == pageIndex ? page : p)
-          .toList(),
+      pages: newPages,
+      pageCount: newPages.length,
       updateTime: DateTime.now(),
     );
   }

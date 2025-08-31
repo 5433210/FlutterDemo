@@ -142,8 +142,8 @@ class PracticeService {
         debugPrint('检测到页面数据，将更新页面');
         final updatedPractice = newPractice.copyWith(
           pages: pages,
-          thumbnail: thumbnail != null && thumbnail.isNotEmpty 
-              ? await _compressThumbnail(thumbnail) 
+          thumbnail: thumbnail != null && thumbnail.isNotEmpty
+              ? await _compressThumbnail(thumbnail)
               : null,
         );
         debugPrint('准备保存更新后的实体，调用 _repository.save...');
@@ -169,17 +169,17 @@ class PracticeService {
         debugPrint('准备保存缩略图到数据库, 大小=${thumbnail.length} 字节');
         final compressedThumbnail = await _compressThumbnail(thumbnail);
         debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
-        
+
         final updatedPractice = newPractice.copyWith(
           thumbnail: compressedThumbnail,
         );
         final result = await _repository.save(updatedPractice);
-        
+
         // 同时保存到文件系统（兼容性）
         await _storageService.saveCoverThumbnail(
             newPractice.id, compressedThumbnail);
         debugPrint('已保存新字帖缩略图到数据库和文件系统: ${newPractice.id}');
-        
+
         debugPrint('=== PracticeService.savePractice 完成(有缩略图分支) ===');
         return result;
       }
@@ -204,8 +204,8 @@ class PracticeService {
       pages: pages,
       tags: tags,
       updateTime: DateTime.now(),
-      thumbnail: thumbnail != null && thumbnail.isNotEmpty 
-          ? await _compressThumbnail(thumbnail) 
+      thumbnail: thumbnail != null && thumbnail.isNotEmpty
+          ? await _compressThumbnail(thumbnail)
           : existingPractice.thumbnail, // 保留现有缩略图
     );
     debugPrint('创建了更新后的实体, 准备调用 _repository.save...');
@@ -234,6 +234,7 @@ class PracticeService {
     String? id,
     required String title,
     required List<Map<String, dynamic>> pages,
+    Map<String, dynamic>? metadata,
     Uint8List? thumbnail,
   }) async {
     // 确保每个页面都有ID
@@ -248,6 +249,7 @@ class PracticeService {
       id: id,
       title: title,
       pages: pages,
+      metadata: metadata,
       thumbnail: null, // 不再将缩略图保存到数据库
     );
 
@@ -371,9 +373,17 @@ class PracticeService {
 
     return Uint8List.fromList(jpgBytes);
   }
-  
+
+  /// 修复所有字帖的pageCount字段
+  Future<void> fixPageCountForAllPractices() async {
+    if (_repository is PracticeRepositoryImpl) {
+      final repo = _repository as PracticeRepositoryImpl;
+      return await repo.fixPageCountForAllPractices();
+    }
+  }
+
   /// 迁移数据库中的图像路径从绝对路径到相对路径
-  /// 
+  ///
   /// 用于数据迁移，将存储在数据库中的绝对路径转换为相对路径以提高可移植性
   Future<PathMigrationResult> migrateImagePathsToRelative({
     void Function(int processed, int total)? onProgress,

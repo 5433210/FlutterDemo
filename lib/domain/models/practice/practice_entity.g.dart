@@ -21,6 +21,8 @@ _$PracticeEntityImpl _$$PracticeEntityImplFromJson(Map<String, dynamic> json) =>
       createTime: DateTime.parse(json['createTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
       isFavorite: json['isFavorite'] as bool? ?? false,
+      pageCount: (json['pageCount'] as num?)?.toInt() ?? 0,
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
       thumbnail: _bytesFromJson(json['thumbnail']),
     );
 
@@ -35,5 +37,7 @@ Map<String, dynamic> _$$PracticeEntityImplToJson(
       'createTime': instance.createTime.toIso8601String(),
       'updateTime': instance.updateTime.toIso8601String(),
       'isFavorite': instance.isFavorite,
+      'pageCount': instance.pageCount,
+      'metadata': instance.metadata,
       'thumbnail': _bytesToJson(instance.thumbnail),
     };

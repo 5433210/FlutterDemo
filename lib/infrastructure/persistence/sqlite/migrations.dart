@@ -476,4 +476,48 @@ const migrations = [
   -- 注意：SQLite的ALTER TABLE不支持直接添加外键，但我们可以在应用层处理关联关系
   
   ''',
+
+  // 版本 19: 为practices表添加pageCount字段
+  '''
+  
+  -- 添加pageCount字段存储页数
+  ALTER TABLE practices ADD COLUMN pageCount INTEGER DEFAULT 0;
+  
+  -- 创建索引以提高查询性能
+  CREATE INDEX IF NOT EXISTS idx_practices_page_count ON practices(pageCount);
+  
+  -- 更新现有记录的pageCount字段，基于pages JSON数据计算
+  UPDATE practices 
+  SET pageCount = (
+    CASE 
+      WHEN pages IS NULL OR pages = '' OR pages = '[]' THEN 0
+      WHEN pages LIKE '[%]' THEN (
+        -- 粗略计算JSON数组长度（通过统计逗号数量+1，但需要处理空数组）
+        CASE 
+          WHEN pages = '[]' THEN 0
+          ELSE (length(pages) - length(replace(pages, '},{', ''))) + 1
+        END
+      )
+      ELSE 0
+    END
+  )
+  WHERE pageCount IS NULL OR pageCount = 0;
+  
+  ''',
+
+  // 版本 20: 为practices表添加metadata字段
+  '''
+  
+  -- 添加metadata字段存储JSON格式的元数据
+  ALTER TABLE practices ADD COLUMN metadata TEXT;
+  
+  -- 创建索引以提高基于元数据的查询性能
+  CREATE INDEX IF NOT EXISTS idx_practices_metadata ON practices(metadata);
+  
+  -- 初始化现有记录的metadata字段为空的JSON对象
+  UPDATE practices 
+  SET metadata = '{}'
+  WHERE metadata IS NULL;
+  
+  ''',
 ];

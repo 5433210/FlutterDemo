@@ -330,6 +330,60 @@ class PracticeRepositoryImpl
     }
   }
 
+  /// 修复现有字帖的pageCount字段（一次性数据迁移）
+  @override
+  Future<void> fixPageCountForAllPractices() async {
+    try {
+      debugPrint('开始修复所有字帖的pageCount字段...');
+
+      // 查询所有pageCount为0或null的字帖
+      final practices = await _db.rawQuery('''
+        SELECT id, pages 
+        FROM $_table 
+        WHERE pageCount IS NULL OR pageCount = 0
+      ''');
+
+      debugPrint('找到需要修复的字帖数量: ${practices.length}');
+
+      int fixedCount = 0;
+      for (final practice in practices) {
+        try {
+          final id = practice['id'] as String;
+          final pagesJson = practice['pages'] as String?;
+
+          // 解析pages来计算实际页数
+          int actualPageCount = 0;
+          if (pagesJson != null && pagesJson.isNotEmpty) {
+            try {
+              final pagesList = jsonDecode(pagesJson);
+              if (pagesList is List) {
+                actualPageCount = pagesList.length;
+              }
+            } catch (e) {
+              debugPrint('解析字帖页面数据失败，ID: $id, 错误: $e');
+              actualPageCount = 0;
+            }
+          }
+
+          // 更新数据库中的pageCount字段
+          await _db.rawUpdate(
+            'UPDATE $_table SET pageCount = ? WHERE id = ?',
+            [actualPageCount, id],
+          );
+
+          fixedCount++;
+          debugPrint('已修复字帖 ID: $id, pageCount: $actualPageCount');
+        } catch (e) {
+          debugPrint('修复单个字帖失败: $e');
+        }
+      }
+
+      debugPrint('pageCount字段修复完成，共修复: $fixedCount 个字帖');
+    } catch (e) {
+      debugPrint('修复pageCount字段失败: $e');
+    }
+  }
+
   @override
   Future<List<PracticeEntity>> queryList(PracticeFilter filter) async {
     try {
@@ -343,7 +397,8 @@ class PracticeRepositoryImpl
       final whereArgs = _buildWhereArgs(queryParams);
 
       final sql = '''
-        SELECT id, title, tags, createTime, updateTime, isFavorite, thumbnail
+        SELECT id, title, tags, createTime, updateTime, isFavorite, 
+               COALESCE(pageCount, 0) as pageCount, metadata, thumbnail
         FROM $_table 
         ${whereClause.isNotEmpty ? 'WHERE $whereClause' : ''}
         ORDER BY updateTime DESC
@@ -474,6 +529,7 @@ class PracticeRepositoryImpl
     String? id,
     required String title,
     required List<Map<String, dynamic>> pages,
+    Map<String, dynamic>? metadata,
     Uint8List? thumbnail,
   }) async {
     try {
@@ -538,10 +594,13 @@ class PracticeRepositoryImpl
         'id': practiceId,
         'title': title,
         'pages': pagesJson,
+        'pageCount': pages.length, // 根据传入的pages数组计算页数
+        'metadata': metadata != null ? jsonEncode(metadata) : '{}', // 元数据
         'updateTime': now,
       };
 
-      debugPrint('缩略图数据: ${thumbnail != null ? '已生成' : '无缩略图'}');
+      debugPrint(
+          '保存数据: 标题=$title, 页数=${pages.length}, 元数据=${metadata != null ? '已设置' : '默认空对象'}, 缩略图=${thumbnail != null ? '已生成' : '无缩略图'}');
 
       // 如果是新建的字帖，添加创建时间
       if (id == null) {
@@ -818,6 +877,62 @@ class PracticeRepositoryImpl
       debugPrint('_prepareForSave: pages字段不存在，设为空列表');
     }
 
+    // 处理pageCount字段，确保与pages字段保持同步
+    // 无论是否已有pageCount字段，都根据当前pages字段重新计算
+    int calculatedPageCount = 0;
+    if (result['pages'] != null) {
+      if (result['pages'] is List) {
+        calculatedPageCount = (result['pages'] as List).length;
+        debugPrint(
+            '_prepareForSave: 根据当前pages数组计算pageCount: $calculatedPageCount');
+      } else if (result['pages'] is String) {
+        try {
+          final pagesData = jsonDecode(result['pages'] as String);
+          if (pagesData is List) {
+            calculatedPageCount = pagesData.length;
+            debugPrint(
+                '_prepareForSave: 根据pages JSON计算pageCount: $calculatedPageCount');
+          }
+        } catch (e) {
+          debugPrint('_prepareForSave: 无法解析pages JSON计算pageCount: $e');
+          calculatedPageCount = 0;
+        }
+      }
+    }
+    result['pageCount'] = calculatedPageCount;
+    debugPrint('_prepareForSave: 设置pageCount为: $calculatedPageCount');
+
+    // 处理metadata字段，将Map结构转换为JSON字符串
+    if (result.containsKey('metadata') && result['metadata'] != null) {
+      try {
+        if (result['metadata'] is Map) {
+          debugPrint('_prepareForSave: 将metadata字段转换为JSON字符串');
+          result['metadata'] = jsonEncode(result['metadata']);
+        } else if (result['metadata'] is String) {
+          // 如果已经是字符串，验证是否为有效JSON
+          debugPrint('_prepareForSave: metadata字段已经是字符串，验证JSON格式');
+          try {
+            jsonDecode(result['metadata'] as String);
+            debugPrint('_prepareForSave: metadata字段JSON格式有效');
+          } catch (e) {
+            debugPrint('_prepareForSave: metadata字段JSON格式无效，设为空对象: $e');
+            result['metadata'] = '{}';
+          }
+        } else {
+          // 如果是其他类型，设置为空JSON对象
+          debugPrint('_prepareForSave: metadata字段类型未知，设为空对象');
+          result['metadata'] = '{}';
+        }
+      } catch (e) {
+        debugPrint('_prepareForSave: 转换metadata字段失败: $e，设为空对象');
+        result['metadata'] = '{}';
+      }
+    } else {
+      // 如果不存在，设置为空JSON对象
+      result['metadata'] = '{}';
+      debugPrint('_prepareForSave: metadata字段不存在，设为空对象');
+    }
+
     // 处理thumbnail字段，确保SQLite兼容的BLOB类型
     if (result.containsKey('thumbnail') && result['thumbnail'] != null) {
       try {
@@ -933,6 +1048,69 @@ class PracticeRepositoryImpl
       // 如果不存在，设置为默认值false
       processedData['isFavorite'] = false;
       debugPrint('_processDbData: isFavorite字段不存在，设为默认值false');
+    }
+
+    // 处理pageCount字段，确保是整数类型
+    if (processedData.containsKey('pageCount')) {
+      // 确保pageCount是整数类型
+      if (processedData['pageCount'] is int) {
+        debugPrint(
+            '_processDbData: 从数据库读取 pageCount=${processedData['pageCount']}');
+      } else {
+        // 尝试转换为整数
+        try {
+          processedData['pageCount'] =
+              int.tryParse(processedData['pageCount'].toString()) ?? 0;
+          debugPrint(
+              '_processDbData: 转换 pageCount=${processedData['pageCount']}');
+        } catch (e) {
+          processedData['pageCount'] = 0;
+          debugPrint('_processDbData: pageCount转换失败，设为0');
+        }
+      }
+    } else {
+      // 如果数据库中没有pageCount字段，根据pages计算
+      int calculatedPageCount = 0;
+      if (processedData['pages'] is List) {
+        calculatedPageCount = (processedData['pages'] as List).length;
+      }
+      processedData['pageCount'] = calculatedPageCount;
+      debugPrint(
+          '_processDbData: pageCount字段不存在，根据pages计算得到: $calculatedPageCount');
+    }
+
+    // 处理metadata字段，将JSON字符串解析为Map
+    if (processedData.containsKey('metadata') &&
+        processedData['metadata'] != null) {
+      if (processedData['metadata'] is String) {
+        final metadataJson = processedData['metadata'] as String;
+        if (metadataJson.isNotEmpty) {
+          try {
+            final decodedMetadata = jsonDecode(metadataJson);
+            if (decodedMetadata is Map<String, dynamic>) {
+              processedData['metadata'] = decodedMetadata;
+              debugPrint('_processDbData: 成功解析metadata JSON');
+            } else {
+              processedData['metadata'] = <String, dynamic>{};
+              debugPrint('_processDbData: metadata解析结果不是Map，使用空对象');
+            }
+          } catch (e) {
+            debugPrint('_processDbData: 解析metadata JSON失败: $e，使用空对象');
+            processedData['metadata'] = <String, dynamic>{};
+          }
+        } else {
+          processedData['metadata'] = <String, dynamic>{};
+          debugPrint('_processDbData: metadata字段为空字符串，使用空对象');
+        }
+      } else if (processedData['metadata'] is Map) {
+        debugPrint('_processDbData: metadata字段已经是Map类型');
+      } else {
+        processedData['metadata'] = <String, dynamic>{};
+        debugPrint('_processDbData: metadata字段类型未知，使用空对象');
+      }
+    } else {
+      processedData['metadata'] = <String, dynamic>{};
+      debugPrint('_processDbData: metadata字段不存在，使用空对象');
     }
 
     // 处理status字段，数据库表中不存在但实体模型中需要
@@ -1194,6 +1372,59 @@ class PracticeRepositoryImpl
       // 如果不存在，设置为默认值false
       processedData['isFavorite'] = false;
       debugPrint('_processDbDataForList: isFavorite字段不存在，设为默认值false');
+    }
+
+    // 处理pageCount字段，确保是整数类型
+    if (processedData.containsKey('pageCount')) {
+      // 确保pageCount是整数类型
+      if (processedData['pageCount'] is int) {
+        debugPrint(
+            '_processDbDataForList: 从数据库读取 pageCount=${processedData['pageCount']}');
+      } else {
+        // 尝试转换为整数
+        try {
+          processedData['pageCount'] =
+              int.tryParse(processedData['pageCount'].toString()) ?? 0;
+          debugPrint(
+              '_processDbDataForList: 转换 pageCount=${processedData['pageCount']}');
+        } catch (e) {
+          processedData['pageCount'] = 0;
+          debugPrint('_processDbDataForList: pageCount转换失败，设为0');
+        }
+      }
+    } else {
+      // 如果数据库中没有pageCount字段，设为默认值0
+      processedData['pageCount'] = 0;
+      debugPrint('_processDbDataForList: pageCount字段不存在，设为默认值0');
+    }
+
+    // 处理metadata字段（列表查询时保持为JSON字符串，不解析以提高性能）
+    if (processedData.containsKey('metadata') &&
+        processedData['metadata'] != null) {
+      if (processedData['metadata'] is String) {
+        // 验证JSON格式但不解析，保持字符串格式以提高列表查询性能
+        final metadataJson = processedData['metadata'] as String;
+        if (metadataJson.isEmpty) {
+          processedData['metadata'] = <String, dynamic>{};
+          debugPrint('_processDbDataForList: metadata为空字符串，使用空对象');
+        } else {
+          try {
+            jsonDecode(metadataJson); // 仅验证格式，不使用结果
+            // 对于列表查询，我们将JSON字符串转换为空对象以节省内存
+            processedData['metadata'] = <String, dynamic>{};
+            debugPrint('_processDbDataForList: metadata JSON格式有效，使用空对象');
+          } catch (e) {
+            processedData['metadata'] = <String, dynamic>{};
+            debugPrint('_processDbDataForList: metadata JSON格式无效，使用空对象');
+          }
+        }
+      } else {
+        processedData['metadata'] = <String, dynamic>{};
+        debugPrint('_processDbDataForList: metadata字段类型非字符串，使用空对象');
+      }
+    } else {
+      processedData['metadata'] = <String, dynamic>{};
+      debugPrint('_processDbDataForList: metadata字段不存在，使用空对象');
     }
 
     // 处理status字段，数据库表中不存在但实体模型中需要

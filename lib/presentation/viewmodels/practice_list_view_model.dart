@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/services/practice/practice_list_refresh_service.dart';
 import '../../application/services/practice/practice_service.dart';
@@ -167,7 +168,8 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
 
       debugPrint(
           'PracticeListViewModel: 查询过滤条件: limit=${filter.limit}, offset=${filter.offset}, isFavorite=${filter.isFavorite}'); // 查询练习（使用优化版本，不包含pages字段）
-      debugPrint('PracticeListViewModel: 调用 _practiceService.queryPracticesList (优化版本)');
+      debugPrint(
+          'PracticeListViewModel: 调用 _practiceService.queryPracticesList (优化版本)');
       debugPrint('PracticeListViewModel: 详细过滤条件: ${filter.toJson()}');
       final practicesResult = await _practiceService.queryPracticesList(filter);
       debugPrint('PracticeListViewModel: 查询结果数量: ${practicesResult.length}');
@@ -193,7 +195,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
             'status': practice.status,
             'createTime': practice.createTime.toIso8601String(),
             'updateTime': practice.updateTime.toIso8601String(),
-            'pageCount': practice.pages.length,
+            'pageCount': practice.actualPageCount,
             'isFavorite': practice.isFavorite,
             'tags': practice.tags,
             'thumbnail': practice.thumbnail, // 从数据库获取的缩略图
@@ -508,10 +510,40 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
     );
   }
 
+  /// 检查是否需要修复pageCount字段（只在首次启动时执行）
+  Future<void> _fixPageCountIfNeeded() async {
+    try {
+      const fixKey = 'pagecount_fix_applied_v2'; // 更新键名以重新触发修复
+      final prefs = await SharedPreferences.getInstance();
+
+      // 检查是否已经执行过修复
+      if (prefs.getBool(fixKey) == true) {
+        debugPrint('PracticeListViewModel: pageCount修复已执行过，跳过');
+        return;
+      }
+
+      debugPrint('PracticeListViewModel: 开始执行pageCount字段修复...');
+
+      // 执行修复
+      await _practiceService.fixPageCountForAllPractices();
+
+      // 标记修复已完成
+      await prefs.setBool(fixKey, true);
+
+      debugPrint('PracticeListViewModel: pageCount字段修复完成');
+    } catch (e) {
+      debugPrint('PracticeListViewModel: pageCount字段修复失败: $e');
+      // 修复失败不影响应用启动
+    }
+  }
+
   // 初始化数据
   Future<void> _initializeData() async {
     try {
       debugPrint('PracticeListViewModel: 开始初始化数据...');
+
+      // 一次性修复pageCount字段（仅在首次启动时执行）
+      await _fixPageCountIfNeeded();
 
       // 尝试恢复之前保存的状态
       final savedState = await PracticeListStatePersistence.restore();

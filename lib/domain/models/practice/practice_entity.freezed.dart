@@ -44,6 +44,12 @@ mixin _$PracticeEntity {
   /// 是否收藏
   bool get isFavorite => throw _privateConstructorUsedError;
 
+  /// 页数 - 数据库存储字段，与pages.length保持同步
+  int get pageCount => throw _privateConstructorUsedError;
+
+  /// 元数据 - JSON格式存储的扩展信息
+  Map<String, dynamic> get metadata => throw _privateConstructorUsedError;
+
   /// 缩略图数据 (BLOB)
   @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
   Uint8List? get thumbnail => throw _privateConstructorUsedError;
@@ -73,6 +79,8 @@ abstract class $PracticeEntityCopyWith<$Res> {
       DateTime createTime,
       DateTime updateTime,
       bool isFavorite,
+      int pageCount,
+      Map<String, dynamic> metadata,
       @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
       Uint8List? thumbnail});
 }
@@ -100,6 +108,8 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
+    Object? pageCount = null,
+    Object? metadata = null,
     Object? thumbnail = freezed,
   }) {
     return _then(_value.copyWith(
@@ -135,6 +145,14 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      pageCount: null == pageCount
+          ? _value.pageCount
+          : pageCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      metadata: null == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       thumbnail: freezed == thumbnail
           ? _value.thumbnail
           : thumbnail // ignore: cast_nullable_to_non_nullable
@@ -160,6 +178,8 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
       DateTime createTime,
       DateTime updateTime,
       bool isFavorite,
+      int pageCount,
+      Map<String, dynamic> metadata,
       @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
       Uint8List? thumbnail});
 }
@@ -185,6 +205,8 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
+    Object? pageCount = null,
+    Object? metadata = null,
     Object? thumbnail = freezed,
   }) {
     return _then(_$PracticeEntityImpl(
@@ -220,6 +242,14 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      pageCount: null == pageCount
+          ? _value.pageCount
+          : pageCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      metadata: null == metadata
+          ? _value._metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       thumbnail: freezed == thumbnail
           ? _value.thumbnail
           : thumbnail // ignore: cast_nullable_to_non_nullable
@@ -240,9 +270,12 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       required this.createTime,
       required this.updateTime,
       this.isFavorite = false,
+      this.pageCount = 0,
+      final Map<String, dynamic> metadata = const {},
       @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson) this.thumbnail})
       : _pages = pages,
         _tags = tags,
+        _metadata = metadata,
         super._();
 
   factory _$PracticeEntityImpl.fromJson(Map<String, dynamic> json) =>
@@ -298,6 +331,23 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   @JsonKey()
   final bool isFavorite;
 
+  /// 页数 - 数据库存储字段，与pages.length保持同步
+  @override
+  @JsonKey()
+  final int pageCount;
+
+  /// 元数据 - JSON格式存储的扩展信息
+  final Map<String, dynamic> _metadata;
+
+  /// 元数据 - JSON格式存储的扩展信息
+  @override
+  @JsonKey()
+  Map<String, dynamic> get metadata {
+    if (_metadata is EqualUnmodifiableMapView) return _metadata;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_metadata);
+  }
+
   /// 缩略图数据 (BLOB)
   @override
   @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
@@ -319,6 +369,9 @@ class _$PracticeEntityImpl extends _PracticeEntity {
                 other.updateTime == updateTime) &&
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
+            (identical(other.pageCount, pageCount) ||
+                other.pageCount == pageCount) &&
+            const DeepCollectionEquality().equals(other._metadata, _metadata) &&
             const DeepCollectionEquality().equals(other.thumbnail, thumbnail));
   }
 
@@ -334,6 +387,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       createTime,
       updateTime,
       isFavorite,
+      pageCount,
+      const DeepCollectionEquality().hash(_metadata),
       const DeepCollectionEquality().hash(thumbnail));
 
   /// Create a copy of PracticeEntity
@@ -363,6 +418,8 @@ abstract class _PracticeEntity extends PracticeEntity {
       required final DateTime createTime,
       required final DateTime updateTime,
       final bool isFavorite,
+      final int pageCount,
+      final Map<String, dynamic> metadata,
       @JsonKey(fromJson: _bytesFromJson, toJson: _bytesToJson)
       final Uint8List? thumbnail}) = _$PracticeEntityImpl;
   const _PracticeEntity._() : super._();
@@ -401,6 +458,14 @@ abstract class _PracticeEntity extends PracticeEntity {
   /// 是否收藏
   @override
   bool get isFavorite;
+
+  /// 页数 - 数据库存储字段，与pages.length保持同步
+  @override
+  int get pageCount;
+
+  /// 元数据 - JSON格式存储的扩展信息
+  @override
+  Map<String, dynamic> get metadata;
 
   /// 缩略图数据 (BLOB)
   @override
