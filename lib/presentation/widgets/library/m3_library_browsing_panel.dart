@@ -702,7 +702,7 @@ class _M3LibraryBrowsingPanelState
                 const SizedBox(height: 16),
                 Text(AppLocalizations.of(context).importing),
                 const SizedBox(height: 8),
-                Text('正在处理 ${files.length} 个文件...'),
+                Text('${AppLocalizations.of(context).processing} ${files.length} ${AppLocalizations.of(context).files}...'),
               ],
             ),
           ),
@@ -743,7 +743,7 @@ class _M3LibraryBrowsingPanelState
         } catch (e) {
           failureCount++;
           lastError = e.toString();
-          AppLogger.warning('导入文件失败: $filePath', error: e);
+          AppLogger.warning('Import file failed: $filePath', error: e);
         }
       }
 
@@ -759,7 +759,7 @@ class _M3LibraryBrowsingPanelState
           // 全部成功
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('成功导入 $successCount 个文件'),
+              content: Text('${AppLocalizations.of(context).importSuccess}: $successCount ${AppLocalizations.of(context).files}'),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -767,7 +767,7 @@ class _M3LibraryBrowsingPanelState
           // 部分成功
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('导入完成：成功 $successCount 个，失败 $failureCount 个'),
+              content: Text('${AppLocalizations.of(context).importing}: ${AppLocalizations.of(context).importSuccess} $successCount, ${AppLocalizations.of(context).importFailure} $failureCount'),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 3),
             ),
@@ -776,7 +776,7 @@ class _M3LibraryBrowsingPanelState
           // 全部失败
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('导入失败：${lastError ?? "未知错误"}'),
+              content: Text('${AppLocalizations.of(context).importFailure}: ${lastError ?? AppLocalizations.of(context).unknownError}'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
@@ -790,7 +790,7 @@ class _M3LibraryBrowsingPanelState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('批量导入失败：${e.toString()}'),
+            content: Text('${AppLocalizations.of(context).batchImport} ${AppLocalizations.of(context).importFailure}: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
