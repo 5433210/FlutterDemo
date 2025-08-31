@@ -12,9 +12,9 @@ set(APPLICATION_ID "com.example.demo")
 # Application version information
 set(APP_VERSION_MAJOR 0)
 set(APP_VERSION_MINOR 0)
-set(APP_VERSION_PATCH 9)
+set(APP_VERSION_PATCH 10)
 set(APP_BUILD_NUMBER "20250620001")
-set(APP_VERSION_STRING "0.0.9-20250830001")
+set(APP_VERSION_STRING "0.0.10-20250831001")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
