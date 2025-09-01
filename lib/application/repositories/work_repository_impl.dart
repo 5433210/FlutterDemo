@@ -195,28 +195,29 @@ class WorkRepositoryImpl implements WorkRepository {
 
     // 搜索关键字
     if (filter.keyword?.isNotEmpty == true) {
+      final escapedKeyword = _escapeLikePattern(filter.keyword!);
       groups.add(
         DatabaseQueryGroup.or([
           DatabaseQueryCondition(
             field: 'title',
             operator: 'like',
-            value: '%${filter.keyword}%',
+            value: '%$escapedKeyword%',
           ),
           DatabaseQueryCondition(
             field: 'author',
             operator: 'like',
-            value: '%${filter.keyword}%',
+            value: '%$escapedKeyword%',
           ),
           DatabaseQueryCondition(
             field: 'remark',
             operator: 'like',
-            value: '%${filter.keyword}%',
+            value: '%$escapedKeyword%',
           ),
           // 添加标签模糊搜索
           DatabaseQueryCondition(
             field: 'tags',
             operator: 'like',
-            value: '%${filter.keyword}%',
+            value: '%$escapedKeyword%',
           ),
         ]),
       );
@@ -466,5 +467,17 @@ class WorkRepositoryImpl implements WorkRepository {
       'imageCount': imageCount,
       'firstImageId': firstImageId,
     });
+  }
+  
+  /// 转义 LIKE 操作符中的特殊字符
+  String _escapeLikePattern(String pattern) {
+    // 转义 SQLite LIKE 操作符中的特殊字符
+    // % 匹配零个或多个字符
+    // _ 匹配单个字符
+    // \ 用作转义字符
+    return pattern
+        .replaceAll('\\', '\\\\')  // 先转义反斜杠
+        .replaceAll('%', '\\%')    // 转义百分号
+        .replaceAll('_', '\\_');   // 转义下划线
   }
 }

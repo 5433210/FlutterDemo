@@ -264,9 +264,10 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   Future<List<CharacterView>> searchBySimplifiedCharacter(String character,
       {int limit = 20}) async {
     try {
+      final escapedCharacter = _escapeLikePattern(character);
       final results = await _database.rawQuery(
         'SELECT * FROM $_viewName WHERE character LIKE ? LIMIT ?',
-        ['%$character%', limit],
+        ['%$escapedCharacter%', limit],
       );
 
       return results.map(_mapToCharacterView).toList();
@@ -307,7 +308,8 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     if (filter.searchText != null && filter.searchText!.isNotEmpty) {
       conditions.add(
           '(character LIKE ? OR title LIKE ? OR author LIKE ? OR tags LIKE ?)');
-      final searchPattern = '%${filter.searchText}%';
+      final escapedText = _escapeLikePattern(filter.searchText!);
+      final searchPattern = '%$escapedText%';
       args.addAll([searchPattern, searchPattern, searchPattern, searchPattern]);
     }
 
@@ -570,5 +572,17 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
       );
       rethrow;
     }
+  }
+  
+  /// 转义 LIKE 操作符中的特殊字符
+  String _escapeLikePattern(String pattern) {
+    // 转义 SQLite LIKE 操作符中的特殊字符
+    // % 匹配零个或多个字符
+    // _ 匹配单个字符
+    // \ 用作转义字符
+    return pattern
+        .replaceAll('\\', '\\\\')  // 先转义反斜杠
+        .replaceAll('%', '\\%')    // 转义百分号
+        .replaceAll('_', '\\_');   // 转义下划线
   }
 }

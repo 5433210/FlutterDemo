@@ -152,10 +152,13 @@ class CharacterRepositoryImpl implements CharacterRepository {
     }
 
     try {
+      // 转义特殊字符以避免误匹配
+      final escapedQuery = _escapeLikePattern(query.trim());
+      
       // 构建搜索查询
       final searchQuery = DatabaseQuery(conditions: [
         DatabaseQueryCondition(
-            field: 'character', operator: 'LIKE', value: '%${query.trim()}%')
+            field: 'character', operator: 'LIKE', value: '%$escapedQuery%')
       ], limit: limit, orderBy: 'character ASC');
 
       // 执行优化后的查询
@@ -197,6 +200,19 @@ class CharacterRepositoryImpl implements CharacterRepository {
   }
 
   // Helper methods
+  
+  /// 转义 LIKE 操作符中的特殊字符
+  String _escapeLikePattern(String pattern) {
+    // 转义 SQLite LIKE 操作符中的特殊字符
+    // % 匹配零个或多个字符
+    // _ 匹配单个字符
+    // \ 用作转义字符
+    return pattern
+        .replaceAll('\\', '\\\\')  // 先转义反斜杠
+        .replaceAll('%', '\\%')    // 转义百分号
+        .replaceAll('_', '\\_');   // 转义下划线
+  }
+
   DatabaseQuery _buildFilterQuery(CharacterFilter? filter) {
     final conditions = <DatabaseQueryCondition>[];
 
@@ -222,7 +238,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
       ));
     } // 文本搜索过滤
     if (filter.searchText != null && filter.searchText!.isNotEmpty) {
-      final searchText = filter.searchText!.trim();
+      final searchText = _escapeLikePattern(filter.searchText!.trim());
 
       // 使用OR逻辑：如果搜索文本匹配字符或标签，则返回结果
       conditions.add(DatabaseQueryCondition(

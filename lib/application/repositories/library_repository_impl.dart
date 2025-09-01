@@ -170,10 +170,11 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       // Handle tags using individual LIKE conditions
       if (tags != null && tags.isNotEmpty) {
         for (final tag in tags) {
+          final escapedTag = _escapeLikePattern(tag);
           conditions.add(DatabaseQueryCondition(
             field: 'tags',
             operator: 'LIKE',
-            value: '%$tag%',
+            value: '%$escapedTag%',
           ));
         }
       }
@@ -181,10 +182,11 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       // Handle categories using individual LIKE conditions
       if (categories != null && categories.isNotEmpty) {
         for (final category in categories) {
+          final escapedCategory = _escapeLikePattern(category);
           conditions.add(DatabaseQueryCondition(
             field: 'categories',
             operator: 'LIKE',
-            value: '%$category%',
+            value: '%$escapedCategory%',
           ));
         }
       }
@@ -194,18 +196,19 @@ class LibraryRepositoryImpl implements ILibraryRepository {
 
       if (searchQuery != null && searchQuery.isNotEmpty) {
         // 创建一个OR条件组，实现同时搜索名称和标签
+        final escapedQuery = _escapeLikePattern(searchQuery);
         final searchConditions = [
           // 搜索文件名
           DatabaseQueryCondition(
             field: 'fileName',
             operator: 'LIKE',
-            value: '%$searchQuery%',
+            value: '%$escapedQuery%',
           ),
           // 搜索标签
           DatabaseQueryCondition(
             field: 'tags',
             operator: 'LIKE',
-            value: '%$searchQuery%',
+            value: '%$escapedQuery%',
           ),
         ];
 
@@ -433,12 +436,13 @@ class LibraryRepositoryImpl implements ILibraryRepository {
 
       for (final category in categories) {
         // Create a query with LIKE operator for comma-separated values
+        final escapedCategoryId = _escapeLikePattern(category.id);
         final query = DatabaseQuery(
           conditions: [
             DatabaseQueryCondition(
               field: 'categories',
               operator: 'LIKE',
-              value: '%${category.id}%',
+              value: '%$escapedCategoryId%',
             ),
           ],
         );
@@ -548,27 +552,29 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       if (categories != null && categories.isNotEmpty) {
         // Handle categories using individual LIKE conditions
         for (final category in categories) {
+          final escapedCategory = _escapeLikePattern(category);
           conditions.add(DatabaseQueryCondition(
             field: 'categories',
             operator: 'LIKE',
-            value: '%$category%',
+            value: '%$escapedCategory%',
           ));
         }
       }
       if (searchQuery != null && searchQuery.isNotEmpty) {
         // 创建一个OR条件组，实现同时搜索名称和标签
+        final escapedQuery = _escapeLikePattern(searchQuery);
         final searchConditions = [
           // 搜索文件名
           DatabaseQueryCondition(
             field: 'fileName',
             operator: 'LIKE',
-            value: '%$searchQuery%',
+            value: '%$escapedQuery%',
           ),
           // 搜索标签
           DatabaseQueryCondition(
             field: 'tags',
             operator: 'LIKE',
-            value: '%$searchQuery%',
+            value: '%$escapedQuery%',
           ),
         ];
 
@@ -773,5 +779,17 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   /// 清理路径用于日志记录
   String _sanitizePathForLogging(String path) {
     return PathPrivacyHelper.sanitizePathForLogging(path);
+  }
+  
+  /// 转义 LIKE 操作符中的特殊字符
+  String _escapeLikePattern(String pattern) {
+    // 转义 SQLite LIKE 操作符中的特殊字符
+    // % 匹配零个或多个字符
+    // _ 匹配单个字符
+    // \ 用作转义字符
+    return pattern
+        .replaceAll('\\', '\\\\')  // 先转义反斜杠
+        .replaceAll('%', '\\%')    // 转义百分号
+        .replaceAll('_', '\\_');   // 转义下划线
   }
 }

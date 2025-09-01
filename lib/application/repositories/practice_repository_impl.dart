@@ -720,17 +720,19 @@ class PracticeRepositoryImpl
 
     // 添加标题关键词查询
     if (filter.keyword?.isNotEmpty == true) {
+      final escapedKeyword = _escapeLikePattern(filter.keyword!);
       conditions
-          .add({'field': 'title', 'op': 'LIKE', 'val': '%${filter.keyword}%'});
-      debugPrint('添加关键词筛选条件: title LIKE %${filter.keyword}%');
+          .add({'field': 'title', 'op': 'LIKE', 'val': '%$escapedKeyword%'});
+      debugPrint('添加关键词筛选条件: title LIKE %$escapedKeyword%');
     }
 
     // 添加标签查询
     if (filter.tags.isNotEmpty) {
       // 为每个标签构建一个包含查询
       for (final tag in filter.tags) {
-        conditions.add({'field': 'tags', 'op': 'LIKE', 'val': '%$tag%'});
-        debugPrint('添加标签筛选条件: tags LIKE %$tag%');
+        final escapedTag = _escapeLikePattern(tag);
+        conditions.add({'field': 'tags', 'op': 'LIKE', 'val': '%$escapedTag%'});
+        debugPrint('添加标签筛选条件: tags LIKE %$escapedTag%');
       }
     }
 
@@ -1439,5 +1441,17 @@ class PracticeRepositoryImpl
     }
 
     return processedData;
+  }
+  
+  /// 转义 LIKE 操作符中的特殊字符
+  String _escapeLikePattern(String pattern) {
+    // 转义 SQLite LIKE 操作符中的特殊字符
+    // % 匹配零个或多个字符
+    // _ 匹配单个字符
+    // \ 用作转义字符
+    return pattern
+        .replaceAll('\\', '\\\\')  // 先转义反斜杠
+        .replaceAll('%', '\\%')    // 转义百分号
+        .replaceAll('_', '\\_');   // 转义下划线
   }
 }
