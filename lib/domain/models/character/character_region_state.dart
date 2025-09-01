@@ -31,16 +31,16 @@ class CharacterRegionColorScheme {
   static const multiSelectedOpacity = 0.4; // 最高透明度，确保多选状态最显眼
 
   /// 选中状态边框宽度
-  static const selectedBorderWidth = 3.0; // 增加边框宽度
+  static const selectedBorderWidth = 2.0; // 🔧 优化：减细边框，更精致
 
   /// 多选状态边框宽度
-  static const multiSelectedBorderWidth = 3.5; // 最粗的边框
+  static const multiSelectedBorderWidth = 2.5; // 🔧 优化：减细多选边框
 
   /// 普通状态边框宽度
-  static const normalBorderWidth = 1.5;
+  static const normalBorderWidth = 1.2; // 🔧 优化：进一步减细普通边框
 
   /// 调整状态边框宽度
-  static const adjustingBorderWidth = 2.5;
+  static const adjustingBorderWidth = 2.0; // 🔧 优化：减细调整状态边框
 }
 
 /// 表示字符区域的状态

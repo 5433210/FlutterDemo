@@ -428,7 +428,7 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
           constrained: false,
           transformationController: _transformationController,
           minScale: 0.1,
-          maxScale: 10.0,
+          maxScale: 50.0,
           // 在桌面端，缩放功能（鼠标滚轮）应该在所有模式下都可用
           scaleEnabled: true,
           // 平移功能只在特定条件下启用：平移模式、Alt键、右键
@@ -1374,16 +1374,16 @@ class _DesktopImageViewState extends ConsumerState<DesktopImageView>
     // 控制点现在向内偏移8px，与绘制逻辑保持一致
     const double inset = 8.0;
     final rect = _adjustingRect!;
-    
+
     final handles = [
-      Offset(rect.left + inset, rect.top + inset),       // 左上角
-      Offset(rect.center.dx, rect.top + inset),          // 上中
-      Offset(rect.right - inset, rect.top + inset),      // 右上角
-      Offset(rect.right - inset, rect.center.dy),        // 右中
-      Offset(rect.right - inset, rect.bottom - inset),   // 右下角
-      Offset(rect.center.dx, rect.bottom - inset),       // 下中
-      Offset(rect.left + inset, rect.bottom - inset),    // 左下角
-      Offset(rect.left + inset, rect.center.dy),         // 左中
+      Offset(rect.left + inset, rect.top + inset), // 左上角
+      Offset(rect.center.dx, rect.top + inset), // 上中
+      Offset(rect.right - inset, rect.top + inset), // 右上角
+      Offset(rect.right - inset, rect.center.dy), // 右中
+      Offset(rect.right - inset, rect.bottom - inset), // 右下角
+      Offset(rect.center.dx, rect.bottom - inset), // 下中
+      Offset(rect.left + inset, rect.bottom - inset), // 左下角
+      Offset(rect.left + inset, rect.center.dy), // 左中
     ];
 
     // Transform these handle positions if we have rotation

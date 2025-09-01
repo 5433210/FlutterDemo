@@ -53,7 +53,7 @@ class AdjustableRegionPainter extends CustomPainter {
     final borderPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isAdjusting ? 2.0 : 1.5;
+      ..strokeWidth = isAdjusting ? 1.2 : 1.0; // 🔧 优化：减细边框，更精致
     canvas.drawRect(viewportRect!, borderPaint);
 
     // 绘制调整手柄 (draw with rotation applied)
@@ -80,18 +80,18 @@ class AdjustableRegionPainter extends CustomPainter {
         oldDelegate.activeHandleIndex != activeHandleIndex) {
       return true;
     }
-    
-    // 检查变换相关的变化  
+
+    // 检查变换相关的变化
     if (oldDelegate.currentRotation != currentRotation ||
         oldDelegate.viewportRect != viewportRect) {
       return true;
     }
-    
+
     // 检查引导线变化
     if (!_listsEqual(oldDelegate.guideLines, guideLines)) {
       return true;
     }
-    
+
     // 最后检查区域变化（最复杂的比较）
     return oldDelegate.region != region;
   }
@@ -121,26 +121,26 @@ class AdjustableRegionPainter extends CustomPainter {
   }
 
   void _drawHandles(Canvas canvas, Rect rect) {
-    // 使用与字帖编辑页相同的角落标记式风格
+    // 使用与字帖编辑页相同的角落标记式风格，但优化间距和样式
     final markPaint = Paint()
       ..color = Colors.blue
-      ..strokeWidth = 2.5
+      ..strokeWidth = 1.8 // 🔧 优化：减细线条，更精致
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
     // 绘制包围元素区域的细线框
     final borderPaint = Paint()
-      ..color = Colors.blue.withValues(alpha: 0.5)
-      ..strokeWidth = 1.0
+      ..color = Colors.blue.withValues(alpha: 0.4) // 🔧 优化：降低透明度，更淡雅
+      ..strokeWidth = 0.8 // 🔧 优化：更细的边框线
       ..style = PaintingStyle.stroke;
 
     canvas.drawRect(rect, borderPaint);
 
-    // 控制点标记的长度
-    const double markLength = 12.0;
-    const double inset = 8.0; // 控制点内偏移量
+    // 🔧 优化控制点参数：减少间距，使控制点更贴近选择框
+    const double markLength = 10.0; // 减小标记长度，更紧凑
+    const double inset = 4.0; // 大幅减少内偏移量，控制点更靠近边框
 
-    // 计算所有8个控制点位置（在元素内部）
+    // 计算所有8个控制点位置（在元素内部但更靠近边缘）
     final controlPoints = [
       Offset(rect.left + inset, rect.top + inset), // 左上角
       Offset(rect.center.dx, rect.top + inset), // 上中
@@ -155,54 +155,70 @@ class AdjustableRegionPainter extends CustomPainter {
     // 为每个控制点位置绘制L形或T形标记
     for (int i = 0; i < controlPoints.length; i++) {
       final isActive = i == activeHandleIndex;
-      final currentPaint = isActive 
+      final currentPaint = isActive
           ? (Paint()
-              ..color = Colors.blue.shade800
-              ..strokeWidth = 3.0
-              ..style = PaintingStyle.stroke
-              ..strokeCap = StrokeCap.square)
+            ..color = Colors.blue.shade700 // 更深的蓝色突出活跃状态
+            ..strokeWidth = 2.2 // 🔧 优化：适中的活跃状态线宽
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.square)
           : markPaint;
-      
-      _drawControlPointMark(canvas, currentPaint, controlPoints[i], i, markLength);
+
+      _drawControlPointMark(
+          canvas, currentPaint, controlPoints[i], i, markLength);
     }
   }
 
-  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint, 
+  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint,
       int index, double markLength) {
-    
     // 根据控制点位置确定L形或T形标记的方向
     switch (index) {
       case 0: // 左上角 - L形开口向右下
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 1: // 上中 - T形向下
-        canvas.drawLine(controlPoint.translate(-markLength/2, 0), controlPoint.translate(markLength/2, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(controlPoint.translate(-markLength / 2, 0),
+            controlPoint.translate(markLength / 2, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 2: // 右上角 - L形开口向左下
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 3: // 右中 - T形向左
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint.translate(0, -markLength/2), controlPoint.translate(0, markLength/2), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(controlPoint.translate(0, -markLength / 2),
+            controlPoint.translate(0, markLength / 2), paint);
         break;
       case 4: // 右下角 - L形开口向左上
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 5: // 下中 - T形向上
-        canvas.drawLine(controlPoint.translate(-markLength/2, 0), controlPoint.translate(markLength/2, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(controlPoint.translate(-markLength / 2, 0),
+            controlPoint.translate(markLength / 2, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 6: // 左下角 - L形开口向右上
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 7: // 左中 - T形向右
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint.translate(0, -markLength/2), controlPoint.translate(0, markLength/2), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(controlPoint.translate(0, -markLength / 2),
+            controlPoint.translate(0, markLength / 2), paint);
         break;
     }
   }
@@ -256,10 +272,10 @@ class AdjustableRegionPainter extends CustomPainter {
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
-    
+
     // 绘制阴影
     canvas.drawCircle(rotationPoint.translate(1, 1), 8.5, shadowPaint);
-    
+
     // 绘制控制点主体
     canvas.drawCircle(rotationPoint, 8.0, controlPaint);
     canvas.drawCircle(rotationPoint, 8.0, controlBorderPaint);

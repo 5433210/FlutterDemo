@@ -210,16 +210,16 @@ class _M3LibraryManagementNavigationBarState
           if (widget.selectedCount > 0)
             IconButton(
               icon: const Icon(Icons.delete),
-              tooltip: l10n.deleteSuccess,
+              tooltip: l10n.delete,
               onPressed: widget.onDeleteSelected,
             ),
         ], // 删除全部按钮 - 在非批量模式下显示
-        if (!widget.isBatchMode && widget.onDeleteAll != null)
-          IconButton(
-            icon: const Icon(Icons.delete_sweep),
-            tooltip: l10n.deleteAll,
-            onPressed: widget.onDeleteAll,
-          ),
+        // if (!widget.isBatchMode && widget.onDeleteAll != null)
+        //   IconButton(
+        //     icon: const Icon(Icons.delete_sweep),
+        //     tooltip: l10n.deleteAll,
+        //     onPressed: widget.onDeleteAll,
+        //   ),
 
         // 批量操作按钮
         IconButton(

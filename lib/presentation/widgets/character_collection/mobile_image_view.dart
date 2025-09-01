@@ -233,7 +233,7 @@ class _MobileImageViewState extends ConsumerState<MobileImageView>
           constrained: false,
           transformationController: _transformationController,
           minScale: 0.1,
-          maxScale: 10.0,
+          maxScale: 50.0,
           panEnabled: toolMode == Tool.pan,
           scaleEnabled: true, // 保持缩放始终启用
           boundaryMargin: const EdgeInsets.all(double.infinity),

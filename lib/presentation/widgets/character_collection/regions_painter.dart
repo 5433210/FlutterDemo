@@ -52,9 +52,11 @@ class RegionsPainter extends CustomPainter {
       final viewportBounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
       // 调试信息
-      debugPrint('🎨 RegionsPainter paint开始 - regions: ${regions.length}, isSelecting: $isSelecting');
+      debugPrint(
+          '🎨 RegionsPainter paint开始 - regions: ${regions.length}, isSelecting: $isSelecting');
       if (isSelecting && selectionStart != null && selectionEnd != null) {
-        debugPrint('📐 创建中选区: start=${selectionStart!.dx}, ${selectionStart!.dy}, end=${selectionEnd!.dx}, ${selectionEnd!.dy}');
+        debugPrint(
+            '📐 创建中选区: start=${selectionStart!.dx}, ${selectionStart!.dy}, end=${selectionEnd!.dx}, ${selectionEnd!.dy}');
       }
 
       for (final region in regions) {
@@ -113,32 +115,32 @@ class RegionsPainter extends CustomPainter {
   @override
   bool shouldRepaint(RegionsPainter oldDelegate) {
     // 🚀 优化：先检查最可能变化的属性，短路求值提升性能
-    if (oldDelegate.hoveredId != hoveredId || 
+    if (oldDelegate.hoveredId != hoveredId ||
         oldDelegate.adjustingRegionId != adjustingRegionId ||
         oldDelegate.isAdjusting != isAdjusting) {
       return true;
     }
-    
+
     // 检查创建选区状态变化
     if (oldDelegate.isSelecting != isSelecting ||
         oldDelegate.selectionStart != selectionStart ||
         oldDelegate.selectionEnd != selectionEnd) {
       return true;
     }
-    
+
     // 检查控制点状态变化
     if (oldDelegate.isHandlePressed != isHandlePressed ||
         oldDelegate.pressedRegionId != pressedRegionId ||
         oldDelegate.pressedHandleIndex != pressedHandleIndex) {
       return true;
     }
-    
+
     // 检查选中状态变化
     if (oldDelegate.selectedIds.length != selectedIds.length ||
         !_listsEqual(oldDelegate.selectedIds, selectedIds)) {
       return true;
     }
-    
+
     // 最后检查较复杂的对象比较
     return oldDelegate.regions != regions ||
         oldDelegate.transformer != transformer ||
@@ -155,51 +157,51 @@ class RegionsPainter extends CustomPainter {
   }
 
   void _drawHandles(Canvas canvas, Rect rect, bool isActive, String regionId) {
-    // 🔧 更新为角落标记式风格，与AdjustableRegionPainter保持一致
-    
+    // 🔧 更新为角落标记式风格，与AdjustableRegionPainter保持一致，优化间距和样式
+
     // 绘制包围元素区域的细线框
     final borderPaint = Paint()
-      ..color = Colors.blue.withValues(alpha: 0.5)
-      ..strokeWidth = 1.0
+      ..color = Colors.blue.withValues(alpha: 0.25) // 🔧 优化：更淡的透明度，更精致
+      ..strokeWidth = 0.6 // 🔧 优化：更细的边框线，更精致
       ..style = PaintingStyle.stroke;
 
     canvas.drawRect(rect, borderPaint);
 
-    // 控制点标记的长度
-    const double markLength = 12.0;
-    const double inset = 8.0; // 控制点内偏移量
+    // 🔧 优化控制点参数：减少间距和大小，使其更精致
+    const double markLength = 8.0; // 进一步减小标记长度，更加精致
+    const double inset = 4.0; // 大幅减少内偏移量，控制点更靠近边框
 
-    // 计算所有8个控制点位置（在元素内部）
+    // 计算所有8个控制点位置（在元素内部但更靠近边缘）
     final controlPoints = [
-      Offset(rect.left + inset, rect.top + inset),       // 左上角
-      Offset(rect.center.dx, rect.top + inset),          // 上中
-      Offset(rect.right - inset, rect.top + inset),      // 右上角
-      Offset(rect.right - inset, rect.center.dy),        // 右中
-      Offset(rect.right - inset, rect.bottom - inset),   // 右下角
-      Offset(rect.center.dx, rect.bottom - inset),       // 下中
-      Offset(rect.left + inset, rect.bottom - inset),    // 左下角
-      Offset(rect.left + inset, rect.center.dy),         // 左中
+      Offset(rect.left + inset, rect.top + inset), // 左上角
+      Offset(rect.center.dx, rect.top + inset), // 上中
+      Offset(rect.right - inset, rect.top + inset), // 右上角
+      Offset(rect.right - inset, rect.center.dy), // 右中
+      Offset(rect.right - inset, rect.bottom - inset), // 右下角
+      Offset(rect.center.dx, rect.bottom - inset), // 下中
+      Offset(rect.left + inset, rect.bottom - inset), // 左下角
+      Offset(rect.left + inset, rect.center.dy), // 左中
     ];
 
     // 为每个控制点位置绘制L形或T形标记
     for (int i = 0; i < controlPoints.length; i++) {
       // 判断此控制点是否被点压
-      final isPressed = isHandlePressed && 
-                       pressedRegionId == regionId && 
-                       pressedHandleIndex == i;
+      final isPressed = isHandlePressed &&
+          pressedRegionId == regionId &&
+          pressedHandleIndex == i;
 
-      final markPaint = isPressed 
+      final markPaint = isPressed
           ? (Paint()
-              ..color = Colors.orange.shade700
-              ..strokeWidth = 3.0
-              ..style = PaintingStyle.stroke
-              ..strokeCap = StrokeCap.square)
+            ..color = Colors.orange.shade600 // 优化按下时的颜色
+            ..strokeWidth = 1.0 // 🔧 优化：减细按下状态线宽，更精致
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round) // 🔧 圆角端点，更精致
           : (Paint()
-              ..color = Colors.blue
-              ..strokeWidth = 2.5
-              ..style = PaintingStyle.stroke
-              ..strokeCap = StrokeCap.square);
-      
+            ..color = Colors.blue.withValues(alpha: 0.6) // 🔧 适度提高透明度
+            ..strokeWidth = 1.0 // 🔧 优化：进一步减细线条，更精致
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round); // 🔧 圆角端点，更精致
+
       _drawControlPointMark(canvas, markPaint, controlPoints[i], i, markLength);
     }
 
@@ -212,42 +214,57 @@ class RegionsPainter extends CustomPainter {
     });
   }
 
-  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint, 
+  void _drawControlPointMark(Canvas canvas, Paint paint, Offset controlPoint,
       int index, double markLength) {
-    
     // 根据控制点位置确定L形或T形标记的方向
     switch (index) {
       case 0: // 左上角 - L形开口向右下
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 1: // 上中 - T形向下
-        canvas.drawLine(controlPoint.translate(-markLength/2, 0), controlPoint.translate(markLength/2, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(controlPoint.translate(-markLength / 2, 0),
+            controlPoint.translate(markLength / 2, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 2: // 右上角 - L形开口向左下
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, markLength), paint);
         break;
       case 3: // 右中 - T形向左
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint.translate(0, -markLength/2), controlPoint.translate(0, markLength/2), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(controlPoint.translate(0, -markLength / 2),
+            controlPoint.translate(0, markLength / 2), paint);
         break;
       case 4: // 右下角 - L形开口向左上
-        canvas.drawLine(controlPoint, controlPoint.translate(-markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(-markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 5: // 下中 - T形向上
-        canvas.drawLine(controlPoint.translate(-markLength/2, 0), controlPoint.translate(markLength/2, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(controlPoint.translate(-markLength / 2, 0),
+            controlPoint.translate(markLength / 2, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 6: // 左下角 - L形开口向右上
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint, controlPoint.translate(0, -markLength), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(0, -markLength), paint);
         break;
       case 7: // 左中 - T形向右
-        canvas.drawLine(controlPoint, controlPoint.translate(markLength, 0), paint);
-        canvas.drawLine(controlPoint.translate(0, -markLength/2), controlPoint.translate(0, markLength/2), paint);
+        canvas.drawLine(
+            controlPoint, controlPoint.translate(markLength, 0), paint);
+        canvas.drawLine(controlPoint.translate(0, -markLength / 2),
+            controlPoint.translate(0, markLength / 2), paint);
         break;
     }
   }
@@ -287,13 +304,13 @@ class RegionsPainter extends CustomPainter {
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
-      
+
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderWidth
-      ..strokeCap = StrokeCap.round      // 圆角端点，更精致
-      ..strokeJoin = StrokeJoin.round;   // 圆角连接，更精致
+      ..strokeCap = StrokeCap.round // 圆角端点，更精致
+      ..strokeJoin = StrokeJoin.round; // 圆角连接，更精致
 
     // 🔧 为选中状态添加精致的光晕效果
     Paint? glowPaint;
@@ -301,7 +318,7 @@ class RegionsPainter extends CustomPainter {
       glowPaint = Paint()
         ..color = borderColor.withValues(alpha: 0.15)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = borderWidth + 4.0;  // 更宽的光晕
+        ..strokeWidth = borderWidth + 0.5; // 🔧 优化：减小光晕宽度，更精致
     }
 
     // 🔧 为多选状态添加额外的强调边框
@@ -310,7 +327,7 @@ class RegionsPainter extends CustomPainter {
       emphasisPaint = Paint()
         ..color = borderColor.withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = borderWidth + 1.5
+        ..strokeWidth = borderWidth + 0.0 // 🔧 优化：减小强调边框宽度
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
     }
@@ -321,8 +338,8 @@ class RegionsPainter extends CustomPainter {
       canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(region.rotation);
-      canvas.translate(-center.dx, -center.dy); 
-      
+      canvas.translate(-center.dx, -center.dy);
+
       // 绘制所有元素并应用旋转
       // 1. 绘制光晕（如果存在）
       if (glowPaint != null) {
@@ -413,74 +430,81 @@ class RegionsPainter extends CustomPainter {
   void _drawCreatingRegion(Canvas canvas, Offset start, Offset end) {
     // 计算选区矩形
     final rect = Rect.fromPoints(start, end);
-    
+
     debugPrint('🎨 _drawCreatingRegion 绘制创建中选区');
-    debugPrint('📐 选区矩形: ${rect.left}, ${rect.top}, ${rect.width}x${rect.height}');
-    
+    debugPrint(
+        '📐 选区矩形: ${rect.left}, ${rect.top}, ${rect.width}x${rect.height}');
+
     // 🔧 优化创建中选区的样式：更精致的虚线边框和填充
     final borderPaint = Paint()
       ..color = Colors.blue.withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;    // 圆角端点
-    
+      ..strokeWidth = 1.0 // 🔧 优化：减细边框线条
+      ..strokeCap = StrokeCap.round; // 圆角端点
+
     final fillPaint = Paint()
-      ..color = Colors.blue.withValues(alpha: 0.08)  // 更淡的填充
+      ..color = Colors.blue.withValues(alpha: 0.08) // 更淡的填充
       ..style = PaintingStyle.fill;
 
     // 🔧 添加光晕效果
     final glowPaint = Paint()
       ..color = Colors.blue.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-    
+      ..strokeWidth = 3.0; // 🔧 优化：减小光晕宽度
+
     // 1. 绘制光晕
     canvas.drawRect(rect, glowPaint);
-    
+
     // 2. 绘制填充
     canvas.drawRect(rect, fillPaint);
-    
+
     // 3. 绘制精致的虚线边框
     _drawDashedRect(canvas, rect, borderPaint);
-    
+
     debugPrint('✅ _drawCreatingRegion 绘制完成');
   }
 
   /// 绘制虚线矩形
   void _drawDashedRect(Canvas canvas, Rect rect, Paint paint) {
     // 🔧 优化虚线参数，使其更精致
-    const dashWidth = 6.0;   // 稍长的实线段
-    const dashSpace = 4.0;   // 稍短的空隙
-    
+    const dashWidth = 6.0; // 稍长的实线段
+    const dashSpace = 4.0; // 稍短的空隙
+
     // 绘制上边
-    _drawDashedLine(canvas, rect.topLeft, rect.topRight, paint, dashWidth, dashSpace);
+    _drawDashedLine(
+        canvas, rect.topLeft, rect.topRight, paint, dashWidth, dashSpace);
     // 绘制右边
-    _drawDashedLine(canvas, rect.topRight, rect.bottomRight, paint, dashWidth, dashSpace);
+    _drawDashedLine(
+        canvas, rect.topRight, rect.bottomRight, paint, dashWidth, dashSpace);
     // 绘制下边
-    _drawDashedLine(canvas, rect.bottomRight, rect.bottomLeft, paint, dashWidth, dashSpace);
+    _drawDashedLine(
+        canvas, rect.bottomRight, rect.bottomLeft, paint, dashWidth, dashSpace);
     // 绘制左边
-    _drawDashedLine(canvas, rect.bottomLeft, rect.topLeft, paint, dashWidth, dashSpace);
+    _drawDashedLine(
+        canvas, rect.bottomLeft, rect.topLeft, paint, dashWidth, dashSpace);
   }
 
   /// 绘制虚线
-  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint, double dashWidth, double dashSpace) {
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint,
+      double dashWidth, double dashSpace) {
     final distance = (end - start).distance;
     final unitVector = (end - start) / distance;
-    
+
     double currentDistance = 0.0;
     bool drawing = true;
-    
+
     // 🔧 优化虚线绘制，确保线条平滑
     while (currentDistance < distance) {
       final segmentLength = drawing ? dashWidth : dashSpace;
-      final nextDistance = (currentDistance + segmentLength).clamp(0.0, distance);
-      
+      final nextDistance =
+          (currentDistance + segmentLength).clamp(0.0, distance);
+
       if (drawing) {
         final segmentStart = start + unitVector * currentDistance;
         final segmentEnd = start + unitVector * nextDistance;
         canvas.drawLine(segmentStart, segmentEnd, paint);
       }
-      
+
       currentDistance = nextDistance;
       drawing = !drawing;
     }
