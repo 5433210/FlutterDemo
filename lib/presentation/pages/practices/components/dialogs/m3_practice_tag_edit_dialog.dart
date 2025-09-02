@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../widgets/tag_editor.dart';
@@ -34,54 +33,43 @@ class _M3PracticeTagEditDialogState extends State<M3PracticeTagEditDialog> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      autofocus: true,
-      onKeyEvent: (KeyEvent event) {
-        if (event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.enter) {
-            _handleSave();
-          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-            Navigator.of(context).pop();
-          }
-        }
-      },
-      child: AlertDialog(
-        title: Text(l10n.edit),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TagEditor(
-                tags: _currentTags,
-                suggestedTags: widget.suggestedTags,
-                onTagsChanged: (tags) {
-                  setState(() {
-                    _currentTags = tags;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: _handleSave,
-            style: TextButton.styleFrom(
-              foregroundColor: theme.colorScheme.primary,
+    return AlertDialog(
+      title: Text(l10n.edit),
+      content: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TagEditor(
+              tags: _currentTags,
+              suggestedTags: widget.suggestedTags,
+              onTagsChanged: (tags) {
+                setState(() {
+                  _currentTags = tags;
+                });
+              },
             ),
-            child: Text(l10n.save),
-          ),
-        ],
+          ],
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(l10n.cancel),
+        ),
+        TextButton(
+          onPressed: () {
+            widget.onSaved(_currentTags);
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: theme.colorScheme.primary,
+          ),
+          child: Text(l10n.save),
+        ),
+      ],
     );
   }
 
@@ -89,10 +77,5 @@ class _M3PracticeTagEditDialogState extends State<M3PracticeTagEditDialog> {
   void initState() {
     super.initState();
     _currentTags = List.from(widget.tags);
-  }
-
-  /// 处理保存操作
-  void _handleSave() {
-    widget.onSaved(_currentTags);
   }
 }

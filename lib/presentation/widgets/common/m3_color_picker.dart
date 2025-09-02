@@ -132,6 +132,8 @@ class _M3ColorPickerState extends State<M3ColorPicker>
   late TabController _tabController;
   late TextEditingController _hexController;
 
+  // 内部维护的当前颜色状态
+  late Color _currentColor;
   bool _isValidHex = true;
 
   @override
@@ -146,11 +148,11 @@ class _M3ColorPickerState extends State<M3ColorPicker>
           height: 64,
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: widget.color,
+            color: _currentColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colorScheme.outline),
           ),
-          child: widget.color == Colors.transparent
+          child: _currentColor == Colors.transparent
               ? const Center(
                   child: Icon(Icons.block, color: Colors.red),
                 )
@@ -186,7 +188,10 @@ class _M3ColorPickerState extends State<M3ColorPicker>
   void didUpdateWidget(M3ColorPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.color != widget.color) {
-      _hexController.text = _colorToHex(widget.color).toUpperCase();
+      setState(() {
+        _currentColor = widget.color;
+      });
+      _hexController.text = _colorToHex(_currentColor).toUpperCase();
     }
   }
 
@@ -200,34 +205,42 @@ class _M3ColorPickerState extends State<M3ColorPicker>
   @override
   void initState() {
     super.initState();
+    _currentColor = widget.color;
     _tabController = TabController(length: 3, vsync: this);
     _hexController = TextEditingController(
-      text: _colorToHex(widget.color).toUpperCase(),
+      text: _colorToHex(_currentColor).toUpperCase(),
     );
   }
 
   // 颜色调节标签页
   Widget _buildColorAdjustmentTab() {
+    // 将0-1范围的颜色值转换为0-255范围显示
+    final redValue = (_currentColor.r * 255).round().toDouble();
+    final greenValue = (_currentColor.g * 255).round().toDouble();
+    final blueValue = (_currentColor.b * 255).round().toDouble();
+    final alphaValue = (_currentColor.a * 255).round().toDouble();
+    
+    print('🎨 [ColorPicker] 构建调节tab: R=${redValue}, G=${greenValue}, B=${blueValue}');
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildColorSlider('Red', widget.color.r.toDouble(),
+        _buildColorSlider('Red', redValue,
             const Color.fromARGB(255, 255, 0, 0), (value) {
-          _notifyColorChanged(widget.color.withRed(value.round()));
+          _updateColor(_currentColor.withRed(value.round()));
         }),
-        _buildColorSlider('Green', widget.color.g.toDouble(),
+        _buildColorSlider('Green', greenValue,
             const Color.fromARGB(255, 0, 255, 0), (value) {
-          _notifyColorChanged(widget.color.withGreen(value.round()));
+          _updateColor(_currentColor.withGreen(value.round()));
         }),
-        _buildColorSlider('Blue', widget.color.b.toDouble(),
+        _buildColorSlider('Blue', blueValue,
             const Color.fromARGB(255, 0, 0, 255), (value) {
-          _notifyColorChanged(widget.color.withBlue(value.round()));
+          _updateColor(_currentColor.withBlue(value.round()));
         }),
         if (widget.enableAlpha) ...[
           const Divider(),
-          _buildColorSlider('Alpha', widget.color.a.toDouble(), Colors.grey,
+          _buildColorSlider('Alpha', alphaValue, Colors.grey,
               (value) {
-            _notifyColorChanged(widget.color.withAlpha(value.round()));
+            _updateColor(_currentColor.withAlpha(value.round()));
           }),
         ],
       ],
@@ -259,10 +272,10 @@ class _M3ColorPickerState extends State<M3ColorPicker>
             onChanged: _handleHexInputChange,
           ),
           const SizedBox(height: 16),
-          Text('RGB: ${widget.color.r}, ${widget.color.g}, ${widget.color.b}'),
-          if (widget.enableAlpha) Text('Alpha: ${widget.color.a}'),
+          Text('RGB: ${_currentColor.r}, ${_currentColor.g}, ${_currentColor.b}'),
+          if (widget.enableAlpha) Text('Alpha: ${_currentColor.a}'),
           const SizedBox(height: 8),
-          Text('Opacity: ${(widget.color.a / 255 * 100).round()}%'),
+          Text('Opacity: ${(_currentColor.a / 255 * 100).round()}%'),
         ],
       ),
     );
@@ -283,7 +296,10 @@ class _M3ColorPickerState extends State<M3ColorPicker>
                 min: 0,
                 max: 255,
                 activeColor: activeColor,
-                onChanged: onChanged,
+                onChanged: (newValue) {
+                  print('🎨 [ColorPicker] 滑块拖动: $label = $newValue');
+                  onChanged(newValue);
+                },
               ),
             ),
             SizedBox(
@@ -302,9 +318,17 @@ class _M3ColorPickerState extends State<M3ColorPicker>
                 ],
                 controller:
                     TextEditingController(text: value.round().toString()),
-                onSubmitted: (value) {
-                  final intValue = int.tryParse(value);
+                onSubmitted: (inputValue) {
+                  final intValue = int.tryParse(inputValue);
                   if (intValue != null && intValue >= 0 && intValue <= 255) {
+                    print('🎨 [ColorPicker] 数字输入: $label = $intValue');
+                    onChanged(intValue.toDouble());
+                  }
+                },
+                onChanged: (inputValue) {
+                  final intValue = int.tryParse(inputValue);
+                  if (intValue != null && intValue >= 0 && intValue <= 255) {
+                    print('🎨 [ColorPicker] 数字变化: $label = $intValue');
                     onChanged(intValue.toDouble());
                   }
                 },
@@ -312,6 +336,7 @@ class _M3ColorPickerState extends State<M3ColorPicker>
             ),
           ],
         ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -329,12 +354,12 @@ class _M3ColorPickerState extends State<M3ColorPicker>
       itemCount: _presetColors.length,
       itemBuilder: (context, index) {
         final color = _presetColors[index];
-        final isSelected = widget.color.toARGB32() == color.toARGB32();
+        final isSelected = _currentColor.toARGB32() == color.toARGB32();
 
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _notifyColorChanged(color),
+            onTap: () => _updateColor(color),
             borderRadius: BorderRadius.circular(8),
             child: Container(
               decoration: BoxDecoration(
@@ -371,14 +396,20 @@ class _M3ColorPickerState extends State<M3ColorPicker>
 
   // 处理颜色代码输入变化
   void _handleHexInputChange(String value) {
+    print('🎨 [ColorPicker] Hex输入变化: "$value" (长度: ${value.length})');
     if (value.length == 6) {
       try {
         final color = _hexToColor(value);
+        print('🎨 [ColorPicker] Hex解析成功: $color');
         setState(() => _isValidHex = true);
-        _notifyColorChanged(color);
+        // 不更新hex控制器文本，避免中断用户输入
+        _updateColor(color, updateHexController: false);
       } catch (e) {
+        print('🎨 [ColorPicker] Hex解析失败: $e');
         setState(() => _isValidHex = false);
       }
+    } else if (value.length < 6) {
+      setState(() => _isValidHex = false);
     }
   }
 
@@ -389,10 +420,24 @@ class _M3ColorPickerState extends State<M3ColorPicker>
       throw const FormatException('Invalid hex color code');
     }
     final value = int.parse(cleanHex, radix: 16);
-    return Color(value).withAlpha(widget.color.a.toInt());
+    // 保持当前的alpha值，转换为正确的0-255范围
+    return Color(value | 0xFF000000).withAlpha((_currentColor.a * 255).round());
+  }
+
+  // 更新颜色的统一方法
+  void _updateColor(Color color, {bool updateHexController = true}) {
+    print('🎨 [ColorPicker] 更新颜色: $color, updateHexController: $updateHexController');
+    setState(() {
+      _currentColor = color;
+      if (updateHexController) {
+        _hexController.text = _colorToHex(color).toUpperCase();
+      }
+    });
+    _notifyColorChanged(color);
   }
 
   void _notifyColorChanged(Color color) {
+    print('🎨 [ColorPicker] 通知颜色变化: $color');
     if (widget.onColorChanged != null) {
       widget.onColorChanged!(color);
     }
