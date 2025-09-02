@@ -1071,8 +1071,18 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
           newDynamicCropHeight = currentDynCropHeight + deltaY;
           break;
         case _DragHandle.move:
-          newDynamicCropX = currentDynCropX + deltaX;
-          newDynamicCropY = currentDynCropY + deltaY;
+          // 🔧 对于移动操作，需要特殊处理边界检查以避免自动调整尺寸
+          final proposedX = currentDynCropX + deltaX;
+          final proposedY = currentDynCropY + deltaY;
+          
+          // 获取动态边界信息
+          final dynamicBounds = _coordinator.dynamicBounds;
+          
+          // 检查新位置是否会超出边界，如果超出则限制在边界内但保持尺寸
+          newDynamicCropX = math.max(0.0, math.min(proposedX, dynamicBounds.width - currentDynCropWidth));
+          newDynamicCropY = math.max(0.0, math.min(proposedY, dynamicBounds.height - currentDynCropHeight));
+          newDynamicCropWidth = currentDynCropWidth;  // 保持原尺寸
+          newDynamicCropHeight = currentDynCropHeight; // 保持原尺寸
           break;
       }
 
@@ -1086,10 +1096,14 @@ class _InteractiveCropOverlayState extends State<InteractiveCropOverlay> {
         return;
       }
 
-      // Validate dynamic boundary crop area
+      // 对于移动操作，直接使用计算出的位置，避免使用clampDynamicCropRect导致尺寸变化
       final dynamicRect = Rect.fromLTWH(newDynamicCropX, newDynamicCropY,
           newDynamicCropWidth, newDynamicCropHeight);
-      final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicRect);
+      
+      // 只对非移动操作使用clampDynamicCropRect，移动操作已经在上面做了边界限制
+      final clampedDynamicRect = (handle == _DragHandle.move) 
+          ? dynamicRect 
+          : _coordinator.clampDynamicCropRect(dynamicRect);
 
       // Convert back to original image coordinates
       final originalCropParams = _coordinator.dynamicToOriginalCropParams(
@@ -1969,8 +1983,18 @@ class _ZoomedCropOverlayState extends State<ZoomedCropOverlay> {
           newDynamicCropHeight = currentDynCropHeight + deltaY;
           break;
         case _DragHandle.move:
-          newDynamicCropX = currentDynCropX + deltaX;
-          newDynamicCropY = currentDynCropY + deltaY;
+          // 🔧 对于移动操作，需要特殊处理边界检查以避免自动调整尺寸
+          final proposedX = currentDynCropX + deltaX;
+          final proposedY = currentDynCropY + deltaY;
+          
+          // 获取动态边界信息
+          final dynamicBounds = _coordinator.dynamicBounds;
+          
+          // 检查新位置是否会超出边界，如果超出则限制在边界内但保持尺寸
+          newDynamicCropX = math.max(0.0, math.min(proposedX, dynamicBounds.width - currentDynCropWidth));
+          newDynamicCropY = math.max(0.0, math.min(proposedY, dynamicBounds.height - currentDynCropHeight));
+          newDynamicCropWidth = currentDynCropWidth;  // 保持原尺寸
+          newDynamicCropHeight = currentDynCropHeight; // 保持原尺寸
           break;
       }
 
@@ -1983,10 +2007,14 @@ class _ZoomedCropOverlayState extends State<ZoomedCropOverlay> {
         return;
       }
 
-      // Validate dynamic boundary crop area
+      // 对于移动操作，直接使用计算出的位置，避免使用clampDynamicCropRect导致尺寸变化
       final dynamicRect = Rect.fromLTWH(newDynamicCropX, newDynamicCropY,
           newDynamicCropWidth, newDynamicCropHeight);
-      final clampedDynamicRect = _coordinator.clampDynamicCropRect(dynamicRect);
+      
+      // 只对非移动操作使用clampDynamicCropRect，移动操作已经在上面做了边界限制
+      final clampedDynamicRect = (handle == _DragHandle.move) 
+          ? dynamicRect 
+          : _coordinator.clampDynamicCropRect(dynamicRect);
 
       // Convert back to original image coordinates
       final originalCropParams = _coordinator.dynamicToOriginalCropParams(
