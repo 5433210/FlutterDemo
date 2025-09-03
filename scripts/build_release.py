@@ -191,9 +191,11 @@ class MultiPlatformBuilder:
             return False
         
         # 更新版本（如果指定）
+        version_updated = False
         if update_version:
             if not self.update_version(update_version):
                 return False
+            version_updated = True
             self.show_current_version()
         
         # 确定构建类型
@@ -210,8 +212,10 @@ class MultiPlatformBuilder:
         
         try:
             cmd = [sys.executable, str(builder_script), '--type', build_type]
-            if update_version:
-                cmd.extend(['--update-version', update_version])
+            # 🔧 修复：如果已经在这里更新了版本，就不要再传递给子脚本
+            # 避免重复更新版本号导致跳号
+            # if update_version:
+            #     cmd.extend(['--update-version', update_version])
             
             result = subprocess.run(cmd, cwd=self.project_root)
             
