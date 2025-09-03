@@ -149,6 +149,7 @@ mixin ImageSelectionHandler {
           content['isFlippedVertically'] = false;
           content['rotation'] = 0.0;
           content['isTransformApplied'] = false; // 新选择的图像无需变换
+          content['isBinarizationEnabled'] = false;
 
           // 清除之前的图片尺寸信息，让系统重新检测
           content.remove('originalWidth');
@@ -496,8 +497,8 @@ mixin ImageSelectionHandler {
       // 重置新的坐标格式裁剪区域
       content['cropX'] = 0.0;
       content['cropY'] = 0.0;
-      content.remove('cropWidth'); // 移除裁剪宽高，让系统根据新图片尺寸重新计算
-      content.remove('cropHeight');
+      content['cropWidth'] = null; // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+      content['cropHeight'] = null; // 移除裁剪宽高，让系统根据新图片尺寸重新计算
 
       // 清除所有裁剪相关的缓存和变换数据
       content.remove('cropRect');
@@ -507,6 +508,7 @@ mixin ImageSelectionHandler {
       content['isFlippedVertically'] = false;
       content['rotation'] = 0.0;
       content['isTransformApplied'] = false; // 新选择的图像无需变换
+      content['isBinarizationEnabled'] = false;
 
       // 清除之前的图片尺寸信息，让系统重新检测
       content.remove('originalWidth');
