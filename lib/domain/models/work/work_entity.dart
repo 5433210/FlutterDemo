@@ -58,6 +58,9 @@ class WorkEntity with _$WorkEntity {
 
     /// 图片数量
     int? imageCount,
+    
+    /// 元数据（扩展用）
+    @Default({}) Map<String, dynamic> metadata,
   }) = _WorkEntity;
 
   factory WorkEntity.fromJson(Map<String, dynamic> json) =>

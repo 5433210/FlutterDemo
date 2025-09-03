@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -337,6 +339,17 @@ class WorkRepositoryImpl implements WorkRepository {
     //     );
     //   }
     // }
+    
+    // 处理元数据
+    Map<String, dynamic> metadata = {};
+    if (data['metadata'] != null) {
+      try {
+        metadata = jsonDecode(data['metadata'] as String) as Map<String, dynamic>;
+      } catch (e) {
+        AppLogger.warning('Failed to parse metadata for work ${data['id']}',
+            tag: 'WorkRepositoryImpl', error: e);
+      }
+    }
 
     return {
       ...data,
@@ -352,6 +365,7 @@ class WorkRepositoryImpl implements WorkRepository {
       'updateTime': data['updateTime'],
       'lastImageUpdateTime': data['lastImageUpdateTime'],
       'isFavorite': data['isFavorite'] == 1,
+      'metadata': metadata,
     };
   }
 
@@ -397,6 +411,7 @@ class WorkRepositoryImpl implements WorkRepository {
       'tags': work.tags.join(','),
       'imageCount': work.imageCount,
       'isFavorite': work.isFavorite ? 1 : 0,
+      'metadata': jsonEncode(work.metadata ?? {}),
     };
 
     // try {

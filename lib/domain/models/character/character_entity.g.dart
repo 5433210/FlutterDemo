@@ -21,6 +21,7 @@ _$CharacterEntityImpl _$$CharacterEntityImplFromJson(
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       note: json['note'] as String?,
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
 
 Map<String, dynamic> _$$CharacterEntityImplToJson(
@@ -36,4 +37,5 @@ Map<String, dynamic> _$$CharacterEntityImplToJson(
       'isFavorite': instance.isFavorite,
       'tags': instance.tags,
       'note': instance.note,
+      'metadata': instance.metadata,
     };

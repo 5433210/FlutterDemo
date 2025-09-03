@@ -69,6 +69,9 @@ mixin _$WorkEntity {
   /// 图片数量
   int? get imageCount => throw _privateConstructorUsedError;
 
+  /// 元数据（扩展用）
+  Map<String, dynamic> get metadata => throw _privateConstructorUsedError;
+
   /// Serializes this WorkEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -101,7 +104,8 @@ abstract class $WorkEntityCopyWith<$Res> {
       List<WorkImage> images,
       List<CharacterEntity> collectedChars,
       List<String> tags,
-      int? imageCount});
+      int? imageCount,
+      Map<String, dynamic> metadata});
 }
 
 /// @nodoc
@@ -135,6 +139,7 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
     Object? collectedChars = null,
     Object? tags = null,
     Object? imageCount = freezed,
+    Object? metadata = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -201,6 +206,10 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
           ? _value.imageCount
           : imageCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      metadata: null == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ) as $Val);
   }
 }
@@ -229,7 +238,8 @@ abstract class _$$WorkEntityImplCopyWith<$Res>
       List<WorkImage> images,
       List<CharacterEntity> collectedChars,
       List<String> tags,
-      int? imageCount});
+      int? imageCount,
+      Map<String, dynamic> metadata});
 }
 
 /// @nodoc
@@ -261,6 +271,7 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
     Object? collectedChars = null,
     Object? tags = null,
     Object? imageCount = freezed,
+    Object? metadata = null,
   }) {
     return _then(_$WorkEntityImpl(
       id: null == id
@@ -327,6 +338,10 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
           ? _value.imageCount
           : imageCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      metadata: null == metadata
+          ? _value._metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ));
   }
 }
@@ -350,10 +365,12 @@ class _$WorkEntityImpl extends _WorkEntity {
       final List<WorkImage> images = const [],
       final List<CharacterEntity> collectedChars = const [],
       final List<String> tags = const [],
-      this.imageCount})
+      this.imageCount,
+      final Map<String, dynamic> metadata = const {}})
       : _images = images,
         _collectedChars = collectedChars,
         _tags = tags,
+        _metadata = metadata,
         super._();
 
   factory _$WorkEntityImpl.fromJson(Map<String, dynamic> json) =>
@@ -451,9 +468,21 @@ class _$WorkEntityImpl extends _WorkEntity {
   @override
   final int? imageCount;
 
+  /// 元数据（扩展用）
+  final Map<String, dynamic> _metadata;
+
+  /// 元数据（扩展用）
+  @override
+  @JsonKey()
+  Map<String, dynamic> get metadata {
+    if (_metadata is EqualUnmodifiableMapView) return _metadata;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_metadata);
+  }
+
   @override
   String toString() {
-    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
+    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount, metadata: $metadata)';
   }
 
   @override
@@ -483,7 +512,8 @@ class _$WorkEntityImpl extends _WorkEntity {
                 .equals(other._collectedChars, _collectedChars) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.imageCount, imageCount) ||
-                other.imageCount == imageCount));
+                other.imageCount == imageCount) &&
+            const DeepCollectionEquality().equals(other._metadata, _metadata));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -505,7 +535,8 @@ class _$WorkEntityImpl extends _WorkEntity {
       const DeepCollectionEquality().hash(_images),
       const DeepCollectionEquality().hash(_collectedChars),
       const DeepCollectionEquality().hash(_tags),
-      imageCount);
+      imageCount,
+      const DeepCollectionEquality().hash(_metadata));
 
   /// Create a copy of WorkEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -540,7 +571,8 @@ abstract class _WorkEntity extends WorkEntity {
       final List<WorkImage> images,
       final List<CharacterEntity> collectedChars,
       final List<String> tags,
-      final int? imageCount}) = _$WorkEntityImpl;
+      final int? imageCount,
+      final Map<String, dynamic> metadata}) = _$WorkEntityImpl;
   _WorkEntity._() : super._();
 
   factory _WorkEntity.fromJson(Map<String, dynamic> json) =
@@ -609,6 +641,10 @@ abstract class _WorkEntity extends WorkEntity {
   /// 图片数量
   @override
   int? get imageCount;
+
+  /// 元数据（扩展用）
+  @override
+  Map<String, dynamic> get metadata;
 
   /// Create a copy of WorkEntity
   /// with the given fields replaced by the non-null parameter values.

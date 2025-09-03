@@ -366,6 +366,17 @@ class CharacterRepositoryImpl implements CharacterRepository {
     } else {
       tags = <String>[];
     }
+    
+    // Parse metadata field
+    Map<String, dynamic> metadata = {};
+    if (map['metadata'] != null) {
+      try {
+        metadata = jsonDecode(map['metadata'] as String) as Map<String, dynamic>;
+      } catch (e) {
+        AppLogger.warning('Failed to parse metadata for character ${map['id']}',
+            tag: 'CharacterRepository', error: e);
+      }
+    }
 
     return CharacterEntity(
       id: map['id'] as String,
@@ -377,6 +388,8 @@ class CharacterRepositoryImpl implements CharacterRepository {
       createTime: DateTime.parse(map['createTime'] as String),
       updateTime: DateTime.parse(map['updateTime'] as String),
       isFavorite: (map['isFavorite'] as int) == 1,
+      note: map['note'] as String?,
+      metadata: metadata,
     );
   }
 
@@ -391,6 +404,8 @@ class CharacterRepositoryImpl implements CharacterRepository {
       'createTime': entity.createTime.toIso8601String(),
       'updateTime': entity.updateTime.toIso8601String(),
       'isFavorite': entity.isFavorite ? 1 : 0,
+      'note': entity.note,
+      'metadata': jsonEncode(entity.metadata),
     };
   }
 }

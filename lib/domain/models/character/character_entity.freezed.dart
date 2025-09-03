@@ -30,6 +30,7 @@ mixin _$CharacterEntity {
   bool get isFavorite => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
   String? get note => throw _privateConstructorUsedError;
+  Map<String, dynamic> get metadata => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -57,7 +58,8 @@ abstract class $CharacterEntityCopyWith<$Res> {
       DateTime updateTime,
       bool isFavorite,
       List<String> tags,
-      String? note});
+      String? note,
+      Map<String, dynamic> metadata});
 
   $CharacterRegionCopyWith<$Res> get region;
 }
@@ -87,6 +89,7 @@ class _$CharacterEntityCopyWithImpl<$Res, $Val extends CharacterEntity>
     Object? isFavorite = null,
     Object? tags = null,
     Object? note = freezed,
+    Object? metadata = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -129,6 +132,10 @@ class _$CharacterEntityCopyWithImpl<$Res, $Val extends CharacterEntity>
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
               as String?,
+      metadata: null == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ) as $Val);
   }
 
@@ -161,7 +168,8 @@ abstract class _$$CharacterEntityImplCopyWith<$Res>
       DateTime updateTime,
       bool isFavorite,
       List<String> tags,
-      String? note});
+      String? note,
+      Map<String, dynamic> metadata});
 
   @override
   $CharacterRegionCopyWith<$Res> get region;
@@ -190,6 +198,7 @@ class __$$CharacterEntityImplCopyWithImpl<$Res>
     Object? isFavorite = null,
     Object? tags = null,
     Object? note = freezed,
+    Object? metadata = null,
   }) {
     return _then(_$CharacterEntityImpl(
       id: null == id
@@ -232,6 +241,10 @@ class __$$CharacterEntityImplCopyWithImpl<$Res>
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
               as String?,
+      metadata: null == metadata
+          ? _value._metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
     ));
   }
 }
@@ -249,8 +262,10 @@ class _$CharacterEntityImpl implements _CharacterEntity {
       required this.updateTime,
       this.isFavorite = false,
       final List<String> tags = const [],
-      this.note})
-      : _tags = tags;
+      this.note,
+      final Map<String, dynamic> metadata = const {}})
+      : _tags = tags,
+        _metadata = metadata;
 
   factory _$CharacterEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharacterEntityImplFromJson(json);
@@ -283,10 +298,18 @@ class _$CharacterEntityImpl implements _CharacterEntity {
 
   @override
   final String? note;
+  final Map<String, dynamic> _metadata;
+  @override
+  @JsonKey()
+  Map<String, dynamic> get metadata {
+    if (_metadata is EqualUnmodifiableMapView) return _metadata;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_metadata);
+  }
 
   @override
   String toString() {
-    return 'CharacterEntity(id: $id, workId: $workId, pageId: $pageId, character: $character, region: $region, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, tags: $tags, note: $note)';
+    return 'CharacterEntity(id: $id, workId: $workId, pageId: $pageId, character: $character, region: $region, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, tags: $tags, note: $note, metadata: $metadata)';
   }
 
   @override
@@ -307,7 +330,8 @@ class _$CharacterEntityImpl implements _CharacterEntity {
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
-            (identical(other.note, note) || other.note == note));
+            (identical(other.note, note) || other.note == note) &&
+            const DeepCollectionEquality().equals(other._metadata, _metadata));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -323,7 +347,8 @@ class _$CharacterEntityImpl implements _CharacterEntity {
       updateTime,
       isFavorite,
       const DeepCollectionEquality().hash(_tags),
-      note);
+      note,
+      const DeepCollectionEquality().hash(_metadata));
 
   /// Create a copy of CharacterEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -353,7 +378,8 @@ abstract class _CharacterEntity implements CharacterEntity {
       required final DateTime updateTime,
       final bool isFavorite,
       final List<String> tags,
-      final String? note}) = _$CharacterEntityImpl;
+      final String? note,
+      final Map<String, dynamic> metadata}) = _$CharacterEntityImpl;
 
   factory _CharacterEntity.fromJson(Map<String, dynamic> json) =
       _$CharacterEntityImpl.fromJson;
@@ -378,6 +404,8 @@ abstract class _CharacterEntity implements CharacterEntity {
   List<String> get tags;
   @override
   String? get note;
+  @override
+  Map<String, dynamic> get metadata;
 
   /// Create a copy of CharacterEntity
   /// with the given fields replaced by the non-null parameter values.

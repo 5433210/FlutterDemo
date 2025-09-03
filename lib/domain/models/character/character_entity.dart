@@ -18,6 +18,7 @@ class CharacterEntity with _$CharacterEntity {
     @Default(false) bool isFavorite,
     @Default([]) List<String> tags,
     String? note,
+    @Default({}) Map<String, dynamic> metadata,
   }) = _CharacterEntity;
 
   factory CharacterEntity.create({
@@ -27,6 +28,7 @@ class CharacterEntity with _$CharacterEntity {
     String character = '',
     List<String> tags = const [],
     String? note,
+    Map<String, dynamic> metadata = const {},
   }) {
     final now = DateTime.now();
     return CharacterEntity(
@@ -39,6 +41,7 @@ class CharacterEntity with _$CharacterEntity {
       updateTime: now,
       tags: tags,
       note: note,
+      metadata: metadata,
     );
   }
 

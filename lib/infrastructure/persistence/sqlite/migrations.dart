@@ -1,4 +1,6 @@
 /// SQLite数据库迁移脚本
+import 'migrations_21.dart';
+
 const migrations = [
   // 版本 1: 创建基础表结构
   '''
@@ -520,4 +522,7 @@ const migrations = [
   WHERE metadata IS NULL;
   
   ''',
+  
+  // 版本 21: 为works和characters表添加metadata字段
+  migrationScript21,
 ];

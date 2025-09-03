@@ -35,6 +35,7 @@ _$WorkEntityImpl _$$WorkEntityImplFromJson(Map<String, dynamic> json) =>
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       imageCount: (json['imageCount'] as num?)?.toInt(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
 
 Map<String, dynamic> _$$WorkEntityImplToJson(_$WorkEntityImpl instance) =>
@@ -55,6 +56,7 @@ Map<String, dynamic> _$$WorkEntityImplToJson(_$WorkEntityImpl instance) =>
       'collectedChars': instance.collectedChars,
       'tags': instance.tags,
       'imageCount': instance.imageCount,
+      'metadata': instance.metadata,
     };
 
 const _$WorkStatusEnumMap = {
