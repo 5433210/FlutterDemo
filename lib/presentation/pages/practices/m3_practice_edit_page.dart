@@ -2351,6 +2351,22 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
       // 🆕 根据页面数量自动决定是否显示缩略图面板
       _updateThumbnailVisibilityBasedOnPageCount();
+
+      // 🆕 字帖加载完成后自动重置画布视图位置
+      // 延迟执行以确保UI完全更新完成
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          EditPageLogger.editPageInfo(
+            '字帖加载完成，自动重置视图位置',
+            data: {
+              'practiceId': practiceId,
+              'practiceTitle': practice.title,
+              'operation': 'auto_reset_view_after_load',
+            },
+          );
+          _controller.resetViewPosition();
+        }
+      });
     } catch (e, stackTrace) {
       if (!mounted) return;
 
