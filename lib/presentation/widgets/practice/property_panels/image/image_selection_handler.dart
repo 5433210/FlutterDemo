@@ -63,19 +63,19 @@ mixin ImageSelectionHandler {
             // 如果是普通路径，添加file://前缀
             tempImageUrl = 'file:///${selectedItem.path.replaceAll("\\", "/")}';
           }
-          
+
           final absolutePath = await ImagePathConverter.toAbsolutePath(
               ImagePathConverter.toRelativePath(tempImageUrl));
-          
+
           // 处理 absolutePath：如果包含 file:// 前缀，则去除前缀
           String imageFilePath = absolutePath;
           if (imageFilePath.startsWith('file://')) {
             // 去除 file:// 前缀，转换为标准文件路径
             imageFilePath = imageFilePath.startsWith('file:///')
-                ? imageFilePath.substring(8)  // file:///C:/... -> C:/...
+                ? imageFilePath.substring(8) // file:///C:/... -> C:/...
                 : imageFilePath.substring(7); // file://path -> path
           }
-          
+
           final imageFile = File(imageFilePath);
 
           if (!await imageFile.exists()) {
@@ -83,7 +83,8 @@ mixin ImageSelectionHandler {
             EditPageLogger.propertyPanelError(
               '从图库选择的图像文件不存在',
               tag: EditPageLoggingConfig.tagImagePanel,
-              error: 'File not found: Image file does not exist at computed path',
+              error:
+                  'File not found: Image file does not exist at computed path',
               data: {
                 'operation': 'selectImageFromLibrary_file_validation',
                 'selectedItemId': selectedItem.id,
@@ -91,7 +92,8 @@ mixin ImageSelectionHandler {
                 'selectedItemPath': selectedItem.path,
                 'tempImageUrl': tempImageUrl,
                 'computedAbsolutePath': absolutePath,
-                'pathExists': await Directory(File(absolutePath).parent.path).exists(),
+                'pathExists':
+                    await Directory(File(absolutePath).parent.path).exists(),
                 'parentDirectory': File(absolutePath).parent.path,
                 'possibleCauses': [
                   'File was moved or deleted after library indexing',
@@ -107,7 +109,7 @@ mixin ImageSelectionHandler {
                 }
               },
             );
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('图像文件不存在，请重新选择'),
@@ -136,8 +138,8 @@ mixin ImageSelectionHandler {
           // 重置新的坐标格式裁剪区域
           content['cropX'] = 0.0;
           content['cropY'] = 0.0;
-          content.remove('cropWidth'); // 移除裁剪宽高，让系统根据新图片尺寸重新计算
-          content.remove('cropHeight');
+          content['cropWidth'] = null; // 移除裁剪宽高，让系统根据新图片尺寸重新计算
+          content['cropHeight'] = null; // 移除裁剪宽高，让系统根据新图片尺寸重新计算
 
           // 清除所有裁剪相关的缓存和变换数据
           content.remove('cropRect');
@@ -161,10 +163,10 @@ mixin ImageSelectionHandler {
             if (filePath.startsWith('file://')) {
               // 去除 file:// 前缀，转换为标准文件路径
               filePath = filePath.startsWith('file:///')
-                  ? filePath.substring(8)  // file:///C:/... -> C:/...
+                  ? filePath.substring(8) // file:///C:/... -> C:/...
                   : filePath.substring(7); // file://path -> path
             }
-            
+
             final file = File(filePath);
             if (await file.exists()) {
               final imageBytes = await file.readAsBytes();
@@ -219,17 +221,18 @@ mixin ImageSelectionHandler {
           if (filePath.startsWith('file://')) {
             // 去除 file:// 前缀，转换为标准文件路径
             filePath = filePath.startsWith('file:///')
-                ? filePath.substring(8)  // file:///C:/... -> C:/...
+                ? filePath.substring(8) // file:///C:/... -> C:/...
                 : filePath.substring(7); // file://path -> path
           }
-          
+
           final localFile = File(filePath);
           if (!await localFile.exists()) {
             // 记录详细的文件不存在错误信息
             EditPageLogger.propertyPanelError(
               '从图库选择的本地文件不存在',
               tag: EditPageLoggingConfig.tagImagePanel,
-              error: 'Local file not found: Image file does not exist at processed path',
+              error:
+                  'Local file not found: Image file does not exist at processed path',
               data: {
                 'operation': 'selectImageFromLibrary_local_file_validation',
                 'selectedItemId': selectedItem.id,
@@ -237,7 +240,8 @@ mixin ImageSelectionHandler {
                 'selectedItemPath': selectedItem.path,
                 'processedFilePath': filePath,
                 'fileExists': await localFile.exists(),
-                'parentDirExists': await Directory(localFile.parent.path).exists(),
+                'parentDirExists':
+                    await Directory(localFile.parent.path).exists(),
                 'parentDirectory': localFile.parent.path,
                 'possibleCauses': [
                   'Original file was moved or deleted',
@@ -248,14 +252,15 @@ mixin ImageSelectionHandler {
                   'URI path processing error'
                 ],
                 'debugInfo': {
-                  'originalHadFilePrefix': selectedItem.path.startsWith('file://'),
+                  'originalHadFilePrefix':
+                      selectedItem.path.startsWith('file://'),
                   'isAbsolute': localFile.isAbsolute,
                   'platformSeparator': Platform.pathSeparator,
                   'currentDirectory': Directory.current.path,
                 }
               },
             );
-            
+
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -516,10 +521,10 @@ mixin ImageSelectionHandler {
         if (filePath.startsWith('file://')) {
           // 去除 file:// 前缀，转换为标准文件路径
           filePath = filePath.startsWith('file:///')
-              ? filePath.substring(8)  // file:///C:/... -> C:/...
+              ? filePath.substring(8) // file:///C:/... -> C:/...
               : filePath.substring(7); // file://path -> path
         }
-        
+
         final file = File(filePath);
         if (await file.exists()) {
           final imageBytes = await file.readAsBytes();
