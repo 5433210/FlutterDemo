@@ -218,7 +218,8 @@ mixin ImagePropertyUpdaters {
   }
 
   /// 更新内容属性
-  void updateContentProperty(String key, dynamic value, {bool createUndoOperation = true}) {
+  void updateContentProperty(String key, dynamic value,
+      {bool createUndoOperation = true}) {
     AppLogger.debug(
       '🔍 updateContentProperty 被调用',
       tag: 'ImagePropertyPanelMixins',
@@ -228,10 +229,10 @@ mixin ImagePropertyUpdaters {
         'createUndoOperation': createUndoOperation,
       },
     );
-    
+
     final content =
         Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
-    
+
     AppLogger.debug(
       '更新content属性',
       tag: 'ImagePropertyPanelMixins',
@@ -241,14 +242,14 @@ mixin ImagePropertyUpdaters {
         'valueAfterUpdate': value,
       },
     );
-    
+
     content[key] = value;
-    
+
     // 🔧 特别检查翻转状态
     if (key == 'isFlippedHorizontally' || key == 'isFlippedVertically') {
       final flipH = content['isFlippedHorizontally'] as bool? ?? false;
       final flipV = content['isFlippedVertically'] as bool? ?? false;
-      
+
       AppLogger.debug(
         '🔍 翻转状态特别检查',
         tag: 'ImagePropertyPanelMixins',
@@ -260,9 +261,10 @@ mixin ImagePropertyUpdaters {
         },
       );
     }
-    
-    updateProperty('content', content, createUndoOperation: createUndoOperation);
-    
+
+    updateProperty('content', content,
+        createUndoOperation: createUndoOperation);
+
     AppLogger.debug(
       'updateProperty 已调用',
       tag: 'ImagePropertyPanelMixins',
@@ -544,8 +546,8 @@ mixin ImagePropertyUpdaters {
     // 强制重新初始化裁剪区域，确保新图片加载时使用新的尺寸
     content['cropX'] = 0.0;
     content['cropY'] = 0.0;
-    content['cropWidth'] = imageSize.width;
-    content['cropHeight'] = imageSize.height;
+    if (content['cropWidth'] == null) content['cropWidth'] = imageSize.width;
+    if (content['cropHeight'] == null) content['cropHeight'] = imageSize.height;
 
     EditPageLogger.propertyPanelDebug(
       '更新图像尺寸信息并重置裁剪区域',
@@ -600,15 +602,16 @@ mixin ImagePropertyUpdaters {
     final currentRenderHeight = (content['renderHeight'] as num?)?.toDouble();
 
     // 区分是初次加载图像还是图像真正改变
-    final isInitialLoad = currentImageWidth == null || currentImageHeight == null;
-    final imageSizeChanged = !isInitialLoad && 
-                            (currentImageWidth != imageSize.width || 
-                             currentImageHeight != imageSize.height);
-    final renderSizeChanged = !isInitialLoad && 
-                             currentRenderWidth != null && 
-                             currentRenderHeight != null &&
-                             (currentRenderWidth != renderSize.width || 
-                              currentRenderHeight != renderSize.height);
+    final isInitialLoad =
+        currentImageWidth == null || currentImageHeight == null;
+    final imageSizeChanged = !isInitialLoad &&
+        (currentImageWidth != imageSize.width ||
+            currentImageHeight != imageSize.height);
+    final renderSizeChanged = !isInitialLoad &&
+        currentRenderWidth != null &&
+        currentRenderHeight != null &&
+        (currentRenderWidth != renderSize.width ||
+            currentRenderHeight != renderSize.height);
 
     if (isInitialLoad) {
       AppLogger.debug(
@@ -620,7 +623,7 @@ mixin ImagePropertyUpdaters {
           'willUpdateAfterBuild': true,
         },
       );
-      
+
       // 🔧 修复：延迟到构建完成后再更新图像状态，避免setState during build错误
       WidgetsBinding.instance.addPostFrameCallback((_) {
         updateImageSizeInfo(imageSize, renderSize);
@@ -632,18 +635,18 @@ mixin ImagePropertyUpdaters {
         data: {
           'sizeChanges': {
             'originalImageSize': {
-              'from': '${currentImageWidth}x${currentImageHeight}',
+              'from': '${currentImageWidth}x$currentImageHeight',
               'to': '${imageSize.width}x${imageSize.height}',
             },
             'renderSize': {
-              'from': '${currentRenderWidth}x${currentRenderHeight}',
+              'from': '${currentRenderWidth}x$currentRenderHeight',
               'to': '${renderSize.width}x${renderSize.height}',
             },
           },
           'willUpdateAfterBuild': true,
         },
       );
-      
+
       // 真正的图像变更时才创建撤销操作（比如切换到不同的图像文件）
       WidgetsBinding.instance.addPostFrameCallback((_) {
         updateImageSizeInfoWithUndo(imageSize, renderSize);
