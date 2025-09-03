@@ -544,8 +544,8 @@ mixin ImagePropertyUpdaters {
     content['renderHeight'] = renderSize.height;
 
     // 强制重新初始化裁剪区域，确保新图片加载时使用新的尺寸
-    content['cropX'] = 0.0;
-    content['cropY'] = 0.0;
+    if (content['cropX'] == null) content['cropX'] = 0.0;
+    if (content['cropY'] == null) content['cropY'] = 0.0;
     if (content['cropWidth'] == null) content['cropWidth'] = imageSize.width;
     if (content['cropHeight'] == null) content['cropHeight'] = imageSize.height;
 
