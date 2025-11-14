@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -155,13 +156,32 @@ class ExportService {
       final pageRenderer = PageRenderer(controller);
 
       // 获取页面格式
-      final PdfPageFormat pageFormat = extraParams.containsKey('pageFormat')
-          ? extraParams['pageFormat'] as PdfPageFormat
-          : PdfPageFormat.a4;
-      // 检查页面格式是否为横向
-      final isLandscape = pageFormat.width > pageFormat.height;
-      EditPageLogger.editPageDebug(
-          '使用页面格式: $pageFormat, 朝向: ${isLandscape ? "横向" : "纵向"}');
+    final PdfPageFormat pageFormat = extraParams.containsKey('pageFormat')
+      ? extraParams['pageFormat'] as PdfPageFormat
+      : PdfPageFormat.a4;
+    final PdfPageFormat basePageFormat =
+      extraParams.containsKey('basePageFormat')
+        ? extraParams['basePageFormat'] as PdfPageFormat
+        : pageFormat;
+    final bool defaultLandscape = extraParams.containsKey('isLandscape')
+      ? extraParams['isLandscape'] as bool
+      : pageFormat.width > pageFormat.height;
+    final bool autoDetectOrientation =
+      extraParams['autoDetectOrientation'] as bool? ?? false;
+    final Map<int, bool> pageOrientationOverrides =
+      extraParams.containsKey('pageOrientationOverrides')
+        ? Map<int, bool>.from(
+          extraParams['pageOrientationOverrides'] as Map<dynamic, dynamic>)
+        : <int, bool>{};
+
+    EditPageLogger.editPageDebug(
+    '使用页面格式: $pageFormat, 默认朝向: ${defaultLandscape ? "横向" : "纵向"}, 自动检测: $autoDetectOrientation',
+    data: autoDetectOrientation
+      ? {
+        'orientationOverrides': pageOrientationOverrides.length,
+        }
+      : null,
+    );
 
       // 页面范围
       List<int> pageIndices = [];
@@ -222,6 +242,7 @@ class ExportService {
 
       // 渲染指定的页面
       final List<Uint8List> pageImages = [];
+      final List<int> renderedPageIndices = [];
       for (final pageIndex in pageIndices) {
         if (pageIndex < 0 || pageIndex >= controller.state.pages.length) {
           EditPageLogger.editPageWarning(
@@ -236,6 +257,7 @@ class ExportService {
 
         if (pageImage != null) {
           pageImages.add(pageImage);
+          renderedPageIndices.add(pageIndex);
         } else {
           EditPageLogger.editPageWarning(
               'Failed to render page ${pageIndex + 1}, skipping');
@@ -255,13 +277,32 @@ class ExportService {
       // 为每个页面创建PDF页面
       for (int i = 0; i < pageImages.length; i++) {
         final image = pageImages[i];
+        final int originalPageIndex = i < renderedPageIndices.length
+            ? renderedPageIndices[i]
+            : pageIndices[i.clamp(0, pageIndices.length - 1)];
+        final PdfPageFormat targetOrientation = resolvePageFormatForPage(
+          baseFormat: basePageFormat,
+          defaultLandscape: defaultLandscape,
+          autoDetectOrientation: autoDetectOrientation,
+          pageOrientationOverrides: pageOrientationOverrides,
+          pageIndex: originalPageIndex,
+        );
 
         // 使用指定的页面格式，应用边距
-        final effectivePageFormat = pageFormat.copyWith(
+        final effectivePageFormat = targetOrientation.copyWith(
           marginTop: marginTop,
           marginRight: marginRight,
           marginBottom: marginBottom,
           marginLeft: marginLeft,
+        );
+
+        final bool usingLandscape = targetOrientation.width > targetOrientation.height;
+        EditPageLogger.editPageDebug(
+          'PDF页面方向',
+          data: {
+            'pageIndex': originalPageIndex,
+            'orientation': usingLandscape ? 'landscape' : 'portrait',
+          },
         );
 
         // 添加页面到PDF
@@ -404,6 +445,21 @@ class ExportService {
       // 出错时返回空列表
       return [];
     }
+  }
+
+  @visibleForTesting
+  static PdfPageFormat resolvePageFormatForPage({
+    required PdfPageFormat baseFormat,
+    required bool defaultLandscape,
+    required bool autoDetectOrientation,
+    required Map<int, bool> pageOrientationOverrides,
+    required int pageIndex,
+  }) {
+    final bool useLandscape = autoDetectOrientation
+        ? (pageOrientationOverrides[pageIndex] ?? defaultLandscape)
+        : defaultLandscape;
+
+    return useLandscape ? baseFormat.landscape : baseFormat.portrait;
   }
 }
 

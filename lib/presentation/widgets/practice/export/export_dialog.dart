@@ -952,6 +952,21 @@ class _ExportDialogState extends State<ExportDialog> {
     );
   }
 
+  Map<int, bool> _collectPageOrientationOverrides() {
+    if (widget.controller == null) {
+      return {};
+    }
+
+    final pages = widget.controller!.state.pages;
+    final Map<int, bool> orientationMap = {};
+
+    for (int i = 0; i < pages.length; i++) {
+      orientationMap[i] = _detectPageOrientation(i);
+    }
+
+    return orientationMap;
+  }
+
   /// 检测当前页面的方向
   bool _detectPageOrientation(int pageIndex) {
     if (widget.controller == null) {
@@ -1055,6 +1070,14 @@ class _ExportDialogState extends State<ExportDialog> {
       final pageFormat = _getEffectivePageFormat();
 
       extraParams['pageFormat'] = pageFormat;
+      extraParams['basePageFormat'] = _pageFormat;
+      extraParams['isLandscape'] = _isLandscape;
+      extraParams['autoDetectOrientation'] = _autoDetectOrientation;
+
+      if (_autoDetectOrientation && widget.controller != null) {
+        extraParams['pageOrientationOverrides'] =
+            _collectPageOrientationOverrides();
+      }
       extraParams['pageRangeType'] = _pageRangeType;
 
       if (_pageRangeType == PageRangeType.current) {
